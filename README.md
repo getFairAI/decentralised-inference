@@ -1,1 +1,1 @@
-# decentralized-inference
+# Decentralized Inference
