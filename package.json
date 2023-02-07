@@ -1,0 +1,23 @@
+{
+  "name": "decentralized-inference",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "prepare": "npx husky install && npx husky add .husky/commit-msg  'npx --no -- commitlint --edit ${1}'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FAIR-Protocol/decentralized-inference.git"
+  },
+  "author": "fair-protocol",
+  "license": "AGPL-3.0 license",
+  "bugs": {
+    "url": "https://github.com/FAIR-Protocol/decentralized-inference/issues"
+  },
+  "homepage": "https://github.com/FAIR-Protocol/decentralized-inference#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^17.4.2",
+    "@commitlint/config-conventional": "^17.4.2",
+    "husky": "^8.0.3"
+  }
+}
