@@ -1,6 +1,6 @@
 
 import useArweave from '@/context/arweave';
-import { Alert, Box, Button, Paper, Snackbar } from '@mui/material';
+import { Alert, Box, Button, Paper, Skeleton, Snackbar, Typography } from '@mui/material';
 import React, {ChangeEvent, createRef, DragEvent, ReactNode, useRef, useState} from 'react';
 import { WebBundlr } from "@bundlr-network/client";
 import CustomProgress from './progress';
@@ -91,9 +91,10 @@ const FileUpload = (props: any & { name: string, description: string }) => {
       <Paper elevation={3}>
         <Container>
           <Box>
-            <div onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDrop={handleDrop}></div>
-            <input type="file" ref={fileInput} onChange={handleFileInput} style={{ display: 'none' }}/>
-            <Button id="fileSelect" type="button" variant="contained" onClick={() => fileInput.current?.click()}>Choose a file</Button>
+            <Typography variant="h1" onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDrop={handleDrop}>
+              <input type="file" ref={fileInput} onChange={handleFileInput} style={{ display: 'none' }}/>
+              <Button id="fileSelect" type="button" variant="contained" onClick={() => fileInput.current?.click()}>Choose a file</Button>
+            </Typography>
           </Box>
           
         </Container>
