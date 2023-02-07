@@ -1,0 +1,60 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Create Your Model</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <form>
+      <table style="width: 100%">
+        <tr>
+          <td>
+            <mat-form-field appearance="outline" class="full-field">
+              <mat-label>Name</mat-label>
+              <input type="text" matInput>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field appearance="outline" class="full-field">
+              <mat-label>Category</mat-label>
+              <mat-select [multiple]="false">
+                <mat-option *ngFor="let category of categories" [value]="category">{{category}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <mat-form-field appearance="outline" class="full-field">
+              <mat-label>Description/use</mat-label>
+              <textarea type="text" maxlength="255" matInput cdkTextareaAutosize="true" cdkAutosizeMinRows="3" cdkAutosizeMaxRows="5"></textarea>
+            </mat-form-field>
+          </td>
+        </tr>
+      </table>
+
+      <div class="drop-upload" appDnd *ngIf="files.length === 0; else hasFile">
+        <input [type]="'file'" #dropUploadRef [multiple]="false" (change)="fileBrowseHandler($event.target)">
+        <mat-icon>upload</mat-icon>
+        <p>Drag And Drop file</p>
+      </div>
+      <ng-template #hasFile>
+        <div class="info">
+          <h4 class="name">
+            {{ files[0]?.name }}
+          </h4>
+          <p class="size">
+            {{ formatBytes(files[0]?.size, 0) }}
+          </p>
+          <mat-progress-bar *ngIf="files[0].progress < 100" [mode]="'determinate'" [value]="files[0].progress"></mat-progress-bar>
+          <button mat-icon-button type="button" *ngIf="files[0].progress >= 100" (click)="deleteFile(0)">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </div>
+      </ng-template>
+      <button mat-raised-button (click)="submit()" type="button">Submit
+      </button>
+    </form>
+  </mat-card-content>
+  <mat-card-footer>
+    <mat-card-actions></mat-card-actions>
+  </mat-card-footer>
+</mat-card>

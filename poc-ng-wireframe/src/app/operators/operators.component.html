@@ -1,0 +1,22 @@
+<form class="example-form">
+  <mat-form-field class="example-full-width" appearance="outline">
+    <mat-label>Search</mat-label>
+    <input type="tel" matInput>
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+</form>
+
+<mat-grid-list cols="3" rowHeight="200px" style="margin-top: -20px">
+  <mat-grid-tile *ngFor="let model of nModels">
+    <mat-card (click)="open()">
+      <mat-card-header>
+        <mat-card-title>{{model.name}}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{model.category}}</p>
+        <p>{{model.description}}</p>
+        <p>{{ model.creator}}</p>
+      </mat-card-content>
+    </mat-card>
+  </mat-grid-tile>
+</mat-grid-list>
