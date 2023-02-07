@@ -1,0 +1,55 @@
+<table mat-table [dataSource]="dataSource" class="mat-elevation-z12" matSort>
+
+  <!--- Note that these columns can be defined in any order.
+        The actual rendered columns are set as a property on the row definition" -->
+
+  <!-- Position Column -->
+  <ng-container matColumnDef="name">
+    <th mat-header-cell *matHeaderCellDef  mat-sort-header> Name </th>
+    <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+  </ng-container>
+
+  <!-- Name Column -->
+  <ng-container matColumnDef="address">
+    <th mat-header-cell *matHeaderCellDef  mat-sort-header> Address </th>
+    <td mat-cell *matCellDef="let element"> {{element.address}} </td>
+  </ng-container>
+
+  <!-- Weight Column -->
+  <ng-container matColumnDef="rating">
+    <th mat-header-cell *matHeaderCellDef  mat-sort-header> Rating </th>
+    <td mat-cell *matCellDef="let element"> {{element.rating}} </td>
+  </ng-container>
+
+  <!-- Symbol Column -->
+  <ng-container matColumnDef="fee">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Fee </th>
+    <td mat-cell *matCellDef="let element"> {{element.fee}} </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+  <tr
+    mat-row *matRowDef="let row; columns: displayedColumns;"
+    [class.selected-row]="selectedElement === row"
+    (click)="selectedElement = selectedElement === row ? null : row"
+  ></tr>
+  <!--  -->
+</table>
+<div class="float" *ngIf="selectedElement != null">
+<button mat-fab color="accent" [mat-dialog-close]="selectedElement.id">
+  <mat-icon>check</mat-icon>
+</button>
+</div>
+
+<!-- <div class="form-wrapper">
+  <form class="example-form">
+    <mat-form-field class="example-full-width" appearance="outline">
+      <mat-label>Prompt</mat-label>
+      <textarea type="text" matInput></textarea>
+    </mat-form-field>
+  </form>
+  <button mat-raised-button class="example-form" mat-dialog-close (click)="openSnack()">
+    Submit
+  </button>
+</div> -->
+

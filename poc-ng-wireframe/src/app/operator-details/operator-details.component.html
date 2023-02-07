@@ -1,0 +1,52 @@
+<mat-grid-list cols="1" rowHeight="250px">
+  <mat-grid-tile colspan="1">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{currentOperator.name}}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-form-field appearance="outline">
+          <mat-label>Address</mat-label>
+          <input type="text" matInput disabled [value]="currentOperator.address">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Rating</mat-label>
+          <input type="number" matInput disabled [value]="currentOperator.rating">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fee</mat-label>
+          <input type="number" matInput disabled [value]="currentOperator.fee">
+        </mat-form-field>
+          <mat-checkbox>Continue previous Conversation</mat-checkbox>
+      </mat-card-content>
+    </mat-card>
+  </mat-grid-tile>
+  <mat-grid-tile colspan="1">
+    <mat-card>
+      <mat-grid-list cols="2">
+        <mat-grid-tile colspan="1">
+          <mat-list>
+            <mat-list-item>
+              question 1
+            </mat-list-item>
+            <mat-list-item>
+              question 2
+            </mat-list-item>
+            <mat-list-item>
+              question 3
+            </mat-list-item>
+          </mat-list>
+        </mat-grid-tile>
+        <mat-grid-tile>
+          <div class="prompt-container">
+            <mat-form-field appearance="outline" class="full-field">
+              <mat-label>Prompt</mat-label>
+              <textarea matInput cdkTextareaAutosize="true" cdkAutosizeMaxRows="10" cdkAutosizeMinRows="3">
+              </textarea>
+            </mat-form-field>
+          </div>
+        </mat-grid-tile>
+      </mat-grid-list>
+    </mat-card>
+  </mat-grid-tile>
+</mat-grid-list>

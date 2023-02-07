@@ -1,0 +1,56 @@
+
+<mat-grid-list [cols]="6" [rowHeight]="'64px'" [gutterSize]="'5px'">
+  <mat-grid-tile [colspan]="6">
+    <mat-toolbar color="primary">
+      <button mat-button class="example-icon" aria-label="Example icon-button with menu icon" routerLink="/">
+        Transparent AI
+      </button>
+      <span class="example-spacer"></span>
+      <button mat-button class="example-icon favorite-icon" aria-label="Example icon-button with heart icon" routerLink="/explore">
+        Explore
+      </button>
+      <button mat-button class="example-icon favorite-icon" aria-label="Example icon-button with heart icon" routerLink="/operators">
+        operators
+      </button>
+      <button mat-button class="example-icon favorite-icon" aria-label="Example icon-button with heart icon" routerLink="/models">
+        Create
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="menu" class="example-icon" aria-label="Example icon-button with share icon">
+        <mat-icon>notifications</mat-icon>
+      </button>
+      <button mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
+        <mat-icon>wallet</mat-icon>
+      </button>
+    </mat-toolbar>
+  </mat-grid-tile>
+  <mat-grid-tile [colspan]="6" [rowspan]="10">
+    <router-outlet></router-outlet>
+  </mat-grid-tile>
+
+  <mat-menu #menu="matMenu">
+    <mat-list>
+      <mat-list-item>
+        <mat-icon matListItemIcon>pending_actions</mat-icon>
+        <a matListItemTitle href="...">Result1</a>
+        <div matListItemLine>{{date | date}} - {{date | date}}</div>
+      </mat-list-item>
+      <mat-divider></mat-divider>
+      <mat-list-item>
+        <mat-icon matListItemIcon>done</mat-icon>
+        <a matListItemTitle href="...">Result2</a>
+        <div matListItemLine>{{date | date}} - {{date | date}}</div>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListItemIcon>done</mat-icon>
+        <a matListItemTitle href="...">Result3</a>
+        <div matListItemLine>{{date | date}} - {{date | date}}</div>
+      </mat-list-item>
+      <mat-divider></mat-divider>
+      <mat-list-item>
+        <mat-icon matListItemIcon>done</mat-icon>
+        <a matListItemTitle href="...">Result4</a>
+        <div matListItemLine>{{date | date}} - {{date | date}}</div>
+      </mat-list-item>
+    </mat-list>
+  </mat-menu>
+</mat-grid-list>
