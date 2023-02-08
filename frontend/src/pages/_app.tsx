@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 // import { WalletProvider } from '@/context/wallet';
 
 const client = new ApolloClient({
-  uri: "/api/graphql",
+  uri: "http://localhost:1984/graphql",
   cache: new InMemoryCache(),
 });
 

@@ -90,6 +90,10 @@ a {
   text-decoration: none;
 }
 
+.MuiCardHeader-avatar {
+  margin-right: 0;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
