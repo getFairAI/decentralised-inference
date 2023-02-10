@@ -1,6 +1,11 @@
 import Arweave from 'arweave';
 import { useState } from 'react';
-import * as bundler from 'arbundles';
+
+const arweave = Arweave.init({
+  host: '127.0.0.1',
+  port: 1984,
+  protocol: 'http'
+})
 
 const useArweave = () => {
   const [ addresses, setAddresses ] = useState<string[]>([]);
@@ -15,11 +20,7 @@ const useArweave = () => {
     port: 443,
     protocol: 'https'
   }); */
-  const arweave = Arweave.init({
-    host: '127.0.0.1',
-    port: 1984,
-    protocol: 'http'
-  })
+  
 
   const connect = async () => {
     setIsLoading(true);
@@ -37,8 +38,25 @@ const useArweave = () => {
     setIsConnected(true);
   }
 
+  const getData = async (txid: string) => {
+    const result = await arweave.transactions.getData(txid, { decode: true });
+
+    return result;
+  }
+
+  const getDataPromise = (txid: string) => arweave.transactions.getData(txid, { decode: true });
+
+  const getTxTags = async (txid: string) => {
+    const result = await arweave.transactions.get(txid);
+
+    return result.tags;
+  }
+
   return {
     connect,
+    getData,
+    getDataPromise,
+    getTxTags,
     arweave,
     addresses,
     isLoading,
