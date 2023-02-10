@@ -4,8 +4,11 @@ import { Avatar, Box, Card, CardActionArea, CardContent, CardHeader, Chip, Input
 import Grid from '@mui/material/Unstable_Grid2'; // Grid version 2
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import SearchIcon from '@mui/icons-material/Search';
+import { useRouter } from 'next/router';
+import { MouseEvent } from 'react';
 
 const Explore = () => {
+  const router = useRouter();
   const QUERY = gql`
     query txs {
       transactions(
@@ -43,6 +46,11 @@ const Explore = () => {
 
   const txs = data.transactions.edges as IEdge[];
 
+  const handleCardClick = (e: MouseEvent<HTMLButtonElement>, txid: string) => {
+    e.preventDefault();
+    router.push(`/model/${encodeURIComponent(txid)}`);
+  }
+
   return (
     <Box sx={{ flexGrow: 1 }} margin={2}>
       <Grid container spacing={{ xs: 2, md: 3, lg: 5 }} columns={{ xs: 4, sm: 8, md: 12 }}>
@@ -57,7 +65,7 @@ const Explore = () => {
         {txs.map((edge: IEdge, index) => (
           <Grid xs={2} sm={4} md={4} key={index}>
             <Card>
-              <CardActionArea style={{ display: 'flex' }}>
+              <CardActionArea style={{ display: 'flex' }} onClick={(e) => handleCardClick(e, edge.node.id)}>
                 <CardHeader
                   sx={{ marginRight: 0}}
                   avatar={
