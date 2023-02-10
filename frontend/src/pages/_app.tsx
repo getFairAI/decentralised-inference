@@ -28,12 +28,11 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ApolloProvider client={client}>
-      {/* <WalletProvider></WalletProvider> */}
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Layout>
-            <Component {...pageProps} />
-          </Layout>
+          <Component {...pageProps} />
+        </Layout>
       </ThemeProvider>
     </ApolloProvider>
   )
