@@ -1,12 +1,13 @@
-import { Box, Typography, Button, Card, CardMedia } from "@mui/material";
+import { IEdge } from "@/interfaces/arweave";
+import { Box, Typography, Button, Card, CardMedia, Container } from "@mui/material";
 import { forwardRef } from "react";
 ;
 
-const SlideCard = forwardRef(function SlideCard(props, ref) {
+const SlideCard = (props: { data: IEdge }) => {
   return (
     <>
       <Box sx={{ maxHeight: '250px', maxWidth: '250px' }} display={'flex'} flexDirection={'column'} justifyContent={'space-between'}>
-        <Typography variant='h4' gutterBottom>Name</Typography>
+        <Typography variant='h4' gutterBottom>{props.data.node.tags.find(el => el.name === 'test')?.value}</Typography>
         <Typography
           variant='body1'
           sx={{ overflow: 'hidden',
@@ -52,6 +53,6 @@ const SlideCard = forwardRef(function SlideCard(props, ref) {
       </Card>
     </>
   );
-});
+};
 
 export default SlideCard;
