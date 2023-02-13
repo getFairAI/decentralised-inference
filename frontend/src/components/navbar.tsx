@@ -25,13 +25,15 @@ const Navbar = () => {
           >
             <MenuIcon />
           </IconButton> */}
-          <Typography variant="h4" component="div" sx={{
-              mr: 2,
-              display: { md: 'flex' },
-              color: 'inherit',
-            }}>
-            Fair protocol
-          </Typography>
+          <Link href="/">
+            <Typography variant="h4" component="div" sx={{
+                mr: 2,
+                display: { md: 'flex' },
+                color: 'inherit',
+              }}>
+              Fair protocol
+            </Typography>
+          </Link>
           <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
             <Link href="/explore" passHref>
               <Button variant="text" color="secondary">Explore</Button>
