@@ -2,7 +2,7 @@
 
 ### File Structure
 ├── poc-ng-wireframes
-├── frontend
+├── client
 ├── .gitignore
 ├── LICENSE
 └── README.md
