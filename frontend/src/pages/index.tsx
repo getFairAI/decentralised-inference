@@ -1,13 +1,14 @@
 import { gql, useQuery } from '@apollo/client';
-import { Avatar, Box, Card, CardActionArea, Container, Grid, IconButton, Slide, Stack, Typography} from '@mui/material';
+import { Avatar, Box, Card, CardActionArea, Container, Grid, IconButton, Stack, Typography} from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SlideCard from '@/components/slide-card';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import GroupIcon from '@mui/icons-material/Group';
 import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import { IEdge } from '@/interfaces/arweave';
+import { ThumbUp } from '@mui/icons-material';
 
 export default function Home() {
   const TOP5QUERY = gql`
@@ -36,7 +37,11 @@ export default function Home() {
   `;
 
   const { data, loading, error } = useQuery(TOP5QUERY);
-  const [ rightClicked, setRightClicked ] = useState(false);
+  const [slideIdx, setSlideIdx ] = useState(0);
+  const [ swipeRight, setSwipeRight] = useState(false);
+  const [ swiped, setSwiped ] = useState(true);
+  const max = 5;
+
   if (loading) {
     return <h2>Loading...</h2>;
   }
@@ -46,23 +51,45 @@ export default function Home() {
     return null;
   }
 
+  const onDisplayTxs = data.transactions.edges as IEdge[];
   const txs = data.transactions.edges as IEdge[];
-  
-  const click = () => {
-    setRightClicked(true);
+
+  const click = (direction: string) => {
+    setSwiped(!swiped);
+    if (direction === 'left') {
+      setSwipeRight(false);
+      if (slideIdx === 0) {
+        setSlideIdx(max - 1);
+      } else {
+        setSlideIdx(slideIdx - 1);
+      }
+      
+    } else if (direction === 'right') {
+      setSwipeRight(true);
+      if (slideIdx === 4) {
+        setSlideIdx(0);
+      } else {
+        setSlideIdx(slideIdx + 1);
+      }
+    }
   }
 
   return (
     <Container sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', alignContent: 'space-around'}}>
-      <Box display={'flex'}>
+      <Box display={'flex'} >
         <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-          <IconButton disableRipple={true} onClick={click}><ChevronLeftIcon /></IconButton>
+          <IconButton disableRipple={true}  onClick={() => click('left')}><ChevronLeftIcon /></IconButton>
         </Box>
         <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'space-between' }, margin: '16px' }}>
-          <SlideCard />
+          {/* {
+            onDisplayTxs.map((edge, index) => (
+              <SlideCard  key={index} data={edge}/>
+            ))
+          } */}
+          <SlideCard data={onDisplayTxs.find((_, index) => index === slideIdx)!}/>
         </Box>
         <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-          <IconButton disableRipple={true}><ChevronRightIcon /></IconButton>
+          <IconButton disableRipple={true} onClick={() => click('right')}><ChevronRightIcon /></IconButton>
         </Box>
       </Box>
       <Box sx={{ margin: '16px' }}>
@@ -91,9 +118,18 @@ export default function Home() {
                 <Box sx={{ width: '100%'}} display={'flex'} flexDirection={'row'} key={index}>
                   <Card sx={{ width: '100%'}}>
                     <CardActionArea sx={{ width: '100%'}}>
-                      <Box margin={'8px'}>
-                        <Avatar />
-                        <Typography variant="h6">{edge.node.tags.find(el => el.name === 'test')?.value}</Typography>
+                      <Box margin={'8px'} display='flex' justifyContent={'space-between'}>
+                        <Box display='flex'>
+                          <Avatar sx={{ width: 56, height: 56 }}/>
+                          <Box sx={{ maxWidth: '300px' }} marginLeft={'8px'}>
+                            <Typography variant="h6">{edge.node.tags.find(el => el.name === 'test')?.value}</Typography>
+                            <Typography variant='h6' noWrap>{edge.node.id}</Typography>
+                          </Box>
+                        </Box>
+                        <Box display={'flex'} alignItems='self-end'>
+                          <Typography variant='body1' lineHeight={1} paddingRight={'8px'}>2</Typography>
+                          <ThumbUp></ThumbUp>
+                        </Box>
                       </Box>
                     </CardActionArea>
                   </Card>
@@ -103,13 +139,22 @@ export default function Home() {
           </Grid>
           <Grid item xs={12} sm={12} md={6}>
             <Stack spacing={2}>
-              {txs.map((edge: IEdge, index: number) => (
+            {txs.map((edge: IEdge, index: number) => (
                 <Box sx={{ width: '100%'}} display={'flex'} flexDirection={'row'} key={index}>
                   <Card sx={{ width: '100%'}}>
                     <CardActionArea sx={{ width: '100%'}}>
-                      <Box margin={'8px'}>
-                        <Avatar />
-                        <Typography variant="h6">{edge.node.tags.find(el => el.name === 'test')?.value}</Typography>
+                      <Box margin={'8px'} display='flex' justifyContent={'space-between'}>
+                        <Box display='flex'>
+                          <Avatar sx={{ width: 56, height: 56 }}/>
+                          <Box sx={{ maxWidth: '300px' }} marginLeft={'8px'}>
+                            <Typography variant="h6">{edge.node.tags.find(el => el.name === 'test')?.value}</Typography>
+                            <Typography variant='h6' noWrap>{edge.node.id}</Typography>
+                          </Box>
+                        </Box>
+                        <Box display={'flex'} alignItems='self-end'>
+                          <Typography variant='body1' lineHeight={1} paddingRight={'8px'}>2</Typography>
+                          <ThumbUp></ThumbUp>
+                        </Box>
                       </Box>
                     </CardActionArea>
                   </Card>
