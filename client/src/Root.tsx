@@ -5,7 +5,8 @@ import { Outlet } from "react-router-dom";
 import Layout from "./components/layout";
 
 const client = new ApolloClient({
-  uri: "http://localhost:1984/graphql",
+  // uri: "http://localhost:1984/graphql",
+  uri: 'https://arweave.dev/graphql',
   cache: new InMemoryCache(),
 });
 
@@ -34,3 +35,5 @@ export const Root = () => {
     </ApolloProvider>
   )
 };
+
+export default Root;
