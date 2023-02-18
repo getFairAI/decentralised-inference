@@ -1,12 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Root } from './Root';
+import Root from './root';
 import Home from '@/pages/home';
 import Explore from '@/pages/explore';
 import Upload from '@/pages/upload';
-import './index.css'
 import Model, { txLoader } from '@/pages/model';
+import './styles/main.css';
 
 const router = createBrowserRouter([
   {
