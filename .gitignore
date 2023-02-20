@@ -41,3 +41,9 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Rasa files
+./script-examples/wallet.json
+./script-examples/venv
+./script-examples/rasa-assistant
+./script-examples/node_modules
