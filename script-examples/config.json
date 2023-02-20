@@ -1,0 +1,5 @@
+{
+    "privateKey": "key",
+    "url": "http://localhost:5005/webhooks/rest/webhook",
+    "sleepTime": 0.1
+}
