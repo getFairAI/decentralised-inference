@@ -1,40 +1,17 @@
 import { IEdge } from '@/interfaces/arweave';
 import { gql, useQuery } from '@apollo/client';
 import { Avatar, Box, Card, CardActionArea, CardContent, CardHeader, Chip, InputAdornment, TextField, Typography } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2'; // Grid version 2
+import Grid from '@mui/material/Grid'; // Grid version 2
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import SearchIcon from '@mui/icons-material/Search';
 import { MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LIST_MODELS_QUERY } from '@/queries/graphql';
 
 const Explore = () => {
   const navigate = useNavigate();
-  const QUERY = gql`
-    query txs {
-      transactions(
-        first:100,
-        tags: [
-          {
-            name: "test",
-            values: ["test-upload"]
-          },
-        ]
-      )
-      {
-        edges {
-          node {
-            id
-            tags {
-              name
-              value
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  const { data, loading, error } = useQuery(QUERY);
+  
+  const { data, loading, error } = useQuery(LIST_MODELS_QUERY);
   if (loading) {
     return <h2>Loading...</h2>;
   }

@@ -14,13 +14,7 @@ export default function Home() {
   const TOP5QUERY = gql`
     query txs {
       transactions (
-        first: 5,
-        tags: [
-          {
-            name: "test",
-            values: ["test-upload"]
-          },
-        ]
+        first: 5
       )
       {
         edges {
