@@ -5,8 +5,11 @@ import Root from './root';
 import Home from '@/pages/home';
 import Explore from '@/pages/explore';
 import Upload from '@/pages/upload';
-import Model, { txLoader } from '@/pages/model';
+import Model, { txLoader } from '@/pages/model/model';
 import './styles/main.css';
+import Operators from './pages/operators';
+import Register from './pages/model/register';
+import Detail from './pages/model/detail';
 
 const router = createBrowserRouter([
   {
@@ -26,9 +29,24 @@ const router = createBrowserRouter([
         element: <Upload />
       },
       {
+        path: 'operators',
+        element: <Operators />
+      },
+      {
         path: 'model/:txid',
         element: <Model />,
         loader: txLoader,
+        id: 'model',
+        children: [
+          {
+            path: 'detail',
+            element: <Detail />
+          },
+          {
+            path: 'register',
+            element: <Register />
+          }
+        ]
       }
     ]
   },

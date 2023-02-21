@@ -6,12 +6,15 @@ import Button from '@mui/material/Button';
 // import useArweave from '@/context/arweave';
 import useArweave from '../context/arweave';
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 // import { connectWallet, useWallet } from '@/context/wallet';
 
 const Navbar = () => {
   
   const { connect, arweave, addresses, isLoading, error, isConnected, network } = useArweave();
   
+  useEffect(() => {}, [isConnected]);
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="sticky">
@@ -40,6 +43,9 @@ const Navbar = () => {
             </Link>
             <Link to="/upload">
               <Button variant="text" color="secondary">Create</Button>
+            </Link>
+            <Link to="/operators">
+              <Button variant="text" color="secondary">Operators</Button>
             </Link>
           </Box>
           <Box sx={{ flexGrow: 0 }}>

@@ -4,7 +4,7 @@ import { WebBundlr } from 'bundlr-custom';
 import { PermissionType } from 'arconnect';
 
 const arweave = Arweave.init({
-  host: 'arweave.dev',
+  host: 'arweave.net',
   port: 443,
   protocol: 'https'
 });
@@ -13,6 +13,12 @@ export const getTxTags = async (txid: string) => {
   const result = await arweave.transactions.get(txid);
 
   return result.tags;
+}
+
+export const getData = async (txid: string) => {
+  const result = await arweave.transactions.getData(txid, { decode: true });
+
+  return result;
 }
 
 const useArweave = () => {
@@ -24,24 +30,14 @@ const useArweave = () => {
   const [ bundlr, setBundlr ] = useState<WebBundlr | undefined>(undefined);
   const [ permissions, setPermissions ] = useState<PermissionType[]>(['ACCESS_ALL_ADDRESSES', 'ACCESS_PUBLIC_KEY', 'SIGNATURE', 'ACCESS_ADDRESS' ]);
 
-  // Or manually specify a host
-  /* const arweave = Arweave.init({
-    host: 'arweave.dev',
-    port: 443,
-    protocol: 'https'
-  }); */
-  
-
   const connect = async () => {
     setIsLoading(true);
     try {
       await window.arweaveWallet.connect(permissions);
-      console.log(error, 'err');
       const addresses = await window.arweaveWallet.getAllAddresses();
       const network = await (await arweave.network.getInfo()).network;
       setNetwork(network);
       setAddresses(addresses);
-      console.log(addresses);
       setIsLoading(false);
       setIsConnected(true);
       // await signer.refresh(window.arweaveWallet);
@@ -53,12 +49,6 @@ const useArweave = () => {
       setError(`${error.message}. Refresh to try again.`);
     }
     
-  }
-
-  const getData = async (txid: string) => {
-    const result = await arweave.transactions.getData(txid, { decode: true });
-
-    return result;
   }
 
   const getDataPromise = (txid: string) => arweave.transactions.getData(txid, { decode: true });
@@ -78,22 +68,52 @@ const useArweave = () => {
   }
 
   const connectWallet = async () => {
-    if (window !== undefined && window.arweaveWallet) {
-      await window.arweaveWallet.connect(permissions);
-      const addr = await window.arweaveWallet.getActiveAddress();
-      const network = await (await arweave.network.getInfo()).network;
-      setNetwork(network);
-      setAddresses([addr]);
-      setIsConnected(true);
+    if (window.arweaveWallet && !isConnected) {
+      try {
+        //
+        const perms = await window.arweaveWallet.getPermissions();
+        if (perms != permissions) {
+          await window.arweaveWallet.connect(permissions);
+        }
+        // await window.arweaveWallet.connect(permissions);
+        const addr = await window.arweaveWallet.getActiveAddress();
+        const network = await (await arweave.network.getInfo()).network;
+        setNetwork(network);
+        setAddresses([addr]);
+        setIsConnected(true);
+      } catch (err) {
+        setIsConnected(false);
+      }
     }
   }
 
-  useEffect(() => { connectWallet()}, [ window ]);
+  const handleWalletSwitch = (event: any) => {
+    setAddresses([event.detail.address]);
+  }
+
   useEffect(() => { connectWallet()}, [ permissions ])
+
+  useEffect(() => {
+    const arweaveWalletLoaded = async () => {
+      await connectWallet();
+    }
+    window.addEventListener('arweaveWalletLoaded', arweaveWalletLoaded);
+
+    return () => {
+      window.removeEventListener('arweaveWalletLoaded', arweaveWalletLoaded);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('arweaveWalletLoaded', e => handleWalletSwitch(e));
+
+    return () => {
+      window.removeEventListener('arweaveWalletLoaded', e => handleWalletSwitch(e));
+    }
+  }, []);
 
   return {
     connect,
-    getData,
     getDataPromise,
     arweave,
     addresses,

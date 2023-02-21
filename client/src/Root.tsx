@@ -6,7 +6,7 @@ import Layout from "./components/layout";
 
 const client = new ApolloClient({
   // uri: "http://localhost:1984/graphql",
-  uri: 'https://arweave.dev/graphql',
+  uri: 'https://arweave.net/graphql',
   cache: new InMemoryCache(),
 });
 
