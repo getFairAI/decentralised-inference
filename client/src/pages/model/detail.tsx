@@ -1,32 +1,11 @@
-import useArweave, { getTxTags } from "@/context/arweave";
-import { Avatar, Card, CardContent, Container, Divider, FormControl, InputLabel, MenuItem, Select, Skeleton, SvgIcon, TextField, Typography } from "@mui/material";
+import { Avatar, Card, CardContent, Container, Divider, FormControl, InputLabel, MenuItem, Select, SvgIcon, TextField, Typography } from "@mui/material";
 import { Box } from "@mui/system";
-import { useEffect, useState, MouseEvent } from "react";
 import BasicTable from "@/components/basic-table";;
 import Stamp from '@/components/stamp';
-import { Params, useLoaderData } from "react-router-dom";
+import { useRouteLoaderData } from "react-router-dom";
 
-const SkeletonDetail = () => {
-  return (
-    <Box display='flex'>
-      <Box>
-        <Skeleton variant="circular"  width={90} height={90}/>
-      </Box>
-      <Box>
-        <Typography component="div" variant='h1'>
-          <Skeleton />
-        </Typography>
-      </Box>
-    </Box>
-  )
-}
-
-export const txLoader = async ({ params }: { params: Params<string>}) => {
-  return getTxTags(params.txid!);
-};
-
-const Model = () => { 
-  const { data }: any = useLoaderData();
+const Detail = () => { 
+  const { data }: any = useRouteLoaderData('model');
 
   return (
     <Container>
@@ -94,4 +73,4 @@ const Model = () => {
   )
 }
 
-export default Model;
+export default Detail;
