@@ -146,9 +146,10 @@ const Upload = () => {
     // upload the file
     const readableStream = fileReaderStream(file);
     const tags = [];
-    tags.push({ name: 'AppName', value: 'Fair-protocol'});
+    tags.push({ name: 'App-Name', value: 'Fair Protocol'});
     tags.push({ name: "Content-Type", value: file.type });
-    tags.push({ name: 'ModelName', value: formData.name });
+    tags.push({ name: 'Model-Transaction', value: formData.name });
+    tags.push({ name: 'Operation-Name', value: 'Model Creation' });
     tags.push({ name: 'Notes', value: formData.notes });
     tags.push({ name: 'Category', value: formData.category });
     if (formData.avatar) tags.push({ name: 'AvatarUrl', value: formData.avatar });
