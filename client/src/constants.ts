@@ -1,0 +1,1 @@
+export const STATIC_ADDRESS = 'z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ';

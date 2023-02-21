@@ -25,13 +25,13 @@ const Explore = () => {
 
   const handleCardClick = (e: MouseEvent<HTMLButtonElement>, txid: string) => {
     e.preventDefault();
-    navigate(`/model/${encodeURIComponent(txid)}`);
+    navigate(`/model/${encodeURIComponent(txid)}/detail`);
   }
 
   return (
     <Box sx={{ flexGrow: 1 }} margin={2}>
       <Grid container spacing={{ xs: 2, md: 3, lg: 5 }} columns={{ xs: 4, sm: 8, md: 12 }}>
-        <Grid xs={12} justifyContent={'flex-end'} display={'flex'}>
+        <Grid xs={12} justifyContent={'flex-end'} display={'flex'} item>
           <TextField
             placeholder='Search...'
             InputProps={{
@@ -40,7 +40,7 @@ const Explore = () => {
           ></TextField>
         </Grid>
         {txs.map((edge: IEdge, index) => (
-          <Grid xs={2} sm={4} md={4} key={index}>
+          <Grid xs={2} sm={4} md={4} key={index} item>
             <Card>
               <CardActionArea style={{ display: 'flex' }} onClick={(e) => handleCardClick(e, edge.node.id)}>
                 <CardHeader
