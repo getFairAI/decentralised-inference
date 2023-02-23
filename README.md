@@ -7,7 +7,7 @@
 ├── LICENSE
 └── README.md
 
-# Rules, Terms, and Conditions of the app
+# Rules, Terms, and Conditions of the App
 
 ### Terminology:
 
