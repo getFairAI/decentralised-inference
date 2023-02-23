@@ -1,13 +1,52 @@
-import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
-import { createTheme, CssBaseline, ThemeProvider, useMediaQuery } from "@mui/material";
-import { useMemo } from "react";
-import { Outlet } from "react-router-dom";
-import Layout from "./components/layout";
+import { ApolloClient, ApolloLink, ApolloProvider, from, HttpLink, InMemoryCache } from '@apollo/client';
+import { createTheme, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
+import { useMemo } from 'react';
+import { Outlet } from 'react-router-dom';
+import Layout from './components/layout';
+import { ITransactions } from './interfaces/arweave';
+
+const mapLink  = new ApolloLink((operation, forward) => 
+  forward(operation).map((result) => {
+    if (operation.operationName === 'results_responses') {
+      const nested = (result.data as { results: ITransactions, requests: ITransactions });
+      const parsedResult = {
+        ...result,
+        data: {
+          results: nested.results.edges,
+          requests: nested.requests.edges
+        }
+      };
+
+      return parsedResult;
+    }
+
+    const parsedResult = {
+      ...result,
+      data: (result.data as { transactions: ITransactions }).transactions.edges
+    };
+    operation.setContext({ data: parsedResult.data, vars: operation.variables });
+    return parsedResult;
+  }
+));
 
 const client = new ApolloClient({
-  // uri: "http://localhost:1984/graphql",
-  uri: 'https://arweave.net/graphql',
+  // uri: 'http://localhost:1984/graphql',
   cache: new InMemoryCache(),
+  link: from([
+    // chainRequestLink,
+    mapLink,
+    new HttpLink({ uri: 'https://arweave.net/graphql' }),
+  ]),
+  defaultOptions: {
+    watchQuery: {
+      fetchPolicy: 'no-cache',
+      errorPolicy: 'ignore',
+    },
+    query: {
+      fetchPolicy: 'no-cache',
+      errorPolicy: 'all',
+    },
+  }
 });
 
 
