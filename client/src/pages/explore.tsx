@@ -11,7 +11,7 @@ import { LIST_MODELS_QUERY } from '@/queries/graphql';
 const Explore = () => {
   const navigate = useNavigate();
   
-  const { data, loading, error } = useQuery(LIST_MODELS_QUERY);
+  const { data, loading, error } = useQuery(LIST_MODELS_QUERY, /* { fetchPolicy: "no-cache" } */);
   if (loading) {
     return <h2>Loading...</h2>;
   }
@@ -21,7 +21,7 @@ const Explore = () => {
     return null;
   }
 
-  const txs = data.transactions.edges as IEdge[];
+  const txs = data as IEdge[];
 
   const handleCardClick = (e: MouseEvent<HTMLButtonElement>, txid: string) => {
     e.preventDefault();

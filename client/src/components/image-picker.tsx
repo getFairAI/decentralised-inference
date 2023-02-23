@@ -3,7 +3,7 @@ import { Box, CircularProgress, ImageList, ImageListItem } from "@mui/material";
 import { useController, UseControllerProps } from "react-hook-form";
 
 const arweaveUrl = `https://arweave.net`;
-const ImagePicker = (props: UseControllerProps & { data: { transactions: { edges: IEdge[] }}, loading: boolean, error: any, closeHandler: Function}) => {
+const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boolean, error: any, closeHandler: Function}) => {
   const { field } = useController(props);
 
   if (props.loading) {
@@ -36,7 +36,7 @@ const ImagePicker = (props: UseControllerProps & { data: { transactions: { edges
         Something Went Wrong...
       </Box>
   }
-  const txids = props.data.transactions.edges.map(el => el.node.id);
+  const txids = props.data.map(el => el.node.id);
 
   const handleClickImage = (itemUrl: string) => {
     console.log(itemUrl);
