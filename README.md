@@ -33,4 +33,4 @@ To reward the train of models executed by Creators as well as the fees paid by t
 
 The Fair Protocol marketplace will ensure that all participants follow all the rules specified, charging another 5% fee for that service to Users when they request inferences. Those 5% will be paid to Operators, that in turn will pay to the marketplace. **If any of those extra fees are not paid by the Operator, the marketplace won't show the results of the inference to the User. If was the Operator who didn't had paid back, he will be penalized by the marketplace, by not being shown as a valid option to Users.** **To do: detail more these rules**
 
-By clicking next, you accept all these rules, terms, and conditions specified above.
+By using this app, you accept all these rules, terms, and conditions specified above.
