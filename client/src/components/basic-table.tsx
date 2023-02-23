@@ -6,9 +6,22 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Box, TablePagination } from '@mui/material';
+import { Box, IconButton, TablePagination, Tooltip, Typography } from '@mui/material';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import HistoryIcon from '@mui/icons-material/History';
+import { ApolloError } from '@apollo/client';
+import CopyIcon from '@mui/icons-material/ContentCopy';
+import useArweave from '@/context/arweave';
 
-function createData(
+export interface RowData {
+  address: string,
+  fee: number,
+  availability: number,
+  stamps: number,
+  registrationTimestamp: string,
+};
+
+/* function createData(
   address: string,
   fee: number,
   availability: number,
@@ -23,12 +36,13 @@ const rows = [
   createData('Lq2KrMU-VgbpwjzKQiOx5tpRW6NZ-cGoelP-YCYdzMg', 4, 95, 8),
   createData('Du-4Lq_1NiY9A1KSuWc0WbUKs99lxHMiFA3OkfMhkFw', 3, 100, 11),
   createData('H_5-R2rOlBnPQL1yo8Kj2B8wNjYnZOAzMTQTeAia0k4', 0.6, 87, 15),
-];
+]; */
 
-export default function BasicTable() {
-
+export default function BasicTable(props: { data: RowData[], loading: boolean, error?: ApolloError }) {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [page, setPage] = React.useState(0);
+
+  const { arweave } = useArweave();
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -46,23 +60,44 @@ export default function BasicTable() {
           <TableHead>
             <TableRow>
               <TableCell variant='head'>Address</TableCell>
-              <TableCell variant='head' align="right">Fee&nbsp;(%)</TableCell>
+              <TableCell variant='head'>Registration&nbsp;</TableCell>
+              <TableCell variant='head' align="right">Fee&nbsp;(Ar)</TableCell>
               <TableCell variant='head' align="right">Availability&nbsp;(%)</TableCell>
               <TableCell variant='head' align="right">Stamps&nbsp;</TableCell>
+              <TableCell variant='head' align='right'>Actions&nbsp;</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
+            {props.data.map((row, idx) => (
               <TableRow
-                key={row.address}
+                key={idx}
                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
               >
                 <TableCell scope="row">
-                  {row.address}
+                  <Tooltip title={row.address}>
+                    <Typography>
+                      {row.address.slice(0, 10)}...{row.address.slice(-2)}
+                      <IconButton
+                        size='small'
+                        onClick={() => {navigator.clipboard.writeText(row.address)}}
+                      >
+                        <CopyIcon fontSize='inherit'/>
+                      </IconButton>
+                    </Typography>
+                  </Tooltip>
                 </TableCell>
-                <TableCell align="right">{row.fee}</TableCell>
+                <TableCell align="right">{row.registrationTimestamp}</TableCell>
+                <TableCell align="right">{arweave.ar.winstonToAr(`${row.fee}`)}</TableCell>
                 <TableCell align="right">{row.availability}</TableCell>
                 <TableCell align="right">{row.stamps}</TableCell>
+                <TableCell align='right'>
+                  <Tooltip title='History'>
+                    <IconButton><HistoryIcon /></IconButton>
+                  </Tooltip>
+                  <Tooltip title='Execute'>
+                    <IconButton><PlayArrowIcon /></IconButton>
+                  </Tooltip>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -71,7 +106,7 @@ export default function BasicTable() {
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={rows.length}
+        count={props.data.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}

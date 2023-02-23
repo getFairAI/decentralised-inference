@@ -45,8 +45,8 @@ export default function Home() {
     return null;
   }
 
-  const onDisplayTxs = data.transactions.edges as IEdge[];
-  const txs = data.transactions.edges as IEdge[];
+  const onDisplayTxs = data as IEdge[];
+  const txs = data as IEdge[];
 
   const click = (direction: string) => {
     setSwiped(!swiped);

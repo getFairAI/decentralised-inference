@@ -7,7 +7,7 @@ const Operators = () => {
   const navigate = useNavigate();
   const mockData = [
     {
-      txid: '5v6zsI8oap17qTKp4ZRpq8VrN80_6haMvVv_mWb6YkI',
+      txid: 'gOtMgHjoxsllyVs5Mbqb-ICYljxqnavAptADJnNmnaM',
       name: 'model X',
       uploader: 'rM9K69Uv7olZeKA0bOZ9dwo-GvyYprkjqafhtjeSx2M',
       nOperators: 8,
