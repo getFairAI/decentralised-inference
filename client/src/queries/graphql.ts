@@ -331,3 +331,95 @@ export const QUERY_OPERATOR_RESULTS_RESPONSES = gql`
     }
   }
 `;
+
+export const QUERY_OPERATOR_HISTORY = gql`
+  query history ($address: String!, $tags: [TagFilter!]) {
+    owned: transactions (
+      tags: $tags
+      owners: [ $address ]
+    ) {
+      edges {
+        cursor
+        node {
+          id
+          anchor
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
+          }
+        }
+      }
+    }
+
+    received: transactions (
+      tags: $tags
+      recipients: [ $address ]
+    ) {
+      edges {
+        cursor
+        node {
+          id
+          anchor
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
+          }
+        }
+      }
+    }
+  }
+`

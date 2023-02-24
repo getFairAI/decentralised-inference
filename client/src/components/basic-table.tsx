@@ -12,6 +12,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import { ApolloError } from '@apollo/client';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import useArweave from '@/context/arweave';
+import { useNavigate } from 'react-router-dom';
 
 export interface RowData {
   address: string,
@@ -41,7 +42,7 @@ const rows = [
 export default function BasicTable(props: { data: RowData[], loading: boolean, error?: ApolloError }) {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [page, setPage] = React.useState(0);
-
+  const navigate = useNavigate();
   const { arweave } = useArweave();
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -62,7 +63,7 @@ export default function BasicTable(props: { data: RowData[], loading: boolean, e
               <TableCell variant='head'>Address</TableCell>
               <TableCell variant='head'>Registration&nbsp;</TableCell>
               <TableCell variant='head' align="right">Fee&nbsp;(Ar)</TableCell>
-              <TableCell variant='head' align="right">Availability&nbsp;(%)</TableCell>
+              <TableCell variant='head' align="right">Response Rate&nbsp;(%)</TableCell>
               <TableCell variant='head' align="right">Stamps&nbsp;</TableCell>
               <TableCell variant='head' align='right'>Actions&nbsp;</TableCell>
             </TableRow>
@@ -87,12 +88,12 @@ export default function BasicTable(props: { data: RowData[], loading: boolean, e
                   </Tooltip>
                 </TableCell>
                 <TableCell align="right">{row.registrationTimestamp}</TableCell>
-                <TableCell align="right">{arweave.ar.winstonToAr(`${row.fee}`)}</TableCell>
+                <TableCell align="right">{Math.round(+arweave.ar.winstonToAr(`${row.fee}`))}</TableCell>
                 <TableCell align="right">{row.availability}</TableCell>
                 <TableCell align="right">{row.stamps}</TableCell>
                 <TableCell align='right'>
                   <Tooltip title='History'>
-                    <IconButton><HistoryIcon /></IconButton>
+                    <IconButton onClick={() => navigate(`/operators/details/${row.address}`)}><HistoryIcon /></IconButton>
                   </Tooltip>
                   <Tooltip title='Execute'>
                     <IconButton><PlayArrowIcon /></IconButton>
@@ -113,6 +114,5 @@ export default function BasicTable(props: { data: RowData[], loading: boolean, e
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </Box>
-    
   );
 }

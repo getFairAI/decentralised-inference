@@ -18,8 +18,18 @@ const mapLink  = new ApolloLink((operation, forward) =>
       };
 
       return parsedResult;
-    }
+    } else if (operation.operationName === 'history') {
+      const nested = (result.data as { owned: ITransactions, received: ITransactions });
+      const parsedResult = {
+        ...result,
+        data: {
+          owned: nested.owned.edges,
+          received: nested.received.edges
+        }
+      };
 
+      return parsedResult;
+    }
     const parsedResult = {
       ...result,
       data: (result.data as { transactions: ITransactions }).transactions.edges
