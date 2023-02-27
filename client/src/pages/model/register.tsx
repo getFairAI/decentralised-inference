@@ -1,25 +1,30 @@
-import BasicTable from "@/components/basic-table";
-import Stamp from "@/components/stamp";
 import { CustomStepper } from "@/components/stepper";
-import { STATIC_ADDRESS } from "@/constants";
+import { DEFAULT_TAGS, REGISTER_OPERATION_TAG, STATIC_ADDRESS } from "@/constants";
 import useArweave from "@/context/arweave";
-import { get_registered_operators } from "@/queries/graphql";
+import { QUERY_REGISTERED_OPERATORS } from "@/queries/graphql";
 import { useQuery } from "@apollo/client";
 import { Container, Box, Card, CardContent, Avatar, SvgIcon, TextField, FormControl, InputLabel, Select, MenuItem, Divider, Typography, Snackbar, Alert } from "@mui/material";
 import { useState } from "react";
-import { useRouteLoaderData, useSearchParams } from "react-router-dom";
+import { useParams, useRouteLoaderData, useSearchParams } from "react-router-dom";
 
 const Register = () => {
   const { data }: any = useRouteLoaderData('model');
-  const [ params ] = useSearchParams();
+  const { txid } = useParams();
   
   const { arweave } = useArweave();
   const [ error, setError ] = useState<string | undefined>(undefined);
   const [ message, setMessage ] = useState<string | undefined>(undefined);
   const [ isRegistered, setIsRegistered ] = useState(false);
 
-  const query = get_registered_operators(params.get('txid') as string);
-  const { data: queryData, loading, error: queryError } = useQuery(query);
+  const tags = [
+    ...DEFAULT_TAGS,
+    REGISTER_OPERATION_TAG,
+    {
+      name: "Model-Transaction",
+      values: [ txid ]
+    },
+  ];
+  const { data: queryData, loading, error: queryError } = useQuery(QUERY_REGISTERED_OPERATORS, { variables: { tags }});
 
 
   const handleRegister = async (rate: string) => {
@@ -31,7 +36,7 @@ const Register = () => {
       const tags = [];
       tags.push({ name: 'App-Name', values: 'Fair Protocol'});
       tags.push({ name: 'App-Version', values: 'v0.01'});
-      tags.push({ name: 'Model-Transaction', values: params.get('txid') as string});
+      tags.push({ name: 'Model-Transaction', values: txid as string});
       tags.push({ name: 'Model-Fee', values:  arweave.ar.arToWinston(rate) });
       tags.push({ name: 'Operation-Name', values: 'Operator Registration'});
 
