@@ -10,6 +10,7 @@ import './styles/main.css';
 import Operators from './pages/operators';
 import Register from './pages/model/register';
 import Detail from './pages/model/detail';
+import OperatorDetails from './pages/operator/detail';
 
 const router = createBrowserRouter([
   {
@@ -30,7 +31,16 @@ const router = createBrowserRouter([
       },
       {
         path: 'operators',
-        element: <Operators />
+        children: [
+          {
+            path: '',
+            element: <Operators />
+          },
+          {
+            path: 'details/:address',
+            element: <OperatorDetails />
+          }
+        ]
       },
       {
         path: 'model/:txid',
