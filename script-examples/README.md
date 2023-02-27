@@ -1,6 +1,6 @@
 # Instructions on how to install and use Rasa as an Operator
 
-#### **Note:** All the links and instructions presented were tested and validated on 2023-02-23, in an x86-64 and AArch64 CPUs using Brave browser version 1.48.164. Updates could have changed things since then and other types of CPUs architectures could not work. We don't take responsibility for the links presented, as their content could have changed drastically. **Follow this guide at your own risk.**
+#### **Note:** All the links and instructions presented were tested and validated on 2023-02-23, in an x86-64 and AArch64 CPUs using Brave browser version 1.48.164 and Ubuntu 22.04.1 LTS. Updates could have changed things since then and other types of CPUs architectures could not work. We don't take responsibility for the links presented, as their content could have changed drastically. **Follow this guide at your own risk.**
 
 1. Use the offitial guide on how to install Rasa, from Rasa Learning Center. The official website for Ubuntu is [this one](https://learning.rasa.com/installation/ubuntu/), and on the left side of the screen there is an option to install for [MacOS](https://learning.rasa.com/installation/mac/) and [Windows](https://learning.rasa.com/installation/) as well;
 
@@ -39,7 +39,8 @@
 
 1. Run the "RasaInferenceFairProtocol.js" script on the same folder you have Rasa and all the other needed files, running "node RasaInferenceFairProtocol.js";
 
-   * **Note:** We recommend to confirm the code you are running to check if isn't any kind of malware.
+   * **Note:** We recommend to confirm the code you are running to check if isn't any kind of malware;
+   * **Note:** For Windows users, you will need to change your paths in the file.
   
 1. Go to the next step of this webpage and send the transaction to the Arweave blcokchain, in order to inform the marketplace that you started business and are ready to go.
 
