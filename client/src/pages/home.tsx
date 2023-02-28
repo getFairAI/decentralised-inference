@@ -69,7 +69,7 @@ export default function Home() {
   }
 
   return (
-    <Container sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', alignContent: 'space-around'}}>
+    <Container sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', alignContent: 'space-around', top: '64px', position: 'relative'}}>
       <Box display={'flex'} >
         <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
           <IconButton disableRipple={true}  onClick={() => click('left')}><ChevronLeftIcon /></IconButton>
