@@ -11,6 +11,7 @@ import Operators from './pages/operators';
 import Register from './pages/model/register';
 import Detail from './pages/model/detail';
 import OperatorDetails from './pages/operator/detail';
+import Chat from './pages/model/chat';
 
 const router = createBrowserRouter([
   {
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
           {
             path: 'detail',
             element: <Detail />
+          },
+          {
+            path: 'chat/:address',
+            element: <Chat />
           },
           {
             path: 'register',

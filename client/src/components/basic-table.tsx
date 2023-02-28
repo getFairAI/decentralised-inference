@@ -96,7 +96,7 @@ export default function BasicTable(props: { data: RowData[], loading: boolean, e
                     <IconButton onClick={() => navigate(`/operators/details/${row.address}`)}><HistoryIcon /></IconButton>
                   </Tooltip>
                   <Tooltip title='Execute'>
-                    <IconButton><PlayArrowIcon /></IconButton>
+                    <IconButton onClick={() => navigate(`../chat/${row.address}`)}><PlayArrowIcon /></IconButton>
                   </Tooltip>
                 </TableCell>
               </TableRow>

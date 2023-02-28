@@ -7,7 +7,7 @@ import { ITransactions } from './interfaces/arweave';
 
 const mapLink  = new ApolloLink((operation, forward) => 
   forward(operation).map((result) => {
-    if (operation.operationName === 'results_responses') {
+    if (operation.operationName === 'results_responses' || operation.operationName === 'chat_history') {
       const nested = (result.data as { results: ITransactions, requests: ITransactions });
       const parsedResult = {
         ...result,
