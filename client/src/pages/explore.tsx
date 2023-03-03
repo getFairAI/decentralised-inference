@@ -23,9 +23,9 @@ const Explore = () => {
 
   const txs = data as IEdge[];
 
-  const handleCardClick = (e: MouseEvent<HTMLButtonElement>, txid: string) => {
+  const handleCardClick = (e: MouseEvent<HTMLButtonElement>, txid: string, index: number) => {
     e.preventDefault();
-    navigate(`/model/${encodeURIComponent(txid)}/detail`);
+    navigate(`/model/${encodeURIComponent(txid)}/detail`, { state: txs[index] });
   }
 
   return (
@@ -42,7 +42,7 @@ const Explore = () => {
         {txs.map((edge: IEdge, index) => (
           <Grid xs={2} sm={4} md={4} key={index} item>
             <Card>
-              <CardActionArea style={{ display: 'flex' }} onClick={(e) => handleCardClick(e, edge.node.id)}>
+              <CardActionArea style={{ display: 'flex' }} onClick={(e) => handleCardClick(e, edge.node.id, index)}>
                 <CardHeader
                   sx={{ marginRight: 0}}
                   avatar={

@@ -20,6 +20,8 @@ export interface RowData {
   availability: number,
   stamps: number,
   registrationTimestamp: string,
+  modelName: string,
+  modelCreator: string,
 };
 
 /* function createData(
@@ -88,15 +90,15 @@ export default function BasicTable(props: { data: RowData[], loading: boolean, e
                   </Tooltip>
                 </TableCell>
                 <TableCell align="right">{row.registrationTimestamp}</TableCell>
-                <TableCell align="right">{Math.round(+arweave.ar.winstonToAr(`${row.fee}`))}</TableCell>
+                <TableCell align="right">{arweave.ar.winstonToAr(`${row.fee}`)}</TableCell>
                 <TableCell align="right">{row.availability}</TableCell>
                 <TableCell align="right">{row.stamps}</TableCell>
                 <TableCell align='right'>
                   <Tooltip title='History'>
-                    <IconButton onClick={() => navigate(`/operators/details/${row.address}`)}><HistoryIcon /></IconButton>
+                    <IconButton onClick={() => navigate(`/operators/details/${row.address}`, { state: { modelName: row.modelName, modelCreator: row.modelCreator, operatorFee: row.fee }})}><HistoryIcon /></IconButton>
                   </Tooltip>
                   <Tooltip title='Execute'>
-                    <IconButton onClick={() => navigate(`../chat/${row.address}`)}><PlayArrowIcon /></IconButton>
+                    <IconButton onClick={() => navigate(`../chat/${row.address}`, { state: { modelName: row.modelName, modelCreator: row.modelCreator }})}><PlayArrowIcon /></IconButton>
                   </Tooltip>
                 </TableCell>
               </TableRow>
