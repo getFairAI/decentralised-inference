@@ -17,8 +17,16 @@ export const getTxTags = async (txid: string) => {
 
 export const getData = async (txid: string) => {
   const result = await arweave.transactions.getData(txid, { decode: true });
+  if (typeof result === 'string') {
+    return result;
+  } else {
+    return new TextDecoder().decode(result);
+  }
+}
 
-  return result;
+export const getActiveAddress = async () => {
+  const addr = await window.arweaveWallet.getActiveAddress();
+  return addr;
 }
 
 const useArweave = () => {

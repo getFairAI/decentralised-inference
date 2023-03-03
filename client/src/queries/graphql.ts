@@ -423,3 +423,95 @@ export const QUERY_OPERATOR_HISTORY = gql`
     }
   }
 `
+
+export const QUERY_CHAT_HISTORY = gql`
+  query chat_history ($address: String!, $tagsRequests: [TagFilter!], $tagsResults: [TagFilter!]) {
+    requests: transactions (
+      tags: $tagsRequests
+      owners: [ $address ]
+    ) {
+      edges {
+        cursor
+        node {
+          id
+          anchor
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
+          }
+        }
+      }
+    }
+
+    results: transactions (
+      tags: $tagsResults
+      # recipients: [ $address ]
+    ) {
+      edges {
+        cursor
+        node {
+          id
+          anchor
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
+          }
+        }
+      }
+    }
+  }
+`
