@@ -1,4 +1,4 @@
 [submodule "js-sdk"]
 	path = js-sdk
-	url = https://github.com/l-silvestre/js-sdk.git
+	url = https://github.com/FAIR-Protocol/js-sdk.git
 	branch = feat-arweave-wallet-web-support
