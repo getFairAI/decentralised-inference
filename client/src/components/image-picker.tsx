@@ -1,8 +1,8 @@
+import { DEV_ARWEAVE_URL } from "@/constants";
 import { IEdge } from "@/interfaces/arweave";
 import { Box, CircularProgress, ImageList, ImageListItem } from "@mui/material";
 import { useController, UseControllerProps } from "react-hook-form";
 
-const arweaveUrl = `https://arweave.net`;
 const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boolean, error: any, closeHandler: Function}) => {
   const { field } = useController(props);
 
@@ -47,11 +47,11 @@ const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boole
     <>
       <ImageList sx={{ width: 500, height: 450 }} cols={3} rowHeight={164}>
         {txids.map((item, index) => (
-          <ImageListItem key={index} component='button' onClick={() => handleClickImage(`${arweaveUrl}/${item}`)}>
+          <ImageListItem key={index} component='button' onClick={() => handleClickImage(`${DEV_ARWEAVE_URL}/${item}`)}>
             <img
-              src={`${arweaveUrl}/${item}?w=164&h=164&fit=crop&auto=format`}
-              srcSet={`${arweaveUrl}/${item}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
-              alt={`{${arweaveUrl}/${item}}`}
+              src={`${DEV_ARWEAVE_URL}/${item}?w=164&h=164&fit=crop&auto=format`}
+              srcSet={`${DEV_ARWEAVE_URL}/${item}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
+              alt={`{${DEV_ARWEAVE_URL}/${item}}`}
               loading="lazy"
             />
           </ImageListItem>

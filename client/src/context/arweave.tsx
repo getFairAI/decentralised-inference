@@ -2,9 +2,10 @@ import Arweave from 'arweave';
 import { useEffect, useState } from 'react';
 import { WebBundlr } from 'bundlr-custom';
 import { PermissionType } from 'arconnect';
+import { DEV_ARWEAVE_URL, DEV_BUNDLR_URL } from '@/constants';
 
 const arweave = Arweave.init({
-  host: 'arweave.net',
+  host: DEV_ARWEAVE_URL.split('//')[1],
   port: 443,
   protocol: 'https'
 });
@@ -36,7 +37,7 @@ const useArweave = () => {
   const [ isConnected, setIsConnected ] = useState(false);
   const [ network, setNetwork ] = useState('');
   const [ bundlr, setBundlr ] = useState<WebBundlr | undefined>(undefined);
-  const [ permissions, setPermissions ] = useState<PermissionType[]>(['ACCESS_ALL_ADDRESSES', 'ACCESS_PUBLIC_KEY', 'SIGNATURE', 'ACCESS_ADDRESS' ]);
+  const [ permissions, setPermissions ] = useState<PermissionType[]>(['ACCESS_ALL_ADDRESSES', 'ACCESS_PUBLIC_KEY', 'SIGNATURE', 'ACCESS_ADDRESS', 'SIGN_TRANSACTION', 'ACCESS_ARWEAVE_CONFIG', 'ENCRYPT', 'DECRYPT', 'DISPATCH' ]);
 
   const connect = async () => {
     setIsLoading(true);
@@ -49,7 +50,7 @@ const useArweave = () => {
       setIsLoading(false);
       setIsConnected(true);
       // await signer.refresh(window.arweaveWallet);
-      const bundlr = new WebBundlr('https://node1.bundlr.network', "arweave", window.arweaveWallet);
+      const bundlr = new WebBundlr(DEV_BUNDLR_URL, "arweave", window.arweaveWallet);
       await bundlr.ready();
       setBundlr(bundlr);
     }
@@ -113,10 +114,10 @@ const useArweave = () => {
   }, []);
 
   useEffect(() => {
-    window.addEventListener('arweaveWalletLoaded', e => handleWalletSwitch(e));
+    window.addEventListener('walletSwitch', e => handleWalletSwitch(e));
 
     return () => {
-      window.removeEventListener('arweaveWalletLoaded', e => handleWalletSwitch(e));
+      window.removeEventListener('walletSwitch', e => handleWalletSwitch(e));
     }
   }, []);
 

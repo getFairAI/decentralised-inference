@@ -1,8 +1,10 @@
-import { ApolloClient, ApolloLink, ApolloProvider, from, HttpLink, InMemoryCache } from '@apollo/client';
+import { ApolloClient, ApolloLink, ApolloProvider, from, HttpLink, InMemoryCache, split } from '@apollo/client';
 import { createTheme, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
+import { SnackbarProvider } from 'notistack';
 import { useMemo } from 'react';
 import { Outlet } from 'react-router-dom';
 import Layout from './components/layout';
+import { DEV_ARWEAVE_URL, NET_ARWEAVE_URL } from './constants';
 import { ITransactions } from './interfaces/arweave';
 
 const mapLink  = new ApolloLink((operation, forward) => 
@@ -42,11 +44,19 @@ const mapLink  = new ApolloLink((operation, forward) =>
 const client = new ApolloClient({
   // uri: 'http://localhost:1984/graphql',
   cache: new InMemoryCache(),
-  link: from([
-    // chainRequestLink,
-    mapLink,
-    new HttpLink({ uri: 'https://arweave.net/graphql' }),
-  ]),
+  link: split(
+    (operation) => true, // default to arweave net
+    from([
+      // chainRequestLink,
+      mapLink,
+      new HttpLink({ uri: NET_ARWEAVE_URL + '/graphql' }),
+    ]),
+    from([
+      // chainRequestLink,
+      mapLink,
+      new HttpLink({ uri: DEV_ARWEAVE_URL + '/graphql' }),
+    ])
+  ),
   defaultOptions: {
     watchQuery: {
       fetchPolicy: 'no-cache',
@@ -76,10 +86,12 @@ export const Root = () => {
   return (
     <ApolloProvider client={client}>
       <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Layout>
-          <Outlet />
-        </Layout>
+        <SnackbarProvider maxSnack={3}>
+          <CssBaseline />
+          <Layout>
+            <Outlet />
+          </Layout>
+          </SnackbarProvider>
       </ThemeProvider>
     </ApolloProvider>
   )
