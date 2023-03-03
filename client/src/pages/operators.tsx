@@ -1,32 +1,51 @@
 import { CustomStepper } from "@/components/stepper";
+import { IEdge } from "@/interfaces/arweave";
+import { LIST_MODELS_QUERY } from "@/queries/graphql";
 import { useQuery } from "@apollo/client";
 import { Container, Box, Stepper, Stack, Card, CardActionArea, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Operators = () => {
   const navigate = useNavigate();
-  const mockData = [
-    {
-      txid: 'gOtMgHjoxsllyVs5Mbqb-ICYljxqnavAptADJnNmnaM',
-      name: 'model X',
-      uploader: 'rM9K69Uv7olZeKA0bOZ9dwo-GvyYprkjqafhtjeSx2M',
-      nOperators: 8,
-      avgFee: 0.4,
-      avgRunCost: 0.1,
-      totalRuns: 198,
-      rating: 18
-    }
-  ]
+  const [ elements, setElements ] = useState<any[]>([]);
+  const { data, loading, error } = useQuery(LIST_MODELS_QUERY);
   
+  
+  useEffect(() => {
+    if (data) {
+      setElements(data.map((el: any) => {
+        return {
+          name: '',
+          txid: el.node.id,
+          uploader: el.node.address,
+          avgFee: 0,
+          avgRunCost: 0,
+          totalRuns: 0,
+          rating: 0
+        }
+      }))
+    }
+  }, [ data ]);
+  
+  if (loading) {
+    return <h2>Loading...</h2>;
+  }
+
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
   const handleCardClick = (idx: number) => {
-    navigate(`/model/${encodeURIComponent(mockData[idx].txid)}/register`);
+    navigate(`/model/${encodeURIComponent(elements[idx].txid)}/register`, { state: data[idx] });
   }
   return (
     <>
     <Container sx={{ top: '64px', position: 'relative' }}>
       <Box>
         <Stack spacing={4} sx={{ margin: '16px' }}>
-          {mockData.map((el, idx) => (
+          {elements.map((el: any, idx: number) => (
             <Card key={idx}>
               <Box>
                 <CardActionArea onClick={(e) => handleCardClick(idx)}>

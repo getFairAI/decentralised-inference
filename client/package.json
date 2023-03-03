@@ -21,6 +21,8 @@
     "bundlr-custom": "file:../js-sdk/bundlr-network-client-0.10.3.tgz",
     "filereader-stream": "^2.0.0",
     "graphql": "^16.6.0",
+    "lodash": "^4.17.21",
+    "notistack": "^2.0.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.43.1",
@@ -28,6 +30,7 @@
     "rehype-sanitize": "^5.0.1"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.191",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
     "@vitejs/plugin-react": "^3.1.0",

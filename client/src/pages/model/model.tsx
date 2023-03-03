@@ -1,9 +1,10 @@
-import { getData } from "@/context/arweave";
+import { getData, getTxTags } from "@/context/arweave";
 import { Container } from "@mui/material";
 import { Outlet, Params } from "react-router-dom";
 
 export const txLoader = async ({ params }: { params: Params<string>}) => {
-  const res = await getData(params.txid!);
+  const txid = decodeURIComponent(params.txid!)
+  const res = await getData(txid);
   return res;
 };
 

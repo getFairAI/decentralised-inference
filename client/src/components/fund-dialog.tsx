@@ -1,13 +1,15 @@
 import { Box, Button, Dialog, DialogContent, DialogTitle, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from "@mui/material";
-import { WebBundlr } from "bundlr-custom";
+ import { WebBundlr } from "bundlr-custom";
+// import { WebBundlr } from "@bundlr-network/client";
 import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from "react";
 import LoadingButton from '@mui/lab/LoadingButton';
 import useArweave from "@/context/arweave";
 import BigNumber from "bignumber.js";
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { DEV_ARWEAVE_URL, DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from "@/constants";
 
 const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpen: Dispatch<SetStateAction<boolean>>,handleFundFinished: Function }) => {
-  const [ node, setNode ] = useState('https://node1.bundlr.network');
+  const [ node, setNode ] = useState(DEV_BUNDLR_URL);
   const [ amount, setAmount ] = useState(0);
   const [ balance, setBalance ] = useState(0);
   const [ loading, setLoading ] = useState(false);
@@ -22,19 +24,20 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
     setAmount(+event.target.value);
   }
 
-  const updatebalanceEffect = () => {
-    const updateBalance = async () => {
-      console.log('riunn')
-      const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
-      await bundlr.ready();
-      console.log(bundlr, 'running')
-       // Get loaded balance in atomic units
-      let atomicBalance = await bundlr.getLoadedBalance();
+  const updateBalance = async () => {
+    console.log('riunn')
+    const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
+    await bundlr.ready();
+    console.log(bundlr, 'running')
+     // Get loaded balance in atomic units
+    let atomicBalance = await bundlr.getLoadedBalance();
 
-      // Convert balance to an easier to read format
-      let convertedBalance = bundlr.utils.unitConverter(atomicBalance!);
-      setBalance(convertedBalance.toNumber());
-    }
+    // Convert balance to an easier to read format
+    let convertedBalance = bundlr.utils.unitConverter(atomicBalance!);
+    setBalance(convertedBalance.toNumber());
+  }
+
+  const updatebalanceEffect = () => {
     if (open) {
       updateBalance();
     }
@@ -62,12 +65,11 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
   const handleFund = async () => {
     const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
     await bundlr.ready();
-    const fundAmountParsed = new BigNumber(amount).multipliedBy(
-      bundlr.currencyConfig.base[1],
-    );
     setLoading(true);
+    const bn = new BigNumber(amount);
+    const fundAmountParsed = bn.multipliedBy(bundlr.currencyConfig.base[1]);
     try {
-      const res = await bundlr.fund(fundAmountParsed);
+      const res = await bundlr.fund(fundAmountParsed.toString());
       let atomicBalance = await bundlr.getLoadedBalance();
 
       // Convert balance to an easier to read format
@@ -75,6 +77,7 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
       setBalance(convertedBalance.toNumber());
       setLoading(false);
     } catch (error) {
+      setLoading(false);
       console.log(error);
     }
     
@@ -93,12 +96,13 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
               label="Age"
               onChange={handleChange}
             >
-              <MenuItem value={'https://node1.bundlr.network'}>node1.bundlr.network</MenuItem>
-              <MenuItem value={'https://node2.bundlr.network'}>node2.bundlr.network</MenuItem>
+              <MenuItem value={DEV_BUNDLR_URL}>dev.bundlr.network</MenuItem>
+              <MenuItem value={NODE1_BUNDLR_URL}>node1.bundlr.network</MenuItem>
+              <MenuItem value={NODE2_BUNDLR_URL}>node2.bundlr.network</MenuItem>
             </Select>
           </FormControl>
           <TextField label='Current Node Balance' value={balance}  disabled  margin='dense' InputProps={{
-            endAdornment: <InputAdornment position="start"><IconButton><RefreshIcon /></IconButton></InputAdornment>
+            endAdornment: <InputAdornment position="start"><IconButton onClick={updateBalance}><RefreshIcon /></IconButton></InputAdornment>
           }}/>
           <TextField type='number' label='Amount to Fund' value={amount} onChange={handleAmountChange} helperText={`Max: ${walletBalance}`} InputProps={{ inputProps: { min: 0, max: walletBalance } }} margin='dense'/>
         </Box>
