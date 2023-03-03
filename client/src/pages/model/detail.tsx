@@ -61,7 +61,7 @@ const Detail = () => {
         address: el.node.owner.address,
         stamps: Math.round(Math.random() * 100),
         fee: el.node.tags.find(el => el.name === 'Model-Fee')?.value || 0,
-        registrationTimestamp: new Date(el.node.block.timestamp * 1000).toLocaleDateString(),
+        registrationTimestamp: el.node.block ? new Date(el.node.block.timestamp * 1000).toLocaleDateString() : 'Pending',
         availability: (
           results.filter(res => el.node.owner.address === res.node.owner.address).length /
           requests.filter(req => el.node.owner.address === req.node.recipient).length
@@ -72,7 +72,7 @@ const Detail = () => {
   }, [ followupResult ])
 
   return (
-    <Container>
+    <Container sx={{top: '64px', position: 'relative'}}>
       <Box sx={{ margin: '8px' }}>
         <Card>
           <CardContent>

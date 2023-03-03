@@ -27,12 +27,12 @@ export const MODEL_CREATION_TAG = {
 
 export const MODEL_INFERENCE_REQUEST_TAG = {
   name: 'Operation-Name',
-  values: 'Model Inference Request'
+  values: ['Model Inference Request']
 }
 
 export const MODEL_INFERENCE_RESULT_TAG = {
   name: 'Operation-Name',
-  values: 'Model Inference Result'
+  values: ['Model Inference Result']
 }
 
 export const DEFAULT_TAGS = [

@@ -61,7 +61,7 @@ const Register = () => {
   }
 
   return (<Container>
-      <Box sx={{ margin: '8px' }}>
+      <Box sx={{ margin: '8px', top: '64px', position: 'relative' }}>
         <Card>
           <CardContent>
             <Box display={'flex'} justifyContent={'space-evenly'}>

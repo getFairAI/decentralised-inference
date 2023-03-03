@@ -16,6 +16,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import MDEditor from '@uiw/react-md-editor';
 import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
+import useArweave from '@/context/arweave';
 
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -145,6 +146,9 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
   const [ activeStep, setActiveStep ] = useState(0);
   const [ skipped, setSkipped ] = useState(new Set<number>());
   const [ completed, setCompleted ] = useState(new Set<number>());
+  const [ currentBalance, setCurrentBalance ] = useState(0.00);
+
+  const { getWalletBalance } = useArweave();
 
   const [ rate, setRate ] = useState(0);
 
@@ -221,9 +225,18 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
   }
 
   const handleRateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRate(+event.target.value);
+    const newNumber = parseFloat(event.target.value);
+
+    if (newNumber && newNumber < currentBalance) setRate(parseFloat(newNumber.toFixed(3)));
   }
 
+  React.useEffect(() => {
+    const f = async () => {
+      const res = await getWalletBalance();
+      setCurrentBalance(+res);
+    }
+    f();
+  }, [])
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
       <Stepper alternativeLabel activeStep={activeStep} connector={<QontoConnector />}>
@@ -266,8 +279,16 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
           <React.Fragment>
             <TextField disabled value={'Model id'} label={'Model'}></TextField>
             <Box justifyContent={'space-between'} display={'flex'}>
-              <TextField label={'Rates Endpoint'} sx={{ width: '70%'}}></TextField>
-              <TextField label={'Rate'} sx={{ width: '25%'}} value={rate} onChange={handleRateChange}></TextField>
+              {/* <TextField label={'Rates Endpoint'} sx={{ width: '70%'}}></TextField> */}
+              <TextField
+                label={'Rate'}
+                sx={{ width: '25%'}}
+                value={rate}
+                onChange={handleRateChange}
+                type='number'
+                inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, max: currentBalance }}
+                helperText={`Max: ${currentBalance}`}
+              ></TextField>
             </Box>
             <Alert severity='warning'>Registration Requires a small fee to prevent malicious actors</Alert>
             <Box display={'flex'} justifyContent={'space-between'}>

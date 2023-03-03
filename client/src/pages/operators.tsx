@@ -23,7 +23,7 @@ const Operators = () => {
   }
   return (
     <>
-    <Container>
+    <Container sx={{ top: '64px', position: 'relative' }}>
       <Box>
         <Stack spacing={4} sx={{ margin: '16px' }}>
           {mockData.map((el, idx) => (
