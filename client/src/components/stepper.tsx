@@ -227,7 +227,7 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
   const handleRateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newNumber = parseFloat(event.target.value);
 
-    if (newNumber && newNumber < currentBalance) setRate(parseFloat(newNumber.toFixed(3)));
+    if (newNumber) setRate(parseFloat(newNumber.toFixed(3)));
   }
 
   React.useEffect(() => {
@@ -286,8 +286,8 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
                 value={rate}
                 onChange={handleRateChange}
                 type='number'
-                inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, max: currentBalance }}
-                helperText={`Max: ${currentBalance}`}
+                inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, /* max: currentBalance */ }}
+                /* helperText={`Max: ${currentBalance}`} */
               ></TextField>
             </Box>
             <Alert severity='warning'>Registration Requires a small fee to prevent malicious actors</Alert>

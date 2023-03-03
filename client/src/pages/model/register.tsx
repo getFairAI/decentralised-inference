@@ -1,14 +1,16 @@
 import { CustomStepper } from "@/components/stepper";
 import { DEFAULT_TAGS, REGISTER_OPERATION_TAG, STATIC_ADDRESS } from "@/constants";
 import useArweave from "@/context/arweave";
+import { IEdge, ITag } from "@/interfaces/arweave";
 import { QUERY_REGISTERED_OPERATORS } from "@/queries/graphql";
 import { useQuery } from "@apollo/client";
 import { Container, Box, Card, CardContent, Avatar, SvgIcon, TextField, FormControl, InputLabel, Select, MenuItem, Divider, Typography, Snackbar, Alert } from "@mui/material";
 import { useState } from "react";
-import { useParams, useRouteLoaderData, useSearchParams } from "react-router-dom";
+import { useLocation, useParams, useRouteLoaderData, useSearchParams } from "react-router-dom";
 
 const Register = () => {
   const { data }: any = useRouteLoaderData('model');
+  const { state }: { state: any } = useLocation();
   const { txid } = useParams();
   
   const { arweave } = useArweave();
@@ -25,7 +27,7 @@ const Register = () => {
     },
   ];
   const { data: queryData, loading, error: queryError } = useQuery(QUERY_REGISTERED_OPERATORS, { variables: { tags }});
-
+  console.log(data);
 
   const handleRegister = async (rate: string) => {
     try {
@@ -35,10 +37,12 @@ const Register = () => {
       });
       const tags = [];
       tags.push({ name: 'App-Name', values: 'Fair Protocol'});
-      tags.push({ name: 'App-Version', values: 'v0.01'});
-      tags.push({ name: 'Model-Transaction', values: txid as string});
+      tags.push({ name: 'App-Version', values: 'test'});
+      tags.push({ name: 'Model-Name', values: state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value || ''});
+      tags.push({ name: 'Model-Creator', values: state.node.address });
       tags.push({ name: 'Model-Fee', values:  arweave.ar.arToWinston(rate) });
       tags.push({ name: 'Operation-Name', values: 'Operator Registration'});
+
 
       tags.map((tag) => tx.addTag(tag.name, tag.values));
      

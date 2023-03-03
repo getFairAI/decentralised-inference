@@ -4,6 +4,7 @@ import { ChangeEvent, CSSProperties, DragEvent, useEffect, useState } from "reac
 import { useController, UseControllerProps } from "react-hook-form";
 import ClearIcon from '@mui/icons-material/Clear';
 import { WebBundlr } from "bundlr-custom";
+import { DEV_BUNDLR_URL } from "@/constants";
 
 type FileControlProps = UseControllerProps & { mat?: InputProps, style?: CSSProperties};
 
@@ -111,7 +112,7 @@ const FileControl = (props: FileControlProps) => {
     // Check the price to upload 1MB of data
     // The function accepts a number of bytes, so to check the price of
     // 1MB, check the price of 1,048,576 bytes.
-    const bundlr = new WebBundlr('https://node1.bundlr.network', "arweave", window.arweaveWallet);
+    const bundlr = new WebBundlr(DEV_BUNDLR_URL, "arweave", window.arweaveWallet);
     await bundlr.ready();
     console.log(bundlr);
     const atomicPrice = await bundlr.getPrice(fileSize);
@@ -121,6 +122,7 @@ const FileControl = (props: FileControlProps) => {
     // Once we have the value in atomic units, we can convert it into something easier to read.
     const priceConverted = bundlr.utils.unitConverter(atomicPrice);
     setFilePrice(priceConverted.toNumber());
+    // setFilePriceAR(parseFloat(arweave.ar.winstonToAr(atomicPrice.toString())));
   }
 
 
@@ -155,7 +157,7 @@ const FileControl = (props: FileControlProps) => {
           />
           { loading && <LinearProgress variant="determinate" value={progress}/>}
         </FormControl>
-        <Typography variant="caption">Estimated price ${filePrice}</Typography>
+        <Typography variant="caption">Estimated price ${filePrice} {/* / {filePriceAR} AR */}</Typography>
       </Box>
     </>);
   }

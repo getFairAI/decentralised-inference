@@ -1,16 +1,19 @@
 import { Box, Card, CardActionArea, CardContent, Container, Divider, Grid, IconButton, InputAdornment, List, ListItem, ListItemButton, ListItemText, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
-import { Params, useParams } from "react-router-dom";
+import { Params, useLocation, useParams } from "react-router-dom";
 import useArweave, { getActiveAddress, getData } from "@/context/arweave";
 import { useLazyQuery, useQuery } from "@apollo/client";
 import { ChangeEvent, useEffect, useState } from "react";
-import { DEFAULT_TAGS, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG } from "@/constants";
-import { QUERY_CHAT_HISTORY } from "@/queries/graphql";
+import { APP_VERSION, DEFAULT_TAGS, DEV_BUNDLR_URL, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG } from "@/constants";
+import { QUERY_CHAT_HISTORY, QUERY_INFERENCE_RESULTS } from "@/queries/graphql";
 import { IEdge } from "@/interfaces/arweave";
 import Transaction from "arweave/node/lib/transaction";
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import _ from "lodash";
+import { useSnackbar } from "notistack";
+import { WebBundlr } from "bundlr-custom";
 
 interface Message {
   msg: string,
@@ -21,6 +24,7 @@ interface Message {
 
 const Chat = () => {
   const { txid, address } = useParams();
+  const { state } = useLocation();
   const [ userAddr, setUserAddr ] = useState<string | undefined>(undefined);
   const [ messages, setMessages ] = useState<Message[]>([]);
   const [ newMessage, setNewMessage ] = useState<string>('');
@@ -28,9 +32,10 @@ const Chat = () => {
   const [ conversationIds, setConversationIds ] = useState<string[]>([]);
   const [ currentConversationId, setCurrentConversationId ] = useState<string>('C-1');
 
+  const { enqueueSnackbar } = useSnackbar();
   const { arweave } = useArweave();
   
-  const [ getConversationHistory, { data, loading, error } ] = useLazyQuery(QUERY_CHAT_HISTORY);
+  const [ getConversationHistory, { data, loading, error, previousData, stopPolling, startPolling, refetch } ] = useLazyQuery(QUERY_CHAT_HISTORY);
 
   useEffect(() => {
     const reqAddr = async () => setUserAddr(await getActiveAddress());
@@ -43,20 +48,18 @@ const Chat = () => {
     if (txid && userAddr) {
       const commonTags = [
         ...DEFAULT_TAGS,
-        {
-          name: "Model-Transaction",
-          values: [ txid ]
-        },
+        { name: 'Model-Name', values: [ state.modelName ]},
+        { name: 'Model-Creator', values: [ state.modelCreator ]}
       ];
       const tagsRequests = [
         ...commonTags,
         MODEL_INFERENCE_REQUEST_TAG,
-        { name: 'Conversation-Identifier', values: [ 'C-1' ]}
+        { name: 'Conversation-Identifier', values: [ currentConversationId ]}
       ];
       const tagsResults = [
         ...commonTags,
         MODEL_INFERENCE_RESULT_TAG,
-        { name: 'Conversation-Identifier', values: [ 'C-1' ]}
+        { name: 'Conversation-Identifier', values: [ currentConversationId ]}
       ];
       getConversationHistory({
         variables: {
@@ -64,6 +67,7 @@ const Chat = () => {
           tagsResults,
           address: userAddr
         },
+        pollInterval: 5000
       })
     }
   }, [ txid, userAddr ])
@@ -87,7 +91,7 @@ const Chat = () => {
   }
 
   useEffect(() => {
-    if (data) {
+    if ((data && !previousData) || (data && previousData && !_.isEqual(data, previousData))) {
       reqData(data)
     }
   }, [ data ]);
@@ -95,10 +99,8 @@ const Chat = () => {
   useEffect(() => {
     const commonTags = [
       ...DEFAULT_TAGS,
-      {
-        name: "Model-Transaction",
-        values: [ txid ]
-      },
+      { name: 'Model-Name', values: [ state.modelName ]},
+      { name: 'Model-Creator', values: [ state.modelCreator ]}
     ];
     const tagsRequests = [
       ...commonTags,
@@ -108,10 +110,11 @@ const Chat = () => {
     const tagsResults = [
       ...commonTags,
       MODEL_INFERENCE_RESULT_TAG,
-      { name: 'Conversation-Identifier', values: [ 'C-1' ]}
+      { name: 'Conversation-Identifier', values: [ currentConversationId ]}
     ];
     getConversationHistory({
-      variables: { tagsRequests, tagsResults, address }
+      variables: { tagsRequests, tagsResults, address },
+      pollInterval: 5000
     });
   }, [ currentConversationId ])
 
@@ -120,25 +123,58 @@ const Chat = () => {
   }
 
   const handleSend = async () => {
+    const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
+    await bundlr.ready();
+    let atomicBalance = await bundlr.getLoadedBalance();
+
+    // Convert balance to an easier to read format
+    let convertedBalance = bundlr.utils.unitConverter(atomicBalance).toNumber();
+    const dataSize = new TextEncoder().encode(newMessage).length;
+    const dataPrice = (await bundlr.getPrice(dataSize)).toNumber();
+    if (dataPrice < convertedBalance) {
+      // bundlr does not have enough funds
+      enqueueSnackbar('Bundlr Node does not have enough funds for upload', { variant: 'error'});
+      return;
+    }
     const tx = await arweave.createTransaction({
       target: address,
-      quantity: arweave.ar.arToWinston('0.01'),
-      data: newMessage
+      quantity: state.fee,
     });
-  
+
     tx.addTag("App-Name", "Fair Protocol");
-    tx.addTag("App-Version", "v0.01");
-    tx.addTag('Model-Transaction', txid!);
-    tx.addTag('Operation-Name', 'Model Inference Request');
+    tx.addTag("App-Version", APP_VERSION);
+    tx.addTag('Operation-Name', 'Inference Payment');
+    tx.addTag('Model-Name', state.modelName);
+    tx.addTag('Model-Creator', state.modelCreator);
     tx.addTag('Conversation-Identifier', currentConversationId)
   
     await arweave.transactions.sign(tx);
     const res = await arweave.transactions.post(tx);
-    const temp = [ ...messages]
-    temp.push({ msg: newMessage, type: 'request', timestamp: new Date().getTime(), txid: tx.id});
-    setMessages(temp);
-    setPendingTxs([ ...pendingTxs, tx]);
-    setNewMessage('');
+    if (res.status === 200) {
+      enqueueSnackbar(`Paid Operator Fee ${arweave.ar.winstonToAr(state.fee)} AR, TxId: https://arweave.net/${tx.id}`, { variant: 'success' });
+    } else {
+      enqueueSnackbar(res.statusText, { variant: 'error' });
+    }
+
+    const tags = [];
+    tags.push({ name: 'App-Name', value: 'Fair Protocol'});
+    tags.push({ name: 'App-Version', value: APP_VERSION });
+    tags.push({ name: 'Model-Name', value: state.modelName });
+    tags.push({ name: 'Model-Creator', value: state.modelCreator });
+    tags.push({ name: 'Operation-Name', value: 'Model Inference Request' });
+    tags.push({ name: 'Conversation-Identifier', value: currentConversationId });
+    try {
+      const bundlrRes = await bundlr.upload(newMessage, { tags });
+  
+      const temp = [ ...messages]
+      temp.push({ msg: newMessage, type: 'request', timestamp: bundlrRes.timestamp!, txid: bundlrRes.id});
+      setMessages(temp);
+      setNewMessage('');
+      enqueueSnackbar(`Inference Request, TxId: https://arweave.net/${bundlrRes.id}`, { variant: 'success'});
+    } catch (error) {
+      enqueueSnackbar(JSON.stringify(error), { variant: 'error'})
+    }
+    
   }
 
   const handleListItemClick = (cid: string) => {

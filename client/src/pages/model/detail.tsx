@@ -2,15 +2,16 @@ import { Avatar, Button, Card, CardContent, Container, Divider, FormControl, Inp
 import { Box } from "@mui/system";
 import BasicTable, { RowData } from "@/components/basic-table";;
 import Stamp from '@/components/stamp';
-import { useParams, useRouteLoaderData } from "react-router-dom";
+import { useLocation, useParams, useRouteLoaderData } from "react-router-dom";
 import { ApolloError, useLazyQuery, useQuery } from "@apollo/client";
 import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from "@/queries/graphql";
 import { DEFAULT_TAGS, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG, REGISTER_OPERATION_TAG } from "@/constants";
-import { IEdge, INode, ITransactions } from "@/interfaces/arweave";
+import { IEdge, INode, ITag, ITransactions } from "@/interfaces/arweave";
 import { useEffect, useState } from "react";
 
 const Detail = () => { 
-  const { data }: any = useRouteLoaderData('model');
+  const res = useRouteLoaderData('model');
+  const { state }: {  state: any } = useLocation();
   const { txid } = useParams();
   const [ operatorsData, setOperatorsData ] = useState<RowData[]>([]);
   
@@ -18,15 +19,23 @@ const Detail = () => {
     ...DEFAULT_TAGS,
     REGISTER_OPERATION_TAG,
     {
-      name: "Model-Transaction",
-      values: [ txid ]
+      name: 'Model-Creator',
+      values: [ state.node.address ]
     },
+    {
+      name: 'Model-Name',
+      values: [ state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value ]
+    }
   ];
   const { data: queryData, loading, error } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags },
   })
 
   const [ getFollowupQuery, followupResult ] = useLazyQuery(QUERY_OPERATOR_RESULTS_RESPONSES);
+
+  useEffect(() => {
+    console.log(state)
+  }, [ state ]);
 
   useEffect(() => {
     if (queryData) {
@@ -61,11 +70,13 @@ const Detail = () => {
         address: el.node.owner.address,
         stamps: Math.round(Math.random() * 100),
         fee: el.node.tags.find(el => el.name === 'Model-Fee')?.value || 0,
-        registrationTimestamp: el.node.block ? new Date(el.node.block.timestamp * 1000).toLocaleDateString() : 'Pending',
+        registrationTimestamp: el.node.block ? new Date(el.node.block.timestamp * 1000).toLocaleString() : 'Pending',
         availability: (
           results.filter(res => el.node.owner.address === res.node.owner.address).length /
           requests.filter(req => el.node.owner.address === req.node.recipient).length
         ) * 100 || 0,
+        modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value,
+        modelCreator: state.node.address,
       }));
       setOperatorsData(parsed);
     }
@@ -88,11 +99,11 @@ const Detail = () => {
                   </Button>
               </Box>
               <Box>
-                <TextField label="Name" variant="outlined" value={''} fullWidth inputProps={{ readOnly: true }}/>
+                <TextField label="Name" variant="outlined" value={state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value} fullWidth inputProps={{ readOnly: true }}/>
                 <FormControl fullWidth margin="normal">
                   <InputLabel>Category</InputLabel>
                   <Select
-                    value={'text'}
+                    value={state?.node?.tags?.find((el: ITag) => el.name === 'Category')?.value}
                     label="Category"
                     inputProps={{ readOnly: true }}
                   >
@@ -105,7 +116,7 @@ const Detail = () => {
                   label="Description"
                   variant="outlined"
                   multiline
-                  value={''}
+                  value={state?.node?.tags?.find((el: ITag) => el.name === 'Description')?.value}
                   inputProps={{ readOnly: true }}
                   style={{ width: '100%' }}
                   margin='normal'

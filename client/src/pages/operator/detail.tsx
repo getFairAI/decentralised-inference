@@ -29,7 +29,7 @@ const OperatorDetails = () => {
           appFee: node.quantity.ar,
           destination: node.recipient,
           origin: node.owner.address,
-          modelTx: node.tags.find(el => el.name === 'Model-Transaction')?.value,
+          modelTx: node.tags.find(el => el.name === 'Model-Transaction')?.value || '',
           operation: node.tags.find(el => el.name === 'Operation-Name')?.value,
         }
       });
@@ -44,7 +44,7 @@ const OperatorDetails = () => {
           appFee: node.quantity.ar,
           destination: node.recipient,
           origin: node.owner.address,
-          modelTx: node.tags.find(el => el.name === 'Model-Transaction')?.value,
+          modelTx: node.tags.find(el => el.name === 'Model-Transaction')?.value || '',
           operation: node.tags.find(el => el.name === 'Operation-Name')?.value,
         }
       });
