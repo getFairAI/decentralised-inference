@@ -30,10 +30,10 @@ const Navbar = () => {
           </IconButton> */}
           <Link to="/">
             <Typography variant="h4" component="div" sx={{
-                mr: 2,
-                display: { md: 'flex' },
-                color: 'inherit',
-              }}>
+              mr: 2,
+              display: { md: 'flex' },
+              color: 'inherit',
+            }}>
               Fair protocol
             </Typography>
           </Link>
@@ -61,6 +61,6 @@ const Navbar = () => {
       </AppBar>
     </Box>
   );
-}
+};
 
 export default Navbar;

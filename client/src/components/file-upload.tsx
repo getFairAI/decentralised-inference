@@ -37,13 +37,13 @@ const FileUpload = (props: any & { name: string, description: string }) => {
   
     const uploader = await arweave.transactions.getUploader(tx);
 
-    const worker  = new Worker(new URL("../workers/upload.ts", import.meta.url));
+    const worker  = new Worker(new URL('../workers/upload.ts', import.meta.url));
     worker.postMessage([JSON.stringify(uploader), buffer]);
     
     worker.onmessage = (e: MessageEvent<any>) => {
       if (e.data.isComplete) {
         worker.terminate();
-        setProgress(100)
+        setProgress(100);
         setOpen(false);
         setProgress(0);
       } else {
@@ -51,40 +51,40 @@ const FileUpload = (props: any & { name: string, description: string }) => {
         // update progress
       }
     };
-  }
+  };
 
   const handleFileInput = async (e: ChangeEvent) => {
     await handleFile(fileInput.current?.files!);
-  }
+  };
 
   const handleClose = () => {
     setOpen(false);
-  }
+  };
 
   const mint = async () => {
     const addr = await arweave.wallets.getAddress();
     const tokens = arweave.ar.arToWinston('100');
     // mint some tokens
-    await arweave.api.get(`mint/${addr}/${tokens}`)
+    await arweave.api.get(`mint/${addr}/${tokens}`);
     await arweave.api.get('mine');
-  }
+  };
 
   const handleDragEnter = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
-  }
+  };
 
   const handleDragOver = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
-  }
+  };
 
   const handleDrop = async (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
 
     await handleFile(event.dataTransfer.files);
-  }
+  };
 
   return (
     <>
@@ -116,6 +116,6 @@ const FileUpload = (props: any & { name: string, description: string }) => {
       </Snackbar>
     </>
   );
-}
+};
 
 export default FileUpload;

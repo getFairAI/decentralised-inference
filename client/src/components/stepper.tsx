@@ -175,7 +175,7 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
   const handleFinish = () => {
     props.handleSubmit(rate);
     handleNext();
-  }
+  };
 
   const handleBack = () => {
     completed.delete(activeStep);
@@ -187,7 +187,7 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
     if (!isStepOptional(activeStep)) {
       // You probably want to guard against something like this,
       // it should never occur unless someone's actively trying to break something.
-      throw new Error("You can't skip a step that isn't optional.");
+      throw new Error('You can\'t skip a step that isn\'t optional.');
     }
 
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -206,7 +206,7 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
 
   const handleDownload = () => {
 
-  }
+  };
 
   const printSize = (file: File) => {
     const size = file.size;
@@ -222,21 +222,21 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
       const gb = size / Math.pow(1024, 3);
       return `${Math.round((gb + Number.EPSILON) * 100) / 100} GB`;
     }
-  }
+  };
 
   const handleRateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newNumber = parseFloat(event.target.value);
 
     if (newNumber) setRate(parseFloat(newNumber.toFixed(3)));
-  }
+  };
 
   React.useEffect(() => {
     const f = async () => {
       const res = await getWalletBalance();
       setCurrentBalance(+res);
-    }
+    };
     f();
-  }, [])
+  }, []);
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
       <Stepper alternativeLabel activeStep={activeStep} connector={<QontoConnector />}>
@@ -387,4 +387,4 @@ export const CustomStepper = (props: { data: any, handleSubmit: Function, isRegi
       }
     </Stack>
   );
-}
+};

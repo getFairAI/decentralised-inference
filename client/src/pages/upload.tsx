@@ -1,20 +1,20 @@
 
-import { Alert, Box, Button, Card, CardActions, CardContent, CardHeader, Container, Dialog, Divider, MenuItem, Snackbar, Typography } from "@mui/material";
-import { useRef, useState } from "react";
-import { FieldValues, useForm } from "react-hook-form";
-import TextControl from "@/components/text-control";
-import SelectControl from "@/components/select-control";
-import MarkdownControl from "@/components/md-control";
-import FileControl from "@/components/file-control";
-import { useLazyQuery } from "@apollo/client";
-import ImagePicker from "@/components/image-picker";
-import AvatarControl from "@/components/avatar-control";
-import { WebBundlr } from "bundlr-custom";
-import FundDialog from "@/components/fund-dialog";
-import CustomProgress from "@/components/progress";
-import { GET_IMAGES_TXIDS } from "@/queries/graphql";
-import fileReaderStream from "filereader-stream";
-import { DEV_BUNDLR_URL } from "@/constants";
+import { Alert, Box, Button, Card, CardActions, CardContent, CardHeader, Container, Dialog, Divider, MenuItem, Snackbar, Typography } from '@mui/material';
+import { useRef, useState } from 'react';
+import { FieldValues, useForm } from 'react-hook-form';
+import TextControl from '@/components/text-control';
+import SelectControl from '@/components/select-control';
+import MarkdownControl from '@/components/md-control';
+import FileControl from '@/components/file-control';
+import { useLazyQuery } from '@apollo/client';
+import ImagePicker from '@/components/image-picker';
+import AvatarControl from '@/components/avatar-control';
+import { WebBundlr } from 'bundlr-custom';
+import FundDialog from '@/components/fund-dialog';
+import CustomProgress from '@/components/progress';
+import { GET_IMAGES_TXIDS } from '@/queries/graphql';
+import fileReaderStream from 'filereader-stream';
+import { DEV_BUNDLR_URL } from '@/constants';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -70,20 +70,20 @@ const Upload = () => {
   };
 
   const getNodeBalance = async () => {
-    const bundlr = new WebBundlr(DEV_BUNDLR_URL, "arweave", window.arweaveWallet);
+    const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
-    let atomicBalance = await bundlr.getLoadedBalance();
+    const atomicBalance = await bundlr.getLoadedBalance();
 
     // Convert balance to an easier to read format
-    let convertedBalance = bundlr.utils.unitConverter(atomicBalance);
+    const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
     return convertedBalance.toNumber();
-  }
+  };
 
   const getFilePrice = async (fileSize: number) => {
     // Check the price to upload 1MB of data
     // The function accepts a number of bytes, so to check the price of
     // 1MB, check the price of 1,048,576 bytes.
-    const bundlr = new WebBundlr(DEV_BUNDLR_URL, "arweave", window.arweaveWallet);
+    const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
     
     const atomicPrice = await bundlr.getPrice(fileSize);
@@ -93,7 +93,7 @@ const Upload = () => {
     // Once we have the value in atomic units, we can convert it into something easier to read.
     const priceConverted = bundlr.utils.unitConverter(atomicPrice);
     return priceConverted.toNumber();
-  }
+  };
 
   const handleFundFinished = async (node: string) => {
     setOpen(false);
@@ -104,7 +104,7 @@ const Upload = () => {
     if (await getFilePrice(file.size) > await getNodeBalance()) return;
     
     await window.arweaveWallet.connect(['ACCESS_ALL_ADDRESSES', 'ACCESS_PUBLIC_KEY', 'SIGNATURE', 'ACCESS_ADDRESS' ]);
-    const bundlr = new WebBundlr(node, "arweave", { ...window.arweaveWallet });
+    const bundlr = new WebBundlr(node, 'arweave', { ...window.arweaveWallet });
     await bundlr.ready();
     console.log(bundlr.currencyConfig);
     console.log(bundlr.currency);
@@ -120,35 +120,35 @@ const Upload = () => {
     }
     /** Register Event Callbacks */
     // event callback: called for every chunk uploaded
-    uploader.on("chunkUpload", (chunkInfo) => {
-        console.log(chunkInfo);
-        console.log(
-            `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
-        );
-        const chunkNumber = chunkInfo.id + 1;
-        // update the progress bar based on how much has been uploaded
-        if (chunkNumber >= totalChunks.current) setProgress(100);
-        else setProgress((chunkNumber / totalChunks.current) * 100);
+    uploader.on('chunkUpload', (chunkInfo) => {
+      console.log(chunkInfo);
+      console.log(
+        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
+      );
+      const chunkNumber = chunkInfo.id + 1;
+      // update the progress bar based on how much has been uploaded
+      if (chunkNumber >= totalChunks.current) setProgress(100);
+      else setProgress((chunkNumber / totalChunks.current) * 100);
     });
     // event callback: called if an error happens
-    uploader.on("chunkError", (e) => {
-        setSnackbarOpen(false);
-        console.error(
-            `Error uploading chunk number ${e.id} - ${e.res.statusText}`,
-        );
+    uploader.on('chunkError', (e) => {
+      setSnackbarOpen(false);
+      console.error(
+        `Error uploading chunk number ${e.id} - ${e.res.statusText}`,
+      );
     });
     // event callback: called when file is fully uploaded
-    uploader.on("done", (finishRes) => {
-        console.log(`Upload completed with ID ${finishRes.id}`);
-        // set the progress bar to 100
-        setProgress(100);
-        setSnackbarOpen(false);
+    uploader.on('done', (finishRes) => {
+      console.log(`Upload completed with ID ${finishRes.id}`);
+      // set the progress bar to 100
+      setProgress(100);
+      setSnackbarOpen(false);
     });
     // upload the file
     const readableStream = fileReaderStream(file);
     const tags = [];
     tags.push({ name: 'App-Name', value: 'Fair Protocol'});
-    tags.push({ name: "Content-Type", value: file.type });
+    tags.push({ name: 'Content-Type', value: file.type });
     tags.push({ name: 'Model-Name', value: `${formData.name}` });
     tags.push({ name: 'Operation-Name', value: 'Model Creation' });
     tags.push({ name: 'Notes', value: formData.notes });
@@ -160,14 +160,14 @@ const Upload = () => {
     await uploader
       .uploadData(readableStream, { tags })
       .then((res) => {
-          console.log(`Upload Success: https://arweave.net/${res.data.id}`);
-          // setUploadedURL("https://arweave.net/" + res.data.id);
+        console.log(`Upload Success: https://arweave.net/${res.data.id}`);
+        // setUploadedURL("https://arweave.net/" + res.data.id);
       })
       .catch((e) => {
-          setSnackbarOpen(false);
-          setProgress(0);
-          setMessage("Upload error "+ e.message);
-          console.log("error on upload, ", e);
+        setSnackbarOpen(false);
+        setProgress(0);
+        setMessage('Upload error '+ e.message);
+        console.log('error on upload, ', e);
       });
   };
 
@@ -183,7 +183,7 @@ const Upload = () => {
               <Typography variant="h6" gutterBottom>General Information</Typography>
             </Divider>
 
-            <table style={ { width: "100%"}}>
+            <table style={ { width: '100%'}}>
               <tbody>
                 <tr>
                   <td colSpan={2} rowSpan={1} style={{ display: 'flex', justifyContent: 'center' }}>
@@ -224,11 +224,11 @@ const Upload = () => {
             {/* <FileUpload ></FileUpload> */}
             <FileControl name="file" control={control} rules={{required: true }}/>
           </CardContent>
-        <CardActions>
-          <Button onClick={handleSubmit(onSubmit)} disabled={control._formState.isValid}>Submit</Button>
-          <FundDialog open={fundOpen} setOpen={setFundOpen} handleFundFinished={handleFundFinished}/>
-          <Button onClick={() => reset()} variant={"outlined"}>Reset</Button>
-        </CardActions>
+          <CardActions>
+            <Button onClick={handleSubmit(onSubmit)} disabled={control._formState.isValid}>Submit</Button>
+            <FundDialog open={fundOpen} setOpen={setFundOpen} handleFundFinished={handleFundFinished}/>
+            <Button onClick={() => reset()} variant={'outlined'}>Reset</Button>
+          </CardActions>
         </Card>
       </Box>
       <Snackbar
@@ -244,7 +244,7 @@ const Upload = () => {
         
       </Snackbar>
     </Container>
-  )
+  );
 };
 
 export default Upload;

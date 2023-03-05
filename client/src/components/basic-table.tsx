@@ -82,7 +82,7 @@ export default function BasicTable(props: { data: RowData[], loading: boolean, e
                       {row.address.slice(0, 10)}...{row.address.slice(-2)}
                       <IconButton
                         size='small'
-                        onClick={() => {navigator.clipboard.writeText(row.address)}}
+                        onClick={() => {navigator.clipboard.writeText(row.address);}}
                       >
                         <CopyIcon fontSize='inherit'/>
                       </IconButton>

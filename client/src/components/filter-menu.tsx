@@ -61,6 +61,6 @@ const FilterMenu = ({ options }: { options: string[]}) => {
       </Menu>
     </Box>
   );
-}
+};
 
 export default FilterMenu;

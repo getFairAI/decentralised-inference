@@ -1,5 +1,5 @@
-import { STATIC_ADDRESS } from "@/constants";
-import { gql } from "@apollo/client";
+import { STATIC_ADDRESS } from '@/constants';
+import { gql } from '@apollo/client';
 
 export const GET_IMAGES_TXIDS = gql`
   query GET_IMAGES_TXIDS {
@@ -119,7 +119,7 @@ export const GET_MODELS_PAID_QUERY = gql`
       }
     }
   }
-`
+`;
 
 export const QUERY_REGISTERED_MODELS = gql`
   query QUERY_REGISTERED_MODELS {
@@ -325,7 +325,7 @@ export const QUERY_CANCELLED_OPERATORS = gql`
   }
 `;
 
-  // availability could be replaced with something more meaningful
+// availability could be replaced with something more meaningful
 /* export const QUERY_OPERATORS_AVAILABILITY = gql`
   query QUERY_OPERATORS_AVAILABILITY($tags: [TagFilter!]) {
     transactions (
@@ -510,7 +510,7 @@ export const QUERY_OPERATOR_HISTORY = gql`
       }
     }
   }
-`
+`;
 
 export const QUERY_CHAT_HISTORY = gql`
   query chat_history ($address: String!, $tagsRequests: [TagFilter!], $tagsResults: [TagFilter!]) {
@@ -600,4 +600,4 @@ export const QUERY_CHAT_HISTORY = gql`
       }
     }
   }
-`
+`;

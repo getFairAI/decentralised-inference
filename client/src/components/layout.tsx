@@ -13,5 +13,5 @@ export default function Layout({ children }: { children: ReactElement}) {
         </Box>
       </Container>
     </>
-  )
+  );
 }

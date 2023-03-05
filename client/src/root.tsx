@@ -39,7 +39,7 @@ const mapLink  = new ApolloLink((operation, forward) =>
     operation.setContext({ data: parsedResult.data, vars: operation.variables });
     return parsedResult;
   }
-));
+  ));
 
 const client = new ApolloClient({
   // uri: 'http://localhost:1984/graphql',
@@ -91,10 +91,10 @@ export const Root = () => {
           <Layout>
             <Outlet />
           </Layout>
-          </SnackbarProvider>
+        </SnackbarProvider>
       </ThemeProvider>
     </ApolloProvider>
-  )
+  );
 };
 
 export default Root;
