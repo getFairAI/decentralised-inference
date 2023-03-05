@@ -10,10 +10,10 @@ const Transition = forwardRef(function Transition(
   },
   ref: Ref<unknown>,
 ) {
-  return <Slide direction="up" ref={ref} {...props} />;
+  return <Slide direction='up' ref={ref} {...props} />;
 });
 
-const DialogPreview = ({ open }: { open: boolean}) => {
+const DialogPreview = ({ open }: { open: boolean }) => {
   /* const [open, setOpen] = useState(false);
 
   const handleClickOpen = () => {

@@ -16,26 +16,27 @@ interface Element {
 }
 const Operators = () => {
   const navigate = useNavigate();
-  const [ elements, setElements ] = useState<Element[]>([]);
+  const [elements, setElements] = useState<Element[]>([]);
   const { data, loading, error } = useQuery(LIST_MODELS_QUERY);
-  
-  
+
   useEffect(() => {
     if (data) {
-      setElements(data.map((el: IEdge) => {
-        return {
-          name: '',
-          txid: el.node.id,
-          uploader: el.node.owner.address,
-          avgFee: 0,
-          avgRunCost: 0,
-          totalRuns: 0,
-          rating: 0
-        };
-      }));
+      setElements(
+        data.map((el: IEdge) => {
+          return {
+            name: '',
+            txid: el.node.id,
+            uploader: el.node.owner.address,
+            avgFee: 0,
+            avgRunCost: 0,
+            totalRuns: 0,
+            rating: 0,
+          };
+        }),
+      );
     }
-  }, [ data ]);
-  
+  }, [data]);
+
   if (loading) {
     return <h2>Loading...</h2>;
   }

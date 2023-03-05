@@ -7,7 +7,18 @@ import StepLabel from '@mui/material/StepLabel';
 import Check from '@mui/icons-material/Check';
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
 import { StepIconProps } from '@mui/material/StepIcon';
-import { Alert, Box, Button, FormControl, IconButton, InputAdornment, List, ListItem, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  TextField,
+  Typography,
+  List,
+  ListItem
+} from '@mui/material';
 import { useState } from 'react';
 import PaymentIcon from '@mui/icons-material/Payment';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -69,9 +80,9 @@ function QontoStepIcon(props: StepIconProps) {
   return (
     <QontoStepIconRoot ownerState={{ active }} className={className}>
       {completed ? (
-        <Check className="QontoStepIcon-completedIcon" />
+        <Check className='QontoStepIcon-completedIcon' />
       ) : (
-        <div className="QontoStepIcon-circle" />
+        <div className='QontoStepIcon-circle' />
       )}
     </QontoStepIconRoot>
   );
@@ -96,8 +107,7 @@ const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`& .${stepConnectorClasses.line}`]: {
     height: 3,
     border: 0,
-    backgroundColor:
-      theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#eaeaf0',
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#eaeaf0',
     borderRadius: 1,
   },
 }));
@@ -141,15 +151,19 @@ function ColorlibStepIcon(props: StepIconProps) {
   );
 }
 
-export const CustomStepper = (props: { data: string, handleSubmit: (rate: string) => Promise<void>, isRegistered: boolean }) => {
-  const [ activeStep, setActiveStep ] = useState(0);
-  const [ skipped, setSkipped ] = useState(new Set<number>());
-  const [ completed, setCompleted ] = useState(new Set<number>());
-  const [ , setCurrentBalance ] = useState(0.00);
+export const CustomStepper = (props: {
+  data: string;
+  handleSubmit: (rate: string) => Promise<void>;
+  isRegistered: boolean;
+}) => {
+  const [activeStep, setActiveStep] = useState(0);
+  const [skipped, setSkipped] = useState(new Set<number>());
+  const [completed, setCompleted] = useState(new Set<number>());
+  const [, setCurrentBalance] = useState(0.0);
 
   const { getWalletBalance } = useArweave();
 
-  const [ rate, setRate ] = useState(0);
+  const [rate, setRate] = useState(0);
 
   /* const isStepOptional = (step: number) => {
     return step === 0 || step === 1;
@@ -240,64 +254,95 @@ export const CustomStepper = (props: { data: string, handleSubmit: (rate: string
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
       <Stepper alternativeLabel activeStep={activeStep} connector={<QontoConnector />}>
         <Step key='wrapEth'>
-          <StepLabel StepIconComponent={QontoStepIcon} StepIconProps={{ active: activeStep === 0, completed:  completed.has(0)}}/>
+          <StepLabel
+            StepIconComponent={QontoStepIcon}
+            StepIconProps={{ active: activeStep === 0, completed: completed.has(0) }}
+          />
         </Step>
         <Step key='swapWETHtoUSDC'>
-          <StepLabel StepIconComponent={QontoStepIcon} StepIconProps={{ active: activeStep === 1, completed:  completed.has(1)}}/>
+          <StepLabel
+            StepIconComponent={QontoStepIcon}
+            StepIconProps={{ active: activeStep === 1, completed: completed.has(1) }}
+          />
         </Step>
         <Step key='createTask'>
-          <StepLabel StepIconComponent={QontoStepIcon} StepIconProps={{ active: activeStep === 2, completed:  completed.has(2)}}/>
+          <StepLabel
+            StepIconComponent={QontoStepIcon}
+            StepIconProps={{ active: activeStep === 2, completed: completed.has(2) }}
+          />
         </Step>
       </Stepper>
       <Stepper alternativeLabel activeStep={activeStep} connector={<ColorlibConnector />}>
         <Step key='wrapEth'>
-          <StepLabel StepIconComponent={ColorlibStepIcon} StepIconProps={{ active: activeStep === 0, completed:  completed.has(0)}}>Information</StepLabel>
+          <StepLabel
+            StepIconComponent={ColorlibStepIcon}
+            StepIconProps={{ active: activeStep === 0, completed: completed.has(0) }}
+          >
+            Information
+          </StepLabel>
           {/* <StepButton></StepButton> */}
         </Step>
         <Step key='swapWETHtoUSDC'>
-          <StepLabel StepIconComponent={ColorlibStepIcon} StepIconProps={{ active: activeStep === 1, completed:  completed.has(1)}}>Setup</StepLabel>
+          <StepLabel
+            StepIconComponent={ColorlibStepIcon}
+            StepIconProps={{ active: activeStep === 1, completed: completed.has(1) }}
+          >
+            Setup
+          </StepLabel>
         </Step>
         <Step key='createTask'>
-          <StepLabel StepIconComponent={ColorlibStepIcon} StepIconProps={{ active: activeStep === 2, completed:  completed.has(2)}}>Register</StepLabel>
+          <StepLabel
+            StepIconComponent={ColorlibStepIcon}
+            StepIconProps={{ active: activeStep === 2, completed: completed.has(2) }}
+          >
+            Register
+          </StepLabel>
         </Step>
       </Stepper>
 
-      {
-        activeStep === 3 ? (
-          <React.Fragment>
-            <Typography sx={{ mt: 2, mb: 1 }} alignContent={'center'} textAlign={'center'}>
-              Registration has been Submitted Successfully.
-              Will will be notified when the transaction is approved...
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
-              <Box sx={{ flex: '1 1 auto' }} />
-              {/* <Button onClick={handleReset} variant='outlined'>Reset</Button> */}
-            </Box>
-          </React.Fragment>
-        ) : activeStep === 2 ? (
-          <React.Fragment>
-            <TextField disabled value={'Model id'} label={'Model'}></TextField>
-            <Box justifyContent={'space-between'} display={'flex'}>
-              {/* <TextField label={'Rates Endpoint'} sx={{ width: '70%'}}></TextField> */}
-              <TextField
-                label={'Rate'}
-                sx={{ width: '25%'}}
-                value={rate}
-                onChange={handleRateChange}
-                type='number'
-                inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, /* max: currentBalance */ }}
-                /* helperText={`Max: ${currentBalance}`} */
-              ></TextField>
-            </Box>
-            <Alert severity='warning'>Registration Requires a small fee to prevent malicious actors</Alert>
-            <Box display={'flex'} justifyContent={'space-between'}>
-              <Button variant='outlined' onClick={handleBack}>Back</Button>
-              <Button variant='contained' onClick={handleFinish}>Finish</Button>
-            </Box>
-          </React.Fragment>
-        ) : activeStep === 1 ? (
-          <React.Fragment>          
-            <MDEditor preview='preview' previewOptions={{
+      {activeStep === 3 ? (
+        <React.Fragment>
+          <Typography sx={{ mt: 2, mb: 1 }} alignContent={'center'} textAlign={'center'}>
+            Registration has been Submitted Successfully. Will will be notified when the transaction
+            is approved...
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+            <Box sx={{ flex: '1 1 auto' }} />
+            {/* <Button onClick={handleReset} variant='outlined'>Reset</Button> */}
+          </Box>
+        </React.Fragment>
+      ) : activeStep === 2 ? (
+        <React.Fragment>
+          <TextField disabled value={'Model id'} label={'Model'}></TextField>
+          <Box justifyContent={'space-between'} display={'flex'}>
+            {/* <TextField label={'Rates Endpoint'} sx={{ width: '70%'}}></TextField> */}
+            <TextField
+              label={'Rate'}
+              sx={{ width: '25%' }}
+              value={rate}
+              onChange={handleRateChange}
+              type='number'
+              inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01 /* max: currentBalance */ }}
+              /* helperText={`Max: ${currentBalance}`} */
+            ></TextField>
+          </Box>
+          <Alert severity='warning'>
+            Registration Requires a small fee to prevent malicious actors
+          </Alert>
+          <Box display={'flex'} justifyContent={'space-between'}>
+            <Button variant='outlined' onClick={handleBack}>
+              Back
+            </Button>
+            <Button variant='contained' onClick={handleFinish}>
+              Finish
+            </Button>
+          </Box>
+        </React.Fragment>
+      ) : activeStep === 1 ? (
+        <React.Fragment>
+          <MDEditor
+            preview='preview'
+            previewOptions={{
               rehypePlugins: [[rehypeSanitize]],
             }} hideToolbar={true} fullscreen={false} value={'### Requirements\nExample Markdown'}></MDEditor>
             <Box>
