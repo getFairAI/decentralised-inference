@@ -2,20 +2,20 @@ import { FormControl, FormHelperText, InputLabel, Select, SelectProps } from '@m
 import { CSSProperties, ReactElement } from 'react';
 import { useController, UseControllerProps } from 'react-hook-form';
 
-type SelectControlProps = UseControllerProps & { mat?: SelectProps, style?: CSSProperties};
+type SelectControlProps = UseControllerProps & { mat?: SelectProps; style?: CSSProperties };
 
-const SelectControl = (props: SelectControlProps & { children: ReactElement[]}) => {
+const SelectControl = (props: SelectControlProps & { children: ReactElement[] }) => {
   const { field, fieldState } = useController(props);
 
   const showError = () => {
     if (fieldState.invalid) {
-      return (<FormHelperText>This Field is Required</FormHelperText>);
+      return <FormHelperText>This Field is Required</FormHelperText>;
     }
   };
 
   return (
     <>
-      <FormControl fullWidth margin="normal" error={fieldState.invalid}>
+      <FormControl fullWidth margin='normal' error={fieldState.invalid}>
         <InputLabel>{field.name}</InputLabel>
         <Select
           label={field.name}
@@ -24,7 +24,7 @@ const SelectControl = (props: SelectControlProps & { children: ReactElement[]}) 
           onChange={field.onChange}
           onBlur={field.onBlur}
         >
-          { props.children }
+          {props.children}
         </Select>
         {showError()}
       </FormControl>

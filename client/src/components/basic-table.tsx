@@ -15,14 +15,14 @@ import useArweave from '@/context/arweave';
 import { useNavigate } from 'react-router-dom';
 
 export interface RowData {
-  address: string,
-  fee: number,
-  availability: number,
-  stamps: number,
-  registrationTimestamp: string,
-  modelName: string,
-  modelCreator: string,
-};
+  address: string;
+  fee: number;
+  availability: number;
+  stamps: number;
+  registrationTimestamp: string;
+  modelName: string;
+  modelCreator: string;
+}
 
 /* function createData(
   address: string,
@@ -41,7 +41,11 @@ const rows = [
   createData('H_5-R2rOlBnPQL1yo8Kj2B8wNjYnZOAzMTQTeAia0k4', 0.6, 87, 15),
 ]; */
 
-export default function BasicTable(props: { data: RowData[], loading: boolean, error?: ApolloError }) {
+export default function BasicTable(props: {
+  data: RowData[];
+  loading: boolean;
+  error?: ApolloError;
+}) {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [page, setPage] = React.useState(0);
   const navigate = useNavigate();
@@ -59,46 +63,73 @@ export default function BasicTable(props: { data: RowData[], loading: boolean, e
   return (
     <Box>
       <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+        <Table sx={{ minWidth: 650 }} aria-label='simple table'>
           <TableHead>
             <TableRow>
               <TableCell variant='head'>Address</TableCell>
               <TableCell variant='head'>Registration&nbsp;</TableCell>
-              <TableCell variant='head' align="right">Fee&nbsp;(Ar)</TableCell>
-              <TableCell variant='head' align="right">Response Rate&nbsp;(%)</TableCell>
-              <TableCell variant='head' align="right">Stamps&nbsp;</TableCell>
-              <TableCell variant='head' align='right'>Actions&nbsp;</TableCell>
+              <TableCell variant='head' align='right'>
+                Fee&nbsp;(Ar)
+              </TableCell>
+              <TableCell variant='head' align='right'>
+                Response Rate&nbsp;(%)
+              </TableCell>
+              <TableCell variant='head' align='right'>
+                Stamps&nbsp;
+              </TableCell>
+              <TableCell variant='head' align='right'>
+                Actions&nbsp;
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {props.data.map((row, idx) => (
-              <TableRow
-                key={idx}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
-                <TableCell scope="row">
+              <TableRow key={idx} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableCell scope='row'>
                   <Tooltip title={row.address}>
                     <Typography>
                       {row.address.slice(0, 10)}...{row.address.slice(-2)}
                       <IconButton
                         size='small'
-                        onClick={() => {navigator.clipboard.writeText(row.address);}}
+                        onClick={() => {
+                          navigator.clipboard.writeText(row.address);
+                        }}
                       >
-                        <CopyIcon fontSize='inherit'/>
+                        <CopyIcon fontSize='inherit' />
                       </IconButton>
                     </Typography>
                   </Tooltip>
                 </TableCell>
-                <TableCell align="right">{row.registrationTimestamp}</TableCell>
-                <TableCell align="right">{arweave.ar.winstonToAr(`${row.fee}`)}</TableCell>
-                <TableCell align="right">{row.availability}</TableCell>
-                <TableCell align="right">{row.stamps}</TableCell>
+                <TableCell align='right'>{row.registrationTimestamp}</TableCell>
+                <TableCell align='right'>{arweave.ar.winstonToAr(`${row.fee}`)}</TableCell>
+                <TableCell align='right'>{row.availability}</TableCell>
+                <TableCell align='right'>{row.stamps}</TableCell>
                 <TableCell align='right'>
                   <Tooltip title='History'>
-                    <IconButton onClick={() => navigate(`/operators/details/${row.address}`, { state: { modelName: row.modelName, modelCreator: row.modelCreator, operatorFee: row.fee }})}><HistoryIcon /></IconButton>
+                    <IconButton
+                      onClick={() =>
+                        navigate(`/operators/details/${row.address}`, {
+                          state: {
+                            modelName: row.modelName,
+                            modelCreator: row.modelCreator,
+                            operatorFee: row.fee,
+                          },
+                        })
+                      }
+                    >
+                      <HistoryIcon />
+                    </IconButton>
                   </Tooltip>
                   <Tooltip title='Execute'>
-                    <IconButton onClick={() => navigate(`../chat/${row.address}`, { state: { modelName: row.modelName, modelCreator: row.modelCreator }})}><PlayArrowIcon /></IconButton>
+                    <IconButton
+                      onClick={() =>
+                        navigate(`../chat/${row.address}`, {
+                          state: { modelName: row.modelName, modelCreator: row.modelCreator },
+                        })
+                      }
+                    >
+                      <PlayArrowIcon />
+                    </IconButton>
                   </Tooltip>
                 </TableCell>
               </TableRow>
@@ -108,7 +139,7 @@ export default function BasicTable(props: { data: RowData[], loading: boolean, e
       </TableContainer>
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
-        component="div"
+        component='div'
         count={props.data.length}
         rowsPerPage={rowsPerPage}
         page={page}

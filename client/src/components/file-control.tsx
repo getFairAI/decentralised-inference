@@ -1,4 +1,13 @@
-import { Button, FormControl, IconButton, InputAdornment, InputProps, LinearProgress, TextField, Typography } from '@mui/material';
+import {
+  Button,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  InputProps,
+  LinearProgress,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { Box } from '@mui/system';
 import { ChangeEvent, CSSProperties, DragEvent, useEffect, useState } from 'react';
 import { useController, UseControllerProps } from 'react-hook-form';
@@ -6,14 +15,14 @@ import ClearIcon from '@mui/icons-material/Clear';
 import { WebBundlr } from 'bundlr-custom';
 import { DEV_BUNDLR_URL } from '@/constants';
 
-type FileControlProps = UseControllerProps & { mat?: InputProps, style?: CSSProperties};
+type FileControlProps = UseControllerProps & { mat?: InputProps; style?: CSSProperties };
 
 const FileControl = (props: FileControlProps) => {
   const { field, fieldState } = useController(props);
-  const [ file, setFile ] = useState<File | undefined>(undefined);
-  const [ progress, setProgress ] = useState(0);
-  const [ loading, setLoading ] = useState(false);
-  const [ filePrice, setFilePrice ] = useState(0);
+  const [file, setFile] = useState<File | undefined>(undefined);
+  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [filePrice, setFilePrice] = useState(0);
 
   const handleDragEnter = (event: DragEvent) => {
     event.preventDefault();
@@ -96,10 +105,10 @@ const FileControl = (props: FileControlProps) => {
     const size = file.size;
     if (size < 1024) {
       return `${size} bytes`;
-    } else if (size < Math.pow(1024,2)) {
+    } else if (size < Math.pow(1024, 2)) {
       const kb = size / 1024;
       return `${Math.round((kb + Number.EPSILON) * 100) / 100} KB`;
-    } else if (size < Math.pow(1024,3)) {
+    } else if (size < Math.pow(1024, 3)) {
       const mb = size / Math.pow(1024, 2);
       return `${Math.round((mb + Number.EPSILON) * 100) / 100} MB`;
     } else {
@@ -125,63 +134,62 @@ const FileControl = (props: FileControlProps) => {
     // setFilePriceAR(parseFloat(arweave.ar.winstonToAr(atomicPrice.toString())));
   };
 
-
   useEffect(() => {
     // create the preview
     if (!field.value) {
       setFile(undefined);
       return;
     }
-    const getPrice = async () => await simulateFilePrice(file && file.size || 0);
+    const getPrice = async () => await simulateFilePrice((file && file.size) || 0);
     getPrice();
-  }, [ field.value ]);
+  }, [field.value]);
 
   if (file) {
-    return (<>
-      <Box>
-        <FormControl variant="outlined" fullWidth>
-          <TextField
-            multiline
-            disabled
-            minRows={1}
-            value={file?.name}
-            InputProps={{
-              startAdornment: <InputAdornment position="start">
-                <IconButton
-                  aria-label="Remove"
-                  onClick={handleRemoveFile}
-                ><ClearIcon /></IconButton>
-              </InputAdornment>,
-              endAdornment: <InputAdornment position="start">{printSize(file)}</InputAdornment>
-            }}
-          />
-          { loading && <LinearProgress variant="determinate" value={progress}/>}
-        </FormControl>
-        <Typography variant="caption">Estimated price ${filePrice} {/* / {filePriceAR} AR */}</Typography>
-      </Box>
-    </>);
+    return (
+      <>
+        <Box>
+          <FormControl variant='outlined' fullWidth>
+            <TextField
+              multiline
+              disabled
+              minRows={1}
+              value={file?.name}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <IconButton aria-label='Remove' onClick={handleRemoveFile}>
+                      <ClearIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+                endAdornment: <InputAdornment position='start'>{printSize(file)}</InputAdornment>,
+              }}
+            />
+            {loading && <LinearProgress variant='determinate' value={progress} />}
+          </FormControl>
+          <Typography variant='caption'>
+            Estimated price ${filePrice} {/* / {filePriceAR} AR */}
+          </Typography>
+        </Box>
+      </>
+    );
   }
 
   return (
     <Box>
-      <FormControl
-        error={fieldState.invalid}
-        variant='outlined'
-        fullWidth
-      >
+      <FormControl error={fieldState.invalid} variant='outlined' fullWidth>
         <TextField
           multiline
           disabled
           minRows={5}
           value={'Drag and Drop to Upload \n Or'}
           inputProps={{
-            style: { textAlign: 'center' }
+            style: { textAlign: 'center' },
           }}
           onDragEnter={handleDragEnter}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         />
-        
       </FormControl>
       <Box
         display={'flex'}
@@ -194,21 +202,11 @@ const FileControl = (props: FileControlProps) => {
         }}
         justifyContent={'center'}
       >
-        <Button
-          variant='text'
-          component="label"
-        >
+        <Button variant='text' component='label'>
           Upload Model
-          <input
-            type="file"
-            hidden
-            name={field.name}
-            value={field.value}
-            onChange={onFileChange}
-          />
+          <input type='file' hidden name={field.name} value={field.value} onChange={onFileChange} />
         </Button>
       </Box>
-      
     </Box>
   );
 };

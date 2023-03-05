@@ -3,7 +3,7 @@ import { Box, Container } from '@mui/material';
 import { ReactElement } from 'react';
 import Navbar from './navbar';
 
-export default function Layout({ children }: { children: ReactElement}) {
+export default function Layout({ children }: { children: ReactElement }) {
   return (
     <>
       <Navbar />

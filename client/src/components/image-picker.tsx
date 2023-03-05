@@ -4,7 +4,14 @@ import { ApolloError } from '@apollo/client';
 import { Box, CircularProgress, ImageList, ImageListItem } from '@mui/material';
 import { useController, UseControllerProps } from 'react-hook-form';
 
-const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boolean, error?: ApolloError, closeHandler: () => void}) => {
+const ImagePicker = (
+  props: UseControllerProps & {
+    data: IEdge[];
+    loading: boolean;
+    error?: ApolloError;
+    closeHandler: () => void;
+  },
+) => {
   const { field } = useController(props);
 
   if (props.loading) {
@@ -19,7 +26,7 @@ const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boole
           alignContent: 'center',
         }}
       >
-        <CircularProgress size={100}/>
+        <CircularProgress size={100} />
       </Box>
     );
   }
@@ -34,10 +41,10 @@ const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boole
         alignContent: 'center',
       }}
     >
-        Something Went Wrong...
+      Something Went Wrong...
     </Box>;
   }
-  const txids = props.data.map(el => el.node.id);
+  const txids = props.data.map((el) => el.node.id);
 
   const handleClickImage = (itemUrl: string) => {
     console.log(itemUrl);
@@ -48,12 +55,16 @@ const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boole
     <>
       <ImageList sx={{ width: 500, height: 450 }} cols={3} rowHeight={164}>
         {txids.map((item, index) => (
-          <ImageListItem key={index} component='button' onClick={() => handleClickImage(`${DEV_ARWEAVE_URL}/${item}`)}>
+          <ImageListItem
+            key={index}
+            component='button'
+            onClick={() => handleClickImage(`${DEV_ARWEAVE_URL}/${item}`)}
+          >
             <img
               src={`${DEV_ARWEAVE_URL}/${item}?w=164&h=164&fit=crop&auto=format`}
               srcSet={`${DEV_ARWEAVE_URL}/${item}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
               alt={`{${DEV_ARWEAVE_URL}/${item}}`}
-              loading="lazy"
+              loading='lazy'
             />
           </ImageListItem>
         ))}

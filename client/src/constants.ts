@@ -3,37 +3,37 @@ export const APP_VERSION = 'test';
 
 export const APP_NAME_TAG = {
   name: 'App-Name',
-  values: ['Fair Protocol']
+  values: ['Fair Protocol'],
 };
 
 export const APP_VERSION_TAG = {
   name: 'App-Version',
-  values: [ APP_VERSION ]
+  values: [APP_VERSION],
 };
 
 export const REGISTER_OPERATION_TAG = {
   name: 'Operation-Name',
-  values: ['Operator Registration']
+  values: ['Operator Registration'],
 };
 
 export const CANCEL_OPERATION_TAG = {
   name: 'Operation-Name',
-  values: ['Operator Cancellation']
+  values: ['Operator Cancellation'],
 };
 
 export const MODEL_CREATION_TAG = {
   name: 'Operation-Name',
-  values: ['Model Creation']
+  values: ['Model Creation'],
 };
 
 export const MODEL_INFERENCE_REQUEST_TAG = {
   name: 'Operation-Name',
-  values: ['Model Inference Request']
+  values: ['Model Inference Request'],
 };
 
 export const MODEL_INFERENCE_RESULT_TAG = {
   name: 'Operation-Name',
-  values: ['Model Inference Response']
+  values: ['Model Inference Response'],
 };
 
 export const DEFAULT_TAGS = [

@@ -1,7 +1,7 @@
 import { getData } from '@/context/arweave';
 import { Outlet, Params } from 'react-router-dom';
 
-export const txLoader = async ({ params }: { params: Params<string>}) => {
+export const txLoader = async ({ params }: { params: Params<string> }) => {
   if (params.txid) {
     const txid = decodeURIComponent(params.txid);
     const res = await getData(txid);
@@ -11,9 +11,7 @@ export const txLoader = async ({ params }: { params: Params<string>}) => {
 };
 
 const Model = () => {
-  return (
-    <Outlet />
-  );
+  return <Outlet />;
 };
 
 export default Model;

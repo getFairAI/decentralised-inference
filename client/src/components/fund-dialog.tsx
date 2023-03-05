@@ -1,4 +1,18 @@
-import { Box, Button, Dialog, DialogContent, DialogTitle, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  TextField,
+} from '@mui/material';
 import { WebBundlr } from 'bundlr-custom';
 // import { WebBundlr } from "@bundlr-network/client";
 import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from 'react';
@@ -10,12 +24,20 @@ import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants'
 
 type FundFinishedFn = (node: string) => Promise<void>;
 
-const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, handleFundFinished: FundFinishedFn}) => {
-  const [ node, setNode ] = useState(DEV_BUNDLR_URL);
-  const [ amount, setAmount ] = useState(0);
-  const [ balance, setBalance ] = useState(0);
-  const [ loading, setLoading ] = useState(false);
-  const [ walletBalance, setWalletBalance] = useState(0);
+const FundDialog = ({
+  open,
+  setOpen,
+  handleFundFinished,
+}: {
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  handleFundFinished: FundFinishedFn;
+}) => {
+  const [node, setNode] = useState(DEV_BUNDLR_URL);
+  const [amount, setAmount] = useState(0);
+  const [balance, setBalance] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
   const { getWalletBalance } = useArweave();
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -45,16 +67,16 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
     }
   };
 
-  useEffect(updatebalanceEffect, [ node, open ]); // run when node changes
+  useEffect(updatebalanceEffect, [node, open]); // run when node changes
 
   useEffect(() => {
     const asyncgetWalletBalance = async () => {
-      setWalletBalance(+await getWalletBalance());
+      setWalletBalance(+(await getWalletBalance()));
     };
     if (open) {
       asyncgetWalletBalance();
     }
-  }, [ open ]);
+  }, [open]);
 
   const handleClick = () => {
     handleFundFinished(node);
@@ -82,46 +104,69 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
       setLoading(false);
       console.log(error);
     }
-    
   };
 
-  return (<>
-    <Dialog open={open} maxWidth={'sm'} fullWidth onClose={handleClose}>
-      <DialogTitle>Fund Bundlr Node</DialogTitle>
-      <DialogContent>
-        <Box display={'flex'} flexDirection={'column'} justifyContent={'space-evenly'} marginBottom={'8px'}>
-          <FormControl fullWidth margin='dense'>
-            <InputLabel id="select-label">Bundlr Node</InputLabel>
-            <Select
-              labelId="select-label"
-              value={node}
-              label="Age"
-              onChange={handleChange}
-            >
-              <MenuItem value={DEV_BUNDLR_URL}>dev.bundlr.network</MenuItem>
-              <MenuItem value={NODE1_BUNDLR_URL}>node1.bundlr.network</MenuItem>
-              <MenuItem value={NODE2_BUNDLR_URL}>node2.bundlr.network</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField label='Current Node Balance' value={balance}  disabled  margin='dense' InputProps={{
-            endAdornment: <InputAdornment position="start"><IconButton onClick={updateBalance}><RefreshIcon /></IconButton></InputAdornment>
-          }}/>
-          <TextField type='number' label='Amount to Fund' value={amount} onChange={handleAmountChange} helperText={`Max: ${walletBalance}`} InputProps={{ inputProps: { min: 0, max: walletBalance } }} margin='dense'/>
-        </Box>
-        <Box>
-          <LoadingButton
-            loading={loading}
-            variant="outlined"
-            onClick={handleFund}
-            disabled={amount <= 0 || amount >= walletBalance}
+  return (
+    <>
+      <Dialog open={open} maxWidth={'sm'} fullWidth onClose={handleClose}>
+        <DialogTitle>Fund Bundlr Node</DialogTitle>
+        <DialogContent>
+          <Box
+            display={'flex'}
+            flexDirection={'column'}
+            justifyContent={'space-evenly'}
+            marginBottom={'8px'}
           >
-            Fund
-          </LoadingButton>
-          <Button onClick={handleClick} variant='contained' disabled={balance <= 0}>Continue</Button>
-        </Box>
-      </DialogContent>
-    </Dialog>
-  </>);
+            <FormControl fullWidth margin='dense'>
+              <InputLabel id='select-label'>Bundlr Node</InputLabel>
+              <Select labelId='select-label' value={node} label='Age' onChange={handleChange}>
+                <MenuItem value={DEV_BUNDLR_URL}>dev.bundlr.network</MenuItem>
+                <MenuItem value={NODE1_BUNDLR_URL}>node1.bundlr.network</MenuItem>
+                <MenuItem value={NODE2_BUNDLR_URL}>node2.bundlr.network</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label='Current Node Balance'
+              value={balance}
+              disabled
+              margin='dense'
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position='start'>
+                    <IconButton onClick={updateBalance}>
+                      <RefreshIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              type='number'
+              label='Amount to Fund'
+              value={amount}
+              onChange={handleAmountChange}
+              helperText={`Max: ${walletBalance}`}
+              InputProps={{ inputProps: { min: 0, max: walletBalance } }}
+              margin='dense'
+            />
+          </Box>
+          <Box>
+            <LoadingButton
+              loading={loading}
+              variant='outlined'
+              onClick={handleFund}
+              disabled={amount <= 0 || amount >= walletBalance}
+            >
+              Fund
+            </LoadingButton>
+            <Button onClick={handleClick} variant='contained' disabled={balance <= 0}>
+              Continue
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 };
 
 export default FundDialog;
