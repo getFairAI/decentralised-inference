@@ -1,6 +1,6 @@
-import { FormControl, FormHelperText, InputLabel, Select, SelectProps } from "@mui/material";
-import { CSSProperties, ReactElement } from "react";
-import { useController, UseControllerProps } from "react-hook-form";
+import { FormControl, FormHelperText, InputLabel, Select, SelectProps } from '@mui/material';
+import { CSSProperties, ReactElement } from 'react';
+import { useController, UseControllerProps } from 'react-hook-form';
 
 type SelectControlProps = UseControllerProps & { mat?: SelectProps, style?: CSSProperties};
 
@@ -11,7 +11,7 @@ const SelectControl = (props: SelectControlProps & { children: ReactElement[]}) 
     if (fieldState.invalid) {
       return (<FormHelperText>This Field is Required</FormHelperText>);
     }
-  }
+  };
 
   return (
     <>
@@ -30,6 +30,6 @@ const SelectControl = (props: SelectControlProps & { children: ReactElement[]}) 
       </FormControl>
     </>
   );
-}
+};
 
 export default SelectControl;

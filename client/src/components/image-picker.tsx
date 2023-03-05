@@ -1,7 +1,7 @@
-import { DEV_ARWEAVE_URL } from "@/constants";
-import { IEdge } from "@/interfaces/arweave";
-import { Box, CircularProgress, ImageList, ImageListItem } from "@mui/material";
-import { useController, UseControllerProps } from "react-hook-form";
+import { DEV_ARWEAVE_URL } from '@/constants';
+import { IEdge } from '@/interfaces/arweave';
+import { Box, CircularProgress, ImageList, ImageListItem } from '@mui/material';
+import { useController, UseControllerProps } from 'react-hook-form';
 
 const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boolean, error: any, closeHandler: Function}) => {
   const { field } = useController(props);
@@ -24,17 +24,17 @@ const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boole
   }
   if (props.error) {
     <Box
-        sx={{
-          width: 500,
-          height: 450,
-          display: 'flex',
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-          alignContent: 'center',
-        }}
-      >
+      sx={{
+        width: 500,
+        height: 450,
+        display: 'flex',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        alignContent: 'center',
+      }}
+    >
         Something Went Wrong...
-      </Box>
+    </Box>;
   }
   const txids = props.data.map(el => el.node.id);
 
@@ -42,7 +42,7 @@ const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boole
     console.log(itemUrl);
     field.onChange(itemUrl);
     props.closeHandler();
-  }
+  };
   return (
     <>
       <ImageList sx={{ width: 500, height: 450 }} cols={3} rowHeight={164}>
@@ -58,7 +58,7 @@ const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boole
         ))}
       </ImageList>
     </>
-  )
+  );
 };
 
 export default ImagePicker;

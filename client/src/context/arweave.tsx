@@ -14,7 +14,7 @@ export const getTxTags = async (txid: string) => {
   const result = await arweave.transactions.get(txid);
 
   return result.tags;
-}
+};
 
 export const getData = async (txid: string) => {
   const result = await arweave.transactions.getData(txid, { decode: true });
@@ -23,12 +23,12 @@ export const getData = async (txid: string) => {
   } else {
     return new TextDecoder().decode(result);
   }
-}
+};
 
 export const getActiveAddress = async () => {
   const addr = await window.arweaveWallet.getActiveAddress();
   return addr;
-}
+};
 
 const useArweave = () => {
   const [ addresses, setAddresses ] = useState<string[]>([]);
@@ -50,7 +50,7 @@ const useArweave = () => {
       setIsLoading(false);
       setIsConnected(true);
       // await signer.refresh(window.arweaveWallet);
-      const bundlr = new WebBundlr(DEV_BUNDLR_URL, "arweave", window.arweaveWallet);
+      const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
       await bundlr.ready();
       setBundlr(bundlr);
     }
@@ -58,23 +58,23 @@ const useArweave = () => {
       setError(`${error.message}. Refresh to try again.`);
     }
     
-  }
+  };
 
   const getDataPromise = (txid: string) => arweave.transactions.getData(txid, { decode: true });
 
   const getNodeBalance = async (bundlr: WebBundlr) => {
     // Get loaded balance in atomic units
-    let atomicBalance = await bundlr?.getLoadedBalance();
+    const atomicBalance = await bundlr?.getLoadedBalance();
 
     // Convert balance to an easier to read format
-    let convertedBalance = bundlr?.utils.unitConverter(atomicBalance!);
+    const convertedBalance = bundlr?.utils.unitConverter(atomicBalance!);
     return convertedBalance!.toNumber();
   };
 
   const getWalletBalance = async () => {
     const winstonBalance = await arweave.wallets.getBalance(await window.arweaveWallet.getActiveAddress());
     return arweave.ar.winstonToAr(winstonBalance);
-  }
+  };
 
   const connectWallet = async () => {
     if (window.arweaveWallet && !isConnected) {
@@ -94,23 +94,23 @@ const useArweave = () => {
         setIsConnected(false);
       }
     }
-  }
+  };
 
   const handleWalletSwitch = (event: any) => {
     setAddresses([event.detail.address]);
-  }
+  };
 
-  useEffect(() => { connectWallet()}, [ permissions ])
+  useEffect(() => { connectWallet();}, [ permissions ]);
 
   useEffect(() => {
     const arweaveWalletLoaded = async () => {
       await connectWallet();
-    }
+    };
     window.addEventListener('arweaveWalletLoaded', arweaveWalletLoaded);
 
     return () => {
       window.removeEventListener('arweaveWalletLoaded', arweaveWalletLoaded);
-    }
+    };
   }, []);
 
   useEffect(() => {
@@ -118,7 +118,7 @@ const useArweave = () => {
 
     return () => {
       window.removeEventListener('walletSwitch', e => handleWalletSwitch(e));
-    }
+    };
   }, []);
 
   return {
@@ -133,7 +133,7 @@ const useArweave = () => {
     bundlr,
     getNodeBalance,
     getWalletBalance,
-  }
+  };
 };
 
 export default useArweave;

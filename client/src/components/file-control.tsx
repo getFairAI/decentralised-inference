@@ -1,10 +1,10 @@
-import { Button, FormControl, IconButton, InputAdornment, InputProps, LinearProgress, TextField, Typography } from "@mui/material";
-import { Box } from "@mui/system";
-import { ChangeEvent, CSSProperties, DragEvent, useEffect, useState } from "react";
-import { useController, UseControllerProps } from "react-hook-form";
+import { Button, FormControl, IconButton, InputAdornment, InputProps, LinearProgress, TextField, Typography } from '@mui/material';
+import { Box } from '@mui/system';
+import { ChangeEvent, CSSProperties, DragEvent, useEffect, useState } from 'react';
+import { useController, UseControllerProps } from 'react-hook-form';
 import ClearIcon from '@mui/icons-material/Clear';
-import { WebBundlr } from "bundlr-custom";
-import { DEV_BUNDLR_URL } from "@/constants";
+import { WebBundlr } from 'bundlr-custom';
+import { DEV_BUNDLR_URL } from '@/constants';
 
 type FileControlProps = UseControllerProps & { mat?: InputProps, style?: CSSProperties};
 
@@ -18,18 +18,18 @@ const FileControl = (props: FileControlProps) => {
   const handleDragEnter = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
-  }
+  };
 
   const handleDragOver = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
-  }
+  };
 
   const handleDrop = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
     field.onChange(event.dataTransfer.files[0]);
-  }
+  };
 
   const onFileLoad = (fr: FileReader, file: File) => {
     return (event: ProgressEvent) => {
@@ -40,8 +40,8 @@ const FileControl = (props: FileControlProps) => {
       fr.removeEventListener('error', onFileError(fr, file));
       fr.removeEventListener('load', onFileLoad(fr, file));
       fr.removeEventListener('progress', onFileProgress(fr, file));
-    }
-  }
+    };
+  };
   const onFileError = (fr: FileReader, file: File) => {
     return (event: ProgressEvent) => {
       console.log(event.type, fr.error);
@@ -52,25 +52,25 @@ const FileControl = (props: FileControlProps) => {
       fr.removeEventListener('error', onFileError(fr, file));
       fr.removeEventListener('load', onFileLoad(fr, file));
       fr.removeEventListener('progress', onFileProgress(fr, file));
-    }
-  }
+    };
+  };
   const onFileProgress = (fr: FileReader, file: File) => {
     return (event: ProgressEvent) => {
       console.log(event.type);
       console.log(event.loaded);
       console.log(event.total);
-    }
-  }
+    };
+  };
   const onFileLoadStart = (fr: FileReader, file: File) => {
     return (event: ProgressEvent) => {
       console.log(event.type);
-      field.onChange(file)
+      field.onChange(file);
       setProgress(event.loaded);
       setFile(file);
       setLoading(true);
       fr.removeEventListener('loadstart', onFileError(fr, file));
-    }
-  }
+    };
+  };
 
   const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -85,12 +85,12 @@ const FileControl = (props: FileControlProps) => {
     } else {
       setFile(undefined);
     }
-  }
+  };
 
   const handleRemoveFile = () => {
     setFile(undefined);
     field.onChange('');
-  }
+  };
 
   const printSize = (file: File) => {
     const size = file.size;
@@ -106,13 +106,13 @@ const FileControl = (props: FileControlProps) => {
       const gb = size / Math.pow(1024, 3);
       return `${Math.round((gb + Number.EPSILON) * 100) / 100} GB`;
     }
-  }
+  };
 
   const simulateFilePrice = async (fileSize: number) => {
     // Check the price to upload 1MB of data
     // The function accepts a number of bytes, so to check the price of
     // 1MB, check the price of 1,048,576 bytes.
-    const bundlr = new WebBundlr(DEV_BUNDLR_URL, "arweave", window.arweaveWallet);
+    const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
     console.log(bundlr);
     const atomicPrice = await bundlr.getPrice(fileSize);
@@ -123,7 +123,7 @@ const FileControl = (props: FileControlProps) => {
     const priceConverted = bundlr.utils.unitConverter(atomicPrice);
     setFilePrice(priceConverted.toNumber());
     // setFilePriceAR(parseFloat(arweave.ar.winstonToAr(atomicPrice.toString())));
-  }
+  };
 
 
   useEffect(() => {
@@ -134,7 +134,7 @@ const FileControl = (props: FileControlProps) => {
     }
     const getPrice = async () => await simulateFilePrice(file?.size!);
     getPrice();
-  }, [ field.value ])
+  }, [ field.value ]);
 
   if (file) {
     return (<>
@@ -173,7 +173,7 @@ const FileControl = (props: FileControlProps) => {
           multiline
           disabled
           minRows={5}
-          value={`Drag and Drop to Upload \n Or`}
+          value={'Drag and Drop to Upload \n Or'}
           inputProps={{
             style: { textAlign: 'center' }
           }}
@@ -211,6 +211,6 @@ const FileControl = (props: FileControlProps) => {
       
     </Box>
   );
-}
+};
 
 export default FileControl;

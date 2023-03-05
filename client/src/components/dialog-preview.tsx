@@ -1,7 +1,7 @@
-import { Dialog, Slide } from "@mui/material";
-import { TransitionProps } from "@mui/material/transitions";
-import { forwardRef, ReactElement, Ref } from "react";
-import rehypeSanitize from "rehype-sanitize";
+import { Dialog, Slide } from '@mui/material';
+import { TransitionProps } from '@mui/material/transitions';
+import { forwardRef, ReactElement, Ref } from 'react';
+import rehypeSanitize from 'rehype-sanitize';
 import MDEditor from '@uiw/react-md-editor';
 
 const Transition = forwardRef(function Transition(
@@ -44,6 +44,6 @@ const DialogPreview = ({ open }: { open: boolean}) => {
       </Dialog>
     </div>
   );
-}
+};
 
 export default DialogPreview;

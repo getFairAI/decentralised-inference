@@ -26,7 +26,7 @@ const Explore = () => {
   const handleCardClick = (e: MouseEvent<HTMLButtonElement>, txid: string, index: number) => {
     e.preventDefault();
     navigate(`/model/${encodeURIComponent(txid)}/detail`, { state: txs[index] });
-  }
+  };
 
   return (
     <Box sx={{ flexGrow: 1, top: '64px', position: 'relative' }} margin={2} >
@@ -74,6 +74,6 @@ const Explore = () => {
       </Grid>
     </Box>
   );
-}
+};
 
 export default Explore;

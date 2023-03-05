@@ -1,12 +1,12 @@
-import { CustomStepper } from "@/components/stepper";
-import { DEFAULT_TAGS, REGISTER_OPERATION_TAG, STATIC_ADDRESS } from "@/constants";
-import useArweave from "@/context/arweave";
-import { IEdge, ITag } from "@/interfaces/arweave";
-import { QUERY_REGISTERED_OPERATORS } from "@/queries/graphql";
-import { useQuery } from "@apollo/client";
-import { Container, Box, Card, CardContent, Avatar, SvgIcon, TextField, FormControl, InputLabel, Select, MenuItem, Divider, Typography, Snackbar, Alert } from "@mui/material";
-import { useState } from "react";
-import { useLocation, useParams, useRouteLoaderData, useSearchParams } from "react-router-dom";
+import { CustomStepper } from '@/components/stepper';
+import { DEFAULT_TAGS, REGISTER_OPERATION_TAG, STATIC_ADDRESS } from '@/constants';
+import useArweave from '@/context/arweave';
+import { IEdge, ITag } from '@/interfaces/arweave';
+import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import { useQuery } from '@apollo/client';
+import { Container, Box, Card, CardContent, Avatar, SvgIcon, TextField, FormControl, InputLabel, Select, MenuItem, Divider, Typography, Snackbar, Alert } from '@mui/material';
+import { useState } from 'react';
+import { useLocation, useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom';
 
 const Register = () => {
   const { data }: any = useRouteLoaderData('model');
@@ -22,7 +22,7 @@ const Register = () => {
     ...DEFAULT_TAGS,
     REGISTER_OPERATION_TAG,
     {
-      name: "Model-Transaction",
+      name: 'Model-Transaction',
       values: [ txid ]
     },
   ];
@@ -53,85 +53,85 @@ const Register = () => {
     } catch (error) {
       setError('Something went Wrong. Please Try again...');
     }
-  }
+  };
 
   const handleClose = () => {
     setError(undefined);
     setMessage(undefined);
-  }
+  };
 
   if (queryData) {
     console.log(queryData);
   }
 
   return (<Container>
-      <Box sx={{ margin: '8px', top: '64px', position: 'relative' }}>
-        <Card>
-          <CardContent>
-            <Box display={'flex'} justifyContent={'space-evenly'}>
-              <Box display={'flex'} flexDirection={'column'}>
-                <Avatar sx={ { width: '200px', height: '200px' }}/>
-                {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
+    <Box sx={{ margin: '8px', top: '64px', position: 'relative' }}>
+      <Card>
+        <CardContent>
+          <Box display={'flex'} justifyContent={'space-evenly'}>
+            <Box display={'flex'} flexDirection={'column'}>
+              <Avatar sx={ { width: '200px', height: '200px' }}/>
+              {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
                   <Button startIcon={<DownloadIcon />}>
                     <a href={`http://localhost:1984/${txid}`} download>download</a>
                   </Button>
                   <Button endIcon={<OpenInNewIcon />} onClick={openDialog}>Usage Notes</Button>
                 </Box> */}
-                <Box>
-                  {/* <SvgIcon>
+              <Box>
+                {/* <SvgIcon>
                     <Stamp />
                   </SvgIcon> */}
-                  {/* <IconButton aria-label="upvote">
+                {/* <IconButton aria-label="upvote">
                     <ThumbUpIcon />
                   </IconButton>
                   38
                   <IconButton aria-label="downvote">
                     <ThumbDownIcon />
                   </IconButton> */}
-                </Box>
+              </Box>
                 
-              </Box>
-              <Box>
-                <TextField label="Name" variant="outlined" value={''} fullWidth inputProps={{ readOnly: true }}/>
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={'text'}
-                    label="Category"
-                    inputProps={{ readOnly: true }}
-                  >
-                    <MenuItem value={'text'}>Text</MenuItem>
-                    <MenuItem value={'audio'}>Audio</MenuItem>
-                    <MenuItem value={'video'}>Video</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField
-                  label="Description"
-                  variant="outlined"
-                  multiline
-                  value={''}
-                  inputProps={{ readOnly: true }}
-                  style={{ width: '100%' }}
-                  margin="normal"
-                  minRows={2}
-                  maxRows={3}
-                />
-              </Box>
             </Box>
-            <Divider textAlign='left'>
-              <Typography variant="h6" gutterBottom>Register</Typography>
-            </Divider>
-            <CustomStepper data={data} handleSubmit={handleRegister} isRegistered={isRegistered}/>
-          </CardContent>
-        </Card>
-      </Box>
-      <Snackbar open={!!error || !!message} autoHideDuration={6000} onClose={handleClose}>
-        {
-          error ? <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert>
-            : <Alert severity="success" sx={{ width: '100%' }}>{message}</Alert>
-        }
-      </Snackbar>
-    </Container>);
-}
+            <Box>
+              <TextField label="Name" variant="outlined" value={''} fullWidth inputProps={{ readOnly: true }}/>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={'text'}
+                  label="Category"
+                  inputProps={{ readOnly: true }}
+                >
+                  <MenuItem value={'text'}>Text</MenuItem>
+                  <MenuItem value={'audio'}>Audio</MenuItem>
+                  <MenuItem value={'video'}>Video</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="Description"
+                variant="outlined"
+                multiline
+                value={''}
+                inputProps={{ readOnly: true }}
+                style={{ width: '100%' }}
+                margin="normal"
+                minRows={2}
+                maxRows={3}
+              />
+            </Box>
+          </Box>
+          <Divider textAlign='left'>
+            <Typography variant="h6" gutterBottom>Register</Typography>
+          </Divider>
+          <CustomStepper data={data} handleSubmit={handleRegister} isRegistered={isRegistered}/>
+        </CardContent>
+      </Card>
+    </Box>
+    <Snackbar open={!!error || !!message} autoHideDuration={6000} onClose={handleClose}>
+      {
+        error ? <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert>
+          : <Alert severity="success" sx={{ width: '100%' }}>{message}</Alert>
+      }
+    </Snackbar>
+  </Container>);
+};
 
 export default Register;

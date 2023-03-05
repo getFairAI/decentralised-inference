@@ -1,19 +1,19 @@
-import { Box, Card, CardActionArea, CardContent, Container, Divider, Grid, IconButton, InputAdornment, List, ListItem, ListItemButton, ListItemText, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Card, CardActionArea, CardContent, Container, Divider, Grid, IconButton, InputAdornment, List, ListItem, ListItemButton, ListItemText, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { Params, useLocation, useParams } from "react-router-dom";
-import useArweave, { getActiveAddress, getData } from "@/context/arweave";
-import { useLazyQuery, useQuery } from "@apollo/client";
-import { ChangeEvent, useEffect, useState } from "react";
-import { APP_VERSION, DEFAULT_TAGS, DEV_BUNDLR_URL, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG } from "@/constants";
-import { QUERY_CHAT_HISTORY, QUERY_INFERENCE_RESULTS } from "@/queries/graphql";
-import { IEdge } from "@/interfaces/arweave";
-import Transaction from "arweave/node/lib/transaction";
+import { Params, useLocation, useParams } from 'react-router-dom';
+import useArweave, { getActiveAddress, getData } from '@/context/arweave';
+import { useLazyQuery, useQuery } from '@apollo/client';
+import { ChangeEvent, useEffect, useState } from 'react';
+import { APP_VERSION, DEFAULT_TAGS, DEV_BUNDLR_URL, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG } from '@/constants';
+import { QUERY_CHAT_HISTORY, QUERY_INFERENCE_RESULTS } from '@/queries/graphql';
+import { IEdge } from '@/interfaces/arweave';
+import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
-import _ from "lodash";
-import { useSnackbar } from "notistack";
-import { WebBundlr } from "bundlr-custom";
+import _ from 'lodash';
+import { useSnackbar } from 'notistack';
+import { WebBundlr } from 'bundlr-custom';
 
 interface Message {
   msg: string,
@@ -68,9 +68,9 @@ const Chat = () => {
           address: userAddr
         },
         pollInterval: 5000
-      })
+      });
     }
-  }, [ txid, userAddr ])
+  }, [ txid, userAddr ]);
 
   const reqData = async (argData: { results: IEdge[], requests: IEdge[]}) => {
     const allData = [ ...argData.results, ...argData.requests ];
@@ -80,19 +80,19 @@ const Chat = () => {
       if (!a.node.block?.timestamp) return 1;
       if (!b.node.block?.timestamp) return -1;
       return new Date(a.node.block.timestamp) < new Date(b.node.block.timestamp) ? 1 : -1;
-    })
+    });
     const temp: Message[] = [];
     await Promise.all(allData.map( async (el: IEdge) => (
       el.node.owner.address === userAddr ?
         temp.push({ msg: await getData(el.node.id) as string, type: 'request', timestamp: el.node.block?.timestamp || 0, txid: el.node.id }) :
-          temp.push({ msg: await getData(el.node.id) as string, type: 'response', timestamp: el.node.block?.timestamp || 0, txid: el.node.id })
-    )))
+        temp.push({ msg: await getData(el.node.id) as string, type: 'response', timestamp: el.node.block?.timestamp || 0, txid: el.node.id })
+    )));
     setMessages(temp);
-  }
+  };
 
   useEffect(() => {
     if ((data && !previousData) || (data && previousData && !_.isEqual(data, previousData))) {
-      reqData(data)
+      reqData(data);
     }
   }, [ data ]);
 
@@ -116,19 +116,19 @@ const Chat = () => {
       variables: { tagsRequests, tagsResults, address },
       pollInterval: 5000
     });
-  }, [ currentConversationId ])
+  }, [ currentConversationId ]);
 
   const handleMessageChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNewMessage(event.target.value);
-  }
+  };
 
   const handleSend = async () => {
     const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
-    let atomicBalance = await bundlr.getLoadedBalance();
+    const atomicBalance = await bundlr.getLoadedBalance();
 
     // Convert balance to an easier to read format
-    let convertedBalance = bundlr.utils.unitConverter(atomicBalance).toNumber();
+    const convertedBalance = bundlr.utils.unitConverter(atomicBalance).toNumber();
     const dataSize = new TextEncoder().encode(newMessage).length;
     const dataPrice = (await bundlr.getPrice(dataSize)).toNumber();
     if (dataPrice < convertedBalance) {
@@ -141,12 +141,12 @@ const Chat = () => {
       quantity: state.fee,
     });
 
-    tx.addTag("App-Name", "Fair Protocol");
-    tx.addTag("App-Version", APP_VERSION);
+    tx.addTag('App-Name', 'Fair Protocol');
+    tx.addTag('App-Version', APP_VERSION);
     tx.addTag('Operation-Name', 'Inference Payment');
     tx.addTag('Model-Name', state.modelName);
     tx.addTag('Model-Creator', state.modelCreator);
-    tx.addTag('Conversation-Identifier', currentConversationId)
+    tx.addTag('Conversation-Identifier', currentConversationId);
   
     await arweave.transactions.sign(tx);
     const res = await arweave.transactions.post(tx);
@@ -166,16 +166,16 @@ const Chat = () => {
     try {
       const bundlrRes = await bundlr.upload(newMessage, { tags });
   
-      const temp = [ ...messages]
+      const temp = [ ...messages];
       temp.push({ msg: newMessage, type: 'request', timestamp: bundlrRes.timestamp!, txid: bundlrRes.id});
       setMessages(temp);
       setNewMessage('');
       enqueueSnackbar(`Inference Request, TxId: https://arweave.net/${bundlrRes.id}`, { variant: 'success'});
     } catch (error) {
-      enqueueSnackbar(JSON.stringify(error), { variant: 'error'})
+      enqueueSnackbar(JSON.stringify(error), { variant: 'error'});
     }
     
-  }
+  };
 
   const handleListItemClick = (cid: string) => {
     setCurrentConversationId(cid);
@@ -187,7 +187,7 @@ const Chat = () => {
     const newConversationId = `C-${(+number) + 1}`;
     setConversationIds([ ...conversationIds, newConversationId ]);
     setCurrentConversationId(newConversationId);
-  }
+  };
 
   return (
     <Grid container spacing={0} sx={{ height: '100%'}}>
@@ -266,6 +266,6 @@ const Chat = () => {
       </Grid>
     </Grid>
   );
-}
+};
 
 export default Chat;

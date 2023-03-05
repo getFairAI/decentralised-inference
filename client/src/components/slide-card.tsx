@@ -1,7 +1,7 @@
 // import { IEdge } from "@/interfaces/arweave";
-import { Box, Typography, Button, Card, CardMedia, Container } from "@mui/material";
-import { forwardRef } from "react";
-import { IEdge } from "../interfaces/arweave";
+import { Box, Typography, Button, Card, CardMedia, Container } from '@mui/material';
+import { forwardRef } from 'react';
+import { IEdge } from '../interfaces/arweave';
 ;
 
 const SlideCard = (props: { data: IEdge }) => {

@@ -1,6 +1,6 @@
-import { FormHelperText, TextField, TextFieldProps } from "@mui/material";
-import { CSSProperties } from "react";
-import { useController, UseControllerProps } from "react-hook-form";
+import { FormHelperText, TextField, TextFieldProps } from '@mui/material';
+import { CSSProperties } from 'react';
+import { useController, UseControllerProps } from 'react-hook-form';
 
 type TextControlProps = UseControllerProps & { mat: TextFieldProps, style: CSSProperties};
 
@@ -13,7 +13,7 @@ const TextControl = (props: TextControlProps) => {
     } else {
       return '';
     }
-  }
+  };
   return (
     <TextField 
       onChange={field.onChange} // send value to hook form 
@@ -28,6 +28,6 @@ const TextControl = (props: TextControlProps) => {
       helperText={showError()}
     />
   );
-}
+};
 
 export default TextControl;

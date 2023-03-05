@@ -24,6 +24,6 @@ const CustomProgress = (props: LinearProgressProps & { value: number }) => {
       </Box>
     </Box>
   );
-}
+};
 
 export default CustomProgress;

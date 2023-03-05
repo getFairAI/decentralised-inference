@@ -66,7 +66,7 @@ export default function Home() {
         setSlideIdx(slideIdx + 1);
       }
     }
-  }
+  };
 
   return (
     <Container sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', alignContent: 'space-around', top: '64px', position: 'relative'}}>
@@ -133,7 +133,7 @@ export default function Home() {
           </Grid>
           <Grid item xs={12} sm={12} md={6}>
             <Stack spacing={2}>
-            {txs.map((edge: IEdge, index: number) => (
+              {txs.map((edge: IEdge, index: number) => (
                 <Box sx={{ width: '100%'}} display={'flex'} flexDirection={'row'} key={index}>
                   <Card sx={{ width: '100%'}}>
                     <CardActionArea sx={{ width: '100%'}}>

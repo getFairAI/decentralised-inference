@@ -1,13 +1,13 @@
-import { Avatar, Button, Card, CardContent, Container, Divider, FormControl, InputLabel, MenuItem, Select, SvgIcon, TextField, Typography } from "@mui/material";
-import { Box } from "@mui/system";
-import BasicTable, { RowData } from "@/components/basic-table";;
+import { Avatar, Button, Card, CardContent, Container, Divider, FormControl, InputLabel, MenuItem, Select, SvgIcon, TextField, Typography } from '@mui/material';
+import { Box } from '@mui/system';
+import BasicTable, { RowData } from '@/components/basic-table';;
 import Stamp from '@/components/stamp';
-import { useLocation, useParams, useRouteLoaderData } from "react-router-dom";
-import { ApolloError, useLazyQuery, useQuery } from "@apollo/client";
-import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from "@/queries/graphql";
-import { DEFAULT_TAGS, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG, REGISTER_OPERATION_TAG } from "@/constants";
-import { IEdge, INode, ITag, ITransactions } from "@/interfaces/arweave";
-import { useEffect, useState } from "react";
+import { useLocation, useParams, useRouteLoaderData } from 'react-router-dom';
+import { ApolloError, useLazyQuery, useQuery } from '@apollo/client';
+import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import { DEFAULT_TAGS, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG, REGISTER_OPERATION_TAG } from '@/constants';
+import { IEdge, INode, ITag, ITransactions } from '@/interfaces/arweave';
+import { useEffect, useState } from 'react';
 
 const Detail = () => { 
   const res = useRouteLoaderData('model');
@@ -29,12 +29,12 @@ const Detail = () => {
   ];
   const { data: queryData, loading, error } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags },
-  })
+  });
 
   const [ getFollowupQuery, followupResult ] = useLazyQuery(QUERY_OPERATOR_RESULTS_RESPONSES);
 
   useEffect(() => {
-    console.log(state)
+    console.log(state);
   }, [ state ]);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ const Detail = () => {
       const tagsRequests = [
         ...tags.filter(el => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
         MODEL_INFERENCE_REQUEST_TAG
-      ]
+      ];
       const tagsResults = [
         ...tags.filter(el => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
         MODEL_INFERENCE_RESULT_TAG
@@ -58,7 +58,7 @@ const Detail = () => {
   }, [ queryData ]);
 
   useEffect(() => {
-    console.log(followupResult)
+    console.log(followupResult);
     if (followupResult.loading) console.log('loading');
     if (followupResult.error) console.log(error, 'err');
     if (followupResult.data) {
@@ -80,7 +80,7 @@ const Detail = () => {
       }));
       setOperatorsData(parsed);
     }
-  }, [ followupResult ])
+  }, [ followupResult ]);
 
   return (
     <Container sx={{top: '64px', position: 'relative'}}>
@@ -90,13 +90,13 @@ const Detail = () => {
             <Box display={'flex'} justifyContent={'space-evenly'} marginBottom={'16px'}>
               <Box display={'flex'} flexDirection={'column'} justifyContent={'space-between'}>
                 <Avatar sx={ { width: '180px', height: '180px' }}/>
-                  <Button variant="outlined" startIcon={
-                    <SvgIcon>
-                      <Stamp />
-                    </SvgIcon>}
-                  >
+                <Button variant="outlined" startIcon={
+                  <SvgIcon>
+                    <Stamp />
+                  </SvgIcon>}
+                >
                     Stamp
-                  </Button>
+                </Button>
               </Box>
               <Box>
                 <TextField label="Name" variant="outlined" value={state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value} fullWidth inputProps={{ readOnly: true }}/>
@@ -134,7 +134,7 @@ const Detail = () => {
         </Card>
       </Box>
     </Container>
-  )
-}
+  );
+};
 
 export default Detail;

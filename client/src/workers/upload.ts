@@ -19,10 +19,10 @@ self.onmessage  = async (e: MessageEvent<string>) => {
       isComplete: resume.isComplete,
       completedChunks: resume.uploadedChunks,
       totalChunks: resume.totalChunks,
-    })
+    });
   }
 
   /* self.postMessage(resume.lastResponseStatus); */
-}
+};
 
 export {};

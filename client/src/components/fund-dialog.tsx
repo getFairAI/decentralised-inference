@@ -1,12 +1,12 @@
-import { Box, Button, Dialog, DialogContent, DialogTitle, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from "@mui/material";
- import { WebBundlr } from "bundlr-custom";
+import { Box, Button, Dialog, DialogContent, DialogTitle, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
+import { WebBundlr } from 'bundlr-custom';
 // import { WebBundlr } from "@bundlr-network/client";
-import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from "react";
+import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from 'react';
 import LoadingButton from '@mui/lab/LoadingButton';
-import useArweave from "@/context/arweave";
-import BigNumber from "bignumber.js";
+import useArweave from '@/context/arweave';
+import BigNumber from 'bignumber.js';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { DEV_ARWEAVE_URL, DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from "@/constants";
+import { DEV_ARWEAVE_URL, DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 
 const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpen: Dispatch<SetStateAction<boolean>>,handleFundFinished: Function }) => {
   const [ node, setNode ] = useState(DEV_BUNDLR_URL);
@@ -18,24 +18,24 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
 
   const handleChange = (event: SelectChangeEvent) => {
     setNode(event.target.value);
-  }
+  };
 
   const handleAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
     setAmount(+event.target.value);
-  }
+  };
 
   const updateBalance = async () => {
-    console.log('riunn')
+    console.log('riunn');
     const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
     await bundlr.ready();
-    console.log(bundlr, 'running')
-     // Get loaded balance in atomic units
-    let atomicBalance = await bundlr.getLoadedBalance();
+    console.log(bundlr, 'running');
+    // Get loaded balance in atomic units
+    const atomicBalance = await bundlr.getLoadedBalance();
 
     // Convert balance to an easier to read format
-    let convertedBalance = bundlr.utils.unitConverter(atomicBalance!);
+    const convertedBalance = bundlr.utils.unitConverter(atomicBalance!);
     setBalance(convertedBalance.toNumber());
-  }
+  };
 
   const updatebalanceEffect = () => {
     if (open) {
@@ -47,20 +47,20 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
 
   useEffect(() => {
     const asyncgetWalletBalance = async () => {
-      setWalletBalance(+await getWalletBalance())
-    }
+      setWalletBalance(+await getWalletBalance());
+    };
     if (open) {
       asyncgetWalletBalance();
     }
-  }, [ open ])
+  }, [ open ]);
 
   const handleClick = () => {
     handleFundFinished(node);
-  }
+  };
 
   const handleClose = () => {
     setOpen(false);
-  }
+  };
 
   const handleFund = async () => {
     const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
@@ -70,10 +70,10 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
     const fundAmountParsed = bn.multipliedBy(bundlr.currencyConfig.base[1]);
     try {
       const res = await bundlr.fund(fundAmountParsed.toString());
-      let atomicBalance = await bundlr.getLoadedBalance();
+      const atomicBalance = await bundlr.getLoadedBalance();
 
       // Convert balance to an easier to read format
-      let convertedBalance = bundlr.utils.unitConverter(atomicBalance!);
+      const convertedBalance = bundlr.utils.unitConverter(atomicBalance!);
       setBalance(convertedBalance.toNumber());
       setLoading(false);
     } catch (error) {
@@ -81,7 +81,7 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
       console.log(error);
     }
     
-  }
+  };
 
   return (<>
     <Dialog open={open} maxWidth={'sm'} fullWidth onClose={handleClose}>
@@ -119,7 +119,7 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
         </Box>
       </DialogContent>
     </Dialog>
-  </>)
-}
+  </>);
+};
 
 export default FundDialog;
