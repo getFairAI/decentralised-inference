@@ -2,17 +2,17 @@ import { Avatar, Button, Card, CardContent, Container, Divider, FormControl, Inp
 import { Box } from '@mui/system';
 import BasicTable, { RowData } from '@/components/basic-table';;
 import Stamp from '@/components/stamp';
-import { useLocation, useParams, useRouteLoaderData } from 'react-router-dom';
-import { ApolloError, useLazyQuery, useQuery } from '@apollo/client';
+import { useLocation } from 'react-router-dom';
+import { useLazyQuery, useQuery } from '@apollo/client';
 import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { DEFAULT_TAGS, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG, REGISTER_OPERATION_TAG } from '@/constants';
-import { IEdge, INode, ITag, ITransactions } from '@/interfaces/arweave';
+import { IEdge, ITag } from '@/interfaces/arweave';
 import { useEffect, useState } from 'react';
 
 const Detail = () => { 
-  const res = useRouteLoaderData('model');
-  const { state }: {  state: any } = useLocation();
-  const { txid } = useParams();
+  // const res = useRouteLoaderData('model');
+  const { state }: {  state: IEdge } = useLocation();
+  // const { txid } = useParams();
   const [ operatorsData, setOperatorsData ] = useState<RowData[]>([]);
   
   const tags = [
@@ -20,7 +20,7 @@ const Detail = () => {
     REGISTER_OPERATION_TAG,
     {
       name: 'Model-Creator',
-      values: [ state.node.address ]
+      values: [ state.node.owner.address ]
     },
     {
       name: 'Model-Name',
@@ -76,7 +76,7 @@ const Detail = () => {
           requests.filter(req => el.node.owner.address === req.node.recipient).length
         ) * 100 || 0,
         modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value,
-        modelCreator: state.node.address,
+        modelCreator: state.node.owner.address,
       }));
       setOperatorsData(parsed);
     }

@@ -29,7 +29,6 @@ const Upload = () => {
     handleSubmit,
     reset,
     control,
-    formState: { errors },
   } = useForm<FieldValues>({
     defaultValues: {
       name: '',
@@ -44,7 +43,7 @@ const Upload = () => {
   const [ fundOpen, setFundOpen ] = useState(false);
   const [ snackbarOpen, setSnackbarOpen ] = useState(false);
   const [ progress, setProgress ] = useState(0);
-  const [ message, setMessage ] = useState('');
+  const [ ,setMessage ] = useState('');
   const [ formData, setFormData ] = useState<CreateForm | undefined>(undefined); 
   const totalChunks = useRef(0);
 

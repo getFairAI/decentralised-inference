@@ -45,7 +45,7 @@ const client = new ApolloClient({
   // uri: 'http://localhost:1984/graphql',
   cache: new InMemoryCache(),
   link: split(
-    (operation) => true, // default to arweave net
+    () => true, // default to arweave net
     from([
       // chainRequestLink,
       mapLink,

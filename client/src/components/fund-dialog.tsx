@@ -6,9 +6,11 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import useArweave from '@/context/arweave';
 import BigNumber from 'bignumber.js';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { DEV_ARWEAVE_URL, DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
+import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 
-const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpen: Dispatch<SetStateAction<boolean>>,handleFundFinished: Function }) => {
+type FundFinishedFn = (node: string) => Promise<void>;
+
+const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, handleFundFinished: FundFinishedFn}) => {
   const [ node, setNode ] = useState(DEV_BUNDLR_URL);
   const [ amount, setAmount ] = useState(0);
   const [ balance, setBalance ] = useState(0);
@@ -33,7 +35,7 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
     const atomicBalance = await bundlr.getLoadedBalance();
 
     // Convert balance to an easier to read format
-    const convertedBalance = bundlr.utils.unitConverter(atomicBalance!);
+    const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
     setBalance(convertedBalance.toNumber());
   };
 
@@ -69,11 +71,11 @@ const FundDialog = ({ open, setOpen, handleFundFinished}: {open: boolean, setOpe
     const bn = new BigNumber(amount);
     const fundAmountParsed = bn.multipliedBy(bundlr.currencyConfig.base[1]);
     try {
-      const res = await bundlr.fund(fundAmountParsed.toString());
+      await bundlr.fund(fundAmountParsed.toString());
       const atomicBalance = await bundlr.getLoadedBalance();
 
       // Convert balance to an easier to read format
-      const convertedBalance = bundlr.utils.unitConverter(atomicBalance!);
+      const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
       setBalance(convertedBalance.toNumber());
       setLoading(false);
     } catch (error) {

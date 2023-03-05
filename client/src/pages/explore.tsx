@@ -1,5 +1,5 @@
 import { IEdge } from '@/interfaces/arweave';
-import { gql, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { Avatar, Box, Card, CardActionArea, CardContent, CardHeader, Chip, InputAdornment, TextField, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid'; // Grid version 2
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';

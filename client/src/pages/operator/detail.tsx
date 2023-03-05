@@ -8,13 +8,24 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
+interface Row {
+  txid: string;
+  type: string;
+  date: string;
+  networkFee: number;
+  appFee: number;
+  destination: string;
+  origin: string;
+  modelTx: string;
+  operation: string;
+}
 const OperatorDetails = () => {
   const { address } = useParams();
   const navigate = useNavigate();
 
   const tags = [ ...DEFAULT_TAGS ];
-  const { data, error, loading } = useQuery(QUERY_OPERATOR_HISTORY, { variables: { address, tags }});
-  const [ rows, setRows ] = useState<any[]>([]);
+  const { data, loading } = useQuery(QUERY_OPERATOR_HISTORY, { variables: { address, tags }});
+  const [ rows, setRows ] = useState<Row[]>([]);
 
   useEffect(() => {
     if (data) {
@@ -30,7 +41,7 @@ const OperatorDetails = () => {
           destination: node.recipient,
           origin: node.owner.address,
           modelTx: node.tags.find(el => el.name === 'Model-Transaction')?.value || '',
-          operation: node.tags.find(el => el.name === 'Operation-Name')?.value,
+          operation: node.tags.find(el => el.name === 'Operation-Name')?.value || '',
         };
       });
 
@@ -45,7 +56,7 @@ const OperatorDetails = () => {
           destination: node.recipient,
           origin: node.owner.address,
           modelTx: node.tags.find(el => el.name === 'Model-Transaction')?.value || '',
-          operation: node.tags.find(el => el.name === 'Operation-Name')?.value,
+          operation: node.tags.find(el => el.name === 'Operation-Name')?.value || '',
         };
       });
 
@@ -67,7 +78,7 @@ const OperatorDetails = () => {
           <CardContent>
             <Box display={'flex'} justifyContent={'space-between'} marginBottom={'16px'}>
               <TextField label="Address" variant="outlined" value={address} sx={{ width: '60%'}}
-                InputProps={{ readOnly: true, endAdornment: <IconButton onClick={() => {navigator.clipboard.writeText(address!);}}><ContentCopyIcon /></IconButton> }}/>
+                InputProps={{ readOnly: true, endAdornment: <IconButton onClick={() => {address && navigator.clipboard.writeText(address);}}><ContentCopyIcon /></IconButton> }}/>
               <TextField label="Registration Date" variant="outlined" value={new Date().toLocaleDateString()} inputProps={{ readOnly: true }}/>
             </Box>
             <Divider textAlign='left'>History</Divider>
@@ -89,7 +100,7 @@ const OperatorDetails = () => {
                 <TableBody>
                   {
                     loading ? <TableRow><TableCell colSpan={9} align='center'><Typography>Loading...</Typography></TableCell></TableRow>
-                      : rows.map((row: any, idx: number) => (
+                      : rows.map((row: Row, idx: number) => (
                         <TableRow
                           key={idx}
                           sx={{ '&:last-child td, &:last-child th': { border: 0 } }}

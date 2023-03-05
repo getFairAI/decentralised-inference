@@ -39,7 +39,7 @@ const FileControl = (props: FileControlProps) => {
       setLoading(false);
       fr.removeEventListener('error', onFileError(fr, file));
       fr.removeEventListener('load', onFileLoad(fr, file));
-      fr.removeEventListener('progress', onFileProgress(fr, file));
+      fr.removeEventListener('progress', onFileProgress());
     };
   };
   const onFileError = (fr: FileReader, file: File) => {
@@ -51,10 +51,10 @@ const FileControl = (props: FileControlProps) => {
       setProgress(0);
       fr.removeEventListener('error', onFileError(fr, file));
       fr.removeEventListener('load', onFileLoad(fr, file));
-      fr.removeEventListener('progress', onFileProgress(fr, file));
+      fr.removeEventListener('progress', onFileProgress());
     };
   };
-  const onFileProgress = (fr: FileReader, file: File) => {
+  const onFileProgress = () => {
     return (event: ProgressEvent) => {
       console.log(event.type);
       console.log(event.loaded);
@@ -79,7 +79,7 @@ const FileControl = (props: FileControlProps) => {
       const fr = new FileReader();
       fr.addEventListener('load', onFileLoad(fr, file));
       fr.addEventListener('error', onFileError(fr, file));
-      fr.addEventListener('progress', onFileProgress(fr, file));
+      fr.addEventListener('progress', onFileProgress());
       fr.addEventListener('loadstart', onFileLoadStart(fr, file));
       fr.readAsArrayBuffer(file);
     } else {
@@ -132,7 +132,7 @@ const FileControl = (props: FileControlProps) => {
       setFile(undefined);
       return;
     }
-    const getPrice = async () => await simulateFilePrice(file?.size!);
+    const getPrice = async () => await simulateFilePrice(file && file.size || 0);
     getPrice();
   }, [ field.value ]);
 

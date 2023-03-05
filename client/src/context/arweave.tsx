@@ -37,7 +37,7 @@ const useArweave = () => {
   const [ isConnected, setIsConnected ] = useState(false);
   const [ network, setNetwork ] = useState('');
   const [ bundlr, setBundlr ] = useState<WebBundlr | undefined>(undefined);
-  const [ permissions, setPermissions ] = useState<PermissionType[]>(['ACCESS_ALL_ADDRESSES', 'ACCESS_PUBLIC_KEY', 'SIGNATURE', 'ACCESS_ADDRESS', 'SIGN_TRANSACTION', 'ACCESS_ARWEAVE_CONFIG', 'ENCRYPT', 'DECRYPT', 'DISPATCH' ]);
+  const [ permissions ] = useState<PermissionType[]>(['ACCESS_ALL_ADDRESSES', 'ACCESS_PUBLIC_KEY', 'SIGNATURE', 'ACCESS_ADDRESS', 'SIGN_TRANSACTION', 'ACCESS_ARWEAVE_CONFIG', 'ENCRYPT', 'DECRYPT', 'DISPATCH' ]);
 
   const connect = async () => {
     setIsLoading(true);
@@ -54,8 +54,8 @@ const useArweave = () => {
       await bundlr.ready();
       setBundlr(bundlr);
     }
-    catch (error: any) {
-      setError(`${error.message}. Refresh to try again.`);
+    catch (error) {
+      setError(`${(error as { message: string }).message}. Refresh to try again.`);
     }
     
   };
@@ -67,8 +67,8 @@ const useArweave = () => {
     const atomicBalance = await bundlr?.getLoadedBalance();
 
     // Convert balance to an easier to read format
-    const convertedBalance = bundlr?.utils.unitConverter(atomicBalance!);
-    return convertedBalance!.toNumber();
+    const convertedBalance = bundlr?.utils.unitConverter(atomicBalance);
+    return convertedBalance.toNumber();
   };
 
   const getWalletBalance = async () => {
@@ -96,7 +96,7 @@ const useArweave = () => {
     }
   };
 
-  const handleWalletSwitch = (event: any) => {
+  const handleWalletSwitch = (event: { detail: { address: string }}) => {
     setAddresses([event.detail.address]);
   };
 
