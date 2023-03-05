@@ -4,13 +4,13 @@ import useArweave from '@/context/arweave';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
-import { Container, Box, Card, CardContent, Avatar, SvgIcon, TextField, FormControl, InputLabel, Select, MenuItem, Divider, Typography, Snackbar, Alert } from '@mui/material';
+import { Container, Box, Card, CardContent, Avatar, TextField, FormControl, InputLabel, Select, MenuItem, Divider, Typography, Snackbar, Alert } from '@mui/material';
 import { useState } from 'react';
-import { useLocation, useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom';
+import { useLocation, useParams, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
-  const { data }: any = useRouteLoaderData('model');
-  const { state }: { state: any } = useLocation();
+  const { data } = useRouteLoaderData('model') as { data: string };
+  const { state }: { state: IEdge } = useLocation();
   const { txid } = useParams();
   
   const { arweave } = useArweave();
@@ -26,8 +26,7 @@ const Register = () => {
       values: [ txid ]
     },
   ];
-  const { data: queryData, loading, error: queryError } = useQuery(QUERY_REGISTERED_OPERATORS, { variables: { tags }});
-  console.log(data);
+  const { data: queryData } = useQuery(QUERY_REGISTERED_OPERATORS, { variables: { tags }});
 
   const handleRegister = async (rate: string) => {
     try {
@@ -39,7 +38,7 @@ const Register = () => {
       tags.push({ name: 'App-Name', values: 'Fair Protocol'});
       tags.push({ name: 'App-Version', values: 'test'});
       tags.push({ name: 'Model-Name', values: state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value || ''});
-      tags.push({ name: 'Model-Creator', values: state.node.address });
+      tags.push({ name: 'Model-Creator', values: state.node.owner.address });
       tags.push({ name: 'Model-Fee', values:  arweave.ar.arToWinston(rate) });
       tags.push({ name: 'Operation-Name', values: 'Operator Registration'});
 
@@ -48,8 +47,13 @@ const Register = () => {
      
       await arweave.transactions.sign(tx);
       const response = await arweave.transactions.post(tx);
-      setMessage(`Transaction Successful. View at: ${tx.id}`);
-      setIsRegistered(true);
+      if (response.status === 200) {
+        setMessage(`Transaction Successful. View at: ${tx.id}`);
+        setIsRegistered(true);
+      } else {
+        setError('Something went Wrong. Please Try again...');
+      }
+      
     } catch (error) {
       setError('Something went Wrong. Please Try again...');
     }

@@ -3,7 +3,7 @@ import { Avatar, Box, Card, CardActionArea, Container, Grid, IconButton, Stack, 
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SlideCard from '@/components/slide-card';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import GroupIcon from '@mui/icons-material/Group';
 import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
 import EngineeringIcon from '@mui/icons-material/Engineering';
@@ -32,7 +32,7 @@ export default function Home() {
 
   const { data, loading, error } = useQuery(TOP5QUERY);
   const [slideIdx, setSlideIdx ] = useState(0);
-  const [ swipeRight, setSwipeRight] = useState(false);
+  const [ , setSwipeRight] = useState(false);
   const [ swiped, setSwiped ] = useState(true);
   const max = 5;
 
@@ -80,7 +80,7 @@ export default function Home() {
               <SlideCard  key={index} data={edge}/>
             ))
           } */}
-          <SlideCard data={onDisplayTxs.find((_, index) => index === slideIdx)!}/>
+          <SlideCard data={onDisplayTxs.find((_, index) => index === slideIdx)}/>
         </Box>
         <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
           <IconButton disableRipple={true} onClick={() => click('right')}><ChevronRightIcon /></IconButton>

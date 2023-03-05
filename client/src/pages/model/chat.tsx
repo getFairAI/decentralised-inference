@@ -1,11 +1,11 @@
-import { Box, Card, CardActionArea, CardContent, Container, Divider, Grid, IconButton, InputAdornment, List, ListItem, ListItemButton, ListItemText, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Box, Card, CardContent, Container, Divider, Grid, IconButton, InputAdornment, List, ListItemButton, ListItemText, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { Params, useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import useArweave, { getActiveAddress, getData } from '@/context/arweave';
-import { useLazyQuery, useQuery } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { APP_VERSION, DEFAULT_TAGS, DEV_BUNDLR_URL, MODEL_INFERENCE_REQUEST_TAG, MODEL_INFERENCE_RESULT_TAG } from '@/constants';
-import { QUERY_CHAT_HISTORY, QUERY_INFERENCE_RESULTS } from '@/queries/graphql';
+import { QUERY_CHAT_HISTORY } from '@/queries/graphql';
 import { IEdge } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
@@ -28,14 +28,14 @@ const Chat = () => {
   const [ userAddr, setUserAddr ] = useState<string | undefined>(undefined);
   const [ messages, setMessages ] = useState<Message[]>([]);
   const [ newMessage, setNewMessage ] = useState<string>('');
-  const [ pendingTxs, setPendingTxs ] = useState<Transaction[]>([]);
+  const [ pendingTxs ] = useState<Transaction[]>([]);
   const [ conversationIds, setConversationIds ] = useState<string[]>([]);
   const [ currentConversationId, setCurrentConversationId ] = useState<string>('C-1');
 
   const { enqueueSnackbar } = useSnackbar();
   const { arweave } = useArweave();
   
-  const [ getConversationHistory, { data, loading, error, previousData, stopPolling, startPolling, refetch } ] = useLazyQuery(QUERY_CHAT_HISTORY);
+  const [ getConversationHistory, { data, loading, previousData } ] = useLazyQuery(QUERY_CHAT_HISTORY);
 
   useEffect(() => {
     const reqAddr = async () => setUserAddr(await getActiveAddress());
@@ -74,7 +74,7 @@ const Chat = () => {
 
   const reqData = async (argData: { results: IEdge[], requests: IEdge[]}) => {
     const allData = [ ...argData.results, ...argData.requests ];
-    const cids = [... new Set(allData.map((x: IEdge) => x.node.tags.find(tag => tag.name === 'Conversation-Identifier')?.value!))].filter(el => el !== undefined);
+    const cids = [... new Set(allData.map((x: IEdge) => x.node.tags.find(tag => tag.name === 'Conversation-Identifier')?.value))].filter(el => el !== undefined) as string[];
     setConversationIds(cids.length > 0 ? cids : conversationIds.length > 0 ? conversationIds : [ currentConversationId ]);
     allData.sort((a: IEdge, b: IEdge) => {
       if (!a.node.block?.timestamp) return 1;
@@ -167,7 +167,7 @@ const Chat = () => {
       const bundlrRes = await bundlr.upload(newMessage, { tags });
   
       const temp = [ ...messages];
-      temp.push({ msg: newMessage, type: 'request', timestamp: bundlrRes.timestamp!, txid: bundlrRes.id});
+      temp.push({ msg: newMessage, type: 'request', timestamp: bundlrRes.timestamp || 0, txid: bundlrRes.id});
       setMessages(temp);
       setNewMessage('');
       enqueueSnackbar(`Inference Request, TxId: https://arweave.net/${bundlrRes.id}`, { variant: 'success'});
@@ -210,7 +210,7 @@ const Chat = () => {
                 key={idx}
                 alignItems="flex-start"
                 selected={cid === currentConversationId}
-                onClick={(event) => handleListItemClick(cid)}
+                onClick={() => handleListItemClick(cid)}
               >
                 <ListItemText primary={cid}/>
               </ListItemButton>

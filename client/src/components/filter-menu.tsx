@@ -1,12 +1,9 @@
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useState, MouseEvent } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { Box, Checkbox } from '@mui/material';
-
-const ITEM_HEIGHT = 48;
 
 const FilterMenu = ({ options }: { options: string[]}) => {
   // const [ selected, setSelected ]

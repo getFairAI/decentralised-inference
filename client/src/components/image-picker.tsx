@@ -1,9 +1,10 @@
 import { DEV_ARWEAVE_URL } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
+import { ApolloError } from '@apollo/client';
 import { Box, CircularProgress, ImageList, ImageListItem } from '@mui/material';
 import { useController, UseControllerProps } from 'react-hook-form';
 
-const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boolean, error: any, closeHandler: Function}) => {
+const ImagePicker = (props: UseControllerProps & { data: IEdge[], loading: boolean, error?: ApolloError, closeHandler: () => void}) => {
   const { field } = useController(props);
 
   if (props.loading) {
