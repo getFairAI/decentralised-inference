@@ -37,9 +37,16 @@
         ],
         "react/react-in-jsx-scope": "off",
         "camelcase": "error",
-        "spaced-comment": "error",
+        "spaced-comment": ["error", "always", { "markers": ["/"] }],
         "no-duplicate-imports": "error",
-        "@typescript-eslint/triple-slash-reference": { "path": "never", "types": "always", "lib": "never" }
+        "@typescript-eslint/triple-slash-reference": [
+            "error",
+            {
+                "path": "never",
+                "types": "always",
+                "lib": "never"
+            }
+        ]
     },
     "settings": {
         "import/resolver": {
