@@ -42,11 +42,11 @@ interface Message {
   msg: string;
   type: 'response' | 'request';
   timestamp: number;
-  txid: string;
+  txidModel: string;
 }
 
 const Chat = () => {
-  const { txid, address } = useParams();
+  const { txid:txidModel, address } = useParams();
   const { state } = useLocation();
   const [userAddr, setUserAddr] = useState<string | undefined>(undefined);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -68,7 +68,7 @@ const Chat = () => {
   }, []); // run only once
 
   useEffect(() => {
-    if (txid && userAddr) {
+    if (txidModel && userAddr) {
       const commonTags = [
         ...DEFAULT_TAGS,
         { name: 'Model-Name', values: [state.modelName] },
@@ -93,7 +93,7 @@ const Chat = () => {
         pollInterval: 5000,
       });
     }
-  }, [txid, userAddr]);
+  }, [txidModel, userAddr]);
 
   const reqData = async (argData: { results: IEdge[]; requests: IEdge[] }) => {
     const allData = [...argData.results, ...argData.requests];
@@ -124,13 +124,13 @@ const Chat = () => {
               msg: (await getData(el.node.id)) as string,
               type: 'request',
               timestamp: el.node.block?.timestamp || 0,
-              txid: el.node.id,
+              txidModel: el.node.id,
             })
           : temp.push({
               msg: (await getData(el.node.id)) as string,
               type: 'response',
               timestamp: el.node.block?.timestamp || 0,
-              txid: el.node.id,
+              txidModel: el.node.id,
             }),
       ),
     );
@@ -223,7 +223,7 @@ const Chat = () => {
         msg: newMessage,
         type: 'request',
         timestamp: bundlrRes.timestamp || 0,
-        txid: bundlrRes.id,
+        txidModel: bundlrRes.id,
       });
       setMessages(temp);
       setNewMessage('');
@@ -345,7 +345,7 @@ const Chat = () => {
                     margin='8px'
                   >
                     <Box display={'flex'} alignItems='center'>
-                      {!!pendingTxs.find((pending) => el.txid === pending.id) && (
+                      {!!pendingTxs.find((pending) => el.txidModel === pending.id) && (
                         <Tooltip
                           title='This transaction is still not ocnfirmed by the network'
                           sx={{ margin: '8px' }}
