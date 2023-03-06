@@ -17,7 +17,7 @@ const CustomProgress = (props: LinearProgressProps & { value: number }) => {
           <LinearProgress variant='determinate' /* {...props} */ value={progress} />
         </Box>
         <Box sx={{ minWidth: 35 }}>
-          <Typography variant='body2' color='text.secondary'>{`${Math.round(
+          <Typography variant='body2' color='text.secondary' data-testid='progress-bar-text'>{`${Math.round(
             progress,
           )}%`}</Typography>
         </Box>
