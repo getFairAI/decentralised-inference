@@ -1,9 +1,19 @@
 import { gql, useQuery } from '@apollo/client';
-import { Avatar, Box, Card, CardActionArea, Container, Grid, IconButton, Stack, Typography} from '@mui/material';
+import {
+  Avatar,
+  Box,
+  Card,
+  CardActionArea,
+  Container,
+  Grid,
+  IconButton,
+  Stack,
+  Typography,
+} from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SlideCard from '@/components/slide-card';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import GroupIcon from '@mui/icons-material/Group';
 import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
 import EngineeringIcon from '@mui/icons-material/Engineering';
@@ -13,10 +23,7 @@ import { ThumbUp } from '@mui/icons-material';
 export default function Home() {
   const TOP5QUERY = gql`
     query txs {
-      transactions (
-        first: 5
-      )
-      {
+      transactions(first: 5) {
         edges {
           node {
             id
@@ -31,9 +38,9 @@ export default function Home() {
   `;
 
   const { data, loading, error } = useQuery(TOP5QUERY);
-  const [slideIdx, setSlideIdx ] = useState(0);
-  const [ swipeRight, setSwipeRight] = useState(false);
-  const [ swiped, setSwiped ] = useState(true);
+  const [slideIdx, setSlideIdx] = useState(0);
+  const [, setSwipeRight] = useState(false);
+  const [swiped, setSwiped] = useState(true);
   const max = 5;
 
   if (loading) {
@@ -57,7 +64,6 @@ export default function Home() {
       } else {
         setSlideIdx(slideIdx - 1);
       }
-      
     } else if (direction === 'right') {
       setSwipeRight(true);
       if (slideIdx === 4) {
@@ -66,32 +72,61 @@ export default function Home() {
         setSlideIdx(slideIdx + 1);
       }
     }
-  }
+  };
 
   return (
-    <Container sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', alignContent: 'space-around', top: '64px', position: 'relative'}}>
-      <Box display={'flex'} >
+    <Container
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-around',
+        alignContent: 'space-around',
+        top: '64px',
+        position: 'relative',
+      }}
+    >
+      <Box display={'flex'}>
         <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-          <IconButton disableRipple={true}  onClick={() => click('left')}><ChevronLeftIcon /></IconButton>
+          <IconButton disableRipple={true} onClick={() => click('left')}>
+            <ChevronLeftIcon />
+          </IconButton>
         </Box>
-        <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'space-between' }, margin: '16px' }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: { md: 'flex', justifyContent: 'space-between' },
+            margin: '16px',
+          }}
+        >
           {/* {
             onDisplayTxs.map((edge, index) => (
               <SlideCard  key={index} data={edge}/>
             ))
           } */}
-          <SlideCard data={onDisplayTxs.find((_, index) => index === slideIdx)!}/>
+          <SlideCard data={onDisplayTxs.find((_, index) => index === slideIdx)} />
         </Box>
         <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-          <IconButton disableRipple={true} onClick={() => click('right')}><ChevronRightIcon /></IconButton>
+          <IconButton disableRipple={true} onClick={() => click('right')}>
+            <ChevronRightIcon />
+          </IconButton>
         </Box>
       </Box>
       <Box sx={{ margin: '16px' }}>
         <Box display={'flex'}>
-          <Typography variant='h4' display={'flex'}>Arweave Powered AI Model MarketPlace</Typography>
-          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap><GroupIcon fontSize='large'/> 1k users</Typography>
-          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap><ModelTrainingIcon fontSize='large'/>260 Models</Typography>
-          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap><EngineeringIcon fontSize='large'/>600 Operators</Typography>
+          <Typography variant='h4' display={'flex'}>
+            Arweave Powered AI Model MarketPlace
+          </Typography>
+          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap>
+            <GroupIcon fontSize='large' /> 1k users
+          </Typography>
+          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap>
+            <ModelTrainingIcon fontSize='large' />
+            260 Models
+          </Typography>
+          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap>
+            <EngineeringIcon fontSize='large' />
+            600 Operators
+          </Typography>
         </Box>
         {/* <Card>
           <CardActionArea sx={{ height: '150px'}}>
@@ -109,19 +144,25 @@ export default function Home() {
           <Grid item xs={12} sm={12} md={6}>
             <Stack spacing={2}>
               {txs.map((edge: IEdge, index: number) => (
-                <Box sx={{ width: '100%'}} display={'flex'} flexDirection={'row'} key={index}>
-                  <Card sx={{ width: '100%'}}>
-                    <CardActionArea sx={{ width: '100%'}}>
+                <Box sx={{ width: '100%' }} display={'flex'} flexDirection={'row'} key={index}>
+                  <Card sx={{ width: '100%' }}>
+                    <CardActionArea sx={{ width: '100%' }}>
                       <Box margin={'8px'} display='flex' justifyContent={'space-between'}>
                         <Box display='flex'>
-                          <Avatar sx={{ width: 56, height: 56 }}/>
+                          <Avatar sx={{ width: 56, height: 56 }} />
                           <Box sx={{ maxWidth: '300px' }} marginLeft={'8px'}>
-                            <Typography variant="h6">{edge.node.tags.find(el => el.name === 'test')?.value}</Typography>
-                            <Typography variant='h6' noWrap>{edge.node.id}</Typography>
+                            <Typography variant='h6'>
+                              {edge.node.tags.find((el) => el.name === 'test')?.value}
+                            </Typography>
+                            <Typography variant='h6' noWrap>
+                              {edge.node.id}
+                            </Typography>
                           </Box>
                         </Box>
                         <Box display={'flex'} alignItems='self-end'>
-                          <Typography variant='body1' lineHeight={1} paddingRight={'8px'}>2</Typography>
+                          <Typography variant='body1' lineHeight={1} paddingRight={'8px'}>
+                            2
+                          </Typography>
                           <ThumbUp></ThumbUp>
                         </Box>
                       </Box>
@@ -133,20 +174,26 @@ export default function Home() {
           </Grid>
           <Grid item xs={12} sm={12} md={6}>
             <Stack spacing={2}>
-            {txs.map((edge: IEdge, index: number) => (
-                <Box sx={{ width: '100%'}} display={'flex'} flexDirection={'row'} key={index}>
-                  <Card sx={{ width: '100%'}}>
-                    <CardActionArea sx={{ width: '100%'}}>
+              {txs.map((edge: IEdge, index: number) => (
+                <Box sx={{ width: '100%' }} display={'flex'} flexDirection={'row'} key={index}>
+                  <Card sx={{ width: '100%' }}>
+                    <CardActionArea sx={{ width: '100%' }}>
                       <Box margin={'8px'} display='flex' justifyContent={'space-between'}>
                         <Box display='flex'>
-                          <Avatar sx={{ width: 56, height: 56 }}/>
+                          <Avatar sx={{ width: 56, height: 56 }} />
                           <Box sx={{ maxWidth: '300px' }} marginLeft={'8px'}>
-                            <Typography variant="h6">{edge.node.tags.find(el => el.name === 'test')?.value}</Typography>
-                            <Typography variant='h6' noWrap>{edge.node.id}</Typography>
+                            <Typography variant='h6'>
+                              {edge.node.tags.find((el) => el.name === 'test')?.value}
+                            </Typography>
+                            <Typography variant='h6' noWrap>
+                              {edge.node.id}
+                            </Typography>
                           </Box>
                         </Box>
                         <Box display={'flex'} alignItems='self-end'>
-                          <Typography variant='body1' lineHeight={1} paddingRight={'8px'}>2</Typography>
+                          <Typography variant='body1' lineHeight={1} paddingRight={'8px'}>
+                            2
+                          </Typography>
                           <ThumbUp></ThumbUp>
                         </Box>
                       </Box>

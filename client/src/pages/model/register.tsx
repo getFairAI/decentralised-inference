@@ -1,33 +1,47 @@
-import { CustomStepper } from "@/components/stepper";
-import { DEFAULT_TAGS, REGISTER_OPERATION_TAG, STATIC_ADDRESS } from "@/constants";
-import useArweave from "@/context/arweave";
-import { IEdge, ITag } from "@/interfaces/arweave";
-import { QUERY_REGISTERED_OPERATORS } from "@/queries/graphql";
-import { useQuery } from "@apollo/client";
-import { Container, Box, Card, CardContent, Avatar, SvgIcon, TextField, FormControl, InputLabel, Select, MenuItem, Divider, Typography, Snackbar, Alert } from "@mui/material";
-import { useState } from "react";
-import { useLocation, useParams, useRouteLoaderData, useSearchParams } from "react-router-dom";
+import { CustomStepper } from '@/components/stepper';
+import { DEFAULT_TAGS, REGISTER_OPERATION_TAG, STATIC_ADDRESS } from '@/constants';
+import useArweave from '@/context/arweave';
+import { IEdge, ITag } from '@/interfaces/arweave';
+import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import { useQuery } from '@apollo/client';
+import {
+  Container,
+  Box,
+  Card,
+  CardContent,
+  Avatar,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider,
+  Typography,
+  Snackbar,
+  Alert,
+} from '@mui/material';
+import { useState } from 'react';
+import { useLocation, useParams, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
-  const { data }: any = useRouteLoaderData('model');
-  const { state }: { state: any } = useLocation();
+  const { data } = useRouteLoaderData('model') as { data: string };
+  const { state }: { state: IEdge } = useLocation();
   const { txid } = useParams();
-  
+
   const { arweave } = useArweave();
-  const [ error, setError ] = useState<string | undefined>(undefined);
-  const [ message, setMessage ] = useState<string | undefined>(undefined);
-  const [ isRegistered, setIsRegistered ] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+  const [message, setMessage] = useState<string | undefined>(undefined);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const tags = [
     ...DEFAULT_TAGS,
     REGISTER_OPERATION_TAG,
     {
-      name: "Model-Transaction",
-      values: [ txid ]
+      name: 'Model-Transaction',
+      values: [txid],
     },
   ];
-  const { data: queryData, loading, error: queryError } = useQuery(QUERY_REGISTERED_OPERATORS, { variables: { tags }});
-  console.log(data);
+  const { data: queryData } = useQuery(QUERY_REGISTERED_OPERATORS, { variables: { tags } });
 
   const handleRegister = async (rate: string) => {
     try {
@@ -36,41 +50,48 @@ const Register = () => {
         quantity: arweave.ar.arToWinston('0.05'),
       });
       const tags = [];
-      tags.push({ name: 'App-Name', values: 'Fair Protocol'});
-      tags.push({ name: 'App-Version', values: 'test'});
-      tags.push({ name: 'Model-Name', values: state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value || ''});
-      tags.push({ name: 'Model-Creator', values: state.node.address });
-      tags.push({ name: 'Model-Fee', values:  arweave.ar.arToWinston(rate) });
-      tags.push({ name: 'Operation-Name', values: 'Operator Registration'});
-
+      tags.push({ name: 'App-Name', values: 'Fair Protocol' });
+      tags.push({ name: 'App-Version', values: 'test' });
+      tags.push({
+        name: 'Model-Name',
+        values: state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value || '',
+      });
+      tags.push({ name: 'Model-Creator', values: state.node.owner.address });
+      tags.push({ name: 'Model-Fee', values: arweave.ar.arToWinston(rate) });
+      tags.push({ name: 'Operation-Name', values: 'Operator Registration' });
 
       tags.map((tag) => tx.addTag(tag.name, tag.values));
-     
+
       await arweave.transactions.sign(tx);
       const response = await arweave.transactions.post(tx);
-      setMessage(`Transaction Successful. View at: ${tx.id}`);
-      setIsRegistered(true);
+      if (response.status === 200) {
+        setMessage(`Transaction Successful. View at: ${tx.id}`);
+        setIsRegistered(true);
+      } else {
+        setError('Something went Wrong. Please Try again...');
+      }
     } catch (error) {
       setError('Something went Wrong. Please Try again...');
     }
-  }
+  };
 
   const handleClose = () => {
     setError(undefined);
     setMessage(undefined);
-  }
+  };
 
   if (queryData) {
     console.log(queryData);
   }
 
-  return (<Container>
+  return (
+    <Container>
       <Box sx={{ margin: '8px', top: '64px', position: 'relative' }}>
         <Card>
           <CardContent>
             <Box display={'flex'} justifyContent={'space-evenly'}>
               <Box display={'flex'} flexDirection={'column'}>
-                <Avatar sx={ { width: '200px', height: '200px' }}/>
+                <Avatar sx={{ width: '200px', height: '200px' }} />
                 {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
                   <Button startIcon={<DownloadIcon />}>
                     <a href={`http://localhost:1984/${txid}`} download>download</a>
@@ -89,49 +110,58 @@ const Register = () => {
                     <ThumbDownIcon />
                   </IconButton> */}
                 </Box>
-                
               </Box>
               <Box>
-                <TextField label="Name" variant="outlined" value={''} fullWidth inputProps={{ readOnly: true }}/>
-                <FormControl fullWidth margin="normal">
+                <TextField
+                  label='Name'
+                  variant='outlined'
+                  value={''}
+                  fullWidth
+                  inputProps={{ readOnly: true }}
+                />
+                <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>
-                  <Select
-                    value={'text'}
-                    label="Category"
-                    inputProps={{ readOnly: true }}
-                  >
+                  <Select value={'text'} label='Category' inputProps={{ readOnly: true }}>
                     <MenuItem value={'text'}>Text</MenuItem>
                     <MenuItem value={'audio'}>Audio</MenuItem>
                     <MenuItem value={'video'}>Video</MenuItem>
                   </Select>
                 </FormControl>
                 <TextField
-                  label="Description"
-                  variant="outlined"
+                  label='Description'
+                  variant='outlined'
                   multiline
                   value={''}
                   inputProps={{ readOnly: true }}
                   style={{ width: '100%' }}
-                  margin="normal"
+                  margin='normal'
                   minRows={2}
                   maxRows={3}
                 />
               </Box>
             </Box>
             <Divider textAlign='left'>
-              <Typography variant="h6" gutterBottom>Register</Typography>
+              <Typography variant='h6' gutterBottom>
+                Register
+              </Typography>
             </Divider>
-            <CustomStepper data={data} handleSubmit={handleRegister} isRegistered={isRegistered}/>
+            <CustomStepper data={data} handleSubmit={handleRegister} isRegistered={isRegistered} />
           </CardContent>
         </Card>
       </Box>
       <Snackbar open={!!error || !!message} autoHideDuration={6000} onClose={handleClose}>
-        {
-          error ? <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert>
-            : <Alert severity="success" sx={{ width: '100%' }}>{message}</Alert>
-        }
+        {error ? (
+          <Alert severity='error' sx={{ width: '100%' }}>
+            {error}
+          </Alert>
+        ) : (
+          <Alert severity='success' sx={{ width: '100%' }}>
+            {message}
+          </Alert>
+        )}
       </Snackbar>
-    </Container>);
-}
+    </Container>
+  );
+};
 
 export default Register;

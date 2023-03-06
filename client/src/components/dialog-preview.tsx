@@ -1,7 +1,7 @@
-import { Dialog, Slide } from "@mui/material";
-import { TransitionProps } from "@mui/material/transitions";
-import { forwardRef, ReactElement, Ref } from "react";
-import rehypeSanitize from "rehype-sanitize";
+import { Dialog, Slide } from '@mui/material';
+import { TransitionProps } from '@mui/material/transitions';
+import { forwardRef, ReactElement, Ref } from 'react';
+import rehypeSanitize from 'rehype-sanitize';
 import MDEditor from '@uiw/react-md-editor';
 
 const Transition = forwardRef(function Transition(
@@ -10,10 +10,10 @@ const Transition = forwardRef(function Transition(
   },
   ref: Ref<unknown>,
 ) {
-  return <Slide direction="up" ref={ref} {...props} />;
+  return <Slide direction='up' ref={ref} {...props} />;
 });
 
-const DialogPreview = ({ open }: { open: boolean}) => {
+const DialogPreview = ({ open }: { open: boolean }) => {
   /* const [open, setOpen] = useState(false);
 
   const handleClickOpen = () => {
@@ -44,6 +44,6 @@ const DialogPreview = ({ open }: { open: boolean}) => {
       </Dialog>
     </div>
   );
-}
+};
 
 export default DialogPreview;
