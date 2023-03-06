@@ -550,8 +550,9 @@ export const QUERY_CHAT_HISTORY = gql`
       }
     }
 
-    results: transactions(tags: $tagsResults) # recipients: [ $address ]
-    {
+    results: transactions(
+      tags: $tagsResults # recipients: [ $address ]
+    ) {
       edges {
         node {
           id
