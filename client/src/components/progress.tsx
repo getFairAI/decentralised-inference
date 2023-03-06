@@ -14,16 +14,16 @@ const CustomProgress = (props: LinearProgressProps & { value: number }) => {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Box sx={{ width: '100%', mr: 1 }}>
-          <LinearProgress variant="determinate" /* {...props} */ value={progress}/>
+          <LinearProgress variant='determinate' /* {...props} */ value={progress} />
         </Box>
         <Box sx={{ minWidth: 35 }}>
-          <Typography variant="body2" color="text.secondary">{`${Math.round(
+          <Typography variant='body2' color='text.secondary'>{`${Math.round(
             progress,
           )}%`}</Typography>
         </Box>
       </Box>
     </Box>
   );
-}
+};
 
 export default CustomProgress;

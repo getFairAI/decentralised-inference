@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Root from './root';
 import Home from '@/pages/home';
@@ -15,33 +15,33 @@ import Chat from './pages/model/chat';
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <Root />,
     children: [
       {
         path: '',
-        element: <Home />
+        element: <Home />,
       },
       {
         path: 'explore',
-        element: <Explore />
+        element: <Explore />,
       },
       {
         path: 'upload',
-        element: <Upload />
+        element: <Upload />,
       },
       {
         path: 'operators',
         children: [
           {
             path: '',
-            element: <Operators />
+            element: <Operators />,
           },
           {
             path: 'details/:address',
-            element: <OperatorDetails />
-          }
-        ]
+            element: <OperatorDetails />,
+          },
+        ],
       },
       {
         path: 'model/:txid',
@@ -51,19 +51,19 @@ const router = createBrowserRouter([
         children: [
           {
             path: 'detail',
-            element: <Detail />
+            element: <Detail />,
           },
           {
             path: 'chat/:address',
-            element: <Chat />
+            element: <Chat />,
           },
           {
             path: 'register',
-            element: <Register />
-          }
-        ]
-      }
-    ]
+            element: <Register />,
+          },
+        ],
+      },
+    ],
   },
 ]);
 
@@ -71,4 +71,4 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <RouterProvider router={router} />
   </React.StrictMode>,
-)
+);
