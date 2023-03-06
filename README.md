@@ -1,5 +1,6 @@
 # Decentralized Inference
 
+![Latest Development Changes](https://github.com/FAIR-Protocol/decentralized-inference/actions/workflows/development.yml/badge.svg?event=push)
 ### File Structure
 ```bash
 ├── poc-ng-wireframes
