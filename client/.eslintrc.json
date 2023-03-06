@@ -38,7 +38,8 @@
         "react/react-in-jsx-scope": "off",
         "camelcase": "error",
         "spaced-comment": "error",
-        "no-duplicate-imports": "error"
+        "no-duplicate-imports": "error",
+        "@typescript-eslint/triple-slash-reference": { "path": "never", "types": "always", "lib": "never" }
     },
     "settings": {
         "import/resolver": {
