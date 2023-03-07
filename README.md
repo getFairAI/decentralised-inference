@@ -14,13 +14,13 @@
 ## Installation
 Initialize Submodule:
 ```
-git submodule update  --init
+git submodule update  --init --recursive --remote
 ```
 
 Enter Client directory and install dependencies:
 ```
 cd client
-npm install
+npm run build-deps && npm install
 ```
 
 ## Running
