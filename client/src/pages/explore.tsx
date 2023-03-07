@@ -25,8 +25,7 @@ const Explore = () => {
   const { data, loading, error } = useQuery(LIST_MODELS_QUERY /* { fetchPolicy: "no-cache" } */);
   if (loading) {
     return <h2>Loading...</h2>;
-  }
-  else if (error) {
+  } else if (error) {
     console.error(error);
     return null;
   }

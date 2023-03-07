@@ -46,7 +46,7 @@ interface Message {
 }
 
 const Chat = () => {
-  const { txid:txidModel, address } = useParams();
+  const { txid: txidModel, address } = useParams();
   const { state } = useLocation();
   const [userAddr, setUserAddr] = useState<string | undefined>(undefined);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -121,22 +121,22 @@ const Chat = () => {
           ? temp.push({
               msg: (await getData(el.node.id)) as string,
               type: 'request',
-              timestamp: el.node.block?.timestamp || Date.now()/1000,
+              timestamp: el.node.block?.timestamp || Date.now() / 1000,
               txidModel: el.node.id,
             })
           : temp.push({
               msg: (await getData(el.node.id)) as string,
               type: 'response',
-              timestamp: el.node.block?.timestamp + 0.001 || (Date.now()/1000) + 0.001,
+              timestamp: el.node.block?.timestamp + 0.001 || Date.now() / 1000 + 0.001,
               txidModel: el.node.id,
             }),
       ),
     );
 
-    temp.sort(function(a, b) {
+    temp.sort(function (a, b) {
       return a.timestamp - b.timestamp;
     });
-    
+
     setMessages(temp);
   };
 
@@ -372,9 +372,7 @@ const Chat = () => {
                       variant='caption'
                       textAlign={el.type === 'request' ? 'right' : 'left'}
                     >
-                      {
-                        new Date(el.timestamp * 1000).toLocaleTimeString()
-                      }
+                      {new Date(el.timestamp * 1000).toLocaleTimeString()}
                     </Typography>
                   </Box>
                 </Stack>

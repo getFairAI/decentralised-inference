@@ -124,7 +124,11 @@ export default function BasicTable(props: {
                     <IconButton
                       onClick={() =>
                         navigate(`../chat/${row.address}`, {
-                          state: { modelName: row.modelName, modelCreator: row.modelCreator, fee: row.fee },
+                          state: {
+                            modelName: row.modelName,
+                            modelCreator: row.modelCreator,
+                            fee: row.fee,
+                          },
                         })
                       }
                     >

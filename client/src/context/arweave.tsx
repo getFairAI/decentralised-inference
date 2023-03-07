@@ -40,7 +40,7 @@ const useArweave = () => {
     'ACCESS_PUBLIC_KEY',
     'SIGNATURE',
     'ACCESS_ADDRESS',
-    'SIGN_TRANSACTION'
+    'SIGN_TRANSACTION',
   ]);
 
   const connect = async () => {
