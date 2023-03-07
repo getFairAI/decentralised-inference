@@ -13,7 +13,7 @@ import { ChangeEvent, CSSProperties, DragEvent, useEffect, useState } from 'reac
 import { useController, UseControllerProps } from 'react-hook-form';
 import ClearIcon from '@mui/icons-material/Clear';
 import { WebBundlr } from 'bundlr-custom';
-import { DEV_BUNDLR_URL } from '@/constants';
+import { NODE1_BUNDLR_URL } from '@/constants';
 
 type FileControlProps = UseControllerProps & { mat?: InputProps; style?: CSSProperties };
 
@@ -121,7 +121,7 @@ const FileControl = (props: FileControlProps) => {
     // Check the price to upload 1MB of data
     // The function accepts a number of bytes, so to check the price of
     // 1MB, check the price of 1,048,576 bytes.
-    const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
+    const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
     console.log(bundlr);
     const atomicPrice = await bundlr.getPrice(fileSize);

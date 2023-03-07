@@ -33,7 +33,7 @@ const FundDialog = ({
   setOpen: Dispatch<SetStateAction<boolean>>;
   handleFundFinished: FundFinishedFn;
 }) => {
-  const [node, setNode] = useState(DEV_BUNDLR_URL);
+  const [node, setNode] = useState(NODE1_BUNDLR_URL);
   const [amount, setAmount] = useState(0);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(false);

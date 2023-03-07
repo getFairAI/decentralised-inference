@@ -2,10 +2,10 @@ import Arweave from 'arweave';
 import { useEffect, useState } from 'react';
 import { WebBundlr } from 'bundlr-custom';
 import { PermissionType } from 'arconnect';
-import { DEV_ARWEAVE_URL, DEV_BUNDLR_URL } from '@/constants';
+import { NET_ARWEAVE_URL, NODE1_BUNDLR_URL } from '@/constants';
 
 const arweave = Arweave.init({
-  host: DEV_ARWEAVE_URL.split('//')[1],
+  host: NET_ARWEAVE_URL.split('//')[1],
   port: 443,
   protocol: 'https',
 });
@@ -17,12 +17,11 @@ export const getTxTags = async (txid: string) => {
 };
 
 export const getData = async (txid: string) => {
-  const result = await arweave.transactions.getData(txid, { decode: true });
-  if (typeof result === 'string') {
-    return result;
-  } else {
-    return new TextDecoder().decode(result);
-  }
+  // const result = await arweave.transactions.getData(txid);
+  const result = await fetch('http://arweave.net/' + txid);
+  const text = await (await result.blob()).text();
+  console.log(text);
+  return text;
 };
 
 export const getActiveAddress = async () => {
@@ -38,15 +37,10 @@ const useArweave = () => {
   const [network, setNetwork] = useState('');
   const [bundlr, setBundlr] = useState<WebBundlr | undefined>(undefined);
   const [permissions] = useState<PermissionType[]>([
-    'ACCESS_ALL_ADDRESSES',
     'ACCESS_PUBLIC_KEY',
     'SIGNATURE',
     'ACCESS_ADDRESS',
     'SIGN_TRANSACTION',
-    'ACCESS_ARWEAVE_CONFIG',
-    'ENCRYPT',
-    'DECRYPT',
-    'DISPATCH',
   ]);
 
   const connect = async () => {
@@ -60,7 +54,7 @@ const useArweave = () => {
       setIsLoading(false);
       setIsConnected(true);
       // await signer.refresh(window.arweaveWallet);
-      const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
+      const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
       await bundlr.ready();
       setBundlr(bundlr);
     } catch (error) {
