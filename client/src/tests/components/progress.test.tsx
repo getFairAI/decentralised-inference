@@ -1,8 +1,8 @@
 import {render, screen} from '@testing-library/react';
 import CustomProgress from '@/components/progress';
 
-describe('Simple working test', () => {
-  it('should display progress bar with percetage 0%', async () => {
+describe('components/progress.tsx', () => {
+  it('should display progress bar with percetage 10%', async () => {
     render(<CustomProgress value={10}/>);
     expect(await screen.queryByTestId('progress-bar-text')?.textContent).toEqual('10%');
   });
