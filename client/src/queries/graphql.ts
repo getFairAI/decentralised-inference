@@ -55,7 +55,6 @@ export const LIST_MODELS_QUERY = gql`
         cursor
         node {
           id
-          anchor
           signature
           recipient
           owner {
@@ -137,7 +136,6 @@ export const QUERY_REGISTERED_MODELS = gql`
             cursor
             node {
                 id
-                anchor
                 signature
                 recipient
                 owner {
@@ -227,7 +225,6 @@ export const QUERY_REGISTERED_OPERATORS = gql`
             cursor
             node {
                 id
-                anchor
                 signature
                 recipient
                 owner {
@@ -278,7 +275,6 @@ export const QUERY_CANCELLED_OPERATORS = gql`
         cursor
         node {
           id
-          anchor
           signature
           recipient
           owner {
@@ -429,7 +425,6 @@ export const QUERY_OPERATOR_HISTORY = gql`
         cursor
         node {
           id
-          anchor
           signature
           recipient
           owner {
@@ -470,7 +465,6 @@ export const QUERY_OPERATOR_HISTORY = gql`
         cursor
         node {
           id
-          anchor
           signature
           recipient
           owner {
@@ -514,7 +508,6 @@ export const QUERY_CHAT_HISTORY = gql`
       edges {
         node {
           id
-          anchor
           signature
           recipient
           owner {
@@ -556,7 +549,6 @@ export const QUERY_CHAT_HISTORY = gql`
       edges {
         node {
           id
-          anchor
           signature
           recipient
           owner {
