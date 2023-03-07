@@ -40,8 +40,7 @@ const Operators = () => {
   if (loading) {
     return <h2>Loading...</h2>;
   }
-
-  if (error) {
+  else if (error) {
     console.error(error);
     return null;
   }

@@ -27,7 +27,7 @@ import FundDialog from '@/components/fund-dialog';
 import CustomProgress from '@/components/progress';
 import { GET_IMAGES_TXIDS } from '@/queries/graphql';
 import fileReaderStream from 'filereader-stream';
-import { DEV_BUNDLR_URL } from '@/constants';
+import { NODE1_BUNDLR_URL } from '@/constants';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -72,12 +72,12 @@ const Upload = () => {
     if ((await getNodeBalance()) <= 0) {
       setFundOpen(true);
     } else {
-      handleFundFinished(DEV_BUNDLR_URL); // use default node
+      handleFundFinished(NODE1_BUNDLR_URL); // use default node
     }
   };
 
   const getNodeBalance = async () => {
-    const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
+    const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
     const atomicBalance = await bundlr.getLoadedBalance();
 
@@ -90,7 +90,7 @@ const Upload = () => {
     // Check the price to upload 1MB of data
     // The function accepts a number of bytes, so to check the price of
     // 1MB, check the price of 1,048,576 bytes.
-    const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
+    const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
 
     const atomicPrice = await bundlr.getPrice(fileSize);
