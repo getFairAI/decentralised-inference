@@ -24,7 +24,7 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import {
   APP_VERSION,
   DEFAULT_TAGS,
-  DEV_BUNDLR_URL,
+  NODE1_BUNDLR_URL,
   MODEL_INFERENCE_REQUEST_TAG,
   MODEL_INFERENCE_RESULT_TAG,
 } from '@/constants';
@@ -111,11 +111,9 @@ const Chat = () => {
         ? conversationIds
         : [currentConversationId],
     );
-    allData.sort((a: IEdge, b: IEdge) => {
-      if (!a.node.block?.timestamp) return 1;
-      if (!b.node.block?.timestamp) return -1;
-      return new Date(a.node.block.timestamp) < new Date(b.node.block.timestamp) ? 1 : -1;
-    });
+
+    console.log(allData);
+
     const temp: Message[] = [];
     await Promise.all(
       allData.map(async (el: IEdge) =>
@@ -123,17 +121,22 @@ const Chat = () => {
           ? temp.push({
               msg: (await getData(el.node.id)) as string,
               type: 'request',
-              timestamp: el.node.block?.timestamp || 0,
+              timestamp: el.node.block?.timestamp || Date.now()/1000,
               txidModel: el.node.id,
             })
           : temp.push({
               msg: (await getData(el.node.id)) as string,
               type: 'response',
-              timestamp: el.node.block?.timestamp || 0,
+              timestamp: el.node.block?.timestamp + 0.001 || (Date.now()/1000) + 0.001,
               txidModel: el.node.id,
             }),
       ),
     );
+
+    temp.sort(function(a, b) {
+      return a.timestamp - b.timestamp;
+    });
+    
     setMessages(temp);
   };
 
@@ -170,7 +173,7 @@ const Chat = () => {
   };
 
   const handleSend = async () => {
-    const bundlr = new WebBundlr(DEV_BUNDLR_URL, 'arweave', window.arweaveWallet);
+    const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
     const atomicBalance = await bundlr.getLoadedBalance();
 
@@ -213,6 +216,7 @@ const Chat = () => {
     tags.push({ name: 'App-Version', value: APP_VERSION });
     tags.push({ name: 'Model-Name', value: state.modelName });
     tags.push({ name: 'Model-Creator', value: state.modelCreator });
+    tags.push({ name: 'Model-Operator', value: address });
     tags.push({ name: 'Operation-Name', value: 'Model Inference Request' });
     tags.push({ name: 'Conversation-Identifier', value: currentConversationId });
     try {
@@ -368,9 +372,9 @@ const Chat = () => {
                       variant='caption'
                       textAlign={el.type === 'request' ? 'right' : 'left'}
                     >
-                      {el.timestamp === 0
-                        ? 'pending'
-                        : new Date(el.timestamp * 1000).toLocaleTimeString()}
+                      {
+                        new Date(el.timestamp * 1000).toLocaleTimeString()
+                      }
                     </Typography>
                   </Box>
                 </Stack>
