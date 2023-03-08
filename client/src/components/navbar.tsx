@@ -3,13 +3,13 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-// import useArweave from '@/context/arweave';
 import useArweave from '../context/arweave';
 import { Link } from 'react-router-dom';
-// import { connectWallet, useWallet } from '@/context/wallet';
+import ProfileMenu from './profile-menu';
+import { Tooltip } from '@mui/material';
 
 const Navbar = () => {
-  const { connect, addresses, isConnected, network } = useArweave();
+  const { connect, addresses, isConnected } = useArweave();
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -56,10 +56,12 @@ const Navbar = () => {
           </Box>
           <Box sx={{ flexGrow: 0 }}>
             {isConnected ? (
-              <div>
-                <p>{addresses[0]}</p>
-                <p>{network}</p>
-              </div>
+              <Box display={'flex'} alignItems={'center'}>
+                <Tooltip title={addresses[0]} placement={'left-start'}>
+                  <Typography>{addresses[0].slice(0, 10)}...{addresses[0].slice(-3)}</Typography>
+                </Tooltip>
+                <ProfileMenu />
+              </Box>
             ) : (
               <Button color='inherit' onClick={connect}>
                 Connect
