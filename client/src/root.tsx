@@ -13,7 +13,7 @@ import { useMemo } from 'react';
 import { Outlet } from 'react-router-dom';
 import Layout from './components/layout';
 import { DEV_ARWEAVE_URL, NET_ARWEAVE_URL } from './constants';
-import {BundlrProvider} from './context/bundlr';
+import { BundlrProvider } from './context/bundlr';
 import { ITransactions } from './interfaces/arweave';
 
 const mapLink = new ApolloLink((operation, forward) =>

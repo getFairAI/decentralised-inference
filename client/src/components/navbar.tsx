@@ -58,7 +58,9 @@ const Navbar = () => {
             {isConnected ? (
               <Box display={'flex'} alignItems={'center'}>
                 <Tooltip title={addresses[0]} placement={'left-start'}>
-                  <Typography>{addresses[0].slice(0, 10)}...{addresses[0].slice(-3)}</Typography>
+                  <Typography>
+                    {addresses[0].slice(0, 10)}...{addresses[0].slice(-3)}
+                  </Typography>
                 </Tooltip>
                 <ProfileMenu />
               </Box>

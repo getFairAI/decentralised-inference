@@ -102,12 +102,17 @@ const FundDialog = ({
       setBalance(convertedBalance.toNumber());
       setWalletBalance(+(await getWalletBalance()));
       setAmount(0);
-      enqueueSnackbar(`Funded Bundlr with ${arweave.ar.winstonToAr(res.quantity)} AR. Txid: https://arweave.net/tx/${res.id}`, { variant: 'success'});
+      enqueueSnackbar(
+        `Funded Bundlr with ${arweave.ar.winstonToAr(
+          res.quantity,
+        )} AR. Txid: https://arweave.net/tx/${res.id}`,
+        { variant: 'success' },
+      );
       setLoading(false);
       setOpen(false);
     } catch (error) {
       setLoading(false);
-      enqueueSnackbar(`Error: ${error}`, { variant: 'error'});
+      enqueueSnackbar(`Error: ${error}`, { variant: 'error' });
     }
   };
 
@@ -117,10 +122,19 @@ const FundDialog = ({
         <DialogTitle>Fund Bundlr Node</DialogTitle>
         <DialogContent>
           <Alert variant='outlined' severity='info' sx={{ marginBottom: '16px' }}>
-            Funding a Node Bundlr can take up to 40 minutes. Current Pending transactions will not be reflected on the node balance until they are confirmed.<br />
-            You can view Bundlr Node transactions at:<br />
-            <a href='https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs' target='_blank' rel='noopener noreferrer'>
-              <u>https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs</u>
+            Funding a Node Bundlr can take up to 40 minutes. Current Pending transactions will not
+            be reflected on the node balance until they are confirmed.
+            <br />
+            You can view Bundlr Node transactions at:
+            <br />
+            <a
+              href='https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs'
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              <u>
+                https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs
+              </u>
             </a>
           </Alert>
           <Box
@@ -129,10 +143,15 @@ const FundDialog = ({
             justifyContent={'space-evenly'}
             marginBottom={'8px'}
           >
-            
             <FormControl fullWidth margin='dense'>
               <InputLabel id='select-label'>Bundlr Node</InputLabel>
-              <Select labelId='select-label' value={node} onChange={handleChange} label={'Bundlr Node'} disabled>
+              <Select
+                labelId='select-label'
+                value={node}
+                onChange={handleChange}
+                label={'Bundlr Node'}
+                disabled
+              >
                 {/* <MenuItem value={DEV_BUNDLR_URL}>dev.bundlr.network</MenuItem> */}
                 <MenuItem value={NODE1_BUNDLR_URL}>node1.bundlr.network</MenuItem>
                 <MenuItem value={NODE2_BUNDLR_URL}>node2.bundlr.network</MenuItem>
@@ -172,12 +191,15 @@ const FundDialog = ({
             >
               Fund
             </LoadingButton>
-            {
-              handleFundFinished &&
-              <Button onClick={() => handleFundFinished(node)} variant='contained' disabled={balance <= 0}>
+            {handleFundFinished && (
+              <Button
+                onClick={() => handleFundFinished(node)}
+                variant='contained'
+                disabled={balance <= 0}
+              >
                 Continue
               </Button>
-            }
+            )}
           </Box>
         </DialogContent>
       </Dialog>
