@@ -2,7 +2,7 @@ import Arweave from 'arweave';
 import { useEffect, useState } from 'react';
 import { WebBundlr } from 'bundlr-custom';
 import { PermissionType } from 'arconnect';
-import { NET_ARWEAVE_URL, NODE1_BUNDLR_URL } from '@/constants';
+import { NET_ARWEAVE_URL } from '@/constants';
 
 const arweave = Arweave.init({
   host: NET_ARWEAVE_URL.split('//')[1],
@@ -35,7 +35,6 @@ const useArweave = () => {
   const [error, setError] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [network, setNetwork] = useState('');
-  const [bundlr, setBundlr] = useState<WebBundlr | undefined>(undefined);
   const [permissions] = useState<PermissionType[]>([
     'ACCESS_PUBLIC_KEY',
     'SIGNATURE',
@@ -53,12 +52,20 @@ const useArweave = () => {
       setAddresses(addresses);
       setIsLoading(false);
       setIsConnected(true);
-      // await signer.refresh(window.arweaveWallet);
-      const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
-      await bundlr.ready();
-      setBundlr(bundlr);
     } catch (error) {
       setError(`${(error as { message: string }).message}. Refresh to try again.`);
+    }
+  };
+
+  const disconnect = async () => {
+    try {
+      await window.arweaveWallet.disconnect();
+      setNetwork('');
+      setAddresses([]);
+      setIsLoading(false);
+      setIsConnected(false);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -136,9 +143,9 @@ const useArweave = () => {
     error,
     isConnected,
     network,
-    bundlr,
     getNodeBalance,
     getWalletBalance,
+    disconnect,
   };
 };
 

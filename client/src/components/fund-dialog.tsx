@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -13,14 +14,14 @@ import {
   SelectChangeEvent,
   TextField,
 } from '@mui/material';
-import { WebBundlr } from 'bundlr-custom';
-// import { WebBundlr } from "@bundlr-network/client";
-import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import LoadingButton from '@mui/lab/LoadingButton';
 import useArweave from '@/context/arweave';
 import BigNumber from 'bignumber.js';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
+import { NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
+import { BundlrContext, bundlrNodeUrl } from '@/context/bundlr';
+import { useSnackbar } from 'notistack';
 
 type FundFinishedFn = (node: string) => Promise<void>;
 
@@ -31,17 +32,21 @@ const FundDialog = ({
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
-  handleFundFinished: FundFinishedFn;
+  handleFundFinished?: FundFinishedFn;
 }) => {
-  const [node, setNode] = useState(NODE1_BUNDLR_URL);
+  const [node, setNode] = useState<bundlrNodeUrl>(NODE1_BUNDLR_URL);
   const [amount, setAmount] = useState(0);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
-  const { getWalletBalance } = useArweave();
+  const { arweave, getWalletBalance } = useArweave();
+  const { enqueueSnackbar } = useSnackbar();
+
+  const bundlrContext = useContext(BundlrContext);
 
   const handleChange = (event: SelectChangeEvent) => {
-    setNode(event.target.value);
+    setNode(event.target.value as bundlrNodeUrl);
+    bundlrContext && bundlrContext.actions.changeNode(event.target.value as bundlrNodeUrl);
   };
 
   const handleAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -49,16 +54,14 @@ const FundDialog = ({
   };
 
   const updateBalance = async () => {
-    console.log('riunn');
-    const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
-    await bundlr.ready();
-    console.log(bundlr, 'running');
     // Get loaded balance in atomic units
-    const atomicBalance = await bundlr.getLoadedBalance();
+    const atomicBalance = await bundlrContext?.state?.getLoadedBalance();
 
     // Convert balance to an easier to read format
-    const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
-    setBalance(convertedBalance.toNumber());
+    if (atomicBalance) {
+      const convertedBalance = bundlrContext?.state?.utils.unitConverter(atomicBalance);
+      convertedBalance && setBalance(convertedBalance.toNumber());
+    }
   };
 
   const updatebalanceEffect = () => {
@@ -78,31 +81,38 @@ const FundDialog = ({
     }
   }, [open]);
 
-  const handleClick = () => {
-    handleFundFinished(node);
-  };
-
   const handleClose = () => {
     setOpen(false);
   };
 
   const handleFund = async () => {
-    const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
-    await bundlr.ready();
+    if (!bundlrContext || !bundlrContext.state) {
+      return;
+    }
+
     setLoading(true);
     const bn = new BigNumber(amount);
-    const fundAmountParsed = bn.multipliedBy(bundlr.currencyConfig.base[1]);
+    const fundAmountParsed = bn.multipliedBy(bundlrContext.state.currencyConfig.base[1]);
     try {
-      await bundlr.fund(fundAmountParsed.toString());
-      const atomicBalance = await bundlr.getLoadedBalance();
+      const res = await bundlrContext.state.fund(fundAmountParsed.toString());
+      const atomicBalance = await bundlrContext.state.getLoadedBalance();
 
       // Convert balance to an easier to read format
-      const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
+      const convertedBalance = bundlrContext.state.utils.unitConverter(atomicBalance);
       setBalance(convertedBalance.toNumber());
+      setWalletBalance(+(await getWalletBalance()));
+      setAmount(0);
+      enqueueSnackbar(
+        `Funded Bundlr with ${arweave.ar.winstonToAr(
+          res.quantity,
+        )} AR. Txid: https://arweave.net/tx/${res.id}`,
+        { variant: 'success' },
+      );
       setLoading(false);
+      setOpen(false);
     } catch (error) {
       setLoading(false);
-      console.log(error);
+      enqueueSnackbar(`Error: ${error}`, { variant: 'error' });
     }
   };
 
@@ -111,6 +121,22 @@ const FundDialog = ({
       <Dialog open={open} maxWidth={'sm'} fullWidth onClose={handleClose}>
         <DialogTitle>Fund Bundlr Node</DialogTitle>
         <DialogContent>
+          <Alert variant='outlined' severity='info' sx={{ marginBottom: '16px' }}>
+            Funding a Node Bundlr can take up to 40 minutes. Current Pending transactions will not
+            be reflected on the node balance until they are confirmed.
+            <br />
+            You can view Bundlr Node transactions at:
+            <br />
+            <a
+              href='https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs'
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              <u>
+                https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs
+              </u>
+            </a>
+          </Alert>
           <Box
             display={'flex'}
             flexDirection={'column'}
@@ -119,8 +145,14 @@ const FundDialog = ({
           >
             <FormControl fullWidth margin='dense'>
               <InputLabel id='select-label'>Bundlr Node</InputLabel>
-              <Select labelId='select-label' value={node} label='Age' onChange={handleChange}>
-                <MenuItem value={DEV_BUNDLR_URL}>dev.bundlr.network</MenuItem>
+              <Select
+                labelId='select-label'
+                value={node}
+                onChange={handleChange}
+                label={'Bundlr Node'}
+                disabled
+              >
+                {/* <MenuItem value={DEV_BUNDLR_URL}>dev.bundlr.network</MenuItem> */}
                 <MenuItem value={NODE1_BUNDLR_URL}>node1.bundlr.network</MenuItem>
                 <MenuItem value={NODE2_BUNDLR_URL}>node2.bundlr.network</MenuItem>
               </Select>
@@ -159,9 +191,15 @@ const FundDialog = ({
             >
               Fund
             </LoadingButton>
-            <Button onClick={handleClick} variant='contained' disabled={balance <= 0}>
-              Continue
-            </Button>
+            {handleFundFinished && (
+              <Button
+                onClick={() => handleFundFinished(node)}
+                variant='contained'
+                disabled={balance <= 0}
+              >
+                Continue
+              </Button>
+            )}
           </Box>
         </DialogContent>
       </Dialog>
