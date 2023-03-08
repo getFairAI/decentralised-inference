@@ -21,7 +21,6 @@ import { useLazyQuery, useQuery } from '@apollo/client';
 import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import {
   DEFAULT_TAGS,
-  MODEL_INFERENCE_REQUEST_TAG,
   MODEL_INFERENCE_RESULT_TAG,
   REGISTER_OPERATION_TAG,
 } from '@/constants';
@@ -62,10 +61,12 @@ const Detail = () => {
 
   useEffect(() => {
     if (queryData) {
-      const owners = queryData.map((el: IEdge) => el.node.owner.address);
+
+      const owners = Array.from(new Set(queryData.map((el: IEdge) => el.node.owner.address))); 
       const tagsRequests = [
         ...tags.filter((el) => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
-        MODEL_INFERENCE_REQUEST_TAG,
+        // MODEL_INFERENCE_REQUEST_TAG,
+        { name: 'Operation-Name', values: ['Inference Payment']}, // filter by inference payment
       ];
       const tagsResults = [
         ...tags.filter((el) => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
@@ -91,18 +92,24 @@ const Detail = () => {
       const results = followupResult.data.results as IEdge[];
       console.log(requests);
       console.log(results);
-      const parsed: RowData[] = queryData.map((el: IEdge) => ({
+      const uniqueQueryData: IEdge[] = [];
+      queryData.map(
+        (el: IEdge) => uniqueQueryData.filter(unique => el.node.owner.address === unique.node.owner.address).length > 0 ?
+          undefined : uniqueQueryData.push(el)
+      );
+      const parsed: RowData[] = uniqueQueryData.map((el: IEdge) => ({
         address: el.node.owner.address,
         stamps: Math.round(Math.random() * 100),
-        fee: el.node.tags.find((el) => el.name === 'Model-Fee')?.value || 0,
+        fee: el.node.tags.find((el) => el.name === 'Model-Fee')?.value || '0',
         registrationTimestamp: el.node.block
           ? new Date(el.node.block.timestamp * 1000).toLocaleString()
           : 'Pending',
         availability:
-          (results.filter((res) => el.node.owner.address === res.node.owner.address).length /
-            requests.filter((req) => el.node.owner.address === req.node.recipient).length) *
-            100 || 0,
-        modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value,
+          ((
+            results.filter(res => el.node.owner.address === res.node.owner.address).length /
+            requests.filter(req => el.node.owner.address === req.node.recipient).length
+          ) * 100) || 0,
+        modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value || '',
         modelCreator: state.node.owner.address,
       }));
       setOperatorsData(parsed);
