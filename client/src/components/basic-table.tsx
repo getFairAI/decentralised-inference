@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 
 export interface RowData {
   address: string;
-  fee: number;
+  fee: string;
   availability: number;
   stamps: number;
   registrationTimestamp: string;
@@ -67,7 +67,9 @@ export default function BasicTable(props: {
           <TableHead>
             <TableRow>
               <TableCell variant='head'>Address</TableCell>
-              <TableCell variant='head'>Registration&nbsp;</TableCell>
+              <TableCell variant='head' align='right'>
+                Registration&nbsp;
+              </TableCell>
               <TableCell variant='head' align='right'>
                 Fee&nbsp;(Ar)
               </TableCell>
@@ -101,7 +103,7 @@ export default function BasicTable(props: {
                   </Tooltip>
                 </TableCell>
                 <TableCell align='right'>{row.registrationTimestamp}</TableCell>
-                <TableCell align='right'>{arweave.ar.winstonToAr(`${row.fee}`)}</TableCell>
+                <TableCell align='right'>{arweave.ar.winstonToAr(row.fee)}</TableCell>
                 <TableCell align='right'>{row.availability}</TableCell>
                 <TableCell align='right'>{row.stamps}</TableCell>
                 <TableCell align='right'>
