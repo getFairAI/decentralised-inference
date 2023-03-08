@@ -67,7 +67,9 @@ export default function BasicTable(props: {
           <TableHead>
             <TableRow>
               <TableCell variant='head'>Address</TableCell>
-              <TableCell variant='head' align='right'>Registration&nbsp;</TableCell>
+              <TableCell variant='head' align='right'>
+                Registration&nbsp;
+              </TableCell>
               <TableCell variant='head' align='right'>
                 Fee&nbsp;(Ar)
               </TableCell>
