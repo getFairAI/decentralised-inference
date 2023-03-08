@@ -19,12 +19,7 @@ import Stamp from '@/components/stamp';
 import { useLocation } from 'react-router-dom';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
-import {
-  DEFAULT_TAGS,
-  MODEL_INFERENCE_REQUEST_TAG,
-  MODEL_INFERENCE_RESULT_TAG,
-  REGISTER_OPERATION_TAG,
-} from '@/constants';
+import { DEFAULT_TAGS, MODEL_INFERENCE_RESULT_TAG, REGISTER_OPERATION_TAG } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { useEffect, useState } from 'react';
 
@@ -57,15 +52,12 @@ const Detail = () => {
   const [getFollowupQuery, followupResult] = useLazyQuery(QUERY_OPERATOR_RESULTS_RESPONSES);
 
   useEffect(() => {
-    console.log(state);
-  }, [state]);
-
-  useEffect(() => {
     if (queryData) {
-      const owners = queryData.map((el: IEdge) => el.node.owner.address);
+      const owners = Array.from(new Set(queryData.map((el: IEdge) => el.node.owner.address)));
       const tagsRequests = [
         ...tags.filter((el) => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
-        MODEL_INFERENCE_REQUEST_TAG,
+        // MODEL_INFERENCE_REQUEST_TAG,
+        { name: 'Operation-Name', values: ['Inference Payment'] }, // filter by inference payment
       ];
       const tagsResults = [
         ...tags.filter((el) => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
@@ -83,18 +75,22 @@ const Detail = () => {
   }, [queryData]);
 
   useEffect(() => {
-    console.log(followupResult);
     if (followupResult.loading) console.log('loading');
     if (followupResult.error) console.log(error, 'err');
     if (followupResult.data) {
       const requests = followupResult.data.requests as IEdge[];
       const results = followupResult.data.results as IEdge[];
-      console.log(requests);
-      console.log(results);
-      const parsed: RowData[] = queryData.map((el: IEdge) => ({
+      const uniqueQueryData: IEdge[] = [];
+      queryData.map((el: IEdge) =>
+        uniqueQueryData.filter((unique) => el.node.owner.address === unique.node.owner.address)
+          .length > 0
+          ? undefined
+          : uniqueQueryData.push(el),
+      );
+      const parsed: RowData[] = uniqueQueryData.map((el: IEdge) => ({
         address: el.node.owner.address,
         stamps: Math.round(Math.random() * 100),
-        fee: el.node.tags.find((el) => el.name === 'Model-Fee')?.value || 0,
+        fee: el.node.tags.find((el) => el.name === 'Model-Fee')?.value || '0',
         registrationTimestamp: el.node.block
           ? new Date(el.node.block.timestamp * 1000).toLocaleString()
           : 'Pending',
@@ -102,7 +98,7 @@ const Detail = () => {
           (results.filter((res) => el.node.owner.address === res.node.owner.address).length /
             requests.filter((req) => el.node.owner.address === req.node.recipient).length) *
             100 || 0,
-        modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value,
+        modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value || '',
         modelCreator: state.node.owner.address,
       }));
       setOperatorsData(parsed);
@@ -116,7 +112,10 @@ const Detail = () => {
           <CardContent>
             <Box display={'flex'} justifyContent={'space-evenly'} marginBottom={'16px'}>
               <Box display={'flex'} flexDirection={'column'} justifyContent={'space-between'}>
-                <Avatar sx={{ width: '180px', height: '180px' }} />
+                <Avatar
+                  sx={{ width: '180px', height: '180px' }}
+                  src={state?.node?.tags?.find((el: ITag) => el.name === 'AvatarUrl')?.value}
+                />
                 <Button
                   variant='outlined'
                   startIcon={
@@ -139,6 +138,7 @@ const Detail = () => {
                 <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>
                   <Select
+                    data-testid={'category'}
                     value={state?.node?.tags?.find((el: ITag) => el.name === 'Category')?.value}
                     label='Category'
                     inputProps={{ readOnly: true }}
