@@ -56,12 +56,7 @@ const Detail = () => {
   const [getFollowupQuery, followupResult] = useLazyQuery(QUERY_OPERATOR_RESULTS_RESPONSES);
 
   useEffect(() => {
-    console.log(state);
-  }, [state]);
-
-  useEffect(() => {
     if (queryData) {
-
       const owners = Array.from(new Set(queryData.map((el: IEdge) => el.node.owner.address))); 
       const tagsRequests = [
         ...tags.filter((el) => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
@@ -84,14 +79,11 @@ const Detail = () => {
   }, [queryData]);
 
   useEffect(() => {
-    console.log(followupResult);
     if (followupResult.loading) console.log('loading');
     if (followupResult.error) console.log(error, 'err');
     if (followupResult.data) {
       const requests = followupResult.data.requests as IEdge[];
       const results = followupResult.data.results as IEdge[];
-      console.log(requests);
-      console.log(results);
       const uniqueQueryData: IEdge[] = [];
       queryData.map(
         (el: IEdge) => uniqueQueryData.filter(unique => el.node.owner.address === unique.node.owner.address).length > 0 ?
@@ -123,7 +115,7 @@ const Detail = () => {
           <CardContent>
             <Box display={'flex'} justifyContent={'space-evenly'} marginBottom={'16px'}>
               <Box display={'flex'} flexDirection={'column'} justifyContent={'space-between'}>
-                <Avatar sx={{ width: '180px', height: '180px' }} />
+                <Avatar sx={{ width: '180px', height: '180px' }} src={state?.node?.tags?.find((el: ITag) => el.name === 'AvatarUrl')?.value} />
                 <Button
                   variant='outlined'
                   startIcon={
@@ -146,6 +138,7 @@ const Detail = () => {
                 <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>
                   <Select
+                    data-testid={'category'}
                     value={state?.node?.tags?.find((el: ITag) => el.name === 'Category')?.value}
                     label='Category'
                     inputProps={{ readOnly: true }}
