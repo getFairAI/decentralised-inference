@@ -15,7 +15,7 @@ const ITEM_HEIGHT = 48;
 
 export default function ProfileMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [ fundOpen, setFundOpen ] = React.useState(false);
+  const [fundOpen, setFundOpen] = React.useState(false);
   const { disconnect } = useArweave();
   const open = Boolean(anchorEl);
 
@@ -46,17 +46,17 @@ export default function ProfileMenu() {
   return (
     <div>
       <IconButton
-        aria-label="more"
-        id="long-button"
+        aria-label='more'
+        id='long-button'
         aria-controls={open ? 'long-menu' : undefined}
         aria-expanded={open ? 'true' : undefined}
-        aria-haspopup="true"
+        aria-haspopup='true'
         onClick={handleClick}
       >
         <MoreVertIcon />
       </IconButton>
       <Menu
-        id="long-menu"
+        id='long-menu'
         MenuListProps={{
           'aria-labelledby': 'long-button',
         }}
@@ -76,10 +76,7 @@ export default function ProfileMenu() {
           </MenuItem>
         ))}
       </Menu>
-      <FundDialog
-        open={fundOpen}
-        setOpen={setFundOpen}
-      />
+      <FundDialog open={fundOpen} setOpen={setFundOpen} />
     </div>
   );
 }
