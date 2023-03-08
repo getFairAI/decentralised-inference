@@ -130,7 +130,11 @@ const OperatorDetails = () => {
               <Divider textAlign='left'>History</Divider>
               <Paper sx={{ width: '100%', overflow: 'hidden' }}>
                 <TableContainer>
-                  <Table sx={{ minWidth: 650, maxHeight: 700 }} aria-label='simple table' stickyHeader>
+                  <Table
+                    sx={{ minWidth: 650, maxHeight: 700 }}
+                    aria-label='simple table'
+                    stickyHeader
+                  >
                     <TableHead>
                       <TableRow>
                         <TableCell variant='head'>TxID</TableCell>

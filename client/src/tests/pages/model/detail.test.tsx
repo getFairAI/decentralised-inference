@@ -21,12 +21,12 @@ const queryRegisteredOperatorsMock = [
             name: 'Model-Name',
             values: ['model 1'],
           },
-        ]
-      }
+        ],
+      },
     },
     result: {
       data: {
-        transactions:{
+        transactions: {
           edges: [
             {
               cursor: 'cursor',
@@ -35,24 +35,24 @@ const queryRegisteredOperatorsMock = [
                 signature: 'signature',
                 owner: { address: 'operator 1', key: 'key' },
                 recipient: 'tx2',
-                fee: { winston: '0', ar: '0'},
-                quantity: { winston: '0', ar: '0'},
+                fee: { winston: '0', ar: '0' },
+                quantity: { winston: '0', ar: '0' },
                 block: { timestamp: Date.now(), previous: 0, height: 0, id: 'blockId' },
-                bundledIn: { id: 'bundledInId'},
-                data: { size: '0', type: 'type'},
+                bundledIn: { id: 'bundledInId' },
+                data: { size: '0', type: 'type' },
                 tags: [
                   { name: 'App-Name', value: 'FairProtocol' },
-                  { name: 'Operation-Name', value: 'Operator Registration'},
+                  { name: 'Operation-Name', value: 'Operator Registration' },
                   { name: 'Model-Fee', value: '1000000' },
-                  { name: 'Model-Creator', value: 'creator 1'},
-                  { name: 'Model-Name', value: 'model 1'}
-                ]
-              } 
-            }
-          ]
-        }
-      }
-    }
+                  { name: 'Model-Creator', value: 'creator 1' },
+                  { name: 'Model-Name', value: 'model 1' },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    },
   },
   {
     request: {
@@ -62,20 +62,20 @@ const queryRegisteredOperatorsMock = [
         tagsRequests: [
           ...DEFAULT_TAGS,
           { name: 'Model-Fee', values: ['1000000'] },
-          { name: 'Model-Creator', values:[ 'creator 1']},
-          { name: 'Model-Name', values: ['model 1']},
-          { name: 'Operation-Name', values: ['Inference Payment']},
-          { name: 'Model-Fee', values: [ '1000000']},
+          { name: 'Model-Creator', values: ['creator 1'] },
+          { name: 'Model-Name', values: ['model 1'] },
+          { name: 'Operation-Name', values: ['Inference Payment'] },
+          { name: 'Model-Fee', values: ['1000000'] },
         ],
         tagsResuts: [
           ...DEFAULT_TAGS,
           { name: 'Model-Fee', values: ['1000000'] },
-          { name: 'Model-Creator', values:[ 'creator 1']},
-          { name: 'Model-Name', values: ['model 1']},
-          { name: 'Operation-Name', values: ['Model Inference Response']},
-          { name: 'Model-Fee', values: [ '1000000']},
-        ]
-      }
+          { name: 'Model-Creator', values: ['creator 1'] },
+          { name: 'Model-Name', values: ['model 1'] },
+          { name: 'Operation-Name', values: ['Model Inference Response'] },
+          { name: 'Model-Fee', values: ['1000000'] },
+        ],
+      },
     },
     result: {
       data: {
@@ -84,52 +84,52 @@ const queryRegisteredOperatorsMock = [
             {
               node: {
                 owner: {
-                  address: 'user 1'
+                  address: 'user 1',
                 },
-                recipient: 'operator 1'
-              }
-            }
-          ]
+                recipient: 'operator 1',
+              },
+            },
+          ],
         },
         results: {
           edges: [
             {
               node: {
                 owner: {
-                  address: 'operator 1'
-                }
-              }
-            }
-          ]
-        }
-      }
-    }
-  }
+                  address: 'operator 1',
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
 ];
 
 const mockState = {
   node: {
     owner: {
-      address: 'creator 1'
+      address: 'creator 1',
     },
     tags: [
       {
         name: 'Model-Name',
-        value: 'model 1'
+        value: 'model 1',
       },
       {
         name: 'Description',
-        value: 'description'
+        value: 'description',
       },
       {
         name: 'Category',
-        value: 'text'
+        value: 'text',
       },
       {
         name: 'AvatarUrl',
-        value: 'avatarLink'
-      }
-    ]
+        value: 'avatarLink',
+      },
+    ],
   },
 };
 
@@ -142,12 +142,12 @@ describe('pages/model/detail.tsx', () => {
         <MemoryRouter initialEntries={[{ pathname: '/model/tx1/detail', state: mockState }]}>
           <Detail />
         </MemoryRouter>
-      </MockedProvider>
+      </MockedProvider>,
     );
 
-    const nameField = await screen.findByLabelText('Name') as HTMLInputElement;
+    const nameField = (await screen.findByLabelText('Name')) as HTMLInputElement;
     expect(nameField.value).toEqual('model 1');
-    const descriptionField = await screen.findByLabelText('Description') as HTMLInputElement;
+    const descriptionField = (await screen.findByLabelText('Description')) as HTMLInputElement;
     expect(descriptionField.value).toEqual('description');
 
     expect(await screen.getByRole('table')).toBeDefined();
