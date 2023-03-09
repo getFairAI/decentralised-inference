@@ -21,10 +21,10 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { useLocation, useParams, useRouteLoaderData } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 const Register = () => {
-  const { data } = useRouteLoaderData('model') as { data: string };
+  /* const { data } = useRouteLoaderData('model') as { data: string }; */
   const { state }: { state: IEdge } = useLocation();
   const { txid } = useParams();
 
@@ -43,7 +43,7 @@ const Register = () => {
   ];
   const { data: queryData } = useQuery(QUERY_REGISTERED_OPERATORS, { variables: { tags } });
 
-  const handleRegister = async (rate: string) => {
+  const handleRegister = async (rate: string, operatorName: string) => {
     try {
       const tx = await arweave.createTransaction({
         target: STATIC_ADDRESS,
@@ -59,6 +59,7 @@ const Register = () => {
       tags.push({ name: 'Model-Creator', values: state.node.owner.address });
       tags.push({ name: 'Model-Fee', values: arweave.ar.arToWinston(rate) });
       tags.push({ name: 'Operation-Name', values: 'Operator Registration' });
+      tags.push({ name: 'Operator-Name', values: operatorName });
 
       tags.map((tag) => tx.addTag(tag.name, tag.values));
 
@@ -91,7 +92,10 @@ const Register = () => {
           <CardContent>
             <Box display={'flex'} justifyContent={'space-evenly'}>
               <Box display={'flex'} flexDirection={'column'}>
-                <Avatar sx={{ width: '200px', height: '200px' }} />
+                <Avatar
+                  sx={{ width: '200px', height: '200px' }}
+                  src={state.node.tags.find((el) => el.name === 'AvatarUrl')?.value || ''}
+                />
                 {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
                   <Button startIcon={<DownloadIcon />}>
                     <a href={`http://localhost:1984/${txid}`} download>download</a>
@@ -115,13 +119,17 @@ const Register = () => {
                 <TextField
                   label='Name'
                   variant='outlined'
-                  value={''}
+                  value={state.node.tags.find((el) => el.name === 'Model-Name')?.value}
                   fullWidth
                   inputProps={{ readOnly: true }}
                 />
                 <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>
-                  <Select value={'text'} label='Category' inputProps={{ readOnly: true }}>
+                  <Select
+                    value={state.node.tags.find((el) => el.name === 'Category')?.value}
+                    label='Category'
+                    inputProps={{ readOnly: true }}
+                  >
                     <MenuItem value={'text'}>Text</MenuItem>
                     <MenuItem value={'audio'}>Audio</MenuItem>
                     <MenuItem value={'video'}>Video</MenuItem>
@@ -131,7 +139,7 @@ const Register = () => {
                   label='Description'
                   variant='outlined'
                   multiline
-                  value={''}
+                  value={state.node.tags.find((el) => el.name === 'Description')?.value}
                   inputProps={{ readOnly: true }}
                   style={{ width: '100%' }}
                   margin='normal'
@@ -145,7 +153,7 @@ const Register = () => {
                 Register
               </Typography>
             </Divider>
-            <CustomStepper data={data} handleSubmit={handleRegister} isRegistered={isRegistered} />
+            <CustomStepper data={state} handleSubmit={handleRegister} isRegistered={isRegistered} />
           </CardContent>
         </Card>
       </Box>
