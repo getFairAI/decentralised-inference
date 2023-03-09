@@ -92,7 +92,10 @@ const Register = () => {
           <CardContent>
             <Box display={'flex'} justifyContent={'space-evenly'}>
               <Box display={'flex'} flexDirection={'column'}>
-                <Avatar sx={{ width: '200px', height: '200px' }} src={state.node.tags.find(el => el.name === 'AvatarUrl')?.value || ''}/>
+                <Avatar
+                  sx={{ width: '200px', height: '200px' }}
+                  src={state.node.tags.find((el) => el.name === 'AvatarUrl')?.value || ''}
+                />
                 {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
                   <Button startIcon={<DownloadIcon />}>
                     <a href={`http://localhost:1984/${txid}`} download>download</a>
@@ -116,13 +119,17 @@ const Register = () => {
                 <TextField
                   label='Name'
                   variant='outlined'
-                  value={state.node.tags.find(el => el.name === 'Model-Name')?.value}
+                  value={state.node.tags.find((el) => el.name === 'Model-Name')?.value}
                   fullWidth
                   inputProps={{ readOnly: true }}
                 />
                 <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>
-                  <Select value={state.node.tags.find(el => el.name === 'Category')?.value} label='Category' inputProps={{ readOnly: true }}>
+                  <Select
+                    value={state.node.tags.find((el) => el.name === 'Category')?.value}
+                    label='Category'
+                    inputProps={{ readOnly: true }}
+                  >
                     <MenuItem value={'text'}>Text</MenuItem>
                     <MenuItem value={'audio'}>Audio</MenuItem>
                     <MenuItem value={'video'}>Video</MenuItem>
@@ -132,7 +139,7 @@ const Register = () => {
                   label='Description'
                   variant='outlined'
                   multiline
-                  value={state.node.tags.find(el => el.name === 'Description')?.value}
+                  value={state.node.tags.find((el) => el.name === 'Description')?.value}
                   inputProps={{ readOnly: true }}
                   style={{ width: '100%' }}
                   margin='normal'
