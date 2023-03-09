@@ -159,6 +159,7 @@ const Upload = () => {
     const tags = [];
     tags.push({ name: 'App-Name', value: 'Fair Protocol' });
     tags.push({ name: 'Content-Type', value: file.type });
+    tags.push({ name: 'Content-Disposition', value: 'attachment'});
     tags.push({ name: 'Model-Name', value: `${formData.name}` });
     tags.push({ name: 'Operation-Name', value: 'Model Creation' });
     tags.push({ name: 'Notes', value: formData.notes });
