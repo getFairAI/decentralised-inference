@@ -72,7 +72,7 @@ const Upload = () => {
     if ((await getNodeBalance()) <= 0) {
       setFundOpen(true);
     } else {
-      handleFundFinished(NODE1_BUNDLR_URL); // use default node
+      handleFundFinished(NODE1_BUNDLR_URL, data as CreateForm); // use default node
     }
   };
 
@@ -102,11 +102,13 @@ const Upload = () => {
     return priceConverted.toNumber();
   };
 
-  const handleFundFinished = async (node: string) => {
+  const handleFundFinished = async (node: string, data?: CreateForm) => {
     setOpen(false);
-
-    if (!formData || !formData.file) return;
-    const file = formData.file;
+    if (!data) {
+      data = formData;
+    }
+    if (!data || !data.file) return;
+    const file = data.file;
 
     if ((await getFilePrice(file.size)) > (await getNodeBalance())) return;
 
@@ -159,12 +161,12 @@ const Upload = () => {
     const tags = [];
     tags.push({ name: 'App-Name', value: 'Fair Protocol' });
     tags.push({ name: 'Content-Type', value: file.type });
-    tags.push({ name: 'Model-Name', value: `${formData.name}` });
+    tags.push({ name: 'Model-Name', value: `${data.name}` });
     tags.push({ name: 'Operation-Name', value: 'Model Creation' });
-    tags.push({ name: 'Notes', value: formData.notes });
-    tags.push({ name: 'Category', value: formData.category });
-    if (formData.avatar) tags.push({ name: 'AvatarUrl', value: formData.avatar });
-    if (formData.description) tags.push({ name: 'Description', value: formData.description });
+    tags.push({ name: 'Notes', value: data.notes });
+    tags.push({ name: 'Category', value: data.category });
+    if (data.avatar) tags.push({ name: 'AvatarUrl', value: data.avatar });
+    if (data.description) tags.push({ name: 'Description', value: data.description });
     setSnackbarOpen(true);
     reset(); // reset form
     await uploader
