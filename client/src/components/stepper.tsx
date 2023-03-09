@@ -162,8 +162,8 @@ export const CustomStepper = (props: {
   const [skipped, setSkipped] = useState(new Set<number>());
   const [completed, setCompleted] = useState(new Set<number>());
   const [, setCurrentBalance] = useState(0.0);
-  const [ fileSize, setFileSize ] = useState(0);
-  const [ operatorName, setOperatorName ] = useState('');
+  const [fileSize, setFileSize] = useState(0);
+  const [operatorName, setOperatorName] = useState('');
   const { getWalletBalance } = useArweave();
 
   const [rate, setRate] = useState(0);
@@ -222,7 +222,7 @@ export const CustomStepper = (props: {
 
   const printSize = (args: File | number) => {
     let size;
-    if (typeof args === 'number'){
+    if (typeof args === 'number') {
       size = args;
     } else {
       size = args.size;
@@ -230,10 +230,10 @@ export const CustomStepper = (props: {
 
     if (size < 1024) {
       return `${size} bytes`;
-    } else if (size < Math.pow(1024,2)) {
+    } else if (size < Math.pow(1024, 2)) {
       const kb = size / 1024;
       return `${Math.round((kb + Number.EPSILON) * 100) / 100} KB`;
-    } else if (size < Math.pow(1024,3)) {
+    } else if (size < Math.pow(1024, 3)) {
       const mb = size / Math.pow(1024, 2);
       return `${Math.round((mb + Number.EPSILON) * 100) / 100} MB`;
     } else {
@@ -255,7 +255,9 @@ export const CustomStepper = (props: {
   const download = () => {
     const a = document.createElement('a');
     a.href = `${NET_ARWEAVE_URL}/${props.data.node.id}`;
-    a.download = props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value || props.data.node.id;
+    a.download =
+      props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value ||
+      props.data.node.id;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -271,11 +273,11 @@ export const CustomStepper = (props: {
 
   useEffect(() => {
     const getFileSize = async () => {
-      const response = await fetch(`${NET_ARWEAVE_URL}/${props.data.node.id}`, { method: 'HEAD'});
+      const response = await fetch(`${NET_ARWEAVE_URL}/${props.data.node.id}`, { method: 'HEAD' });
       setFileSize(parseInt(response.headers.get('Content-Length') || ''));
     };
     getFileSize();
-  }, [ props.data ]);
+  }, [props.data]);
 
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
@@ -340,10 +342,14 @@ export const CustomStepper = (props: {
         </Fragment>
       ) : activeStep === 2 ? (
         <Fragment>
-          
           <Box justifyContent={'space-between'} display={'flex'}>
             {/* <TextField label={'Rates Endpoint'} sx={{ width: '70%'}}></TextField> */}
-            <TextField value={operatorName} label={'Name'} onChange={handleNameChange} sx={{ width: '72%' }}></TextField>
+            <TextField
+              value={operatorName}
+              label={'Name'}
+              onChange={handleNameChange}
+              sx={{ width: '72%' }}
+            ></TextField>
             <TextField
               label={'Rate'}
               sx={{ width: '25%' }}
@@ -361,7 +367,11 @@ export const CustomStepper = (props: {
             <Button variant='outlined' onClick={handleBack}>
               Back
             </Button>
-            <Button variant='contained' onClick={handleFinish} disabled={!operatorName && operatorName === ''}>
+            <Button
+              variant='contained'
+              onClick={handleFinish}
+              disabled={!operatorName && operatorName === ''}
+            >
               Finish
             </Button>
           </Box>
@@ -375,7 +385,7 @@ export const CustomStepper = (props: {
             }}
             hideToolbar={true}
             fullscreen={false}
-            value={props.data.node.tags.find(el => el.name === 'Notes')?.value || ''}
+            value={props.data.node.tags.find((el) => el.name === 'Notes')?.value || ''}
           ></MDEditor>
           <Box>
             <FormControl variant='outlined' fullWidth>
@@ -387,14 +397,14 @@ export const CustomStepper = (props: {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
-                      <IconButton aria-label='download'
-                        onClick={() => download()}
-                      >
+                      <IconButton aria-label='download' onClick={() => download()}>
                         <DownloadIcon />
                       </IconButton>
                     </InputAdornment>
                   ),
-                  endAdornment: <InputAdornment position='start'>{printSize(fileSize)}</InputAdornment>,
+                  endAdornment: (
+                    <InputAdornment position='start'>{printSize(fileSize)}</InputAdornment>
+                  ),
                   readOnly: true,
                 }}
               />
