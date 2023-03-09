@@ -129,9 +129,9 @@ const OperatorDetails = () => {
               </Box>
               <Divider textAlign='left'>History</Divider>
               <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                <TableContainer>
+                <TableContainer sx={{ maxHeight: 700 }}>
                   <Table
-                    sx={{ minWidth: 650, maxHeight: 700 }}
+                    sx={{ minWidth: 650 }}
                     aria-label='simple table'
                     stickyHeader
                   >

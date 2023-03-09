@@ -19,7 +19,7 @@ import {
   List,
   ListItem,
 } from '@mui/material';
-import { useState } from 'react';
+import { ChangeEvent, Fragment, ReactElement, useEffect, useState } from 'react';
 import PaymentIcon from '@mui/icons-material/Payment';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -27,6 +27,8 @@ import MDEditor from '@uiw/react-md-editor';
 import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
 import useArweave from '@/context/arweave';
+import { IEdge, ITag } from '@/interfaces/arweave';
+import { NET_ARWEAVE_URL } from '@/constants';
 
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -138,7 +140,7 @@ const ColorlibStepIconRoot = styled('div')<{
 function ColorlibStepIcon(props: StepIconProps) {
   const { active, completed, className } = props;
 
-  const icons: { [index: string]: React.ReactElement } = {
+  const icons: { [index: string]: ReactElement } = {
     1: <InfoOutlinedIcon />,
     2: <SettingsIcon />,
     3: <PaymentIcon />,
@@ -152,15 +154,16 @@ function ColorlibStepIcon(props: StepIconProps) {
 }
 
 export const CustomStepper = (props: {
-  data: string;
-  handleSubmit: (rate: string) => Promise<void>;
+  data: IEdge;
+  handleSubmit: (rate: string, name: string) => Promise<void>;
   isRegistered: boolean;
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const [completed, setCompleted] = useState(new Set<number>());
   const [, setCurrentBalance] = useState(0.0);
-
+  const [ fileSize, setFileSize ] = useState(0);
+  const [ operatorName, setOperatorName ] = useState('');
   const { getWalletBalance } = useArweave();
 
   const [rate, setRate] = useState(0);
@@ -186,7 +189,7 @@ export const CustomStepper = (props: {
   };
 
   const handleFinish = () => {
-    props.handleSubmit(rate.toString());
+    props.handleSubmit(rate.toString(), operatorName);
     handleNext();
   };
 
@@ -217,12 +220,14 @@ export const CustomStepper = (props: {
     setCompleted(new Set<number>());
   }; */
 
-  /* const handleDownload = () => {
+  const printSize = (args: File | number) => {
+    let size;
+    if (typeof args === 'number'){
+      size = args;
+    } else {
+      size = args.size;
+    }
 
-  }; */
-
-  /* const printSize = (file: File) => {
-    const size = file.size;
     if (size < 1024) {
       return `${size} bytes`;
     } else if (size < Math.pow(1024,2)) {
@@ -235,21 +240,43 @@ export const CustomStepper = (props: {
       const gb = size / Math.pow(1024, 3);
       return `${Math.round((gb + Number.EPSILON) * 100) / 100} GB`;
     }
-  }; */
+  };
 
-  const handleRateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRateChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newNumber = parseFloat(event.target.value);
 
     if (newNumber) setRate(parseFloat(newNumber.toFixed(3)));
   };
 
-  React.useEffect(() => {
+  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setOperatorName(event.target.value);
+  };
+
+  const download = () => {
+    const a = document.createElement('a');
+    a.href = `${NET_ARWEAVE_URL}/${props.data.node.id}`;
+    a.download = props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value || props.data.node.id;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  useEffect(() => {
     const f = async () => {
       const res = await getWalletBalance();
       setCurrentBalance(+res);
     };
     f();
   }, []);
+
+  useEffect(() => {
+    const getFileSize = async () => {
+      const response = await fetch(`${NET_ARWEAVE_URL}/${props.data.node.id}`, { method: 'HEAD'});
+      setFileSize(parseInt(response.headers.get('Content-Length') || ''));
+    };
+    getFileSize();
+  }, [ props.data ]);
+
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
       <Stepper alternativeLabel activeStep={activeStep} connector={<QontoConnector />}>
@@ -301,7 +328,7 @@ export const CustomStepper = (props: {
       </Stepper>
 
       {activeStep === 3 ? (
-        <React.Fragment>
+        <Fragment>
           <Typography sx={{ mt: 2, mb: 1 }} alignContent={'center'} textAlign={'center'}>
             Registration has been Submitted Successfully. Will will be notified when the transaction
             is approved...
@@ -310,12 +337,13 @@ export const CustomStepper = (props: {
             <Box sx={{ flex: '1 1 auto' }} />
             {/* <Button onClick={handleReset} variant='outlined'>Reset</Button> */}
           </Box>
-        </React.Fragment>
+        </Fragment>
       ) : activeStep === 2 ? (
-        <React.Fragment>
-          <TextField disabled value={'Model id'} label={'Model'}></TextField>
+        <Fragment>
+          
           <Box justifyContent={'space-between'} display={'flex'}>
             {/* <TextField label={'Rates Endpoint'} sx={{ width: '70%'}}></TextField> */}
+            <TextField value={operatorName} label={'Name'} onChange={handleNameChange} sx={{ width: '72%' }}></TextField>
             <TextField
               label={'Rate'}
               sx={{ width: '25%' }}
@@ -326,20 +354,20 @@ export const CustomStepper = (props: {
               /* helperText={`Max: ${currentBalance}`} */
             ></TextField>
           </Box>
-          <Alert severity='warning'>
+          <Alert severity='warning' variant='outlined'>
             Registration Requires a small fee to prevent malicious actors
           </Alert>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Button variant='outlined' onClick={handleBack}>
               Back
             </Button>
-            <Button variant='contained' onClick={handleFinish}>
+            <Button variant='contained' onClick={handleFinish} disabled={!operatorName && operatorName === ''}>
               Finish
             </Button>
           </Box>
-        </React.Fragment>
+        </Fragment>
       ) : activeStep === 1 ? (
-        <React.Fragment>
+        <Fragment>
           <MDEditor
             preview='preview'
             previewOptions={{
@@ -347,7 +375,7 @@ export const CustomStepper = (props: {
             }}
             hideToolbar={true}
             fullscreen={false}
-            value={'### Requirements\nExample Markdown'}
+            value={props.data.node.tags.find(el => el.name === 'Notes')?.value || ''}
           ></MDEditor>
           <Box>
             <FormControl variant='outlined' fullWidth>
@@ -355,16 +383,18 @@ export const CustomStepper = (props: {
                 multiline
                 disabled
                 minRows={1}
-                value={'Model name'}
+                value={props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
-                      <IconButton aria-label='download' /* onClick={handleDownload} */>
+                      <IconButton aria-label='download'
+                        onClick={() => download()}
+                      >
                         <DownloadIcon />
                       </IconButton>
                     </InputAdornment>
                   ),
-                  endAdornment: <InputAdornment position='start'>{'15MB'}</InputAdornment>,
+                  endAdornment: <InputAdornment position='start'>{printSize(fileSize)}</InputAdornment>,
                   readOnly: true,
                 }}
               />
@@ -378,9 +408,9 @@ export const CustomStepper = (props: {
               Next
             </Button>
           </Box>
-        </React.Fragment>
+        </Fragment>
       ) : (
-        <React.Fragment>
+        <Fragment>
           <Typography variant='h4' textAlign={'justify'}>
             <b>Rules, Terms, and Conditions of the App</b>
           </Typography>
@@ -494,7 +524,7 @@ export const CustomStepper = (props: {
               Next
             </Button>
           </Box>
-        </React.Fragment>
+        </Fragment>
       )}
     </Stack>
   );
