@@ -22,6 +22,7 @@ export interface RowData {
   registrationTimestamp: string;
   modelName: string;
   modelCreator: string;
+  modelTransaction: string;
 }
 
 /* function createData(
@@ -130,6 +131,7 @@ export default function BasicTable(props: {
                             modelName: row.modelName,
                             modelCreator: row.modelCreator,
                             fee: row.fee,
+                            modelTransaction: row.modelTransaction,
                           },
                         })
                       }
