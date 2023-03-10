@@ -254,7 +254,7 @@ export const CustomStepper = (props: {
 
   const download = () => {
     const a = document.createElement('a');
-    a.href = `${NET_ARWEAVE_URL}/${props.data.node.id}`;
+    a.href = `${NET_ARWEAVE_URL}/${props.data.node.tags.find(el => el.name === 'Model-Transaction')?.value}`;
     a.download =
       props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value ||
       props.data.node.id;
@@ -273,7 +273,7 @@ export const CustomStepper = (props: {
 
   useEffect(() => {
     const getFileSize = async () => {
-      const response = await fetch(`${NET_ARWEAVE_URL}/${props.data.node.id}`, { method: 'HEAD' });
+      const response = await fetch(`${NET_ARWEAVE_URL}/${props.data.node.tags.find(el => el.name === 'Model-Transaction')?.value}`, { method: 'HEAD' });
       setFileSize(parseInt(response.headers.get('Content-Length') || ''));
     };
     getFileSize();

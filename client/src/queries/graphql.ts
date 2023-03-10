@@ -1,4 +1,4 @@
-import { STATIC_ADDRESS } from '@/constants';
+import { MARKETPLACE_ADDRESS } from '@/constants';
 import { gql } from '@apollo/client';
 
 export const GET_IMAGES_TXIDS = gql`
@@ -13,29 +13,45 @@ export const GET_IMAGES_TXIDS = gql`
   }
 `;
 
-export const LIST_MODELS_QUERY_BUNDLR = gql`
-  query LIST_MODELS_QUERY {
+export const GET_TX = gql`
+  query LIST_MODELS_QUERY($id: ID!) {
     transactions(
-      tags: [
-        { name: "App-Name", values: ["Fair Protocol"] }
-        { name: "Operation-Name", values: "Model Creation" }
-      ]
+      ids: [ $id ]
     ) {
       edges {
+        cursor
         node {
           id
-          address
-          currency
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
           tags {
             name
             value
           }
-          signature
-          timestamp
-          receipt {
-            version
-            signature
+          block {
+            id
             timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
           }
         }
       }
@@ -48,8 +64,80 @@ export const LIST_MODELS_QUERY = gql`
     transactions(
       tags: [
         { name: "App-Name", values: ["Fair Protocol"] }
-        { name: "Operation-Name", values: "Model Creation" }
+        { name: "Operation-Name", values: "Model Creation Payment" }
       ]
+      recipients:["${MARKETPLACE_ADDRESS}"],
+    ) {
+      edges {
+        cursor
+        node {
+          id
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_LATEST_FEE_UPDATE = gql`
+  query GET_LATEST_FEE_UPDATE($tags: [TagFilter!]) {
+    transactions(
+      first: 1,
+      tags: $tags
+      sort: HEIGHT_DESC
+    ) {
+      edges {
+        node {
+          id
+          tags {
+            name
+            value
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const LIST_OWN_MODELS_QUERY = gql`
+  query LIST_MODELS_QUERY($owner: String!) {
+    transactions(
+      tags: [
+        { name: "App-Name", values: ["Fair Protocol"] }
+        { name: "Operation-Name", values: "Model Creation Payment" }
+      ]
+      recipients:["${MARKETPLACE_ADDRESS}"],
+      owners: [$owner]
     ) {
       edges {
         cursor
@@ -115,7 +203,7 @@ export const QUERY_REGISTERED_MODELS = gql`
   query QUERY_REGISTERED_MODELS {
     transactions(
       first: 25,
-      recipients:["${STATIC_ADDRESS}"],
+      recipients:["${MARKETPLACE_ADDRESS}"],
       tags: [
         {
               name: "App-Name",
@@ -216,7 +304,7 @@ export const QUERY_REGISTERED_MODELS = gql`
 export const QUERY_REGISTERED_OPERATORS = gql`
   query QUERY_REGISTERED_OPERATORS($tags: [TagFilter!]) {
     transactions(
-      recipients:["${STATIC_ADDRESS}"],
+      recipients:["${MARKETPLACE_ADDRESS}"],
       tags: $tags
       sort: HEIGHT_DESC
     )
@@ -266,7 +354,7 @@ export const QUERY_CANCELLED_OPERATORS = gql`
   query QUERY_CANCELLED_OPERATORS($tags: [TagFilter!]) {
     transactions(
       first: 1,
-      recipients:["${STATIC_ADDRESS}"],
+      recipients:["${MARKETPLACE_ADDRESS}"],
       tags: $tags
       sort: HEIGHT_DESC
     )
@@ -316,7 +404,7 @@ export const QUERY_CANCELLED_OPERATORS = gql`
 /* export const QUERY_OPERATORS_AVAILABILITY = gql`
   query QUERY_OPERATORS_AVAILABILITY($tags: [TagFilter!]) {
     transactions (
-      recipients:["${STATIC_ADDRESS}"],
+      recipients:["${MARKETPLACE_ADDRESS}"],
       tags: $tags
       sort: HEIGHT_DESC
     )
