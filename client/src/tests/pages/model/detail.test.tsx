@@ -140,17 +140,18 @@ const fakeLoader = () => 'fakeData';
 
 describe('pages/model/detail.tsx', () => {
   it('should populate model data from queries', async () => {
-    const mockRouter = createMemoryRouter([
+    const mockRouter = createMemoryRouter(
+      [
+        {
+          path: '/model/:txid',
+          children: [{ path: 'detail', element: <Detail /> }],
+          loader: fakeLoader,
+        },
+      ],
       {
-        path: '/model/:txid',
-        children: [
-          { path: 'detail', element: <Detail /> }
-        ],
-        loader: fakeLoader
-      }
-    ], {
-      initialEntries: [{ pathname: '/model/tx1/detail', state: mockState }],
-    });
+        initialEntries: [{ pathname: '/model/tx1/detail', state: mockState }],
+      },
+    );
     render(
       <MockedProvider mocks={queryRegisteredOperatorsMock} link={mockLink}>
         <SnackbarProvider>

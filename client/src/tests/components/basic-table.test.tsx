@@ -13,6 +13,7 @@ const mocks: RowData[] = [
     availability: 100,
     modelName: 'testModel1',
     modelCreator: 'testCreator1',
+    modelTransaction: 'testModel1tx',
   },
   {
     address: 'mock 2 address',
@@ -22,6 +23,7 @@ const mocks: RowData[] = [
     availability: 89,
     modelName: 'testModel1',
     modelCreator: 'testCreator1',
+    modelTransaction: 'testModel1tx',
   },
 ];
 
