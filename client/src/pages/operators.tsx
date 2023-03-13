@@ -1,4 +1,4 @@
-import { DEFAULT_TAGS, REGISTER_OPERATION_TAG } from '@/constants';
+import { DEFAULT_TAGS, MARKETPLACE_FEE, REGISTER_OPERATION_TAG } from '@/constants';
 import useArweave from '@/context/arweave';
 import { IEdge } from '@/interfaces/arweave';
 import { LIST_MODELS_QUERY, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
@@ -12,25 +12,34 @@ interface Element {
   txid: string;
   uploader: string;
   avgFee: number;
+  modelFee: string;
   totalOperators: number;
 }
 const Operators = () => {
   const navigate = useNavigate();
   const [elements, setElements] = useState<Element[]>([]);
   const { arweave } = useArweave();
+  const [txs, setTxs] = useState<IEdge[]>([]);
 
-  const { data, loading, error } = useQuery(LIST_MODELS_QUERY);
+  // filter only models who paid the correct Marketplace fee
+  const handleCompleted = (data: IEdge[]) =>
+    setTxs(data.filter((el) => el.node.quantity.ar.toString() !== MARKETPLACE_FEE));
+
+  const { loading, error } = useQuery(LIST_MODELS_QUERY, {
+    onCompleted: handleCompleted,
+  });
+
   const tags = [...DEFAULT_TAGS, REGISTER_OPERATION_TAG];
   // get all operatorsRegistration
   const { data: operatorsData } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags },
-    skip: !data,
+    skip: txs.length <= 0,
   });
 
   useEffect(() => {
     if (operatorsData) {
       setElements(
-        data.map((el: IEdge) => {
+        txs.map((el: IEdge) => {
           const uniqueOperators: IEdge[] = [];
           const modelOperators = operatorsData.filter(
             (op: IEdge) =>
@@ -47,7 +56,7 @@ const Operators = () => {
               : uniqueOperators.push(op),
           );
           const opFees = uniqueOperators.map((op) => {
-            const fee = op.node.tags.find((el) => el.name === 'Model-Fee')?.value;
+            const fee = op.node.tags.find((el) => el.name === 'Operator-Fee')?.value;
             if (fee) return parseFloat(arweave.ar.winstonToAr(fee));
             else return 0;
           });
@@ -57,8 +66,13 @@ const Operators = () => {
           return {
             name:
               el.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Name not Available',
-            txid: el.node.id,
+            txid:
+              el.node.tags.find((el) => el.name === 'Model-Transaction')?.value ||
+              'Transaction Not Available',
             uploader: el.node.owner.address,
+            modelFee:
+              el.node.tags.find((el) => el.name === 'Model-Fee')?.value ||
+              'Model Fee Not Available',
             avgFee,
             totalOperators: uniqueOperators.length,
           };
@@ -75,8 +89,9 @@ const Operators = () => {
   }
 
   const handleCardClick = (idx: number) => {
-    navigate(`/model/${encodeURIComponent(elements[idx].txid)}/register`, { state: data[idx] });
+    navigate(`/model/${encodeURIComponent(elements[idx].txid)}/register`, { state: txs[idx] });
   };
+
   return (
     <>
       <Container sx={{ top: '64px', position: 'relative' }}>
@@ -89,6 +104,7 @@ const Operators = () => {
                     <Typography>Name: {el.name}</Typography>
                     <Typography>Transaction id: {el.txid}</Typography>
                     <Typography>Creator: {el.uploader}</Typography>
+                    <Typography>Model Fee: {el.modelFee}</Typography>
                     <Typography>
                       Average Fee:{' '}
                       {Number.isNaN(el.avgFee) ? 'Not enough Operators for Fee' : el.avgFee}

@@ -5,9 +5,11 @@ import MenuItem from '@mui/material/MenuItem';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FundDialog from './fund-dialog';
 import useArweave from '@/context/arweave';
+import { useNavigate } from 'react-router-dom';
 
 const options = [
   'Bundlr Settings',
+  'My Models',
   // 'Disconnect'
 ];
 
@@ -16,6 +18,7 @@ const ITEM_HEIGHT = 48;
 export default function ProfileMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [fundOpen, setFundOpen] = React.useState(false);
+  const navigate = useNavigate();
   const { disconnect } = useArweave();
   const open = Boolean(anchorEl);
 
@@ -32,6 +35,10 @@ export default function ProfileMenu() {
       case 'Bundlr Settings':
         setFundOpen(true);
         setAnchorEl(null);
+        break;
+      case 'My Models':
+        setAnchorEl(null);
+        navigate('/history');
         break;
       case 'Disconnect':
         await disconnect();

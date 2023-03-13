@@ -1,5 +1,10 @@
 import { CustomStepper } from '@/components/stepper';
-import { DEFAULT_TAGS, REGISTER_OPERATION_TAG, STATIC_ADDRESS } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  REGISTER_OPERATION_TAG,
+  MARKETPLACE_ADDRESS,
+  APP_VERSION,
+} from '@/constants';
 import useArweave from '@/context/arweave';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
@@ -21,10 +26,10 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
-  /* const { data } = useRouteLoaderData('model') as { data: string }; */
+  const updatedFee = useRouteLoaderData('model') as string;
   const { state }: { state: IEdge } = useLocation();
   const { txid } = useParams();
 
@@ -46,22 +51,22 @@ const Register = () => {
   const handleRegister = async (rate: string, operatorName: string) => {
     try {
       const tx = await arweave.createTransaction({
-        target: STATIC_ADDRESS,
+        target: MARKETPLACE_ADDRESS,
         quantity: arweave.ar.arToWinston('0.05'),
       });
       const tags = [];
       tags.push({ name: 'App-Name', values: 'Fair Protocol' });
-      tags.push({ name: 'App-Version', values: 'test' });
+      tags.push({ name: 'App-Version', values: APP_VERSION });
       tags.push({
         name: 'Model-Name',
         values: state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value || '',
       });
       tags.push({ name: 'Model-Creator', values: state.node.owner.address });
-      tags.push({ name: 'Model-Fee', values: arweave.ar.arToWinston(rate) });
+      tags.push({ name: 'Operator-Fee', values: arweave.ar.arToWinston(rate) });
       tags.push({ name: 'Operation-Name', values: 'Operator Registration' });
       tags.push({ name: 'Operator-Name', values: operatorName });
 
-      tags.map((tag) => tx.addTag(tag.name, tag.values));
+      tags.forEach((tag) => tx.addTag(tag.name, tag.values));
 
       await arweave.transactions.sign(tx);
       const response = await arweave.transactions.post(tx);
@@ -122,6 +127,18 @@ const Register = () => {
                   value={state.node.tags.find((el) => el.name === 'Model-Name')?.value}
                   fullWidth
                   inputProps={{ readOnly: true }}
+                />
+                <TextField
+                  label='Fee'
+                  variant='outlined'
+                  type='number'
+                  value={arweave.ar.winstonToAr(
+                    updatedFee ||
+                      state.node.tags.find((el) => el.name === 'Model-Fee')?.value ||
+                      '0',
+                  )}
+                  inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, readOnly: true }}
+                  sx={{ width: '25%' }}
                 />
                 <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>

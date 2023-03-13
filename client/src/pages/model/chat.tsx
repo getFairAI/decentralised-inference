@@ -119,13 +119,13 @@ const Chat = () => {
       allData.map(async (el: IEdge) =>
         el.node.owner.address === userAddr
           ? temp.push({
-              msg: (await getData(el.node.id)) as string,
+              msg: await getData(el.node.id),
               type: 'request',
               timestamp: el.node.block?.timestamp || Date.now() / 1000,
               txidModel: el.node.id,
             })
           : temp.push({
-              msg: (await getData(el.node.id)) as string,
+              msg: await getData(el.node.id),
               type: 'response',
               timestamp: el.node.block?.timestamp + 0.001 || Date.now() / 1000 + 0.001,
               txidModel: el.node.id,
@@ -186,36 +186,12 @@ const Chat = () => {
       enqueueSnackbar('Bundlr Node does not have enough funds for upload', { variant: 'error' });
       return;
     }
-    const tx = await arweave.createTransaction({
-      target: address,
-      quantity: state.fee,
-    });
-
-    tx.addTag('App-Name', 'Fair Protocol');
-    tx.addTag('App-Version', APP_VERSION);
-    tx.addTag('Operation-Name', 'Inference Payment');
-    tx.addTag('Model-Name', state.modelName);
-    tx.addTag('Model-Creator', state.modelCreator);
-    tx.addTag('Conversation-Identifier', currentConversationId);
-
-    await arweave.transactions.sign(tx);
-    const res = await arweave.transactions.post(tx);
-    if (res.status === 200) {
-      enqueueSnackbar(
-        `Paid Operator Fee ${arweave.ar.winstonToAr(state.fee)} AR, TxId: https://arweave.net/${
-          tx.id
-        }`,
-        { variant: 'success' },
-      );
-    } else {
-      enqueueSnackbar(res.statusText, { variant: 'error' });
-    }
-
     const tags = [];
     tags.push({ name: 'App-Name', value: 'Fair Protocol' });
     tags.push({ name: 'App-Version', value: APP_VERSION });
     tags.push({ name: 'Model-Name', value: state.modelName });
     tags.push({ name: 'Model-Creator', value: state.modelCreator });
+    tags.push({ name: 'Model-Transaction', value: state.modelTransaction });
     tags.push({ name: 'Model-Operator', value: address });
     tags.push({ name: 'Operation-Name', value: 'Model Inference Request' });
     tags.push({ name: 'Conversation-Identifier', value: currentConversationId });
@@ -234,6 +210,33 @@ const Chat = () => {
       enqueueSnackbar(`Inference Request, TxId: https://arweave.net/${bundlrRes.id}`, {
         variant: 'success',
       });
+      const tx = await arweave.createTransaction({
+        target: address,
+        quantity: state.fee,
+      });
+
+      tx.addTag('App-Name', 'Fair Protocol');
+      tx.addTag('App-Version', APP_VERSION);
+      tx.addTag('Operation-Name', 'Inference Payment');
+      tx.addTag('Model-Name', state.modelName);
+      tx.addTag('Model-Creator', state.modelCreator);
+      tx.addTag('Model-Transaction', state.modelTransaction);
+      tx.addTag('Model-Operator', address || '');
+      tx.addTag('Conversation-Identifier', currentConversationId);
+      tx.addTag('Inference-Transaction', bundlrRes.id);
+
+      await arweave.transactions.sign(tx);
+      const res = await arweave.transactions.post(tx);
+      if (res.status === 200) {
+        enqueueSnackbar(
+          `Paid Operator Fee ${arweave.ar.winstonToAr(state.fee)} AR, TxId: https://arweave.net/${
+            tx.id
+          }`,
+          { variant: 'success' },
+        );
+      } else {
+        enqueueSnackbar(res.statusText, { variant: 'error' });
+      }
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
     }

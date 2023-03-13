@@ -13,7 +13,7 @@ import {
   Snackbar,
   Typography,
 } from '@mui/material';
-import { useRef, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
 import TextControl from '@/components/text-control';
 import SelectControl from '@/components/select-control';
@@ -22,15 +22,18 @@ import FileControl from '@/components/file-control';
 import { useLazyQuery } from '@apollo/client';
 import ImagePicker from '@/components/image-picker';
 import AvatarControl from '@/components/avatar-control';
-import { WebBundlr } from 'bundlr-custom';
 import FundDialog from '@/components/fund-dialog';
 import CustomProgress from '@/components/progress';
 import { GET_IMAGES_TXIDS } from '@/queries/graphql';
 import fileReaderStream from 'filereader-stream';
-import { NODE1_BUNDLR_URL } from '@/constants';
+import { APP_VERSION, MARKETPLACE_FEE, NODE1_BUNDLR_URL, MARKETPLACE_ADDRESS } from '@/constants';
+import useArweave from '@/context/arweave';
+import { BundlrContext } from '@/context/bundlr';
+import { useSnackbar } from 'notistack';
 
 export interface CreateForm extends FieldValues {
   name: string;
+  fee: number;
   category: string;
   notes: string;
   file: File;
@@ -41,6 +44,7 @@ const Upload = () => {
   const { handleSubmit, reset, control } = useForm<FieldValues>({
     defaultValues: {
       name: '',
+      fee: 0,
       description: '',
       notes: '',
       avatar: '',
@@ -55,6 +59,9 @@ const Upload = () => {
   const [, setMessage] = useState('');
   const [formData, setFormData] = useState<CreateForm | undefined>(undefined);
   const totalChunks = useRef(0);
+  const { arweave } = useArweave();
+  const bundlrContext = useContext(BundlrContext);
+  const { enqueueSnackbar } = useSnackbar();
 
   const [getImageTxIds, { data, error, loading }] = useLazyQuery(GET_IMAGES_TXIDS);
 
@@ -77,33 +84,31 @@ const Upload = () => {
   };
 
   const getNodeBalance = async () => {
-    const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
-    await bundlr.ready();
-    const atomicBalance = await bundlr.getLoadedBalance();
+    if (!bundlrContext || !bundlrContext.state) return 0;
+    const atomicBalance = await bundlrContext.state.getLoadedBalance();
 
     // Convert balance to an easier to read format
-    const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
+    const convertedBalance = bundlrContext.state.utils.unitConverter(atomicBalance);
     return convertedBalance.toNumber();
   };
 
   const getFilePrice = async (fileSize: number) => {
+    if (!bundlrContext || !bundlrContext.state) return 0;
     // Check the price to upload 1MB of data
     // The function accepts a number of bytes, so to check the price of
     // 1MB, check the price of 1,048,576 bytes.
-    const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
-    await bundlr.ready();
-
-    const atomicPrice = await bundlr.getPrice(fileSize);
+    const atomicPrice = await bundlrContext.state.getPrice(fileSize);
     // To ensure accuracy when performing mathematical operations
     // on fractional numbers in JavaScript, it is common to use atomic units.
     // This is a way to represent a floating point (decimal) number using non-decimal notation.
     // Once we have the value in atomic units, we can convert it into something easier to read.
-    const priceConverted = bundlr.utils.unitConverter(atomicPrice);
+    const priceConverted = bundlrContext.state.utils.unitConverter(atomicPrice);
     return priceConverted.toNumber();
   };
 
   const handleFundFinished = async (node: string, data?: CreateForm) => {
     setOpen(false);
+    if (!bundlrContext || !bundlrContext.state) return;
     if (!data) {
       data = formData;
     }
@@ -112,19 +117,7 @@ const Upload = () => {
 
     if ((await getFilePrice(file.size)) > (await getNodeBalance())) return;
 
-    await window.arweaveWallet.connect([
-      'ACCESS_ALL_ADDRESSES',
-      'ACCESS_PUBLIC_KEY',
-      'SIGNATURE',
-      'ACCESS_ADDRESS',
-    ]);
-    const bundlr = new WebBundlr(node, 'arweave', { ...window.arweaveWallet });
-    await bundlr.ready();
-    console.log(bundlr.currencyConfig);
-    console.log(bundlr.currency);
-    console.log(bundlr.getSigner().publicKey);
-
-    const uploader = bundlr.uploader.chunkedUploader;
+    const uploader = bundlrContext.state.uploader.chunkedUploader;
     const chunkSize = 25 * (1024 * 1024); // default is
 
     // divide the total file size by the size of each chunk we'll upload
@@ -160,27 +153,54 @@ const Upload = () => {
     const readableStream = fileReaderStream(file);
     const tags = [];
     tags.push({ name: 'App-Name', value: 'Fair Protocol' });
+    tags.push({ name: 'APP-Version', value: `${APP_VERSION}` });
     tags.push({ name: 'Content-Type', value: file.type });
     tags.push({ name: 'Model-Name', value: `${data.name}` });
     tags.push({ name: 'Operation-Name', value: 'Model Creation' });
     tags.push({ name: 'Notes', value: data.notes });
     tags.push({ name: 'Category', value: data.category });
+    tags.push({ name: 'Model-Fee', value: arweave.ar.arToWinston(`${data.fee}`) });
     if (data.avatar) tags.push({ name: 'AvatarUrl', value: data.avatar });
     if (data.description) tags.push({ name: 'Description', value: data.description });
     setSnackbarOpen(true);
     reset(); // reset form
-    await uploader
-      .uploadData(readableStream, { tags })
-      .then((res) => {
-        console.log(`Upload Success: https://arweave.net/${res.data.id}`);
-        // setUploadedURL("https://arweave.net/" + res.data.id);
-      })
-      .catch((e) => {
-        setSnackbarOpen(false);
-        setProgress(0);
-        setMessage('Upload error ' + e.message);
-        console.log('error on upload, ', e);
-      });
+    try {
+      const res = await uploader.uploadData(readableStream, { tags });
+      console.log(`Upload Success: https://arweave.net/${res.data.id}`);
+      try {
+        const tx = await arweave.createTransaction({
+          quantity: arweave.ar.arToWinston(MARKETPLACE_FEE),
+          target: MARKETPLACE_ADDRESS,
+        });
+        tx.addTag('App-Name', 'Fair Protocol');
+        tx.addTag('App-Version', APP_VERSION);
+        tx.addTag('Content-Type', file.type);
+        tx.addTag('Operation-Name', 'Model Creation Payment');
+        tx.addTag('Model-Name', data.name);
+        tx.addTag('Notes', data.notes);
+        tx.addTag('Category', data.category);
+        tx.addTag('Model-Fee', arweave.ar.arToWinston(`${data.fee}`));
+        if (data.avatar) tx.addTag('AvatarUrl', data.avatar);
+        if (data.description) tx.addTag('Description', data.description);
+        tx.addTag('Model-Transaction', res.data.id);
+        await arweave.transactions.sign(tx);
+        const payRes = await arweave.transactions.post(tx);
+        if (payRes.status === 200) {
+          enqueueSnackbar(
+            `Paid Marketplace Fee ${MARKETPLACE_FEE} AR, TxId: https://arweave.net/${tx.id}`,
+            { variant: 'success' },
+          );
+        } else {
+          enqueueSnackbar(payRes.statusText, { variant: 'error' });
+        }
+      } catch (error) {
+        enqueueSnackbar('An Error Occured.', { variant: 'error' });
+      }
+    } catch (error) {
+      setSnackbarOpen(false);
+      setProgress(0);
+      setMessage('Upload error ');
+    }
   };
 
   return (
@@ -204,13 +224,30 @@ const Upload = () => {
                     <AvatarControl name='avatar' control={control} />
                   </td>
                   <td colSpan={8} rowSpan={2}>
-                    <TextControl
-                      name='name'
-                      control={control}
-                      rules={{ required: true }}
-                      mat={{ variant: 'outlined' }}
-                      style={{ width: '100%' }}
-                    />
+                    <Box display={'flex'} justifyContent={'space-between'}>
+                      <TextControl
+                        name='name'
+                        control={control}
+                        rules={{ required: true }}
+                        mat={{ variant: 'outlined' }}
+                        style={{ width: '70%' }}
+                      />
+                      <TextControl
+                        name='fee'
+                        control={control}
+                        rules={{ required: true }}
+                        mat={{
+                          variant: 'outlined',
+                          type: 'number',
+                          inputProps: {
+                            step: 0.01,
+                            inputMode: 'numeric',
+                            min: 0.01 /* max: currentBalance */,
+                          },
+                        }}
+                        style={{ width: '25%' }}
+                      />
+                    </Box>
                     <SelectControl name='category' control={control} rules={{ required: true }}>
                       <MenuItem value={'text'}>Text</MenuItem>
                       <MenuItem value={'audio'}>Audio</MenuItem>

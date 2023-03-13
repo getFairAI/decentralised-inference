@@ -1,5 +1,6 @@
-export const STATIC_ADDRESS = 'z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ';
 export const APP_VERSION = 'test';
+export const MARKETPLACE_FEE = '0.1';
+export const MARKETPLACE_ADDRESS = 'RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo';
 
 export const APP_NAME_TAG = {
   name: 'App-Name',
