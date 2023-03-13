@@ -214,17 +214,17 @@ const Chat = () => {
         target: address,
         quantity: state.fee,
       });
-  
+
       tx.addTag('App-Name', 'Fair Protocol');
       tx.addTag('App-Version', APP_VERSION);
       tx.addTag('Operation-Name', 'Inference Payment');
       tx.addTag('Model-Name', state.modelName);
       tx.addTag('Model-Creator', state.modelCreator);
-      tx.addTag('Model-Transaction', state.modelTransaction );
-      tx.addTag('Model-Operator',  address || '');
+      tx.addTag('Model-Transaction', state.modelTransaction);
+      tx.addTag('Model-Operator', address || '');
       tx.addTag('Conversation-Identifier', currentConversationId);
       tx.addTag('Inference-Transaction', bundlrRes.id);
-  
+
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {

@@ -15,9 +15,7 @@ export const GET_IMAGES_TXIDS = gql`
 
 export const GET_TX = gql`
   query LIST_MODELS_QUERY($id: ID!) {
-    transactions(
-      ids: [ $id ]
-    ) {
+    transactions(ids: [$id]) {
       edges {
         cursor
         node {
@@ -111,11 +109,7 @@ export const LIST_MODELS_QUERY = gql`
 
 export const GET_LATEST_FEE_UPDATE = gql`
   query GET_LATEST_FEE_UPDATE($tags: [TagFilter!]) {
-    transactions(
-      first: 1,
-      tags: $tags
-      sort: HEIGHT_DESC
-    ) {
+    transactions(first: 1, tags: $tags, sort: HEIGHT_DESC) {
       edges {
         node {
           id

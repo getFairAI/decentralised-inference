@@ -33,7 +33,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'history',
-        element: <History />
+        element: <History />,
       },
       {
         path: 'operators',

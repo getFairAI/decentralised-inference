@@ -1,6 +1,4 @@
-import {
-  ApolloProvider,
-} from '@apollo/client';
+import { ApolloProvider } from '@apollo/client';
 import { createTheme, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import { useMemo } from 'react';

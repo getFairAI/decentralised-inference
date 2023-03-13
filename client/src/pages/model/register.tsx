@@ -1,5 +1,10 @@
 import { CustomStepper } from '@/components/stepper';
-import { DEFAULT_TAGS, REGISTER_OPERATION_TAG, MARKETPLACE_ADDRESS, APP_VERSION } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  REGISTER_OPERATION_TAG,
+  MARKETPLACE_ADDRESS,
+  APP_VERSION,
+} from '@/constants';
 import useArweave from '@/context/arweave';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
@@ -51,7 +56,7 @@ const Register = () => {
       });
       const tags = [];
       tags.push({ name: 'App-Name', values: 'Fair Protocol' });
-      tags.push({ name: 'App-Version', values: APP_VERSION});
+      tags.push({ name: 'App-Version', values: APP_VERSION });
       tags.push({
         name: 'Model-Name',
         values: state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value || '',
@@ -127,9 +132,13 @@ const Register = () => {
                   label='Fee'
                   variant='outlined'
                   type='number'
-                  value={arweave.ar.winstonToAr(updatedFee || (state.node.tags.find(el => el.name === 'Model-Fee')?.value || '0'))}
-                  inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, readOnly: true} }
-                  sx={{ width: '25%'}}
+                  value={arweave.ar.winstonToAr(
+                    updatedFee ||
+                      state.node.tags.find((el) => el.name === 'Model-Fee')?.value ||
+                      '0',
+                  )}
+                  inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, readOnly: true }}
+                  sx={{ width: '25%' }}
                 />
                 <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>
