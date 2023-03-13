@@ -15,22 +15,35 @@ import {
 import Grid from '@mui/material/Grid'; // Grid version 2
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import SearchIcon from '@mui/icons-material/Search';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LIST_MODELS_QUERY } from '@/queries/graphql';
 import { MARKETPLACE_FEE } from '@/constants';
+import { LIST_OWN_MODELS_QUERY } from '@/queries/graphql';
 
-const Explore = () => {
+const History = () => {
   const navigate = useNavigate();
   const [txs, setTxs] = useState<IEdge[]>([]);
+  const [owner, setOwner] = useState<string>('');
 
   // filter only models who paid the correct Marketplace fee
   const handleCompleted = (data: IEdge[]) =>
     setTxs(data.filter((el) => el.node.quantity.ar.toString() !== MARKETPLACE_FEE));
 
-  const { loading, error } = useQuery(LIST_MODELS_QUERY, {
+  const { loading, error } = useQuery(LIST_OWN_MODELS_QUERY, {
     onCompleted: handleCompleted,
+    skip: !owner,
+    variables: {
+      owner,
+    },
   });
+
+  useEffect(() => {
+    const getAddress = async () => {
+      setOwner(await window.arweaveWallet.getActiveAddress());
+    };
+
+    if (window && window.arweaveWallet) getAddress();
+  }, [window.arweaveWallet]);
 
   if (loading) {
     return <h2>Loading...</h2>;
@@ -113,4 +126,4 @@ const Explore = () => {
   );
 };
 
-export default Explore;
+export default History;
