@@ -17,13 +17,10 @@ export const getTxTags = async (txid: string) => {
 };
 
 export const getData = async (txid: string) => {
-  // const result = await arweave.transactions.getData(txid);
   const result = await fetch('http://arweave.net/' + txid);
-  const f = new File([(await result.blob())], 'test');
-  return '';
- /*  const text = await (await result.blob()).text();
-  console.log(text);
-  return text; */
+  const text = await (await result.blob()).text();
+
+  return text;
 };
 
 export const getActiveAddress = async () => {

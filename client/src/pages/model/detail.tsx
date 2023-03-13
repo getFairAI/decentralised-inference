@@ -19,7 +19,13 @@ import Stamp from '@/components/stamp';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
-import { APP_VERSION, DEFAULT_TAGS, MARKETPLACE_ADDRESS, MODEL_INFERENCE_RESULT_TAG, REGISTER_OPERATION_TAG } from '@/constants';
+import {
+  APP_VERSION,
+  DEFAULT_TAGS,
+  MARKETPLACE_ADDRESS,
+  MODEL_INFERENCE_RESULT_TAG,
+  REGISTER_OPERATION_TAG,
+} from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { ChangeEvent, useEffect, useState } from 'react';
 import useArweave from '@/context/arweave';
@@ -28,10 +34,10 @@ import { useSnackbar } from 'notistack';
 const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
   const { state } = useLocation();
-  const [ operatorsData, setOperatorsData] = useState<RowData[]>([]);
-  const [ owner, setOwner ] = useState('');
-  const [ feeValue, setFeeValue ] = useState(0);
-  const [ feeDirty, setFeeDirty ] = useState(false);
+  const [operatorsData, setOperatorsData] = useState<RowData[]>([]);
+  const [owner, setOwner] = useState('');
+  const [feeValue, setFeeValue] = useState(0);
+  const [feeDirty, setFeeDirty] = useState(false);
   const { arweave } = useArweave();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -114,7 +120,8 @@ const Detail = () => {
             100 || 0,
         modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value || '',
         modelCreator: state.node.owner.address,
-        modelTransaction: state.node.tags.find((el: ITag) => el.name === 'Model-Transaction')?.value || ''
+        modelTransaction:
+          state.node.tags.find((el: ITag) => el.name === 'Model-Transaction')?.value || '',
       }));
       setOperatorsData(parsed);
     }
@@ -126,11 +133,13 @@ const Detail = () => {
         const arValue = arweave.ar.winstonToAr(updatedFee);
         setFeeValue(parseFloat(arValue));
       } else {
-        const arValue = arweave.ar.winstonToAr(state.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value);
+        const arValue = arweave.ar.winstonToAr(
+          state.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value,
+        );
         setFeeValue(parseFloat(arValue));
       }
     }
-  }, [ state ]);
+  }, [state]);
 
   const handleFeeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(event.target.value);
@@ -142,22 +151,22 @@ const Detail = () => {
     try {
       const tx = await arweave.createTransaction({
         quantity: arweave.ar.arToWinston('0'),
-        target: MARKETPLACE_ADDRESS
+        target: MARKETPLACE_ADDRESS,
       });
       tx.addTag('App-Name', 'Fair Protocol');
       tx.addTag('App-Version', APP_VERSION);
       tx.addTag('Operation-Name', 'Model Fee Update');
-      tx.addTag('Model-Transaction', state.node.tags.find((el: ITag) => el.name === 'Model-Transaction')?.value);
+      tx.addTag(
+        'Model-Transaction',
+        state.node.tags.find((el: ITag) => el.name === 'Model-Transaction')?.value,
+      );
       tx.addTag('Model-Fee', arweave.ar.arToWinston(`${feeValue}`));
       await arweave.transactions.sign(tx);
       const payRes = await arweave.transactions.post(tx);
       if (payRes.status === 200) {
-        enqueueSnackbar(
-          `Updated Model Fee, TxId: https://arweave.net/${
-            tx.id
-          }`,
-          { variant: 'success' },
-        );
+        enqueueSnackbar(`Updated Model Fee, TxId: https://arweave.net/${tx.id}`, {
+          variant: 'success',
+        });
         setFeeDirty(false);
       } else {
         enqueueSnackbar(payRes.statusText, { variant: 'error' });
@@ -178,20 +187,22 @@ const Detail = () => {
                   sx={{ width: '180px', height: '180px' }}
                   src={state?.node?.tags?.find((el: ITag) => el.name === 'AvatarUrl')?.value}
                 />
-                {
-                  owner === state.node.owner.address ?
-                    <Button variant='outlined' disabled={!feeDirty} onClick={updateFee}>Update</Button> :
-                    <Button
-                      variant='outlined'
-                      startIcon={
-                        <SvgIcon>
-                          <Stamp />
-                        </SvgIcon>
-                      }
-                    >
-                      Stamp
-                    </Button>
-                }
+                {owner === state.node.owner.address ? (
+                  <Button variant='outlined' disabled={!feeDirty} onClick={updateFee}>
+                    Update
+                  </Button>
+                ) : (
+                  <Button
+                    variant='outlined'
+                    startIcon={
+                      <SvgIcon>
+                        <Stamp />
+                      </SvgIcon>
+                    }
+                  >
+                    Stamp
+                  </Button>
+                )}
               </Box>
               <Box>
                 <TextField
@@ -200,30 +211,29 @@ const Detail = () => {
                   value={state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value}
                   fullWidth
                   inputProps={{ readOnly: true }}
-                  sx={{ width: '70%'}}
+                  sx={{ width: '70%' }}
                 />
-                {
-                  owner === state.node.owner.address ? 
-                    <TextField
-                      label='Fee'
-                      variant='outlined'
-                      type='number'
-                      value={feeValue}
-                      onChange={handleFeeChange}
-                      inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01}}
-                      sx={{ width: '25%'}}
-                    /> :
-                    <TextField
-                      label='Fee'
-                      variant='outlined'
-                      type='number'
-                      value={feeValue}
-                      inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, readOnly: true} }
-                      sx={{ width: '25%'}}
-                    />
-                }
-                
-                
+                {owner === state.node.owner.address ? (
+                  <TextField
+                    label='Fee'
+                    variant='outlined'
+                    type='number'
+                    value={feeValue}
+                    onChange={handleFeeChange}
+                    inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01 }}
+                    sx={{ width: '25%' }}
+                  />
+                ) : (
+                  <TextField
+                    label='Fee'
+                    variant='outlined'
+                    type='number'
+                    value={feeValue}
+                    inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, readOnly: true }}
+                    sx={{ width: '25%' }}
+                  />
+                )}
+
                 <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>
                   <Select
@@ -267,7 +277,3 @@ const Detail = () => {
 };
 
 export default Detail;
-function enqueueSnackbar(arg0: string, arg1: { variant: string; }) {
-  throw new Error('Function not implemented.');
-}
-

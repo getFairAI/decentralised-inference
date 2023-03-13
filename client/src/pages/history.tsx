@@ -22,8 +22,8 @@ import { LIST_OWN_MODELS_QUERY } from '@/queries/graphql';
 
 const History = () => {
   const navigate = useNavigate();
-  const [ txs, setTxs ] = useState<IEdge[]>([]);
-  const [ owner, setOwner ] = useState<string>('');
+  const [txs, setTxs] = useState<IEdge[]>([]);
+  const [owner, setOwner] = useState<string>('');
 
   // filter only models who paid the correct Marketplace fee
   const handleCompleted = (data: IEdge[]) =>
@@ -33,8 +33,8 @@ const History = () => {
     onCompleted: handleCompleted,
     skip: !owner,
     variables: {
-      owner
-    }
+      owner,
+    },
   });
 
   useEffect(() => {
@@ -78,7 +78,13 @@ const History = () => {
             <Card>
               <CardActionArea
                 style={{ display: 'flex' }}
-                onClick={(e) => handleCardClick(e, edge.node.tags.find(el => el.name === 'Model-Transaction')?.value, index)}
+                onClick={(e) =>
+                  handleCardClick(
+                    e,
+                    edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value,
+                    index,
+                  )
+                }
               >
                 <CardHeader
                   sx={{ marginRight: 0 }}
@@ -91,7 +97,7 @@ const History = () => {
                       {edge.node.tags.find((el) => el.name === 'test')?.value}
                     </Typography> */}
                     <Typography noWrap variant='body1'>
-                      {edge.node.tags.find(el => el.name === 'Model-Transaction')?.value}
+                      {edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value}
                     </Typography>
                     <Box
                       sx={{
@@ -100,7 +106,10 @@ const History = () => {
                         alignContent: 'center',
                       }}
                     >
-                      <Chip label={edge.node.tags.find(el => el.name === 'Category')?.value} color='primary' />
+                      <Chip
+                        label={edge.node.tags.find((el) => el.name === 'Category')?.value}
+                        color='primary'
+                      />
                       <Box sx={{ display: 'flex', alignContent: 'center' }}>
                         <Typography variant='body1'>11</Typography>
                         <ThumbUpIcon />

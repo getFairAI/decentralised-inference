@@ -19,7 +19,7 @@ const Operators = () => {
   const navigate = useNavigate();
   const [elements, setElements] = useState<Element[]>([]);
   const { arweave } = useArweave();
-  const [ txs, setTxs ] = useState<IEdge[]>([]);
+  const [txs, setTxs] = useState<IEdge[]>([]);
 
   // filter only models who paid the correct Marketplace fee
   const handleCompleted = (data: IEdge[]) =>
@@ -66,9 +66,13 @@ const Operators = () => {
           return {
             name:
               el.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Name not Available',
-            txid: el.node.tags.find(el => el.name === 'Model-Transaction')?.value || 'Transaction Not Available',
+            txid:
+              el.node.tags.find((el) => el.name === 'Model-Transaction')?.value ||
+              'Transaction Not Available',
             uploader: el.node.owner.address,
-            modelFee: el.node.tags.find(el => el.name === 'Model-Fee')?.value || 'Model Fee Not Available',
+            modelFee:
+              el.node.tags.find((el) => el.name === 'Model-Fee')?.value ||
+              'Model Fee Not Available',
             avgFee,
             totalOperators: uniqueOperators.length,
           };
@@ -85,7 +89,7 @@ const Operators = () => {
   }
 
   const handleCardClick = (idx: number) => {
-    navigate(`/model/${encodeURIComponent(elements[idx].txid)}/register`, { state: txs[idx]});
+    navigate(`/model/${encodeURIComponent(elements[idx].txid)}/register`, { state: txs[idx] });
   };
 
   return (

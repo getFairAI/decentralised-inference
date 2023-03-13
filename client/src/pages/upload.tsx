@@ -153,7 +153,7 @@ const Upload = () => {
     const readableStream = fileReaderStream(file);
     const tags = [];
     tags.push({ name: 'App-Name', value: 'Fair Protocol' });
-    tags.push({ name: 'APP-Version', value: `${APP_VERSION}`});
+    tags.push({ name: 'APP-Version', value: `${APP_VERSION}` });
     tags.push({ name: 'Content-Type', value: file.type });
     tags.push({ name: 'Model-Name', value: `${data.name}` });
     tags.push({ name: 'Operation-Name', value: 'Model Creation' });
@@ -170,7 +170,7 @@ const Upload = () => {
       try {
         const tx = await arweave.createTransaction({
           quantity: arweave.ar.arToWinston(MARKETPLACE_FEE),
-          target: MARKETPLACE_ADDRESS
+          target: MARKETPLACE_ADDRESS,
         });
         tx.addTag('App-Name', 'Fair Protocol');
         tx.addTag('App-Version', APP_VERSION);
@@ -187,9 +187,7 @@ const Upload = () => {
         const payRes = await arweave.transactions.post(tx);
         if (payRes.status === 200) {
           enqueueSnackbar(
-            `Paid Marketplace Fee ${MARKETPLACE_FEE} AR, TxId: https://arweave.net/${
-              tx.id
-            }`,
+            `Paid Marketplace Fee ${MARKETPLACE_FEE} AR, TxId: https://arweave.net/${tx.id}`,
             { variant: 'success' },
           );
         } else {
@@ -238,7 +236,15 @@ const Upload = () => {
                         name='fee'
                         control={control}
                         rules={{ required: true }}
-                        mat={{ variant: 'outlined', type: 'number', inputProps: { step: 0.01, inputMode: 'numeric', min: 0.01 /* max: currentBalance */ } }}
+                        mat={{
+                          variant: 'outlined',
+                          type: 'number',
+                          inputProps: {
+                            step: 0.01,
+                            inputMode: 'numeric',
+                            min: 0.01 /* max: currentBalance */,
+                          },
+                        }}
                         style={{ width: '25%' }}
                       />
                     </Box>
