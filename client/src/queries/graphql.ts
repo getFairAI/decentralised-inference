@@ -15,9 +15,7 @@ export const GET_IMAGES_TXIDS = gql`
 
 export const GET_TX = gql`
   query LIST_MODELS_QUERY($id: ID!) {
-    transactions(
-      ids: [ $id ]
-    ) {
+    transactions(ids: [$id]) {
       edges {
         cursor
         node {
@@ -111,11 +109,7 @@ export const LIST_MODELS_QUERY = gql`
 
 export const GET_LATEST_FEE_UPDATE = gql`
   query GET_LATEST_FEE_UPDATE($tags: [TagFilter!]) {
-    transactions(
-      first: 1,
-      tags: $tags
-      sort: HEIGHT_DESC
-    ) {
+    transactions(first: 1, tags: $tags, sort: HEIGHT_DESC) {
       edges {
         node {
           id
@@ -474,6 +468,63 @@ export const QUERY_OPERATOR_RESULTS_RESPONSES = gql`
           recipient
           owner {
             address
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_PAID_FEE_OPERATORS = gql`
+  query QUERY_PAID_FEE_OPERATORS(
+    $tags: [TagFilter!]
+    $owner: String!
+    $minBlockHeight: Int!
+    $maxBlockHeight: Int!
+  ) {
+    transactions(
+      first: 1,
+      recipients:["${MARKETPLACE_ADDRESS}"],
+      tags: $tags,
+      owners: [$owner],
+      block: {min: $minBlockHeight, max: $maxBlockHeight},
+      sort: HEIGHT_DESC
+    )
+    {
+      edges {
+        cursor
+        node {
+          id
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
           }
         }
       }

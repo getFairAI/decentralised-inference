@@ -15,6 +15,7 @@ import useArweave from '@/context/arweave';
 import { useNavigate } from 'react-router-dom';
 
 export interface RowData {
+  quantityAR: number;
   address: string;
   fee: string;
   availability: number;
