@@ -18,12 +18,19 @@ import BasicTable, { RowData } from '@/components/basic-table';
 import Stamp from '@/components/stamp';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 import { useLazyQuery, useQuery } from '@apollo/client';
-import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import {
+  QUERY_OPERATOR_RESULTS_RESPONSES,
+  QUERY_REGISTERED_OPERATORS,
+  QUERY_PAID_FEE_OPERATORS,
+} from '@/queries/graphql';
 import {
   APP_VERSION,
   DEFAULT_TAGS,
+  INFERENCE_PERCENTAGE_FEE,
   MARKETPLACE_ADDRESS,
   MODEL_INFERENCE_RESULT_TAG,
+  N_PREVIOUS_BLOCKS,
+  OPERATOR_REGISTRATION_AR_FEE,
   REGISTER_OPERATION_TAG,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
@@ -63,6 +70,8 @@ const Detail = () => {
 
   const [getFollowupQuery, followupResult] = useLazyQuery(QUERY_OPERATOR_RESULTS_RESPONSES);
 
+  const [getPaidFee, paidFeeResult] = useLazyQuery(QUERY_PAID_FEE_OPERATORS);
+
   useEffect(() => {
     if (queryData) {
       const owners = Array.from(new Set(queryData.map((el: IEdge) => el.node.owner.address)));
@@ -87,6 +96,24 @@ const Detail = () => {
   }, [queryData]);
 
   useEffect(() => {
+    if (paidFeeResult.loading) console.log('loading');
+    if (paidFeeResult.error) console.log(error, 'err');
+    if (paidFeeResult.data) {
+      const currentUser = paidFeeResult?.variables?.owner;
+      paidFeeResult.data.forEach((el: IEdge) => {
+        if (
+          operatorsData.find((op: RowData) => op.address === currentUser)?.quantityAR.toString() ===
+            OPERATOR_REGISTRATION_AR_FEE ||
+          el.node.quantity.winston * INFERENCE_PERCENTAGE_FEE <=
+            parseFloat(operatorsData.find((op: RowData) => op.address === currentUser)?.fee || '0')
+        ) {
+          setOperatorsData(operatorsData.filter((op: RowData) => op.address !== currentUser));
+        }
+      });
+    }
+  }, [paidFeeResult]);
+
+  useEffect(() => {
     const getAddress = async () => {
       setOwner(await window.arweaveWallet.getActiveAddress());
     };
@@ -95,36 +122,65 @@ const Detail = () => {
   }, [window.arweaveWallet]);
 
   useEffect(() => {
-    if (followupResult.loading) console.log('loading');
-    if (followupResult.error) console.log(error, 'err');
-    if (followupResult.data) {
-      const requests = followupResult.data.requests as IEdge[];
-      const results = followupResult.data.results as IEdge[];
-      const uniqueQueryData: IEdge[] = [];
-      queryData.map((el: IEdge) =>
-        uniqueQueryData.filter((unique) => el.node.owner.address === unique.node.owner.address)
-          .length > 0
-          ? undefined
-          : uniqueQueryData.push(el),
-      );
-      const parsed: RowData[] = uniqueQueryData.map((el: IEdge) => ({
-        address: el.node.owner.address,
-        stamps: Math.round(Math.random() * 100),
-        fee: el.node.tags.find((el) => el.name === 'Operator-Fee')?.value || '0',
-        registrationTimestamp: el.node.block
-          ? new Date(el.node.block.timestamp * 1000).toLocaleString()
-          : 'Pending',
-        availability:
-          (results.filter((res) => el.node.owner.address === res.node.owner.address).length /
-            requests.filter((req) => el.node.owner.address === req.node.recipient).length) *
-            100 || 0,
-        modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value || '',
-        modelCreator: state.node.owner.address,
-        modelTransaction:
-          state.node.tags.find((el: ITag) => el.name === 'Model-Transaction')?.value || '',
-      }));
-      setOperatorsData(parsed);
-    }
+    const asyncFunction = async () => {
+      if (followupResult.loading) console.log('loading');
+      if (followupResult.error) console.log(error, 'err');
+      if (followupResult.data) {
+        const requests = followupResult.data.requests as IEdge[];
+        const results = followupResult.data.results as IEdge[];
+        const uniqueQueryData: IEdge[] = [];
+        queryData.map((el: IEdge) =>
+          uniqueQueryData.filter((unique) => el.node.owner.address === unique.node.owner.address)
+            .length > 0
+            ? undefined
+            : uniqueQueryData.push(el),
+        );
+        const parsed: RowData[] = uniqueQueryData.map((el: IEdge) => ({
+          quantityAR: el.node.quantity.ar,
+          address: el.node.owner.address,
+          stamps: Math.round(Math.random() * 100),
+          fee: el.node.tags.find((el) => el.name === 'Operator-Fee')?.value || '0',
+          registrationTimestamp: el.node.block
+            ? new Date(el.node.block.timestamp * 1000).toLocaleString()
+            : 'Pending',
+          availability:
+            (results.filter((res) => el.node.owner.address === res.node.owner.address).length /
+              requests.filter((req) => el.node.owner.address === req.node.recipient).length) *
+              100 || 0,
+          modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value || '',
+          modelCreator: state.node.owner.address,
+          modelTransaction:
+            state.node.tags.find((el: ITag) => el.name === 'Model-Transaction')?.value || '',
+        }));
+        setOperatorsData(parsed);
+
+        await Promise.all(
+          uniqueQueryData.map(async (el: IEdge) => {
+            const tags = [
+              ...DEFAULT_TAGS,
+              {
+                name: 'Operation-Name',
+                values: ['Operator Fee Payment'],
+              },
+              {
+                name: 'Response-Identifier',
+                values: [el.node.id],
+              },
+            ];
+            const currentBlockHeight = await arweave.blocks.getCurrent();
+            getPaidFee({
+              variables: {
+                tags: tags,
+                owner: el.node.owner.address,
+                minBlockHeight: el.node.block.height,
+                maxBlockHeight: currentBlockHeight.height - N_PREVIOUS_BLOCKS,
+              },
+            });
+          }),
+        );
+      }
+    };
+    asyncFunction();
   }, [followupResult]);
 
   useEffect(() => {

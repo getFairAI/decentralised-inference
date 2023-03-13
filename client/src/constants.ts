@@ -1,5 +1,7 @@
 export const APP_VERSION = 'test';
 export const MARKETPLACE_FEE = '0.1';
+export const OPERATOR_REGISTRATION_AR_FEE = '0.05';
+export const INFERENCE_PERCENTAGE_FEE = 0.05;
 export const MARKETPLACE_ADDRESS = 'RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo';
 
 export const APP_NAME_TAG = {
@@ -48,3 +50,5 @@ export const NODE2_BUNDLR_URL = 'https://node2.bundlr.network/';
 
 export const DEV_ARWEAVE_URL = 'https://arweave.dev';
 export const NET_ARWEAVE_URL = 'https://arweave.net';
+
+export const N_PREVIOUS_BLOCKS = 7;

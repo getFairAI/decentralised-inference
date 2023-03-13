@@ -495,6 +495,63 @@ export const QUERY_OPERATOR_RESULTS_RESPONSES = gql`
   }
 `;
 
+export const QUERY_PAID_FEE_OPERATORS = gql`
+  query QUERY_PAID_FEE_OPERATORS(
+    $tags: [TagFilter!]
+    $owner: String!
+    $minBlockHeight: Int!
+    $maxBlockHeight: Int!
+  ) {
+    transactions(
+      first: 1,
+      recipients:["${MARKETPLACE_ADDRESS}"],
+      tags: $tags,
+      owners: [$owner],
+      block: {min: $minBlockHeight, max: $maxBlockHeight},
+      sort: HEIGHT_DESC
+    )
+    {
+      edges {
+        cursor
+        node {
+          id
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const QUERY_INFERENCE_RESULTS = gql`
   query GET_INFERENCE_RESULTS($tags: [TagFilter!]) {
     transactions(tags: $tags) {
