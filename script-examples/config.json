@@ -1,5 +1,9 @@
 {
-    "privateKey": "key",
     "url": "http://localhost:5005/webhooks/rest/webhook",
-    "sleepTime": 0.1
+    "sleepTimeSeconds": 5,
+    "modelCreator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8",
+    "modelName": "Test v3",
+    "marketplaceWallet": "RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo",
+    "inferencePercentageFee": 0.05,
+    "nPreviousBlocks": 7
 }
