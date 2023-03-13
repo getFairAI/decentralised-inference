@@ -22,7 +22,7 @@ import { MARKETPLACE_FEE } from '@/constants';
 
 const Explore = () => {
   const navigate = useNavigate();
-  const [ txs, setTxs ] = useState<IEdge[]>([]);
+  const [txs, setTxs] = useState<IEdge[]>([]);
 
   // filter only models who paid the correct Marketplace fee
   const handleCompleted = (data: IEdge[]) =>
@@ -65,7 +65,13 @@ const Explore = () => {
             <Card>
               <CardActionArea
                 style={{ display: 'flex' }}
-                onClick={(e) => handleCardClick(e, edge.node.tags.find(el => el.name === 'Model-Transaction')?.value, index)}
+                onClick={(e) =>
+                  handleCardClick(
+                    e,
+                    edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value,
+                    index,
+                  )
+                }
               >
                 <CardHeader
                   sx={{ marginRight: 0 }}
@@ -78,7 +84,7 @@ const Explore = () => {
                       {edge.node.tags.find((el) => el.name === 'test')?.value}
                     </Typography> */}
                     <Typography noWrap variant='body1'>
-                      {edge.node.tags.find(el => el.name === 'Model-Transaction')?.value}
+                      {edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value}
                     </Typography>
                     <Box
                       sx={{
@@ -87,7 +93,10 @@ const Explore = () => {
                         alignContent: 'center',
                       }}
                     >
-                      <Chip label={edge.node.tags.find(el => el.name === 'Category')?.value} color='primary' />
+                      <Chip
+                        label={edge.node.tags.find((el) => el.name === 'Category')?.value}
+                        color='primary'
+                      />
                       <Box sx={{ display: 'flex', alignContent: 'center' }}>
                         <Typography variant='body1'>11</Typography>
                         <ThumbUpIcon />

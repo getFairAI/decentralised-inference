@@ -18,7 +18,7 @@ const ITEM_HEIGHT = 48;
 export default function ProfileMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [fundOpen, setFundOpen] = React.useState(false);
-  const navigate= useNavigate();
+  const navigate = useNavigate();
   const { disconnect } = useArweave();
   const open = Boolean(anchorEl);
 
