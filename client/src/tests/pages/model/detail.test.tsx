@@ -2,8 +2,9 @@ import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from '@/
 import { render, screen } from '@testing-library/react';
 import { MockedProvider, mockObservableLink } from '@apollo/client/testing';
 import Detail from '@/pages/model/detail';
-import { MemoryRouter } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { DEFAULT_TAGS, REGISTER_OPERATION_TAG } from '@/constants';
+import { SnackbarProvider } from 'notistack';
 
 const queryRegisteredOperatorsMock = [
   {
@@ -135,13 +136,26 @@ const mockState = {
 
 const mockLink = mockObservableLink();
 
+const fakeLoader = () => 'fakeData';
+
 describe('pages/model/detail.tsx', () => {
   it('should populate model data from queries', async () => {
+    const mockRouter = createMemoryRouter([
+      {
+        path: '/model/:txid',
+        children: [
+          { path: 'detail', element: <Detail /> }
+        ],
+        loader: fakeLoader
+      }
+    ], {
+      initialEntries: [{ pathname: '/model/tx1/detail', state: mockState }],
+    });
     render(
       <MockedProvider mocks={queryRegisteredOperatorsMock} link={mockLink}>
-        <MemoryRouter initialEntries={[{ pathname: '/model/tx1/detail', state: mockState }]}>
-          <Detail />
-        </MemoryRouter>
+        <SnackbarProvider>
+          <RouterProvider router={mockRouter} />
+        </SnackbarProvider>
       </MockedProvider>,
     );
 
@@ -150,6 +164,6 @@ describe('pages/model/detail.tsx', () => {
     const descriptionField = (await screen.findByLabelText('Description')) as HTMLInputElement;
     expect(descriptionField.value).toEqual('description');
 
-    expect(await screen.getByRole('table')).toBeDefined();
+    expect(screen.getByRole('table')).toBeDefined();
   });
 });
