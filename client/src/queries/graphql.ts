@@ -394,6 +394,26 @@ export const QUERY_CANCELLED_OPERATORS = gql`
   }
 `;
 
+export const QUERY_MODEL_FEE_PAYMENT = gql`
+  query QUERY_MODEL_FEE_PAYMENT($owner: String!, $tags: [TagFilter!], $recipient: String!) {
+    transactions(first: 1, owners: [$owner], recipients: [$recipient], tags: $tags) {
+      edges {
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          quantity {
+            winston
+            ar
+          }
+        }
+      }
+    }
+  }
+`;
+
 // availability could be replaced with something more meaningful
 /* export const QUERY_OPERATORS_AVAILABILITY = gql`
   query QUERY_OPERATORS_AVAILABILITY($tags: [TagFilter!]) {
@@ -468,6 +488,63 @@ export const QUERY_OPERATOR_RESULTS_RESPONSES = gql`
           recipient
           owner {
             address
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_PAID_FEE_OPERATORS = gql`
+  query QUERY_PAID_FEE_OPERATORS(
+    $tags: [TagFilter!]
+    $owner: String!
+    $minBlockHeight: Int!
+    $maxBlockHeight: Int!
+  ) {
+    transactions(
+      first: 1,
+      recipients:["${MARKETPLACE_ADDRESS}"],
+      tags: $tags,
+      owners: [$owner],
+      block: {min: $minBlockHeight, max: $maxBlockHeight},
+      sort: HEIGHT_DESC
+    )
+    {
+      edges {
+        cursor
+        node {
+          id
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
           }
         }
       }

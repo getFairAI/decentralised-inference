@@ -27,6 +27,7 @@ import {
   NODE1_BUNDLR_URL,
   MODEL_INFERENCE_REQUEST_TAG,
   MODEL_INFERENCE_RESULT_TAG,
+  INFERENCE_PERCENTAGE_FEE,
 } from '@/constants';
 import { QUERY_CHAT_HISTORY } from '@/queries/graphql';
 import { IEdge } from '@/interfaces/arweave';
@@ -210,9 +211,15 @@ const Chat = () => {
       enqueueSnackbar(`Inference Request, TxId: https://arweave.net/${bundlrRes.id}`, {
         variant: 'success',
       });
+
+      const inferenceFee = (
+        parseFloat(state.fee) +
+        parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
+      ).toString();
+
       const tx = await arweave.createTransaction({
         target: address,
-        quantity: state.fee,
+        quantity: inferenceFee,
       });
 
       tx.addTag('App-Name', 'Fair Protocol');
@@ -229,9 +236,9 @@ const Chat = () => {
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {
         enqueueSnackbar(
-          `Paid Operator Fee ${arweave.ar.winstonToAr(state.fee)} AR, TxId: https://arweave.net/${
-            tx.id
-          }`,
+          `Paid Operator Fee ${arweave.ar.winstonToAr(
+            inferenceFee,
+          )} AR, TxId: https://arweave.net/${tx.id}`,
           { variant: 'success' },
         );
       } else {

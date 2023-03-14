@@ -13,8 +13,10 @@ import { ApolloError } from '@apollo/client';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import useArweave from '@/context/arweave';
 import { useNavigate } from 'react-router-dom';
+import { IEdge } from '@/interfaces/arweave';
 
 export interface RowData {
+  quantityAR: number;
   address: string;
   fee: string;
   availability: number;
@@ -46,6 +48,7 @@ export default function BasicTable(props: {
   data: RowData[];
   loading: boolean;
   error?: ApolloError;
+  state?: IEdge;
 }) {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [page, setPage] = React.useState(0);
@@ -132,6 +135,7 @@ export default function BasicTable(props: {
                             modelCreator: row.modelCreator,
                             fee: row.fee,
                             modelTransaction: row.modelTransaction,
+                            fullState: props.state,
                           },
                         })
                       }
