@@ -65,6 +65,7 @@ const Register = () => {
       tags.push({ name: 'Operator-Fee', values: arweave.ar.arToWinston(rate) });
       tags.push({ name: 'Operation-Name', values: 'Operator Registration' });
       tags.push({ name: 'Operator-Name', values: operatorName });
+      tags.push({ name: 'Unix-Time', values: (Date.now() / 1000).toString() });
 
       tags.forEach((tag) => tx.addTag(tag.name, tag.values));
 
