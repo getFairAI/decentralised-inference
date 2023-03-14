@@ -394,6 +394,31 @@ export const QUERY_CANCELLED_OPERATORS = gql`
   }
 `;
 
+export const QUERY_MODEL_FEE_PAYMENT = gql`
+  query QUERY_MODEL_FEE_PAYMENT($owner: String!, $tags: [TagFilter!], $recipient: String!) {
+    transactions(
+      first: 1,
+      owners: [ $owner ],
+      recipients: [ $recipient ],
+      tags: $tags
+    ) {
+      edges {
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          quantity {
+            winston
+            ar
+          }
+        }
+      }
+    }
+  }
+`;
+
 // availability could be replaced with something more meaningful
 /* export const QUERY_OPERATORS_AVAILABILITY = gql`
   query QUERY_OPERATORS_AVAILABILITY($tags: [TagFilter!]) {
