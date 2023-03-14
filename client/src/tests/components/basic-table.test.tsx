@@ -6,6 +6,7 @@ const date1 = Date.now() * 1000;
 const date2 = Date.now() * 1000 + 3600;
 const mocks: RowData[] = [
   {
+    quantityAR: 0.1,
     address: 'mock 1 address',
     stamps: 9,
     fee: '100000000',
@@ -16,6 +17,7 @@ const mocks: RowData[] = [
     modelTransaction: 'testModel1tx',
   },
   {
+    quantityAR: 0.05,
     address: 'mock 2 address',
     stamps: 903,
     fee: '200000000',
