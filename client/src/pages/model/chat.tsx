@@ -27,6 +27,7 @@ import {
   NODE1_BUNDLR_URL,
   MODEL_INFERENCE_REQUEST_TAG,
   MODEL_INFERENCE_RESULT_TAG,
+  INFERENCE_PERCENTAGE_FEE,
 } from '@/constants';
 import { QUERY_CHAT_HISTORY } from '@/queries/graphql';
 import { IEdge } from '@/interfaces/arweave';
@@ -210,7 +211,12 @@ const Chat = () => {
       enqueueSnackbar(`Inference Request, TxId: https://arweave.net/${bundlrRes.id}`, {
         variant: 'success',
       });
-      const inferenceFee = state.fee + state.fee * 0.05;
+
+      const inferenceFee = (
+        parseFloat(state.fee) +
+        parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
+      ).toString();
+
       const tx = await arweave.createTransaction({
         target: address,
         quantity: inferenceFee,

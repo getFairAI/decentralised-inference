@@ -1,13 +1,5 @@
 import { WebBundlr } from 'bundlr-custom';
-import {
-  createContext,
-  Dispatch,
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useReducer,
-} from 'react';
+import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer } from 'react';
 import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 import { WalletContext } from './wallet';
 
@@ -72,7 +64,7 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
 
   const retryConnection = async () => await state?.ready();
 
-  const value = useMemo(() => ({ state, actions, retryConnection }), []);
+  const value = { state, actions, retryConnection };
 
   return <BundlrContext.Provider value={value}>{children}</BundlrContext.Provider>;
 };

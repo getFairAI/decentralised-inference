@@ -28,7 +28,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
 import useArweave from '@/context/arweave';
 import { IEdge, ITag } from '@/interfaces/arweave';
-import { NET_ARWEAVE_URL } from '@/constants';
+import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
 
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -368,7 +368,7 @@ export const CustomStepper = (props: {
             ></TextField>
           </Box>
           <Alert severity='warning' variant='outlined'>
-            Registration Requires a small fee to prevent malicious actors
+            Registration Requires {OPERATOR_REGISTRATION_AR_FEE} AR to prevent malicious actors.
           </Alert>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Button variant='outlined' onClick={handleBack}>
