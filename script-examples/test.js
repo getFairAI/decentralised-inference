@@ -195,6 +195,12 @@ const start = async function () {
 				    name
 				    value
 				}
+				block {
+				    id
+				    timestamp
+				    height
+				    previous
+				}
 			    }
 			}
 		    }
@@ -209,7 +215,7 @@ const start = async function () {
   try {
     const resultOperatorFee = await clientGateway.query(query);
     var edges = resultOperatorFee.data.transactions.edges;
-    console.log(edges);
+    // console.log(edges);
     var tags = resultOperatorFee.data.transactions.edges[0].node.tags;
     for (let i = 0; i < tags.length; i++) {
       if (tags[i].name == "Operator-Fee") {
@@ -273,8 +279,8 @@ const start = async function () {
     return queryObjectTransactionsReceived;
   };
 
-  const buildQueryTransactionsAnswered = (transactionId) => {
-    const queryObjectTransactionsAnswered = {
+  const buildQueryTransactionAnswered = (transactionId) => {
+    const queryObjectTransactionAnswered = {
       query: gql`
 		query {
 		    transactions(
@@ -321,10 +327,100 @@ const start = async function () {
 		}
 	`,
     };
-    return queryObjectTransactionsAnswered;
+    return queryObjectTransactionAnswered;
+  };
+  
+  const buildQueryOperatorFeeWithLimit = (address, minBlockHeight, maxBlockHeight) => {
+    const queryObjectTransactionsAnsweredWithLimit = {
+      query: gql`
+		query {
+		    transactions(
+		    	first: 1,
+		    	owners:["${address}"],
+		    	tags: [
+			    	{
+					name: "Operation-Name",
+					values: ["Model Inference Response"]
+				},
+				{
+					name: "Model-Creator",
+					values: ["${CONFIG.modelCreator}"]
+				},
+				{
+					name: "Model-Name",
+					values: ["${CONFIG.modelName}"]
+				}
+			],
+			block: {min: ${minBlockHeight}, max: ${maxBlockHeight}},
+			sort: HEIGHT_DESC
+		    ) {
+			edges {
+			    node {
+				id
+				owner {
+				    address
+				    key
+				}
+				quantity {
+				    winston
+				    ar
+				}
+				tags {
+				    name
+				    value
+				}
+			    }
+			}
+		    }
+		}
+	`,
+    };
+    return queryObjectTransactionsAnsweredWithLimit;
   };
 
-  const buildQueryCheckUserPayment = (userAddress) => {
+  const buildQueryCheckUserModelRequests = (userAddress) => {
+    const queryObjectCheckUserModelRequests = {
+      query: gql`
+		query {
+		    transactions(
+		    	owners:["${userAddress}"],
+		    	tags: [
+			    	{
+					name: "Operation-Name",
+					values: ["Inference Request"]
+				},
+				{
+					name: "Model-Creator",
+					values: ["${CONFIG.modelCreator}"]
+				},
+				{
+					name: "Model-Name",
+					values: ["${CONFIG.modelName}"]
+				}
+			],
+			sort: HEIGHT_DESC
+		    ) {
+			edges {
+			    node {
+				id
+				quantity {
+				    winston
+				    ar
+				}
+				tags {
+				    name
+				    value
+				}
+			    }
+			}
+		    }
+		}
+	`,
+    };
+    return queryObjectCheckUserModelRequests;
+  };
+  
+  const buildQueryCheckUserPayment = (userAddress, inferenceTransaction) => {
     const queryObjectCheckUserPayment = {
       query: gql`
 		query {
@@ -343,6 +439,10 @@ const start = async function () {
 				{
 					name: "Model-Name",
 					values: ["${CONFIG.modelName}"]
+				},
+				{
+					name: "Inference-Transaction",
+					values: ["${inferenceTransaction}"]
 				}
 			],
 			sort: HEIGHT_DESC
@@ -405,6 +505,49 @@ const start = async function () {
     };
     return queryObjectModelFee;
   };
+  
+  const buildQueryCheckUserCreatorPayment = (userAddress) => {
+    const queryObjectCheckUserCreatorPayment = {
+      query: gql`
+		query {
+		    transactions(
+		    	owners:["${userAddress}"],
+		    	recipients:["${CONFIG.modelCreator}"],
+		    	tags: [
+			    	{
+					name: "Operation-Name",
+					values: ["Model Fee Payment"]
+				},
+				{
+					name: "Model-Creator",
+					values: ["${CONFIG.modelCreator}"]
+				},
+				{
+					name: "Model-Name",
+					values: ["${CONFIG.modelName}"]
+				}
+			],
+			sort: HEIGHT_DESC
+		    ) {
+			edges {
+			    node {
+				id
+				quantity {
+				    winston
+				    ar
+				}
+				tags {
+				    name
+				    value
+				}
+			    }
+			}
+		    }
+		}
+	`,
+    };
+    return queryObjectCheckUserCreatorPayment;
+  };
 
   try {
     // load the JWK wallet key file from disk
@@ -413,50 +556,99 @@ const start = async function () {
     query = buildQueryTransactionsReceived();
     const resultTransactionsReceived = await clientGateway.query(query);
     var edges = resultTransactionsReceived.data.transactions.edges;
-    console.log(resultTransactionsReceived.data.transactions.edges);
+    //console.log(resultTransactionsReceived.data.transactions.edges);
 
     for (let i = 0; i < edges.length; i++) {
-      console.log(edges[i].node.quantity.winston);
-
-      query = buildQueryCheckUserPayment(edges[i].node.owner.address);
-      const checkUserPayment = await clientGateway.query(query);
-      var checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
-
-      query = buildQueryModelFee(edges[i].node.owner.address);
-      const modelFee = await clientGateway.query(query);
-      var modelFeeEdges = modelFee.data.transactions.edges;
-
-      var modelFeeWinston = -1;
-      for (let j = 0; j < edges[i].node.tags.length; j++) {
-        if (edges[i].node.tags[j].name == "Model-Fee") {
-          modelFeeWinston = parseFloat(edges[i].node.tags[j].value);
-        } else {
-        }
-      }
-
+      // Initialization of variables:
+      
+      var userHasPaidCreator = true;
+      var userHasPaidOperators = true;
+    
+    
+      // Check if request already answered:
+      
+      query = buildQueryTransactionAnswered(edges[i].node.id);
+      var resultTransactionAnswered = await clientGateway.query(query);
+      console.log(resultTransactionAnswered.data.transactions.edges);
       if (
-        edges[i].node.quantity.winston >= operatorFee &&
-        modelFeeWinston >= 0 &&
-        parseFloat(checkBadUsersEdges[0].node.quantity.winston) >=
-          modelFeeWinston
+        JSON.stringify(resultTransactionAnswered.data.transactions.edges) ===
+        "[]"
       ) {
-        var appVersion = "null";
-        var conversationIdentifier = "null";
-        for (let j = 0; j < edges[i].node.tags.length; j++) {
-          if (edges[i].node.tags[j].name == "App-Version") {
-            appVersion = edges[i].node.tags[j].value;
-          } else if (edges[i].node.tags[j].name == "Conversation-Identifier") {
-            conversationIdentifier = edges[i].node.tags[j].value;
-          } else {
+      
+        
+        // Creator Validations:
+      	
+      	query = buildQueryModelFee(edges[i].node.owner.address);
+      	const modelFee = await clientGateway.query(query);
+      	var modelFeeEdges = modelFee.data.transactions.edges;
+      	//console.log(modelFeeEdges);
+
+      	var modelFeeWinston = -1;
+      	for (let j = 0; j < modelFeeEdges[0].node.tags.length; j++) {
+	  if (modelFeeEdges[0].node.tags[j].name == "Model-Fee") {
+	    modelFeeWinston = parseFloat(modelFeeEdges[0].node.tags[j].value);
+	  } else {
+	  }
+       	}
+      	//console.log(modelFeeWinston);
+        
+      	query = buildQueryCheckUserCreatorPayment(edges[i].node.owner.address);
+      	const userCreatorPayment = await clientGateway.query(query);
+      	var userCreatorPaymentEdges = userCreatorPayment.data.transactions.edges;
+      	console.log(userCreatorPaymentEdges);
+
+      	var creatorPaymentAmount = 0;
+      	for (let i = 0; i < userCreatorPaymentEdges.length; i++) {
+      	  creatorPaymentAmount = creatorPaymentAmount + userCreatorPaymentEdges[i].node.quantity.winston;
+      	}
+      	console.log(creatorPaymentAmount);
+      	if (creatorPaymentAmount < modelFeeWinston) {
+      	  userHasPaidCreator = false;
+      	}
+      	console.log(userHasPaidCreator);
+    
+    	
+    	// Operator Validations:
+    	
+    	if (userHasPaidCreator) {
+      	  query = buildQueryCheckUserModelRequests(edges[i].node.owner.address);
+     	  const checkUserModelRequests = await clientGateway.query(query);
+      	  var checkUserModelRequestsEdges = checkUserModelRequests.data.transactions.edges;
+      	  console.log(checkUserModelRequestsEdges[0]);
+      	  
+      	  for (let i = 0; i < checkUserModelRequestsEdges.length; i++) {
+      	    query = buildQueryCheckUserPayment(edges[i].node.owner.address, checkUserModelRequestsEdges[i].node.id);
+     	    const checkUserPayment = await clientGateway.query(query);
+      	    var checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
+      	    console.log(checkUserPaymentEdges[0]);
+      	    
+      	    query = buildQueryOperatorFeeWithLimit(edges[i].node.owner.address, 0, checkUserModelRequestsEdges[i].node.block.height - CONFIG.nPreviousBlocks);
+     	    const operatorFeeWithLimit = await clientGateway.query(query);
+      	    var operatorFeeWithLimitEdges = operatorFeeWithLimit.data.transactions.edges;
+      	    console.log(operatorFeeWithLimitEdges[0]);
+      	    
+      	    
+      	    if (operatorFeeWithLimitEdges[0].node.quantity.winston < checkUserPaymentEdges[0].node.quantity.winston) {
+      	      userHasPaidOperators = false;
+      	    }
+      	  }
+      	}
+      	
+      	
+      	// Do Inference and send it to Bundlr:
+
+      	if (userHasPaidCreator && userHasPaidOperators) {
+          var appVersion = "null";
+          var conversationIdentifier = "null";
+          for (let j = 0; j < edges[i].node.tags.length; j++) {
+            if (edges[i].node.tags[j].name == "App-Version") {
+              appVersion = edges[i].node.tags[j].value;
+            } else if (edges[i].node.tags[j].name == "Conversation-Identifier") {
+              conversationIdentifier = edges[i].node.tags[j].value;
+            } else {
+            }
           }
-        }
-        query = buildQueryTransactionsAnswered(edges[i].node.id);
-        var resultTransactionsAnswered = await clientGateway.query(query);
-        //console.log(resultTransactionsAnswered.data.transactions.edges);
-        if (
-          JSON.stringify(resultTransactionsAnswered.data.transactions.edges) ===
-          "[]"
-        ) {
+        
           //arweave.transactions.getData(edges[i].node.id, {string: true}).then(data => {
           fetch("https://arweave.net/" + edges[i].node.id).then((data) => {
             data.blob().then((blob) => {
@@ -485,14 +677,19 @@ const start = async function () {
           );
         } else {
           console.log(
-            typeof resultTransactionsAnswered.data.transactions.edges
+            typeof resultTransactionAnswered.data.transactions.edges
           );
+          console.log(
+	    "Transaction with ID '" +
+	    edges[i].node.id +
+	    "' didn't paid enough amount."
+  	  );
         }
       } else {
         console.log(
           "Transaction with ID '" +
             edges[i].node.id +
-            "' didn't sent enough amount."
+            "' already answered."
         );
       }
     }
