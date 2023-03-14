@@ -217,6 +217,7 @@ const Detail = () => {
         state.node.tags.find((el: ITag) => el.name === 'Model-Transaction')?.value,
       );
       tx.addTag('Model-Fee', arweave.ar.arToWinston(`${feeValue}`));
+      tx.addTag('Unix-Time', (Date.now() / 1000).toString());
       await arweave.transactions.sign(tx);
       const payRes = await arweave.transactions.post(tx);
       if (payRes.status === 200) {

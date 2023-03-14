@@ -196,6 +196,7 @@ const Chat = () => {
     tags.push({ name: 'Model-Operator', value: address });
     tags.push({ name: 'Operation-Name', value: 'Model Inference Request' });
     tags.push({ name: 'Conversation-Identifier', value: currentConversationId });
+    tags.push({ name: 'Unix-Time', value: (Date.now() / 1000).toString() });
     try {
       const bundlrRes = await bundlr.upload(newMessage, { tags });
 
@@ -231,6 +232,7 @@ const Chat = () => {
       tx.addTag('Model-Operator', address || '');
       tx.addTag('Conversation-Identifier', currentConversationId);
       tx.addTag('Inference-Transaction', bundlrRes.id);
+      tx.addTag('Unix-Time', (Date.now() / 1000).toString());
 
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);

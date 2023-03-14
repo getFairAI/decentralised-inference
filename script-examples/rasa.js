@@ -60,6 +60,7 @@ const sendToBundlr = async function (
     { name: "Operation-Name", value: "Model Inference Response" },
     { name: "Conversation-Identifier", value: conversationIdentifier },
     { name: "Content-Type", value: "application/json" },
+	{ name: "Unix-Time", value: (Date.now() / 1000).toString() },
   ];
 
   try {

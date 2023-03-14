@@ -93,6 +93,7 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
       tx.addTag('Model-Fee', modelFee);
       tx.addTag('Operation-Name', 'Model Fee Payment');
       tx.addTag('Model-Transaction', txid || state.modelTransaction);
+      tx.addTag('Unix-Time', (Date.now() / 1000).toString());
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {

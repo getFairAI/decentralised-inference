@@ -162,6 +162,7 @@ const Upload = () => {
     tags.push({ name: 'Model-Fee', value: arweave.ar.arToWinston(`${data.fee}`) });
     if (data.avatar) tags.push({ name: 'AvatarUrl', value: data.avatar });
     if (data.description) tags.push({ name: 'Description', value: data.description });
+    tags.push({ name: 'Unix-Time', value: (Date.now() / 1000).toString() });
     setSnackbarOpen(true);
     reset(); // reset form
     try {
@@ -183,6 +184,7 @@ const Upload = () => {
         if (data.avatar) tx.addTag('AvatarUrl', data.avatar);
         if (data.description) tx.addTag('Description', data.description);
         tx.addTag('Model-Transaction', res.data.id);
+        tx.addTag('Unix-Time', (Date.now() / 1000).toString());
         await arweave.transactions.sign(tx);
         const payRes = await arweave.transactions.post(tx);
         if (payRes.status === 200) {
