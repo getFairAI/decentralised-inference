@@ -1,14 +1,7 @@
-import Arweave from 'arweave';
 import { useEffect, useState } from 'react';
 import { WebBundlr } from 'bundlr-custom';
 import { PermissionType } from 'arconnect';
-import { NET_ARWEAVE_URL } from '@/constants';
-
-const arweave = Arweave.init({
-  host: NET_ARWEAVE_URL.split('//')[1],
-  port: 443,
-  protocol: 'https',
-});
+import arweave from '@/utils/arweave';
 
 export const getTxTags = async (txid: string) => {
   const result = await arweave.transactions.get(txid);

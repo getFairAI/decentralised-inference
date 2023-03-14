@@ -266,6 +266,7 @@ const Detail = () => {
             </Divider>
             <BasicTable
               data={operatorsData}
+              state={state}
               loading={loading || followupResult.loading}
               error={error || followupResult.error}
             ></BasicTable>

@@ -1,6 +1,7 @@
 import { WebBundlr } from 'bundlr-custom';
-import { createContext, Dispatch, ReactNode, useEffect, useReducer } from 'react';
+import { createContext, Dispatch, ReactNode, useContext, useEffect, useMemo, useReducer } from 'react';
 import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
+import { WalletContext } from './wallet';
 
 export type bundlrNodeUrl =
   | typeof DEV_BUNDLR_URL
@@ -52,21 +53,21 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(bundlrReducer, undefined);
   const actions = createActions(dispatch);
 
+  const walletState = useContext(WalletContext);
+
   useEffect(() => {
-    const arweaveWalletLoaded = async () => {
+    const addressChanged = async () => {
       await actions.changeNode(NODE1_BUNDLR_URL);
     };
-    window.addEventListener('arweaveWalletLoaded', arweaveWalletLoaded);
-
-    return () => {
-      window.removeEventListener('arweaveWalletLoaded', arweaveWalletLoaded);
-    };
-  }, []);
+    addressChanged();
+  }, [walletState.currentAddress]);
 
   const retryConnection = async () => await state?.ready();
 
+  const value = useMemo(() => ({ state, actions, retryConnection }), []);
+
   return (
-    <BundlrContext.Provider value={{ state, actions, retryConnection }}>
+    <BundlrContext.Provider value={value}>
       {children}
     </BundlrContext.Provider>
   );

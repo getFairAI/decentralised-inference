@@ -3,14 +3,18 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import useArweave from '../context/arweave';
 import { Link } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import { Tooltip } from '@mui/material';
+import { useContext, useEffect } from 'react';
+import { WalletContext } from '@/context/wallet';
 
 const Navbar = () => {
-  const { connect, addresses, isConnected } = useArweave();
+  const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
 
+  useEffect(() => {
+    console.log(currentAddress);
+  }, [ currentAddress]);
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position='fixed'>
@@ -55,17 +59,20 @@ const Navbar = () => {
             </Link>
           </Box>
           <Box sx={{ flexGrow: 0 }}>
-            {isConnected ? (
+            {currentAddress && currentAddress !== '' ? (
               <Box display={'flex'} alignItems={'center'}>
-                <Tooltip title={addresses[0]} placement={'left-start'}>
-                  <Typography>
-                    {addresses[0].slice(0, 10)}...{addresses[0].slice(-3)}
-                  </Typography>
-                </Tooltip>
+                <Box display={'flex'} flexDirection={'column'} alignItems={'flex-end'}>
+                  <Tooltip title={currentAddress} placement={'left-start'}>
+                    <Typography>
+                      {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
+                    </Typography>
+                  </Tooltip>
+                  <Typography>{currentBalance.toFixed(4)} AR</Typography>
+                </Box>
                 <ProfileMenu />
               </Box>
             ) : (
-              <Button color='inherit' onClick={connect}>
+              <Button color='inherit' onClick={connectWallet}>
                 Connect
               </Button>
             )}
