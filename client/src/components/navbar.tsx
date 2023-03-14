@@ -14,7 +14,7 @@ const Navbar = () => {
 
   useEffect(() => {
     console.log(currentAddress);
-  }, [ currentAddress]);
+  }, [currentAddress]);
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position='fixed'>

@@ -1,5 +1,13 @@
 import { WebBundlr } from 'bundlr-custom';
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useMemo, useReducer } from 'react';
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+} from 'react';
 import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 import { WalletContext } from './wallet';
 
@@ -66,9 +74,5 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(() => ({ state, actions, retryConnection }), []);
 
-  return (
-    <BundlrContext.Provider value={value}>
-      {children}
-    </BundlrContext.Provider>
-  );
+  return <BundlrContext.Provider value={value}>{children}</BundlrContext.Provider>;
 };
