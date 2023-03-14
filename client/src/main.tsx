@@ -60,13 +60,14 @@ const router = createBrowserRouter([
             path: 'detail',
             element: <Detail />,
           },
-          
+
           {
             path: 'chat/:address',
-            element:
+            element: (
               <ModelFeeGuard>
                 <Chat />
               </ModelFeeGuard>
+            ),
           },
           {
             path: 'register',

@@ -3,7 +3,16 @@ import { ITag } from '@/interfaces/arweave';
 import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useLazyQuery } from '@apollo/client';
-import { Alert, Backdrop, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import {
+  Alert,
+  Backdrop,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { ReactElement, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams, useRouteLoaderData } from 'react-router-dom';
@@ -54,7 +63,8 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
     if (queryResult.data && queryResult.data.length > 0) {
       setIsAllowed(
         queryResult.data[0].node.quantity.winston ===
-          (updatedFee || state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee').value),
+          (updatedFee ||
+            state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee').value),
       );
       setLoading(false);
     } else if (queryResult.data) {
@@ -70,7 +80,8 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
 
   const handleAccept = async () => {
     try {
-      const modelFee = updatedFee || state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value;
+      const modelFee =
+        updatedFee || state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value;
       const tx = await arweave.createTransaction({
         target: MARKETPLACE_ADDRESS,
         quantity: modelFee,
@@ -86,7 +97,9 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {
         enqueueSnackbar(
-          `Model Fee Paid: ${arweave.ar.winstonToAr(modelFee)} AR... Please view tx at: https://arweave.net/${tx.id}`,
+          `Model Fee Paid: ${arweave.ar.winstonToAr(
+            modelFee,
+          )} AR... Please view tx at: https://arweave.net/${tx.id}`,
           { variant: 'success' },
         );
         setIsAllowed(true);
@@ -100,11 +113,8 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
 
   return (
     <>
-      <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={loading}
-      >
-        <CircularProgress color="inherit" />
+      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
+        <CircularProgress color='inherit' />
       </Backdrop>
       <Dialog open={!loading && !isAllowed} maxWidth={'sm'} fullWidth>
         <DialogTitle>Model Fee Payment</DialogTitle>
@@ -112,7 +122,13 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
           <Alert variant='outlined' severity='warning' sx={{ marginBottom: '16px' }}>
             In Order to prevent bad actors an user has to pay the model fee before being able to use
             it. The current Model fee is
-            <u>{arweave.ar.winstonToAr(updatedFee || state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value)}</u> AR
+            <u>
+              {arweave.ar.winstonToAr(
+                updatedFee ||
+                  state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value,
+              )}
+            </u>{' '}
+            AR
             <br />
           </Alert>
         </DialogContent>

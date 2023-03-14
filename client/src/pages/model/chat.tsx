@@ -210,7 +210,7 @@ const Chat = () => {
       enqueueSnackbar(`Inference Request, TxId: https://arweave.net/${bundlrRes.id}`, {
         variant: 'success',
       });
-      const inferenceFee = state.fee + (state.fee * 0.05);
+      const inferenceFee = state.fee + state.fee * 0.05;
       const tx = await arweave.createTransaction({
         target: address,
         quantity: inferenceFee,
@@ -230,9 +230,9 @@ const Chat = () => {
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {
         enqueueSnackbar(
-          `Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR, TxId: https://arweave.net/${
-            tx.id
-          }`,
+          `Paid Operator Fee ${arweave.ar.winstonToAr(
+            inferenceFee,
+          )} AR, TxId: https://arweave.net/${tx.id}`,
           { variant: 'success' },
         );
       } else {

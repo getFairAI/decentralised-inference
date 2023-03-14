@@ -10,14 +10,20 @@ const DEFAULT_PERMISSSIONS: PermissionType[] = [
 ];
 type WalletConnectedAction = { type: 'wallet_connected'; address: string };
 type WalletBalanceUpdatedAction = { type: 'wallet_balance_updated'; balance: number };
-type WalletPermissionsChangedAction = { type: 'wallet_permissions_changed', permissions: PermissionType[]}
-type WalletAction = WalletConnectedAction | WalletBalanceUpdatedAction | WalletPermissionsChangedAction;
+type WalletPermissionsChangedAction = {
+  type: 'wallet_permissions_changed';
+  permissions: PermissionType[];
+};
+type WalletAction =
+  | WalletConnectedAction
+  | WalletBalanceUpdatedAction
+  | WalletPermissionsChangedAction;
 
 interface WalletContext {
   currentAddress: string;
-  currentPermissions: PermissionType[]; 
+  currentPermissions: PermissionType[];
   currentBalance: number;
-  connectWallet: () => Promise<void>
+  connectWallet: () => Promise<void>;
 }
 
 const createActions = (dispatch: Dispatch<WalletAction>) => {
@@ -31,9 +37,12 @@ const asyncConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
   try {
     await window.arweaveWallet.connect(DEFAULT_PERMISSSIONS);
     const addr = await window.arweaveWallet.getActiveAddress();
-    dispatch({ type: 'wallet_connected', address: addr});
+    dispatch({ type: 'wallet_connected', address: addr });
     const winstonBalance = await arweave.wallets.getBalance(addr);
-    dispatch({ type: 'wallet_balance_updated', balance: parseFloat(arweave.ar.winstonToAr(winstonBalance))});
+    dispatch({
+      type: 'wallet_balance_updated',
+      balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
+    });
   } catch (error) {
     console.log(error);
   }
@@ -43,7 +52,10 @@ const asyncWalletSwitch = async (dispatch: Dispatch<WalletAction>, newAddress: s
   try {
     dispatch({ type: 'wallet_connected', address: newAddress });
     const winstonBalance = await arweave.wallets.getBalance(newAddress);
-    dispatch({ type: 'wallet_balance_updated', balance: parseFloat(arweave.ar.winstonToAr(winstonBalance))});
+    dispatch({
+      type: 'wallet_balance_updated',
+      balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
+    });
   } catch (error) {
     console.log(error);
   }
@@ -54,30 +66,36 @@ const walletReducer = (state: WalletContext, action?: WalletAction) => {
   switch (action.type) {
     case 'wallet_connected':
       // eslint-disable-next-line no-case-declarations
-      return { ...state, currentAddress: action.address};
+      return { ...state, currentAddress: action.address };
     case 'wallet_balance_updated':
-      return { ...state, currentBalance: action.balance};
+      return { ...state, currentBalance: action.balance };
     case 'wallet_permissions_changed':
-      return { ...state, currentPermissions: action.permissions};
+      return { ...state, currentPermissions: action.permissions };
     default:
       return state;
   }
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-const initialState = { currentAddress: '', currentPermissions: [], currentBalance: 0, connectWallet: async () => {}};
+const initialState = {
+  currentAddress: '',
+  currentPermissions: [],
+  currentBalance: 0,
+  connectWallet: async () => {},
+};
 
 export const WalletContext = createContext<WalletContext>(initialState);
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
-  const [ state, dispatch ] = useReducer(walletReducer, initialState);
+  const [state, dispatch] = useReducer(walletReducer, initialState);
   const actions = createActions(dispatch);
 
   const value = { ...state, connectWallet: actions.connectWallet };
 
   useEffect(() => {
     const walletSwitched = async (event: { detail: { address: string } }) => {
-      if (event && event.detail && event.detail.address) await actions.switchWallet(event.detail.address);
+      if (event && event.detail && event.detail.address)
+        await actions.switchWallet(event.detail.address);
       else await actions.connectWallet();
     };
     window.addEventListener('arweaveWalletLoaded', () => walletSwitched);
@@ -89,9 +107,5 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  return (
-    <WalletContext.Provider value={value}>
-      {children}
-    </WalletContext.Provider>
-  );
+  return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };
