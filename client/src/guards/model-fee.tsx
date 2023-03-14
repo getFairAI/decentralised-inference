@@ -1,4 +1,4 @@
-import { APP_NAME_TAG, APP_VERSION, MARKETPLACE_ADDRESS } from '@/constants';
+import { APP_NAME_TAG, APP_VERSION } from '@/constants';
 import { ITag } from '@/interfaces/arweave';
 import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
@@ -27,7 +27,7 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
   const { enqueueSnackbar } = useSnackbar();
   /* const { data, loading, error } = useQuery(QUERY_MODEL_FEE_PAYMENT, {
     variables: {
-      recipient: MARKETPLACE_ADDRESS,
+      recipient: state.modelCreator,
       owner:
     }
   }); */
@@ -47,7 +47,7 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
         getLazyFeePayment({
           variables: {
             owner: addr,
-            recipient: MARKETPLACE_ADDRESS,
+            recipient: state.modelCreator,
             tags,
           },
         });
@@ -83,7 +83,7 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
       const modelFee =
         updatedFee || state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value;
       const tx = await arweave.createTransaction({
-        target: MARKETPLACE_ADDRESS,
+        target: state.modelCreator,
         quantity: modelFee,
       });
       tx.addTag('App-Name', APP_NAME_TAG.values[0]);
@@ -121,14 +121,14 @@ const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
         <DialogContent>
           <Alert variant='outlined' severity='warning' sx={{ marginBottom: '16px' }}>
             In Order to prevent bad actors an user has to pay the model fee before being able to use
-            it. The current Model fee is
+            it. The current Model fee is{' '}
             <u>
               {arweave.ar.winstonToAr(
                 updatedFee ||
                   state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value,
               )}
             </u>{' '}
-            AR
+            AR.
             <br />
           </Alert>
         </DialogContent>

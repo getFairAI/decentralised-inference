@@ -76,11 +76,11 @@ const walletReducer = (state: WalletContext, action?: WalletAction) => {
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 const initialState = {
   currentAddress: '',
   currentPermissions: [],
   currentBalance: 0,
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   connectWallet: async () => {},
 };
 
