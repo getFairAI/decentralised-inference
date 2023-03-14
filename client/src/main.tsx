@@ -13,6 +13,7 @@ import Detail from './pages/model/detail';
 import OperatorDetails from './pages/operator/detail';
 import Chat from './pages/model/chat';
 import History from './pages/history';
+import ModelFeeGuard from './guards/model-fee';
 
 const router = createBrowserRouter([
   {
@@ -59,9 +60,14 @@ const router = createBrowserRouter([
             path: 'detail',
             element: <Detail />,
           },
+
           {
             path: 'chat/:address',
-            element: <Chat />,
+            element: (
+              <ModelFeeGuard>
+                <Chat />
+              </ModelFeeGuard>
+            ),
           },
           {
             path: 'register',
