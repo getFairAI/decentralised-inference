@@ -2,8 +2,8 @@
   "url": "http://localhost:5005/webhooks/rest/webhook",
   "sleepTimeSeconds": 5,
   "modelCreator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8",
-  "modelName": "Test v3",
+  "modelName": "Test Full Flow v4",
   "marketplaceWallet": "RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo",
   "inferencePercentageFee": 0.05,
-  "nPreviousBlocks": 7
+  "nPreviousBlocks": 1
 }
