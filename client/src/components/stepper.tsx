@@ -26,7 +26,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import MDEditor from '@uiw/react-md-editor';
 import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
-import useArweave from '@/context/arweave';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
 
@@ -161,10 +160,8 @@ export const CustomStepper = (props: {
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const [completed, setCompleted] = useState(new Set<number>());
-  const [, setCurrentBalance] = useState(0.0);
   const [fileSize, setFileSize] = useState(0);
   const [operatorName, setOperatorName] = useState('');
-  const { getWalletBalance } = useArweave();
 
   const [rate, setRate] = useState(0);
 
@@ -264,14 +261,6 @@ export const CustomStepper = (props: {
     a.click();
     document.body.removeChild(a);
   };
-
-  useEffect(() => {
-    const f = async () => {
-      const res = await getWalletBalance();
-      setCurrentBalance(+res);
-    };
-    f();
-  }, []);
 
   useEffect(() => {
     const getFileSize = async () => {
