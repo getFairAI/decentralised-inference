@@ -27,7 +27,7 @@ const History = () => {
 
   // filter only models who paid the correct Marketplace fee
   const handleCompleted = (data: IEdge[]) =>
-    setTxs(data.filter((el) => el.node.quantity.ar.toString() !== MARKETPLACE_FEE));
+    setTxs(data.filter((el) => el.node.quantity.ar !== MARKETPLACE_FEE));
 
   const { loading, error } = useQuery(LIST_OWN_MODELS_QUERY, {
     onCompleted: handleCompleted,

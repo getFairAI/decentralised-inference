@@ -101,9 +101,9 @@ const Detail = () => {
       const currentUser = paidFeeResult?.variables?.owner;
       paidFeeResult.data.forEach((el: IEdge) => {
         if (
-          operatorsData.find((op: RowData) => op.address === currentUser)?.quantityAR.toString() ===
+          operatorsData.find((op: RowData) => op.address === currentUser)?.quantityAR ===
             OPERATOR_REGISTRATION_AR_FEE ||
-          el.node.quantity.winston * INFERENCE_PERCENTAGE_FEE <=
+          (parseFloat(el.node.quantity.winston) * INFERENCE_PERCENTAGE_FEE) <=
             parseFloat(operatorsData.find((op: RowData) => op.address === currentUser)?.fee || '0')
         ) {
           setOperatorsData(operatorsData.filter((op: RowData) => op.address !== currentUser));
