@@ -26,13 +26,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import { formatNumbers } from '@/utils/common';
 
 interface Row {
   txid: string;
   type: string;
   date: string;
-  networkFee: number;
-  appFee: number;
+  networkFee: string;
+  appFee: string;
   destination: string;
   origin: string;
   modelTx: string;
@@ -55,8 +56,8 @@ const OperatorDetails = () => {
           txid: node.id,
           type: 'Response',
           date: new Date(node.block.timestamp * 1000).toLocaleDateString(),
-          networkFee: node.fee.ar,
-          appFee: node.quantity.ar,
+          networkFee: formatNumbers(node.fee.ar),
+          appFee: formatNumbers(node.quantity.ar),
           destination: node.recipient,
           origin: node.owner.address,
           modelTx: node.tags.find((el) => el.name === 'Model-Transaction')?.value || '',
@@ -70,8 +71,8 @@ const OperatorDetails = () => {
           txid: node.id,
           type: 'Request',
           date: new Date(node.block.timestamp * 1000).toLocaleDateString(),
-          networkFee: node.fee.ar,
-          appFee: node.quantity.ar,
+          networkFee: formatNumbers(node.fee.ar),
+          appFee: formatNumbers(node.quantity.ar),
           destination: node.recipient,
           origin: node.owner.address,
           modelTx: node.tags.find((el) => el.name === 'Model-Transaction')?.value || '',

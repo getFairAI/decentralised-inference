@@ -13,10 +13,10 @@ import { ApolloError } from '@apollo/client';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useNavigate } from 'react-router-dom';
 import { IEdge } from '@/interfaces/arweave';
-import arweave from '@/utils/arweave';
+import { parseWinston } from '@/utils/arweave';
 
 export interface RowData {
-  quantityAR: number;
+  quantityAR: string;
   address: string;
   fee: string;
   availability: number;
@@ -106,7 +106,7 @@ export default function BasicTable(props: {
                   </Tooltip>
                 </TableCell>
                 <TableCell align='right'>{row.registrationTimestamp}</TableCell>
-                <TableCell align='right'>{arweave.ar.winstonToAr(row.fee)}</TableCell>
+                <TableCell align='right'>{parseWinston(row.fee)}</TableCell>
                 <TableCell align='right'>{row.availability}</TableCell>
                 <TableCell align='right'>{row.stamps}</TableCell>
                 <TableCell align='right'>
