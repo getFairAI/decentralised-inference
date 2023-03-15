@@ -60,22 +60,23 @@ const Chat = () => {
   const [pendingTxs] = useState<Transaction[]>([]);
   const [conversationIds, setConversationIds] = useState<string[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('C-1');
-  const [ allMessages, setAllMessages ] = useState<Message[]>([]);
+  const [allMessages, setAllMessages] = useState<Message[]>([]);
 
   const { enqueueSnackbar } = useSnackbar();
   const { arweave } = useArweave();
 
   const [getChatRequests, { data: requestsData, loading: requestsLoading }] =
     useLazyQuery(QUERY_CHAT_REQUESTS);
-  const [getChatResponses, { data: responsesData, loading: responsesLoading, previousData: responsesPreviousData }] =
-    useLazyQuery(QUERY_CHAT_RESPONSES);
+  const [
+    getChatResponses,
+    { data: responsesData, loading: responsesLoading, previousData: responsesPreviousData },
+  ] = useLazyQuery(QUERY_CHAT_RESPONSES);
 
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
       navigate(pathname, { state });
     }
-  }, [ userAddr ]);
-
+  }, [userAddr]);
 
   useEffect(() => {
     if (txidModel && userAddr) {
@@ -100,8 +101,8 @@ const Chat = () => {
   }, []); // run only first time
 
   useEffect(() => {
-    setMessages(allMessages.filter(el => el.cid === currentConversationId));
-  }, [ currentConversationId ]);
+    setMessages(allMessages.filter((el) => el.cid === currentConversationId));
+  }, [currentConversationId]);
 
   useEffect(() => {
     if (requestsData) {
@@ -114,21 +115,25 @@ const Chat = () => {
         ...commonTags,
         MODEL_INFERENCE_RESULT_TAG,
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: 'Model-User', values: [ userAddr ]},
-        { name: 'Request-Transaction', values: requestsData.map((el: IEdge) => el.node.id )},
+        { name: 'Model-User', values: [userAddr] },
+        { name: 'Request-Transaction', values: requestsData.map((el: IEdge) => el.node.id) },
       ];
       const owners = Array.from(
-        new Set(requestsData.map(((el: IEdge) => el.node.tags.find(el => el.name === 'Model-Operator')?.value)))
+        new Set(
+          requestsData.map(
+            (el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value,
+          ),
+        ),
       );
 
       getChatResponses({
         variables: {
           tagsResponses,
-          owners
-        }
+          owners,
+        },
       });
     }
-  }, [ requestsData ]);
+  }, [requestsData]);
 
   const reqData = async () => {
     const allData = [...requestsData, ...responsesData];
@@ -136,17 +141,20 @@ const Chat = () => {
     const temp: Message[] = [];
     await Promise.all(
       allData.map(async (el: IEdge) => {
-        const msgIdx = messages.findIndex(msg => msg.id === el.node.id);
+        const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
         const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;
-        const timestamp = parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') || el.node.block?.timestamp || (Date.now() / 1000);
-        const cid = el.node.tags.find(el => el.name === 'Conversation-Identifier')?.value;
+        const timestamp =
+          parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+          el.node.block?.timestamp ||
+          Date.now() / 1000;
+        const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
         if (el.node.owner.address === userAddr) {
           temp.push({
             id: el.node.id,
             msg: data,
             type: 'request',
             timestamp: timestamp,
-            cid
+            cid,
           });
         } else {
           temp.push({
@@ -154,7 +162,7 @@ const Chat = () => {
             msg: data,
             type: 'response',
             timestamp: timestamp,
-            cid
+            cid,
           });
         }
       }),
@@ -165,13 +173,9 @@ const Chat = () => {
     });
     setAllMessages(temp);
 
-    const cids = [
-      ...new Set(
-        temp.map(
-          (x: Message) => x.cid,
-        ),
-      ),
-    ].filter((el) => el !== undefined) as string[];
+    const cids = [...new Set(temp.map((x: Message) => x.cid))].filter(
+      (el) => el !== undefined,
+    ) as string[];
 
     setConversationIds(
       cids.length > 0
@@ -181,11 +185,11 @@ const Chat = () => {
         : [currentConversationId],
     );
 
-    setMessages(temp.filter(el => el.cid === currentConversationId));
+    setMessages(temp.filter((el) => el.cid === currentConversationId));
   };
 
   useEffect(() => {
-    if (responsesData !== undefined && (!_.isEqual(responsesData, responsesPreviousData))) {
+    if (responsesData !== undefined && !_.isEqual(responsesData, responsesPreviousData)) {
       reqData();
     }
   }, [responsesData]);
