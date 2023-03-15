@@ -11,7 +11,7 @@ export const getWalletBalance = async () => {
   const winstonBalance = await arweave.wallets.getBalance(
     await window.arweaveWallet.getActiveAddress(),
   );
-  
+
   return arweave.ar.winstonToAr(winstonBalance);
 };
 
