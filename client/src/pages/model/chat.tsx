@@ -17,10 +17,10 @@ import {
   Typography,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { useLocation, useParams } from 'react-router-dom';
-import useArweave, { getActiveAddress, getData } from '@/context/arweave';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import useArweave, { getData } from '@/context/arweave';
 import { useLazyQuery } from '@apollo/client';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import {
   APP_VERSION,
   DEFAULT_TAGS,
@@ -29,8 +29,8 @@ import {
   MODEL_INFERENCE_RESULT_TAG,
   INFERENCE_PERCENTAGE_FEE,
 } from '@/constants';
-import { QUERY_CHAT_HISTORY } from '@/queries/graphql';
-import { IEdge } from '@/interfaces/arweave';
+import { QUERY_CHAT_REQUESTS, QUERY_CHAT_RESPONSES } from '@/queries/graphql';
+import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import SearchIcon from '@mui/icons-material/Search';
@@ -38,35 +38,45 @@ import AddIcon from '@mui/icons-material/Add';
 import _ from 'lodash';
 import { useSnackbar } from 'notistack';
 import { WebBundlr } from 'bundlr-custom';
+import { WalletContext } from '@/context/wallet';
+import usePrevious from '@/hooks/usePrevious';
 
 interface Message {
+  id: string;
   msg: string;
   type: 'response' | 'request';
   timestamp: number;
-  txidModel: string;
+  cid?: string;
 }
 
 const Chat = () => {
   const { txid: txidModel, address } = useParams();
-  const { state } = useLocation();
-  const [userAddr, setUserAddr] = useState<string | undefined>(undefined);
+  const { state, pathname } = useLocation();
+  const navigate = useNavigate();
+  const { currentAddress: userAddr } = useContext(WalletContext);
+  const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
   const [conversationIds, setConversationIds] = useState<string[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('C-1');
+  const [allMessages, setAllMessages] = useState<Message[]>([]);
 
   const { enqueueSnackbar } = useSnackbar();
   const { arweave } = useArweave();
 
-  const [getConversationHistory, { data, loading, previousData }] =
-    useLazyQuery(QUERY_CHAT_HISTORY);
+  const [getChatRequests, { data: requestsData, loading: requestsLoading }] =
+    useLazyQuery(QUERY_CHAT_REQUESTS);
+  const [
+    getChatResponses,
+    { data: responsesData, loading: responsesLoading, previousData: responsesPreviousData },
+  ] = useLazyQuery(QUERY_CHAT_RESPONSES);
 
   useEffect(() => {
-    const reqAddr = async () => setUserAddr(await getActiveAddress());
-
-    reqAddr();
-  }, []); // run only once
+    if (previousAddr && previousAddr !== userAddr) {
+      navigate(pathname, { state });
+    }
+  }, [userAddr]);
 
   useEffect(() => {
     if (txidModel && userAddr) {
@@ -78,33 +88,95 @@ const Chat = () => {
       const tagsRequests = [
         ...commonTags,
         MODEL_INFERENCE_REQUEST_TAG,
-        { name: 'Conversation-Identifier', values: [currentConversationId] },
+        // { name: 'Conversation-Identifier', values: [currentConversationId] },
       ];
-      const tagsResults = [
-        ...commonTags,
-        MODEL_INFERENCE_RESULT_TAG,
-        { name: 'Conversation-Identifier', values: [currentConversationId] },
-      ];
-      getConversationHistory({
+      getChatRequests({
         variables: {
           tagsRequests,
-          tagsResults,
           address: userAddr,
         },
         pollInterval: 5000,
       });
     }
-  }, [txidModel, userAddr]);
+  }, []); // run only first time
 
-  const reqData = async (argData: { results: IEdge[]; requests: IEdge[] }) => {
-    const allData = [...argData.results, ...argData.requests];
-    const cids = [
-      ...new Set(
-        allData.map(
-          (x: IEdge) => x.node.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value,
+  useEffect(() => {
+    setMessages(allMessages.filter((el) => el.cid === currentConversationId));
+  }, [currentConversationId]);
+
+  useEffect(() => {
+    if (requestsData) {
+      const commonTags = [
+        ...DEFAULT_TAGS,
+        { name: 'Model-Name', values: [state.modelName] },
+        { name: 'Model-Creator', values: [state.modelCreator] },
+      ];
+      const tagsResponses = [
+        ...commonTags,
+        MODEL_INFERENCE_RESULT_TAG,
+        // { name: 'Conversation-Identifier', values: [currentConversationId] },
+        { name: 'Model-User', values: [userAddr] },
+        { name: 'Request-Transaction', values: requestsData.map((el: IEdge) => el.node.id) },
+      ];
+      const owners = Array.from(
+        new Set(
+          requestsData.map(
+            (el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value,
+          ),
         ),
-      ),
-    ].filter((el) => el !== undefined) as string[];
+      );
+
+      getChatResponses({
+        variables: {
+          tagsResponses,
+          owners,
+        },
+      });
+    }
+  }, [requestsData]);
+
+  const reqData = async () => {
+    const allData = [...requestsData, ...responsesData];
+
+    const temp: Message[] = [];
+    await Promise.all(
+      allData.map(async (el: IEdge) => {
+        const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
+        const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;
+        const timestamp =
+          parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+          el.node.block?.timestamp ||
+          Date.now() / 1000;
+        const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
+        if (el.node.owner.address === userAddr) {
+          temp.push({
+            id: el.node.id,
+            msg: data,
+            type: 'request',
+            timestamp: timestamp,
+            cid,
+          });
+        } else {
+          temp.push({
+            id: el.node.id,
+            msg: data,
+            type: 'response',
+            timestamp: timestamp,
+            cid,
+          });
+        }
+      }),
+    );
+
+    temp.sort(function (a, b) {
+      return a.timestamp - b.timestamp;
+    });
+    setAllMessages(temp);
+
+    const cids = [...new Set(temp.map((x: Message) => x.cid))].filter(
+      (el) => el !== undefined,
+    ) as string[];
+
     setConversationIds(
       cids.length > 0
         ? cids
@@ -113,61 +185,14 @@ const Chat = () => {
         : [currentConversationId],
     );
 
-    console.log(allData);
-
-    const temp: Message[] = [];
-    await Promise.all(
-      allData.map(async (el: IEdge) =>
-        el.node.owner.address === userAddr
-          ? temp.push({
-              msg: await getData(el.node.id),
-              type: 'request',
-              timestamp: el.node.block?.timestamp || Date.now() / 1000,
-              txidModel: el.node.id,
-            })
-          : temp.push({
-              msg: await getData(el.node.id),
-              type: 'response',
-              timestamp: el.node.block?.timestamp + 0.001 || Date.now() / 1000 + 0.001,
-              txidModel: el.node.id,
-            }),
-      ),
-    );
-
-    temp.sort(function (a, b) {
-      return a.timestamp - b.timestamp;
-    });
-
-    setMessages(temp);
+    setMessages(temp.filter((el) => el.cid === currentConversationId));
   };
 
   useEffect(() => {
-    if ((data && !previousData) || (data && previousData && !_.isEqual(data, previousData))) {
-      reqData(data);
+    if (responsesData !== undefined && !_.isEqual(responsesData, responsesPreviousData)) {
+      reqData();
     }
-  }, [data]);
-
-  useEffect(() => {
-    const commonTags = [
-      ...DEFAULT_TAGS,
-      { name: 'Model-Name', values: [state.modelName] },
-      { name: 'Model-Creator', values: [state.modelCreator] },
-    ];
-    const tagsRequests = [
-      ...commonTags,
-      MODEL_INFERENCE_REQUEST_TAG,
-      { name: 'Conversation-Identifier', values: [currentConversationId] },
-    ];
-    const tagsResults = [
-      ...commonTags,
-      MODEL_INFERENCE_RESULT_TAG,
-      { name: 'Conversation-Identifier', values: [currentConversationId] },
-    ];
-    getConversationHistory({
-      variables: { tagsRequests, tagsResults, address },
-      pollInterval: 5000,
-    });
-  }, [currentConversationId]);
+  }, [responsesData]);
 
   const handleMessageChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNewMessage(event.target.value);
@@ -205,7 +230,7 @@ const Chat = () => {
         msg: newMessage,
         type: 'request',
         timestamp: bundlrRes.timestamp || 0,
-        txidModel: bundlrRes.id,
+        id: bundlrRes.id,
       });
       setMessages(temp);
       setNewMessage('');
@@ -338,7 +363,7 @@ const Chat = () => {
               height: '100%',
             }}
           >
-            {loading || !data ? (
+            {responsesLoading || requestsLoading ? (
               <p>Loading...</p>
             ) : messages.length > 0 ? (
               <Divider textAlign='center'>
@@ -361,7 +386,7 @@ const Chat = () => {
                     margin='8px'
                   >
                     <Box display={'flex'} alignItems='center'>
-                      {!!pendingTxs.find((pending) => el.txidModel === pending.id) && (
+                      {!!pendingTxs.find((pending) => el.id === pending.id) && (
                         <Tooltip
                           title='This transaction is still not ocnfirmed by the network'
                           sx={{ margin: '8px' }}
