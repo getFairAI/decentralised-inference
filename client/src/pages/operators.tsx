@@ -70,9 +70,7 @@ const Operators = () => {
               el.node.tags.find((el) => el.name === 'Model-Transaction')?.value ||
               'Transaction Not Available',
             uploader: el.node.owner.address,
-            modelFee:
-              parseWinston(modelFee) ||
-              'Model Fee Not Available',
+            modelFee: parseWinston(modelFee) || 'Model Fee Not Available',
             avgFee,
             totalOperators: uniqueOperators.length,
           };
@@ -104,10 +102,17 @@ const Operators = () => {
                     <Typography>Name: {el.name}</Typography>
                     <Typography>Transaction id: {el.txid}</Typography>
                     <Typography>Creator: {el.uploader}</Typography>
-                    <Typography>Model Fee: {Number.isNaN(el.modelFee) || el.modelFee === 'NaN' ? 'Invalid Fee' : `${el.modelFee} AR`}</Typography>
+                    <Typography>
+                      Model Fee:{' '}
+                      {Number.isNaN(el.modelFee) || el.modelFee === 'NaN'
+                        ? 'Invalid Fee'
+                        : `${el.modelFee} AR`}
+                    </Typography>
                     <Typography>
                       Average Fee:{' '}
-                      {Number.isNaN(el.avgFee) || el.avgFee === 'NaN' ? 'Not enough Operators for Fee' : `${el.avgFee} AR`}
+                      {Number.isNaN(el.avgFee) || el.avgFee === 'NaN'
+                        ? 'Not enough Operators for Fee'
+                        : `${el.avgFee} AR`}
                     </Typography>
                     <Typography>Total Operators: {el.totalOperators}</Typography>
                   </CardActionArea>

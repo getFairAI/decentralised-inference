@@ -103,7 +103,7 @@ const Detail = () => {
         if (
           operatorsData.find((op: RowData) => op.address === currentUser)?.quantityAR ===
             OPERATOR_REGISTRATION_AR_FEE ||
-          (parseFloat(el.node.quantity.winston) * INFERENCE_PERCENTAGE_FEE) <=
+          parseFloat(el.node.quantity.winston) * INFERENCE_PERCENTAGE_FEE <=
             parseFloat(operatorsData.find((op: RowData) => op.address === currentUser)?.fee || '0')
         ) {
           setOperatorsData(operatorsData.filter((op: RowData) => op.address !== currentUser));

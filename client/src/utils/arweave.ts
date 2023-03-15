@@ -24,9 +24,7 @@ export const getData = async (txid: string) => {
 
 export const parseWinston = (value?: string) => {
   try {
-    return parseFloat(
-      arweave.ar.winstonToAr(value as string)
-    ).toFixed(4);
+    return parseFloat(arweave.ar.winstonToAr(value as string)).toFixed(4);
   } catch (error) {
     return '0';
   }
