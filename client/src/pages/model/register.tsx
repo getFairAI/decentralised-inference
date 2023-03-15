@@ -5,9 +5,9 @@ import {
   MARKETPLACE_ADDRESS,
   APP_VERSION,
 } from '@/constants';
-import useArweave from '@/context/arweave';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
 import {
   Container,
@@ -32,8 +32,6 @@ const Register = () => {
   const updatedFee = useRouteLoaderData('model') as string;
   const { state }: { state: IEdge } = useLocation();
   const { txid } = useParams();
-
-  const { arweave } = useArweave();
   const [error, setError] = useState<string | undefined>(undefined);
   const [message, setMessage] = useState<string | undefined>(undefined);
   const [isRegistered, setIsRegistered] = useState(false);

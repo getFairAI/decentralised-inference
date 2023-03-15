@@ -27,9 +27,9 @@ import CustomProgress from '@/components/progress';
 import { GET_IMAGES_TXIDS } from '@/queries/graphql';
 import fileReaderStream from 'filereader-stream';
 import { APP_VERSION, MARKETPLACE_FEE, NODE1_BUNDLR_URL, MARKETPLACE_ADDRESS } from '@/constants';
-import useArweave from '@/context/arweave';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
+import arweave from '@/utils/arweave';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -59,7 +59,6 @@ const Upload = () => {
   const [, setMessage] = useState('');
   const [formData, setFormData] = useState<CreateForm | undefined>(undefined);
   const totalChunks = useRef(0);
-  const { arweave } = useArweave();
   const bundlrContext = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
 

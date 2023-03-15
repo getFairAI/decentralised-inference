@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import useArweave, { getData } from '@/context/arweave';
 import { useLazyQuery } from '@apollo/client';
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import {
@@ -40,6 +39,7 @@ import { useSnackbar } from 'notistack';
 import { WebBundlr } from 'bundlr-custom';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
+import arweave, { getData } from '@/utils/arweave';
 
 interface Message {
   id: string;
@@ -63,7 +63,6 @@ const Chat = () => {
   const [allMessages, setAllMessages] = useState<Message[]>([]);
 
   const { enqueueSnackbar } = useSnackbar();
-  const { arweave } = useArweave();
 
   const [getChatRequests, { data: requestsData, loading: requestsLoading }] =
     useLazyQuery(QUERY_CHAT_REQUESTS);
@@ -74,7 +73,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
-      navigate(pathname, { state });
+      navigate(0);
     }
   }, [userAddr]);
 

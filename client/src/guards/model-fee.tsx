@@ -52,7 +52,8 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
           },
         });
       } catch (err) {
-        console.log(err);
+        enqueueSnackbar('Wallet is not Connected', { variant: 'error'});
+        navigate('/');
       }
     };
 
