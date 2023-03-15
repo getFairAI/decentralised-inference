@@ -1,7 +1,7 @@
 import { DEFAULT_TAGS, MARKETPLACE_FEE, REGISTER_OPERATION_TAG } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { LIST_MODELS_QUERY, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
+import { parseWinston } from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
 import { Container, Box, Stack, Card, CardActionArea, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -11,7 +11,7 @@ interface Element {
   name: string;
   txid: string;
   uploader: string;
-  avgFee: number;
+  avgFee: string;
   modelFee: string;
   totalOperators: number;
 }
@@ -22,7 +22,7 @@ const Operators = () => {
 
   // filter only models who paid the correct Marketplace fee
   const handleCompleted = (data: IEdge[]) =>
-    setTxs(data.filter((el) => el.node.quantity.ar.toString() !== MARKETPLACE_FEE));
+    setTxs(data.filter((el) => el.node.quantity.ar !== MARKETPLACE_FEE));
 
   const { loading, error } = useQuery(LIST_MODELS_QUERY, {
     onCompleted: handleCompleted,
@@ -56,11 +56,12 @@ const Operators = () => {
           );
           const opFees = uniqueOperators.map((op) => {
             const fee = op.node.tags.find((el) => el.name === 'Operator-Fee')?.value;
-            if (fee) return parseFloat(arweave.ar.winstonToAr(fee));
+            if (fee) return parseFloat(fee);
             else return 0;
           });
           const average = (arr: number[]) => arr.reduce((p, c) => p + c, 0) / arr.length;
-          const avgFee = average(opFees);
+          const avgFee = parseWinston(average(opFees).toString());
+          const modelFee = el.node.tags.find((el) => el.name === 'Model-Fee')?.value;
 
           return {
             name:
@@ -69,9 +70,7 @@ const Operators = () => {
               el.node.tags.find((el) => el.name === 'Model-Transaction')?.value ||
               'Transaction Not Available',
             uploader: el.node.owner.address,
-            modelFee:
-              el.node.tags.find((el) => el.name === 'Model-Fee')?.value ||
-              'Model Fee Not Available',
+            modelFee: parseWinston(modelFee) || 'Model Fee Not Available',
             avgFee,
             totalOperators: uniqueOperators.length,
           };
@@ -103,10 +102,17 @@ const Operators = () => {
                     <Typography>Name: {el.name}</Typography>
                     <Typography>Transaction id: {el.txid}</Typography>
                     <Typography>Creator: {el.uploader}</Typography>
-                    <Typography>Model Fee: {el.modelFee}</Typography>
+                    <Typography>
+                      Model Fee:{' '}
+                      {Number.isNaN(el.modelFee) || el.modelFee === 'NaN'
+                        ? 'Invalid Fee'
+                        : `${el.modelFee} AR`}
+                    </Typography>
                     <Typography>
                       Average Fee:{' '}
-                      {Number.isNaN(el.avgFee) ? 'Not enough Operators for Fee' : el.avgFee}
+                      {Number.isNaN(el.avgFee) || el.avgFee === 'NaN'
+                        ? 'Not enough Operators for Fee'
+                        : `${el.avgFee} AR`}
                     </Typography>
                     <Typography>Total Operators: {el.totalOperators}</Typography>
                   </CardActionArea>

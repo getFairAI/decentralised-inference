@@ -178,8 +178,8 @@ const FundDialog = ({
               label='Amount to Fund'
               value={amount}
               onChange={handleAmountChange}
-              helperText={`Max: ${walletBalance}`}
-              InputProps={{ inputProps: { min: 0, max: walletBalance } }}
+              helperText={`Max: ${walletBalance.toFixed(4)}`}
+              InputProps={{ inputProps: { min: 0, max: walletBalance.toFixed(4) } }}
               margin='dense'
             />
           </Box>

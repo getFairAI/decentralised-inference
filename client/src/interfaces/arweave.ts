@@ -9,8 +9,8 @@ export interface IData {
 }
 
 export interface IFee {
-  ar: number;
-  winston: number;
+  ar: string;
+  winston: string;
 }
 
 export interface IOwner {
@@ -19,8 +19,8 @@ export interface IOwner {
 }
 
 export interface IQuantity {
-  ar: number;
-  winston: number;
+  ar: string;
+  winston: string;
 }
 
 export interface IBlock {
