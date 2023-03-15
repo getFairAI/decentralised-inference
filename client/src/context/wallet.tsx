@@ -26,7 +26,7 @@ interface WalletContext {
   currentPermissions: PermissionType[];
   currentBalance: number;
   connectWallet: () => Promise<void>;
-  updateBalance: () =>  Promise<void>;
+  updateBalance: () => Promise<void>;
 }
 
 const createActions = (dispatch: Dispatch<WalletAction>, state: WalletContext) => {
@@ -114,7 +114,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const connectWalletSubscriptionRef = useRef<boolean>(false);
   const switchWalletSubscriptionRef = useRef<boolean>(false);
 
-  const value: WalletContext = { ...state, connectWallet: actions.connectWallet, updateBalance: actions.updateBalance };
+  const value: WalletContext = {
+    ...state,
+    connectWallet: actions.connectWallet,
+    updateBalance: actions.updateBalance,
+  };
 
   const walletLoaded = async () => {
     await actions.connectWallet();
@@ -149,8 +153,8 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         window.removeEventListener('walletSwitch', walletSwitched);
         switchWalletSubscriptionRef.current = false;
       }
-    };    
-  }, [ window.arweaveWallet ]);
+    };
+  }, [window.arweaveWallet]);
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };

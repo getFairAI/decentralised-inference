@@ -51,7 +51,7 @@ interface Message {
 
 const Chat = () => {
   const { txid: txidModel, address } = useParams();
-  const { state, pathname } = useLocation();
+  const { state } = useLocation();
   const navigate = useNavigate();
   const { currentAddress: userAddr } = useContext(WalletContext);
   const previousAddr = usePrevious<string>(userAddr);

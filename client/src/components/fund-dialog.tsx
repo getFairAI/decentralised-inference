@@ -43,7 +43,8 @@ const FundDialog = ({
   // const { curer}
 
   const bundlrContext = useContext(BundlrContext);
-  const { currentBalance: walletBalance, updateBalance: updateWalletBalance } = useContext(WalletContext);
+  const { currentBalance: walletBalance, updateBalance: updateWalletBalance } =
+    useContext(WalletContext);
 
   const handleChange = (event: SelectChangeEvent) => {
     setNode(event.target.value as bundlrNodeUrl);
