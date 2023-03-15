@@ -1,7 +1,7 @@
 import { DEFAULT_TAGS, MARKETPLACE_FEE, REGISTER_OPERATION_TAG } from '@/constants';
-import useArweave from '@/context/arweave';
 import { IEdge } from '@/interfaces/arweave';
 import { LIST_MODELS_QUERY, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
 import { Container, Box, Stack, Card, CardActionArea, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -18,7 +18,6 @@ interface Element {
 const Operators = () => {
   const navigate = useNavigate();
   const [elements, setElements] = useState<Element[]>([]);
-  const { arweave } = useArweave();
   const [txs, setTxs] = useState<IEdge[]>([]);
 
   // filter only models who paid the correct Marketplace fee

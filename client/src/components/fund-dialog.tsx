@@ -16,12 +16,13 @@ import {
 } from '@mui/material';
 import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import LoadingButton from '@mui/lab/LoadingButton';
-import useArweave from '@/context/arweave';
 import BigNumber from 'bignumber.js';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 import { BundlrContext, bundlrNodeUrl } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
+import { WalletContext } from '@/context/wallet';
+import arweave from '@/utils/arweave';
 
 type FundFinishedFn = (node: string) => Promise<void>;
 
@@ -38,11 +39,12 @@ const FundDialog = ({
   const [amount, setAmount] = useState(0);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(0);
-  const { arweave, getWalletBalance } = useArweave();
   const { enqueueSnackbar } = useSnackbar();
+  // const { curer}
 
   const bundlrContext = useContext(BundlrContext);
+  const { currentBalance: walletBalance, updateBalance: updateWalletBalance } =
+    useContext(WalletContext);
 
   const handleChange = (event: SelectChangeEvent) => {
     setNode(event.target.value as bundlrNodeUrl);
@@ -53,7 +55,7 @@ const FundDialog = ({
     setAmount(+event.target.value);
   };
 
-  const updateBalance = async () => {
+  const updateNodeBalance = async () => {
     // Get loaded balance in atomic units
     const atomicBalance = await bundlrContext?.state?.getLoadedBalance();
 
@@ -64,17 +66,17 @@ const FundDialog = ({
     }
   };
 
-  const updatebalanceEffect = () => {
+  const updateNodeBalanceEffect = () => {
     if (open) {
-      updateBalance();
+      updateNodeBalance();
     }
   };
 
-  useEffect(updatebalanceEffect, [node, open]); // run when node changes
+  useEffect(updateNodeBalanceEffect, [node, open]); // run when node changes
 
   useEffect(() => {
     const asyncgetWalletBalance = async () => {
-      setWalletBalance(+(await getWalletBalance()));
+      await updateWalletBalance();
     };
     if (open) {
       asyncgetWalletBalance();
@@ -100,7 +102,6 @@ const FundDialog = ({
       // Convert balance to an easier to read format
       const convertedBalance = bundlrContext.state.utils.unitConverter(atomicBalance);
       setBalance(convertedBalance.toNumber());
-      setWalletBalance(+(await getWalletBalance()));
       setAmount(0);
       enqueueSnackbar(
         `Funded Bundlr with ${arweave.ar.winstonToAr(
@@ -165,7 +166,7 @@ const FundDialog = ({
               InputProps={{
                 endAdornment: (
                   <InputAdornment position='start'>
-                    <IconButton onClick={updateBalance}>
+                    <IconButton onClick={updateNodeBalance}>
                       <RefreshIcon />
                     </IconButton>
                   </InputAdornment>

@@ -4,7 +4,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FundDialog from './fund-dialog';
-import useArweave from '@/context/arweave';
 import { useNavigate } from 'react-router-dom';
 
 const options = [
@@ -19,7 +18,8 @@ export default function ProfileMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [fundOpen, setFundOpen] = React.useState(false);
   const navigate = useNavigate();
-  const { disconnect } = useArweave();
+  /* const {  } = React.useContext(WalletContext); */
+
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -40,10 +40,10 @@ export default function ProfileMenu() {
         setAnchorEl(null);
         navigate('/history');
         break;
-      case 'Disconnect':
+      /* case 'Disconnect':
         await disconnect();
         setAnchorEl(null);
-        return;
+        return; */
       default:
         setAnchorEl(null);
         return;

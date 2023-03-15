@@ -35,8 +35,8 @@ import {
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { ChangeEvent, useEffect, useState } from 'react';
-import useArweave from '@/context/arweave';
 import { useSnackbar } from 'notistack';
+import arweave from '@/utils/arweave';
 
 const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
@@ -45,7 +45,6 @@ const Detail = () => {
   const [owner, setOwner] = useState('');
   const [feeValue, setFeeValue] = useState(0);
   const [feeDirty, setFeeDirty] = useState(false);
-  const { arweave } = useArweave();
   const { enqueueSnackbar } = useSnackbar();
 
   const tags = [
