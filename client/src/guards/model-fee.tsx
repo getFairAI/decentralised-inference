@@ -14,10 +14,10 @@ import {
   DialogTitle,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { ReactElement, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams, useRouteLoaderData } from 'react-router-dom';
 
-const ModelFeeGuard = ({ children }: { children: ReactElement }) => {
+const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   const updatedFee = useRouteLoaderData('model') as string;
   const { txid } = useParams();
   const { state } = useLocation();
