@@ -22,4 +22,12 @@ export const getData = async (txid: string) => {
   return text;
 };
 
+export const parseWinston = (value?: string) => {
+  try {
+    return parseFloat(arweave.ar.winstonToAr(value as string)).toFixed(4);
+  } catch (error) {
+    return '0';
+  }
+};
+
 export default arweave;
