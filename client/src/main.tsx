@@ -70,7 +70,6 @@ const router = createBrowserRouter([
                   <Chat />
                 </ModelFeeGuard>
               </BlockOperatorGuard>
-              
             ),
           },
           {
