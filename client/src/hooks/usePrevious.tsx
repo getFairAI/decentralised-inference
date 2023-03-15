@@ -4,11 +4,11 @@ import { useEffect, useRef } from 'react';
 
 const usePrevious = <T extends Partial<T>>(value: T): T | undefined => {
   const ref = useRef<T | undefined>();
-  
-  useEffect(() => { 
+
+  useEffect(() => {
     ref.current = value;
   });
-  
+
   return ref.current;
 };
 
