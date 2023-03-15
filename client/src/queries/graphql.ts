@@ -661,9 +661,61 @@ export const QUERY_OPERATOR_HISTORY = gql`
   }
 `;
 
+export const QUERY_CHAT_REQUESTS = gql`
+  query QUERY_CHAT_REQUESTS($address: String!, $tagsRequests: [TagFilter!]) {
+    transactions(tags: $tagsRequests, owners: [ $address ]) {
+      edges {
+        node {
+          id
+          recipient
+          tags {
+            name
+            value
+          }
+          owner {
+            address
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_CHAT_RESPONSES = gql`
+  query QUERY_CHAT_RESPONSES($operators: [String!], $tagsResponses: [TagFilter!]) {
+    transactions(tags: $tagsResponses, owners: $operators) {
+      edges {
+        node {
+          id
+          recipient
+          tags {
+            name
+            value
+          }
+          owner {
+            address
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const QUERY_CHAT_HISTORY = gql`
   query chat_history($address: String!, $tagsRequests: [TagFilter!], $tagsResults: [TagFilter!]) {
-    requests: transactions(tags: $tagsRequests, owners: [$address]) {
+    requests: transactions(tags: $tagsRequests, owners: [ $address ]) {
       edges {
         node {
           id
@@ -703,7 +755,7 @@ export const QUERY_CHAT_HISTORY = gql`
     }
 
     results: transactions(
-      tags: $tagsResults # recipients: [ $address ]
+      tags: $tagsResults, recipients: [ $address ]
     ) {
       edges {
         node {
