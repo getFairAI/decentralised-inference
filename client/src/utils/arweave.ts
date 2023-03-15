@@ -7,4 +7,19 @@ const arweave = Arweave.init({
   protocol: 'https',
 });
 
+export const getWalletBalance = async () => {
+  const winstonBalance = await arweave.wallets.getBalance(
+    await window.arweaveWallet.getActiveAddress(),
+  );
+
+  return arweave.ar.winstonToAr(winstonBalance);
+};
+
+export const getData = async (txid: string) => {
+  const result = await fetch('http://arweave.net/' + txid);
+  const text = await (await result.blob()).text();
+
+  return text;
+};
+
 export default arweave;

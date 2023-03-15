@@ -6,15 +6,12 @@ import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import { Tooltip } from '@mui/material';
-import { useContext, useEffect } from 'react';
+import { useContext } from 'react';
 import { WalletContext } from '@/context/wallet';
 
 const Navbar = () => {
   const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
 
-  useEffect(() => {
-    console.log(currentAddress);
-  }, [currentAddress]);
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position='fixed'>
