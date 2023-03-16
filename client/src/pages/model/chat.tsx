@@ -11,6 +11,7 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
+  Skeleton,
   Stack,
   TextField,
   Tooltip,
@@ -40,6 +41,7 @@ import { WebBundlr } from 'bundlr-custom';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
+import { genLoadingArray } from '@/utils/common';
 
 interface Message {
   id: string;
@@ -61,15 +63,15 @@ const Chat = () => {
   const [conversationIds, setConversationIds] = useState<string[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('C-1');
   const [allMessages, setAllMessages] = useState<Message[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+
+  const mockArray = genLoadingArray(5);
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const [getChatRequests, { data: requestsData, loading: requestsLoading }] =
-    useLazyQuery(QUERY_CHAT_REQUESTS);
-  const [
-    getChatResponses,
-    { data: responsesData, loading: responsesLoading, previousData: responsesPreviousData },
-  ] = useLazyQuery(QUERY_CHAT_RESPONSES);
+  const [getChatRequests, { data: requestsData }] = useLazyQuery(QUERY_CHAT_REQUESTS);
+  const [getChatResponses, { data: responsesData, previousData: responsesPreviousData }] =
+    useLazyQuery(QUERY_CHAT_RESPONSES);
 
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
@@ -96,6 +98,7 @@ const Chat = () => {
         },
         pollInterval: 5000,
       });
+      setMessagesLoading(true);
     }
   }, []); // run only first time
 
@@ -185,6 +188,7 @@ const Chat = () => {
     );
 
     setMessages(temp.filter((el) => el.cid === currentConversationId));
+    setMessagesLoading(false);
   };
 
   useEffect(() => {
@@ -362,14 +366,47 @@ const Chat = () => {
               height: '100%',
             }}
           >
-            {responsesLoading || requestsLoading ? (
-              <p>Loading...</p>
+            {messagesLoading ? (
+              mockArray.map((el: number) => {
+                return (
+                  <Container key={el}>
+                    <Stack
+                      spacing={4}
+                      flexDirection='row'
+                      justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
+                    >
+                      <Skeleton animation={'wave'} width={'40%'}>
+                        <Box
+                          display={'flex'}
+                          justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
+                          flexDirection='column'
+                          margin='8px'
+                        >
+                          <Box display={'flex'} alignItems='center'>
+                            <Card
+                              elevation={8}
+                              raised={true}
+                              sx={{ width: 'fit-content', paddingBottom: 0 }}
+                            >
+                              <CardContent>
+                                <Typography></Typography>
+                              </CardContent>
+                            </Card>
+                          </Box>
+                        </Box>
+                      </Skeleton>
+                    </Stack>
+                  </Container>
+                );
+              })
             ) : messages.length > 0 ? (
               <Divider textAlign='center'>
                 {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
               </Divider>
             ) : (
-              <p>You Are Starting a conversation</p>
+              <Typography alignItems='center' display='flex' flexDirection='column'>
+                Could not Fetch Conversation History.
+              </Typography>
             )}
             {messages.map((el: Message, index: number) => (
               <Container key={index}>
