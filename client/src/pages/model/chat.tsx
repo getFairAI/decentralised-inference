@@ -20,7 +20,7 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useLazyQuery } from '@apollo/client';
-import { ChangeEvent, useContext, useEffect, useState } from 'react';
+import { ChangeEvent, useContext, useEffect, useRef, useState } from 'react';
 import {
   APP_VERSION,
   DEFAULT_TAGS,
@@ -42,6 +42,7 @@ import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
 import { genLoadingArray } from '@/utils/common';
+import useWindowDimensions from '@/hooks/useWindowDimensions';
 
 interface Message {
   id: string;
@@ -64,14 +65,18 @@ const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState<string>('C-1');
   const [allMessages, setAllMessages] = useState<Message[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
-
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { height } = useWindowDimensions();
+  const [ chatMaxHeight, setChatMaxHeight ] = useState('100%');
   const mockArray = genLoadingArray(5);
-
   const { enqueueSnackbar } = useSnackbar();
-
-  const [getChatRequests, { data: requestsData }] = useLazyQuery(QUERY_CHAT_REQUESTS);
-  const [getChatResponses, { data: responsesData, previousData: responsesPreviousData }] =
+  const [getChatRequests, { data: requestsData, error: requestError }] = useLazyQuery(QUERY_CHAT_REQUESTS);
+  const [getChatResponses, { data: responsesData, previousData: responsesPreviousData, error: responseError }] =
     useLazyQuery(QUERY_CHAT_RESPONSES);
+
+  useEffect(() => {
+    setChatMaxHeight(`${height - 94}px`);
+  }, [ height ]);
 
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
@@ -138,65 +143,31 @@ const Chat = () => {
     }
   }, [requestsData]);
 
-  const reqData = async () => {
-    const allData = [...requestsData, ...responsesData];
-
-    const temp: Message[] = [];
-    await Promise.all(
-      allData.map(async (el: IEdge) => {
-        const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
-        const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;
-        const timestamp =
-          parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
-          el.node.block?.timestamp ||
-          Date.now() / 1000;
-        const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
-        if (el.node.owner.address === userAddr) {
-          temp.push({
-            id: el.node.id,
-            msg: data,
-            type: 'request',
-            timestamp: timestamp,
-            cid,
-          });
-        } else {
-          temp.push({
-            id: el.node.id,
-            msg: data,
-            type: 'response',
-            timestamp: timestamp,
-            cid,
-          });
-        }
-      }),
-    );
-
-    temp.sort(function (a, b) {
-      return a.timestamp - b.timestamp;
-    });
-    setAllMessages(temp);
-
-    const cids = [...new Set(temp.map((x: Message) => x.cid))].filter(
-      (el) => el !== undefined,
-    ) as string[];
-
-    setConversationIds(
-      cids.length > 0
-        ? cids
-        : conversationIds.length > 0
-        ? conversationIds
-        : [currentConversationId],
-    );
-
-    setMessages(temp.filter((el) => el.cid === currentConversationId));
-    setMessagesLoading(false);
-  };
-
   useEffect(() => {
     if (responsesData !== undefined && !_.isEqual(responsesData, responsesPreviousData)) {
       reqData();
     }
   }, [responsesData]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleListItemClick = (cid: string) => {
+    setCurrentConversationId(cid);
+  };
+
+  const handleAddConversation = () => {
+    const lastConversation = conversationIds[conversationIds.length - 1];
+    const number = lastConversation?.split('-')[1];
+    const newConversationId = `C-${+number + 1}`;
+    setConversationIds([...conversationIds, newConversationId]);
+    setCurrentConversationId(newConversationId);
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleMessageChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNewMessage(event.target.value);
@@ -280,16 +251,58 @@ const Chat = () => {
     }
   };
 
-  const handleListItemClick = (cid: string) => {
-    setCurrentConversationId(cid);
-  };
+  const reqData = async () => {
+    const allData = [...requestsData, ...responsesData];
 
-  const handleAddConversation = () => {
-    const lastConversation = conversationIds[conversationIds.length - 1];
-    const number = lastConversation?.split('-')[1];
-    const newConversationId = `C-${+number + 1}`;
-    setConversationIds([...conversationIds, newConversationId]);
-    setCurrentConversationId(newConversationId);
+    const temp: Message[] = [];
+    await Promise.all(
+      allData.map(async (el: IEdge) => {
+        const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
+        const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;
+        const timestamp =
+          parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+          el.node.block?.timestamp ||
+          Date.now() / 1000;
+        const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
+        if (el.node.owner.address === userAddr) {
+          temp.push({
+            id: el.node.id,
+            msg: data,
+            type: 'request',
+            timestamp: timestamp,
+            cid,
+          });
+        } else {
+          temp.push({
+            id: el.node.id,
+            msg: data,
+            type: 'response',
+            timestamp: timestamp,
+            cid,
+          });
+        }
+      }),
+    );
+
+    temp.sort(function (a, b) {
+      return a.timestamp - b.timestamp;
+    });
+    setAllMessages(temp);
+
+    const cids = [...new Set(temp.map((x: Message) => x.cid))].filter(
+      (el) => el !== undefined,
+    ) as string[];
+
+    setConversationIds(
+      cids.length > 0
+        ? cids
+        : conversationIds.length > 0
+        ? conversationIds
+        : [currentConversationId],
+    );
+
+    setMessages(temp.filter((el) => el.cid === currentConversationId));
+    setMessagesLoading(false);
   };
 
   return (
@@ -314,7 +327,7 @@ const Chat = () => {
           }}
           elevation={4}
         >
-          <Box marginTop={'72px'} display='flex'>
+          <Box marginTop={'16px'} display='flex'>
             <TextField
               placeholder='Search...'
               InputProps={{
@@ -351,114 +364,128 @@ const Chat = () => {
         xs={10}
         sx={{
           width: '100%',
+          height: '100%',
           bgcolor: 'background.paper',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'flex-end',
+          justifyContent: 'flex-end'
         }}
       >
         <Box flexGrow={1}>
           <Paper
             elevation={1}
             sx={{
+              height: '100%',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'flex-end',
-              height: '100%',
             }}
           >
-            {messagesLoading ? (
-              mockArray.map((el: number) => {
-                return (
-                  <Container key={el}>
-                    <Stack
-                      spacing={4}
-                      flexDirection='row'
-                      justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                    >
-                      <Skeleton animation={'wave'} width={'40%'}>
-                        <Box
-                          display={'flex'}
+            <Box sx={{overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}>
+              {
+                requestError || responseError ? (
+                  <Typography alignItems='center' display='flex' flexDirection='column'>
+                    Could not Fetch Conversation History.
+                  </Typography>
+                ) :
+                messagesLoading ? (
+                  mockArray.map((el: number) => {
+                    return (
+                      <Container key={el} maxWidth={false}>
+                        <Stack
+                          spacing={4}
+                          flexDirection='row'
                           justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                          flexDirection='column'
-                          margin='8px'
                         >
-                          <Box display={'flex'} alignItems='center'>
-                            <Card
-                              elevation={8}
-                              raised={true}
-                              sx={{ width: 'fit-content', paddingBottom: 0 }}
+                          <Skeleton animation={'wave'} width={'40%'}>
+                            <Box
+                              display={'flex'}
+                              justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
+                              flexDirection='column'
+                              margin='8px'
                             >
-                              <CardContent>
-                                <Typography></Typography>
-                              </CardContent>
-                            </Card>
-                          </Box>
-                        </Box>
-                      </Skeleton>
-                    </Stack>
-                  </Container>
-                );
-              })
-            ) : messages.length > 0 ? (
-              <Divider textAlign='center'>
-                {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
-              </Divider>
-            ) : (
-              <Typography alignItems='center' display='flex' flexDirection='column'>
-                Could not Fetch Conversation History.
-              </Typography>
-            )}
-            {messages.map((el: Message, index: number) => (
-              <Container key={index}>
-                <Stack
-                  spacing={4}
-                  flexDirection='row'
-                  justifyContent={el.type === 'request' ? 'flex-end' : 'flex-start'}
-                >
-                  <Box
-                    display={'flex'}
-                    justifyContent={el.type === 'request' ? 'flex -end' : 'flex-start'}
-                    flexDirection='column'
-                    margin='8px'
-                  >
-                    <Box display={'flex'} alignItems='center'>
-                      {!!pendingTxs.find((pending) => el.id === pending.id) && (
-                        <Tooltip
-                          title='This transaction is still not confirmed by the network'
-                          sx={{ margin: '8px' }}
+                              <Box display={'flex'} alignItems='center'>
+                                <Card
+                                  elevation={8}
+                                  raised={true}
+                                  sx={{ width: 'fit-content', paddingBottom: 0 }}
+                                >
+                                  <CardContent>
+                                    <Typography></Typography>
+                                  </CardContent>
+                                </Card>
+                              </Box>
+                            </Box>
+                          </Skeleton>
+                        </Stack>
+                      </Container>
+                    );
+                  })
+                ) : messages.length > 0 ? (<>
+                  <Divider textAlign='center'>
+                    {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
+                  </Divider>
+                  {
+                    messages.map((el: Message, index: number) => (
+                      <Container key={index} maxWidth={false}>
+                        <Stack
+                          spacing={4}
+                          flexDirection='row'
+                          justifyContent={el.type === 'request' ? 'flex-end' : 'flex-start'}
                         >
-                          <PendingActionsIcon />
-                        </Tooltip>
-                      )}
-                      <Card
-                        elevation={8}
-                        raised={true}
-                        sx={{ width: 'fit-content', paddingBottom: 0 }}
-                      >
-                        <CardContent>
-                          <Typography>{el.msg}</Typography>
-                        </CardContent>
-                      </Card>
-                    </Box>
-
-                    <Typography
-                      variant='caption'
-                      textAlign={el.type === 'request' ? 'right' : 'left'}
-                    >
-                      {new Date(el.timestamp * 1000).toLocaleTimeString()}
-                    </Typography>
-                  </Box>
-                </Stack>
-                {index < messages.length - 1 &&
-                  new Date(el.timestamp * 1000).getDay() !==
-                    new Date(messages[index + 1].timestamp * 1000).getDay() && (
-                    <Divider textAlign='center'>
-                      {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
-                    </Divider>
-                  )}
-              </Container>
-            ))}
+                          <Box
+                            display={'flex'}
+                            justifyContent={el.type === 'request' ? 'flex -end' : 'flex-start'}
+                            flexDirection='column'
+                            margin='8px'
+                          >
+                            <Box display={'flex'} alignItems='center'>
+                              {!!pendingTxs.find((pending) => el.id === pending.id) && (
+                                <Tooltip
+                                  title='This transaction is still not confirmed by the network'
+                                  sx={{ margin: '8px' }}
+                                >
+                                  <PendingActionsIcon />
+                                </Tooltip>
+                              )}
+                              <Card
+                                elevation={8}
+                                raised={true}
+                                sx={{ width: 'fit-content', paddingBottom: 0 }}
+                              >
+                                <CardContent>
+                                  <Typography>{el.msg}</Typography>
+                                </CardContent>
+                              </Card>
+                            </Box>
+      
+                            <Typography
+                              variant='caption'
+                              textAlign={el.type === 'request' ? 'right' : 'left'}
+                            >
+                              {new Date(el.timestamp * 1000).toLocaleTimeString()}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        {index < messages.length - 1 &&
+                          new Date(el.timestamp * 1000).getDay() !==
+                            new Date(messages[index + 1].timestamp * 1000).getDay() && (
+                            <Divider textAlign='center'>
+                              {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
+                            </Divider>
+                          )}
+                      </Container>
+                    ))
+                  }
+                </>
+              ) : (
+                <Typography alignItems='center' display='flex' flexDirection='column'>
+                  Starting a new conversation.
+                </Typography>
+              )}
+              <div ref={messagesEndRef} />
+            </Box>
+            
           </Paper>
         </Box>
         <TextField
