@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { useContext, useState } from 'react';
+import { Dispatch, SetStateAction, useContext } from 'react';
 import { IconButton, styled, Tooltip } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
@@ -19,9 +19,9 @@ const Banner =  styled(Toolbar)(({ theme }) => ({
   },
 }));
 
-const Navbar = () => {
+const Navbar = ({ showBanner, setShowBanner }: { showBanner: boolean, setShowBanner: Dispatch<SetStateAction<boolean>>}) => {
   const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
-  const [ showBanner, setShowBanner ] = useState(true);
+  
 
   return (<>
     <AppBar position='fixed'>
@@ -91,7 +91,7 @@ const Navbar = () => {
       </Toolbar>
     </AppBar>
     <Toolbar />
-    <Banner />
+    { showBanner && <Banner />}
   </>);
 };
 
