@@ -40,13 +40,6 @@ const Explore = () => {
     onCompleted: handleCompleted,
   });
 
-  if (loading) {
-    return <h2>Loading...</h2>;
-  } else if (error) {
-    console.error(error);
-    return null;
-  }
-
   const handleCardClick = (e: MouseEvent<HTMLButtonElement>, txid?: string, index?: number) => {
     e.preventDefault();
     if (!txid || index === undefined) return;
