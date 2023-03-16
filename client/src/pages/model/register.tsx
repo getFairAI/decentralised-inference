@@ -1,8 +1,5 @@
 import { CustomStepper } from '@/components/stepper';
-import {
-  MARKETPLACE_ADDRESS,
-  APP_VERSION,
-} from '@/constants';
+import { MARKETPLACE_ADDRESS, APP_VERSION } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import arweave from '@/utils/arweave';
 import {
@@ -57,9 +54,11 @@ const Register = () => {
           <>
             Operator Registration Submitted.
             <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
-          </>, 
-          { variant: 'success' }
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
+          { variant: 'success' },
         );
         setIsRegistered(true);
       } else {

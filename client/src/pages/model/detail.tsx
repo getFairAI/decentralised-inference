@@ -230,10 +230,14 @@ const Detail = () => {
           <>
             Updated Model Fee
             <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
-          </>, {
-          variant: 'success',
-        });
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
+          {
+            variant: 'success',
+          },
+        );
         setFeeDirty(false);
       } else {
         enqueueSnackbar(payRes.statusText, { variant: 'error' });

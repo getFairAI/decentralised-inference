@@ -100,11 +100,11 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-          Model Fee Paid: {arweave.ar.winstonToAr(
-            modelFee,
-          )} AR.
-          <br></br>
-          <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
+            Model Fee Paid: {arweave.ar.winstonToAr(modelFee)} AR.
+            <br></br>
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+              <u>View Transaction in Explorer</u>
+            </a>
           </>,
           { variant: 'success' },
         );

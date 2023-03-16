@@ -191,7 +191,13 @@ const Upload = () => {
             <>
               Paid Marketplace Fee {MARKETPLACE_FEE} AR.
               <br></br>
-              <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
+              <a
+                href={`https://viewblock.io/arweave/tx/${tx.id}`}
+                target={'_blank'}
+                rel='noreferrer'
+              >
+                <u>View Transaction in Explorer</u>
+              </a>
             </>,
             { variant: 'success' },
           );
