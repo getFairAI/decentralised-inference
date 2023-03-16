@@ -41,6 +41,7 @@ import { WebBundlr } from 'bundlr-custom';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
+import { genLoadingArray } from '@/utils/common';
 
 interface Message {
   id: string;
@@ -64,7 +65,7 @@ const Chat = () => {
   const [allMessages, setAllMessages] = useState<Message[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
 
-  const mockArray = Array.from(new Array(5).keys());
+  const mockArray = genLoadingArray(5);
 
   const { enqueueSnackbar } = useSnackbar();
 
