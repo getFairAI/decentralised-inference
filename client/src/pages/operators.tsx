@@ -107,7 +107,7 @@ const Operators = () => {
 
   return (
     <>
-      <Container sx={{ top: '64px', position: 'relative' }}>
+      <Container>
         <Box>
           <Stack spacing={4} sx={{ margin: '16px' }}>
             {listError ? (

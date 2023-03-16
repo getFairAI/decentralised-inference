@@ -59,7 +59,7 @@ const History = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1, top: '64px', position: 'relative' }} margin={2}>
+    <Box sx={{ flexGrow: 1 }} margin={2}>
       <Grid container spacing={{ xs: 2, md: 3, lg: 5 }} columns={{ xs: 4, sm: 8, md: 12 }}>
         <Grid xs={12} justifyContent={'flex-end'} display={'flex'} item>
           <TextField

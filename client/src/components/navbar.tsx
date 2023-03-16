@@ -23,12 +23,11 @@ const Navbar = () => {
   const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
   const [ showBanner, setShowBanner ] = useState(true);
 
-  return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position='sticky'>
-        {
-          showBanner &&
-            <Banner>
+  return (<>
+    <AppBar position='fixed'>
+      {
+        showBanner &&
+          <Banner>
             <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
               <Typography variant='body1'>This Application is in <b>ALPHA</b>. Please Make sure you understand before using any of the functionalities.</Typography>
             </Box>
@@ -38,70 +37,62 @@ const Navbar = () => {
               </IconButton>
             </Box>
           </Banner>
-        }
-        <Toolbar>
-          {/* <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
+      }
+      <Toolbar>
+        <Link to='/'>
+          <Typography
+            variant='h4'
+            component='div'
+            sx={{
+              mr: 2,
+              display: { md: 'flex' },
+              color: 'inherit',
+            }}
           >
-            <MenuIcon />
-          </IconButton> */}
-          <Link to='/'>
-            <Typography
-              variant='h4'
-              component='div'
-              sx={{
-                mr: 2,
-                display: { md: 'flex' },
-                color: 'inherit',
-              }}
-            >
-              Fair protocol
-            </Typography>
+            Fair protocol
+          </Typography>
+        </Link>
+        <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
+          <Link to='/explore'>
+            <Button variant='text' color='secondary'>
+              Explore
+            </Button>
           </Link>
-          <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-            <Link to='/explore'>
-              <Button variant='text' color='secondary'>
-                Explore
-              </Button>
-            </Link>
-            <Link to='/upload'>
-              <Button variant='text' color='secondary'>
-                Create
-              </Button>
-            </Link>
-            <Link to='/operators'>
-              <Button variant='text' color='secondary'>
-                Operators
-              </Button>
-            </Link>
-          </Box>
-          <Box sx={{ flexGrow: 0 }}>
-            {currentAddress && currentAddress !== '' ? (
-              <Box display={'flex'} alignItems={'center'}>
-                <Box display={'flex'} flexDirection={'column'} alignItems={'flex-end'}>
-                  <Tooltip title={currentAddress} placement={'left-start'}>
-                    <Typography>
-                      {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
-                    </Typography>
-                  </Tooltip>
-                  <Typography>{currentBalance.toFixed(4)} AR</Typography>
-                </Box>
-                <ProfileMenu />
+          <Link to='/upload'>
+            <Button variant='text' color='secondary'>
+              Create
+            </Button>
+          </Link>
+          <Link to='/operators'>
+            <Button variant='text' color='secondary'>
+              Operators
+            </Button>
+          </Link>
+        </Box>
+        <Box sx={{ flexGrow: 0 }}>
+          {currentAddress && currentAddress !== '' ? (
+            <Box display={'flex'} alignItems={'center'}>
+              <Box display={'flex'} flexDirection={'column'} alignItems={'flex-end'}>
+                <Tooltip title={currentAddress} placement={'left-start'}>
+                  <Typography>
+                    {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
+                  </Typography>
+                </Tooltip>
+                <Typography>{currentBalance.toFixed(4)} AR</Typography>
               </Box>
-            ) : (
-              <Button color='inherit' onClick={connectWallet}>
-                Connect
-              </Button>
-            )}
-          </Box>
-        </Toolbar>
-      </AppBar>
-    </Box>
-  );
+              <ProfileMenu />
+            </Box>
+          ) : (
+            <Button color='inherit' onClick={connectWallet}>
+              Connect
+            </Button>
+          )}
+        </Box>
+      </Toolbar>
+    </AppBar>
+    <Toolbar />
+    <Banner />
+  </>);
 };
 
 export default Navbar;

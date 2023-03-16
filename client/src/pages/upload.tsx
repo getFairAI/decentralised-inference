@@ -205,7 +205,7 @@ const Upload = () => {
   };
 
   return (
-    <Container sx={{ top: '64px', position: 'relative' }}>
+    <Container>
       <Box sx={{ marginTop: '8px' }}>
         <Card>
           <CardHeader title='Create Your Model'>

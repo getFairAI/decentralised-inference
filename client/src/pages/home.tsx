@@ -81,8 +81,6 @@ export default function Home() {
         flexDirection: 'column',
         justifyContent: 'space-around',
         alignContent: 'space-around',
-        top: '64px',
-        position: 'relative',
       }}
     >
       <Box display={'flex'}>
