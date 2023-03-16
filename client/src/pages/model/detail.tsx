@@ -226,7 +226,12 @@ const Detail = () => {
       await arweave.transactions.sign(tx);
       const payRes = await arweave.transactions.post(tx);
       if (payRes.status === 200) {
-        enqueueSnackbar(`Updated Model Fee, TxId: https://arweave.net/${tx.id}`, {
+        enqueueSnackbar(
+          <>
+            Updated Model Fee
+            <br></br>
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
+          </>, {
           variant: 'success',
         });
         setFeeDirty(false);
