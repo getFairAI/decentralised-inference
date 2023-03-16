@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { IEdge } from '@/interfaces/arweave';
 import { parseWinston } from '@/utils/arweave';
 import ReplayIcon from '@mui/icons-material/Replay';
+import { genLoadingArray } from '@/utils/common';
 
 export interface RowData {
   quantityAR: string;
@@ -55,7 +56,7 @@ export default function BasicTable(props: {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [page, setPage] = React.useState(0);
   const navigate = useNavigate();
-  const mockArray = Array.from(new Array(10).keys());
+  const mockArray = genLoadingArray(10);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);

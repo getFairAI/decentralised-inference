@@ -5,3 +5,7 @@ export const formatNumbers = (value: string) => {
     return '0';
   }
 };
+
+export const genLoadingArray = (numElements: number) => {
+  return Array.from(new Array(numElements).keys());
+};
