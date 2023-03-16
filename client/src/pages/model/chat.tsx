@@ -133,6 +133,7 @@ const Chat = () => {
           tagsResponses,
           owners,
         },
+        pollInterval: 5000,
       });
     }
   }, [requestsData]);
