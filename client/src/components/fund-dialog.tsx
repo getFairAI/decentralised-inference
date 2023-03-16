@@ -104,9 +104,11 @@ const FundDialog = ({
       setBalance(convertedBalance.toNumber());
       setAmount(0);
       enqueueSnackbar(
-        `Funded Bundlr with ${arweave.ar.winstonToAr(
-          res.quantity,
-        )} AR. Txid: https://arweave.net/tx/${res.id}`,
+        <>
+          Funded Bundlr with {arweave.ar.winstonToAr(res.quantity)}{' '}AR.
+          <br></br>
+          <a href={`https://viewblock.io/arweave/tx/${res.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
+        </>,
         { variant: 'success' },
       );
       setLoading(false);

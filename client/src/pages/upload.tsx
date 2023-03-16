@@ -188,7 +188,11 @@ const Upload = () => {
         const payRes = await arweave.transactions.post(tx);
         if (payRes.status === 200) {
           enqueueSnackbar(
-            `Paid Marketplace Fee ${MARKETPLACE_FEE} AR, TxId: https://arweave.net/${tx.id}`,
+            <>
+              Paid Marketplace Fee {MARKETPLACE_FEE} AR.
+              <br></br>
+              <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
+            </>,
             { variant: 'success' },
           );
         } else {

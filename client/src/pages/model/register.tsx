@@ -1,14 +1,10 @@
 import { CustomStepper } from '@/components/stepper';
 import {
-  DEFAULT_TAGS,
-  REGISTER_OPERATION_TAG,
   MARKETPLACE_ADDRESS,
   APP_VERSION,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
-import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
-import { useQuery } from '@apollo/client';
 import {
   Container,
   Box,
@@ -22,29 +18,16 @@ import {
   MenuItem,
   Divider,
   Typography,
-  Snackbar,
-  Alert,
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import { useState } from 'react';
-import { useLocation, useParams, useRouteLoaderData } from 'react-router-dom';
+import { useLocation, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
   const updatedFee = useRouteLoaderData('model') as string;
   const { state }: { state: IEdge } = useLocation();
-  const { txid } = useParams();
-  const [error, setError] = useState<string | undefined>(undefined);
-  const [message, setMessage] = useState<string | undefined>(undefined);
   const [isRegistered, setIsRegistered] = useState(false);
-
-  const tags = [
-    ...DEFAULT_TAGS,
-    REGISTER_OPERATION_TAG,
-    {
-      name: 'Model-Transaction',
-      values: [txid],
-    },
-  ];
-  const { data: queryData } = useQuery(QUERY_REGISTERED_OPERATORS, { variables: { tags } });
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleRegister = async (rate: string, operatorName: string) => {
     try {
@@ -70,24 +53,22 @@ const Register = () => {
       await arweave.transactions.sign(tx);
       const response = await arweave.transactions.post(tx);
       if (response.status === 200) {
-        setMessage(`Transaction Successful. View at: ${tx.id}`);
+        enqueueSnackbar(
+          <>
+            Operator Registration Submitted.
+            <br></br>
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
+          </>, 
+          { variant: 'success' }
+        );
         setIsRegistered(true);
       } else {
-        setError('Something went Wrong. Please Try again...');
+        enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
       }
     } catch (error) {
-      setError('Something went Wrong. Please Try again...');
+      enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
     }
   };
-
-  const handleClose = () => {
-    setError(undefined);
-    setMessage(undefined);
-  };
-
-  if (queryData) {
-    console.log(queryData);
-  }
 
   return (
     <Container>
@@ -173,17 +154,6 @@ const Register = () => {
           </CardContent>
         </Card>
       </Box>
-      <Snackbar open={!!error || !!message} autoHideDuration={6000} onClose={handleClose}>
-        {error ? (
-          <Alert severity='error' sx={{ width: '100%' }}>
-            {error}
-          </Alert>
-        ) : (
-          <Alert severity='success' sx={{ width: '100%' }}>
-            {message}
-          </Alert>
-        )}
-      </Snackbar>
     </Container>
   );
 };
