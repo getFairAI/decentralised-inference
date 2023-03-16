@@ -195,10 +195,10 @@ const FileControl = (props: FileControlProps) => {
         display={'flex'}
         width={'100%'}
         style={{
-          position: 'absolute',
+          position: 'relative',
           left: 0,
           right: 0,
-          bottom: '90px',
+          bottom: '70px',
         }}
         justifyContent={'center'}
       >
