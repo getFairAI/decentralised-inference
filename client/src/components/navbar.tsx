@@ -5,26 +5,48 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { Tooltip } from '@mui/material';
-import { useContext } from 'react';
+import { Dispatch, SetStateAction, useContext } from 'react';
+import { IconButton, styled, Tooltip } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
+import CloseIcon from '@mui/icons-material/Close';
 
-const Navbar = () => {
+const Banner = styled(Toolbar)(({ theme }) => ({
+  backgroundColor: theme.palette.error.main,
+  color: theme.palette.error.contrastText,
+  // Override media queries injected by theme.mixins.toolbar
+  '@media all': {
+    minHeight: '30px',
+  },
+}));
+
+const Navbar = ({
+  showBanner,
+  setShowBanner,
+}: {
+  showBanner: boolean;
+  setShowBanner: Dispatch<SetStateAction<boolean>>;
+}) => {
   const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <>
       <AppBar position='fixed'>
+        {showBanner && (
+          <Banner>
+            <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
+              <Typography variant='body1'>
+                This Application is in <b>ALPHA</b>. Please Make sure you understand before using
+                any of the functionalities.
+              </Typography>
+            </Box>
+            <Box sx={{ flexGrow: 0 }}>
+              <IconButton size='small' onClick={() => setShowBanner(false)}>
+                <CloseIcon fontSize='inherit' />
+              </IconButton>
+            </Box>
+          </Banner>
+        )}
         <Toolbar>
-          {/* <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton> */}
           <Link to='/'>
             <Typography
               variant='h4'
@@ -76,7 +98,9 @@ const Navbar = () => {
           </Box>
         </Toolbar>
       </AppBar>
-    </Box>
+      <Toolbar />
+      {showBanner && <Banner />}
+    </>
   );
 };
 

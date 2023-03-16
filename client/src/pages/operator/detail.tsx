@@ -86,7 +86,7 @@ const OperatorDetails = () => {
 
   return (
     <>
-      <Container sx={{ top: '64px', position: 'relative' }}>
+      <Container>
         <Box sx={{ margin: '16px' }}>
           <Card>
             <Box display={'flex'} justifyContent={'space-between'}>

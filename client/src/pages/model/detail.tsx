@@ -239,7 +239,7 @@ const Detail = () => {
   };
 
   return (
-    <Container sx={{ top: '64px', position: 'relative' }}>
+    <Container>
       <Box sx={{ margin: '8px' }}>
         <Card>
           <CardContent>
