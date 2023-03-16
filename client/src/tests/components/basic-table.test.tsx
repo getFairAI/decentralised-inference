@@ -35,14 +35,18 @@ const fakeRetry = () => {
 
 describe('components/basic-table.tsx', () => {
   it('should display data', () => {
-    render(<BasicTable data={mocks} loading={false} retry={fakeRetry}/>, { wrapper: BrowserRouter });
+    render(<BasicTable data={mocks} loading={false} retry={fakeRetry} />, {
+      wrapper: BrowserRouter,
+    });
 
     const allRows = screen.getAllByRole('row');
     expect(allRows.length).toEqual(3); // 2 data rows + 1 header row
   });
 
   it.skip('should display loading', () => {
-    render(<BasicTable data={mocks} loading={true} retry={fakeRetry}/>, { wrapper: BrowserRouter });
+    render(<BasicTable data={mocks} loading={true} retry={fakeRetry} />, {
+      wrapper: BrowserRouter,
+    });
 
     const allRows = screen.getAllByRole('row');
     expect(allRows.length).toEqual(1);
@@ -50,7 +54,9 @@ describe('components/basic-table.tsx', () => {
   });
 
   it.skip('should display error', () => {
-    render(<BasicTable data={mocks} loading={true} retry={fakeRetry}/>, { wrapper: BrowserRouter });
+    render(<BasicTable data={mocks} loading={true} retry={fakeRetry} />, {
+      wrapper: BrowserRouter,
+    });
 
     const allRows = screen.getAllByRole('row');
     expect(allRows.length).toEqual(1);

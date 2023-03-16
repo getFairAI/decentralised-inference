@@ -64,13 +64,13 @@ const Detail = () => {
     data: queryData,
     loading,
     error,
-    refetch
+    refetch,
   } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags },
   });
 
   const handleRetry = () => {
-    refetch({ tags});
+    refetch({ tags });
   };
 
   const [getFollowupQuery, followupResult] = useLazyQuery(QUERY_OPERATOR_RESULTS_RESPONSES);

@@ -4,7 +4,16 @@ import { LIST_MODELS_QUERY, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql
 import { parseWinston } from '@/utils/arweave';
 import { genLoadingArray } from '@/utils/common';
 import { useQuery } from '@apollo/client';
-import { Container, Box, Stack, Card, CardActionArea, Typography, Button, Skeleton } from '@mui/material';
+import {
+  Container,
+  Box,
+  Stack,
+  Card,
+  CardActionArea,
+  Typography,
+  Button,
+  Skeleton,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -28,13 +37,22 @@ const Operators = () => {
   const handleCompleted = (data: IEdge[]) =>
     setTxs(data.filter((el) => el.node.quantity.ar !== MARKETPLACE_FEE));
 
-  const { loading: listLoading, error: listError, refetch: listRefetch } = useQuery(LIST_MODELS_QUERY, {
+  const {
+    loading: listLoading,
+    error: listError,
+    refetch: listRefetch,
+  } = useQuery(LIST_MODELS_QUERY, {
     onCompleted: handleCompleted,
   });
 
   const tags = [...DEFAULT_TAGS, REGISTER_OPERATION_TAG];
   // get all operatorsRegistration
-  const { data: operatorsData, loading: operatorsLoading, error: operatorsError, refetch: operatorsRefetch } = useQuery(QUERY_REGISTERED_OPERATORS, {
+  const {
+    data: operatorsData,
+    loading: operatorsLoading,
+    error: operatorsError,
+    refetch: operatorsRefetch,
+  } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags },
     skip: txs.length <= 0,
   });
@@ -92,55 +110,62 @@ const Operators = () => {
       <Container sx={{ top: '64px', position: 'relative' }}>
         <Box>
           <Stack spacing={4} sx={{ margin: '16px' }}>
-            {
-              listError ? (
-                <Container>
-                  <Typography alignItems='center' display='flex' flexDirection='column'>
-                    Could not Fetch Available Models.
-                    <Button
-                      sx={{ width: 'fit-content'}}
-                      endIcon={<ReplayIcon />}
-                      onClick={() => listRefetch()}
-                    >
-                      Retry
-                    </Button>
-                  </Typography>
-                </Container>
-              ) :
-              operatorsError ? (
-                <Container>
-                  <Typography alignItems='center' display='flex' flexDirection='column'>
-                    Could not Fetch Registered Operators.
-                    <Button
-                      sx={{ width: 'fit-content'}}
-                      endIcon={<ReplayIcon />}
-                      onClick={() => operatorsRefetch({ tags })}
-                    >
-                      Retry
-                    </Button>
-                  </Typography>
-                </Container>
-              ) :
-              listLoading || operatorsLoading ? (
-                mockArray.map(val => {
-                  return <Card key={val}>
+            {listError ? (
+              <Container>
+                <Typography alignItems='center' display='flex' flexDirection='column'>
+                  Could not Fetch Available Models.
+                  <Button
+                    sx={{ width: 'fit-content' }}
+                    endIcon={<ReplayIcon />}
+                    onClick={() => listRefetch()}
+                  >
+                    Retry
+                  </Button>
+                </Typography>
+              </Container>
+            ) : operatorsError ? (
+              <Container>
+                <Typography alignItems='center' display='flex' flexDirection='column'>
+                  Could not Fetch Registered Operators.
+                  <Button
+                    sx={{ width: 'fit-content' }}
+                    endIcon={<ReplayIcon />}
+                    onClick={() => operatorsRefetch({ tags })}
+                  >
+                    Retry
+                  </Button>
+                </Typography>
+              </Container>
+            ) : listLoading || operatorsLoading ? (
+              mockArray.map((val) => {
+                return (
+                  <Card key={val}>
                     <Box>
                       <CardActionArea>
-                        <Typography><Skeleton animation={'wave'}/></Typography>
-                        <Typography><Skeleton animation={'wave'}/></Typography>
-                        <Typography><Skeleton animation={'wave'}/></Typography>
                         <Typography>
-                          <Skeleton animation={'wave'}/>
+                          <Skeleton animation={'wave'} />
                         </Typography>
                         <Typography>
-                          <Skeleton animation={'wave'}/>
+                          <Skeleton animation={'wave'} />
                         </Typography>
-                        <Typography><Skeleton animation={'wave'}/></Typography>
+                        <Typography>
+                          <Skeleton animation={'wave'} />
+                        </Typography>
+                        <Typography>
+                          <Skeleton animation={'wave'} />
+                        </Typography>
+                        <Typography>
+                          <Skeleton animation={'wave'} />
+                        </Typography>
+                        <Typography>
+                          <Skeleton animation={'wave'} />
+                        </Typography>
                       </CardActionArea>
                     </Box>
-                  </Card>;
-                })
-              ) :
+                  </Card>
+                );
+              })
+            ) : (
               elements.map((el: Element, idx: number) => (
                 <Card key={idx}>
                   <Box>
@@ -165,7 +190,7 @@ const Operators = () => {
                   </Box>
                 </Card>
               ))
-            }
+            )}
           </Stack>
         </Box>
       </Container>
