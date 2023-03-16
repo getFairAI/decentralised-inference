@@ -422,7 +422,7 @@ const Chat = () => {
                     );
                   })
                 ) : messages.length > 0 ? (<>
-                  <Divider textAlign='center'>
+                  <Divider textAlign='center' sx={{ ml: '24px', mr: '24px'}}>
                     {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
                   </Divider>
                   {
