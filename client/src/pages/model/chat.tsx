@@ -216,10 +216,18 @@ const Chat = () => {
         <>
           Inference Request
           <br></br>
-          <a href={`https://viewblock.io/arweave/tx/${bundlrRes.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
-        </>, {
-        variant: 'success',
-      });
+          <a
+            href={`https://viewblock.io/arweave/tx/${bundlrRes.id}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        {
+          variant: 'success',
+        },
+      );
 
       const inferenceFee = (
         parseFloat(state.fee) +
@@ -247,11 +255,11 @@ const Chat = () => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Paid Operator Fee ${arweave.ar.winstonToAr(
-              inferenceFee,
-            )} AR.
+            Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
             <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel="noreferrer"><u>View Transaction in Explorer</u></a>
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+              <u>View Transaction in Explorer</u>
+            </a>
           </>,
           { variant: 'success' },
         );
