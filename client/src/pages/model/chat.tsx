@@ -413,16 +413,10 @@ const Chat = () => {
                   </Box>
                 </Stack>
                 {index < messages.length - 1 &&
-                  new Date(
-                    el.timestamp * 1000
-                  ).getDay() !==
-                    new Date(
-                      messages[index + 1].timestamp * 1000
-                    ).getDay() && (
+                  new Date(el.timestamp * 1000).getDay() !==
+                    new Date(messages[index + 1].timestamp * 1000).getDay() && (
                     <Divider textAlign='center'>
-                      {new Date(
-                        messages[index + 1].timestamp * 1000
-                      ).toLocaleDateString()}
+                      {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
                     </Divider>
                   )}
               </Container>
