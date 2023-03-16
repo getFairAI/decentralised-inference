@@ -99,9 +99,13 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {
         enqueueSnackbar(
-          `Model Fee Paid: ${arweave.ar.winstonToAr(
-            modelFee,
-          )} AR... Please view tx at: https://arweave.net/${tx.id}`,
+          <>
+            Model Fee Paid: {arweave.ar.winstonToAr(modelFee)} AR.
+            <br></br>
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
           { variant: 'success' },
         );
         setIsAllowed(true);

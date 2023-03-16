@@ -212,9 +212,22 @@ const Chat = () => {
       });
       setMessages(temp);
       setNewMessage('');
-      enqueueSnackbar(`Inference Request, TxId: https://arweave.net/${bundlrRes.id}`, {
-        variant: 'success',
-      });
+      enqueueSnackbar(
+        <>
+          Inference Request
+          <br></br>
+          <a
+            href={`https://viewblock.io/arweave/tx/${bundlrRes.id}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        {
+          variant: 'success',
+        },
+      );
 
       const inferenceFee = (
         parseFloat(state.fee) +
@@ -241,9 +254,13 @@ const Chat = () => {
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {
         enqueueSnackbar(
-          `Paid Operator Fee ${arweave.ar.winstonToAr(
-            inferenceFee,
-          )} AR, TxId: https://arweave.net/${tx.id}`,
+          <>
+            Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
+            <br></br>
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
           { variant: 'success' },
         );
       } else {
