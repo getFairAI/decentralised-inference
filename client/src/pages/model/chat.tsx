@@ -387,7 +387,7 @@ const Chat = () => {
                     <Box display={'flex'} alignItems='center'>
                       {!!pendingTxs.find((pending) => el.id === pending.id) && (
                         <Tooltip
-                          title='This transaction is still not ocnfirmed by the network'
+                          title='This transaction is still not confirmed by the network'
                           sx={{ margin: '8px' }}
                         >
                           <PendingActionsIcon />
@@ -413,20 +413,10 @@ const Chat = () => {
                   </Box>
                 </Stack>
                 {index < messages.length - 1 &&
-                  new Date(
-                    el.timestamp !== 0 ? el.timestamp * 1000 : new Date().getTime(),
-                  ).getDay() !==
-                    new Date(
-                      messages[index + 1].timestamp !== 0
-                        ? messages[index + 1].timestamp * 1000
-                        : new Date().getTime(),
-                    ).getDay() && (
+                  new Date(el.timestamp * 1000).getDay() !==
+                    new Date(messages[index + 1].timestamp * 1000).getDay() && (
                     <Divider textAlign='center'>
-                      {new Date(
-                        messages[index + 1].timestamp !== 0
-                          ? messages[index + 1].timestamp * 1000
-                          : new Date().getTime(),
-                      ).toLocaleDateString()}
+                      {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
                     </Divider>
                   )}
               </Container>
