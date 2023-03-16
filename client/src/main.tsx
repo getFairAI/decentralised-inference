@@ -15,11 +15,13 @@ import Chat from './pages/model/chat';
 import History from './pages/history';
 import ModelFeeGuard from './guards/model-fee';
 import BlockOperatorGuard from './guards/block-operator';
+import Error from '@/pages/error';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Root />,
+    errorElement: <Error />,
     children: [
       {
         path: '',
