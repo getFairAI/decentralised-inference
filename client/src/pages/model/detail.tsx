@@ -59,13 +59,19 @@ const Detail = () => {
       values: [state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value],
     },
   ];
+
   const {
     data: queryData,
     loading,
     error,
+    refetch,
   } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags },
   });
+
+  const handleRetry = () => {
+    refetch({ tags });
+  };
 
   const [getFollowupQuery, followupResult] = useLazyQuery(QUERY_OPERATOR_RESULTS_RESPONSES);
 
@@ -323,8 +329,9 @@ const Detail = () => {
             <BasicTable
               data={operatorsData}
               state={state}
-              loading={loading || followupResult.loading}
-              error={error || followupResult.error}
+              loading={loading || followupResult.loading || followupResult.loading}
+              error={error || followupResult.error || paidFeeResult.error}
+              retry={handleRetry}
             ></BasicTable>
           </CardContent>
         </Card>
