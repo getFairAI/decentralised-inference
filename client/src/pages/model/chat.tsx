@@ -69,12 +69,9 @@ const Chat = () => {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const [getChatRequests, { data: requestsData }] =
-    useLazyQuery(QUERY_CHAT_REQUESTS);
-  const [
-    getChatResponses,
-    { data: responsesData, previousData: responsesPreviousData },
-  ] = useLazyQuery(QUERY_CHAT_RESPONSES);
+  const [getChatRequests, { data: requestsData }] = useLazyQuery(QUERY_CHAT_REQUESTS);
+  const [getChatResponses, { data: responsesData, previousData: responsesPreviousData }] =
+    useLazyQuery(QUERY_CHAT_RESPONSES);
 
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
@@ -195,7 +192,7 @@ const Chat = () => {
   };
 
   useEffect(() => {
-    if (responsesData !== undefined && !_.isEqual(responsesData, responsesPreviousData)) {  
+    if (responsesData !== undefined && !_.isEqual(responsesData, responsesPreviousData)) {
       reqData();
     }
   }, [responsesData]);
@@ -371,34 +368,36 @@ const Chat = () => {
           >
             {messagesLoading ? (
               mockArray.map((el: number) => {
-                return <Container key={el}>
-                  <Stack
-                    spacing={4}
-                    flexDirection='row'
-                    justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                  >
-                    <Skeleton animation={'wave'} width={'40%'}>
-                    <Box
-                      display={'flex'}
+                return (
+                  <Container key={el}>
+                    <Stack
+                      spacing={4}
+                      flexDirection='row'
                       justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                      flexDirection='column'
-                      margin='8px'
                     >
-                      <Box display={'flex'} alignItems='center'>
-                        <Card
-                          elevation={8}
-                          raised={true}
-                          sx={{ width: 'fit-content', paddingBottom: 0 }}
+                      <Skeleton animation={'wave'} width={'40%'}>
+                        <Box
+                          display={'flex'}
+                          justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
+                          flexDirection='column'
+                          margin='8px'
                         >
-                          <CardContent>
-                            <Typography></Typography>
-                          </CardContent>
-                        </Card>
-                      </Box>
-                    </Box>
-                    </Skeleton>
-                  </Stack>
-                </Container>;
+                          <Box display={'flex'} alignItems='center'>
+                            <Card
+                              elevation={8}
+                              raised={true}
+                              sx={{ width: 'fit-content', paddingBottom: 0 }}
+                            >
+                              <CardContent>
+                                <Typography></Typography>
+                              </CardContent>
+                            </Card>
+                          </Box>
+                        </Box>
+                      </Skeleton>
+                    </Stack>
+                  </Container>
+                );
               })
             ) : messages.length > 0 ? (
               <Divider textAlign='center'>

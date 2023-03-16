@@ -29,7 +29,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 const Explore = () => {
   const navigate = useNavigate();
   const [txs, setTxs] = useState<IEdge[]>([]);
-  
+
   const mockArray = genLoadingArray(10);
 
   // filter only models who paid the correct Marketplace fee
@@ -61,48 +61,60 @@ const Explore = () => {
             }}
           ></TextField>
         </Grid>
-        {
-          error ? (
-            <Container>
-              <Typography alignItems='center' display='flex' flexDirection='column'>
-                Could not Fetch Available Models.
-                <Button
-                  sx={{ width: 'fit-content'}}
-                  endIcon={<ReplayIcon />}
-                  onClick={() => refetch()}
-                >
-                  Retry
-                </Button>
-              </Typography>
-            </Container>
-          ) :
-          (loading) ? (
-            mockArray.map((val) => {
-              return <Grid xs={2} sm={4} key={val} item>
-                <Card sx={{ display: 'flex'}}>
+        {error ? (
+          <Container>
+            <Typography alignItems='center' display='flex' flexDirection='column'>
+              Could not Fetch Available Models.
+              <Button
+                sx={{ width: 'fit-content' }}
+                endIcon={<ReplayIcon />}
+                onClick={() => refetch()}
+              >
+                Retry
+              </Button>
+            </Typography>
+          </Container>
+        ) : loading ? (
+          mockArray.map((val) => {
+            return (
+              <Grid xs={2} sm={4} key={val} item>
+                <Card sx={{ display: 'flex' }}>
                   <CardHeader
                     sx={{ marginRight: 0 }}
-                    avatar={<Skeleton animation={'wave'} variant='circular' sx={{ width: 80, height: 80 }}/>}
-                    disableTypography={true}  
+                    avatar={
+                      <Skeleton
+                        animation={'wave'}
+                        variant='circular'
+                        sx={{ width: 80, height: 80 }}
+                      />
+                    }
+                    disableTypography={true}
                   />
                   <CardContent sx={{ width: '100%' }}>
-                    <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap',  }}>
+                    <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
                       <Stack spacing={1}>
                         <Typography noWrap variant='body1'>
                           <Skeleton animation={'wave'} variant='rounded' />
                         </Typography>
-                        <Typography variant='body1' width={'80%'}><Skeleton animation='wave' variant='rounded'/></Typography>
+                        <Typography variant='body1' width={'80%'}>
+                          <Skeleton animation='wave' variant='rounded' />
+                        </Typography>
                         <Box display={'flex'} justifyContent={'space-between'}>
-                          <Typography variant='body1' width={'45%'}><Skeleton animation='wave' variant='rounded'/></Typography>
-                          <Typography variant='body1' width={'30%'}><Skeleton animation='wave' variant='rounded'/></Typography>
-                        </Box>                        
+                          <Typography variant='body1' width={'45%'}>
+                            <Skeleton animation='wave' variant='rounded' />
+                          </Typography>
+                          <Typography variant='body1' width={'30%'}>
+                            <Skeleton animation='wave' variant='rounded' />
+                          </Typography>
+                        </Box>
                       </Stack>
                     </Box>
                   </CardContent>
                 </Card>
-              </Grid>;
-            })
-          ): 
+              </Grid>
+            );
+          })
+        ) : (
           txs.map((edge: IEdge, index) => (
             <Grid xs={2} sm={4} md={4} key={index} item>
               <Card>
@@ -150,8 +162,8 @@ const Explore = () => {
                 </CardActionArea>
               </Card>
             </Grid>
-          ))}
-
+          ))
+        )}
       </Grid>
     </Box>
   );

@@ -6,7 +6,15 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Box, Button, IconButton, Skeleton, TablePagination, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  IconButton,
+  Skeleton,
+  TablePagination,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import HistoryIcon from '@mui/icons-material/History';
 import { ApolloError } from '@apollo/client';
@@ -51,7 +59,7 @@ export default function BasicTable(props: {
   loading: boolean;
   error?: ApolloError;
   state?: IEdge;
-  retry: () => void
+  retry: () => void;
 }) {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [page, setPage] = React.useState(0);
@@ -92,90 +100,92 @@ export default function BasicTable(props: {
             </TableRow>
           </TableHead>
           <TableBody>
-            {
-              props.error ?
-                <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell colSpan={6}>
-                    <Typography alignItems='center' display='flex' flexDirection='column'>
-                      Could not Fetch Registered Operators for this Model.
-                      <Button
-                        sx={{ width: 'fit-content'}}
-                        endIcon={<ReplayIcon />}
-                        onClick={props.retry}
-                      >
-                        Retry
-                      </Button>
-                    </Typography>
+            {props.error ? (
+              <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableCell colSpan={6}>
+                  <Typography alignItems='center' display='flex' flexDirection='column'>
+                    Could not Fetch Registered Operators for this Model.
+                    <Button
+                      sx={{ width: 'fit-content' }}
+                      endIcon={<ReplayIcon />}
+                      onClick={props.retry}
+                    >
+                      Retry
+                    </Button>
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : props.loading ? (
+              mockArray.map((val) => {
+                return (
+                  <TableRow key={val} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    <TableCell align='right' colSpan={6} scope='row'>
+                      <Typography>
+                        <Skeleton variant='rounded' animation={'wave'}></Skeleton>
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              props.data.map((row, idx) => (
+                <TableRow key={idx} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                  <TableCell scope='row'>
+                    <Tooltip title={row.address}>
+                      <Typography>
+                        {row.address.slice(0, 10)}...{row.address.slice(-2)}
+                        <IconButton
+                          size='small'
+                          onClick={() => {
+                            navigator.clipboard.writeText(row.address);
+                          }}
+                        >
+                          <CopyIcon fontSize='inherit' />
+                        </IconButton>
+                      </Typography>
+                    </Tooltip>
                   </TableCell>
-                </TableRow> :
-                props.loading ? 
-                  mockArray.map((val) => {
-                    return <TableRow key={val} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        <TableCell align='right' colSpan={6} scope='row'>
-                          <Typography>
-                            <Skeleton variant='rounded' animation={'wave'}></Skeleton>
-                          </Typography>
-                        </TableCell>
-                    </TableRow>;
-                  }) :
-                  props.data.map((row, idx) => (
-                    <TableRow key={idx} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell scope='row'>
-                        <Tooltip title={row.address}>
-                          <Typography>
-                            {row.address.slice(0, 10)}...{row.address.slice(-2)}
-                            <IconButton
-                              size='small'
-                              onClick={() => {
-                                navigator.clipboard.writeText(row.address);
-                              }}
-                            >
-                              <CopyIcon fontSize='inherit' />
-                            </IconButton>
-                          </Typography>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell align='right'>{row.registrationTimestamp}</TableCell>
-                      <TableCell align='right'>{parseWinston(row.fee)}</TableCell>
-                      <TableCell align='right'>{row.availability}</TableCell>
-                      <TableCell align='right'>{row.stamps}</TableCell>
-                      <TableCell align='right'>
-                        <Tooltip title='History'>
-                          <IconButton
-                            onClick={() =>
-                              navigate(`/operators/details/${row.address}`, {
-                                state: {
-                                  modelName: row.modelName,
-                                  modelCreator: row.modelCreator,
-                                  operatorFee: row.fee,
-                                },
-                              })
-                            }
-                          >
-                            <HistoryIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title='Execute'>
-                          <IconButton
-                            onClick={() =>
-                              navigate(`../chat/${row.address}`, {
-                                state: {
-                                  modelName: row.modelName,
-                                  modelCreator: row.modelCreator,
-                                  fee: row.fee,
-                                  modelTransaction: row.modelTransaction,
-                                  fullState: props.state,
-                                },
-                              })
-                            }
-                          >
-                            <PlayArrowIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))
-            }
+                  <TableCell align='right'>{row.registrationTimestamp}</TableCell>
+                  <TableCell align='right'>{parseWinston(row.fee)}</TableCell>
+                  <TableCell align='right'>{row.availability}</TableCell>
+                  <TableCell align='right'>{row.stamps}</TableCell>
+                  <TableCell align='right'>
+                    <Tooltip title='History'>
+                      <IconButton
+                        onClick={() =>
+                          navigate(`/operators/details/${row.address}`, {
+                            state: {
+                              modelName: row.modelName,
+                              modelCreator: row.modelCreator,
+                              operatorFee: row.fee,
+                            },
+                          })
+                        }
+                      >
+                        <HistoryIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Execute'>
+                      <IconButton
+                        onClick={() =>
+                          navigate(`../chat/${row.address}`, {
+                            state: {
+                              modelName: row.modelName,
+                              modelCreator: row.modelCreator,
+                              fee: row.fee,
+                              modelTransaction: row.modelTransaction,
+                              fullState: props.state,
+                            },
+                          })
+                        }
+                      >
+                        <PlayArrowIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
