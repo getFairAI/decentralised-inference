@@ -67,16 +67,19 @@ const Chat = () => {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
-  const [ chatMaxHeight, setChatMaxHeight ] = useState('100%');
+  const [chatMaxHeight, setChatMaxHeight] = useState('100%');
   const mockArray = genLoadingArray(5);
   const { enqueueSnackbar } = useSnackbar();
-  const [getChatRequests, { data: requestsData, error: requestError }] = useLazyQuery(QUERY_CHAT_REQUESTS);
-  const [getChatResponses, { data: responsesData, previousData: responsesPreviousData, error: responseError }] =
-    useLazyQuery(QUERY_CHAT_RESPONSES);
+  const [getChatRequests, { data: requestsData, error: requestError }] =
+    useLazyQuery(QUERY_CHAT_REQUESTS);
+  const [
+    getChatResponses,
+    { data: responsesData, previousData: responsesPreviousData, error: responseError },
+  ] = useLazyQuery(QUERY_CHAT_RESPONSES);
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
-  }, [ height ]);
+  }, [height]);
 
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
@@ -368,7 +371,7 @@ const Chat = () => {
           bgcolor: 'background.paper',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'flex-end'
+          justifyContent: 'flex-end',
         }}
       >
         <Box flexGrow={1}>
@@ -381,102 +384,99 @@ const Chat = () => {
               justifyContent: 'flex-end',
             }}
           >
-            <Box sx={{overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}>
-              {
-                requestError || responseError ? (
-                  <Typography alignItems='center' display='flex' flexDirection='column'>
-                    Could not Fetch Conversation History.
-                  </Typography>
-                ) :
-                messagesLoading ? (
-                  mockArray.map((el: number) => {
-                    return (
-                      <Container key={el} maxWidth={false}>
-                        <Stack
-                          spacing={4}
-                          flexDirection='row'
-                          justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                        >
-                          <Skeleton animation={'wave'} width={'40%'}>
-                            <Box
-                              display={'flex'}
-                              justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                              flexDirection='column'
-                              margin='8px'
-                            >
-                              <Box display={'flex'} alignItems='center'>
-                                <Card
-                                  elevation={8}
-                                  raised={true}
-                                  sx={{ width: 'fit-content', paddingBottom: 0 }}
-                                >
-                                  <CardContent>
-                                    <Typography></Typography>
-                                  </CardContent>
-                                </Card>
-                              </Box>
-                            </Box>
-                          </Skeleton>
-                        </Stack>
-                      </Container>
-                    );
-                  })
-                ) : messages.length > 0 ? (<>
-                  <Divider textAlign='center' sx={{ ml: '24px', mr: '24px'}}>
-                    {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
-                  </Divider>
-                  {
-                    messages.map((el: Message, index: number) => (
-                      <Container key={index} maxWidth={false}>
-                        <Stack
-                          spacing={4}
-                          flexDirection='row'
-                          justifyContent={el.type === 'request' ? 'flex-end' : 'flex-start'}
-                        >
+            <Box sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}>
+              {requestError || responseError ? (
+                <Typography alignItems='center' display='flex' flexDirection='column'>
+                  Could not Fetch Conversation History.
+                </Typography>
+              ) : messagesLoading ? (
+                mockArray.map((el: number) => {
+                  return (
+                    <Container key={el} maxWidth={false}>
+                      <Stack
+                        spacing={4}
+                        flexDirection='row'
+                        justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
+                      >
+                        <Skeleton animation={'wave'} width={'40%'}>
                           <Box
                             display={'flex'}
-                            justifyContent={el.type === 'request' ? 'flex -end' : 'flex-start'}
+                            justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
                             flexDirection='column'
                             margin='8px'
                           >
                             <Box display={'flex'} alignItems='center'>
-                              {!!pendingTxs.find((pending) => el.id === pending.id) && (
-                                <Tooltip
-                                  title='This transaction is still not confirmed by the network'
-                                  sx={{ margin: '8px' }}
-                                >
-                                  <PendingActionsIcon />
-                                </Tooltip>
-                              )}
                               <Card
                                 elevation={8}
                                 raised={true}
                                 sx={{ width: 'fit-content', paddingBottom: 0 }}
                               >
                                 <CardContent>
-                                  <Typography>{el.msg}</Typography>
+                                  <Typography></Typography>
                                 </CardContent>
                               </Card>
                             </Box>
-      
-                            <Typography
-                              variant='caption'
-                              textAlign={el.type === 'request' ? 'right' : 'left'}
-                            >
-                              {new Date(el.timestamp * 1000).toLocaleTimeString()}
-                            </Typography>
                           </Box>
-                        </Stack>
-                        {index < messages.length - 1 &&
-                          new Date(el.timestamp * 1000).getDay() !==
-                            new Date(messages[index + 1].timestamp * 1000).getDay() && (
-                            <Divider textAlign='center'>
-                              {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
-                            </Divider>
-                          )}
-                      </Container>
-                    ))
-                  }
+                        </Skeleton>
+                      </Stack>
+                    </Container>
+                  );
+                })
+              ) : messages.length > 0 ? (
+                <>
+                  <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
+                    {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
+                  </Divider>
+                  {messages.map((el: Message, index: number) => (
+                    <Container key={index} maxWidth={false}>
+                      <Stack
+                        spacing={4}
+                        flexDirection='row'
+                        justifyContent={el.type === 'request' ? 'flex-end' : 'flex-start'}
+                      >
+                        <Box
+                          display={'flex'}
+                          justifyContent={el.type === 'request' ? 'flex -end' : 'flex-start'}
+                          flexDirection='column'
+                          margin='8px'
+                        >
+                          <Box display={'flex'} alignItems='center'>
+                            {!!pendingTxs.find((pending) => el.id === pending.id) && (
+                              <Tooltip
+                                title='This transaction is still not confirmed by the network'
+                                sx={{ margin: '8px' }}
+                              >
+                                <PendingActionsIcon />
+                              </Tooltip>
+                            )}
+                            <Card
+                              elevation={8}
+                              raised={true}
+                              sx={{ width: 'fit-content', paddingBottom: 0 }}
+                            >
+                              <CardContent>
+                                <Typography>{el.msg}</Typography>
+                              </CardContent>
+                            </Card>
+                          </Box>
+
+                          <Typography
+                            variant='caption'
+                            textAlign={el.type === 'request' ? 'right' : 'left'}
+                          >
+                            {new Date(el.timestamp * 1000).toLocaleTimeString()}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      {index < messages.length - 1 &&
+                        new Date(el.timestamp * 1000).getDay() !==
+                          new Date(messages[index + 1].timestamp * 1000).getDay() && (
+                          <Divider textAlign='center'>
+                            {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
+                          </Divider>
+                        )}
+                    </Container>
+                  ))}
                 </>
               ) : (
                 <Typography alignItems='center' display='flex' flexDirection='column'>
@@ -485,7 +485,6 @@ const Chat = () => {
               )}
               <div ref={messagesEndRef} />
             </Box>
-            
           </Paper>
         </Box>
         <TextField
