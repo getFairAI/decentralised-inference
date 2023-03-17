@@ -24,6 +24,7 @@ import { IEdge } from '@/interfaces/arweave';
 import { parseWinston } from '@/utils/arweave';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { genLoadingArray } from '@/utils/common';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 export interface RowData {
   quantityAR: string;
@@ -81,21 +82,28 @@ export default function BasicTable(props: {
         <Table sx={{ minWidth: 650 }} aria-label='simple table'>
           <TableHead>
             <TableRow>
-              <TableCell variant='head'>Address</TableCell>
-              <TableCell variant='head' align='right'>
-                Registration&nbsp;
+              <TableCell variant='head'>
+                <Typography sx={{ fontWeight: 'bold' }}>Address</Typography>
               </TableCell>
               <TableCell variant='head' align='right'>
-                Fee&nbsp;(Ar)
+                <Typography sx={{ fontWeight: 'bold' }}>Registration&nbsp;</Typography>
               </TableCell>
               <TableCell variant='head' align='right'>
-                Response Rate&nbsp;(%)
+                <Typography sx={{ fontWeight: 'bold' }}>Fee&nbsp;(Ar)</Typography>
               </TableCell>
               <TableCell variant='head' align='right'>
-                Stamps&nbsp;
+                <Tooltip
+                  title={'Represents the operator availability in the last 100 transactions'}
+                  placement='top'
+                >
+                  <Typography sx={{ fontWeight: 'bold' }}>Status</Typography>
+                </Tooltip>
               </TableCell>
               <TableCell variant='head' align='right'>
-                Actions&nbsp;
+                <Typography sx={{ fontWeight: 'bold' }}>Stamps&nbsp;</Typography>
+              </TableCell>
+              <TableCell variant='head' align='right'>
+                <Typography sx={{ fontWeight: 'bold' }}>Actions&nbsp;</Typography>
               </TableCell>
             </TableRow>
           </TableHead>
@@ -147,7 +155,30 @@ export default function BasicTable(props: {
                   </TableCell>
                   <TableCell align='right'>{row.registrationTimestamp}</TableCell>
                   <TableCell align='right'>{parseWinston(row.fee)}</TableCell>
-                  <TableCell align='right'>{row.availability}</TableCell>
+                  <TableCell align='right'>
+                    <Tooltip
+                      title={
+                        row.availability > 90
+                          ? 'Online'
+                          : row.availability > 50
+                          ? 'Availability Issues'
+                          : row.availability > 0
+                          ? 'Dangerous'
+                          : 'Offline'
+                      }
+                    >
+                      {row.availability > 90 ? (
+                        <FiberManualRecordIcon color='success' />
+                      ) : row.availability > 50 ? (
+                        <FiberManualRecordIcon color='warning' />
+                      ) : row.availability > 0 ? (
+                        <FiberManualRecordIcon color='error' />
+                      ) : (
+                        <FiberManualRecordIcon color='disabled' />
+                      )}
+                    </Tooltip>
+                    {}
+                  </TableCell>
                   <TableCell align='right'>{row.stamps}</TableCell>
                   <TableCell align='right'>
                     <Tooltip title='History'>
