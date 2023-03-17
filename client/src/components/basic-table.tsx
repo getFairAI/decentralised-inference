@@ -82,23 +82,28 @@ export default function BasicTable(props: {
         <Table sx={{ minWidth: 650 }} aria-label='simple table'>
           <TableHead>
             <TableRow>
-              <TableCell variant='head'><Typography sx={{ fontWeight: 'bold'}}>Address</Typography></TableCell>
-              <TableCell variant='head' align='right'>
-                <Typography sx={{ fontWeight: 'bold'}}>Registration&nbsp;</Typography>
+              <TableCell variant='head'>
+                <Typography sx={{ fontWeight: 'bold' }}>Address</Typography>
               </TableCell>
               <TableCell variant='head' align='right'>
-                <Typography sx={{ fontWeight: 'bold'}}>Fee&nbsp;(Ar)</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>Registration&nbsp;</Typography>
               </TableCell>
               <TableCell variant='head' align='right'>
-                <Tooltip title={'Represents the operator availability in the last 100 transactions'} placement='top'>
-                  <Typography sx={{ fontWeight: 'bold'}}>Status</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>Fee&nbsp;(Ar)</Typography>
+              </TableCell>
+              <TableCell variant='head' align='right'>
+                <Tooltip
+                  title={'Represents the operator availability in the last 100 transactions'}
+                  placement='top'
+                >
+                  <Typography sx={{ fontWeight: 'bold' }}>Status</Typography>
                 </Tooltip>
               </TableCell>
               <TableCell variant='head' align='right'>
-                <Typography sx={{ fontWeight: 'bold'}}>Stamps&nbsp;</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>Stamps&nbsp;</Typography>
               </TableCell>
               <TableCell variant='head' align='right'>
-                <Typography sx={{ fontWeight: 'bold'}}>Actions&nbsp;</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>Actions&nbsp;</Typography>
               </TableCell>
             </TableRow>
           </TableHead>
@@ -151,20 +156,29 @@ export default function BasicTable(props: {
                   <TableCell align='right'>{row.registrationTimestamp}</TableCell>
                   <TableCell align='right'>{parseWinston(row.fee)}</TableCell>
                   <TableCell align='right'>
-                    <Tooltip title={
-                      row.availability > 90 ? 'Online'
-                        : row.availability > 50 ? 'Availability Issues'
-                          : row.availability > 0 ? 'Dangerous'
-                            : 'Offline'
-                    }>
-                      {row.availability > 90 ? <FiberManualRecordIcon color='success' />
-                      : row.availability > 50 ? <FiberManualRecordIcon color='warning' />
-                        : row.availability > 0 ? <FiberManualRecordIcon color='error' />
-                          : <FiberManualRecordIcon color='disabled' />}
+                    <Tooltip
+                      title={
+                        row.availability > 90
+                          ? 'Online'
+                          : row.availability > 50
+                          ? 'Availability Issues'
+                          : row.availability > 0
+                          ? 'Dangerous'
+                          : 'Offline'
+                      }
+                    >
+                      {row.availability > 90 ? (
+                        <FiberManualRecordIcon color='success' />
+                      ) : row.availability > 50 ? (
+                        <FiberManualRecordIcon color='warning' />
+                      ) : row.availability > 0 ? (
+                        <FiberManualRecordIcon color='error' />
+                      ) : (
+                        <FiberManualRecordIcon color='disabled' />
+                      )}
                     </Tooltip>
-                    {
-                    
-                  }</TableCell>
+                    {}
+                  </TableCell>
                   <TableCell align='right'>{row.stamps}</TableCell>
                   <TableCell align='right'>
                     <Tooltip title='History'>

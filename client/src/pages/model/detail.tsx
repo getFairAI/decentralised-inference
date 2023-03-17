@@ -75,15 +75,15 @@ const Detail = () => {
     refetch({ tags });
   };
 
-  const [ getOpRequests, opRequests ] = useLazyQuery(QUERY_REQUESTS_FOR_OPERATOR);
-  
-  const [ getOpResponses, opResponses ] = useLazyQuery(QUERY_RESPONSES_BY_OPERATOR); 
+  const [getOpRequests, opRequests] = useLazyQuery(QUERY_REQUESTS_FOR_OPERATOR);
+
+  const [getOpResponses, opResponses] = useLazyQuery(QUERY_RESPONSES_BY_OPERATOR);
 
   const [getPaidFee, paidFeeResult] = useLazyQuery(QUERY_PAID_FEE_OPERATORS);
 
   useEffect(() => {
     if (queryData) {
-      const requestTags =  [
+      const requestTags = [
         ...DEFAULT_TAGS,
         {
           name: 'Model-Creator',
@@ -95,15 +95,17 @@ const Detail = () => {
         },
         {
           name: 'Operation-Name',
-          values: [ 'Inference Payment']
-        }
+          values: ['Inference Payment'],
+        },
       ];
-      const owners: string[] = Array.from(new Set(queryData.map((el: IEdge) => el.node.owner.address)));
+      const owners: string[] = Array.from(
+        new Set(queryData.map((el: IEdge) => el.node.owner.address)),
+      );
       getOpRequests({
         variables: {
           recipients: owners,
-          tags: requestTags, 
-        }
+          tags: requestTags,
+        },
       });
     }
   }, [queryData]);
@@ -130,7 +132,7 @@ const Detail = () => {
     if (opRequests.data) {
       const owners = opRequests.variables?.recipients;
       const inferenceReqIds = (opRequests.data as IEdge[]).map((req) => {
-        return req.node.tags.find(el => el.name === 'Inference-Transaction')?.value;
+        return req.node.tags.find((el) => el.name === 'Inference-Transaction')?.value;
       });
       const responseTags = [
         ...DEFAULT_TAGS,
@@ -145,14 +147,14 @@ const Detail = () => {
         MODEL_INFERENCE_RESULT_TAG,
         {
           name: 'Request-Transaction',
-          values: inferenceReqIds
-        }
+          values: inferenceReqIds,
+        },
       ];
       getOpResponses({
         variables: {
           owners,
-          tags: responseTags
-        }
+          tags: responseTags,
+        },
       });
     }
   }, [opRequests]);
@@ -215,7 +217,7 @@ const Detail = () => {
       }
     };
     asyncFunction();
-  }, [ opResponses ]);
+  }, [opResponses]);
 
   useEffect(() => {
     if (state) {
