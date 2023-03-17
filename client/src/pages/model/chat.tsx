@@ -199,7 +199,7 @@ const Chat = () => {
     tags.push({ name: 'Model-Operator', value: address });
     tags.push({ name: 'Operation-Name', value: 'Model Inference Request' });
     tags.push({ name: 'Conversation-Identifier', value: currentConversationId });
-    const tempDate = (Date.now() / 1000);
+    const tempDate = Date.now() / 1000;
     tags.push({ name: 'Unix-Time', value: tempDate.toString() });
     try {
       const bundlrRes = await bundlr.upload(newMessage, { tags });
