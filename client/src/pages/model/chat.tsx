@@ -199,7 +199,8 @@ const Chat = () => {
     tags.push({ name: 'Model-Operator', value: address });
     tags.push({ name: 'Operation-Name', value: 'Model Inference Request' });
     tags.push({ name: 'Conversation-Identifier', value: currentConversationId });
-    tags.push({ name: 'Unix-Time', value: (Date.now() / 1000).toString() });
+    const tempDate = (Date.now() / 1000);
+    tags.push({ name: 'Unix-Time', value: tempDate.toString() });
     try {
       const bundlrRes = await bundlr.upload(newMessage, { tags });
 
@@ -207,7 +208,7 @@ const Chat = () => {
       temp.push({
         msg: newMessage,
         type: 'request',
-        timestamp: bundlrRes.timestamp || 0,
+        timestamp: tempDate,
         id: bundlrRes.id,
       });
       setMessages(temp);
