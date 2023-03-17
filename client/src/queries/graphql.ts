@@ -794,3 +794,53 @@ export const QUERY_CHAT_HISTORY = gql`
     }
   }
 `;
+
+/**
+ * Get latest 100 inference payment requests for operator
+ */
+export const QUERY_REQUESTS_FOR_OPERATOR = gql`
+  query QUERY_REQUESTS_FOR_OPERATOR($recipients: [String!], $tags: [TagFilter!]) {
+    transactions(tags: $tags, recipients: $recipients, first: 100, sort: HEIGHT_DESC) {
+      edges {
+        node {
+          recipient
+          tags {
+            name
+            value
+          }
+          block {
+            timestamp
+          }
+          quantity {
+            ar
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_RESPONSES_BY_OPERATOR = gql`
+  query QUERY_RESPONSES_BY_OPERATOR($owners: [String!], $tags: [TagFilter!]) {
+    transactions(tags: $tags, owners: $owners) {
+      edges {
+        node {
+          id
+          owner {
+            address
+          }
+          block {
+            timestamp
+          }
+          tags {
+            name
+            value
+          }
+          quantity {
+            ar
+          }
+        }
+      }
+    }
+  }
+`;

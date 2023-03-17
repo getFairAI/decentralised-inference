@@ -19,9 +19,10 @@ import Stamp from '@/components/stamp';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import {
-  QUERY_OPERATOR_RESULTS_RESPONSES,
   QUERY_REGISTERED_OPERATORS,
   QUERY_PAID_FEE_OPERATORS,
+  QUERY_REQUESTS_FOR_OPERATOR,
+  QUERY_RESPONSES_BY_OPERATOR,
 } from '@/queries/graphql';
 import {
   APP_VERSION,
@@ -34,18 +35,19 @@ import {
   REGISTER_OPERATION_TAG,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import arweave from '@/utils/arweave';
+import { WalletContext } from '@/context/wallet';
 
 const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
   const { state } = useLocation();
   const [operatorsData, setOperatorsData] = useState<RowData[]>([]);
-  const [owner, setOwner] = useState('');
   const [feeValue, setFeeValue] = useState(0);
   const [feeDirty, setFeeDirty] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { currentAddress: owner } = useContext(WalletContext);
 
   const tags = [
     ...DEFAULT_TAGS,
@@ -73,29 +75,35 @@ const Detail = () => {
     refetch({ tags });
   };
 
-  const [getFollowupQuery, followupResult] = useLazyQuery(QUERY_OPERATOR_RESULTS_RESPONSES);
+  const [ getOpRequests, opRequests ] = useLazyQuery(QUERY_REQUESTS_FOR_OPERATOR);
+  
+  const [ getOpResponses, opResponses ] = useLazyQuery(QUERY_RESPONSES_BY_OPERATOR); 
 
   const [getPaidFee, paidFeeResult] = useLazyQuery(QUERY_PAID_FEE_OPERATORS);
 
   useEffect(() => {
     if (queryData) {
-      const owners = Array.from(new Set(queryData.map((el: IEdge) => el.node.owner.address)));
-      const tagsRequests = [
-        ...tags.filter((el) => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
-        // MODEL_INFERENCE_REQUEST_TAG,
-        { name: 'Operation-Name', values: ['Inference Payment'] }, // filter by inference payment
-      ];
-      const tagsResults = [
-        ...tags.filter((el) => el.name !== REGISTER_OPERATION_TAG.name), // remove register operation tag
-        MODEL_INFERENCE_RESULT_TAG,
-      ];
-
-      getFollowupQuery({
-        variables: {
-          owners: owners,
-          tagsRequests,
-          tagsResults,
+      const requestTags =  [
+        ...DEFAULT_TAGS,
+        {
+          name: 'Model-Creator',
+          values: [state.node.owner.address],
         },
+        {
+          name: 'Model-Name',
+          values: [state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value],
+        },
+        {
+          name: 'Operation-Name',
+          values: [ 'Inference Payment']
+        }
+      ];
+      const owners: string[] = Array.from(new Set(queryData.map((el: IEdge) => el.node.owner.address)));
+      getOpRequests({
+        variables: {
+          recipients: owners,
+          tags: requestTags, 
+        }
       });
     }
   }, [queryData]);
@@ -119,20 +127,41 @@ const Detail = () => {
   }, [paidFeeResult]);
 
   useEffect(() => {
-    const getAddress = async () => {
-      setOwner(await window.arweaveWallet.getActiveAddress());
-    };
-
-    if (window && window.arweaveWallet) getAddress();
-  }, [window.arweaveWallet]);
+    if (opRequests.data) {
+      const owners = opRequests.variables?.recipients;
+      const inferenceReqIds = (opRequests.data as IEdge[]).map((req) => {
+        return req.node.tags.find(el => el.name === 'Inference-Transaction')?.value;
+      });
+      const responseTags = [
+        ...DEFAULT_TAGS,
+        {
+          name: 'Model-Creator',
+          values: [state.node.owner.address],
+        },
+        {
+          name: 'Model-Name',
+          values: [state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value],
+        },
+        MODEL_INFERENCE_RESULT_TAG,
+        {
+          name: 'Request-Transaction',
+          values: inferenceReqIds
+        }
+      ];
+      getOpResponses({
+        variables: {
+          owners,
+          tags: responseTags
+        }
+      });
+    }
+  }, [opRequests]);
 
   useEffect(() => {
     const asyncFunction = async () => {
-      if (followupResult.loading) console.log('loading');
-      if (followupResult.error) console.log(error, 'err');
-      if (followupResult.data) {
-        const requests = followupResult.data.requests as IEdge[];
-        const results = followupResult.data.results as IEdge[];
+      if (opResponses.data) {
+        const requests = opRequests.data as IEdge[];
+        const results = opResponses.data as IEdge[];
         const uniqueQueryData: IEdge[] = [];
         queryData.map((el: IEdge) =>
           uniqueQueryData.filter((unique) => el.node.owner.address === unique.node.owner.address)
@@ -186,7 +215,7 @@ const Detail = () => {
       }
     };
     asyncFunction();
-  }, [followupResult]);
+  }, [ opResponses ]);
 
   useEffect(() => {
     if (state) {
@@ -338,8 +367,8 @@ const Detail = () => {
             <BasicTable
               data={operatorsData}
               state={state}
-              loading={loading || followupResult.loading || followupResult.loading}
-              error={error || followupResult.error || paidFeeResult.error}
+              loading={loading || opRequests.loading || opResponses.loading}
+              error={error || opRequests.error || opResponses.error || paidFeeResult.error}
               retry={handleRetry}
             ></BasicTable>
           </CardContent>
