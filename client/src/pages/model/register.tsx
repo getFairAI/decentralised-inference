@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
+import { NumericFormat } from 'react-number-format';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
@@ -107,16 +108,18 @@ const Register = () => {
                   fullWidth
                   inputProps={{ readOnly: true }}
                 />
-                <TextField
-                  label='Fee'
-                  variant='outlined'
-                  type='number'
+                <NumericFormat
                   value={arweave.ar.winstonToAr(
                     updatedFee ||
                       state.node.tags.find((el) => el.name === 'Model-Fee')?.value ||
                       '0',
                   )}
-                  inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, readOnly: true }}
+                  customInput={TextField}
+                  decimalScale={4}
+                  label='Fee'
+                  variant='outlined'
+                  decimalSeparator={'.'}
+                  inputProps={{ readOnly: true }}
                   sx={{ width: '25%' }}
                 />
                 <FormControl fullWidth margin='normal'>
