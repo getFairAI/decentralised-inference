@@ -39,6 +39,7 @@ import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import arweave from '@/utils/arweave';
 import { WalletContext } from '@/context/wallet';
+import { NumericFormat } from 'react-number-format';
 
 const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
@@ -316,23 +317,27 @@ const Detail = () => {
                   sx={{ width: '70%' }}
                 />
                 {owner === state.node.owner.address ? (
-                  <TextField
-                    label='Fee'
-                    variant='outlined'
-                    type='number'
+                  <NumericFormat
                     value={feeValue}
                     onChange={handleFeeChange}
-                    inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01 }}
+                    customInput={TextField}
+                    decimalScale={4}
+                    label='Fee'
+                    variant='outlined'
+                    decimalSeparator={'.'}
                     sx={{ width: '25%' }}
                   />
                 ) : (
-                  <TextField
+                  <NumericFormat
+                    value={feeValue}
+                    onChange={handleFeeChange}
+                    customInput={TextField}
+                    decimalScale={4}
                     label='Fee'
                     variant='outlined'
-                    type='number'
-                    value={feeValue}
-                    inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01, readOnly: true }}
+                    decimalSeparator={'.'}
                     sx={{ width: '25%' }}
+                    inputProps={{ readOnly: true}}
                   />
                 )}
 

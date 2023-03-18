@@ -13,6 +13,7 @@ import {
   Select,
   SelectChangeEvent,
   TextField,
+  Typography,
 } from '@mui/material';
 import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -23,6 +24,7 @@ import { BundlrContext, bundlrNodeUrl } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import arweave from '@/utils/arweave';
+import { NumericFormat } from 'react-number-format';
 
 type FundFinishedFn = (node: string) => Promise<void>;
 
@@ -177,14 +179,22 @@ const FundDialog = ({
                 ),
               }}
             />
-            <TextField
-              type='number'
-              label='Amount to Fund'
+            <NumericFormat
               value={amount}
               onChange={handleAmountChange}
-              helperText={`Max: ${walletBalance.toFixed(4)}`}
-              InputProps={{ inputProps: { min: 0, max: walletBalance.toFixed(4) } }}
+              customInput={TextField}
+              helperText={
+                <Typography sx={{ cursor: 'pointer'}} variant='caption'>
+                  <u>Max: {walletBalance.toFixed(4)}</u>
+                </Typography>}
+              FormHelperTextProps={{
+                onClick: () => setAmount(walletBalance)
+              }}
+              allowNegative={false}
+              isAllowed={(val) => !val.floatValue || val?.floatValue < walletBalance }
               margin='dense'
+              decimalScale={4}
+              decimalSeparator={'.'}
             />
           </Box>
           <Box>
