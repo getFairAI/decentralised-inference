@@ -28,6 +28,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
+import { NumericFormat } from 'react-number-format';
 
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -346,15 +347,16 @@ export const CustomStepper = (props: {
               onChange={handleNameChange}
               sx={{ width: '72%' }}
             ></TextField>
-            <TextField
-              label={'Rate'}
-              sx={{ width: '25%' }}
+            <NumericFormat
               value={rate}
               onChange={handleRateChange}
-              type='number'
-              inputProps={{ step: 0.01, inputMode: 'numeric', min: 0.01 /* max: currentBalance */ }}
-              /* helperText={`Max: ${currentBalance}`} */
-            ></TextField>
+              customInput={TextField}
+              decimalScale={4}
+              label='Fee'
+              variant='outlined'
+              decimalSeparator={'.'}
+              sx={{ width: '25%' }}
+            />
           </Box>
           <Alert severity='warning' variant='outlined'>
             Registration Requires {OPERATOR_REGISTRATION_AR_FEE} AR to prevent malicious actors.
