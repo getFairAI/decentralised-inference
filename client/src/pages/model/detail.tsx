@@ -337,7 +337,7 @@ const Detail = () => {
                     variant='outlined'
                     decimalSeparator={'.'}
                     sx={{ width: '25%' }}
-                    inputProps={{ readOnly: true}}
+                    inputProps={{ readOnly: true }}
                   />
                 )}
 

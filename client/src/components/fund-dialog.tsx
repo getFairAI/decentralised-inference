@@ -184,14 +184,15 @@ const FundDialog = ({
               onChange={handleAmountChange}
               customInput={TextField}
               helperText={
-                <Typography sx={{ cursor: 'pointer'}} variant='caption'>
+                <Typography sx={{ cursor: 'pointer' }} variant='caption'>
                   <u>Max: {walletBalance.toFixed(4)}</u>
-                </Typography>}
+                </Typography>
+              }
               FormHelperTextProps={{
-                onClick: () => setAmount(walletBalance)
+                onClick: () => setAmount(walletBalance),
               }}
               allowNegative={false}
-              isAllowed={(val) => !val.floatValue || val?.floatValue < walletBalance }
+              isAllowed={(val) => !val.floatValue || val?.floatValue < walletBalance}
               margin='dense'
               decimalScale={4}
               decimalSeparator={'.'}
