@@ -37,7 +37,7 @@ jobs:
         name: Could not find cache, Creating
         continue-on-error: true
         run: |
-          git submodule update --init
+          git submodule update --init --remote --recursive
           cd client && npm run build-deps && npm install
   lint:
     needs: build-and-install-deps
