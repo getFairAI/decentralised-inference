@@ -146,13 +146,13 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
     if (opResponses.data && opResponses.data.transactions && opResponses.data.transactions.pageInfo.hasNextPage) {
       opResponses.fetchMore({
         variables: {
-          after: opResponses.data.transactions.edges[opResponses.data.transactions.edges.length].cursor
+          after: opResponses.data.transactions.edges[opResponses.data.transactions.edges.length - 1].cursor
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           return Object.assign({}, prev, {
             transactions: {
-              edges: [ ...prev.transactions.edges, fetchMoreResult.transactions.edges],
+              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
             }
           });
@@ -167,7 +167,7 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
         },
         {
           name: 'Response-Identifier',
-          values: [opResponses.data.transactions.edges.map((el: IEdge) => el.node.id )],
+          values: [...opResponses.data.transactions.edges.map((el: IEdge) => el.node.id )],
         },
       ];
 
@@ -178,13 +178,13 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
           variables: {
             tags: tags,
             owner: operatorTx.node.owner.address,
-            minBlockHeight: Math.min(blockHeights),
+            minBlockHeight: Math.min(...blockHeights),
             first: 10
             // maxBlockHeight: currentBlockHeight.height - N_PREVIOUS_BLOCKS,
           },
         });
       };
-      asyncPaidFee();
+      if (opResponses.data.transactions.edges.length > 0) asyncPaidFee();
       const reqs = data.transactions.edges;
       const responses = opResponses.data.transactions.edges;
       const availability = (reqs.length / responses.length) * 100;
@@ -202,13 +202,13 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
     if (paidFeeResult.data && paidFeeResult.data.transactions.pageInfo.hasNextPage) {
       paidFeeResult.fetchMore({
         variables: {
-          after: paidFeeResult.data.transactions.edges[paidFeeResult.data.transactions.edges.length].cursor,
+          after: paidFeeResult.data.transactions.edges[paidFeeResult.data.transactions.edges.length - 1].cursor,
         },
         updateQuery: (prev, {fetchMoreResult}) => {
           if (!fetchMoreResult) return prev;
           return Object.assign({}, prev, {
             transactions: {
-              edges: [ ...prev.transactions.edges, fetchMoreResult.transactions.edges],
+              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
             }
           });
