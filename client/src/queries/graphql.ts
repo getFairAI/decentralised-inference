@@ -523,6 +523,9 @@ export const QUERY_PAID_FEE_OPERATORS = gql`
       after: $after
     )
     {
+      pageInfo {
+        hasNextPage
+      }
       edges {
         cursor
         node {
@@ -848,6 +851,7 @@ export const QUERY_RESPONSES_BY_OPERATOR = gql`
           }
           block {
             timestamp
+            height
           }
           tags {
             name
