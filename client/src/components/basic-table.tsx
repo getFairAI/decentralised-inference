@@ -1,4 +1,3 @@
-import * as React from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -13,28 +12,25 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ApolloError } from '@apollo/client';
+import { ApolloError, ApolloQueryResult, FetchMoreQueryOptions, OperationVariables } from '@apollo/client';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { genLoadingArray } from '@/utils/common';
 import OperatorRow from './operator-row';
-import { IEdge, ITag } from '@/interfaces/arweave';
+import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
+import { useEffect, useRef } from 'react';
+import useOnScreen from '@/hooks/useOnScreen';
 
-/* function createData(
-  address: string,
-  fee: number,
-  availability: number,
-  stamps: number,
-) {
-  return { address, fee, availability, stamps };
-}
 
-const rows = [
-  createData('l9dPUiV1sY1fwy40gtkPENMx4irfxinkIaF0PiwoLI', 1, 99, 4),
-  createData('o2J6dEG47R-4Rc7JgVtMK2MLJurhVdqrBV58cR2ayzA', 0.8, 89, 1),
-  createData('Lq2KrMU-VgbpwjzKQiOx5tpRW6NZ-cGoelP-YCYdzMg', 4, 95, 8),
-  createData('Du-4Lq_1NiY9A1KSuWc0WbUKs99lxHMiFA3OkfMhkFw', 3, 100, 11),
-  createData('H_5-R2rOlBnPQL1yo8Kj2B8wNjYnZOAzMTQTeAia0k4', 0.6, 87, 15),
-]; */
+type fetchMoreFn = <TFetchData = unknown, TFetchVars extends OperationVariables = { tags: ITag[], first: number}>(
+  fetchMoreOptions: FetchMoreQueryOptions<TFetchVars, TFetchData> & {
+    updateQuery?: (
+      previousQueryResult: TFetchData,
+      options: {
+        fetchMoreResult: TFetchData;
+        variables: TFetchVars;
+      }
+    ) => TFetchData;
+  }) => Promise<ApolloQueryResult<TFetchData>>;
 
 export default function BasicTable(props: {
   operators: IEdge[],
@@ -42,8 +38,32 @@ export default function BasicTable(props: {
   error?: ApolloError,
   state: IEdge,
   retry: () => void,
+  hasNextPage: boolean,
+  fetchMore: fetchMoreFn,
 }) {
+  const target = useRef<HTMLDivElement>(null);
+  const isOnScreen = useOnScreen(target);
   const mockArray = genLoadingArray(10);
+
+  useEffect(() => {
+    if (isOnScreen && props.hasNextPage) {
+      props.fetchMore({
+        variables: {
+          after: props.operators[props.operators.length - 1].cursor,
+        },
+        updateQuery: (prev: { transactions: ITransactions }, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+          const newResult = Object.assign({}, prev, {
+            transactions: {
+              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            }
+          });
+          return newResult;
+        }
+      });
+    }
+  }, [isOnScreen, props.operators]);
 
   return (
     <Box>
@@ -114,6 +134,7 @@ export default function BasicTable(props: {
             )}
           </TableBody>
         </Table>
+        <div ref={target}></div>
       </TableContainer>
     </Box>
   );
