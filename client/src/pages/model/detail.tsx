@@ -17,7 +17,7 @@ import { Box } from '@mui/system';
 import BasicTable from '@/components/basic-table';
 import Stamp from '@/components/stamp';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
+import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   QUERY_REGISTERED_OPERATORS,
 } from '@/queries/graphql';
@@ -38,10 +38,12 @@ const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
   const { state } = useLocation();
   const [ operatorsData, setOperatorsData ] = useState<IEdge[]>([]);
+  const [ hasNextPage, setHasNextPage ] = useState(false);
   const [feeValue, setFeeValue] = useState(0);
   const [feeDirty, setFeeDirty] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { currentAddress: owner } = useContext(WalletContext);
+  const elementsPerPage = 5;
 
   const tags = [
     ...DEFAULT_TAGS,
@@ -60,9 +62,11 @@ const Detail = () => {
     data: queryData,
     loading,
     error,
+    networkStatus,
     refetch,
+    fetchMore,
   } = useQuery(QUERY_REGISTERED_OPERATORS, {
-    variables: { tags },
+    variables: { tags, first: elementsPerPage },
   });
 
   const handleRetry = () => {
@@ -130,7 +134,8 @@ const Detail = () => {
 
   useEffect(() => {
     // check has paid correct registration fee
-    if (queryData && queryData.transactions.edges.length > 0) {
+    if (queryData && networkStatus === NetworkStatus.ready) {
+      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
       const uniqueOperators = Array.from(new Set(queryData.transactions.edges.map((el: IEdge) => el.node.owner.address)));
       setOperatorsData(
         queryData.transactions.edges.filter((el: IEdge) => !!uniqueOperators.find(unique => unique === el.node.owner.address))
@@ -236,6 +241,8 @@ const Detail = () => {
               error={error}
               state={state}
               retry={handleRetry}
+              hasNextPage={hasNextPage}
+              fetchMore={fetchMore}
             ></BasicTable>
           </CardContent>
         </Card>
