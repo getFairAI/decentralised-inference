@@ -500,15 +500,17 @@ export const QUERY_PAID_FEE_OPERATORS = gql`
     $tags: [TagFilter!]
     $owner: String!
     $minBlockHeight: Int!
-    $maxBlockHeight: Int!
+    $first: Int,
+    $after: String
   ) {
     transactions(
-      first: 1,
       recipients:["${MARKETPLACE_ADDRESS}"],
       tags: $tags,
       owners: [$owner],
-      block: {min: $minBlockHeight, max: $maxBlockHeight},
-      sort: HEIGHT_DESC
+      block: {min: $minBlockHeight},
+      sort: HEIGHT_DESC,
+      first: $first,
+      after: $after
     )
     {
       edges {
@@ -796,12 +798,13 @@ export const QUERY_CHAT_HISTORY = gql`
 `;
 
 /**
- * Get latest 100 inference payment requests for operator
+ * Get latest X inference payment requests for operator
  */
 export const QUERY_REQUESTS_FOR_OPERATOR = gql`
-  query QUERY_REQUESTS_FOR_OPERATOR($recipients: [String!], $tags: [TagFilter!]) {
-    transactions(tags: $tags, recipients: $recipients, first: 100, sort: HEIGHT_DESC) {
+  query QUERY_REQUESTS_FOR_OPERATOR($recipient: String!, $tags: [TagFilter!], $first: Int, $after: String) {
+    transactions(tags: $tags, recipients: [$recipient], first: $first, after: $after, sort: HEIGHT_DESC) {
       edges {
+        cursor
         node {
           recipient
           tags {
@@ -816,14 +819,18 @@ export const QUERY_REQUESTS_FOR_OPERATOR = gql`
           }
         }
       }
+      pageInfo {
+        hasNextPage
+      }
     }
   }
 `;
 
 export const QUERY_RESPONSES_BY_OPERATOR = gql`
-  query QUERY_RESPONSES_BY_OPERATOR($owners: [String!], $tags: [TagFilter!]) {
-    transactions(tags: $tags, owners: $owners) {
+  query QUERY_RESPONSES_BY_OPERATOR($owner: String!, $tags: [TagFilter!], $first: Int, $after: String) {
+    transactions(tags: $tags, owners: [$owner], first: $first, after: $after, sort: HEIGHT_DESC) {
       edges {
+        cursor
         node {
           id
           owner {
@@ -840,6 +847,9 @@ export const QUERY_RESPONSES_BY_OPERATOR = gql`
             ar
           }
         }
+      }
+      pageInfo {
+        hasNextPage
       }
     }
   }

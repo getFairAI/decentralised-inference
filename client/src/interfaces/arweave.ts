@@ -50,4 +50,7 @@ export interface IEdge {
 
 export interface ITransactions {
   edges: IEdge[];
+  pageInfo: {
+    hasNextPage: boolean;
+  };
 }
