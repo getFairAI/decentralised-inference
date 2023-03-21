@@ -99,11 +99,9 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           return Object.assign({}, prev, {
-            data: {
-              transactions: {
-                edges: [ ...prev.transactions.edges, fetchMoreResult.transactions.edges],
-                pageInfo: fetchMoreResult.transactions.pageInfo,
-              }
+            transactions: {
+              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              pageInfo: fetchMoreResult.transactions.pageInfo,
             }
           });
         }
@@ -153,11 +151,9 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           return Object.assign({}, prev, {
-            data: {
-              transactions: {
-                edges: [ ...prev.transactions.edges, fetchMoreResult.transactions.edges],
-                pageInfo: fetchMoreResult.transactions.pageInfo,
-              }
+            transactions: {
+              edges: [ ...prev.transactions.edges, fetchMoreResult.transactions.edges],
+              pageInfo: fetchMoreResult.transactions.pageInfo,
             }
           });
         }
@@ -211,11 +207,9 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
         updateQuery: (prev, {fetchMoreResult}) => {
           if (!fetchMoreResult) return prev;
           return Object.assign({}, prev, {
-            data: {
-              transactions: {
-                edges: [ ...prev.transactions.edges, fetchMoreResult.transactions.edges],
-                pageInfo: fetchMoreResult.transactions.pageInfo,
-              }
+            transactions: {
+              edges: [ ...prev.transactions.edges, fetchMoreResult.transactions.edges],
+              pageInfo: fetchMoreResult.transactions.pageInfo,
             }
           });
         }
