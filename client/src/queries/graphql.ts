@@ -14,7 +14,7 @@ export const GET_IMAGES_TXIDS = gql`
 `;
 
 export const GET_TX = gql`
-  query LIST_MODELS_QUERY($id: ID!) {
+  query GET_TX($id: ID!) {
     transactions(ids: [$id]) {
       edges {
         cursor
@@ -58,14 +58,19 @@ export const GET_TX = gql`
 `;
 
 export const LIST_MODELS_QUERY = gql`
-  query LIST_MODELS_QUERY {
+  query LIST_MODELS_QUERY($first: Int!, $after: String) {
     transactions(
       tags: [
         { name: "App-Name", values: ["Fair Protocol"] }
         { name: "Operation-Name", values: "Model Creation Payment" }
       ]
       recipients:["${MARKETPLACE_ADDRESS}"],
+      first: $first
+      after: $after
     ) {
+      pageInfo {
+        hasNextPage
+      }
       edges {
         cursor
         node {
