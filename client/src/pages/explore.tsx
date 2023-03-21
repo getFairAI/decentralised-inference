@@ -1,5 +1,5 @@
-import { IEdge, ITransactions } from '@/interfaces/arweave';
-import { useQuery } from '@apollo/client';
+import { IEdge } from '@/interfaces/arweave';
+import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Avatar,
   Box,
@@ -18,33 +18,80 @@ import {
 import Grid from '@mui/material/Grid'; // Grid version 2
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import SearchIcon from '@mui/icons-material/Search';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LIST_MODELS_QUERY } from '@/queries/graphql';
 import { MARKETPLACE_FEE } from '@/constants';
 import { genLoadingArray } from '@/utils/common';
 import { Stack } from '@mui/system';
 import ReplayIcon from '@mui/icons-material/Replay';
+import useOnScreen from '@/hooks/useOnScreen';
 
 const Explore = () => {
   const navigate = useNavigate();
   const [txs, setTxs] = useState<IEdge[]>([]);
+  const [ hasNextPage, setHasNextPage ] = useState(false);
+  const target = useRef<HTMLDivElement>(null);
+  const isOnScreen = useOnScreen(target);
+  const elementsPerPage = 5;
 
-  const mockArray = genLoadingArray(10);
+  const mockArray = genLoadingArray(elementsPerPage);
 
-  // filter only models who paid the correct Marketplace fee
-  const handleCompleted = (data: { transactions: ITransactions }) =>
-    setTxs(data.transactions.edges.filter((el) => el.node.quantity.ar !== MARKETPLACE_FEE));
-
-  const { loading, error, refetch } = useQuery(LIST_MODELS_QUERY, {
-    onCompleted: handleCompleted,
+  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(LIST_MODELS_QUERY, {
+    variables: {
+      first: elementsPerPage,
+    },
+    notifyOnNetworkStatusChange: true,
   });
 
+  /**
+   * @description callback for when card is clicked, it is responsible to navigate to clicked model details page
+   * @param e click mouse event
+   * @param txid clicked transaction id
+   * @param index clicked element index
+   * @returns
+   */
   const handleCardClick = (e: MouseEvent<HTMLButtonElement>, txid?: string, index?: number) => {
     e.preventDefault();
     if (!txid || index === undefined) return;
     navigate(`/model/${encodeURIComponent(txid)}/detail`, { state: txs[index] });
   };
+
+  /**
+   * @description Effect that runs when `isOnScreen` or `txs` variables change;
+   * For each change it will check if it has next page and if bottom bottom element is still on screen
+   * (when bottom element leaves the screeen then next page is fetched when user scrolls and bottom element is visible aggain)
+   */
+  useEffect(() => {
+    if (isOnScreen && hasNextPage) {
+      fetchMore({
+        variables: {
+          after: txs[txs.length - 1].cursor,
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+          const newResult = Object.assign({}, prev, {
+            transactions: {
+              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            }
+          });
+          return newResult;
+        }
+      });
+    }
+  }, [isOnScreen, txs]);
+
+  /**
+   * @description Effect that runs on query data changes;
+   * it is responsible to set the nextPage status and to update current loaded transactions
+   */
+  useEffect(() => {
+    if (data && networkStatus === NetworkStatus.ready) {
+      setHasNextPage(data.transactions.pageInfo.hasNextPage);
+      setTxs(data.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE));
+    }
+  }, [ data ]);
 
   return (
     <Box sx={{ flexGrow: 1 }} margin={2}>
@@ -74,46 +121,6 @@ const Explore = () => {
               </Button>
             </Typography>
           </Container>
-        ) : loading ? (
-          mockArray.map((val) => {
-            return (
-              <Grid xs={2} sm={4} key={val} item>
-                <Card sx={{ display: 'flex' }}>
-                  <CardHeader
-                    sx={{ marginRight: 0 }}
-                    avatar={
-                      <Skeleton
-                        animation={'wave'}
-                        variant='circular'
-                        sx={{ width: 80, height: 80 }}
-                      />
-                    }
-                    disableTypography={true}
-                  />
-                  <CardContent sx={{ width: '100%' }}>
-                    <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
-                      <Stack spacing={1}>
-                        <Typography noWrap variant='body1'>
-                          <Skeleton animation={'wave'} variant='rounded' />
-                        </Typography>
-                        <Typography variant='body1' width={'80%'}>
-                          <Skeleton animation='wave' variant='rounded' />
-                        </Typography>
-                        <Box display={'flex'} justifyContent={'space-between'}>
-                          <Typography variant='body1' width={'45%'}>
-                            <Skeleton animation='wave' variant='rounded' />
-                          </Typography>
-                          <Typography variant='body1' width={'30%'}>
-                            <Skeleton animation='wave' variant='rounded' />
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })
         ) : (
           txs.map((edge: IEdge, index) => (
             <Grid xs={2} sm={4} md={4} key={index} item>
@@ -164,7 +171,47 @@ const Explore = () => {
             </Grid>
           ))
         )}
+        {loading && mockArray.map((val) => {
+          return (
+            <Grid xs={2} sm={4} key={val} item>
+              <Card sx={{ display: 'flex' }}>
+                <CardHeader
+                  sx={{ marginRight: 0 }}
+                  avatar={
+                    <Skeleton
+                      animation={'wave'}
+                      variant='circular'
+                      sx={{ width: 80, height: 80 }}
+                    />
+                  }
+                  disableTypography={true}
+                />
+                <CardContent sx={{ width: '100%' }}>
+                  <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
+                    <Stack spacing={1}>
+                      <Typography noWrap variant='body1'>
+                        <Skeleton animation={'wave'} variant='rounded' />
+                      </Typography>
+                      <Typography variant='body1' width={'80%'}>
+                        <Skeleton animation='wave' variant='rounded' />
+                      </Typography>
+                      <Box display={'flex'} justifyContent={'space-between'}>
+                        <Typography variant='body1' width={'45%'}>
+                          <Skeleton animation='wave' variant='rounded' />
+                        </Typography>
+                        <Typography variant='body1' width={'30%'}>
+                          <Skeleton animation='wave' variant='rounded' />
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
       </Grid>
+      <div ref={target}></div>
     </Box>
   );
 };
