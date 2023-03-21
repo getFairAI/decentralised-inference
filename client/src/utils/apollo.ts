@@ -29,14 +29,10 @@ const mapLink = new ApolloLink((operation, forward) =>
       };
 
       return parsedResult;
+    } else {
+      return result;
     }
-    const parsedResult = {
-      ...result,
-      data: (result.data as { transactions: ITransactions }).transactions.edges,
-    };
-    operation.setContext({ data: parsedResult.data, vars: operation.variables });
-    return parsedResult;
-  }),
+  }), 
 );
 
 export const client = new ApolloClient({
@@ -57,11 +53,11 @@ export const client = new ApolloClient({
   ),
   defaultOptions: {
     watchQuery: {
-      fetchPolicy: 'no-cache',
+      fetchPolicy: 'network-only',
       errorPolicy: 'ignore',
     },
     query: {
-      fetchPolicy: 'no-cache',
+      fetchPolicy: 'cache-first',
       errorPolicy: 'all',
     },
   },

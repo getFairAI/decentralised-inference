@@ -1,4 +1,4 @@
-import { IEdge } from '@/interfaces/arweave';
+import { IEdge, ITransactions } from '@/interfaces/arweave';
 import { useQuery } from '@apollo/client';
 import {
   Avatar,
@@ -33,8 +33,8 @@ const Explore = () => {
   const mockArray = genLoadingArray(10);
 
   // filter only models who paid the correct Marketplace fee
-  const handleCompleted = (data: IEdge[]) =>
-    setTxs(data.filter((el) => el.node.quantity.ar !== MARKETPLACE_FEE));
+  const handleCompleted = (data: { transactions: ITransactions }) =>
+    setTxs(data.transactions.edges.filter((el) => el.node.quantity.ar !== MARKETPLACE_FEE));
 
   const { loading, error, refetch } = useQuery(LIST_MODELS_QUERY, {
     onCompleted: handleCompleted,

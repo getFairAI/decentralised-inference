@@ -9,34 +9,15 @@ import Paper from '@mui/material/Paper';
 import {
   Box,
   Button,
-  IconButton,
   Skeleton,
-  TablePagination,
   Tooltip,
   Typography,
 } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import HistoryIcon from '@mui/icons-material/History';
 import { ApolloError } from '@apollo/client';
-import CopyIcon from '@mui/icons-material/ContentCopy';
-import { useNavigate } from 'react-router-dom';
-import { IEdge } from '@/interfaces/arweave';
-import { parseWinston } from '@/utils/arweave';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { genLoadingArray } from '@/utils/common';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-
-export interface RowData {
-  quantityAR: string;
-  address: string;
-  fee: string;
-  availability: number;
-  stamps: number;
-  registrationTimestamp: string;
-  modelName: string;
-  modelCreator: string;
-  modelTransaction: string;
-}
+import OperatorRow from './operator-row';
+import { IEdge, ITag } from '@/interfaces/arweave';
 
 /* function createData(
   address: string,
@@ -56,25 +37,13 @@ const rows = [
 ]; */
 
 export default function BasicTable(props: {
-  data: RowData[];
-  loading: boolean;
-  error?: ApolloError;
-  state?: IEdge;
-  retry: () => void;
+  operators: IEdge[],
+  loading: boolean,
+  error?: ApolloError,
+  state: IEdge,
+  retry: () => void,
 }) {
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [page, setPage] = React.useState(0);
-  const navigate = useNavigate();
   const mockArray = genLoadingArray(10);
-
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
 
   return (
     <Box>
@@ -136,99 +105,16 @@ export default function BasicTable(props: {
                 );
               })
             ) : (
-              props.data.map((row, idx) => (
-                <TableRow key={idx} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell scope='row'>
-                    <Tooltip title={row.address}>
-                      <Typography>
-                        {row.address.slice(0, 10)}...{row.address.slice(-2)}
-                        <IconButton
-                          size='small'
-                          onClick={() => {
-                            navigator.clipboard.writeText(row.address);
-                          }}
-                        >
-                          <CopyIcon fontSize='inherit' />
-                        </IconButton>
-                      </Typography>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell align='right'>{row.registrationTimestamp}</TableCell>
-                  <TableCell align='right'>{parseWinston(row.fee)}</TableCell>
-                  <TableCell align='right'>
-                    <Tooltip
-                      title={
-                        row.availability > 90
-                          ? 'Online'
-                          : row.availability > 50
-                          ? 'Availability Issues'
-                          : row.availability > 0
-                          ? 'Dangerous'
-                          : 'Offline'
-                      }
-                    >
-                      {row.availability > 90 ? (
-                        <FiberManualRecordIcon color='success' />
-                      ) : row.availability > 50 ? (
-                        <FiberManualRecordIcon color='warning' />
-                      ) : row.availability > 0 ? (
-                        <FiberManualRecordIcon color='error' />
-                      ) : (
-                        <FiberManualRecordIcon color='disabled' />
-                      )}
-                    </Tooltip>
-                    {}
-                  </TableCell>
-                  <TableCell align='right'>{row.stamps}</TableCell>
-                  <TableCell align='right'>
-                    <Tooltip title='History'>
-                      <IconButton
-                        onClick={() =>
-                          navigate(`/operators/details/${row.address}`, {
-                            state: {
-                              modelName: row.modelName,
-                              modelCreator: row.modelCreator,
-                              operatorFee: row.fee,
-                            },
-                          })
-                        }
-                      >
-                        <HistoryIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title='Execute'>
-                      <IconButton
-                        onClick={() =>
-                          navigate(`../chat/${row.address}`, {
-                            state: {
-                              modelName: row.modelName,
-                              modelCreator: row.modelCreator,
-                              fee: row.fee,
-                              modelTransaction: row.modelTransaction,
-                              fullState: props.state,
-                            },
-                          })
-                        }
-                      >
-                        <PlayArrowIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
+              props.operators.map((row) => (
+                <OperatorRow key={row.node.id} operatorTx={row} modelCreator={props.state.node.owner.address}
+                  modelName={props.state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value as string}
+                  state={props.state}
+                />
               ))
             )}
           </TableBody>
         </Table>
       </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component='div'
-        count={props.data.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
     </Box>
   );
 }
