@@ -61,7 +61,11 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (queryResult.data && queryResult.data.transactions && queryResult.data.transactions.edges.length > 0) {
+    if (
+      queryResult.data &&
+      queryResult.data.transactions &&
+      queryResult.data.transactions.edges.length > 0
+    ) {
       setIsAllowed(
         queryResult.data.transactions.edges[0].node.quantity.winston ===
           (updatedFee ||

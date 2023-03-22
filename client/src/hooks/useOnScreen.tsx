@@ -15,7 +15,9 @@ const useOnScreen = (ref: RefObject<HTMLElement>) => {
    * and change the `isOnScreen` state accordingly
    */
   useEffect(() => {
-    observerRef.current = new IntersectionObserver(([ entry ]) => setIsOnScreen(entry.isIntersecting));
+    observerRef.current = new IntersectionObserver(([entry]) =>
+      setIsOnScreen(entry.isIntersecting),
+    );
   }, []);
 
   /**
@@ -27,7 +29,7 @@ const useOnScreen = (ref: RefObject<HTMLElement>) => {
 
     // provide a cleanup funciton to unsubscribe observer when component unmounts
     return () => observerRef.current?.disconnect();
-  }, [ ref ]);
+  }, [ref]);
 
   return isOnScreen;
 };

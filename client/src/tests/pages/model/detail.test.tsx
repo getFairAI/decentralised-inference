@@ -151,12 +151,11 @@ const mockIntersectionObserver = class {
   }
 };
 
-
 describe('pages/model/detail.tsx', () => {
   beforeEach(async () => {
     (window.IntersectionObserver as unknown) = mockIntersectionObserver;
   });
-  
+
   it('should populate model data from queries', async () => {
     const mockRouter = createMemoryRouter(
       [

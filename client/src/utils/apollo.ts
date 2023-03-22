@@ -18,7 +18,7 @@ const mapLink = new ApolloLink((operation, forward) =>
     } else {
       return result;
     }
-  }), 
+  }),
 );
 
 export const client = new ApolloClient({

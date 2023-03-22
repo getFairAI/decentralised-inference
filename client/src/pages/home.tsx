@@ -1,4 +1,4 @@
-import { gql, NetworkStatus, useQuery } from '@apollo/client';
+import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Avatar,
   Box,
@@ -33,8 +33,8 @@ export default function Home() {
   const [slideIdx, setSlideIdx] = useState(0);
   const [, setSwipeRight] = useState(false);
   const [swiped, setSwiped] = useState(true);
-  const [ hasNextPage, setHasNextPage ] = useState(false);
-  const [ txs, setTxs ] = useState<IEdge[]>([]);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [txs, setTxs] = useState<IEdge[]>([]);
   const max = 5;
   const elementsPerPage = 10;
   const target = useRef<HTMLDivElement>(null);
@@ -44,15 +44,22 @@ export default function Home() {
   const { data, loading, error } = useQuery(LIST_LATEST_MODELS_QUERY, {
     variables: {
       first: 5,
-    }
+    },
   });
 
-  const { data: listData, loading: listLoading, error: listError, fetchMore, networkStatus, refetch } = useQuery(LIST_MODELS_QUERY, {
+  const {
+    data: listData,
+    loading: listLoading,
+    error: listError,
+    fetchMore,
+    networkStatus,
+    refetch,
+  } = useQuery(LIST_MODELS_QUERY, {
     variables: {
-      first: elementsPerPage
-    }
+      first: elementsPerPage,
+    },
   });
-  
+
   useEffect(() => {
     if (isOnScreen && hasNextPage) {
       fetchMore({
@@ -62,7 +69,7 @@ export default function Home() {
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           const newData = fetchMoreResult.transactions.edges;
-          
+
           const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
           for (let i = 0; i < newData.length; ++i) {
             if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
@@ -73,18 +80,20 @@ export default function Home() {
             transactions: {
               edges: merged,
               pageInfo: fetchMoreResult.transactions.pageInfo,
-            }
+            },
           });
           return newResult;
-        }
+        },
       });
     }
-  }, [ useOnScreen, listData ]);
+  }, [useOnScreen, listData]);
 
   useEffect(() => {
     if (listData && networkStatus === NetworkStatus.ready) {
       setHasNextPage(listData.transactions.pageInfo.hasNextPage);
-      setTxs(listData.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE));
+      setTxs(
+        listData.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
+      );
     }
   }, [listData]);
 
@@ -134,7 +143,13 @@ export default function Home() {
               <SlideCard  key={index} data={edge}/>
             ))
           } */}
-          <SlideCard data={data && (data.transactions.edges as IEdge[]).find((_, index) => index === slideIdx)} loading={loading} error={error}/>
+          <SlideCard
+            data={
+              data && (data.transactions.edges as IEdge[]).find((_, index) => index === slideIdx)
+            }
+            loading={loading}
+            error={error}
+          />
         </Box>
         <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
           <IconButton disableRipple={true} onClick={() => click('right')}>
@@ -172,25 +187,24 @@ export default function Home() {
           </Typography>
         </Box> */}
         <Grid container spacing={{ xs: 2, md: 3 }}>
-          {
-            listError ? (
-              <Container>
-                <Typography alignItems='center' display='flex' flexDirection='column'>
-                  Could not Fetch Available Models.
-                  <Button
-                    sx={{ width: 'fit-content' }}
-                    endIcon={<ReplayIcon />}
-                    onClick={() => refetch()}
-                  >
-                    Retry
-                  </Button>
-                </Typography>
-              </Container>
-            ) : (
+          {listError ? (
+            <Container>
+              <Typography alignItems='center' display='flex' flexDirection='column'>
+                Could not Fetch Available Models.
+                <Button
+                  sx={{ width: 'fit-content' }}
+                  endIcon={<ReplayIcon />}
+                  onClick={() => refetch()}
+                >
+                  Retry
+                </Button>
+              </Typography>
+            </Container>
+          ) : (
             <>
               <Grid item xs={12} sm={12} md={6}>
                 <Stack spacing={2}>
-                  {txs.slice(0, (txs.length / 2) + 1).map((edge: IEdge, index: number) => (
+                  {txs.slice(0, txs.length / 2 + 1).map((edge: IEdge, index: number) => (
                     <Box sx={{ width: '100%' }} display={'flex'} flexDirection={'row'} key={index}>
                       <Card sx={{ width: '100%' }}>
                         <CardActionArea sx={{ width: '100%' }}>
@@ -202,7 +216,10 @@ export default function Home() {
                                   {edge.node.tags.find((el) => el.name === 'test')?.value}
                                 </Typography>
                                 <Typography noWrap variant='body1'>
-                                  {edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value}
+                                  {
+                                    edge.node.tags.find((el) => el.name === 'Model-Transaction')
+                                      ?.value
+                                  }
                                 </Typography>
                               </Box>
                             </Box>
@@ -218,8 +235,8 @@ export default function Home() {
                     </Box>
                   ))}
                 </Stack>
-                {
-                  loading && mockArray.map((val) => {
+                {loading &&
+                  mockArray.map((val) => {
                     return (
                       <Grid xs={2} sm={4} key={val} item>
                         <Card sx={{ display: 'flex' }}>
@@ -257,8 +274,7 @@ export default function Home() {
                         </Card>
                       </Grid>
                     );
-                  })
-                }
+                  })}
               </Grid>
               <Grid item xs={12} sm={12} md={6}>
                 <Stack spacing={2}>
@@ -274,7 +290,10 @@ export default function Home() {
                                   {edge.node.tags.find((el) => el.name === 'test')?.value}
                                 </Typography>
                                 <Typography noWrap variant='body1'>
-                                  {edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value}
+                                  {
+                                    edge.node.tags.find((el) => el.name === 'Model-Transaction')
+                                      ?.value
+                                  }
                                 </Typography>
                               </Box>
                             </Box>
@@ -289,47 +308,46 @@ export default function Home() {
                       </Card>
                     </Box>
                   ))}
-                  {
-                  listLoading && mockArray.map((val) => {
-                    return (
-                      <Grid xs={2} sm={4} key={val} item>
-                        <Card sx={{ display: 'flex' }}>
-                          <CardHeader
-                            sx={{ marginRight: 0 }}
-                            avatar={
-                              <Skeleton
-                                animation={'wave'}
-                                variant='circular'
-                                sx={{ width: 80, height: 80 }}
-                              />
-                            }
-                            disableTypography={true}
-                          />
-                          <CardContent sx={{ width: '100%' }}>
-                            <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
-                              <Stack spacing={1}>
-                                <Typography noWrap variant='body1'>
-                                  <Skeleton animation={'wave'} variant='rounded' />
-                                </Typography>
-                                <Typography variant='body1' width={'80%'}>
-                                  <Skeleton animation='wave' variant='rounded' />
-                                </Typography>
-                                <Box display={'flex'} justifyContent={'space-between'}>
-                                  <Typography variant='body1' width={'45%'}>
+                  {listLoading &&
+                    mockArray.map((val) => {
+                      return (
+                        <Grid xs={2} sm={4} key={val} item>
+                          <Card sx={{ display: 'flex' }}>
+                            <CardHeader
+                              sx={{ marginRight: 0 }}
+                              avatar={
+                                <Skeleton
+                                  animation={'wave'}
+                                  variant='circular'
+                                  sx={{ width: 80, height: 80 }}
+                                />
+                              }
+                              disableTypography={true}
+                            />
+                            <CardContent sx={{ width: '100%' }}>
+                              <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
+                                <Stack spacing={1}>
+                                  <Typography noWrap variant='body1'>
+                                    <Skeleton animation={'wave'} variant='rounded' />
+                                  </Typography>
+                                  <Typography variant='body1' width={'80%'}>
                                     <Skeleton animation='wave' variant='rounded' />
                                   </Typography>
-                                  <Typography variant='body1' width={'30%'}>
-                                    <Skeleton animation='wave' variant='rounded' />
-                                  </Typography>
-                                </Box>
-                              </Stack>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    );
-                  })
-                }
+                                  <Box display={'flex'} justifyContent={'space-between'}>
+                                    <Typography variant='body1' width={'45%'}>
+                                      <Skeleton animation='wave' variant='rounded' />
+                                    </Typography>
+                                    <Typography variant='body1' width={'30%'}>
+                                      <Skeleton animation='wave' variant='rounded' />
+                                    </Typography>
+                                  </Box>
+                                </Stack>
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
                 </Stack>
               </Grid>
             </>

@@ -1,6 +1,10 @@
 import { DEFAULT_TAGS, INFERENCE_PERCENTAGE_FEE, MODEL_INFERENCE_RESULT_TAG } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_PAID_FEE_OPERATORS, QUERY_REQUESTS_FOR_OPERATOR, QUERY_RESPONSES_BY_OPERATOR } from '@/queries/graphql';
+import {
+  QUERY_PAID_FEE_OPERATORS,
+  QUERY_REQUESTS_FOR_OPERATOR,
+  QUERY_RESPONSES_BY_OPERATOR,
+} from '@/queries/graphql';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import { IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -24,13 +28,23 @@ export interface RowData {
 }
 
 /**
- * @description React Function component to handle displaying a row for an operator 
+ * @description React Function component to handle displaying a row for an operator
  * @param props { operatorTx, modelCreator, modelName, state }
  * @returns
  */
-const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorTx: IEdge, modelCreator: string, modelName: string, state: IEdge }) => {
+const OperatorRow = ({
+  operatorTx,
+  modelCreator,
+  modelName,
+  state,
+}: {
+  operatorTx: IEdge;
+  modelCreator: string;
+  modelName: string;
+  state: IEdge;
+}) => {
   const navigate = useNavigate();
-  const [ row, setRow ] = useState<Partial<RowData> | undefined>(undefined);
+  const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
   const requestTags = [
     ...DEFAULT_TAGS,
     {
@@ -46,17 +60,17 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
       values: ['Inference Payment'],
     },
   ];
-  const { data, /* loading, error,  */fetchMore } = useQuery(QUERY_REQUESTS_FOR_OPERATOR, {
+  const { data, /* loading, error,  */ fetchMore } = useQuery(QUERY_REQUESTS_FOR_OPERATOR, {
     skip: !operatorTx.node.owner.address && !modelCreator && !modelName,
     variables: {
       first: 10,
       recipient: operatorTx.node.owner.address,
       tags: requestTags,
-    }
+    },
   });
 
-  const [ getOpResponses, opResponses ] = useLazyQuery(QUERY_RESPONSES_BY_OPERATOR);
-  const [ getPaidFee, paidFeeResult ] = useLazyQuery(QUERY_PAID_FEE_OPERATORS);
+  const [getOpResponses, opResponses] = useLazyQuery(QUERY_RESPONSES_BY_OPERATOR);
+  const [getPaidFee, paidFeeResult] = useLazyQuery(QUERY_PAID_FEE_OPERATORS);
 
   /**
    * @description Effect that runs on `operatorTx` changes; it will create an easier to read object
@@ -66,12 +80,12 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
     const address = operatorTx.node.owner.address;
     const quantityAR = operatorTx.node.quantity.ar;
     const stamps = Math.random() * 100;
-    const fee = operatorTx.node.tags.find(tag => tag.name === 'Operator-Fee')?.value;
-    const registrationTimestamp = operatorTx.node.block ?
-      new Date(operatorTx.node.block.timestamp * 1000).toLocaleString()
+    const fee = operatorTx.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value;
+    const registrationTimestamp = operatorTx.node.block
+      ? new Date(operatorTx.node.block.timestamp * 1000).toLocaleString()
       : 'Pending';
-    const modelTransaction = state.node.tags.find(tag => tag.name === 'Model-Transaction')?.value;
-    const modelName = state.node.tags.find(tag => tag.name === 'Model-Name')?.value;
+    const modelTransaction = state.node.tags.find((tag) => tag.name === 'Model-Transaction')?.value;
+    const modelName = state.node.tags.find((tag) => tag.name === 'Model-Name')?.value;
     const modelCreator = state.node.owner.address;
     setRow({
       address,
@@ -81,9 +95,9 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
       registrationTimestamp,
       modelTransaction,
       modelName,
-      modelCreator
+      modelCreator,
     });
-  }, [ operatorTx]);
+  }, [operatorTx]);
 
   /**
    * @description Effect that runs when data from `QUERY_REEQUEST_FOR_OPERATOR` changes;
@@ -94,17 +108,17 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
     if (data && data.transactions && data.transactions.pageInfo.hasNextPage) {
       fetchMore({
         variables: {
-          after: data.transactions.edges[data.transactions.edges.length - 1].cursor
+          after: data.transactions.edges[data.transactions.edges.length - 1].cursor,
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           return Object.assign({}, prev, {
             transactions: {
-              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
-            }
+            },
           });
-        }
+        },
       });
     } else if (data && data.transactions) {
       const inferenceReqIds = (data.transactions.edges as IEdge[]).map((req) => {
@@ -135,7 +149,7 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
       });
     }
   }, [data]);
-  
+
   /**
    * @description Effect that runs when data from `QUERY_RESPONSES_BY_OPERATOR` changes;
    * It is responsible to fetch more responses while `hasNextPage` is true, otherwise it will
@@ -143,20 +157,26 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
    * is a payment transaction with the correct value for each response
    */
   useEffect(() => {
-    if (opResponses.data && opResponses.data.transactions && opResponses.data.transactions.pageInfo.hasNextPage) {
+    if (
+      opResponses.data &&
+      opResponses.data.transactions &&
+      opResponses.data.transactions.pageInfo.hasNextPage
+    ) {
       opResponses.fetchMore({
         variables: {
-          after: opResponses.data.transactions.edges[opResponses.data.transactions.edges.length - 1].cursor
+          after:
+            opResponses.data.transactions.edges[opResponses.data.transactions.edges.length - 1]
+              .cursor,
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           return Object.assign({}, prev, {
             transactions: {
-              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
-            }
+            },
           });
-        }
+        },
       });
     } else if (opResponses.data) {
       const tags = [
@@ -167,19 +187,21 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
         },
         {
           name: 'Response-Identifier',
-          values: [...opResponses.data.transactions.edges.map((el: IEdge) => el.node.id )],
+          values: [...opResponses.data.transactions.edges.map((el: IEdge) => el.node.id)],
         },
       ];
 
       const asyncPaidFee = async () => {
-        const blockHeights = opResponses.data.transactions.edges.map((el: IEdge) => el.node.block.height);
+        const blockHeights = opResponses.data.transactions.edges.map(
+          (el: IEdge) => el.node.block.height,
+        );
         // const currentBlockHeight = await arweave.blocks.getCurrent();
         getPaidFee({
           variables: {
             tags: tags,
             owner: operatorTx.node.owner.address,
             minBlockHeight: Math.min(...blockHeights),
-            first: 10
+            first: 10,
             // maxBlockHeight: currentBlockHeight.height - N_PREVIOUS_BLOCKS,
           },
         });
@@ -188,9 +210,9 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
       const reqs = data.transactions.edges;
       const responses = opResponses.data.transactions.edges;
       const availability = (reqs.length / responses.length) * 100;
-      setRow({ ...row, availability});
+      setRow({ ...row, availability });
     }
-  }, [ opResponses.data]);
+  }, [opResponses.data]);
 
   /**
    * @description Effect that runs when data from `QUERY_PAID_FEE_OPERATORS` changes;
@@ -202,17 +224,19 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
     if (paidFeeResult.data && paidFeeResult.data.transactions.pageInfo.hasNextPage) {
       paidFeeResult.fetchMore({
         variables: {
-          after: paidFeeResult.data.transactions.edges[paidFeeResult.data.transactions.edges.length - 1].cursor,
+          after:
+            paidFeeResult.data.transactions.edges[paidFeeResult.data.transactions.edges.length - 1]
+              .cursor,
         },
-        updateQuery: (prev, {fetchMoreResult}) => {
+        updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           return Object.assign({}, prev, {
             transactions: {
-              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
-            }
+            },
           });
-        }
+        },
       });
     } else if (paidFeeResult.data) {
       if (paidFeeResult.data.transactions.edges.length <= 0) {
@@ -221,7 +245,7 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
       paidFeeResult.data.transactions.edges.forEach((el: IEdge) => {
         if (
           parseFloat(el.node.quantity.winston) * INFERENCE_PERCENTAGE_FEE <=
-            parseFloat(operatorTx.node.tags.find(tag => tag.name === 'Operator-Fee')?.value || '0')
+          parseFloat(operatorTx.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value || '0')
         ) {
           // handle case where operator did not pay request
           // can return and not proccess remaining txs
@@ -230,90 +254,89 @@ const OperatorRow = ({ operatorTx, modelCreator, modelName, state }: { operatorT
     }
   }, [paidFeeResult.data]);
 
-  return <>
-    <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-      <TableCell scope='row'>
-        <Tooltip title={row?.address}>
-          <Typography>
-            {operatorTx.node.owner.address.slice(0, 10)}...{operatorTx.node.owner.address.slice(-2)}
+  return (
+    <>
+      <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+        <TableCell scope='row'>
+          <Tooltip title={row?.address}>
+            <Typography>
+              {operatorTx.node.owner.address.slice(0, 10)}...
+              {operatorTx.node.owner.address.slice(-2)}
+              <IconButton
+                size='small'
+                onClick={() => {
+                  row?.address && navigator.clipboard.writeText(row?.address);
+                }}
+              >
+                <CopyIcon fontSize='inherit' />
+              </IconButton>
+            </Typography>
+          </Tooltip>
+        </TableCell>
+        <TableCell align='right'>{row?.registrationTimestamp}</TableCell>
+        <TableCell align='right'>{parseWinston(row?.fee)}</TableCell>
+        <TableCell align='right'>
+          <Tooltip
+            title={
+              row?.availability && row.availability > 90
+                ? 'Online'
+                : row?.availability && row.availability > 50
+                ? 'Availability Issues'
+                : row?.availability && row.availability > 0
+                ? 'Dangerous'
+                : 'Offline'
+            }
+          >
+            {row?.availability && row.availability > 90 ? (
+              <FiberManualRecordIcon color='success' />
+            ) : row?.availability && row.availability > 50 ? (
+              <FiberManualRecordIcon color='warning' />
+            ) : row?.availability && row.availability > 0 ? (
+              <FiberManualRecordIcon color='error' />
+            ) : (
+              <FiberManualRecordIcon color='disabled' />
+            )}
+          </Tooltip>
+          {}
+        </TableCell>
+        <TableCell align='right'>{Math.random() * 100}</TableCell>
+        <TableCell align='right'>
+          <Tooltip title='History'>
             <IconButton
-              size='small'
-              onClick={() => {
-                row?.address && navigator.clipboard.writeText(row?.address);
-              }}
+              onClick={() =>
+                navigate(`/operators/details/${operatorTx.node.owner.address}`, {
+                  state: {
+                    modelName: modelName,
+                    modelCreator: modelCreator,
+                    operatorFee: row?.fee,
+                  },
+                })
+              }
             >
-              <CopyIcon fontSize='inherit' />
+              <HistoryIcon />
             </IconButton>
-          </Typography>
-        </Tooltip>
-      </TableCell>
-      <TableCell align='right'>
-        {
-          row?.registrationTimestamp
-        }
-      </TableCell>
-      <TableCell align='right'>{parseWinston(row?.fee)}</TableCell>
-      <TableCell align='right'>
-        <Tooltip
-          title={
-            row?.availability && row.availability > 90
-              ? 'Online'
-              : row?.availability && row.availability > 50
-              ? 'Availability Issues'
-              : row?.availability && row.availability > 0
-              ? 'Dangerous'
-              : 'Offline'
-          }
-        >
-          {row?.availability && row.availability > 90 ? (
-            <FiberManualRecordIcon color='success' />
-          ) : row?.availability && row.availability > 50 ? (
-            <FiberManualRecordIcon color='warning' />
-          ) : row?.availability && row.availability > 0 ? (
-            <FiberManualRecordIcon color='error' />
-          ) : (
-            <FiberManualRecordIcon color='disabled' />
-          )}
-        </Tooltip>
-        {}
-      </TableCell>
-      <TableCell align='right'>{Math.random() * 100}</TableCell>
-      <TableCell align='right'>
-        <Tooltip title='History'>
-          <IconButton
-            onClick={() =>
-              navigate(`/operators/details/${operatorTx.node.owner.address}`, {
-                state: {
-                  modelName: modelName,
-                  modelCreator: modelCreator,
-                  operatorFee: row?.fee,
-                },
-              })
-            }
-          >
-            <HistoryIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title='Execute'>
-          <IconButton
-            onClick={() =>
-              navigate(`../chat/${operatorTx.node.owner.address}`, {
-                state: {
-                  modelName: modelName,
-                  modelCreator: modelCreator,
-                  fee: row?.fee,
-                  modelTransaction: row?.modelTransaction,
-                  fullState: state,
-                },
-              })
-            }
-          >
-            <PlayArrowIcon />
-          </IconButton>
-        </Tooltip>
-      </TableCell>
-    </TableRow>
-  </>;
+          </Tooltip>
+          <Tooltip title='Execute'>
+            <IconButton
+              onClick={() =>
+                navigate(`../chat/${operatorTx.node.owner.address}`, {
+                  state: {
+                    modelName: modelName,
+                    modelCreator: modelCreator,
+                    fee: row?.fee,
+                    modelTransaction: row?.modelTransaction,
+                    fullState: state,
+                  },
+                })
+              }
+            >
+              <PlayArrowIcon />
+            </IconButton>
+          </Tooltip>
+        </TableCell>
+      </TableRow>
+    </>
+  );
 };
 
 export default OperatorRow;

@@ -30,7 +30,7 @@ import useOnScreen from '@/hooks/useOnScreen';
 const Explore = () => {
   const navigate = useNavigate();
   const [txs, setTxs] = useState<IEdge[]>([]);
-  const [ hasNextPage, setHasNextPage ] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const elementsPerPage = 5;
@@ -72,12 +72,12 @@ const Explore = () => {
           if (!fetchMoreResult) return prev;
           const newResult = Object.assign({}, prev, {
             transactions: {
-              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
-            }
+            },
           });
           return newResult;
-        }
+        },
       });
     }
   }, [isOnScreen, txs]);
@@ -89,9 +89,11 @@ const Explore = () => {
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
       setHasNextPage(data.transactions.pageInfo.hasNextPage);
-      setTxs(data.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE));
+      setTxs(
+        data.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
+      );
     }
-  }, [ data ]);
+  }, [data]);
 
   return (
     <Box sx={{ flexGrow: 1 }} margin={2}>
@@ -171,45 +173,46 @@ const Explore = () => {
             </Grid>
           ))
         )}
-        {loading && mockArray.map((val) => {
-          return (
-            <Grid xs={2} sm={4} key={val} item>
-              <Card sx={{ display: 'flex' }}>
-                <CardHeader
-                  sx={{ marginRight: 0 }}
-                  avatar={
-                    <Skeleton
-                      animation={'wave'}
-                      variant='circular'
-                      sx={{ width: 80, height: 80 }}
-                    />
-                  }
-                  disableTypography={true}
-                />
-                <CardContent sx={{ width: '100%' }}>
-                  <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
-                    <Stack spacing={1}>
-                      <Typography noWrap variant='body1'>
-                        <Skeleton animation={'wave'} variant='rounded' />
-                      </Typography>
-                      <Typography variant='body1' width={'80%'}>
-                        <Skeleton animation='wave' variant='rounded' />
-                      </Typography>
-                      <Box display={'flex'} justifyContent={'space-between'}>
-                        <Typography variant='body1' width={'45%'}>
+        {loading &&
+          mockArray.map((val) => {
+            return (
+              <Grid xs={2} sm={4} key={val} item>
+                <Card sx={{ display: 'flex' }}>
+                  <CardHeader
+                    sx={{ marginRight: 0 }}
+                    avatar={
+                      <Skeleton
+                        animation={'wave'}
+                        variant='circular'
+                        sx={{ width: 80, height: 80 }}
+                      />
+                    }
+                    disableTypography={true}
+                  />
+                  <CardContent sx={{ width: '100%' }}>
+                    <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
+                      <Stack spacing={1}>
+                        <Typography noWrap variant='body1'>
+                          <Skeleton animation={'wave'} variant='rounded' />
+                        </Typography>
+                        <Typography variant='body1' width={'80%'}>
                           <Skeleton animation='wave' variant='rounded' />
                         </Typography>
-                        <Typography variant='body1' width={'30%'}>
-                          <Skeleton animation='wave' variant='rounded' />
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
+                        <Box display={'flex'} justifyContent={'space-between'}>
+                          <Typography variant='body1' width={'45%'}>
+                            <Skeleton animation='wave' variant='rounded' />
+                          </Typography>
+                          <Typography variant='body1' width={'30%'}>
+                            <Skeleton animation='wave' variant='rounded' />
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
       </Grid>
       <div ref={target}></div>
     </Box>
