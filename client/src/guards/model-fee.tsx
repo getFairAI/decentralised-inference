@@ -61,14 +61,18 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (queryResult.data && queryResult.data.length > 0) {
+    if (
+      queryResult.data &&
+      queryResult.data.transactions &&
+      queryResult.data.transactions.edges.length > 0
+    ) {
       setIsAllowed(
-        queryResult.data[0].node.quantity.winston ===
+        queryResult.data.transactions.edges[0].node.quantity.winston ===
           (updatedFee ||
             state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee').value),
       );
       setLoading(false);
-    } else if (queryResult.data) {
+    } else if (queryResult.data && queryResult.data && queryResult.data.transactions) {
       // means there is no
       setIsAllowed(false);
       setLoading(false);

@@ -1,9 +1,8 @@
-import { DEFAULT_TAGS, MARKETPLACE_FEE, REGISTER_OPERATION_TAG } from '@/constants';
+import { MARKETPLACE_FEE } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { LIST_MODELS_QUERY, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
-import { parseWinston } from '@/utils/arweave';
+import { LIST_MODELS_QUERY } from '@/queries/graphql';
 import { genLoadingArray } from '@/utils/common';
-import { useQuery } from '@apollo/client';
+import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Container,
   Box,
@@ -14,187 +13,107 @@ import {
   Button,
   Skeleton,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import ReplayIcon from '@mui/icons-material/Replay';
+import ModelCard from '@/components/model-card';
+import useOnScreen from '@/hooks/useOnScreen';
 
-interface Element {
-  name: string;
-  txid: string;
-  uploader: string;
-  avgFee: string;
-  modelFee: string;
-  totalOperators: number;
-}
 const Operators = () => {
-  const navigate = useNavigate();
-  const [elements, setElements] = useState<Element[]>([]);
   const [txs, setTxs] = useState<IEdge[]>([]);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const target = useRef<HTMLDivElement>(null);
+  const isOnScreen = useOnScreen(target);
+  const elementsPerPage = 5;
 
   const mockArray = genLoadingArray(6);
 
-  // filter only models who paid the correct Marketplace fee
-  const handleCompleted = (data: IEdge[]) =>
-    setTxs(data.filter((el) => el.node.quantity.ar !== MARKETPLACE_FEE));
-
-  const {
-    loading: listLoading,
-    error: listError,
-    refetch: listRefetch,
-  } = useQuery(LIST_MODELS_QUERY, {
-    onCompleted: handleCompleted,
-  });
-
-  const tags = [...DEFAULT_TAGS, REGISTER_OPERATION_TAG];
-  // get all operatorsRegistration
-  const {
-    data: operatorsData,
-    loading: operatorsLoading,
-    error: operatorsError,
-    refetch: operatorsRefetch,
-  } = useQuery(QUERY_REGISTERED_OPERATORS, {
-    variables: { tags },
-    skip: txs.length <= 0,
+  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(LIST_MODELS_QUERY, {
+    variables: {
+      first: elementsPerPage,
+    },
+    notifyOnNetworkStatusChange: true,
   });
 
   useEffect(() => {
-    if (operatorsData) {
-      setElements(
-        txs.map((el: IEdge) => {
-          const uniqueOperators: IEdge[] = [];
-          const modelOperators = operatorsData.filter(
-            (op: IEdge) =>
-              op.node.tags.find((tag) => tag.name === 'Model-Name')?.value ===
-                el.node.tags.find((tag) => tag.name === 'Model-Name')?.value &&
-              op.node.tags.find((tag) => tag.name === 'Model-Creator')?.value ===
-                el.node.owner.address,
-          );
-          // get only latest operators registrations
-          modelOperators.map((op: IEdge) =>
-            uniqueOperators.filter((unique) => op.node.owner.address === unique.node.owner.address)
-              .length > 0
-              ? undefined
-              : uniqueOperators.push(op),
-          );
-          const opFees = uniqueOperators.map((op) => {
-            const fee = op.node.tags.find((el) => el.name === 'Operator-Fee')?.value;
-            if (fee) return parseFloat(fee);
-            else return 0;
+    if (isOnScreen && hasNextPage) {
+      fetchMore({
+        variables: {
+          after: txs[txs.length - 1].cursor,
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+          const newResult = Object.assign({}, prev, {
+            transactions: {
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            },
           });
-          const average = (arr: number[]) => arr.reduce((p, c) => p + c, 0) / arr.length;
-          const avgFee = parseWinston(average(opFees).toString());
-          const modelFee = el.node.tags.find((el) => el.name === 'Model-Fee')?.value;
+          return newResult;
+        },
+      });
+    }
+  }, [isOnScreen, txs]);
 
-          return {
-            name:
-              el.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Name not Available',
-            txid:
-              el.node.tags.find((el) => el.name === 'Model-Transaction')?.value ||
-              'Transaction Not Available',
-            uploader: el.node.owner.address,
-            modelFee: parseWinston(modelFee) || 'Model Fee Not Available',
-            avgFee,
-            totalOperators: uniqueOperators.length,
-          };
-        }),
+  useEffect(() => {
+    if (data && networkStatus === NetworkStatus.ready) {
+      setHasNextPage(data.transactions.pageInfo.hasNextPage);
+      setTxs(
+        data.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
       );
     }
-  }, [operatorsData]); // operatorsData changes
-
-  const handleCardClick = (idx: number) => {
-    navigate(`/model/${encodeURIComponent(elements[idx].txid)}/register`, { state: txs[idx] });
-  };
+  }, [data]);
 
   return (
-    <>
-      <Container>
-        <Box>
-          <Stack spacing={4} sx={{ margin: '16px' }}>
-            {listError ? (
-              <Container>
-                <Typography alignItems='center' display='flex' flexDirection='column'>
-                  Could not Fetch Available Models.
-                  <Button
-                    sx={{ width: 'fit-content' }}
-                    endIcon={<ReplayIcon />}
-                    onClick={() => listRefetch()}
-                  >
-                    Retry
-                  </Button>
-                </Typography>
-              </Container>
-            ) : operatorsError ? (
-              <Container>
-                <Typography alignItems='center' display='flex' flexDirection='column'>
-                  Could not Fetch Registered Operators.
-                  <Button
-                    sx={{ width: 'fit-content' }}
-                    endIcon={<ReplayIcon />}
-                    onClick={() => operatorsRefetch({ tags })}
-                  >
-                    Retry
-                  </Button>
-                </Typography>
-              </Container>
-            ) : listLoading || operatorsLoading ? (
-              mockArray.map((val) => {
-                return (
-                  <Card key={val}>
-                    <Box>
-                      <CardActionArea>
-                        <Typography>
-                          <Skeleton animation={'wave'} />
-                        </Typography>
-                        <Typography>
-                          <Skeleton animation={'wave'} />
-                        </Typography>
-                        <Typography>
-                          <Skeleton animation={'wave'} />
-                        </Typography>
-                        <Typography>
-                          <Skeleton animation={'wave'} />
-                        </Typography>
-                        <Typography>
-                          <Skeleton animation={'wave'} />
-                        </Typography>
-                        <Typography>
-                          <Skeleton animation={'wave'} />
-                        </Typography>
-                      </CardActionArea>
-                    </Box>
-                  </Card>
-                );
-              })
-            ) : (
-              elements.map((el: Element, idx: number) => (
-                <Card key={idx}>
-                  <Box>
-                    <CardActionArea onClick={() => handleCardClick(idx)}>
-                      <Typography>Name: {el.name}</Typography>
-                      <Typography>Transaction id: {el.txid}</Typography>
-                      <Typography>Creator: {el.uploader}</Typography>
-                      <Typography>
-                        Model Fee:{' '}
-                        {Number.isNaN(el.modelFee) || el.modelFee === 'NaN'
-                          ? 'Invalid Fee'
-                          : `${el.modelFee} AR`}
-                      </Typography>
-                      <Typography>
-                        Average Fee:{' '}
-                        {Number.isNaN(el.avgFee) || el.avgFee === 'NaN'
-                          ? 'Not enough Operators for Fee'
-                          : `${el.avgFee} AR`}
-                      </Typography>
-                      <Typography>Total Operators: {el.totalOperators}</Typography>
-                    </CardActionArea>
-                  </Box>
-                </Card>
-              ))
-            )}
-          </Stack>
-        </Box>
-      </Container>
-    </>
+    <Container>
+      <Box>
+        <Stack spacing={4} sx={{ margin: '16px' }}>
+          {error ? (
+            <Container>
+              <Typography alignItems='center' display='flex' flexDirection='column'>
+                Could not Fetch Available Models.
+                <Button
+                  sx={{ width: 'fit-content' }}
+                  endIcon={<ReplayIcon />}
+                  onClick={() => refetch()}
+                >
+                  Retry
+                </Button>
+              </Typography>
+            </Container>
+          ) : (
+            txs.map((el: IEdge) => <ModelCard modelTx={el} key={el.node.id} />)
+          )}
+          {loading &&
+            mockArray.map((val) => (
+              <Card key={val}>
+                <Box>
+                  <CardActionArea>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                  </CardActionArea>
+                </Box>
+              </Card>
+            ))}
+        </Stack>
+        <div ref={target}></div>
+      </Box>
+    </Container>
   );
 };
 

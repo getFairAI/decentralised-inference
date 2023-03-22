@@ -14,7 +14,7 @@ export const GET_IMAGES_TXIDS = gql`
 `;
 
 export const GET_TX = gql`
-  query LIST_MODELS_QUERY($id: ID!) {
+  query GET_TX($id: ID!) {
     transactions(ids: [$id]) {
       edges {
         cursor
@@ -57,15 +57,73 @@ export const GET_TX = gql`
   }
 `;
 
-export const LIST_MODELS_QUERY = gql`
-  query LIST_MODELS_QUERY {
+export const LIST_LATEST_MODELS_QUERY = gql`
+  query LIST_MODELS_QUERY($first: Int!) {
     transactions(
       tags: [
         { name: "App-Name", values: ["Fair Protocol"] }
         { name: "Operation-Name", values: "Model Creation Payment" }
       ]
       recipients:["${MARKETPLACE_ADDRESS}"],
+      first: $first
+      sort: HEIGHT_DESC
     ) {
+      edges {
+        cursor
+        node {
+          id
+          signature
+          recipient
+          owner {
+            address
+            key
+          }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const LIST_MODELS_QUERY = gql`
+  query LIST_MODELS_QUERY($first: Int!, $after: String) {
+    transactions(
+      tags: [
+        { name: "App-Name", values: ["Fair Protocol"] }
+        { name: "Operation-Name", values: "Model Creation Payment" }
+      ]
+      recipients:["${MARKETPLACE_ADDRESS}"],
+      first: $first
+      after: $after,
+      sort: HEIGHT_DESC
+    ) {
+      pageInfo {
+        hasNextPage
+      }
       edges {
         cursor
         node {
@@ -296,50 +354,55 @@ export const QUERY_REGISTERED_MODELS = gql`
 ], */
 
 export const QUERY_REGISTERED_OPERATORS = gql`
-  query QUERY_REGISTERED_OPERATORS($tags: [TagFilter!]) {
+  query QUERY_REGISTERED_OPERATORS($tags: [TagFilter!], $first: Int, $after: String) {
     transactions(
       recipients:["${MARKETPLACE_ADDRESS}"],
       tags: $tags
-      sort: HEIGHT_DESC
+      sort: HEIGHT_DESC,
+      first: $first,
+      after: $after
     )
     {
-        edges {
-            cursor
-            node {
-                id
-                signature
-                recipient
-                owner {
-                    address
-                    key
-                }
-                fee {
-                    winston
-                    ar
-                }
-                quantity {
-                    winston
-                    ar
-                }
-                data {
-                    size
-                    type
-                }
-                tags {
-                    name
-                    value
-                }
-                block {
-                    id
-                    timestamp
-                    height
-                    previous
-                }
-                bundledIn {
-                    id
-                }
-            }
-        }
+      pageInfo {
+        hasNextPage
+      }
+      edges {
+          cursor
+          node {
+              id
+              signature
+              recipient
+              owner {
+                  address
+                  key
+              }
+              fee {
+                  winston
+                  ar
+              }
+              quantity {
+                  winston
+                  ar
+              }
+              data {
+                  size
+                  type
+              }
+              tags {
+                  name
+                  value
+              }
+              block {
+                  id
+                  timestamp
+                  height
+                  previous
+              }
+              bundledIn {
+                  id
+              }
+          }
+      }
     }
   }
 `;
@@ -500,17 +563,22 @@ export const QUERY_PAID_FEE_OPERATORS = gql`
     $tags: [TagFilter!]
     $owner: String!
     $minBlockHeight: Int!
-    $maxBlockHeight: Int!
+    $first: Int,
+    $after: String
   ) {
     transactions(
-      first: 1,
       recipients:["${MARKETPLACE_ADDRESS}"],
       tags: $tags,
       owners: [$owner],
-      block: {min: $minBlockHeight, max: $maxBlockHeight},
-      sort: HEIGHT_DESC
+      block: {min: $minBlockHeight},
+      sort: HEIGHT_DESC,
+      first: $first,
+      after: $after
     )
     {
+      pageInfo {
+        hasNextPage
+      }
       edges {
         cursor
         node {
@@ -662,9 +730,24 @@ export const QUERY_OPERATOR_HISTORY = gql`
 `;
 
 export const QUERY_CHAT_REQUESTS = gql`
-  query QUERY_CHAT_REQUESTS($address: String!, $tagsRequests: [TagFilter!]) {
-    transactions(tags: $tagsRequests, owners: [$address]) {
+  query QUERY_CHAT_REQUESTS(
+    $address: String!
+    $tagsRequests: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(
+      tags: $tagsRequests
+      owners: [$address]
+      sort: HEIGHT_DESC
+      first: $first
+      after: $after
+    ) {
+      pageInfo {
+        hasNextPage
+      }
       edges {
+        cursor
         node {
           id
           recipient
@@ -688,8 +771,49 @@ export const QUERY_CHAT_REQUESTS = gql`
 `;
 
 export const QUERY_CHAT_RESPONSES = gql`
-  query QUERY_CHAT_RESPONSES($operators: [String!], $tagsResponses: [TagFilter!]) {
-    transactions(tags: $tagsResponses, owners: $operators) {
+  query QUERY_CHAT_RESPONSES(
+    $operators: [String!]
+    $tagsResponses: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(
+      tags: $tagsResponses
+      owners: $operators
+      sort: HEIGHT_DESC
+      first: $first
+      after: $after
+    ) {
+      pageInfo {
+        hasNextPage
+      }
+      edges {
+        cursor
+        node {
+          id
+          recipient
+          tags {
+            name
+            value
+          }
+          owner {
+            address
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_CHAT_REQUESTS_POLLING = gql`
+  query QUERY_CHAT_REQUESTS($address: String!, $tagsRequests: [TagFilter!], $first: Int) {
+    transactions(tags: $tagsRequests, owners: [$address], sort: HEIGHT_DESC, first: $first) {
       edges {
         node {
           id
@@ -713,81 +837,25 @@ export const QUERY_CHAT_RESPONSES = gql`
   }
 `;
 
-export const QUERY_CHAT_HISTORY = gql`
-  query chat_history($address: String!, $tagsRequests: [TagFilter!], $tagsResults: [TagFilter!]) {
-    requests: transactions(tags: $tagsRequests, owners: [$address]) {
+export const QUERY_CHAT_RESPONSES_POLLING = gql`
+  query QUERY_CHAT_RESPONSES($operators: [String!], $tagsResponses: [TagFilter!], $first: Int) {
+    transactions(tags: $tagsResponses, owners: $operators, sort: HEIGHT_DESC, first: $first) {
       edges {
         node {
           id
-          signature
           recipient
-          owner {
-            address
-            key
-          }
-          fee {
-            winston
-            ar
-          }
-          quantity {
-            winston
-            ar
-          }
-          data {
-            size
-            type
-          }
           tags {
             name
             value
+          }
+          owner {
+            address
           }
           block {
             id
             timestamp
             height
             previous
-          }
-          bundledIn {
-            id
-          }
-        }
-      }
-    }
-
-    results: transactions(tags: $tagsResults, recipients: [$address]) {
-      edges {
-        node {
-          id
-          signature
-          recipient
-          owner {
-            address
-            key
-          }
-          fee {
-            winston
-            ar
-          }
-          quantity {
-            winston
-            ar
-          }
-          data {
-            size
-            type
-          }
-          tags {
-            name
-            value
-          }
-          block {
-            id
-            timestamp
-            height
-            previous
-          }
-          bundledIn {
-            id
           }
         }
       }
@@ -796,12 +864,24 @@ export const QUERY_CHAT_HISTORY = gql`
 `;
 
 /**
- * Get latest 100 inference payment requests for operator
+ * Get latest X inference payment requests for operator
  */
 export const QUERY_REQUESTS_FOR_OPERATOR = gql`
-  query QUERY_REQUESTS_FOR_OPERATOR($recipients: [String!], $tags: [TagFilter!]) {
-    transactions(tags: $tags, recipients: $recipients, first: 100, sort: HEIGHT_DESC) {
+  query QUERY_REQUESTS_FOR_OPERATOR(
+    $recipient: String!
+    $tags: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(
+      tags: $tags
+      recipients: [$recipient]
+      first: $first
+      after: $after
+      sort: HEIGHT_DESC
+    ) {
       edges {
+        cursor
         node {
           recipient
           tags {
@@ -816,14 +896,23 @@ export const QUERY_REQUESTS_FOR_OPERATOR = gql`
           }
         }
       }
+      pageInfo {
+        hasNextPage
+      }
     }
   }
 `;
 
 export const QUERY_RESPONSES_BY_OPERATOR = gql`
-  query QUERY_RESPONSES_BY_OPERATOR($owners: [String!], $tags: [TagFilter!]) {
-    transactions(tags: $tags, owners: $owners) {
+  query QUERY_RESPONSES_BY_OPERATOR(
+    $owner: String!
+    $tags: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(tags: $tags, owners: [$owner], first: $first, after: $after, sort: HEIGHT_DESC) {
       edges {
+        cursor
         node {
           id
           owner {
@@ -831,6 +920,7 @@ export const QUERY_RESPONSES_BY_OPERATOR = gql`
           }
           block {
             timestamp
+            height
           }
           tags {
             name
@@ -840,6 +930,9 @@ export const QUERY_RESPONSES_BY_OPERATOR = gql`
             ar
           }
         }
+      }
+      pageInfo {
+        hasNextPage
       }
     }
   }
