@@ -4,21 +4,7 @@ import { ApolloClient, ApolloLink, from, HttpLink, InMemoryCache, split } from '
 
 const mapLink = new ApolloLink((operation, forward) =>
   forward(operation).map((result) => {
-    if (
-      operation.operationName === 'results_responses' ||
-      operation.operationName === 'chat_history'
-    ) {
-      const nested = result.data as { results: ITransactions; requests: ITransactions };
-      const parsedResult = {
-        ...result,
-        data: {
-          results: nested.results.edges,
-          requests: nested.requests.edges,
-        },
-      };
-
-      return parsedResult;
-    } else if (operation.operationName === 'history') {
+    if (operation.operationName === 'history') {
       const nested = result.data as { owned: ITransactions; received: ITransactions };
       const parsedResult = {
         ...result,
