@@ -730,8 +730,19 @@ export const QUERY_OPERATOR_HISTORY = gql`
 `;
 
 export const QUERY_CHAT_REQUESTS = gql`
-  query QUERY_CHAT_REQUESTS($address: String!, $tagsRequests: [TagFilter!], $first: Int, $after: String) {
-    transactions(tags: $tagsRequests, owners: [$address], sort: HEIGHT_DESC, first: $first, after: $after) {
+  query QUERY_CHAT_REQUESTS(
+    $address: String!
+    $tagsRequests: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(
+      tags: $tagsRequests
+      owners: [$address]
+      sort: HEIGHT_DESC
+      first: $first
+      after: $after
+    ) {
       pageInfo {
         hasNextPage
       }
@@ -760,8 +771,19 @@ export const QUERY_CHAT_REQUESTS = gql`
 `;
 
 export const QUERY_CHAT_RESPONSES = gql`
-  query QUERY_CHAT_RESPONSES($operators: [String!], $tagsResponses: [TagFilter!], $first: Int, $after: String) {
-    transactions(tags: $tagsResponses, owners: $operators, sort: HEIGHT_DESC, first: $first, after: $after) {
+  query QUERY_CHAT_RESPONSES(
+    $operators: [String!]
+    $tagsResponses: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(
+      tags: $tagsResponses
+      owners: $operators
+      sort: HEIGHT_DESC
+      first: $first
+      after: $after
+    ) {
       pageInfo {
         hasNextPage
       }
@@ -845,8 +867,19 @@ export const QUERY_CHAT_RESPONSES_POLLING = gql`
  * Get latest X inference payment requests for operator
  */
 export const QUERY_REQUESTS_FOR_OPERATOR = gql`
-  query QUERY_REQUESTS_FOR_OPERATOR($recipient: String!, $tags: [TagFilter!], $first: Int, $after: String) {
-    transactions(tags: $tags, recipients: [$recipient], first: $first, after: $after, sort: HEIGHT_DESC) {
+  query QUERY_REQUESTS_FOR_OPERATOR(
+    $recipient: String!
+    $tags: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(
+      tags: $tags
+      recipients: [$recipient]
+      first: $first
+      after: $after
+      sort: HEIGHT_DESC
+    ) {
       edges {
         cursor
         node {
@@ -871,7 +904,12 @@ export const QUERY_REQUESTS_FOR_OPERATOR = gql`
 `;
 
 export const QUERY_RESPONSES_BY_OPERATOR = gql`
-  query QUERY_RESPONSES_BY_OPERATOR($owner: String!, $tags: [TagFilter!], $first: Int, $after: String) {
+  query QUERY_RESPONSES_BY_OPERATOR(
+    $owner: String!
+    $tags: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
     transactions(tags: $tags, owners: [$owner], first: $first, after: $after, sort: HEIGHT_DESC) {
       edges {
         cursor

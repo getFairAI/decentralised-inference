@@ -10,111 +10,13 @@ const mocks: IEdge[] = [
     cursor: 'cursor1',
     node: {
       id: 'txid',
-        owner: {
-          address: 'mock 1 address',
-          key: 'key'
-        },
-        quantity: {
-          ar: '0',
-          winston: '0'
-        },
-        block: {
-          timestamp: 2,
-          height: 1,
-          id: 'id',
-          previous: 'prvious',
-        },
-        tags: [
-          {
-            name: 'Operator-Fee',
-            value: '100000000'
-          },
-          {
-            name: 'model-Name',
-            value: 'testModel1'
-          },
-          {
-            name: 'Model-Creator',
-            value: 'testCreator1',
-          },
-          {
-            name: 'Model-Transaction',
-            value: 'testModel1tx'
-          }
-        ],
-        recipient: '',
-        fee: {
-          ar: '',
-          winston: ''
-        },
-        data: {
-          size: 0,
-          type: ''
-        },
-        signature: 'signature'
-    }
-  },
-  {
-    cursor: 'cursor1',
-    node: {
-      id: 'txid2',
-        owner: {
-          address: 'mock 1 address',
-          key: 'key'
-        },
-        quantity: {
-          ar: '0',
-          winston: '0'
-        },
-        block: {
-          timestamp: 3,
-          height: 2,
-          id: 'id',
-          previous: 'prvious',
-        },
-        tags: [
-          {
-            name: 'Operator-Fee',
-            value: '200000000'
-          },
-          {
-            name: 'model-Name',
-            value: 'testModel1'
-          },
-          {
-            name: 'Model-Creator',
-            value: 'testCreator1',
-          },
-          {
-            name: 'Model-Transaction',
-            value: 'testModel1tx'
-          }
-        ],
-        recipient: '',
-        fee: {
-          ar: '',
-          winston: ''
-        },
-        data: {
-          size: 0,
-          type: ''
-        },
-        signature: 'signature'
-    }
-  },
-];
-
-const mockState = {
-  cursor: 'cursor1',
-  node: {
-    id: 'testModel1tx',
       owner: {
-        address: 'testCreator1',
-        key: 'key'
+        address: 'mock 1 address',
+        key: 'key',
       },
       quantity: {
         ar: '0',
-        winston: '0'
+        winston: '0',
       },
       block: {
         timestamp: 2,
@@ -124,29 +26,127 @@ const mockState = {
       },
       tags: [
         {
-          name: 'Model-Fee',
-          value: '100000000'
+          name: 'Operator-Fee',
+          value: '100000000',
         },
         {
           name: 'model-Name',
-          value: 'testModel1'
+          value: 'testModel1',
         },
         {
           name: 'Model-Creator',
           value: 'testCreator1',
         },
+        {
+          name: 'Model-Transaction',
+          value: 'testModel1tx',
+        },
       ],
       recipient: '',
       fee: {
         ar: '',
-        winston: ''
+        winston: '',
       },
       data: {
         size: 0,
-        type: ''
+        type: '',
       },
-      signature: 'signature'
-  }
+      signature: 'signature',
+    },
+  },
+  {
+    cursor: 'cursor1',
+    node: {
+      id: 'txid2',
+      owner: {
+        address: 'mock 1 address',
+        key: 'key',
+      },
+      quantity: {
+        ar: '0',
+        winston: '0',
+      },
+      block: {
+        timestamp: 3,
+        height: 2,
+        id: 'id',
+        previous: 'prvious',
+      },
+      tags: [
+        {
+          name: 'Operator-Fee',
+          value: '200000000',
+        },
+        {
+          name: 'model-Name',
+          value: 'testModel1',
+        },
+        {
+          name: 'Model-Creator',
+          value: 'testCreator1',
+        },
+        {
+          name: 'Model-Transaction',
+          value: 'testModel1tx',
+        },
+      ],
+      recipient: '',
+      fee: {
+        ar: '',
+        winston: '',
+      },
+      data: {
+        size: 0,
+        type: '',
+      },
+      signature: 'signature',
+    },
+  },
+];
+
+const mockState = {
+  cursor: 'cursor1',
+  node: {
+    id: 'testModel1tx',
+    owner: {
+      address: 'testCreator1',
+      key: 'key',
+    },
+    quantity: {
+      ar: '0',
+      winston: '0',
+    },
+    block: {
+      timestamp: 2,
+      height: 1,
+      id: 'id',
+      previous: 'prvious',
+    },
+    tags: [
+      {
+        name: 'Model-Fee',
+        value: '100000000',
+      },
+      {
+        name: 'model-Name',
+        value: 'testModel1',
+      },
+      {
+        name: 'Model-Creator',
+        value: 'testCreator1',
+      },
+    ],
+    recipient: '',
+    fee: {
+      ar: '',
+      winston: '',
+    },
+    data: {
+      size: 0,
+      type: '',
+    },
+    signature: 'signature',
+  },
 };
 
 const fakeRetry = () => {
@@ -158,7 +158,6 @@ const fakeFetchMore = async () => {
     data: undefined,
     loading: false,
     networkStatus: 1,
-
   };
 };
 
@@ -168,9 +167,8 @@ const mockError: ApolloError = {
   clientErrors: [],
   graphQLErrors: [],
   networkError: null,
-  extraInfo: null
+  extraInfo: null,
 };
-
 
 const mockIntersectionObserver = class {
   constructor() {
@@ -194,11 +192,18 @@ describe('components/basic-table.tsx', () => {
   it('should display data', () => {
     render(
       <MockedProvider>
-        <BasicTable operators={mocks} loading={false} retry={fakeRetry} fetchMore={fakeFetchMore} state={mockState} hasNextPage={false}/>
+        <BasicTable
+          operators={mocks}
+          loading={false}
+          retry={fakeRetry}
+          fetchMore={fakeFetchMore}
+          state={mockState}
+          hasNextPage={false}
+        />
       </MockedProvider>,
       {
         wrapper: BrowserRouter,
-      }
+      },
     );
 
     const allRows = screen.getAllByRole('row');
@@ -206,9 +211,19 @@ describe('components/basic-table.tsx', () => {
   });
 
   it.skip('should display loading', () => {
-    render(<BasicTable operators={mocks} loading={true} retry={fakeRetry} fetchMore={fakeFetchMore} state={mockState} hasNextPage={false} />, {
-      wrapper: BrowserRouter,
-    });
+    render(
+      <BasicTable
+        operators={mocks}
+        loading={true}
+        retry={fakeRetry}
+        fetchMore={fakeFetchMore}
+        state={mockState}
+        hasNextPage={false}
+      />,
+      {
+        wrapper: BrowserRouter,
+      },
+    );
 
     const allRows = screen.getAllByRole('row');
     expect(allRows.length).toEqual(1);
@@ -216,9 +231,20 @@ describe('components/basic-table.tsx', () => {
   });
 
   it.skip('should display error', () => {
-    render(<BasicTable operators={mocks} loading={false} retry={fakeRetry} fetchMore={fakeFetchMore} state={mockState} hasNextPage={false} error={mockError}/>, {
-      wrapper: BrowserRouter,
-    });
+    render(
+      <BasicTable
+        operators={mocks}
+        loading={false}
+        retry={fakeRetry}
+        fetchMore={fakeFetchMore}
+        state={mockState}
+        hasNextPage={false}
+        error={mockError}
+      />,
+      {
+        wrapper: BrowserRouter,
+      },
+    );
 
     const allRows = screen.getAllByRole('row');
     expect(allRows.length).toEqual(1);

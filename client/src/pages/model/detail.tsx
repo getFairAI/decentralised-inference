@@ -18,9 +18,7 @@ import BasicTable from '@/components/basic-table';
 import Stamp from '@/components/stamp';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 import { NetworkStatus, useQuery } from '@apollo/client';
-import {
-  QUERY_REGISTERED_OPERATORS,
-} from '@/queries/graphql';
+import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import {
   APP_VERSION,
   DEFAULT_TAGS,
@@ -37,8 +35,8 @@ import { NumericFormat } from 'react-number-format';
 const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
   const { state } = useLocation();
-  const [ operatorsData, setOperatorsData ] = useState<IEdge[]>([]);
-  const [ hasNextPage, setHasNextPage ] = useState(false);
+  const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [feeValue, setFeeValue] = useState(0);
   const [feeDirty, setFeeDirty] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -136,12 +134,16 @@ const Detail = () => {
     // check has paid correct registration fee
     if (queryData && networkStatus === NetworkStatus.ready) {
       setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
-      const uniqueOperators = Array.from(new Set(queryData.transactions.edges.map((el: IEdge) => el.node.owner.address)));
+      const uniqueOperators = Array.from(
+        new Set(queryData.transactions.edges.map((el: IEdge) => el.node.owner.address)),
+      );
       setOperatorsData(
-        queryData.transactions.edges.filter((el: IEdge) => !!uniqueOperators.find(unique => unique === el.node.owner.address))
+        queryData.transactions.edges.filter(
+          (el: IEdge) => !!uniqueOperators.find((unique) => unique === el.node.owner.address),
+        ),
       );
     }
-  }, [ queryData ]);
+  }, [queryData]);
 
   return (
     <Container>

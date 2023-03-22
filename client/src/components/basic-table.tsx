@@ -5,14 +5,13 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import { Box, Button, Skeleton, Tooltip, Typography } from '@mui/material';
 import {
-  Box,
-  Button,
-  Skeleton,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { ApolloError, ApolloQueryResult, FetchMoreQueryOptions, OperationVariables } from '@apollo/client';
+  ApolloError,
+  ApolloQueryResult,
+  FetchMoreQueryOptions,
+  OperationVariables,
+} from '@apollo/client';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { genLoadingArray } from '@/utils/common';
 import OperatorRow from './operator-row';
@@ -20,26 +19,29 @@ import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
 import { useEffect, useRef } from 'react';
 import useOnScreen from '@/hooks/useOnScreen';
 
-
-type fetchMoreFn = <TFetchData = unknown, TFetchVars extends OperationVariables = { tags: ITag[], first: number}>(
+type fetchMoreFn = <
+  TFetchData = unknown,
+  TFetchVars extends OperationVariables = { tags: ITag[]; first: number },
+>(
   fetchMoreOptions: FetchMoreQueryOptions<TFetchVars, TFetchData> & {
     updateQuery?: (
       previousQueryResult: TFetchData,
       options: {
         fetchMoreResult: TFetchData;
         variables: TFetchVars;
-      }
+      },
     ) => TFetchData;
-  }) => Promise<ApolloQueryResult<TFetchData | undefined>>;
+  },
+) => Promise<ApolloQueryResult<TFetchData | undefined>>;
 
 export default function BasicTable(props: {
-  operators: IEdge[],
-  loading: boolean,
-  error?: ApolloError,
-  state: IEdge,
-  retry: () => void,
-  hasNextPage: boolean,
-  fetchMore: fetchMoreFn,
+  operators: IEdge[];
+  loading: boolean;
+  error?: ApolloError;
+  state: IEdge;
+  retry: () => void;
+  hasNextPage: boolean;
+  fetchMore: fetchMoreFn;
 }) {
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
@@ -55,12 +57,12 @@ export default function BasicTable(props: {
           if (!fetchMoreResult) return prev;
           const newResult = Object.assign({}, prev, {
             transactions: {
-              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
-            }
+            },
           });
           return newResult;
-        }
+        },
       });
     }
   }, [isOnScreen, props.operators]);
@@ -126,8 +128,14 @@ export default function BasicTable(props: {
               })
             ) : (
               props.operators.map((row) => (
-                <OperatorRow key={row.node.id} operatorTx={row} modelCreator={props.state.node.owner.address}
-                  modelName={props.state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value as string}
+                <OperatorRow
+                  key={row.node.id}
+                  operatorTx={row}
+                  modelCreator={props.state.node.owner.address}
+                  modelName={
+                    props.state.node.tags.find((el: ITag) => el.name === 'Model-Name')
+                      ?.value as string
+                  }
                   state={props.state}
                 />
               ))

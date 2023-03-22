@@ -20,21 +20,14 @@ import useOnScreen from '@/hooks/useOnScreen';
 
 const Operators = () => {
   const [txs, setTxs] = useState<IEdge[]>([]);
-  const [ hasNextPage, setHasNextPage ] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const elementsPerPage = 5;
 
   const mockArray = genLoadingArray(6);
 
-  const {
-    data,
-    loading,
-    error,
-    networkStatus,
-    refetch,
-    fetchMore,
-  } = useQuery(LIST_MODELS_QUERY, {
+  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(LIST_MODELS_QUERY, {
     variables: {
       first: elementsPerPage,
     },
@@ -51,12 +44,12 @@ const Operators = () => {
           if (!fetchMoreResult) return prev;
           const newResult = Object.assign({}, prev, {
             transactions: {
-              edges: [ ...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
-            }
+            },
           });
           return newResult;
-        }
+        },
       });
     }
   }, [isOnScreen, txs]);
@@ -64,61 +57,64 @@ const Operators = () => {
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
       setHasNextPage(data.transactions.pageInfo.hasNextPage);
-      setTxs(data.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE));
+      setTxs(
+        data.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
+      );
     }
-  }, [ data ]);
+  }, [data]);
 
-  return <Container>
-    <Box>
-      <Stack spacing={4} sx={{ margin: '16px' }}>
-        {error ? (
-          <Container>
-            <Typography alignItems='center' display='flex' flexDirection='column'>
-              Could not Fetch Available Models.
-              <Button
-                sx={{ width: 'fit-content' }}
-                endIcon={<ReplayIcon />}
-                onClick={() => refetch()}
-              >
-                Retry
-              </Button>
-            </Typography>
-          </Container>
-        ) : (
-          txs.map((el: IEdge) => <ModelCard modelTx={el} key={el.node.id}/>)
-        )}
-        {
-          loading && mockArray.map((val) =>
-            <Card key={val}>
-              <Box>
-                <CardActionArea>
-                  <Typography>
-                    <Skeleton animation={'wave'} />
-                  </Typography>
-                  <Typography>
-                    <Skeleton animation={'wave'} />
-                  </Typography>
-                  <Typography>
-                    <Skeleton animation={'wave'} />
-                  </Typography>
-                  <Typography>
-                    <Skeleton animation={'wave'} />
-                  </Typography>
-                  <Typography>
-                    <Skeleton animation={'wave'} />
-                  </Typography>
-                  <Typography>
-                    <Skeleton animation={'wave'} />
-                  </Typography>
-                </CardActionArea>
-              </Box>
-            </Card>
-          )
-        }
-      </Stack>
-      <div ref={target}></div>
-    </Box>
-  </Container>;
+  return (
+    <Container>
+      <Box>
+        <Stack spacing={4} sx={{ margin: '16px' }}>
+          {error ? (
+            <Container>
+              <Typography alignItems='center' display='flex' flexDirection='column'>
+                Could not Fetch Available Models.
+                <Button
+                  sx={{ width: 'fit-content' }}
+                  endIcon={<ReplayIcon />}
+                  onClick={() => refetch()}
+                >
+                  Retry
+                </Button>
+              </Typography>
+            </Container>
+          ) : (
+            txs.map((el: IEdge) => <ModelCard modelTx={el} key={el.node.id} />)
+          )}
+          {loading &&
+            mockArray.map((val) => (
+              <Card key={val}>
+                <Box>
+                  <CardActionArea>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                    <Typography>
+                      <Skeleton animation={'wave'} />
+                    </Typography>
+                  </CardActionArea>
+                </Box>
+              </Card>
+            ))}
+        </Stack>
+        <div ref={target}></div>
+      </Box>
+    </Container>
+  );
 };
 
 export default Operators;
