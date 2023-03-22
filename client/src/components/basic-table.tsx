@@ -30,7 +30,7 @@ type fetchMoreFn = <TFetchData = unknown, TFetchVars extends OperationVariables 
         variables: TFetchVars;
       }
     ) => TFetchData;
-  }) => Promise<ApolloQueryResult<TFetchData>>;
+  }) => Promise<ApolloQueryResult<TFetchData | undefined>>;
 
 export default function BasicTable(props: {
   operators: IEdge[],

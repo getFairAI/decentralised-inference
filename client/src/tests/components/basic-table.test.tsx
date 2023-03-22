@@ -1,50 +1,212 @@
 import { render, screen } from '@testing-library/react';
-import BasicTable, { RowData } from '@/components/basic-table';
+import BasicTable from '@/components/basic-table';
 import { BrowserRouter } from 'react-router-dom';
+import { IEdge } from '@/interfaces/arweave';
+import { ApolloError } from '@apollo/client';
+import { MockedProvider } from '@apollo/client/testing';
 
-const date1 = Date.now() * 1000;
-const date2 = Date.now() * 1000 + 3600;
-const mocks: RowData[] = [
+const mocks: IEdge[] = [
   {
-    quantityAR: '0.1',
-    address: 'mock 1 address',
-    stamps: 9,
-    fee: '100000000',
-    registrationTimestamp: date1.toLocaleString(),
-    availability: 100,
-    modelName: 'testModel1',
-    modelCreator: 'testCreator1',
-    modelTransaction: 'testModel1tx',
+    cursor: 'cursor1',
+    node: {
+      id: 'txid',
+        owner: {
+          address: 'mock 1 address',
+          key: 'key'
+        },
+        quantity: {
+          ar: '0',
+          winston: '0'
+        },
+        block: {
+          timestamp: 2,
+          height: 1,
+          id: 'id',
+          previous: 'prvious',
+        },
+        tags: [
+          {
+            name: 'Operator-Fee',
+            value: '100000000'
+          },
+          {
+            name: 'model-Name',
+            value: 'testModel1'
+          },
+          {
+            name: 'Model-Creator',
+            value: 'testCreator1',
+          },
+          {
+            name: 'Model-Transaction',
+            value: 'testModel1tx'
+          }
+        ],
+        recipient: '',
+        fee: {
+          ar: '',
+          winston: ''
+        },
+        data: {
+          size: 0,
+          type: ''
+        },
+        signature: 'signature'
+    }
   },
   {
-    quantityAR: '0.05',
-    address: 'mock 2 address',
-    stamps: 903,
-    fee: '200000000',
-    registrationTimestamp: date2.toLocaleString(),
-    availability: 89,
-    modelName: 'testModel1',
-    modelCreator: 'testCreator1',
-    modelTransaction: 'testModel1tx',
+    cursor: 'cursor1',
+    node: {
+      id: 'txid2',
+        owner: {
+          address: 'mock 1 address',
+          key: 'key'
+        },
+        quantity: {
+          ar: '0',
+          winston: '0'
+        },
+        block: {
+          timestamp: 3,
+          height: 2,
+          id: 'id',
+          previous: 'prvious',
+        },
+        tags: [
+          {
+            name: 'Operator-Fee',
+            value: '200000000'
+          },
+          {
+            name: 'model-Name',
+            value: 'testModel1'
+          },
+          {
+            name: 'Model-Creator',
+            value: 'testCreator1',
+          },
+          {
+            name: 'Model-Transaction',
+            value: 'testModel1tx'
+          }
+        ],
+        recipient: '',
+        fee: {
+          ar: '',
+          winston: ''
+        },
+        data: {
+          size: 0,
+          type: ''
+        },
+        signature: 'signature'
+    }
   },
 ];
+
+const mockState = {
+  cursor: 'cursor1',
+  node: {
+    id: 'testModel1tx',
+      owner: {
+        address: 'testCreator1',
+        key: 'key'
+      },
+      quantity: {
+        ar: '0',
+        winston: '0'
+      },
+      block: {
+        timestamp: 2,
+        height: 1,
+        id: 'id',
+        previous: 'prvious',
+      },
+      tags: [
+        {
+          name: 'Model-Fee',
+          value: '100000000'
+        },
+        {
+          name: 'model-Name',
+          value: 'testModel1'
+        },
+        {
+          name: 'Model-Creator',
+          value: 'testCreator1',
+        },
+      ],
+      recipient: '',
+      fee: {
+        ar: '',
+        winston: ''
+      },
+      data: {
+        size: 0,
+        type: ''
+      },
+      signature: 'signature'
+  }
+};
 
 const fakeRetry = () => {
   return;
 };
 
+const fakeFetchMore = async () => {
+  return {
+    data: undefined,
+    loading: false,
+    networkStatus: 1,
+
+  };
+};
+
+const mockError: ApolloError = {
+  name: '',
+  message: '',
+  clientErrors: [],
+  graphQLErrors: [],
+  networkError: null,
+  extraInfo: null
+};
+
+
+const mockIntersectionObserver = class {
+  constructor() {
+    return;
+  }
+  observe() {
+    return;
+  }
+  unobserve() {
+    return;
+  }
+  disconnect() {
+    return;
+  }
+};
+
 describe('components/basic-table.tsx', () => {
+  beforeEach(async () => {
+    (window.IntersectionObserver as unknown) = mockIntersectionObserver;
+  });
   it('should display data', () => {
-    render(<BasicTable data={mocks} loading={false} retry={fakeRetry} />, {
-      wrapper: BrowserRouter,
-    });
+    render(
+      <MockedProvider>
+        <BasicTable operators={mocks} loading={false} retry={fakeRetry} fetchMore={fakeFetchMore} state={mockState} hasNextPage={false}/>
+      </MockedProvider>,
+      {
+        wrapper: BrowserRouter,
+      }
+    );
 
     const allRows = screen.getAllByRole('row');
     expect(allRows.length).toEqual(3); // 2 data rows + 1 header row
   });
 
   it.skip('should display loading', () => {
-    render(<BasicTable data={mocks} loading={true} retry={fakeRetry} />, {
+    render(<BasicTable operators={mocks} loading={true} retry={fakeRetry} fetchMore={fakeFetchMore} state={mockState} hasNextPage={false} />, {
       wrapper: BrowserRouter,
     });
 
@@ -54,7 +216,7 @@ describe('components/basic-table.tsx', () => {
   });
 
   it.skip('should display error', () => {
-    render(<BasicTable data={mocks} loading={true} retry={fakeRetry} />, {
+    render(<BasicTable operators={mocks} loading={false} retry={fakeRetry} fetchMore={fakeFetchMore} state={mockState} hasNextPage={false} error={mockError}/>, {
       wrapper: BrowserRouter,
     });
 
