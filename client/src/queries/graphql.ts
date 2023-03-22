@@ -677,9 +677,13 @@ export const QUERY_OPERATOR_HISTORY = gql`
 `;
 
 export const QUERY_CHAT_REQUESTS = gql`
-  query QUERY_CHAT_REQUESTS($address: String!, $tagsRequests: [TagFilter!]) {
-    transactions(tags: $tagsRequests, owners: [$address]) {
+  query QUERY_CHAT_REQUESTS($address: String!, $tagsRequests: [TagFilter!], $first: Int, $after: String) {
+    transactions(tags: $tagsRequests, owners: [$address], sort: HEIGHT_DESC, first: $first, after: $after) {
+      pageInfo {
+        hasNextPage
+      }
       edges {
+        cursor
         node {
           id
           recipient
@@ -703,8 +707,38 @@ export const QUERY_CHAT_REQUESTS = gql`
 `;
 
 export const QUERY_CHAT_RESPONSES = gql`
-  query QUERY_CHAT_RESPONSES($operators: [String!], $tagsResponses: [TagFilter!]) {
-    transactions(tags: $tagsResponses, owners: $operators) {
+  query QUERY_CHAT_RESPONSES($operators: [String!], $tagsResponses: [TagFilter!], $first: Int, $after: String) {
+    transactions(tags: $tagsResponses, owners: $operators, sort: HEIGHT_DESC, first: $first, after: $after) {
+      pageInfo {
+        hasNextPage
+      }
+      edges {
+        cursor
+        node {
+          id
+          recipient
+          tags {
+            name
+            value
+          }
+          owner {
+            address
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_CHAT_REQUESTS_POLLING = gql`
+  query QUERY_CHAT_REQUESTS($address: String!, $tagsRequests: [TagFilter!], $first: Int) {
+    transactions(tags: $tagsRequests, owners: [$address], sort: HEIGHT_DESC, first: $first) {
       edges {
         node {
           id
@@ -728,81 +762,25 @@ export const QUERY_CHAT_RESPONSES = gql`
   }
 `;
 
-export const QUERY_CHAT_HISTORY = gql`
-  query chat_history($address: String!, $tagsRequests: [TagFilter!], $tagsResults: [TagFilter!]) {
-    requests: transactions(tags: $tagsRequests, owners: [$address]) {
+export const QUERY_CHAT_RESPONSES_POLLING = gql`
+  query QUERY_CHAT_RESPONSES($operators: [String!], $tagsResponses: [TagFilter!], $first: Int) {
+    transactions(tags: $tagsResponses, owners: $operators, sort: HEIGHT_DESC, first: $first) {
       edges {
         node {
           id
-          signature
           recipient
-          owner {
-            address
-            key
-          }
-          fee {
-            winston
-            ar
-          }
-          quantity {
-            winston
-            ar
-          }
-          data {
-            size
-            type
-          }
           tags {
             name
             value
+          }
+          owner {
+            address
           }
           block {
             id
             timestamp
             height
             previous
-          }
-          bundledIn {
-            id
-          }
-        }
-      }
-    }
-
-    results: transactions(tags: $tagsResults, recipients: [$address]) {
-      edges {
-        node {
-          id
-          signature
-          recipient
-          owner {
-            address
-            key
-          }
-          fee {
-            winston
-            ar
-          }
-          quantity {
-            winston
-            ar
-          }
-          data {
-            size
-            type
-          }
-          tags {
-            name
-            value
-          }
-          block {
-            id
-            timestamp
-            height
-            previous
-          }
-          bundledIn {
-            id
           }
         }
       }
