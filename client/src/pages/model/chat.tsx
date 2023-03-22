@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useLazyQuery } from '@apollo/client';
+import { NetworkStatus, useLazyQuery, useQuery } from '@apollo/client';
 import { ChangeEvent, useContext, useEffect, useRef, useState } from 'react';
 import {
   APP_VERSION,
@@ -29,13 +29,17 @@ import {
   MODEL_INFERENCE_RESULT_TAG,
   INFERENCE_PERCENTAGE_FEE,
 } from '@/constants';
-import { QUERY_CHAT_REQUESTS, QUERY_CHAT_RESPONSES } from '@/queries/graphql';
+import {
+  QUERY_CHAT_REQUESTS,
+  QUERY_CHAT_REQUESTS_POLLING,
+  QUERY_CHAT_RESPONSES,
+  QUERY_CHAT_RESPONSES_POLLING,
+} from '@/queries/graphql';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
-import _ from 'lodash';
 import { useSnackbar } from 'notistack';
 import { WebBundlr } from 'bundlr-custom';
 import { WalletContext } from '@/context/wallet';
@@ -43,6 +47,7 @@ import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
 import { genLoadingArray } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
+import useOnScreen from '@/hooks/useOnScreen';
 
 interface Message {
   id: string;
@@ -62,20 +67,58 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
   const [conversationIds, setConversationIds] = useState<string[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string>('C-1');
-  const [allMessages, setAllMessages] = useState<Message[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
   const mockArray = genLoadingArray(5);
   const { enqueueSnackbar } = useSnackbar();
-  const [getChatRequests, { data: requestsData, error: requestError }] =
-    useLazyQuery(QUERY_CHAT_REQUESTS);
+  const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
+  const [hasResponseNextPage, setHasResponseNextPage] = useState(false);
+  const target = useRef<HTMLDivElement>(null);
+  const isOnScreen = useOnScreen(target);
+  const elementsPerPage = 5;
+
+  const { data } = useQuery(QUERY_CHAT_REQUESTS, {
+    skip: !state,
+    variables: {
+      first: 1,
+      address: userAddr,
+      tagsRequests: [
+        ...DEFAULT_TAGS,
+        { name: 'Model-Name', values: [state.modelName] },
+        { name: 'Model-Creator', values: [state.modelCreator] },
+        MODEL_INFERENCE_REQUEST_TAG,
+      ],
+    },
+  });
+
+  const [
+    getChatRequests,
+    {
+      data: requestsData,
+      loading: requestsLoading,
+      error: requestError,
+      networkStatus: requestNetworkStatus,
+      fetchMore: requestFetchMore,
+    },
+  ] = useLazyQuery(QUERY_CHAT_REQUESTS);
   const [
     getChatResponses,
-    { data: responsesData, previousData: responsesPreviousData, error: responseError },
+    {
+      data: responsesData,
+      error: responseError,
+      loading: responsesLoading,
+      networkStatus: responseNetworkStatus,
+      fetchMore: responsesFetchMore,
+    },
   ] = useLazyQuery(QUERY_CHAT_RESPONSES);
+
+  const [getRequestsPolling, { data: requestsPollingData, stopPolling: stopRequestPolling }] =
+    useLazyQuery(QUERY_CHAT_REQUESTS_POLLING);
+  const [getResponsesPolling, { data: responsesPollingData, stopPolling: stopResponsePolling }] =
+    useLazyQuery(QUERY_CHAT_RESPONSES_POLLING);
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
@@ -88,7 +131,24 @@ const Chat = () => {
   }, [userAddr]);
 
   useEffect(() => {
-    if (txidModel && userAddr) {
+    if (txidModel && userAddr && data) {
+      const lastCid = data.transactions.edges[0].node.tags.find(
+        (tag: ITag) => tag.name === 'Conversation-Identifier',
+      )?.value as string;
+      const cidNumber = parseInt(lastCid?.split('-')[1]);
+      const previousCids = [];
+      for (let i = 1; i < cidNumber; i++) {
+        previousCids.push(`C-${i}`);
+      }
+      setConversationIds([...previousCids, lastCid]);
+      setCurrentConversationId(lastCid);
+    }
+  }, [data]); // run only first time
+
+  useEffect(() => {
+    stopRequestPolling();
+    stopResponsePolling();
+    if (currentConversationId) {
       const commonTags = [
         ...DEFAULT_TAGS,
         { name: 'Model-Name', values: [state.modelName] },
@@ -97,25 +157,106 @@ const Chat = () => {
       const tagsRequests = [
         ...commonTags,
         MODEL_INFERENCE_REQUEST_TAG,
-        // { name: 'Conversation-Identifier', values: [currentConversationId] },
+        { name: 'Conversation-Identifier', values: [currentConversationId] },
       ];
       getChatRequests({
         variables: {
+          first: elementsPerPage,
           tagsRequests,
           address: userAddr,
         },
-        pollInterval: 5000,
+        notifyOnNetworkStatusChange: true,
       });
       setMessagesLoading(true);
     }
-  }, []); // run only first time
-
-  useEffect(() => {
-    setMessages(allMessages.filter((el) => el.cid === currentConversationId));
   }, [currentConversationId]);
 
   useEffect(() => {
-    if (requestsData) {
+    if (isOnScreen && hasRequestNextPage && requestsData) {
+      requestFetchMore({
+        variables: {
+          after: requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor,
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+          const newData = fetchMoreResult.transactions.edges;
+          newData.sort((a: IEdge, b: IEdge) => {
+            const aTimestamp =
+              parseInt(a.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+              a.node.block?.timestamp ||
+              Date.now() / 1000;
+            const bTimestamp =
+              parseInt(b.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+              b.node.block?.timestamp ||
+              Date.now() / 1000;
+
+            return aTimestamp - bTimestamp;
+          });
+
+          const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+          for (let i = 0; i < newData.length; ++i) {
+            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
+              merged.push(newData[i]);
+            }
+          }
+          const newResult = Object.assign({}, prev, {
+            transactions: {
+              edges: merged,
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            },
+          });
+
+          return newResult;
+        },
+      });
+    }
+  }, [isOnScreen, requestsData]);
+
+  useEffect(() => {
+    if (isOnScreen && hasResponseNextPage && responsesData) {
+      responsesFetchMore({
+        variables: {
+          after:
+            responsesData.transactions.edges[responsesData.transactions.edges.length - 1].cursor,
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+          const newData = fetchMoreResult.transactions.edges;
+          newData.sort((a: IEdge, b: IEdge) => {
+            const aTimestamp =
+              parseInt(a.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+              a.node.block?.timestamp ||
+              Date.now() / 1000;
+            const bTimestamp =
+              parseInt(b.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+              b.node.block?.timestamp ||
+              Date.now() / 1000;
+
+            return aTimestamp - bTimestamp;
+          });
+
+          const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+          for (let i = 0; i < newData.length; ++i) {
+            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
+              merged.push(newData[i]);
+            }
+          }
+          const newResult = Object.assign({}, prev, {
+            transactions: {
+              edges: merged,
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            },
+          });
+
+          return newResult;
+        },
+      });
+    }
+  }, [isOnScreen, responsesData]);
+
+  useEffect(() => {
+    if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
+      setHasRequestNextPage(requestsData.transactions.pageInfo.hasNextPage);
       const commonTags = [
         ...DEFAULT_TAGS,
         { name: 'Model-Name', values: [state.modelName] },
@@ -126,29 +267,81 @@ const Chat = () => {
         MODEL_INFERENCE_RESULT_TAG,
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
         { name: 'Model-User', values: [userAddr] },
-        { name: 'Request-Transaction', values: requestsData.map((el: IEdge) => el.node.id) },
+        {
+          name: 'Request-Transaction',
+          values: requestsData.transactions.edges
+            .slice(-elementsPerPage)
+            .map((el: IEdge) => el.node.id),
+        }, // slice from end to get latest requests
       ];
       const owners = Array.from(
         new Set(
-          requestsData.map(
+          requestsData.transactions.edges.map(
             (el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value,
           ),
         ),
       );
+      const tagsRequests = [
+        ...commonTags,
+        MODEL_INFERENCE_REQUEST_TAG,
+        { name: 'Conversation-Identifier', values: [currentConversationId] },
+      ];
 
+      getRequestsPolling({
+        variables: {
+          first: elementsPerPage,
+          tagsRequests,
+          address: userAddr,
+        },
+        pollInterval: 5000,
+      });
       getChatResponses({
         variables: {
+          first: elementsPerPage,
           tagsResponses,
           owners,
         },
-        pollInterval: 5000,
+        notifyOnNetworkStatusChange: true,
       });
     }
   }, [requestsData]);
 
   useEffect(() => {
-    if (responsesData !== undefined && !_.isEqual(responsesData, responsesPreviousData)) {
+    if (responsesData && responseNetworkStatus === NetworkStatus.ready) {
+      setHasResponseNextPage(requestsData.transactions.pageInfo.hasNextPage);
       reqData();
+      const commonTags = [
+        ...DEFAULT_TAGS,
+        { name: 'Model-Name', values: [state.modelName] },
+        { name: 'Model-Creator', values: [state.modelCreator] },
+      ];
+      const tagsPollingResponses = [
+        ...commonTags,
+        MODEL_INFERENCE_RESULT_TAG,
+        // { name: 'Conversation-Identifier', values: [currentConversationId] },
+        { name: 'Model-User', values: [userAddr] },
+        {
+          name: 'Request-Transaction',
+          values: requestsData.transactions.edges
+            .slice(-elementsPerPage)
+            .map((el: IEdge) => el.node.id),
+        },
+      ];
+      const owners = Array.from(
+        new Set(
+          requestsData.transactions.edges.map(
+            (el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value,
+          ),
+        ),
+      );
+      getResponsesPolling({
+        variables: {
+          first: elementsPerPage,
+          tagsResponses: tagsPollingResponses,
+          owners,
+        },
+        pollInterval: 5000,
+      });
     }
   }, [responsesData]);
 
@@ -156,8 +349,64 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (!responsesPollingData && !requestsPollingData) return;
+    const requests = responsesPollingData?.transactions?.edges || [];
+    const responses = requestsPollingData?.transactions?.edges || [];
+    // polling only runs for latest `elementsPerPage` elements
+    const allNewData = [...requests, ...responses];
+    const temp: Message[] = [...messages];
+
+    const asyncMap = async () => {
+      await Promise.all(
+        allNewData
+          .filter(
+            (newData) =>
+              !temp.find((msg) => msg.id === newData.node.id) &&
+              newData.node.tags.find((tag: ITag) => tag.name === 'Conversation-Identifier')
+                ?.value === currentConversationId,
+          )
+          .map(async (el: IEdge) => {
+            const data = await getData(el.node.id);
+            const timestamp =
+              parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+              el.node.block?.timestamp ||
+              Date.now() / 1000;
+            const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
+            if (el.node.owner.address === userAddr) {
+              temp.push({
+                id: el.node.id,
+                msg: data,
+                type: 'request',
+                timestamp: timestamp,
+                cid,
+              });
+            } else {
+              temp.push({
+                id: el.node.id,
+                msg: data,
+                type: 'response',
+                timestamp: timestamp,
+                cid,
+              });
+            }
+          }),
+      );
+      temp.sort(function (a, b) {
+        if (a.timestamp === b.timestamp) {
+          return a.type === 'request' ? -1 : 1;
+        }
+        return a.timestamp - b.timestamp;
+      });
+      setMessages(temp.filter((el) => el.cid === currentConversationId));
+    };
+    asyncMap();
+  }, [requestsPollingData, responsesPollingData]);
+
   const handleListItemClick = (cid: string) => {
     setCurrentConversationId(cid);
+    setHasRequestNextPage(false);
+    setHasResponseNextPage(false);
   };
 
   const handleAddConversation = () => {
@@ -177,6 +426,7 @@ const Chat = () => {
   };
 
   const handleSend = async () => {
+    if (!currentConversationId) return;
     const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
     await bundlr.ready();
     const atomicBalance = await bundlr.getLoadedBalance();
@@ -210,6 +460,7 @@ const Chat = () => {
         type: 'request',
         timestamp: tempDate,
         id: bundlrRes.id,
+        cid: currentConversationId,
       });
       setMessages(temp);
       setNewMessage('');
@@ -273,54 +524,50 @@ const Chat = () => {
   };
 
   const reqData = async () => {
-    const allData = [...requestsData, ...responsesData];
+    const allData = [...requestsData.transactions.edges, ...responsesData.transactions.edges];
 
-    const temp: Message[] = [];
+    const temp: Message[] = [...messages];
     await Promise.all(
-      allData.map(async (el: IEdge) => {
-        const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
-        const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;
-        const timestamp =
-          parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
-          el.node.block?.timestamp ||
-          Date.now() / 1000;
-        const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
-        if (el.node.owner.address === userAddr) {
-          temp.push({
-            id: el.node.id,
-            msg: data,
-            type: 'request',
-            timestamp: timestamp,
-            cid,
-          });
-        } else {
-          temp.push({
-            id: el.node.id,
-            msg: data,
-            type: 'response',
-            timestamp: timestamp,
-            cid,
-          });
-        }
-      }),
+      allData
+        .filter(
+          (el: IEdge) =>
+            !temp.find((msg) => msg.id === el.node.id) &&
+            el.node.tags.find((tag: ITag) => tag.name === 'Conversation-Identifier')?.value ===
+              currentConversationId,
+        )
+        .map(async (el: IEdge) => {
+          const data = await getData(el.node.id);
+          const timestamp =
+            parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+            el.node.block?.timestamp ||
+            Date.now() / 1000;
+          const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
+          if (el.node.owner.address === userAddr) {
+            temp.push({
+              id: el.node.id,
+              msg: data,
+              type: 'request',
+              timestamp: timestamp,
+              cid,
+            });
+          } else {
+            temp.push({
+              id: el.node.id,
+              msg: data,
+              type: 'response',
+              timestamp: timestamp,
+              cid,
+            });
+          }
+        }),
     );
 
     temp.sort(function (a, b) {
+      if (a.timestamp === b.timestamp) {
+        return a.type === 'request' ? -1 : 1;
+      }
       return a.timestamp - b.timestamp;
     });
-    setAllMessages(temp);
-
-    const cids = [...new Set(temp.map((x: Message) => x.cid))].filter(
-      (el) => el !== undefined,
-    ) as string[];
-
-    setConversationIds(
-      cids.length > 0
-        ? cids
-        : conversationIds.length > 0
-        ? conversationIds
-        : [currentConversationId],
-    );
 
     setMessages(temp.filter((el) => el.cid === currentConversationId));
     setMessagesLoading(false);
@@ -402,12 +649,9 @@ const Chat = () => {
               justifyContent: 'flex-end',
             }}
           >
+            <div ref={target}></div>
             <Box sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}>
-              {requestError || responseError ? (
-                <Typography alignItems='center' display='flex' flexDirection='column'>
-                  Could not Fetch Conversation History.
-                </Typography>
-              ) : messagesLoading ? (
+              {messagesLoading &&
                 mockArray.map((el: number) => {
                   return (
                     <Container key={el} maxWidth={false}>
@@ -439,13 +683,17 @@ const Chat = () => {
                       </Stack>
                     </Container>
                   );
-                })
+                })}
+              {requestError || responseError ? (
+                <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
+                  Could not Fetch Conversation History.
+                </Typography>
               ) : messages.length > 0 ? (
                 <>
                   <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
                     {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
                   </Divider>
-                  {messages.map((el: Message, index: number) => (
+                  {messages.reverse().map((el: Message, index: number) => (
                     <Container key={index} maxWidth={false}>
                       <Stack
                         spacing={4}
@@ -496,10 +744,12 @@ const Chat = () => {
                     </Container>
                   ))}
                 </>
-              ) : (
+              ) : !(messagesLoading || requestsLoading || responsesLoading) ? (
                 <Typography alignItems='center' display='flex' flexDirection='column'>
                   Starting a new conversation.
                 </Typography>
+              ) : (
+                <></>
               )}
               <div ref={messagesEndRef} />
             </Box>

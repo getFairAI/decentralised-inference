@@ -14,24 +14,15 @@ import {
   Typography,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import BasicTable, { RowData } from '@/components/basic-table';
+import BasicTable from '@/components/basic-table';
 import Stamp from '@/components/stamp';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
-import { useLazyQuery, useQuery } from '@apollo/client';
-import {
-  QUERY_REGISTERED_OPERATORS,
-  QUERY_PAID_FEE_OPERATORS,
-  QUERY_REQUESTS_FOR_OPERATOR,
-  QUERY_RESPONSES_BY_OPERATOR,
-} from '@/queries/graphql';
+import { NetworkStatus, useQuery } from '@apollo/client';
+import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import {
   APP_VERSION,
   DEFAULT_TAGS,
-  INFERENCE_PERCENTAGE_FEE,
   MARKETPLACE_ADDRESS,
-  MODEL_INFERENCE_RESULT_TAG,
-  N_PREVIOUS_BLOCKS,
-  OPERATOR_REGISTRATION_AR_FEE,
   REGISTER_OPERATION_TAG,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
@@ -44,11 +35,13 @@ import { NumericFormat } from 'react-number-format';
 const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
   const { state } = useLocation();
-  const [operatorsData, setOperatorsData] = useState<RowData[]>([]);
+  const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [feeValue, setFeeValue] = useState(0);
   const [feeDirty, setFeeDirty] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { currentAddress: owner } = useContext(WalletContext);
+  const elementsPerPage = 5;
 
   const tags = [
     ...DEFAULT_TAGS,
@@ -67,158 +60,16 @@ const Detail = () => {
     data: queryData,
     loading,
     error,
+    networkStatus,
     refetch,
+    fetchMore,
   } = useQuery(QUERY_REGISTERED_OPERATORS, {
-    variables: { tags },
+    variables: { tags, first: elementsPerPage },
   });
 
   const handleRetry = () => {
     refetch({ tags });
   };
-
-  const [getOpRequests, opRequests] = useLazyQuery(QUERY_REQUESTS_FOR_OPERATOR);
-
-  const [getOpResponses, opResponses] = useLazyQuery(QUERY_RESPONSES_BY_OPERATOR);
-
-  const [getPaidFee, paidFeeResult] = useLazyQuery(QUERY_PAID_FEE_OPERATORS);
-
-  useEffect(() => {
-    if (queryData) {
-      const requestTags = [
-        ...DEFAULT_TAGS,
-        {
-          name: 'Model-Creator',
-          values: [state.node.owner.address],
-        },
-        {
-          name: 'Model-Name',
-          values: [state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value],
-        },
-        {
-          name: 'Operation-Name',
-          values: ['Inference Payment'],
-        },
-      ];
-      const owners: string[] = Array.from(
-        new Set(queryData.map((el: IEdge) => el.node.owner.address)),
-      );
-      getOpRequests({
-        variables: {
-          recipients: owners,
-          tags: requestTags,
-        },
-      });
-    }
-  }, [queryData]);
-
-  useEffect(() => {
-    if (paidFeeResult.loading) console.log('loading');
-    if (paidFeeResult.error) console.log(error, 'err');
-    if (paidFeeResult.data) {
-      const currentUser = paidFeeResult?.variables?.owner;
-      paidFeeResult.data.forEach((el: IEdge) => {
-        if (
-          operatorsData.find((op: RowData) => op.address === currentUser)?.quantityAR ===
-            OPERATOR_REGISTRATION_AR_FEE ||
-          parseFloat(el.node.quantity.winston) * INFERENCE_PERCENTAGE_FEE <=
-            parseFloat(operatorsData.find((op: RowData) => op.address === currentUser)?.fee || '0')
-        ) {
-          setOperatorsData(operatorsData.filter((op: RowData) => op.address !== currentUser));
-        }
-      });
-    }
-  }, [paidFeeResult]);
-
-  useEffect(() => {
-    if (opRequests.data) {
-      const owners = opRequests.variables?.recipients;
-      const inferenceReqIds = (opRequests.data as IEdge[]).map((req) => {
-        return req.node.tags.find((el) => el.name === 'Inference-Transaction')?.value;
-      });
-      const responseTags = [
-        ...DEFAULT_TAGS,
-        {
-          name: 'Model-Creator',
-          values: [state.node.owner.address],
-        },
-        {
-          name: 'Model-Name',
-          values: [state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value],
-        },
-        MODEL_INFERENCE_RESULT_TAG,
-        {
-          name: 'Request-Transaction',
-          values: inferenceReqIds,
-        },
-      ];
-      getOpResponses({
-        variables: {
-          owners,
-          tags: responseTags,
-        },
-      });
-    }
-  }, [opRequests]);
-
-  useEffect(() => {
-    const asyncFunction = async () => {
-      if (opResponses.data) {
-        const requests = opRequests.data as IEdge[];
-        const results = opResponses.data as IEdge[];
-        const uniqueQueryData: IEdge[] = [];
-        queryData.map((el: IEdge) =>
-          uniqueQueryData.filter((unique) => el.node.owner.address === unique.node.owner.address)
-            .length > 0
-            ? undefined
-            : uniqueQueryData.push(el),
-        );
-        const parsed: RowData[] = uniqueQueryData.map((el: IEdge) => ({
-          quantityAR: el.node.quantity.ar,
-          address: el.node.owner.address,
-          stamps: Math.round(Math.random() * 100),
-          fee: el.node.tags.find((el) => el.name === 'Operator-Fee')?.value || '0',
-          registrationTimestamp: el.node.block
-            ? new Date(el.node.block.timestamp * 1000).toLocaleString()
-            : 'Pending',
-          availability:
-            (results.filter((res) => el.node.owner.address === res.node.owner.address).length /
-              requests.filter((req) => el.node.owner.address === req.node.recipient).length) *
-              100 || 0,
-          modelName: state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value || '',
-          modelCreator: state.node.owner.address,
-          modelTransaction:
-            state.node.tags.find((el: ITag) => el.name === 'Model-Transaction')?.value || '',
-        }));
-        setOperatorsData(parsed);
-
-        await Promise.all(
-          uniqueQueryData.map(async (el: IEdge) => {
-            const tags = [
-              ...DEFAULT_TAGS,
-              {
-                name: 'Operation-Name',
-                values: ['Operator Fee Payment'],
-              },
-              {
-                name: 'Response-Identifier',
-                values: [el.node.id],
-              },
-            ];
-            const currentBlockHeight = await arweave.blocks.getCurrent();
-            getPaidFee({
-              variables: {
-                tags: tags,
-                owner: el.node.owner.address,
-                minBlockHeight: el.node.block.height,
-                maxBlockHeight: currentBlockHeight.height - N_PREVIOUS_BLOCKS,
-              },
-            });
-          }),
-        );
-      }
-    };
-    asyncFunction();
-  }, [opResponses]);
 
   useEffect(() => {
     if (state) {
@@ -278,6 +129,21 @@ const Detail = () => {
       enqueueSnackbar('Something Went Wrong', { variant: 'error' });
     }
   };
+
+  useEffect(() => {
+    // check has paid correct registration fee
+    if (queryData && networkStatus === NetworkStatus.ready) {
+      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
+      const uniqueOperators = Array.from(
+        new Set(queryData.transactions.edges.map((el: IEdge) => el.node.owner.address)),
+      );
+      setOperatorsData(
+        queryData.transactions.edges.filter(
+          (el: IEdge) => !!uniqueOperators.find((unique) => unique === el.node.owner.address),
+        ),
+      );
+    }
+  }, [queryData]);
 
   return (
     <Container>
@@ -372,11 +238,13 @@ const Detail = () => {
               <Typography variant='h6'>Operators</Typography>
             </Divider>
             <BasicTable
-              data={operatorsData}
+              operators={operatorsData}
+              loading={loading}
+              error={error}
               state={state}
-              loading={loading || opRequests.loading || opResponses.loading}
-              error={error || opRequests.error || opResponses.error || paidFeeResult.error}
               retry={handleRetry}
+              hasNextPage={hasNextPage}
+              fetchMore={fetchMore}
             ></BasicTable>
           </CardContent>
         </Card>
