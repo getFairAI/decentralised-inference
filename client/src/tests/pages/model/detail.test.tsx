@@ -1,6 +1,6 @@
-import { QUERY_OPERATOR_RESULTS_RESPONSES, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { render, screen } from '@testing-library/react';
-import { MockedProvider, mockObservableLink } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing';
 import Detail from '@/pages/model/detail';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { DEFAULT_TAGS, REGISTER_OPERATION_TAG } from '@/constants';
@@ -55,7 +55,7 @@ const queryRegisteredOperatorsMock = [
       },
     },
   },
-  {
+  /* {
     request: {
       query: QUERY_OPERATOR_RESULTS_RESPONSES,
       variables: {
@@ -105,7 +105,7 @@ const queryRegisteredOperatorsMock = [
         },
       },
     },
-  },
+  }, */
 ];
 
 const mockState = {
@@ -134,11 +134,29 @@ const mockState = {
   },
 };
 
-const mockLink = mockObservableLink();
-
 const fakeLoader = () => 'fakeData';
 
+const mockIntersectionObserver = class {
+  constructor() {
+    return;
+  }
+  observe() {
+    return;
+  }
+  unobserve() {
+    return;
+  }
+  disconnect() {
+    return;
+  }
+};
+
+
 describe('pages/model/detail.tsx', () => {
+  beforeEach(async () => {
+    (window.IntersectionObserver as unknown) = mockIntersectionObserver;
+  });
+  
   it('should populate model data from queries', async () => {
     const mockRouter = createMemoryRouter(
       [
@@ -153,7 +171,7 @@ describe('pages/model/detail.tsx', () => {
       },
     );
     render(
-      <MockedProvider mocks={queryRegisteredOperatorsMock} link={mockLink}>
+      <MockedProvider mocks={queryRegisteredOperatorsMock}>
         <SnackbarProvider>
           <RouterProvider router={mockRouter} />
         </SnackbarProvider>
