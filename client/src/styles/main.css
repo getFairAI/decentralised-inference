@@ -112,7 +112,7 @@ a {
  * Dot Pulse
  * ==============================================
  */
- .dot-pulse {
+.dot-pulse {
   position: relative;
   left: -9999px;
   width: 10px;
@@ -124,8 +124,9 @@ a {
   animation: dot-pulse 1.5s infinite linear;
   animation-delay: 0.25s;
 }
-.dot-pulse::before, .dot-pulse::after {
-  content: "";
+.dot-pulse::before,
+.dot-pulse::after {
+  content: '';
   display: inline-block;
   position: absolute;
   top: 0;
@@ -153,7 +154,8 @@ a {
   30% {
     box-shadow: 9984px 0 0 2px;
   }
-  60%, 100% {
+  60%,
+  100% {
     box-shadow: 9984px 0 0 -5px;
   }
 }
@@ -164,7 +166,8 @@ a {
   30% {
     box-shadow: 9999px 0 0 2px;
   }
-  60%, 100% {
+  60%,
+  100% {
     box-shadow: 9999px 0 0 -5px;
   }
 }
@@ -175,7 +178,8 @@ a {
   30% {
     box-shadow: 10014px 0 0 2px;
   }
-  60%, 100% {
+  60%,
+  100% {
     box-shadow: 10014px 0 0 -5px;
   }
 }

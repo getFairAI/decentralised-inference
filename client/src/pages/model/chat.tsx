@@ -102,14 +102,16 @@ const Chat = () => {
     },
   ] = useLazyQuery(QUERY_CHAT_RESPONSES);
 
-  const [pollRequests, { data: requestsPollingData, stopPolling: stopRequestPolling }] = useLazyQuery(QUERY_CHAT_REQUESTS_POLLING, {
-    fetchPolicy: 'no-cache',
-    nextFetchPolicy: 'no-cache',
-  });
-  const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] = useLazyQuery(
-    QUERY_CHAT_RESPONSES_POLLING,
-    { fetchPolicy: 'no-cache', nextFetchPolicy: 'no-cache' },
-  );
+  const [pollRequests, { data: requestsPollingData, stopPolling: stopRequestPolling }] =
+    useLazyQuery(QUERY_CHAT_REQUESTS_POLLING, {
+      fetchPolicy: 'no-cache',
+      nextFetchPolicy: 'no-cache',
+    });
+  const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] =
+    useLazyQuery(QUERY_CHAT_RESPONSES_POLLING, {
+      fetchPolicy: 'no-cache',
+      nextFetchPolicy: 'no-cache',
+    });
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
@@ -441,7 +443,7 @@ const Chat = () => {
       if (a.timestamp === b.timestamp && a.type !== b.type) {
         return a.type === 'request' ? -1 : 1;
       } else if (a.timestamp === b.timestamp) {
-         return a.id < b.id ? -1 : 1;
+        return a.id < b.id ? -1 : 1;
       }
       return a.timestamp - b.timestamp;
     });
@@ -470,8 +472,6 @@ const Chat = () => {
   const handleMessageChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNewMessage(event.target.value);
   };
-
-  
 
   const handleSend = async () => {
     if (!currentConversationId) return;
@@ -618,7 +618,7 @@ const Chat = () => {
       if (a.timestamp === b.timestamp && a.type !== b.type) {
         return a.type === 'request' ? -1 : 1;
       } else if (a.timestamp === b.timestamp) {
-         return a.id < b.id ? -1 : 1;
+        return a.id < b.id ? -1 : 1;
       }
       return a.timestamp - b.timestamp;
     });
@@ -672,9 +672,7 @@ const Chat = () => {
             </Tooltip>
           </Box>
           <List>
-            {
-              requestsLoading && <div className='dot-pulse'></div>
-            }
+            {requestsLoading && <div className='dot-pulse'></div>}
             {conversationIds.map((cid, idx) => (
               <ListItemButton
                 key={idx}
@@ -711,7 +709,10 @@ const Chat = () => {
               justifyContent: 'flex-end',
             }}
           >
-            <Box sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }} ref={scrollableRef}>
+            <Box
+              sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}
+              ref={scrollableRef}
+            >
               {messagesLoading &&
                 mockArray.map((el: number) => {
                   return (
