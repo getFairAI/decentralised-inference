@@ -48,6 +48,8 @@ import arweave, { getData } from '@/utils/arweave';
 import { genLoadingArray } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
+import useScrollLock from '@/hooks/useScrollLock';
+import '@/styles/main.css';
 
 interface Message {
   id: string;
@@ -76,6 +78,8 @@ const Chat = () => {
   const mockArray = genLoadingArray(5);
   const { enqueueSnackbar } = useSnackbar();
   const elementsPerPage = 5;
+  const scrollableRef = useRef<HTMLDivElement>(null);
+  const setIsLocked = useScrollLock(scrollableRef);
 
   const [
     getChatRequests,
@@ -98,17 +102,18 @@ const Chat = () => {
     },
   ] = useLazyQuery(QUERY_CHAT_RESPONSES);
 
-  const [pollRequests, { data: requestsPollingData }] = useLazyQuery(QUERY_CHAT_REQUESTS_POLLING, {
+  const [pollRequests, { data: requestsPollingData, stopPolling: stopRequestPolling }] = useLazyQuery(QUERY_CHAT_REQUESTS_POLLING, {
     fetchPolicy: 'no-cache',
     nextFetchPolicy: 'no-cache',
   });
-  const [pollResponses, { data: responsesPollingData, stopPolling }] = useLazyQuery(
+  const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] = useLazyQuery(
     QUERY_CHAT_RESPONSES_POLLING,
     { fetchPolicy: 'no-cache', nextFetchPolicy: 'no-cache' },
   );
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
+    setIsLocked(true);
   }, [height]);
 
   useEffect(() => {
@@ -224,6 +229,7 @@ const Chat = () => {
           },
         });
       } else {
+        stopRequestPolling();
         // start polling
         const commonTags = [
           ...DEFAULT_TAGS,
@@ -287,6 +293,7 @@ const Chat = () => {
           },
         });
       } else {
+        stopResponsePolling();
         // start polling
         const commonTags = [
           ...DEFAULT_TAGS,
@@ -326,7 +333,7 @@ const Chat = () => {
     scrollToBottom();
     // start polling
     if (messages && requestsData && !messagesLoading) {
-      stopPolling();
+      stopResponsePolling();
       const commonTags = [
         ...DEFAULT_TAGS,
         { name: 'Model-Name', values: [state.modelName] },
@@ -362,6 +369,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (currentConversationId && requestsData && responsesData) {
+      setIsLocked(true);
       setMessagesLoading(true);
       reqData();
     }
@@ -375,7 +383,7 @@ const Chat = () => {
     const newValidResponses = responses.filter(
       (res: IEdge) => !currentRespones.find((el: IEdge) => el.node.id === res.node.id),
     );
-    asyncMap(newValidResponses);
+    if (newValidResponses.length > 0) asyncMap(newValidResponses);
   }, [responsesPollingData]);
 
   useEffect(() => {
@@ -386,7 +394,7 @@ const Chat = () => {
     const newValidRequests = requests.filter(
       (res: IEdge) => !currentRequests.find((el: IEdge) => el.node.id === res.node.id),
     );
-    asyncMap(newValidRequests);
+    if (newValidRequests.length > 0) asyncMap(newValidRequests);
   }, [requestsPollingData]);
 
   const asyncMap = async (newData: IEdge[]) => {
@@ -429,9 +437,11 @@ const Chat = () => {
     );
     const newMessages = [...messages, ...uniqueNewMessages];
 
-    newMessages.sort(function (a, b) {
-      if (a.timestamp === b.timestamp) {
+    newMessages.sort((a, b) => {
+      if (a.timestamp === b.timestamp && a.type !== b.type) {
         return a.type === 'request' ? -1 : 1;
+      } else if (a.timestamp === b.timestamp) {
+         return a.id < b.id ? -1 : 1;
       }
       return a.timestamp - b.timestamp;
     });
@@ -454,12 +464,14 @@ const Chat = () => {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   };
 
   const handleMessageChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNewMessage(event.target.value);
   };
+
+  
 
   const handleSend = async () => {
     if (!currentConversationId) return;
@@ -602,9 +614,11 @@ const Chat = () => {
       (el) => !messages.find((msg) => msg.id === el.id) && !temp.find((msg) => msg.id === el.id),
     );
     const newMessages = [...temp, ...uniquePolledMessages];
-    newMessages.sort(function (a, b) {
-      if (a.timestamp === b.timestamp) {
+    newMessages.sort((a, b) => {
+      if (a.timestamp === b.timestamp && a.type !== b.type) {
         return a.type === 'request' ? -1 : 1;
+      } else if (a.timestamp === b.timestamp) {
+         return a.id < b.id ? -1 : 1;
       }
       return a.timestamp - b.timestamp;
     });
@@ -614,6 +628,7 @@ const Chat = () => {
       setMessages(newMessages.filter((el) => el.cid === currentConversationId));
     }
 
+    setIsLocked(false);
     setMessagesLoading(false);
   };
 
@@ -657,6 +672,9 @@ const Chat = () => {
             </Tooltip>
           </Box>
           <List>
+            {
+              requestsLoading && <div className='dot-pulse'></div>
+            }
             {conversationIds.map((cid, idx) => (
               <ListItemButton
                 key={idx}
@@ -693,7 +711,7 @@ const Chat = () => {
               justifyContent: 'flex-end',
             }}
           >
-            <Box sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}>
+            <Box sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }} ref={scrollableRef}>
               {messagesLoading &&
                 mockArray.map((el: number) => {
                   return (
