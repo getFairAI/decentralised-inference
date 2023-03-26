@@ -2,11 +2,10 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import { Link } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import { Dispatch, SetStateAction, useContext } from 'react';
-import { IconButton, styled, Tooltip } from '@mui/material';
+import { Icon, IconButton, InputBase, styled, Tooltip } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -15,9 +14,49 @@ const Banner = styled(Toolbar)(({ theme }) => ({
   color: theme.palette.error.contrastText,
   // Override media queries injected by theme.mixins.toolbar
   '@media all': {
-    minHeight: '30px',
+    minHeight: '25px',
   },
 }));
+
+const WalletState = () => {
+  const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
+
+  if (!currentAddress && currentAddress !== '') {
+    return <IconButton onClick={connectWallet}>
+      <img src='/public/icon-empty-wallet.svg'/>
+    </IconButton>;
+  }
+
+  return <>
+    <Box sx={{
+      background: '#222222',
+      borderRadius: '23px',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 0,
+      gap: '17px',
+    }}>
+      <Box display={'flex'}>
+        <Typography sx={{ paddingRight: '6px', paddingLeft: '23px'}}>{currentBalance.toFixed(4)}</Typography>
+        <img src='/public/arweave-small.svg'/>
+      </Box>
+      <Box sx={{
+        background: '#D9D9D9',
+        borderRadius: '43px',
+        padding: '7px 20px 7px 20px',
+      }}>
+        <Tooltip title={currentAddress} placement={'left-start'}>
+          <Typography sx={{color: '#222222'}}>
+            {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
+          </Typography>
+        </Tooltip>
+      </Box>
+      <ProfileMenu />
+    </Box>
+  </>;
+};
 
 const Navbar = ({
   showBanner,
@@ -26,11 +65,11 @@ const Navbar = ({
   showBanner: boolean;
   setShowBanner: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
+  const { pathname } = useLocation();
 
   return (
     <>
-      <AppBar position='fixed'>
+      <AppBar className='navbar' sx={{ background: '#000000'}}>
         {showBanner && (
           <Banner>
             <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
@@ -47,54 +86,50 @@ const Navbar = ({
           </Banner>
         )}
         <Toolbar>
-          <Link to='/'>
-            <Typography
-              variant='h4'
-              component='div'
-              sx={{
-                mr: 2,
-                display: { md: 'flex' },
-                color: 'inherit',
-              }}
-            >
-              Fair protocol
-            </Typography>
-          </Link>
-          <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-            <Link to='/explore'>
-              <Button variant='text' color='secondary'>
-                Explore
-              </Button>
-            </Link>
-            <Link to='/upload'>
-              <Button variant='text' color='secondary'>
-                Create
-              </Button>
-            </Link>
-            <Link to='/operators'>
-              <Button variant='text' color='secondary'>
-                Operators
-              </Button>
+          <Box display={'flex'} flexDirection={'row'}>
+            <Link to='/'>
+              <img src="/public/fair-protocol-logo.svg" />
             </Link>
           </Box>
-          <Box sx={{ flexGrow: 0 }}>
-            {currentAddress && currentAddress !== '' ? (
-              <Box display={'flex'} alignItems={'center'}>
-                <Box display={'flex'} flexDirection={'column'} alignItems={'flex-end'}>
-                  <Tooltip title={currentAddress} placement={'left-start'}>
-                    <Typography>
-                      {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
-                    </Typography>
-                  </Tooltip>
-                  <Typography>{currentBalance.toFixed(4)} AR</Typography>
+          <Box sx={{ flexGrow: 1 }}>
+            {
+              pathname && (pathname === '/' || pathname === '/explore') &&
+                <Box sx={{
+                  background: '#B1B1B1',
+                  borderRadius: '30px',
+                  margin: '0 50px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '3px 20px 3px 50px',
+                  alignItems: 'center'
+                }}>
+                  <InputBase sx={{
+                    color: '#595959',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: '12px',
+                    lineHeight: '16px',
+                  }}
+                  placeholder='Search...'/>
+                  <Icon sx={{
+                    height: '30px'
+                  }}>
+                    <img src='/public/search-icon.svg'></img>
+                  </Icon>
                 </Box>
-                <ProfileMenu />
-              </Box>
-            ) : (
-              <Button color='inherit' onClick={connectWallet}>
-                Connect
-              </Button>
-            )}
+            }
+          </Box>
+          <Box className={'navbar-right-content'}>
+            <NavLink to='/explore' className='navbar-links'>
+              Explore
+            </NavLink>
+            <NavLink to='/upload' className='navbar-links'>
+              Create
+            </NavLink>
+            <NavLink to='/operators' className='navbar-links'>
+              Operators
+            </NavLink>
+            <WalletState />
           </Box>
         </Toolbar>
       </AppBar>
