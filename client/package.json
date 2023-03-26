@@ -29,6 +29,7 @@
     "bundlr-custom": "file:../js-sdk/bundlr-network-client-0.10.5.tgz",
     "filereader-stream": "^2.0.0",
     "graphql": "^16.6.0",
+    "jdenticon": "^3.2.0",
     "lodash": "^4.17.21",
     "notistack": "^2.0.8",
     "react": "^18.2.0",
