@@ -26,6 +26,36 @@ const router = createBrowserRouter([
       {
         path: '',
         element: <Home />,
+        children: [
+          {
+            path: 'model/:txid',
+            element: <Model />,
+            /* loader: txLoader, */
+            loader: getModelFee,
+            id: 'model',
+            children: [
+              {
+                path: 'detail',
+                element: <Detail />,
+              },
+    
+              {
+                path: 'chat/:address',
+                element: (
+                  <BlockOperatorGuard>
+                    <ModelFeeGuard>
+                      <Chat />
+                    </ModelFeeGuard>
+                  </BlockOperatorGuard>
+                ),
+              },
+              {
+                path: 'register',
+                element: <Register />,
+              },
+            ],
+          },
+        ]
       },
       {
         path: 'explore',
@@ -49,34 +79,6 @@ const router = createBrowserRouter([
           {
             path: 'details/:address',
             element: <OperatorDetails />,
-          },
-        ],
-      },
-      {
-        path: 'model/:txid',
-        element: <Model />,
-        /* loader: txLoader, */
-        loader: getModelFee,
-        id: 'model',
-        children: [
-          {
-            path: 'detail',
-            element: <Detail />,
-          },
-
-          {
-            path: 'chat/:address',
-            element: (
-              <BlockOperatorGuard>
-                <ModelFeeGuard>
-                  <Chat />
-                </ModelFeeGuard>
-              </BlockOperatorGuard>
-            ),
-          },
-          {
-            path: 'register',
-            element: <Register />,
           },
         ],
       },
