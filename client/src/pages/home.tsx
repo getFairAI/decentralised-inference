@@ -1,65 +1,49 @@
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
-  Avatar,
   Box,
   Button,
-  Card,
-  CardActionArea,
-  CardContent,
-  CardHeader,
   Container,
-  Grid,
-  IconButton,
-  Skeleton,
+  MenuItem,
+  Select,
   Stack,
   Typography,
 } from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import SlideCard from '@/components/slide-card';
+
 import { useEffect, useRef, useState } from 'react';
-import GroupIcon from '@mui/icons-material/Group';
-import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
-import EngineeringIcon from '@mui/icons-material/Engineering';
+
 import { IEdge } from '@/interfaces/arweave';
-import { ThumbUp } from '@mui/icons-material';
 import { LIST_LATEST_MODELS_QUERY, LIST_MODELS_QUERY } from '@/queries/graphql';
 import useOnScreen from '@/hooks/useOnScreen';
 import { MARKETPLACE_FEE } from '@/constants';
 import { genLoadingArray } from '@/utils/common';
-import ReplayIcon from '@mui/icons-material/Replay';
+import Featured from '@/components/featured';
+import '@/styles/ui.css';
+import AiListCard from '@/components/ai-list-card';
+import { Outlet } from 'react-router-dom';
 
 export default function Home() {
-  const [slideIdx, setSlideIdx] = useState(0);
-  const [, setSwipeRight] = useState(false);
-  const [swiped, setSwiped] = useState(true);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [txs, setTxs] = useState<IEdge[]>([]);
-  const max = 5;
-  const elementsPerPage = 10;
+  const [ hasNextPage, setHasNextPage ] = useState(false);
+  const [ txs, setTxs ] = useState<IEdge[]>([]);
+  const elementsPerPage = 5;
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
-  const mockArray = genLoadingArray(elementsPerPage / 2);
+  const mockArray = genLoadingArray(elementsPerPage);
+  const [ hightlightTop, setHighLightTop ] = useState(false);
 
   const { data, loading, error } = useQuery(LIST_LATEST_MODELS_QUERY, {
     variables: {
-      first: 5,
-    },
+      first: 4,
+    }
   });
 
-  const {
-    data: listData,
-    loading: listLoading,
-    error: listError,
-    fetchMore,
-    networkStatus,
-    refetch,
-  } = useQuery(LIST_MODELS_QUERY, {
+  const { data: listData, loading: listLoading, error: listError, fetchMore, networkStatus, refetch } = useQuery(LIST_MODELS_QUERY, {
     variables: {
-      first: elementsPerPage,
-    },
+      first: elementsPerPage
+    }
   });
 
+  const handleHighlight = (value: boolean) => setHighLightTop(value);
+  
   useEffect(() => {
     if (isOnScreen && hasNextPage) {
       fetchMore({
@@ -69,8 +53,8 @@ export default function Home() {
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           const newData = fetchMoreResult.transactions.edges;
-
-          const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+          
+          const merged: IEdge[] = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
           for (let i = 0; i < newData.length; ++i) {
             if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
               merged.push(newData[i]);
@@ -80,281 +64,117 @@ export default function Home() {
             transactions: {
               edges: merged,
               pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
+            }
           });
           return newResult;
-        },
+        }
       });
     }
-  }, [useOnScreen, listData]);
+  }, [ useOnScreen, txs ]);
 
   useEffect(() => {
     if (listData && networkStatus === NetworkStatus.ready) {
       setHasNextPage(listData.transactions.pageInfo.hasNextPage);
-      setTxs(
-        listData.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
-      );
+      setTxs(listData.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE));
     }
   }, [listData]);
 
-  const click = (direction: string) => {
-    setSwiped(!swiped);
-    if (direction === 'left') {
-      setSwipeRight(false);
-      if (slideIdx === 0) {
-        setSlideIdx(max - 1);
-      } else {
-        setSlideIdx(slideIdx - 1);
-      }
-    } else if (direction === 'right') {
-      setSwipeRight(true);
-      if (slideIdx === 4) {
-        setSlideIdx(0);
-      } else {
-        setSlideIdx(slideIdx + 1);
-      }
-    }
-  };
-
   return (
-    <Container
+    <><Container
       sx={{
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-around',
         alignContent: 'space-around',
+        '@media all': {
+          maxWidth: '100%',
+        },
       }}
     >
-      <Box display={'flex'}>
-        <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-          <IconButton disableRipple={true} onClick={() => click('left')}>
-            <ChevronLeftIcon />
-          </IconButton>
-        </Box>
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: { md: 'flex', justifyContent: 'space-between' },
-            margin: '16px',
+      <Typography sx={{
+        fontStyle: 'normal',
+        fontWeight: 300,
+        fontSize: '30px',
+        lineHeight: '41px',
+        /* identical to box height */
+        // background: 'linear-gradient(101.22deg, rgba(14, 255, 168, 0.58) 30.84%, #9747FF 55.47%, rgba(84, 81, 228, 0) 78.13%), linear-gradient(0deg, #FFFFFF, #FFFFFF)',
+      }}>Choose your AI Model to start using.</Typography>
+      <Featured data={data && data.transactions.edges || []} loading={loading} error={error} />
+      <Box className={'filter-box'} sx={{ display: 'flex' }}>
+        <Box display='flex' gap={'50px'}>
+          <Typography sx={{
+            fontStyle: 'normal',
+            fongWeight: 500,
+            fontSize: '30px',
+            fontHeight: '41px',
           }}
-        >
-          {/* {
-            onDisplayTxs.map((edge, index) => (
-              <SlideCard  key={index} data={edge}/>
-            ))
-          } */}
-          <SlideCard
-            data={
-              data && (data.transactions.edges as IEdge[]).find((_, index) => index === slideIdx)
-            }
-            loading={loading}
-            error={error}
-          />
+            className={hightlightTop ? 'trending-text' : 'trending-text highlight'}
+            onClick={() => handleHighlight(false)}
+          >Trending</Typography>
+          <Typography sx={{
+            fontStyle: 'normal',
+            fongWeight: 500,
+            fontSize: '30px',
+            fontHeight: '41px',
+          }}
+            className={hightlightTop ? 'trending-text highlight' : 'trending-text'}
+            onClick={() => handleHighlight(true)}
+          >Top</Typography>
+          <Box flexGrow={1} />
         </Box>
-        <Box sx={{ flexGrow: 0, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-          <IconButton disableRipple={true} onClick={() => click('right')}>
-            <ChevronRightIcon />
-          </IconButton>
+        <Box flexGrow={1} />
+        <Box display='flex' gap={'50px'}>
+          <Select sx={{
+            padding: '0px 8px',
+            border: '1px solid transparent',
+            borderRadius: '10px',
+            textTransform: 'none',
+            background: 'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderWidth: 0
+            },
+          }}
+            value={'24h'}
+          >
+            <MenuItem value={'24h'}>
+              <Typography sx={{
+                fontStyle: 'normal',
+                fontWeight: 600,
+                fontSize: '20px',
+                lineHeight: '27px',
+                textAlign: 'center',
+                color: '#F4F4F4',
+              }}>24H</Typography>
+            </MenuItem>
+            <MenuItem value={'week'}>
+              <Typography>1 Week</Typography>
+            </MenuItem>
+          </Select>
+          <Button sx={{
+            borderRadius: '10px',
+            border: '1px solid transparent',
+            padding: '8px',
+            textTransform: 'none',
+            background: 'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box'
+          }}>
+            <Typography sx={{
+              padding: '0px 8px',
+              fontStyle: 'normal',
+              fontWeight: 600,
+              fontSize: '20px',
+              lineHeight: '27px',
+              textAlign: 'center',
+              color: '#F4F4F4',
+            }}>
+              View All
+            </Typography>
+          </Button>
         </Box>
       </Box>
-      <Box sx={{ margin: '16px' }}>
-        <Box display={'flex'}>
-          <Typography variant='h4' display={'flex'}>
-            Arweave Powered AI Model MarketPlace
-          </Typography>
-          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap>
-            <GroupIcon fontSize='large' /> 1k users
-          </Typography>
-          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap>
-            <ModelTrainingIcon fontSize='large' />
-            260 Models
-          </Typography>
-          <Typography variant='h6' display={'flex'} alignItems={'center'} noWrap>
-            <EngineeringIcon fontSize='large' />
-            600 Operators
-          </Typography>
-        </Box>
-        {/* <Card>
-          <CardActionArea sx={{ height: '150px'}}>
-            <Typography variant='h5'>learn More <ChevronRightIcon /></Typography>
-          </CardActionArea>
-        </Card> */}
-      </Box>
-      <Box marginBottom={'16px'}>
-        {/* <Box display={'flex'}>
-          <Typography variant='h4'>
-            Top Performing models
-          </Typography>
-        </Box> */}
-        <Grid container spacing={{ xs: 2, md: 3 }}>
-          {listError ? (
-            <Container>
-              <Typography alignItems='center' display='flex' flexDirection='column'>
-                Could not Fetch Available Models.
-                <Button
-                  sx={{ width: 'fit-content' }}
-                  endIcon={<ReplayIcon />}
-                  onClick={() => refetch()}
-                >
-                  Retry
-                </Button>
-              </Typography>
-            </Container>
-          ) : (
-            <>
-              <Grid item xs={12} sm={12} md={6}>
-                <Stack spacing={2}>
-                  {txs.slice(0, txs.length / 2 + 1).map((edge: IEdge, index: number) => (
-                    <Box sx={{ width: '100%' }} display={'flex'} flexDirection={'row'} key={index}>
-                      <Card sx={{ width: '100%' }}>
-                        <CardActionArea sx={{ width: '100%' }}>
-                          <Box margin={'8px'} display='flex' justifyContent={'space-between'}>
-                            <Box display='flex'>
-                              <Avatar sx={{ width: 56, height: 56 }} />
-                              <Box sx={{ maxWidth: '300px' }} marginLeft={'8px'}>
-                                <Typography variant='h6'>
-                                  {edge.node.tags.find((el) => el.name === 'test')?.value}
-                                </Typography>
-                                <Typography noWrap variant='body1'>
-                                  {
-                                    edge.node.tags.find((el) => el.name === 'Model-Transaction')
-                                      ?.value
-                                  }
-                                </Typography>
-                              </Box>
-                            </Box>
-                            <Box display={'flex'} alignItems='self-end'>
-                              <Typography variant='body1' lineHeight={1} paddingRight={'8px'}>
-                                2
-                              </Typography>
-                              <ThumbUp></ThumbUp>
-                            </Box>
-                          </Box>
-                        </CardActionArea>
-                      </Card>
-                    </Box>
-                  ))}
-                </Stack>
-                {loading &&
-                  mockArray.map((val) => {
-                    return (
-                      <Grid xs={2} sm={4} key={val} item>
-                        <Card sx={{ display: 'flex' }}>
-                          <CardHeader
-                            sx={{ marginRight: 0 }}
-                            avatar={
-                              <Skeleton
-                                animation={'wave'}
-                                variant='circular'
-                                sx={{ width: 80, height: 80 }}
-                              />
-                            }
-                            disableTypography={true}
-                          />
-                          <CardContent sx={{ width: '100%' }}>
-                            <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
-                              <Stack spacing={1}>
-                                <Typography noWrap variant='body1'>
-                                  <Skeleton animation={'wave'} variant='rounded' />
-                                </Typography>
-                                <Typography variant='body1' width={'80%'}>
-                                  <Skeleton animation='wave' variant='rounded' />
-                                </Typography>
-                                <Box display={'flex'} justifyContent={'space-between'}>
-                                  <Typography variant='body1' width={'45%'}>
-                                    <Skeleton animation='wave' variant='rounded' />
-                                  </Typography>
-                                  <Typography variant='body1' width={'30%'}>
-                                    <Skeleton animation='wave' variant='rounded' />
-                                  </Typography>
-                                </Box>
-                              </Stack>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    );
-                  })}
-              </Grid>
-              <Grid item xs={12} sm={12} md={6}>
-                <Stack spacing={2}>
-                  {txs.slice(-(txs.length / 2)).map((edge: IEdge, index: number) => (
-                    <Box sx={{ width: '100%' }} display={'flex'} flexDirection={'row'} key={index}>
-                      <Card sx={{ width: '100%' }}>
-                        <CardActionArea sx={{ width: '100%' }}>
-                          <Box margin={'8px'} display='flex' justifyContent={'space-between'}>
-                            <Box display='flex'>
-                              <Avatar sx={{ width: 56, height: 56 }} />
-                              <Box sx={{ maxWidth: '300px' }} marginLeft={'8px'}>
-                                <Typography variant='h6'>
-                                  {edge.node.tags.find((el) => el.name === 'test')?.value}
-                                </Typography>
-                                <Typography noWrap variant='body1'>
-                                  {
-                                    edge.node.tags.find((el) => el.name === 'Model-Transaction')
-                                      ?.value
-                                  }
-                                </Typography>
-                              </Box>
-                            </Box>
-                            <Box display={'flex'} alignItems='self-end'>
-                              <Typography variant='body1' lineHeight={1} paddingRight={'8px'}>
-                                2
-                              </Typography>
-                              <ThumbUp></ThumbUp>
-                            </Box>
-                          </Box>
-                        </CardActionArea>
-                      </Card>
-                    </Box>
-                  ))}
-                  {listLoading &&
-                    mockArray.map((val) => {
-                      return (
-                        <Grid xs={2} sm={4} key={val} item>
-                          <Card sx={{ display: 'flex' }}>
-                            <CardHeader
-                              sx={{ marginRight: 0 }}
-                              avatar={
-                                <Skeleton
-                                  animation={'wave'}
-                                  variant='circular'
-                                  sx={{ width: 80, height: 80 }}
-                                />
-                              }
-                              disableTypography={true}
-                            />
-                            <CardContent sx={{ width: '100%' }}>
-                              <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
-                                <Stack spacing={1}>
-                                  <Typography noWrap variant='body1'>
-                                    <Skeleton animation={'wave'} variant='rounded' />
-                                  </Typography>
-                                  <Typography variant='body1' width={'80%'}>
-                                    <Skeleton animation='wave' variant='rounded' />
-                                  </Typography>
-                                  <Box display={'flex'} justifyContent={'space-between'}>
-                                    <Typography variant='body1' width={'45%'}>
-                                      <Skeleton animation='wave' variant='rounded' />
-                                    </Typography>
-                                    <Typography variant='body1' width={'30%'}>
-                                      <Skeleton animation='wave' variant='rounded' />
-                                    </Typography>
-                                  </Box>
-                                </Stack>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      );
-                    })}
-                </Stack>
-              </Grid>
-            </>
-          )}
-        </Grid>
+      <Stack spacing={4}>
+        {txs.map((el, idx) => <AiListCard model={el} key={el.node.id} index={idx} loading={listLoading} error={listError} />)}
         <div ref={target}></div>
-      </Box>
-    </Container>
+      </Stack>
+    </Container><Outlet /></>
   );
 }
