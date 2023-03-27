@@ -13,7 +13,7 @@ import { parseWinston } from '@/utils/arweave';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import HistoryIcon from '@mui/icons-material/History';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export interface RowData {
   quantityAR: string;
@@ -44,6 +44,7 @@ const OperatorRow = ({
   state: IEdge;
 }) => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
   const requestTags = [
     ...DEFAULT_TAGS,
@@ -319,7 +320,7 @@ const OperatorRow = ({
           <Tooltip title='Execute'>
             <IconButton
               onClick={() =>
-                navigate(`../chat/${operatorTx.node.owner.address}`, {
+                navigate(pathname.includes('chat') ? pathname.replace(pathname.split('/chat/')[1], operatorTx.node.owner.address) : `../chat/${operatorTx.node.owner.address}`, {
                   state: {
                     modelName: modelName,
                     modelCreator: modelCreator,

@@ -2,10 +2,10 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import { Dispatch, SetStateAction, useContext } from 'react';
-import { Icon, IconButton, InputBase, styled, Tooltip } from '@mui/material';
+import { Button, Icon, IconButton, InputBase, styled, Tooltip } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -65,7 +65,8 @@ const Navbar = ({
   showBanner: boolean;
   setShowBanner: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -120,16 +121,43 @@ const Navbar = ({
             }
           </Box>
           <Box className={'navbar-right-content'}>
-            <NavLink to='/explore' className='navbar-links'>
-              Explore
-            </NavLink>
-            <NavLink to='/upload' className='navbar-links'>
-              Create
-            </NavLink>
-            <NavLink to='/operators' className='navbar-links'>
-              Operators
-            </NavLink>
-            <WalletState />
+            {
+              pathname.includes('chat') ? <>
+                <Button
+                  sx={{ borderRadius: '20px', padding: '8px 16px' }}
+                  startIcon={
+                    <img src='/public/chevron-bottom.svg'/>
+                  }
+                  onClick={() => navigate(`${pathname}/change-operator`, { state: { ...state.fullState, ...state} })}
+                >
+                  <Typography sx={{
+                    fontWeight: 500,
+                    fontSize: '18px',
+                    lineHeight: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#FFF'
+                  }}>
+                    Change Operator
+                  </Typography>
+                </Button>
+                <NavLink to='/explore' className='navbar-links'>
+                  Explore
+                </NavLink>
+                <WalletState />
+              </> : <>
+                <NavLink to='/explore' className='navbar-links'>
+                  Explore
+                </NavLink>
+                <NavLink to='/upload' className='navbar-links'>
+                  Create
+                </NavLink>
+                <NavLink to='/operators' className='navbar-links'>
+                  Operators
+                </NavLink>
+                <WalletState />
+              </>
+            }
           </Box>
         </Toolbar>
       </AppBar>

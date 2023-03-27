@@ -27,7 +27,7 @@ import { toSvg } from 'jdenticon';
 
 const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
-  const { state } = useLocation();
+  const { state, pathname } = useLocation();
   const navigate = useNavigate();
   const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -100,7 +100,11 @@ const Detail = () => {
   }, [queryData]);
 
   const handleClose = () => {
-    navigate('/');
+    if (pathname.includes('change-operator')) {
+      navigate(pathname.split('/change-operator')[0], { state });
+      return;
+    }
+    navigate('/', { state });
   };
 
   return (
