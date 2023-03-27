@@ -38,24 +38,37 @@ const router = createBrowserRouter([
                 path: 'detail',
                 element: <Detail />,
               },
-    
-              {
-                path: 'chat/:address',
-                element: (
-                  <BlockOperatorGuard>
-                    <ModelFeeGuard>
-                      <Chat />
-                    </ModelFeeGuard>
-                  </BlockOperatorGuard>
-                ),
-              },
-              {
-                path: 'register',
-                element: <Register />,
-              },
-            ],
+            ]
           },
         ]
+      },
+      {
+        path: 'model/:txid',
+        element: <Model />,
+        /* loader: txLoader, */
+        loader: getModelFee,
+        children: [
+          {
+            path: 'chat/:address',
+            element: (
+              <BlockOperatorGuard>
+                <ModelFeeGuard>
+                  <Chat />
+                </ModelFeeGuard>
+              </BlockOperatorGuard>
+            ),
+            children: [
+              {
+                path: 'change-operator',
+                element: <Detail />
+              }
+            ]
+          },
+          {
+            path: 'register',
+            element: <Register />,
+          },
+        ],
       },
       {
         path: 'explore',

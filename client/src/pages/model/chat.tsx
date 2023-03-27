@@ -5,8 +5,10 @@ import {
   Container,
   Divider,
   Grid,
+  Icon,
   IconButton,
   InputAdornment,
+  InputBase,
   List,
   ListItemButton,
   ListItemText,
@@ -18,7 +20,7 @@ import {
   Typography,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import { ChangeEvent, useContext, useEffect, useRef, useState } from 'react';
 import {
@@ -633,7 +635,7 @@ const Chat = () => {
   };
 
   return (
-    <Grid container spacing={0} sx={{ height: '100%' }}>
+    <><Grid container spacing={0} sx={{ height: '100%' }}>
       <Grid
         item
         xs
@@ -651,36 +653,69 @@ const Chat = () => {
             flexDirection: 'column',
             justifyContent: 'flex-end',
             height: '100%',
+            background: 'rgba(21, 21, 21, 1)',
+            gap: '16px'
           }}
           elevation={4}
         >
-          <Box marginTop={'16px'} display='flex'>
-            <TextField
-              placeholder='Search...'
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
+          <Box marginTop={'16px'}>
+            <Box sx={{
+              background: '#B1B1B1',
+              borderRadius: '30px',
+              margin: '0 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '3px 20px 3px 50px',
+              alignItems: 'center'
+            }}>
+              <InputBase sx={{
+                color: '#595959',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                fontSize: '12px',
+                lineHeight: '16px',
               }}
-            />
-            <Tooltip title='Start a new Conversation'>
-              <IconButton onClick={handleAddConversation}>
-                <AddIcon />
-              </IconButton>
-            </Tooltip>
+              placeholder='Search Conversation...'/>
+              <Icon sx={{
+                height: '30px'
+              }}>
+                <img src='/public/search-icon.svg'></img>
+              </Icon>
+            </Box>
           </Box>
-          <List>
+          <Tooltip title='Start a new Conversation'>
+            <IconButton onClick={handleAddConversation} sx={{
+              margin: '0 20px',
+              borderRadius: '30px'
+            }}>
+              <AddIcon />
+            </IconButton>
+          </Tooltip>
+          <List sx={{ display: 'flex', gap: '16px', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
             {requestsLoading && <div className='dot-pulse'></div>}
             {conversationIds.map((cid, idx) => (
               <ListItemButton
                 key={idx}
-                alignItems='flex-start'
+                alignItems='center'
                 selected={cid === currentConversationId}
                 onClick={() => handleListItemClick(cid)}
+                sx={{
+                  background: 'linear-gradient(354.88deg, #282828 -57.72%, #0A0A0A 49%)',
+                  borderRadius: '21px',
+                  width: '100%',
+                  justifyContent: 'center',
+                  height: '91px'
+               }}
               >
-                <ListItemText primary={cid} />
+                <Typography sx={{
+                  fontWeight: 400,
+                  fontSize: '15px',
+                  lineHeight: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  color: '#F4F4F4',
+                }}>Conversation {cid}</Typography>
               </ListItemButton>
             ))}
           </List>
@@ -697,6 +732,7 @@ const Chat = () => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
+          background: '#000',
         }}
       >
         <Box flexGrow={1}>
@@ -707,6 +743,7 @@ const Chat = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'flex-end',
+              background: '#000',
             }}
           >
             <Box
@@ -756,19 +793,18 @@ const Chat = () => {
                     {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
                   </Divider>
                   {messages.reverse().map((el: Message, index: number) => (
-                    <Container key={index} maxWidth={false}>
+                    <Container key={index} maxWidth={false} sx={{ paddingTop: '24px'}}>
                       <Stack
                         spacing={4}
                         flexDirection='row'
-                        justifyContent={el.type === 'request' ? 'flex-end' : 'flex-start'}
                       >
                         <Box
                           display={'flex'}
-                          justifyContent={el.type === 'request' ? 'flex -end' : 'flex-start'}
                           flexDirection='column'
                           margin='8px'
+                          width={'100%'}
                         >
-                          <Box display={'flex'} alignItems='center'>
+                          <Box display={'flex'} alignItems='center' justifyContent={el.type === 'response' ? 'flex-start' : 'flex-end'}>
                             {!!pendingTxs.find((pending) => el.id === pending.id) && (
                               <Tooltip
                                 title='This transaction is still not confirmed by the network'
@@ -780,27 +816,80 @@ const Chat = () => {
                             <Card
                               elevation={8}
                               raised={true}
-                              sx={{ width: 'fit-content', paddingBottom: 0 }}
+                              sx={{ width: '100%',
+                                background: el.type === 'response' ? '#1F1F1F' : '#070707',
+                                // opacity: '0.4',
+                                borderRadius:'40px'
+                              }}
                             >
-                              <CardContent>
-                                <Typography>{el.msg}</Typography>
+                              <CardContent sx={{
+                                padding: '24px 32px',
+                                gap: '16px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: el.type === 'response' ? 'flex-start' : 'flex-end'
+                              }}>
+                                <Typography
+                                  sx={{
+                                    fontStyle: 'normal',
+                                    fontWeight: 400,
+                                    fontSize: '25px',
+                                    lineHeight: '34px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    color: '#F4F4F4'
+                                  }}
+                                  gutterBottom
+                                >
+                                  {el.msg}
+                                </Typography>
+                                <Box display={'flex'}>
+                                  <Typography
+                                    sx={{
+                                      fontStyle: 'normal',
+                                      fontWeight: 300,
+                                      fontSize: '20px',
+                                      lineHeight: '27px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      color: '#FFF'
+                                    }}
+                                  >
+                                    {new Date(el.timestamp * 1000).toLocaleTimeString()}{' -  '}
+                                  </Typography>
+                                  <Typography sx={{
+                                    fontStyle: 'normal',
+                                    fontWeight: 700,
+                                    fontSize: '20px',
+                                    lineHeight: '27px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    color: '#FFF'
+                                  }}>
+                                    {el.type === 'response' ? state.modelName : 'You' }
+                                  </Typography>
+                                </Box>
+                                
                               </CardContent>
                             </Card>
                           </Box>
-
-                          <Typography
-                            variant='caption'
-                            textAlign={el.type === 'request' ? 'right' : 'left'}
-                          >
-                            {new Date(el.timestamp * 1000).toLocaleTimeString()}
-                          </Typography>
                         </Box>
                       </Stack>
                       {index < messages.length - 1 &&
                         new Date(el.timestamp * 1000).getDay() !==
-                          new Date(messages[index + 1].timestamp * 1000).getDay() && (
+                        new Date(messages[index + 1].timestamp * 1000).getDay() && (
                           <Divider textAlign='center'>
-                            {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
+                            <Typography sx={{
+                              fontStyle: 'normal',
+                              fontWeight: 300,
+                              fontSize: '20px',
+                              lineHeight: '27px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              color: '#FFF'
+                            }}>
+                              {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
+                            </Typography>
                           </Divider>
                         )}
                     </Container>
@@ -817,21 +906,35 @@ const Chat = () => {
             </Box>
           </Paper>
         </Box>
-        <TextField
-          variant='outlined'
+        <Box sx={{
+          background: '#1A1A1A',
+          borderRadius: '20px',
+          border: '1px solid #000000',
+          margin: '0 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: '3px 20px 3px 50px',
+          alignItems: 'center'
+        }}>
+          <InputBase sx={{
+            color: '#595959',
+            fontStyle: 'normal',
+            fontWeight: 400,
+            fontSize: '12px',
+            lineHeight: '16px',
+          }}
           value={newMessage}
           onChange={handleMessageChange}
           fullWidth
-          InputProps={{
-            endAdornment: (
-              <IconButton onClick={handleSend}>
-                <SendIcon />
-              </IconButton>
-            ),
-          }}
-        />
+          placeholder='Start Chatting...'/>
+           <IconButton onClick={handleSend} sx={{ height: '60px', width: '60px'}}
+            disabled={!newMessage || newMessage === ''}
+           >
+              <SendIcon />
+            </IconButton>
+        </Box>
       </Grid>
-    </Grid>
+    </Grid><Outlet /></>
   );
 };
 
