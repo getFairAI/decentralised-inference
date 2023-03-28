@@ -135,22 +135,22 @@ Any wallet that has paid the "Model Fee" and all the "Inference Payments" and "I
 Only Operators who have responded to all the inferences, with the exception of the last 7 blocks, will be listed in the Marketplace. This does not guarantee that an Operator has answered in the correct way. For this validation, it is necessary to track the number of favourable votes it has obtained. The same happens with Creators' models to validate if they are legitimate and safe or not.
 
 
-## VIII Statistics
+## VIII. Statistics
 
 The application will have several statistics about Creators and Operators. In the case of Creators, it will be possible to see all the models that that wallet has already submitted to the Marketplace and the respective positive or negative votes. As for Operators, besides the positive or negative votes they received from Users for all models, it will be possible to see the number of inferences responses returned by that wallet to all the Users for all the models they operated.
 
 
-## IX Cancellations
+## IX. Cancellations
 
 An Operator should cancel his operation on the Marketplace whenever he goes offline. Besides not harming Users requiring inferences, the advantage of doing so is keeping their wallet's favourable statistics. So, should he ever start operating again, he will have the previous statistics to support his excellent service. When the operation is resumed, the Operator will only be required to pay the difference between the "Registration Fee" that he has already paid and the current "Registration Fee" if the latter has increased compared to the former.
 
 
-## Punishments
+## X. Punishments
 
 If an Operator has not cancelled operation and has not responded to a User after 7 Arweave blocks, no matter the reason, they will be delisted from the Marketplace. To be listed again, an Operator must sign up for the Marketplace again and pay the Marketplace entry fee. Moreover, it needs also to send to Arweave all the requested responses that haven’t been answered. These rules ensure that Users are only penalised for 15 minutes when the Operator goes offline and incentivises Operators to always send a response to Users.
 
 
-## Risks, challenges, and Warnings
+## XI. Risks, challenges, and Warnings
 
 Users need to be careful about the files they receive from Operators, and Operators need to be cautious about files uploaded by Creators. Those files may contain malware from malicious Operators or scripts developed by malicious Creators. You are not supposed to open any executable, only files with the expected formats as the output of the chosen model.
 
@@ -167,7 +167,7 @@ The entire Marketplace application is frontend based. As such, the Marketplace c
 All the information displayed on the Marketplace is on Arweave. We used the "arweave.net" gateway for this application version to show all information. This decision presents a risk of a single point of failure since if this gateway goes down, all queries executed by the application will stop working. We pretend to change to a more decentralized gateway in the future, as presented in Section XII.
 
 
-## Next Steps
+## XII. Next Steps
 
 Our team has some ideas that may be implemented in the future, which we intend to finance using the fees paid by the users of the Marketplace. We do not guarantee that these ideas will remain unchanged or that any of these ideas will be implemented, as everything depends on the success of the application and the availability of the team. Below is a list of them:
 
@@ -184,7 +184,7 @@ Payments with other currencies: Currently, the Marketplace only supports payment
 * **Decentralized training:** Our application only supports decentralized inference at the moment. To further solve the problems presented in Section I, we may develop an application that performs model training in a decentralized manner.
 
 
-## Conclusion
+## XIII. Conclusion
 
 In conclusion, big tech companies' centralization of AI computation has raised concerns about the potential for a concentration of power and control over AI technology. Decentralizing AI inference computation using technologies such as Arweave and Bundlr can help to address this problem by creating a more equitable and accessible network for AI technology.
 
