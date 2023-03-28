@@ -115,3 +115,22 @@
   /* identical to box height */
   color: #6C6C6C;;
 }
+
+.underline {
+  background: linear-gradient(-45deg, #31AB7F50, #422D5C50, #A1205D50, #00000000);
+  background-size: 600%;
+  animation: anime 16s linear infinite;
+}
+
+ @keyframes anime {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+    
+  100% {
+    background-position: 0% 50%;
+  } 
+}

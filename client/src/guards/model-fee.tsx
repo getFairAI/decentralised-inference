@@ -149,7 +149,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
               }
             }}
             icon={
-              <img src='/public/warning-icon.svg'></img>
+              <img src='/warning-icon.svg'></img>
             }
           >
             <Typography sx={{
@@ -164,7 +164,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
               {arweave.ar.winstonToAr(
                 updatedFee ||
                   state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value,
-              )}{' '}<img src='/public/arweave-logo-warning.svg'></img>
+              )}{' '}<img src='/arweave-logo-warning.svg'></img>
             </Typography>
           </Alert>
         </DialogContent>

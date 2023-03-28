@@ -4,7 +4,6 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 import { Box, Button, Skeleton, Tooltip, Typography } from '@mui/material';
 import {
   ApolloError,
@@ -42,11 +41,13 @@ export default function BasicTable(props: {
   retry: () => void;
   hasNextPage: boolean;
   fetchMore: fetchMoreFn;
+  selectedIdx: number;
+  handleSelected: (index: number) => void;
 }) {
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const mockArray = genLoadingArray(10);
-
+  
   useEffect(() => {
     if (isOnScreen && props.hasNextPage) {
       props.fetchMore({
@@ -67,22 +68,37 @@ export default function BasicTable(props: {
     }
   }, [isOnScreen, props.operators]);
 
+  useEffect(() => {
+    const firstRow = document.querySelector('tbody tr:first-child');
+    const tableCells = firstRow?.querySelectorAll('td');
+    const tableWidth = document.querySelector('table')?.clientWidth;
+    if (tableWidth && tableCells) {
+      const cellWidth = tableWidth / tableCells.length;
+      tableCells?.forEach((el) => el.setAttribute('width', `${cellWidth}px`));
+      const tableHeadCells = document.querySelectorAll('thead tr th');
+      tableHeadCells.forEach((el) => el.setAttribute('width', `${cellWidth}px`));
+    }
+  }, []);
+
   return (
     <Box>
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label='simple table'>
-          <TableHead>
+      <TableContainer>
+        <Table sx={{ minWidth: 650, background: 'transparent', borderBottom: '0.5px solid #FFFFFF', width: '100%' }} aria-label='simple table' stickyHeader>
+          <TableHead sx={{ display: 'block' }}>
             <TableRow>
-              <TableCell variant='head'>
+              <TableCell sx={{ background: 'transparent'}} >
                 <Typography sx={{ fontWeight: 'bold' }}>Address</Typography>
               </TableCell>
-              <TableCell variant='head' align='right'>
+              <TableCell sx={{ background: 'transparent' }}>
+                <Typography sx={{ fontWeight: 'bold' }}>Name</Typography>
+              </TableCell>
+              <TableCell align='right' sx={{ background: 'transparent' }}>
                 <Typography sx={{ fontWeight: 'bold' }}>Registration&nbsp;</Typography>
               </TableCell>
-              <TableCell variant='head' align='right'>
+              <TableCell align='right' sx={{ background: 'transparent' }}>
                 <Typography sx={{ fontWeight: 'bold' }}>Fee&nbsp;(Ar)</Typography>
               </TableCell>
-              <TableCell variant='head' align='right'>
+              <TableCell align='right' sx={{ background: 'transparent' }}>
                 <Tooltip
                   title={'Represents the operator availability in the last 100 transactions'}
                   placement='top'
@@ -90,15 +106,15 @@ export default function BasicTable(props: {
                   <Typography sx={{ fontWeight: 'bold' }}>Status</Typography>
                 </Tooltip>
               </TableCell>
-              <TableCell variant='head' align='right'>
+              <TableCell align='right' sx={{ background: 'transparent' }}>
                 <Typography sx={{ fontWeight: 'bold' }}>Stamps&nbsp;</Typography>
               </TableCell>
-              <TableCell variant='head' align='right'>
-                <Typography sx={{ fontWeight: 'bold' }}>Actions&nbsp;</Typography>
+              <TableCell align='right' sx={{ background: 'transparent' }}>
+                <Typography sx={{ fontWeight: 'bold' }}>Selected&nbsp;</Typography>
               </TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
+          <TableBody sx={{ display: 'block', overflowY: 'auto',  overflowX: 'hidden' }}>
             {props.error ? (
               <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell colSpan={6}>
@@ -127,7 +143,7 @@ export default function BasicTable(props: {
                 );
               })
             ) : (
-              props.operators.map((row) => (
+              props.operators.map((row, idx) => (
                 <OperatorRow
                   key={row.node.id}
                   operatorTx={row}
@@ -137,6 +153,9 @@ export default function BasicTable(props: {
                       ?.value as string
                   }
                   state={props.state}
+                  index={idx}
+                  isSelected={props.selectedIdx === idx}
+                  setSelected={props.handleSelected}
                 />
               ))
             )}

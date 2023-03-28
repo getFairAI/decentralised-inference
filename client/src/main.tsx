@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Root from './root';
 import Home from '@/pages/home';
-import Explore from '@/pages/explore';
 import Upload from '@/pages/upload';
 import Model, { getModelFee } from '@/pages/model/model';
 import './styles/main.css';
@@ -40,6 +39,10 @@ const router = createBrowserRouter([
               },
             ]
           },
+          {
+            path: 'operators/details/:address',
+            element: <OperatorDetails />,
+          },
         ]
       },
       {
@@ -71,16 +74,12 @@ const router = createBrowserRouter([
         ],
       },
       {
-        path: 'explore',
-        element: <Explore />,
+        path: 'history',
+        element: <History />,
       },
       {
         path: 'upload',
         element: <Upload />,
-      },
-      {
-        path: 'history',
-        element: <History />,
       },
       {
         path: 'operators',
@@ -88,10 +87,6 @@ const router = createBrowserRouter([
           {
             path: '',
             element: <Operators />,
-          },
-          {
-            path: 'details/:address',
-            element: <OperatorDetails />,
           },
         ],
       },

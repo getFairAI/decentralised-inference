@@ -9,17 +9,17 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 
 import { IEdge } from '@/interfaces/arweave';
 import { LIST_LATEST_MODELS_QUERY, LIST_MODELS_QUERY } from '@/queries/graphql';
 import useOnScreen from '@/hooks/useOnScreen';
 import { MARKETPLACE_FEE } from '@/constants';
-import { genLoadingArray } from '@/utils/common';
 import Featured from '@/components/featured';
 import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
+import FilterContext from '@/context/filter';
 
 export default function Home() {
   const [ hasNextPage, setHasNextPage ] = useState(false);
@@ -27,7 +27,7 @@ export default function Home() {
   const elementsPerPage = 5;
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
-  const mockArray = genLoadingArray(elementsPerPage);
+  const filterValue = useContext(FilterContext);
   const [ hightlightTop, setHighLightTop ] = useState(false);
 
   const { data, loading, error } = useQuery(LIST_LATEST_MODELS_QUERY, {
@@ -79,6 +79,11 @@ export default function Home() {
     }
   }, [listData]);
 
+  useEffect(() => {
+    if (listData && filterValue)
+      setTxs(listData.transactions.edges.filter(((el: IEdge) => el.node.tags.find(tag => tag.name === 'Model-Name')?.value.includes(filterValue))));
+  }, [ filterValue ]);
+
   return (
     <><Container
       sx={{
@@ -120,6 +125,7 @@ export default function Home() {
             className={hightlightTop ? 'trending-text highlight' : 'trending-text'}
             onClick={() => handleHighlight(true)}
           >Top</Typography>
+          <div className='underline'></div>
           <Box flexGrow={1} />
         </Box>
         <Box flexGrow={1} />

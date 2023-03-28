@@ -35,7 +35,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
               borderColor: '#DC5141'
             }}
             icon={
-              <img src='/public/error-icon.svg'/>
+              <img src='/error-icon.svg'/>
             }
           >
             <Typography sx={{

@@ -1,256 +1,99 @@
-import { DEFAULT_TAGS } from '@/constants';
+import { DEFAULT_TAGS, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_OPERATOR_HISTORY } from '@/queries/graphql';
+import { QUERY_FIRST_REGISTRATION } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
 import {
   Box,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Container,
-  Divider,
+  CardMedia,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import { formatNumbers } from '@/utils/common';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { createAvatar } from '@dicebear/core';
+import { bottts } from '@dicebear/collection';
+import HistoryTable from '@/components/history-table';
 
-interface Row {
-  txid: string;
-  type: string;
-  date: string;
-  networkFee: string;
-  appFee: string;
-  destination: string;
-  origin: string;
-  modelTx: string;
-  operation: string;
-}
+
 const OperatorDetails = () => {
   const { address } = useParams();
+  const { state } = useLocation();
   const navigate = useNavigate();
+  const [ firstRegistrationDate, setFirstregistrationDate ] = useState('');
 
-  const tags = [...DEFAULT_TAGS];
-  const { data, loading } = useQuery(QUERY_OPERATOR_HISTORY, { variables: { address, tags } });
-  const [rows, setRows] = useState<Row[]>([]);
+  const { data: firstRegistrationData } = useQuery(
+    QUERY_FIRST_REGISTRATION,
+    {
+      variables: { owner: address, tags: [ ...DEFAULT_TAGS, { name: 'Operation-Name', values: 'Operator Registration' }]}
+    }
+  );
+
+  const handleClose = () => navigate(-1);
+
+  const imgUrl = useMemo(() => {
+    const avatar = createAvatar(bottts, {
+      seed: address,
+      scale: 62,
+    });
+
+    const img = avatar.toString();
+    const svg = new Blob([img], { type: 'image/svg+xml' });
+    return URL.createObjectURL(svg);
+  }, [ address ]);
 
   useEffect(() => {
-    if (data) {
-      const results = (data.owned as IEdge[]).map((el) => {
-        const node = el.node;
-
-        return {
-          txid: node.id,
-          type: 'Response',
-          date: new Date(node.block.timestamp * 1000).toLocaleDateString(),
-          networkFee: formatNumbers(node.fee.ar),
-          appFee: formatNumbers(node.quantity.ar),
-          destination: node.recipient,
-          origin: node.owner.address,
-          modelTx: node.tags.find((el) => el.name === 'Model-Transaction')?.value || '',
-          operation: node.tags.find((el) => el.name === 'Operation-Name')?.value || '',
-        };
-      });
-
-      const requests = (data.received as IEdge[]).map((el) => {
-        const node = el.node;
-        return {
-          txid: node.id,
-          type: 'Request',
-          date: new Date(node.block.timestamp * 1000).toLocaleDateString(),
-          networkFee: formatNumbers(node.fee.ar),
-          appFee: formatNumbers(node.quantity.ar),
-          destination: node.recipient,
-          origin: node.owner.address,
-          modelTx: node.tags.find((el) => el.name === 'Model-Transaction')?.value || '',
-          operation: node.tags.find((el) => el.name === 'Operation-Name')?.value || '',
-        };
-      });
-
-      setRows([...requests, ...results]);
+    const registration = firstRegistrationData?.transactions?.edges[0] as IEdge;
+    if (registration) {
+      // check fee
+      if (parseInt(registration.node.quantity.ar) !== parseInt(OPERATOR_REGISTRATION_AR_FEE)) {
+        // incorrect, fetch next
+      } else {
+        const timestamp = parseInt(registration.node.tags.find(tag => tag.name === 'Unix-time')?.value || '') || registration.node.block.timestamp;
+        setFirstregistrationDate(new Date(timestamp * 1000).toLocaleDateString());
+      }
     }
-  }, [data]);
+  }, firstRegistrationData);
 
   return (
     <>
-      <Container>
-        <Box sx={{ margin: '16px' }}>
-          <Card>
-            <Box display={'flex'} justifyContent={'space-between'}>
-              <CardHeader title={'Operator Details'} />
-              <Button
-                variant='contained'
-                startIcon={<ChevronLeftIcon />}
-                sx={{ height: '50%', margin: '16px' }}
-                onClick={() => navigate(-1)}
-              >
-                Back
-              </Button>
+      <Dialog open={true} maxWidth={'xl'} fullWidth sx={{
+        '& .MuiPaper-root': {
+          background: 'rgba(61, 61, 61, 0.9)',
+          borderRadius: '30px',
+        }
+      }}>
+        <DialogTitle display='flex' justifyContent={'space-between'} alignItems='center' lineHeight={0}>
+          <Typography>Operator Details</Typography>
+          <IconButton onClick={handleClose}>
+            <img src='/close-icon.svg'/>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box display={'flex'}>
+            <CardMedia
+              image={imgUrl}
+              sx={{ borderRadius: 8, width: 62, height: 62 }}
+            />
+            <Box>
+              <Typography>{state.operatorName}</Typography>
+              <Typography>{address}</Typography>
             </Box>
-
-            <CardContent>
-              <Box display={'flex'} justifyContent={'space-between'} marginBottom={'16px'}>
-                <TextField
-                  label='Address'
-                  variant='outlined'
-                  value={address}
-                  sx={{ width: '60%' }}
-                  InputProps={{
-                    readOnly: true,
-                    endAdornment: (
-                      <IconButton
-                        onClick={() => {
-                          address && navigator.clipboard.writeText(address);
-                        }}
-                      >
-                        <ContentCopyIcon />
-                      </IconButton>
-                    ),
-                  }}
-                />
-                <TextField
-                  label='Registration Date'
-                  variant='outlined'
-                  value={new Date().toLocaleDateString()}
-                  inputProps={{ readOnly: true }}
-                />
-              </Box>
-              <Divider textAlign='left'>History</Divider>
-              <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                <TableContainer sx={{ maxHeight: 700 }}>
-                  <Table sx={{ minWidth: 650 }} aria-label='simple table' stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell variant='head'>TxID</TableCell>
-                        <TableCell variant='head'>Origin</TableCell>
-                        <TableCell variant='head'>Destination</TableCell>
-                        <TableCell variant='head'>Type</TableCell>
-                        <TableCell variant='head'>Date&nbsp;</TableCell>
-                        <TableCell variant='head' align='right'>
-                          Network Fee&nbsp;(Ar)
-                        </TableCell>
-                        <TableCell variant='head' align='right'>
-                          Application Fee&nbsp;(Ar)
-                        </TableCell>
-                        <TableCell variant='head' align='right'>
-                          Model Tx
-                        </TableCell>
-                        <TableCell variant='head' align='right'>
-                          Operation
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={9} align='center'>
-                            <Typography>Loading...</Typography>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        rows.map((row: Row, idx: number) => (
-                          <TableRow
-                            key={idx}
-                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                          >
-                            <TableCell scope='row'>
-                              <Tooltip title={row.txid}>
-                                <Typography display={'flex'}>
-                                  {row.txid.slice(0, 5)}...{row.txid.slice(-2)}
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(row.txid);
-                                    }}
-                                  >
-                                    <ContentCopyIcon fontSize='inherit' />
-                                  </IconButton>
-                                </Typography>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell align='right'>
-                              <Tooltip title={row.origin}>
-                                <Typography display={'flex'}>
-                                  {row.origin.slice(0, 5)}...{row.origin.slice(-2)}
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(row.origin);
-                                    }}
-                                  >
-                                    <ContentCopyIcon fontSize='inherit' />
-                                  </IconButton>
-                                </Typography>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell align='right'>
-                              <Tooltip title={row.destination}>
-                                <Typography display={'flex'}>
-                                  {row.destination.slice(0, 5)}...{row.destination.slice(-2)}
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(row.destination);
-                                    }}
-                                  >
-                                    <ContentCopyIcon fontSize='inherit' />
-                                  </IconButton>
-                                </Typography>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell align='right'>{row.type}</TableCell>
-                            <TableCell align='right'>{row.date}</TableCell>
-                            <TableCell align='right'>{row.networkFee}</TableCell>
-                            <TableCell align='right'>{row.appFee}</TableCell>
-                            <TableCell align='right'>
-                              <Tooltip title={row.modelTx}>
-                                <Typography display={'flex'}>
-                                  {row.modelTx.slice(0, 5)}...{row.modelTx.slice(-2)}
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(row.modelTx);
-                                    }}
-                                  >
-                                    <ContentCopyIcon fontSize='inherit' />
-                                  </IconButton>
-                                </Typography>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell align='right'>{row.operation}</TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-              {/* <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={props.data.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            /> */}
-            </CardContent>
-          </Card>
-        </Box>
-      </Container>
+            
+          </Box>
+          <Box display={'flex'} flexDirection='column'>
+            <Typography>
+              Date Registered
+            </Typography>
+            <Typography>{firstRegistrationDate}</Typography>
+          </Box>
+        </DialogContent>
+        <DialogContent>
+          <HistoryTable address={address} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
