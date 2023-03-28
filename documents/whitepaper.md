@@ -80,8 +80,9 @@ Models that have dependencies on previous inferences are also supported. To acco
 
 The whole flow of the application regarding inference can be seen in Image 1:
 
-![](images/image1.png)
-* **Image 1:** Full inference flow of the Fair Protocol. *
+|![Full inference flow](images/image1.png)| 
+|:--:| 
+|***Image 1:*** *Full inference flow of the Fair Protocol.*|
 
 The process begins with a Creator submitting a model to the application and uploading it to Arweave, along with Markdown rules and scripts to install and use the same model. That model will be available in the application once the blockchain confirms the payment. Operators can then start running the model on their computers, following the rules imposed by the Creators, and sign up to begin operating it on the Marketplace.
 
@@ -92,8 +93,9 @@ Afterwards, Users can choose any model they wish to use and which Operator they 
 
 The whole flow regarding the economics of the application can be seen in Image 2:
 
-![](images/image2.png)
-* **image_caption** *
+|![Full economic flow](images/image2.png)| 
+|:--:| 
+|***Image 2:*** *Full economic flow of the Fair Protocol.*|
 
 The Marketplace has a set of fees and payments between participants in the Marketplace. These charges aim to create the right incentives for good actors to participate in the network and do their jobs, while bad actors face penalties and are disincentivised to operate.
 
