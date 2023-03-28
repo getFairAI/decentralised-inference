@@ -68,7 +68,7 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
   const [conversationIds, setConversationIds] = useState<string[]>([]);
-  const [ filteredConversationIds, setFilteredConversationIds] = useState<string[]>([]);
+  const [filteredConversationIds, setFilteredConversationIds] = useState<string[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -79,7 +79,7 @@ const Chat = () => {
   const elementsPerPage = 5;
   const scrollableRef = useRef<HTMLDivElement>(null);
   const setIsLocked = useScrollLock(scrollableRef);
-  const [ filterConversations, setFilterConversations ] = useState('');
+  const [filterConversations, setFilterConversations] = useState('');
 
   const [
     getChatRequests,
@@ -456,7 +456,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (conversationIds && conversationIds.length > 0) {
-      setFilteredConversationIds(conversationIds.filter(el => el.includes(filterConversations)));
+      setFilteredConversationIds(conversationIds.filter((el) => el.includes(filterConversations)));
     }
   }, [filterConversations]);
 
@@ -469,7 +469,7 @@ const Chat = () => {
     const number = lastConversation?.split('-')[1];
     const newConversationId = `C-${+number + 1}`;
     setConversationIds([...conversationIds, newConversationId]);
-    setFilteredConversationIds([ ...conversationIds, newConversationId ]);
+    setFilteredConversationIds([...conversationIds, newConversationId]);
     setFilterConversations('');
     setCurrentConversationId(newConversationId);
   };
@@ -642,331 +642,368 @@ const Chat = () => {
   };
 
   return (
-    <><Grid container spacing={0} sx={{ height: '100%' }}>
-      <Grid
-        item
-        xs
-        sx={{
-          width: '100%',
-          bgcolor: 'background.paper',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <Paper
+    <>
+      <Grid container spacing={0} sx={{ height: '100%' }}>
+        <Grid
+          item
+          xs
           sx={{
+            width: '100%',
+            bgcolor: 'background.paper',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
-            height: '100%',
-            // background: 'rgba(21, 21, 21, 1)',
-            gap: '16px',
-            background: '#242424',
-            // opacity: '0.3',
-            borderRadius:' 0px 20px 20px 0px'
           }}
-          elevation={4}
         >
-          <Box marginTop={'16px'}>
-            <Box sx={{
-              background: '#B1B1B1',
-              borderRadius: '30px',
-              margin: '0 20px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '3px 20px 3px 50px',
-              alignItems: 'center'
-            }}>
-              <InputBase sx={{
-                color: '#595959',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '12px',
-                lineHeight: '16px',
-              }}
-              placeholder='Search Conversations...'
-              value={filterConversations}
-              onChange={(event) => setFilterConversations(event.target.value)}
-            />
-              <Icon sx={{
-                height: '30px'
-              }}>
-                <img src='/search-icon.svg'></img>
-              </Icon>
-            </Box>
-          </Box>
-          <Tooltip title='Start a new Conversation'>
-            <IconButton onClick={handleAddConversation} sx={{
-              margin: '0 20px',
-              borderRadius: '30px'
-            }}>
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
-          <List sx={{ display: 'flex', gap: '16px', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '0 20px' }}>
-            {requestsLoading && <div className='dot-pulse'></div>}
-            {filteredConversationIds.map((cid, idx) => (
-              <ListItemButton
-                key={idx}
-                alignItems='center'
-                selected={cid === currentConversationId}
-                onClick={() => handleListItemClick(cid)}
-                sx={{
-                  background: '#434343',
-                  borderRadius: '21px',
-                  width: '100%',
-                  justifyContent: 'center',
-                  height: '91px',
-                  opacity: 0.5,
-                  color: '#f4f4f4',
-                  '&.Mui-selected, &.Mui-selected:hover': {
-                    opacity: 1,
-                    background: 'rgba(204, 204, 204, 0.8)',
-                    color: '#000'
-                    // border: '4px solid transparent',
-                    // background: 'linear-gradient(#434343, #434343) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
-                  },
-                  '&:hover': {
-                    opacity: 1,
-                    background: 'rgba(204, 204, 204, 0.8)',
-                    color: '#000'
-                  }
-               }}
-              >
-                <Typography sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 700,
-                  fontSize: '15px',
-                  lineHeight: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  color: 'inherit',
-                }}>Conversation {cid}</Typography>
-              </ListItemButton>
-            ))}
-          </List>
-          <Box flexGrow={1}></Box>
-        </Paper>
-      </Grid>
-      <Grid
-        item
-        xs={10}
-        sx={{
-          width: '100%',
-          height: '100%',
-          bgcolor: 'background.paper',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          background: '#000',
-        }}
-      >
-        <Box flexGrow={1}>
           <Paper
-            elevation={1}
             sx={{
-              height: '100%',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'flex-end',
-              background: '#000',
+              height: '100%',
+              // background: 'rgba(21, 21, 21, 1)',
+              gap: '16px',
+              background: '#242424',
+              // opacity: '0.3',
+              borderRadius: ' 0px 20px 20px 0px',
             }}
+            elevation={4}
           >
-            <Box
-              sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}
-              ref={scrollableRef}
+            <Box marginTop={'16px'}>
+              <Box
+                sx={{
+                  background: '#B1B1B1',
+                  borderRadius: '30px',
+                  margin: '0 20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '3px 20px 3px 50px',
+                  alignItems: 'center',
+                }}
+              >
+                <InputBase
+                  sx={{
+                    color: '#595959',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: '12px',
+                    lineHeight: '16px',
+                  }}
+                  placeholder='Search Conversations...'
+                  value={filterConversations}
+                  onChange={(event) => setFilterConversations(event.target.value)}
+                />
+                <Icon
+                  sx={{
+                    height: '30px',
+                  }}
+                >
+                  <img src='/search-icon.svg'></img>
+                </Icon>
+              </Box>
+            </Box>
+            <Tooltip title='Start a new Conversation'>
+              <IconButton
+                onClick={handleAddConversation}
+                sx={{
+                  margin: '0 20px',
+                  borderRadius: '30px',
+                }}
+              >
+                <AddIcon />
+              </IconButton>
+            </Tooltip>
+            <List
+              sx={{
+                display: 'flex',
+                gap: '16px',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '100%',
+                padding: '0 20px',
+              }}
             >
-              {messagesLoading &&
-                mockArray.map((el: number) => {
-                  return (
-                    <Container key={el} maxWidth={false}>
-                      <Stack
-                        spacing={4}
-                        flexDirection='row'
-                        justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                      >
-                        <Skeleton animation={'wave'} width={'40%'}>
-                          <Box
-                            display={'flex'}
-                            justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                            flexDirection='column'
-                            margin='8px'
-                          >
-                            <Box display={'flex'} alignItems='center'>
+              {requestsLoading && <div className='dot-pulse'></div>}
+              {filteredConversationIds.map((cid, idx) => (
+                <ListItemButton
+                  key={idx}
+                  alignItems='center'
+                  selected={cid === currentConversationId}
+                  onClick={() => handleListItemClick(cid)}
+                  sx={{
+                    background: '#434343',
+                    borderRadius: '21px',
+                    width: '100%',
+                    justifyContent: 'center',
+                    height: '91px',
+                    opacity: 0.5,
+                    color: '#f4f4f4',
+                    '&.Mui-selected, &.Mui-selected:hover': {
+                      opacity: 1,
+                      background: 'rgba(204, 204, 204, 0.8)',
+                      color: '#000',
+                      // border: '4px solid transparent',
+                      // background: 'linear-gradient(#434343, #434343) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+                    },
+                    '&:hover': {
+                      opacity: 1,
+                      background: 'rgba(204, 204, 204, 0.8)',
+                      color: '#000',
+                    },
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 700,
+                      fontSize: '15px',
+                      lineHeight: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      color: 'inherit',
+                    }}
+                  >
+                    Conversation {cid}
+                  </Typography>
+                </ListItemButton>
+              ))}
+            </List>
+            <Box flexGrow={1}></Box>
+          </Paper>
+        </Grid>
+        <Grid
+          item
+          xs={10}
+          sx={{
+            width: '100%',
+            height: '100%',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            background: '#000',
+          }}
+        >
+          <Box flexGrow={1}>
+            <Paper
+              elevation={1}
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+                background: '#000',
+              }}
+            >
+              <Box
+                sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}
+                ref={scrollableRef}
+              >
+                {messagesLoading &&
+                  mockArray.map((el: number) => {
+                    return (
+                      <Container key={el} maxWidth={false}>
+                        <Stack
+                          spacing={4}
+                          flexDirection='row'
+                          justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
+                        >
+                          <Skeleton animation={'wave'} width={'40%'}>
+                            <Box
+                              display={'flex'}
+                              justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
+                              flexDirection='column'
+                              margin='8px'
+                            >
+                              <Box display={'flex'} alignItems='center'>
+                                <Card
+                                  elevation={8}
+                                  raised={true}
+                                  sx={{ width: 'fit-content', paddingBottom: 0 }}
+                                >
+                                  <CardContent>
+                                    <Typography></Typography>
+                                  </CardContent>
+                                </Card>
+                              </Box>
+                            </Box>
+                          </Skeleton>
+                        </Stack>
+                      </Container>
+                    );
+                  })}
+                {requestError || responseError ? (
+                  <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
+                    Could not Fetch Conversation History.
+                  </Typography>
+                ) : messages.length > 0 && !messagesLoading ? (
+                  <>
+                    <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
+                      {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
+                    </Divider>
+                    {messages.reverse().map((el: Message, index: number) => (
+                      <Container key={index} maxWidth={false} sx={{ paddingTop: '16px' }}>
+                        <Stack spacing={4} flexDirection='row'>
+                          <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
+                            <Box
+                              display={'flex'}
+                              alignItems='center'
+                              justifyContent={el.type === 'response' ? 'flex-start' : 'flex-end'}
+                            >
+                              {!!pendingTxs.find((pending) => el.id === pending.id) && (
+                                <Tooltip
+                                  title='This transaction is still not confirmed by the network'
+                                  sx={{ margin: '8px' }}
+                                >
+                                  <PendingActionsIcon />
+                                </Tooltip>
+                              )}
                               <Card
                                 elevation={8}
                                 raised={true}
-                                sx={{ width: 'fit-content', paddingBottom: 0 }}
+                                sx={{
+                                  width: 'fit-content',
+                                  maxWidth: '75%',
+                                  // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
+                                  border: '4px solid transparent',
+                                  background:
+                                    el.type !== 'response'
+                                      ? 'rgba(204, 204, 204, 0.8)'
+                                      : 'rgba(52, 52, 52, 0.7)',
+                                  // opacity: '0.4',
+                                  borderRadius: '40px',
+                                }}
                               >
-                                <CardContent>
-                                  <Typography></Typography>
+                                <CardContent
+                                  sx={{
+                                    padding: '24px 32px',
+                                    gap: '16px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: el.type === 'response' ? 'flex-start' : 'flex-end',
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      fontStyle: 'normal',
+                                      fontWeight: 400,
+                                      fontSize: '25px',
+                                      lineHeight: '34px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      color: el.type === 'response' ? '#F4F4F4' : '#000',
+                                    }}
+                                    gutterBottom
+                                  >
+                                    {el.msg}
+                                  </Typography>
+                                  <Box display={'flex'}>
+                                    <Typography
+                                      sx={{
+                                        fontStyle: 'normal',
+                                        fontWeight: 300,
+                                        fontSize: '20px',
+                                        lineHeight: '27px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        color: el.type === 'response' ? '#FFF' : '#000',
+                                      }}
+                                    >
+                                      {new Date(el.timestamp * 1000).toLocaleTimeString()}
+                                      {' -  '}
+                                    </Typography>
+                                    <Typography
+                                      sx={{
+                                        fontStyle: 'normal',
+                                        fontWeight: 700,
+                                        fontSize: '20px',
+                                        lineHeight: '27px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        color: el.type === 'response' ? '#FFF' : '#222',
+                                      }}
+                                    >
+                                      {el.type === 'response' ? state.modelName : 'You'}
+                                    </Typography>
+                                  </Box>
                                 </CardContent>
                               </Card>
                             </Box>
                           </Box>
-                        </Skeleton>
-                      </Stack>
-                    </Container>
-                  );
-                })}
-              {requestError || responseError ? (
-                <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
-                  Could not Fetch Conversation History.
-                </Typography>
-              ) : messages.length > 0 && !messagesLoading ? (
-                <>
-                  <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
-                    {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
-                  </Divider>
-                  {messages.reverse().map((el: Message, index: number) => (
-                    <Container key={index} maxWidth={false} sx={{ paddingTop: '16px'}}>
-                      <Stack
-                        spacing={4}
-                        flexDirection='row'
-                      >
-                        <Box
-                          display={'flex'}
-                          flexDirection='column'
-                          margin='8px'
-                          width='100%'
-                        >
-                          <Box display={'flex'} alignItems='center' justifyContent={el.type === 'response' ? 'flex-start' : 'flex-end'}>
-                            {!!pendingTxs.find((pending) => el.id === pending.id) && (
-                              <Tooltip
-                                title='This transaction is still not confirmed by the network'
-                                sx={{ margin: '8px' }}
+                        </Stack>
+                        {index < messages.length - 1 &&
+                          new Date(el.timestamp * 1000).getDay() !==
+                            new Date(messages[index + 1].timestamp * 1000).getDay() && (
+                            <Divider textAlign='center'>
+                              <Typography
+                                sx={{
+                                  fontStyle: 'normal',
+                                  fontWeight: 300,
+                                  fontSize: '20px',
+                                  lineHeight: '27px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  color: '#FFF',
+                                }}
                               >
-                                <PendingActionsIcon />
-                              </Tooltip>
-                            )}
-                            <Card
-                              elevation={8}
-                              raised={true}
-                              sx={{
-                                width:'fit-content',
-                                maxWidth: '75%',
-                                // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
-                                border: '4px solid transparent',
-                                background: el.type !== 'response' ? 'rgba(204, 204, 204, 0.8)' : 'rgba(52, 52, 52, 0.7)',
-                                // opacity: '0.4',
-                                borderRadius:'40px'
-                              }}
-                            >
-                              <CardContent sx={{
-                                padding: '24px 32px',
-                                gap: '16px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: el.type === 'response' ? 'flex-start' : 'flex-end'
-                              }}>
-                                <Typography
-                                  sx={{
-                                    fontStyle: 'normal',
-                                    fontWeight: 400,
-                                    fontSize: '25px',
-                                    lineHeight: '34px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    color: el.type === 'response' ? '#F4F4F4' : '#000'
-                                  }}
-                                  gutterBottom
-                                >
-                                  {el.msg}
-                                </Typography>
-                                <Box display={'flex'}>
-                                  <Typography
-                                    sx={{
-                                      fontStyle: 'normal',
-                                      fontWeight: 300,
-                                      fontSize: '20px',
-                                      lineHeight: '27px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      color: el.type === 'response' ? '#FFF' : '#000'
-                                    }}
-                                  >
-                                    {new Date(el.timestamp * 1000).toLocaleTimeString()}{' -  '}
-                                  </Typography>
-                                  <Typography sx={{
-                                    fontStyle: 'normal',
-                                    fontWeight: 700,
-                                    fontSize: '20px',
-                                    lineHeight: '27px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    color: el.type === 'response' ? '#FFF' : '#222'
-                                  }}>
-                                    {el.type === 'response' ? state.modelName : 'You' }
-                                  </Typography>
-                                </Box>
-                                
-                              </CardContent>
-                            </Card>
-                          </Box>
-                        </Box>
-                      </Stack>
-                      {index < messages.length - 1 &&
-                        new Date(el.timestamp * 1000).getDay() !==
-                        new Date(messages[index + 1].timestamp * 1000).getDay() && (
-                          <Divider textAlign='center'>
-                            <Typography sx={{
-                              fontStyle: 'normal',
-                              fontWeight: 300,
-                              fontSize: '20px',
-                              lineHeight: '27px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              color: '#FFF'
-                            }}>
-                              {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
-                            </Typography>
-                          </Divider>
-                        )}
-                    </Container>
-                  ))}
-                </>
-              ) : !(messagesLoading || requestsLoading || responsesLoading) ? (
-                <Typography alignItems='center' display='flex' flexDirection='column'>
-                  Starting a new conversation.
-                </Typography>
-              ) : (
-                <></>
-              )}
-              <div ref={messagesEndRef} />
-            </Box>
-          </Paper>
-        </Box>
-        <Box sx={{
-          background: '#1A1A1A',
-          borderRadius: '20px',
-          border: '1px solid #000000',
-          margin: '0 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          padding: '3px 20px 0px 50px',
-          alignItems: 'center'
-        }}>
-          <InputBase sx={{
-            color: '#F4F4F4',
-            fontStyle: 'normal',
-            fontWeight: 400,
-            fontSize: '20px',
-            lineHeight: '16px',
-          }}
-          value={newMessage}
-          onChange={handleMessageChange}
-          fullWidth
-          placeholder='Start Chatting...'/>
-           <IconButton onClick={handleSend} sx={{ height: '60px', width: '60px'}}
-            disabled={!newMessage || newMessage === ''}
-           >
+                                {new Date(
+                                  messages[index + 1].timestamp * 1000,
+                                ).toLocaleDateString()}
+                              </Typography>
+                            </Divider>
+                          )}
+                      </Container>
+                    ))}
+                  </>
+                ) : !(messagesLoading || requestsLoading || responsesLoading) ? (
+                  <Typography alignItems='center' display='flex' flexDirection='column'>
+                    Starting a new conversation.
+                  </Typography>
+                ) : (
+                  <></>
+                )}
+                <div ref={messagesEndRef} />
+              </Box>
+            </Paper>
+          </Box>
+          <Box
+            sx={{
+              background: '#1A1A1A',
+              borderRadius: '20px',
+              border: '1px solid #000000',
+              margin: '0 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '3px 20px 0px 50px',
+              alignItems: 'center',
+            }}
+          >
+            <InputBase
+              sx={{
+                color: '#F4F4F4',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                fontSize: '20px',
+                lineHeight: '16px',
+              }}
+              value={newMessage}
+              onChange={handleMessageChange}
+              fullWidth
+              placeholder='Start Chatting...'
+            />
+            <IconButton
+              onClick={handleSend}
+              sx={{ height: '60px', width: '60px' }}
+              disabled={!newMessage || newMessage === ''}
+            >
               <SendIcon />
             </IconButton>
-        </Box>
+          </Box>
+        </Grid>
       </Grid>
-    </Grid><Outlet /></>
+      <Outlet />
+    </>
   );
 };
 

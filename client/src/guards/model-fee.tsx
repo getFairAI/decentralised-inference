@@ -127,59 +127,88 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
       <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
         <CircularProgress color='inherit' />
       </Backdrop>
-      <Dialog open={!loading && !isAllowed} maxWidth={'md'} fullWidth sx={{
-        '& .MuiPaper-root': {
-          background: 'rgba(61, 61, 61, 0.9)',
-          borderRadius: '30px',
-        }
-      }}>
-        <DialogTitle><Typography sx={{
-          color: '#F4BA61',
-          fontWeight: 700,
-          fontSize: '23px',
-          lineHeight: '31px'
-        }}>Model Fee Payment</Typography></DialogTitle>
+      <Dialog
+        open={!loading && !isAllowed}
+        maxWidth={'md'}
+        fullWidth
+        sx={{
+          '& .MuiPaper-root': {
+            background: 'rgba(61, 61, 61, 0.9)',
+            borderRadius: '30px',
+          },
+        }}
+      >
+        <DialogTitle>
+          <Typography
+            sx={{
+              color: '#F4BA61',
+              fontWeight: 700,
+              fontSize: '23px',
+              lineHeight: '31px',
+            }}
+          >
+            Model Fee Payment
+          </Typography>
+        </DialogTitle>
         <DialogContent>
           <Alert
             variant='outlined'
             severity='warning'
-            sx={{ marginBottom: '16px', borderRadius: '10px', color: '#F4BA61', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            sx={{
+              marginBottom: '16px',
+              borderRadius: '10px',
+              color: '#F4BA61',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
               '& .MuiAlert-icon': {
-                justifyContent: 'center'
-              }
+                justifyContent: 'center',
+              },
             }}
-            icon={
-              <img src='/warning-icon.svg'></img>
-            }
+            icon={<img src='/warning-icon.svg'></img>}
           >
-            <Typography sx={{
-              fontWeight: 400,
-              fontSize: '30px',
-              lineHeight: '41px',
-              display: 'block',
-              textAlign: 'center'
-            }}>
-              In Order to prevent bad actors an user has to pay the model fee before being able to use
-              it. The current Model fee is{' '}
+            <Typography
+              sx={{
+                fontWeight: 400,
+                fontSize: '30px',
+                lineHeight: '41px',
+                display: 'block',
+                textAlign: 'center',
+              }}
+            >
+              In Order to prevent bad actors an user has to pay the model fee before being able to
+              use it. The current Model fee is{' '}
               {arweave.ar.winstonToAr(
                 updatedFee ||
                   state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value,
-              )}{' '}<img src='/arweave-logo-warning.svg'></img>
+              )}{' '}
+              <img src='/arweave-logo-warning.svg'></img>
             </Typography>
           </Alert>
         </DialogContent>
-        <DialogActions sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}>
-          <Button color='error' onClick={handleCancel} sx={{
-            border: '1px solid #DC5141',
-            borderRadius: '7px',
-          }}>
+        <DialogActions
+          sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
+        >
+          <Button
+            color='error'
+            onClick={handleCancel}
+            sx={{
+              border: '1px solid #DC5141',
+              borderRadius: '7px',
+            }}
+          >
             Decline
           </Button>
-          <Button onClick={handleAccept} sx={{
-            background:' rgba(14, 255, 168, 0.58)',
-            borderRadius: '7px',
-            color: '#F4F4F4'
-          }}>Accept</Button>
+          <Button
+            onClick={handleAccept}
+            sx={{
+              background: ' rgba(14, 255, 168, 0.58)',
+              borderRadius: '7px',
+              color: '#F4F4F4',
+            }}
+          >
+            Accept
+          </Button>
         </DialogActions>
       </Dialog>
       {isAllowed && children}

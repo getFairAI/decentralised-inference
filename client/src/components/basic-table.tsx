@@ -47,7 +47,7 @@ export default function BasicTable(props: {
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const mockArray = genLoadingArray(10);
-  
+
   useEffect(() => {
     if (isOnScreen && props.hasNextPage) {
       props.fetchMore({
@@ -83,10 +83,19 @@ export default function BasicTable(props: {
   return (
     <Box>
       <TableContainer>
-        <Table sx={{ minWidth: 650, background: 'transparent', borderBottom: '0.5px solid #FFFFFF', width: '100%' }} aria-label='simple table' stickyHeader>
+        <Table
+          sx={{
+            minWidth: 650,
+            background: 'transparent',
+            borderBottom: '0.5px solid #FFFFFF',
+            width: '100%',
+          }}
+          aria-label='simple table'
+          stickyHeader
+        >
           <TableHead sx={{ display: 'block' }}>
             <TableRow>
-              <TableCell sx={{ background: 'transparent'}} >
+              <TableCell sx={{ background: 'transparent' }}>
                 <Typography sx={{ fontWeight: 'bold' }}>Address</Typography>
               </TableCell>
               <TableCell sx={{ background: 'transparent' }}>
@@ -114,7 +123,7 @@ export default function BasicTable(props: {
               </TableCell>
             </TableRow>
           </TableHead>
-          <TableBody sx={{ display: 'block', overflowY: 'auto',  overflowX: 'hidden' }}>
+          <TableBody sx={{ display: 'block', overflowY: 'auto', overflowX: 'hidden' }}>
             {props.error ? (
               <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell colSpan={6}>

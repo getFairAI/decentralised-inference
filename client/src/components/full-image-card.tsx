@@ -1,4 +1,13 @@
-import { Card, CardActionArea, CardActionAreaProps, CardContent, CardContentProps, CardMedia, CardMediaProps, CardProps } from '@mui/material';
+import {
+  Card,
+  CardActionArea,
+  CardActionAreaProps,
+  CardContent,
+  CardContentProps,
+  CardMedia,
+  CardMediaProps,
+  CardProps,
+} from '@mui/material';
 import { styled } from '@mui/system';
 
 export const FiCard = styled((props: CardProps) => {
@@ -7,7 +16,7 @@ export const FiCard = styled((props: CardProps) => {
   borderRadius: '23px',
   position: 'relative',
   width: '317px',
-  height: '352px'
+  height: '352px',
 }));
 
 export const FiCardActionArea = styled((props: CardActionAreaProps) => {
@@ -15,7 +24,7 @@ export const FiCardActionArea = styled((props: CardActionAreaProps) => {
 })(() => ({
   position: 'relative',
   width: '317px',
-  height: '352px'
+  height: '352px',
 }));
 
 export const FiCardContent = styled((props: CardContentProps) => {
@@ -24,7 +33,7 @@ export const FiCardContent = styled((props: CardContentProps) => {
   position: 'relative',
   width: '301px',
   height: '74.46px',
-  top: '110px'
+  top: '110px',
 }));
 
 export const FicardMedia = styled((props: CardMediaProps) => {

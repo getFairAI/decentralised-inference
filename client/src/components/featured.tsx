@@ -5,18 +5,19 @@ import { IEdge } from '@/interfaces/arweave';
 import '@/styles/ui.css';
 import { ApolloError } from '@apollo/client';
 
-const Featured = ({ data, loading }: { data: IEdge[], loading: boolean, error?: ApolloError}) => {
-  const [filterSelected, setFilterChanged ] = useState(0);
-  const filters = [ 'All', 'Text', 'Document' ];
+const Featured = ({ data, loading }: { data: IEdge[]; loading: boolean; error?: ApolloError }) => {
+  const [filterSelected, setFilterChanged] = useState(0);
+  const filters = ['All', 'Text', 'Document'];
 
   const handleFilterChange = (newFilterIdx: number) => {
     setFilterChanged(newFilterIdx);
   };
-  return <>
-    <Box className={'filter-box'}>
-      {
-        filters.map((filter, idx) =>
-          <Typography key={filter}
+  return (
+    <>
+      <Box className={'filter-box'}>
+        {filters.map((filter, idx) => (
+          <Typography
+            key={filter}
             style={{
               fontWeight: filterSelected === idx ? 700 : 400,
               fontSize: '20px',
@@ -32,14 +33,15 @@ const Featured = ({ data, loading }: { data: IEdge[], loading: boolean, error?: 
           >
             {filter}
           </Typography>
-        )
-      }
-    </Box>
-    <Box className={'feature-cards-row'}>
-      {data.map(el => <AiCard model={el} key={el.node.id} loading={loading}/>)}
-    </Box>
-  </>
-  ;
+        ))}
+      </Box>
+      <Box className={'feature-cards-row'}>
+        {data.map((el) => (
+          <AiCard model={el} key={el.node.id} loading={loading} />
+        ))}
+      </Box>
+    </>
+  );
 };
 
 export default Featured;
