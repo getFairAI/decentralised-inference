@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Root from './root';
 import Home from '@/pages/home';
-import Explore from '@/pages/explore';
 import Upload from '@/pages/upload';
 import Model, { getModelFee } from '@/pages/model/model';
 import './styles/main.css';
@@ -26,28 +25,22 @@ const router = createBrowserRouter([
       {
         path: '',
         element: <Home />,
-      },
-      {
-        path: 'explore',
-        element: <Explore />,
-      },
-      {
-        path: 'upload',
-        element: <Upload />,
-      },
-      {
-        path: 'history',
-        element: <History />,
-      },
-      {
-        path: 'operators',
         children: [
           {
-            path: '',
-            element: <Operators />,
+            path: 'model/:txid',
+            element: <Model />,
+            /* loader: txLoader, */
+            loader: getModelFee,
+            id: 'model',
+            children: [
+              {
+                path: 'detail',
+                element: <Detail />,
+              },
+            ],
           },
           {
-            path: 'details/:address',
+            path: 'operators/details/:address',
             element: <OperatorDetails />,
           },
         ],
@@ -57,13 +50,7 @@ const router = createBrowserRouter([
         element: <Model />,
         /* loader: txLoader, */
         loader: getModelFee,
-        id: 'model',
         children: [
-          {
-            path: 'detail',
-            element: <Detail />,
-          },
-
           {
             path: 'chat/:address',
             element: (
@@ -73,10 +60,33 @@ const router = createBrowserRouter([
                 </ModelFeeGuard>
               </BlockOperatorGuard>
             ),
+            children: [
+              {
+                path: 'change-operator',
+                element: <Detail />,
+              },
+            ],
           },
           {
             path: 'register',
             element: <Register />,
+          },
+        ],
+      },
+      {
+        path: 'history',
+        element: <History />,
+      },
+      {
+        path: 'upload',
+        element: <Upload />,
+      },
+      {
+        path: 'operators',
+        children: [
+          {
+            path: '',
+            element: <Operators />,
           },
         ],
       },

@@ -1,0 +1,139 @@
+@import url('https://fonts.cdnfonts.com/css/satoshi');
+
+#root {
+  box-sizing: border-box;
+
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 36px;
+}
+
+.navbar {
+  /* height: 367px; */
+  left: 667px;
+  top: 100px;
+  border-radius: 5px;
+}
+
+.navbar-content {
+  /* Property 1=Chat */
+  position: absolute;
+  height: 107px;
+  left: 20px;
+  top: 22px;
+}
+
+.navbar-links {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 24px;
+
+  color: #e3e3e3;
+}
+
+.navbar-links.active {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 24px;
+
+  color: #e3e3e3;
+}
+
+.navbar-right-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0px;
+  gap: 34px;
+}
+
+.feature-cards-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0px;
+  gap: 36px;
+  flex-wrap: nowrap;
+}
+
+.ai-card-content {
+  width: 301px;
+  height: 74.46px;
+}
+
+.filter-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 30px 20px 30px 20px;
+  gap: 21px;
+}
+
+.text {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 300;
+  font-size: 30px;
+  line-height: 41px;
+  /* identical to box height */
+  color: linear-gradient(
+    101.22deg,
+    rgba(14, 255, 168, 0.58) 30.84%,
+    #9747ff 55.47%,
+    rgba(84, 81, 228, 0) 78.13%
+  );
+}
+
+.trending-text.highlight {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 41px;
+  /* identical to box height */
+  border-bottom: 6px solid;
+  border-image-slice: 1;
+  border-image-source: linear-gradient(
+    104.46deg,
+    rgba(14, 255, 168, 0.58) -238.05%,
+    #9747ff 301.04%,
+    rgba(84, 81, 228, 0) 797.01%
+  );
+
+  color: #f4f4f4;
+}
+
+.trending-text {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 41px;
+  /* identical to box height */
+  color: #6c6c6c;
+}
+
+.underline {
+  background: linear-gradient(-45deg, #31ab7f50, #422d5c50, #a1205d50, #00000000);
+  background-size: 600%;
+  animation: anime 16s linear infinite;
+}
+
+@keyframes anime {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
