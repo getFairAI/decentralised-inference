@@ -6,14 +6,11 @@ import {
   QUERY_RESPONSES_BY_OPERATOR,
 } from '@/queries/graphql';
 import { useLazyQuery, useQuery } from '@apollo/client';
-import { IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
+import { Checkbox, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { parseWinston } from '@/utils/arweave';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import HistoryIcon from '@mui/icons-material/History';
-import { useNavigate } from 'react-router-dom';
 
 export interface RowData {
   quantityAR: string;
@@ -25,6 +22,7 @@ export interface RowData {
   modelName: string;
   modelCreator: string;
   modelTransaction: string;
+  operatorName: string;
 }
 
 /**
@@ -37,13 +35,18 @@ const OperatorRow = ({
   modelCreator,
   modelName,
   state,
+  index,
+  isSelected,
+  setSelected,
 }: {
   operatorTx: IEdge;
   modelCreator: string;
   modelName: string;
   state: IEdge;
+  index: number;
+  isSelected: boolean;
+  setSelected: (index: number) => void;
 }) => {
-  const navigate = useNavigate();
   const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
   const requestTags = [
     ...DEFAULT_TAGS,
@@ -79,7 +82,7 @@ const OperatorRow = ({
   useEffect(() => {
     const address = operatorTx.node.owner.address;
     const quantityAR = operatorTx.node.quantity.ar;
-    const stamps = Math.random() * 100;
+    const stamps = parseInt((Math.random() * 100).toFixed(0));
     const fee = operatorTx.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value;
     const registrationTimestamp = operatorTx.node.block
       ? new Date(operatorTx.node.block.timestamp * 1000).toLocaleString()
@@ -87,6 +90,8 @@ const OperatorRow = ({
     const modelTransaction = state.node.tags.find((tag) => tag.name === 'Model-Transaction')?.value;
     const modelName = state.node.tags.find((tag) => tag.name === 'Model-Name')?.value;
     const modelCreator = state.node.owner.address;
+    const operatorName =
+      operatorTx.node.tags.find((tag) => tag.name === 'Operator-Name')?.value || 'No Name';
     setRow({
       address,
       quantityAR,
@@ -96,6 +101,7 @@ const OperatorRow = ({
       modelTransaction,
       modelName,
       modelCreator,
+      operatorName,
     });
   }, [operatorTx]);
 
@@ -273,6 +279,7 @@ const OperatorRow = ({
             </Typography>
           </Tooltip>
         </TableCell>
+        <TableCell align='left'>{row?.operatorName}</TableCell>
         <TableCell align='right'>{row?.registrationTimestamp}</TableCell>
         <TableCell align='right'>{parseWinston(row?.fee)}</TableCell>
         <TableCell align='right'>
@@ -299,40 +306,9 @@ const OperatorRow = ({
           </Tooltip>
           {}
         </TableCell>
-        <TableCell align='right'>{Math.random() * 100}</TableCell>
-        <TableCell align='right'>
-          <Tooltip title='History'>
-            <IconButton
-              onClick={() =>
-                navigate(`/operators/details/${operatorTx.node.owner.address}`, {
-                  state: {
-                    modelName: modelName,
-                    modelCreator: modelCreator,
-                    operatorFee: row?.fee,
-                  },
-                })
-              }
-            >
-              <HistoryIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='Execute'>
-            <IconButton
-              onClick={() =>
-                navigate(`../chat/${operatorTx.node.owner.address}`, {
-                  state: {
-                    modelName: modelName,
-                    modelCreator: modelCreator,
-                    fee: row?.fee,
-                    modelTransaction: row?.modelTransaction,
-                    fullState: state,
-                  },
-                })
-              }
-            >
-              <PlayArrowIcon />
-            </IconButton>
-          </Tooltip>
+        <TableCell align='right'>{row?.stamps}</TableCell>
+        <TableCell padding='checkbox'>
+          <Checkbox color='primary' checked={isSelected} onChange={() => setSelected(index)} />
         </TableCell>
       </TableRow>
     </>

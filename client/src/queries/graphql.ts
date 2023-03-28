@@ -645,90 +645,6 @@ export const QUERY_INFERENCE_RESULTS = gql`
   }
 `;
 
-export const QUERY_OPERATOR_HISTORY = gql`
-  query history($address: String!, $tags: [TagFilter!]) {
-    owned: transactions(tags: $tags, owners: [$address]) {
-      edges {
-        cursor
-        node {
-          id
-          signature
-          recipient
-          owner {
-            address
-            key
-          }
-          fee {
-            winston
-            ar
-          }
-          quantity {
-            winston
-            ar
-          }
-          data {
-            size
-            type
-          }
-          tags {
-            name
-            value
-          }
-          block {
-            id
-            timestamp
-            height
-            previous
-          }
-          bundledIn {
-            id
-          }
-        }
-      }
-    }
-
-    received: transactions(tags: $tags, recipients: [$address]) {
-      edges {
-        cursor
-        node {
-          id
-          signature
-          recipient
-          owner {
-            address
-            key
-          }
-          fee {
-            winston
-            ar
-          }
-          quantity {
-            winston
-            ar
-          }
-          data {
-            size
-            type
-          }
-          tags {
-            name
-            value
-          }
-          block {
-            id
-            timestamp
-            height
-            previous
-          }
-          bundledIn {
-            id
-          }
-        }
-      }
-    }
-  }
-`;
-
 export const QUERY_CHAT_REQUESTS = gql`
   query QUERY_CHAT_REQUESTS(
     $address: String!
@@ -928,6 +844,114 @@ export const QUERY_RESPONSES_BY_OPERATOR = gql`
           }
           quantity {
             ar
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+`;
+
+export const QUERY_FIRST_REGISTRATION = gql`
+  query QUERY_RESPONSES_BY_OPERATOR($owner: String!, $tags: [TagFilter!]) {
+    transactions(tags: $tags, owners: [$owner], first: 1, sort: HEIGHT_ASC) {
+      edges {
+        node {
+          id
+          owner {
+            address
+          }
+          block {
+            timestamp
+            height
+          }
+          tags {
+            name
+            value
+          }
+          quantity {
+            ar
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_OPERATOR_RECEIVED_HISTORY = gql`
+  query QUERY_OPERATOR_RECEIVED_HISTORY(
+    $address: String!
+    $tags: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(
+      tags: $tags
+      recipients: [$address]
+      sort: HEIGHT_DESC
+      first: $first
+      after: $after
+    ) {
+      edges {
+        cursor
+        node {
+          id
+          recipient
+          owner {
+            address
+          }
+          fee {
+            ar
+          }
+          quantity {
+            ar
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            timestamp
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+`;
+
+export const QUERY_OPERATOR_SENT_HISTORY = gql`
+  query QUERY_OPERATOR_SENT_HISTORY(
+    $address: String!
+    $tags: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          id
+          recipient
+          owner {
+            address
+          }
+          fee {
+            ar
+          }
+          quantity {
+            ar
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            timestamp
           }
         }
       }

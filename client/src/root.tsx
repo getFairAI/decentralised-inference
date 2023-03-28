@@ -11,11 +11,18 @@ import { client } from './utils/apollo';
 export const Root = () => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
+  const satoshiFont = "'Satoshi', sans-serif";
   const theme = useMemo(
     () =>
       createTheme({
+        typography: {
+          fontFamily: satoshiFont,
+        },
         palette: {
           mode: prefersDarkMode ? 'dark' : 'light',
+          background: {
+            default: '#000000',
+          },
         },
       }),
     [prefersDarkMode],

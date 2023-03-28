@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@apollo/client": "^3.7.7",
+    "@dicebear/collection": "^6.0.2",
+    "@dicebear/core": "^6.0.2",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.0",
@@ -29,6 +31,7 @@
     "bundlr-custom": "file:../js-sdk/bundlr-network-client-0.10.5.tgz",
     "filereader-stream": "^2.0.0",
     "graphql": "^16.6.0",
+    "jdenticon": "^3.2.0",
     "lodash": "^4.17.21",
     "notistack": "^2.0.8",
     "react": "^18.2.0",

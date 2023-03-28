@@ -93,9 +93,6 @@ const History = () => {
                 />
                 <CardContent sx={{ maxWidth: '300px' }}>
                   <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
-                    {/* <Typography noWrap variant='h6'>
-                      {edge.node.tags.find((el) => el.name === 'test')?.value}
-                    </Typography> */}
                     <Typography noWrap variant='body1'>
                       {edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value}
                     </Typography>

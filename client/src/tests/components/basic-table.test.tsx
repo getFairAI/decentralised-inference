@@ -185,6 +185,11 @@ const mockIntersectionObserver = class {
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const mockHandleSelected = (index: number) => {
+  return;
+};
+
 describe('components/basic-table.tsx', () => {
   beforeEach(async () => {
     (window.IntersectionObserver as unknown) = mockIntersectionObserver;
@@ -199,6 +204,8 @@ describe('components/basic-table.tsx', () => {
           fetchMore={fakeFetchMore}
           state={mockState}
           hasNextPage={false}
+          selectedIdx={0}
+          handleSelected={mockHandleSelected}
         />
       </MockedProvider>,
       {
@@ -219,6 +226,8 @@ describe('components/basic-table.tsx', () => {
         fetchMore={fakeFetchMore}
         state={mockState}
         hasNextPage={false}
+        selectedIdx={0}
+        handleSelected={mockHandleSelected}
       />,
       {
         wrapper: BrowserRouter,
@@ -240,6 +249,8 @@ describe('components/basic-table.tsx', () => {
         state={mockState}
         hasNextPage={false}
         error={mockError}
+        selectedIdx={0}
+        handleSelected={mockHandleSelected}
       />,
       {
         wrapper: BrowserRouter,
