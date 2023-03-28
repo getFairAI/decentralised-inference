@@ -7,15 +7,12 @@ import {
   Grid,
   Icon,
   IconButton,
-  InputAdornment,
   InputBase,
   List,
   ListItemButton,
-  ListItemText,
   Paper,
   Skeleton,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -40,7 +37,6 @@ import {
 import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import { useSnackbar } from 'notistack';
 import { WebBundlr } from 'bundlr-custom';
@@ -72,6 +68,7 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
   const [conversationIds, setConversationIds] = useState<string[]>([]);
+  const [ filteredConversationIds, setFilteredConversationIds] = useState<string[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -82,6 +79,7 @@ const Chat = () => {
   const elementsPerPage = 5;
   const scrollableRef = useRef<HTMLDivElement>(null);
   const setIsLocked = useScrollLock(scrollableRef);
+  const [ filterConversations, setFilterConversations ] = useState('');
 
   const [
     getChatRequests,
@@ -160,6 +158,7 @@ const Chat = () => {
         return numberA < numberB ? -1 : 1;
       });
       setConversationIds(uniqueCids);
+      setFilteredConversationIds(uniqueCids);
       setCurrentConversationId(uniqueCids[uniqueCids.length - 1]);
 
       const commonTags = [
@@ -455,6 +454,12 @@ const Chat = () => {
     }
   };
 
+  useEffect(() => {
+    if (conversationIds && conversationIds.length > 0) {
+      setFilteredConversationIds(conversationIds.filter(el => el.includes(filterConversations)));
+    }
+  }, [filterConversations]);
+
   const handleListItemClick = (cid: string) => {
     setCurrentConversationId(cid);
   };
@@ -464,6 +469,8 @@ const Chat = () => {
     const number = lastConversation?.split('-')[1];
     const newConversationId = `C-${+number + 1}`;
     setConversationIds([...conversationIds, newConversationId]);
+    setFilteredConversationIds([ ...conversationIds, newConversationId ]);
+    setFilterConversations('');
     setCurrentConversationId(newConversationId);
   };
 
@@ -653,8 +660,11 @@ const Chat = () => {
             flexDirection: 'column',
             justifyContent: 'flex-end',
             height: '100%',
-            background: 'rgba(21, 21, 21, 1)',
-            gap: '16px'
+            // background: 'rgba(21, 21, 21, 1)',
+            gap: '16px',
+            background: '#242424',
+            // opacity: '0.3',
+            borderRadius:' 0px 20px 20px 0px'
           }}
           elevation={4}
         >
@@ -675,11 +685,14 @@ const Chat = () => {
                 fontSize: '12px',
                 lineHeight: '16px',
               }}
-              placeholder='Search Conversation...'/>
+              placeholder='Search Conversations...'
+              value={filterConversations}
+              onChange={(event) => setFilterConversations(event.target.value)}
+            />
               <Icon sx={{
                 height: '30px'
               }}>
-                <img src='/public/search-icon.svg'></img>
+                <img src='/search-icon.svg'></img>
               </Icon>
             </Box>
           </Box>
@@ -691,30 +704,45 @@ const Chat = () => {
               <AddIcon />
             </IconButton>
           </Tooltip>
-          <List sx={{ display: 'flex', gap: '16px', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+          <List sx={{ display: 'flex', gap: '16px', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '0 20px' }}>
             {requestsLoading && <div className='dot-pulse'></div>}
-            {conversationIds.map((cid, idx) => (
+            {filteredConversationIds.map((cid, idx) => (
               <ListItemButton
                 key={idx}
                 alignItems='center'
                 selected={cid === currentConversationId}
                 onClick={() => handleListItemClick(cid)}
                 sx={{
-                  background: 'linear-gradient(354.88deg, #282828 -57.72%, #0A0A0A 49%)',
+                  background: '#434343',
                   borderRadius: '21px',
                   width: '100%',
                   justifyContent: 'center',
-                  height: '91px'
+                  height: '91px',
+                  opacity: 0.5,
+                  color: '#f4f4f4',
+                  '&.Mui-selected, &.Mui-selected:hover': {
+                    opacity: 1,
+                    background: 'rgba(204, 204, 204, 0.8)',
+                    color: '#000'
+                    // border: '4px solid transparent',
+                    // background: 'linear-gradient(#434343, #434343) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+                  },
+                  '&:hover': {
+                    opacity: 1,
+                    background: 'rgba(204, 204, 204, 0.8)',
+                    color: '#000'
+                  }
                }}
               >
                 <Typography sx={{
-                  fontWeight: 400,
+                  fontStyle: 'normal',
+                  fontWeight: 700,
                   fontSize: '15px',
                   lineHeight: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   textAlign: 'center',
-                  color: '#F4F4F4',
+                  color: 'inherit',
                 }}>Conversation {cid}</Typography>
               </ListItemButton>
             ))}
@@ -793,7 +821,7 @@ const Chat = () => {
                     {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
                   </Divider>
                   {messages.reverse().map((el: Message, index: number) => (
-                    <Container key={index} maxWidth={false} sx={{ paddingTop: '24px'}}>
+                    <Container key={index} maxWidth={false} sx={{ paddingTop: '16px'}}>
                       <Stack
                         spacing={4}
                         flexDirection='row'
@@ -802,7 +830,7 @@ const Chat = () => {
                           display={'flex'}
                           flexDirection='column'
                           margin='8px'
-                          width={'100%'}
+                          width='100%'
                         >
                           <Box display={'flex'} alignItems='center' justifyContent={el.type === 'response' ? 'flex-start' : 'flex-end'}>
                             {!!pendingTxs.find((pending) => el.id === pending.id) && (
@@ -816,8 +844,12 @@ const Chat = () => {
                             <Card
                               elevation={8}
                               raised={true}
-                              sx={{ width: '100%',
-                                background: el.type === 'response' ? '#1F1F1F' : '#070707',
+                              sx={{
+                                width:'fit-content',
+                                maxWidth: '75%',
+                                // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
+                                border: '4px solid transparent',
+                                background: el.type !== 'response' ? 'rgba(204, 204, 204, 0.8)' : 'rgba(52, 52, 52, 0.7)',
                                 // opacity: '0.4',
                                 borderRadius:'40px'
                               }}
@@ -837,7 +869,7 @@ const Chat = () => {
                                     lineHeight: '34px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    color: '#F4F4F4'
+                                    color: el.type === 'response' ? '#F4F4F4' : '#000'
                                   }}
                                   gutterBottom
                                 >
@@ -852,7 +884,7 @@ const Chat = () => {
                                       lineHeight: '27px',
                                       display: 'flex',
                                       alignItems: 'center',
-                                      color: '#FFF'
+                                      color: el.type === 'response' ? '#FFF' : '#000'
                                     }}
                                   >
                                     {new Date(el.timestamp * 1000).toLocaleTimeString()}{' -  '}
@@ -864,7 +896,7 @@ const Chat = () => {
                                     lineHeight: '27px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    color: '#FFF'
+                                    color: el.type === 'response' ? '#FFF' : '#222'
                                   }}>
                                     {el.type === 'response' ? state.modelName : 'You' }
                                   </Typography>
@@ -913,14 +945,14 @@ const Chat = () => {
           margin: '0 20px',
           display: 'flex',
           justifyContent: 'space-between',
-          padding: '3px 20px 3px 50px',
+          padding: '3px 20px 0px 50px',
           alignItems: 'center'
         }}>
           <InputBase sx={{
-            color: '#595959',
+            color: '#F4F4F4',
             fontStyle: 'normal',
             fontWeight: 400,
-            fontSize: '12px',
+            fontSize: '20px',
             lineHeight: '16px',
           }}
           value={newMessage}

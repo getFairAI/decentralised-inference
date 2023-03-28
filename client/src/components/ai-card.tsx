@@ -106,7 +106,7 @@ const AiCard = ({ model, loading }: { model: IEdge, loading: boolean }) => {
           bottom: '48px',
           left: '265px'
         }}>
-          <img src='/public/thumbs-up.svg'/>
+          <img src='/thumbs-up.svg'/>
         </Icon>
       </FiCardContent>
     </FiCardActionArea>

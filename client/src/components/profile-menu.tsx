@@ -59,7 +59,7 @@ export default function ProfileMenu() {
         aria-haspopup='true'
         onClick={handleClick}
       >
-        <img src='/public/icon-empty-wallet.svg'/>
+        <img src='/icon-empty-wallet.svg'/>
       </IconButton>
       <Menu
         id='long-menu'

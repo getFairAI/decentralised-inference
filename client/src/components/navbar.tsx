@@ -4,7 +4,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { Dispatch, SetStateAction, useContext } from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useContext } from 'react';
 import { Button, Icon, IconButton, InputBase, styled, Tooltip } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
@@ -23,7 +23,7 @@ const WalletState = () => {
 
   if (!currentAddress && currentAddress !== '') {
     return <IconButton onClick={connectWallet}>
-      <img src='/public/icon-empty-wallet.svg'/>
+      <img src='/icon-empty-wallet.svg'/>
     </IconButton>;
   }
 
@@ -40,7 +40,7 @@ const WalletState = () => {
     }}>
       <Box display={'flex'}>
         <Typography sx={{ paddingRight: '6px', paddingLeft: '23px'}}>{currentBalance.toFixed(4)}</Typography>
-        <img src='/public/arweave-small.svg'/>
+        <img src='/arweave-small.svg'/>
       </Box>
       <Box sx={{
         background: '#D9D9D9',
@@ -61,9 +61,11 @@ const WalletState = () => {
 const Navbar = ({
   showBanner,
   setShowBanner,
+  setFilterValue
 }: {
   showBanner: boolean;
   setShowBanner: Dispatch<SetStateAction<boolean>>;
+  setFilterValue: Dispatch<SetStateAction<string>>
 }) => {
   const { pathname, state } = useLocation();
   const navigate = useNavigate();
@@ -89,7 +91,7 @@ const Navbar = ({
         <Toolbar>
           <Box display={'flex'} flexDirection={'row'}>
             <Link to='/'>
-              <img src="/public/fair-protocol-logo.svg" />
+              <img src="/fair-protocol-logo.svg" />
             </Link>
           </Box>
           <Box sx={{ flexGrow: 1 }}>
@@ -105,17 +107,19 @@ const Navbar = ({
                   alignItems: 'center'
                 }}>
                   <InputBase sx={{
-                    color: '#595959',
+                    color: '#222',
                     fontStyle: 'normal',
                     fontWeight: 400,
-                    fontSize: '12px',
+                    fontSize: '18px',
                     lineHeight: '16px',
+                    width: '100%'
                   }}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setFilterValue(event.target.value)}
                   placeholder='Search...'/>
                   <Icon sx={{
                     height: '30px'
                   }}>
-                    <img src='/public/search-icon.svg'></img>
+                    <img src='/search-icon.svg'></img>
                   </Icon>
                 </Box>
             }
@@ -126,7 +130,7 @@ const Navbar = ({
                 <Button
                   sx={{ borderRadius: '20px', padding: '8px 16px' }}
                   startIcon={
-                    <img src='/public/chevron-bottom.svg'/>
+                    <img src='/chevron-bottom.svg'/>
                   }
                   onClick={() => navigate(`${pathname}/change-operator`, { state: { ...state.fullState, ...state} })}
                 >
@@ -141,12 +145,12 @@ const Navbar = ({
                     Change Operator
                   </Typography>
                 </Button>
-                <NavLink to='/explore' className='navbar-links'>
+                <NavLink to='/' className='navbar-links'>
                   Explore
                 </NavLink>
                 <WalletState />
               </> : <>
-                <NavLink to='/explore' className='navbar-links'>
+                <NavLink to='/' className='navbar-links'>
                   Explore
                 </NavLink>
                 <NavLink to='/upload' className='navbar-links'>
