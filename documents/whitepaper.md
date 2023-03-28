@@ -283,7 +283,7 @@ Our team has some ideas that may be implemented in the future, which we intend t
 * **Slow mode:** Currently, the app runs 100% with upfront payments when performing inferences. Since this increases the entrance fee for Users, and certain Users may want to test models before paying that same fee or only want to perform a single inference on a model, it may make sense for the application to have it in "slow mode" for payment of inferences, even if it takes 30 minutes between replies;
 * **Implement ArProfile:** It can be interesting to associate ArProfile with Creators, Operators or Users that want it in order to have a better integration of the application in Arweave's ecosystem;
 Payments with other currencies: Currently, the Marketplace only supports payments in Arweave. It may make sense to accept additional coins or tokens in the future;
-* **DataOS:** Since this application performs model inference in a decentralized manner, it may be interesting to build the DataOS module (link) on top of the Fair Protocol;
+* **[DataOS](https://q4xpz2buwrju4ai3gfzkfeu3vjn2rhb2crlw7epn77vzm6wg74cq.arweave.net/hy786DS0U04BGzFyopKbqluonDoUV2-R7f_rlnrG_wU "DataOS original article"):** Since Fair Protocol performs model inference in a decentralized manner, it may be interesting to build on top of it a system that would obtain information from Arweave or the broader internet and render it dynamically with code components;
 * **Decentralized training:** Our application only supports decentralized inference at the moment. To further solve the problems presented in Section I, we may develop an application that performs model training in a decentralized manner.
 
 
