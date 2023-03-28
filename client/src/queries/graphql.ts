@@ -855,10 +855,7 @@ export const QUERY_RESPONSES_BY_OPERATOR = gql`
 `;
 
 export const QUERY_FIRST_REGISTRATION = gql`
-  query QUERY_RESPONSES_BY_OPERATOR(
-    $owner: String!
-    $tags: [TagFilter!]
-  ) {
+  query QUERY_RESPONSES_BY_OPERATOR($owner: String!, $tags: [TagFilter!]) {
     transactions(tags: $tags, owners: [$owner], first: 1, sort: HEIGHT_ASC) {
       edges {
         node {
@@ -884,8 +881,19 @@ export const QUERY_FIRST_REGISTRATION = gql`
 `;
 
 export const QUERY_OPERATOR_RECEIVED_HISTORY = gql`
-  query QUERY_OPERATOR_RECEIVED_HISTORY($address: String!, $tags: [TagFilter!], , $first: Int, $after: String) {
-    transactions(tags: $tags, recipients: [$address], sort: HEIGHT_DESC, first: $first, after: $after) {
+  query QUERY_OPERATOR_RECEIVED_HISTORY(
+    $address: String!
+    $tags: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
+    transactions(
+      tags: $tags
+      recipients: [$address]
+      sort: HEIGHT_DESC
+      first: $first
+      after: $after
+    ) {
       edges {
         cursor
         node {
@@ -917,7 +925,12 @@ export const QUERY_OPERATOR_RECEIVED_HISTORY = gql`
 `;
 
 export const QUERY_OPERATOR_SENT_HISTORY = gql`
-  query QUERY_OPERATOR_SENT_HISTORY($address: String!, $tags: [TagFilter!], $first: Int, $after: String) {
+  query QUERY_OPERATOR_SENT_HISTORY(
+    $address: String!
+    $tags: [TagFilter!]
+    $first: Int
+    $after: String
+  ) {
     transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: $first, after: $after) {
       edges {
         cursor

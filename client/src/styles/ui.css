@@ -30,7 +30,7 @@
   font-size: 18px;
   line-height: 24px;
 
-  color: #E3E3E3;
+  color: #e3e3e3;
 }
 
 .navbar-links.active {
@@ -40,7 +40,7 @@
   font-size: 18px;
   line-height: 24px;
 
-  color: #E3E3E3;
+  color: #e3e3e3;
 }
 
 .navbar-right-content {
@@ -85,10 +85,9 @@
   color: linear-gradient(
     101.22deg,
     rgba(14, 255, 168, 0.58) 30.84%,
-    #9747FF 55.47%,
+    #9747ff 55.47%,
     rgba(84, 81, 228, 0) 78.13%
-  ),
-
+  );
 }
 
 .trending-text.highlight {
@@ -100,11 +99,15 @@
   /* identical to box height */
   border-bottom: 6px solid;
   border-image-slice: 1;
-  border-image-source: linear-gradient(104.46deg, rgba(14, 255, 168, 0.58) -238.05%, #9747FF 301.04%, rgba(84, 81, 228, 0) 797.01%);
+  border-image-source: linear-gradient(
+    104.46deg,
+    rgba(14, 255, 168, 0.58) -238.05%,
+    #9747ff 301.04%,
+    rgba(84, 81, 228, 0) 797.01%
+  );
 
-  color: #F4F4F4;
+  color: #f4f4f4;
 }
-
 
 .trending-text {
   font-family: 'Satoshi';
@@ -113,24 +116,24 @@
   font-size: 30px;
   line-height: 41px;
   /* identical to box height */
-  color: #6C6C6C;;
+  color: #6c6c6c;
 }
 
 .underline {
-  background: linear-gradient(-45deg, #31AB7F50, #422D5C50, #A1205D50, #00000000);
+  background: linear-gradient(-45deg, #31ab7f50, #422d5c50, #a1205d50, #00000000);
   background-size: 600%;
   animation: anime 16s linear infinite;
 }
 
- @keyframes anime {
+@keyframes anime {
   0% {
     background-position: 0% 50%;
   }
   50% {
     background-position: 100% 50%;
   }
-    
+
   100% {
     background-position: 0% 50%;
-  } 
+  }
 }

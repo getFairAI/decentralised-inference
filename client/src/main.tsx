@@ -37,13 +37,13 @@ const router = createBrowserRouter([
                 path: 'detail',
                 element: <Detail />,
               },
-            ]
+            ],
           },
           {
             path: 'operators/details/:address',
             element: <OperatorDetails />,
           },
-        ]
+        ],
       },
       {
         path: 'model/:txid',
@@ -63,9 +63,9 @@ const router = createBrowserRouter([
             children: [
               {
                 path: 'change-operator',
-                element: <Detail />
-              }
-            ]
+                element: <Detail />,
+              },
+            ],
           },
           {
             path: 'register',

@@ -37,7 +37,7 @@ const OperatorRow = ({
   state,
   index,
   isSelected,
-  setSelected
+  setSelected,
 }: {
   operatorTx: IEdge;
   modelCreator: string;
@@ -47,7 +47,6 @@ const OperatorRow = ({
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
-
   const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
   const requestTags = [
     ...DEFAULT_TAGS,
@@ -91,7 +90,8 @@ const OperatorRow = ({
     const modelTransaction = state.node.tags.find((tag) => tag.name === 'Model-Transaction')?.value;
     const modelName = state.node.tags.find((tag) => tag.name === 'Model-Name')?.value;
     const modelCreator = state.node.owner.address;
-    const operatorName = operatorTx.node.tags.find((tag) => tag.name === 'Operator-Name')?.value || 'No Name';
+    const operatorName =
+      operatorTx.node.tags.find((tag) => tag.name === 'Operator-Name')?.value || 'No Name';
     setRow({
       address,
       quantityAR,
@@ -279,9 +279,7 @@ const OperatorRow = ({
             </Typography>
           </Tooltip>
         </TableCell>
-        <TableCell align='left'>
-          {row?.operatorName}
-        </TableCell>
+        <TableCell align='left'>{row?.operatorName}</TableCell>
         <TableCell align='right'>{row?.registrationTimestamp}</TableCell>
         <TableCell align='right'>{parseWinston(row?.fee)}</TableCell>
         <TableCell align='right'>
@@ -309,12 +307,8 @@ const OperatorRow = ({
           {}
         </TableCell>
         <TableCell align='right'>{row?.stamps}</TableCell>
-        <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            checked={isSelected}
-            onChange={() => setSelected(index)}
-          />
+        <TableCell padding='checkbox'>
+          <Checkbox color='primary' checked={isSelected} onChange={() => setSelected(index)} />
         </TableCell>
       </TableRow>
     </>

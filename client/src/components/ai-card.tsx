@@ -5,23 +5,24 @@ import { toSvg } from 'jdenticon';
 import { useNavigate } from 'react-router-dom';
 import { MouseEvent, useMemo } from 'react';
 
-const AiCard = ({ model, loading }: { model: IEdge, loading: boolean }) => {
+const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
   const navigate = useNavigate();
 
   const imgUrl = useMemo(() => {
     const img = toSvg(model.node.id, 100);
     const svg = new Blob([img], { type: 'image/svg+xml' });
     return URL.createObjectURL(svg);
-  }, [ model ]);
-
+  }, [model]);
 
   const getTimePassed = () => {
-    const timestamp = model.node.tags.find(el => el.name === 'Unix-Time')?.value
-      || model.node.block.timestamp;
+    const timestamp =
+      model.node.tags.find((el) => el.name === 'Unix-Time')?.value || model.node.block.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
-    const dateA = Number.isInteger(timestamp) ? (timestamp as number) * 1000 :  parseInt(timestamp as string) * 1000;
+    const dateA = Number.isInteger(timestamp)
+      ? (timestamp as number) * 1000
+      : parseInt(timestamp as string) * 1000;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;
@@ -48,69 +49,87 @@ const AiCard = ({ model, loading }: { model: IEdge, loading: boolean }) => {
     navigate(`/model/${encodeURIComponent(model.node.id)}/detail`, { state: model });
   };
 
-  return <FiCard sx={{
-    flexGrow: 0
-  }}>
-    <FiCardActionArea onClick={handleCardClick}>
-      <FicardMedia
-        src={!loading ? imgUrl : ''}
-        sx={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '317px',
-          height: '352px',
-          background: `linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%), url(${!loading ? imgUrl : ''})`,
-          // backgroundPosition: 'center',        
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'cover', /* <------ */
-          backgroundPosition: 'center center',
-        }}
-      />
-      <FiCardContent>
-        <Tooltip title={model.node.tags.find(el => el.name === 'Model-Name')?.value || 'Untitled'} placement={'top-start'}>
-          <Typography sx={{
-            fontStyle: 'normal',
-            fontWeight: '700',
-            fontSize: '24px',
-            lineHeight: '32px',
-            color: '#FFFFFF',
-            maxWidth: '200px',
-          }} noWrap>
-            {model.node.tags.find(el => el.name === 'Model-Name')?.value || 'Untitled'}
+  return (
+    <FiCard
+      sx={{
+        flexGrow: 0,
+      }}
+    >
+      <FiCardActionArea onClick={handleCardClick}>
+        <FicardMedia
+          src={!loading ? imgUrl : ''}
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '317px',
+            height: '352px',
+            background: `linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%), url(${
+              !loading ? imgUrl : ''
+            })`,
+            // backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover' /* <------ */,
+            backgroundPosition: 'center center',
+          }}
+        />
+        <FiCardContent>
+          <Tooltip
+            title={model.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Untitled'}
+            placement={'top-start'}
+          >
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: '700',
+                fontSize: '24px',
+                lineHeight: '32px',
+                color: '#FFFFFF',
+                maxWidth: '200px',
+              }}
+              noWrap
+            >
+              {model.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Untitled'}
+            </Typography>
+          </Tooltip>
+          <Tooltip title={model.node.owner.address} placement={'bottom-start'}>
+            <Typography
+              sx={{
+                color: '#B5B5B5',
+                fontStyle: 'normal',
+                fontWeight: '400',
+                fontSize: '12px',
+                lineHeight: '16px',
+              }}
+            >
+              {model.node.owner.address.slice(0, 5)}...{model.node.owner.address.slice(-8)}
+            </Typography>
+          </Tooltip>
+
+          <Typography
+            sx={{
+              color: '#696969',
+              fontStyle: 'normal',
+              fontWeight: '400',
+              fontSize: '12px',
+              lineHeight: '16px',
+            }}
+          >
+            {getTimePassed()}
           </Typography>
-        </Tooltip>
-        <Tooltip title={model.node.owner.address} placement={'bottom-start'}>
-          <Typography sx={{
-            color: '#B5B5B5',
-            fontStyle: 'normal',
-            fontWeight: '400',
-            fontSize: '12px',
-            lineHeight: '16px'
-          }}>
-            {model.node.owner.address.slice(0, 5)}...{model.node.owner.address.slice(-8)}
-          </Typography>
-        </Tooltip>
-        
-        <Typography sx={{
-          color: '#696969',
-          fontStyle: 'normal',
-          fontWeight: '400',
-          fontSize: '12px',
-          lineHeight: '16px'
-        }}>
-          {getTimePassed()}
-        </Typography>
-        <Icon sx={{
-          position: 'relative',
-          bottom: '48px',
-          left: '265px'
-        }}>
-          <img src='/thumbs-up.svg'/>
-        </Icon>
-      </FiCardContent>
-    </FiCardActionArea>
-  </FiCard>;
+          <Icon
+            sx={{
+              position: 'relative',
+              bottom: '48px',
+              left: '265px',
+            }}
+          >
+            <img src='/thumbs-up.svg' />
+          </Icon>
+        </FiCardContent>
+      </FiCardActionArea>
+    </FiCard>
+  );
 };
 
 export default AiCard;
