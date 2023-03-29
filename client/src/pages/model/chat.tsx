@@ -24,9 +24,10 @@ import {
   APP_VERSION,
   DEFAULT_TAGS,
   NODE1_BUNDLR_URL,
-  MODEL_INFERENCE_REQUEST_TAG,
-  MODEL_INFERENCE_RESULT_TAG,
   INFERENCE_PERCENTAGE_FEE,
+  TAG_NAMES,
+  MODEL_INFERENCE_REQUEST,
+  MODEL_INFERENCE_RESPONSE,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -34,7 +35,7 @@ import {
   QUERY_CHAT_RESPONSES,
   QUERY_CHAT_RESPONSES_POLLING,
 } from '@/queries/graphql';
-import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
+import { IEdge, ITransactions } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import AddIcon from '@mui/icons-material/Add';
@@ -43,7 +44,7 @@ import { WebBundlr } from 'bundlr-custom';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { genLoadingArray } from '@/utils/common';
+import { findTag, genLoadingArray } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import useScrollLock from '@/hooks/useScrollLock';
@@ -128,10 +129,10 @@ const Chat = () => {
     if (state && userAddr) {
       const commonTags = [
         ...DEFAULT_TAGS,
-        { name: 'Model-Name', values: [state.modelName] },
-        { name: 'Model-Creator', values: [state.modelCreator] },
+        { name: TAG_NAMES.modelName, values: [state.modelName] },
+        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
       ];
-      const tagsRequests = [...commonTags, MODEL_INFERENCE_REQUEST_TAG];
+      const tagsRequests = [...commonTags, { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_REQUEST ]}];
       getChatRequests({
         variables: {
           first: elementsPerPage,
@@ -148,7 +149,7 @@ const Chat = () => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       const cids: string[] = requestsData.transactions.edges.map(
         (el: IEdge) =>
-          el.node.tags.find((tag: ITag) => tag.name === 'Conversation-Identifier')?.value,
+         findTag(el, 'conversationIdentifier'),
       );
       const uniqueCids = Array.from(new Set(cids));
       uniqueCids.sort((a: string, b: string) => {
@@ -163,23 +164,23 @@ const Chat = () => {
 
       const commonTags = [
         ...DEFAULT_TAGS,
-        { name: 'Model-Name', values: [state.modelName] },
-        { name: 'Model-Creator', values: [state.modelCreator] },
+        { name: TAG_NAMES.modelName, values: [state.modelName] },
+        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
       ];
       const tagsResponses = [
         ...commonTags,
-        MODEL_INFERENCE_RESULT_TAG,
+        { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_RESPONSE ] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: 'Model-User', values: [userAddr] },
+        { name: TAG_NAMES.modelUser, values: [userAddr] },
         {
-          name: 'Request-Transaction',
+          name: TAG_NAMES.requestTransaction,
           values: requestsData.transactions.edges.map((el: IEdge) => el.node.id),
         }, // slice from end to get latest requests
       ];
       const owners = Array.from(
         new Set(
           requestsData.transactions.edges.map(
-            (el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value,
+            (el: IEdge) => findTag(el, 'modelOperator'),
           ),
         ),
       );
@@ -204,11 +205,11 @@ const Chat = () => {
             const newData = fetchMoreResult.transactions.edges;
             newData.sort((a: IEdge, b: IEdge) => {
               const aTimestamp =
-                parseInt(a.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+                parseInt(findTag(a, 'unixTime') || '') ||
                 a.node.block?.timestamp ||
                 Date.now() / 1000;
               const bTimestamp =
-                parseInt(b.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+                parseInt(findTag(b, 'unixTime') || '') ||
                 b.node.block?.timestamp ||
                 Date.now() / 1000;
 
@@ -236,11 +237,11 @@ const Chat = () => {
         // start polling
         const commonTags = [
           ...DEFAULT_TAGS,
-          { name: 'Model-Name', values: [state.modelName] },
-          { name: 'Model-Creator', values: [state.modelCreator] },
+          { name: TAG_NAMES.modelName, values: [state.modelName] },
+          { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
         ];
 
-        const tagsRequests = [...commonTags, MODEL_INFERENCE_REQUEST_TAG];
+        const tagsRequests = [...commonTags, { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_REQUEST ]}];
 
         pollRequests({
           variables: {
@@ -268,11 +269,11 @@ const Chat = () => {
             const newData = fetchMoreResult.transactions.edges;
             newData.sort((a: IEdge, b: IEdge) => {
               const aTimestamp =
-                parseInt(a.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+                parseInt(findTag(a, 'unixTime') || '') ||
                 a.node.block?.timestamp ||
                 Date.now() / 1000;
               const bTimestamp =
-                parseInt(b.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+                parseInt(findTag(b, 'unixTime') || '') ||
                 b.node.block?.timestamp ||
                 Date.now() / 1000;
 
@@ -300,16 +301,16 @@ const Chat = () => {
         // start polling
         const commonTags = [
           ...DEFAULT_TAGS,
-          { name: 'Model-Name', values: [state.modelName] },
-          { name: 'Model-Creator', values: [state.modelCreator] },
+          { name: TAG_NAMES.modelName, values: [state.modelName] },
+          { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
         ];
         const tagsResponses = [
           ...commonTags,
-          MODEL_INFERENCE_RESULT_TAG,
+          { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_RESPONSE ] },
           // { name: 'Conversation-Identifier', values: [currentConversationId] },
-          { name: 'Model-User', values: [userAddr] },
+          { name: TAG_NAMES.modelUser, values: [userAddr] },
           {
-            name: 'Request-Transaction',
+            name: TAG_NAMES.requestTransaction,
             values: messages.map((el) => el.id).slice(-1),
           }, // slice from end to get latest requests
         ];
@@ -317,7 +318,7 @@ const Chat = () => {
           new Set(
             requestsData.transactions.edges
               .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
-              .map((el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value),
+              .map((el: IEdge) => findTag(el, 'modelOperator')),
           ),
         );
 
@@ -344,11 +345,11 @@ const Chat = () => {
       ];
       const tagsResponses = [
         ...commonTags,
-        MODEL_INFERENCE_RESULT_TAG,
+        { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_RESPONSE ] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: 'Model-User', values: [userAddr] },
+        { name: TAG_NAMES.modelUser, values: [userAddr] },
         {
-          name: 'Request-Transaction',
+          name: TAG_NAMES.requestTransaction,
           values: messages.map((el) => el.id).slice(-1), // last 5 requests
         }, // slice from end to get latest requests
       ];
@@ -356,7 +357,7 @@ const Chat = () => {
         new Set(
           requestsData.transactions.edges
             .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
-            .map((el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value),
+            .map((el: IEdge) => findTag(el, 'modelOperator')),
         ),
       );
 
@@ -407,10 +408,10 @@ const Chat = () => {
         const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
         const data = msgIdx < 0 ? await getData(el.node.id) : polledMessages[msgIdx].msg;
         const timestamp =
-          parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+          parseInt(findTag(el, 'unixTime') || '') ||
           el.node.block?.timestamp ||
           Date.now() / 1000;
-        const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
+        const cid = findTag(el, 'conversationIdentifier');
         if (el.node.owner.address === userAddr) {
           temp.push({
             id: el.node.id,
@@ -588,17 +589,17 @@ const Chat = () => {
       allData
         .filter(
           (el: IEdge) =>
-            el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value ===
+            findTag(el, 'conversationIdentifier') ===
             currentConversationId,
         )
         .map(async (el: IEdge) => {
           const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
           const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;
           const timestamp =
-            parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+            parseInt(findTag(el, 'unixTime') || '') ||
             el.node.block?.timestamp ||
             Date.now() / 1000;
-          const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
+          const cid = findTag(el, 'conversationIdentifier');
           if (el.node.owner.address === userAddr) {
             temp.push({
               id: el.node.id,

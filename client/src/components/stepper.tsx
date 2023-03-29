@@ -26,9 +26,10 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import MDEditor from '@uiw/react-md-editor';
 import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
-import { IEdge, ITag } from '@/interfaces/arweave';
+import { IEdge } from '@/interfaces/arweave';
 import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
 import { NumericFormat } from 'react-number-format';
+import { findTag } from '@/utils/common';
 
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -253,10 +254,10 @@ export const CustomStepper = (props: {
   const download = () => {
     const a = document.createElement('a');
     a.href = `${NET_ARWEAVE_URL}/${
-      props.data.node.tags.find((el) => el.name === 'Model-Transaction')?.value
+      findTag(props.data, 'modelTransaction')
     }`;
     a.download =
-      props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value ||
+      findTag(props.data, 'modelName') ||
       props.data.node.id;
     document.body.appendChild(a);
     a.click();
@@ -267,7 +268,7 @@ export const CustomStepper = (props: {
     const getFileSize = async () => {
       const response = await fetch(
         `${NET_ARWEAVE_URL}/${
-          props.data.node.tags.find((el) => el.name === 'Model-Transaction')?.value
+          findTag(props.data, 'modelTransaction')
         }`,
         { method: 'HEAD' },
       );
@@ -383,7 +384,7 @@ export const CustomStepper = (props: {
             }}
             hideToolbar={true}
             fullscreen={false}
-            value={props.data.node.tags.find((el) => el.name === 'Notes')?.value || ''}
+            value={findTag(props.data, 'notes')}
           ></MDEditor>
           <Box>
             <FormControl variant='outlined' fullWidth>
@@ -391,7 +392,7 @@ export const CustomStepper = (props: {
                 multiline
                 disabled
                 minRows={1}
-                value={props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value}
+                value={findTag(props.data, 'modelName')}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>

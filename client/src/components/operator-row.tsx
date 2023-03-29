@@ -1,4 +1,4 @@
-import { DEFAULT_TAGS, INFERENCE_PERCENTAGE_FEE, MODEL_INFERENCE_RESULT_TAG } from '@/constants';
+import { DEFAULT_TAGS, INFERENCE_PAYMENT, INFERENCE_PERCENTAGE_FEE, MODEL_INFERENCE_RESPONSE, TAG_NAMES } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import {
   QUERY_PAID_FEE_OPERATORS,
@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { parseWinston } from '@/utils/arweave';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import { findTag } from '@/utils/common';
 
 export interface RowData {
   quantityAR: string;
@@ -51,16 +52,16 @@ const OperatorRow = ({
   const requestTags = [
     ...DEFAULT_TAGS,
     {
-      name: 'Model-Creator',
+      name: TAG_NAMES.modelCreator,
       values: [modelCreator],
     },
     {
-      name: 'Model-Name',
+      name: TAG_NAMES.modelName,
       values: [modelName],
     },
     {
-      name: 'Operation-Name',
-      values: ['Inference Payment'],
+      name: TAG_NAMES.operationName,
+      values: [ INFERENCE_PAYMENT ],
     },
   ];
   const { data, /* loading, error,  */ fetchMore } = useQuery(QUERY_REQUESTS_FOR_OPERATOR, {
@@ -83,15 +84,15 @@ const OperatorRow = ({
     const address = operatorTx.node.owner.address;
     const quantityAR = operatorTx.node.quantity.ar;
     const stamps = parseInt((Math.random() * 100).toFixed(0));
-    const fee = operatorTx.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value;
+    const fee = findTag(operatorTx, 'operatorFee');
     const registrationTimestamp = operatorTx.node.block
       ? new Date(operatorTx.node.block.timestamp * 1000).toLocaleString()
       : 'Pending';
-    const modelTransaction = state.node.tags.find((tag) => tag.name === 'Model-Transaction')?.value;
-    const modelName = state.node.tags.find((tag) => tag.name === 'Model-Name')?.value;
+    const modelTransaction = findTag(state, 'modelTransaction');
+    const modelName = findTag(state, 'modelName');
     const modelCreator = state.node.owner.address;
-    const operatorName =
-      operatorTx.node.tags.find((tag) => tag.name === 'Operator-Name')?.value || 'No Name';
+    const operatorName = findTag(operatorTx, 'operatorName') || 'No Name';
+
     setRow({
       address,
       quantityAR,
@@ -128,21 +129,24 @@ const OperatorRow = ({
       });
     } else if (data && data.transactions) {
       const inferenceReqIds = (data.transactions.edges as IEdge[]).map((req) => {
-        return req.node.tags.find((el) => el.name === 'Inference-Transaction')?.value;
+        return findTag(req, 'inferenceTransaction');
       });
       const responseTags = [
         ...DEFAULT_TAGS,
         {
-          name: 'Model-Creator',
+          name: TAG_NAMES.modelCreator,
           values: [modelCreator],
         },
         {
-          name: 'Model-Name',
+          name: TAG_NAMES.modelName,
           values: [modelName],
         },
-        MODEL_INFERENCE_RESULT_TAG,
         {
-          name: 'Request-Transaction',
+          name: TAG_NAMES.operationName,
+          values: [ MODEL_INFERENCE_RESPONSE]
+        },
+        {
+          name: TAG_NAMES.requestTransaction,
           values: inferenceReqIds,
         },
       ];
@@ -251,7 +255,7 @@ const OperatorRow = ({
       paidFeeResult.data.transactions.edges.forEach((el: IEdge) => {
         if (
           parseFloat(el.node.quantity.winston) * INFERENCE_PERCENTAGE_FEE <=
-          parseFloat(operatorTx.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value || '0')
+          parseFloat(findTag(operatorTx, 'operatorFee') || '0')
         ) {
           // handle case where operator did not pay request
           // can return and not proccess remaining txs

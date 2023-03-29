@@ -1,7 +1,7 @@
-import { APP_NAME_TAG, APP_VERSION } from '@/constants';
-import { ITag } from '@/interfaces/arweave';
+import { APP_NAME, APP_VERSION, DEFAULT_TAGS, MODEL_FEE_PAYMENT, TAG_NAMES } from '@/constants';
 import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
+import { findTag } from '@/utils/common';
 import { useLazyQuery } from '@apollo/client';
 import {
   Alert,
@@ -41,9 +41,9 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
       try {
         const addr = await window.arweaveWallet.getActiveAddress();
         const tags = [
-          { name: APP_NAME_TAG.name, values: APP_NAME_TAG.values[0] },
-          { name: 'Model-Transaction', values: txid },
-          { name: 'Operation-Name', values: 'Model Fee Payment' },
+          ...DEFAULT_TAGS,
+          { name: TAG_NAMES.modelTransaction, values: txid },
+          { name: TAG_NAMES.operationName, values: MODEL_FEE_PAYMENT },
         ];
         getLazyFeePayment({
           variables: {
@@ -70,7 +70,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
       setIsAllowed(
         queryResult.data.transactions.edges[0].node.quantity.winston ===
           (updatedFee ||
-            state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee').value),
+            findTag(state.fullState, 'modelFee')),
       );
       setLoading(false);
     } else if (queryResult.data && queryResult.data && queryResult.data.transactions) {
@@ -87,19 +87,19 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   const handleAccept = async () => {
     try {
       const modelFee =
-        updatedFee || state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value;
+        updatedFee || findTag(state.fullState, 'modelFee') as string;
       const tx = await arweave.createTransaction({
         target: state.modelCreator,
         quantity: modelFee,
       });
-      tx.addTag('App-Name', APP_NAME_TAG.values[0]);
-      tx.addTag('App-Version', APP_VERSION);
-      tx.addTag('Model-Name', state.modelName);
-      tx.addTag('Model-Creator', state.modelCreator);
-      tx.addTag('Model-Fee', modelFee);
-      tx.addTag('Operation-Name', 'Model Fee Payment');
-      tx.addTag('Model-Transaction', txid || state.modelTransaction);
-      tx.addTag('Unix-Time', (Date.now() / 1000).toString());
+      tx.addTag(TAG_NAMES.appName, APP_NAME);
+      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+      tx.addTag(TAG_NAMES.modelName, state.modelName);
+      tx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
+      tx.addTag(TAG_NAMES.modelFee, modelFee);
+      tx.addTag(TAG_NAMES.operationName, MODEL_FEE_PAYMENT);
+      tx.addTag(TAG_NAMES.modelTransaction, txid || state.modelTransaction);
+      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {
@@ -179,8 +179,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
               In Order to prevent bad actors an user has to pay the model fee before being able to
               use it. The current Model fee is{' '}
               {arweave.ar.winstonToAr(
-                updatedFee ||
-                  state.fullState.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value,
+                updatedFee || findTag(state.fullState, 'modelFee') as string
               )}{' '}
               <img src='/arweave-logo-warning.svg'></img>
             </Typography>

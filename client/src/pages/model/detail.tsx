@@ -14,11 +14,12 @@ import BasicTable from '@/components/basic-table';
 import { useLocation, useNavigate, useRouteLoaderData } from 'react-router-dom';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
-import { DEFAULT_TAGS, REGISTER_OPERATION_TAG } from '@/constants';
-import { IEdge, ITag } from '@/interfaces/arweave';
+import { DEFAULT_TAGS, REGISTER_OPERATION, TAG_NAMES } from '@/constants';
+import { IEdge } from '@/interfaces/arweave';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import arweave from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
+import { findTag } from '@/utils/common';
 
 const Detail = () => {
   const updatedFee = useRouteLoaderData('model') as string;
@@ -40,14 +41,17 @@ const Detail = () => {
 
   const tags = [
     ...DEFAULT_TAGS,
-    REGISTER_OPERATION_TAG,
     {
-      name: 'Model-Creator',
+      name: TAG_NAMES.operationName,
+      values: [ REGISTER_OPERATION ]
+    },
+    {
+      name: TAG_NAMES.modelCreator,
       values: [state.node.owner.address],
     },
     {
-      name: 'Model-Name',
-      values: [state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value],
+      name: TAG_NAMES.modelName,
+      values: [ findTag(state, 'modelName') ],
     },
   ];
 
@@ -73,7 +77,7 @@ const Detail = () => {
         setFeeValue(parseFloat(arValue));
       } else {
         const arValue = arweave.ar.winstonToAr(
-          state.node.tags.find((el: ITag) => el.name === 'Model-Fee')?.value,
+          findTag(state, 'modelFee') as string
         );
         setFeeValue(parseFloat(arValue));
       }
@@ -99,7 +103,7 @@ const Detail = () => {
     if (queryData && filterValue) {
       setOperatorsData(
         queryData.transactions.edges.filter((el: IEdge) =>
-          el.node.tags.find((tag) => tag.name === 'Operator-Name')?.value.includes(filterValue),
+          findTag(el, 'operatorName')?.includes(filterValue),
         ),
       );
     }
@@ -145,7 +149,7 @@ const Detail = () => {
       >
         {showOperators && (
           <Typography>
-            {state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value}
+            {findTag(state, 'modelName')}
           </Typography>
         )}
         <IconButton onClick={handleClose}>
@@ -197,7 +201,7 @@ const Detail = () => {
                 color: '#FAFAFA',
               }}
             >
-              {state?.node?.tags?.find((el: ITag) => el.name === 'Model-Name')?.value}
+              {findTag(state, 'modelName')}
             </Typography>
           </Box>
           <Box>
@@ -227,7 +231,7 @@ const Detail = () => {
                 color: '#FAFAFA',
               }}
             >
-              {state?.node?.tags?.find((el: ITag) => el.name === 'Category')?.value}
+              {findTag(state, 'category')}
             </Typography>
           </Box>
           <Box>
@@ -289,7 +293,7 @@ const Detail = () => {
               Description
             </Typography>
             <Typography>
-              {state?.node?.tags?.find((el: ITag) => el.name === 'Description')?.value ||
+              { findTag(state, 'description') ||
                 'No Description Available.'}
             </Typography>
           </Box>
@@ -423,14 +427,10 @@ const Detail = () => {
             onClick={() =>
               navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
                 state: {
-                  modelName: state.node.tags.find((el: ITag) => el.name === 'Model-Name').value,
+                  modelName: findTag(state, 'modelName'),
                   modelCreator: state.node.owner.address,
-                  operatorFee: operatorsData[selectedIdx].node.tags.find(
-                    (tag: ITag) => tag.name === 'Operator-Fee',
-                  )?.value,
-                  operatorName: operatorsData[selectedIdx].node.tags.find(
-                    (tag) => tag.name === 'Operator-Name',
-                  )?.value,
+                  operatorFee: findTag(operatorsData[selectedIdx], 'operatorFee'),
+                  operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
                 },
               })
             }
@@ -462,14 +462,10 @@ const Detail = () => {
                   : `../chat/${operatorsData[selectedIdx].node.owner.address}`,
                 {
                   state: {
-                    modelName: state.node.tags.find((el: ITag) => el.name === 'Model-Name').value,
+                    modelName: findTag(state, 'modelName'),
                     modelCreator: state.node.owner.address,
-                    fee: operatorsData[selectedIdx].node.tags.find(
-                      (tag: ITag) => tag.name === 'Operator-Fee',
-                    )?.value,
-                    modelTransaction: state.node.tags.find(
-                      (tag: ITag) => tag.name === 'Model-Transaction',
-                    )?.value,
+                    fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
+                    modelTransaction: findTag(state, 'modelTransaction'),
                     fullState: state,
                   },
                 },

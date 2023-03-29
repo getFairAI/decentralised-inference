@@ -12,7 +12,7 @@ import {
   OperationVariables,
 } from '@apollo/client';
 import ReplayIcon from '@mui/icons-material/Replay';
-import { genLoadingArray } from '@/utils/common';
+import { findTag, genLoadingArray } from '@/utils/common';
 import OperatorRow from './operator-row';
 import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
 import { useEffect, useRef } from 'react';
@@ -158,8 +158,7 @@ export default function BasicTable(props: {
                   operatorTx={row}
                   modelCreator={props.state.node.owner.address}
                   modelName={
-                    props.state.node.tags.find((el: ITag) => el.name === 'Model-Name')
-                      ?.value as string
+                    findTag(props.state, 'modelName') as string
                   }
                   state={props.state}
                   index={idx}
