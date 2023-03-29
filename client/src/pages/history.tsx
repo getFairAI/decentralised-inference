@@ -19,6 +19,7 @@ import { MouseEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MARKETPLACE_FEE } from '@/constants';
 import { LIST_OWN_MODELS_QUERY } from '@/queries/graphql';
+import { findTag } from '@/utils/common';
 
 const History = () => {
   const navigate = useNavigate();
@@ -81,7 +82,7 @@ const History = () => {
                 onClick={(e) =>
                   handleCardClick(
                     e,
-                    edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value,
+                    findTag(edge, 'modelTransaction'),
                     index,
                   )
                 }
@@ -94,7 +95,7 @@ const History = () => {
                 <CardContent sx={{ maxWidth: '300px' }}>
                   <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
                     <Typography noWrap variant='body1'>
-                      {edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value}
+                      {findTag(edge, 'modelTransaction')}
                     </Typography>
                     <Box
                       sx={{
@@ -104,7 +105,7 @@ const History = () => {
                       }}
                     >
                       <Chip
-                        label={edge.node.tags.find((el) => el.name === 'Category')?.value}
+                        label={findTag(edge, 'category')}
                         color='primary'
                       />
                       <Box sx={{ display: 'flex', alignContent: 'center' }}>

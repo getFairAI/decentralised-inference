@@ -1,8 +1,8 @@
-import { DEFAULT_TAGS } from '@/constants';
+import { DEFAULT_TAGS, REGISTER_OPERATION } from '@/constants';
 import useOnScreen from '@/hooks/useOnScreen';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_OPERATOR_RECEIVED_HISTORY, QUERY_OPERATOR_SENT_HISTORY } from '@/queries/graphql';
-import { formatNumbers } from '@/utils/common';
+import { findTag, formatNumbers } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Box,
@@ -129,14 +129,12 @@ const HistoryTable = ({ address }: { address?: string }) => {
       setHasSentNextPage(sentData.transactions.pageInfo.hasNextPage);
       const registrations = (txs as IEdge[])
         .filter(
-          (el) =>
-            el.node.tags.find((tag) => tag.name === 'Operation-Name')?.value ===
-            'Operator Registration',
+          (el) => findTag(el, 'operationName') === REGISTER_OPERATION
         )
         .map((el) => {
           const node = el.node;
           const timestamp =
-            parseInt(node.tags.find((tag) => tag.name === 'Unix-Time')?.value || '') ||
+            parseInt(findTag(el, 'unixTime') || '') ||
             node.block.timestamp;
           return {
             txid: node.id,
@@ -146,9 +144,9 @@ const HistoryTable = ({ address }: { address?: string }) => {
             appFee: formatNumbers(node.quantity.ar),
             destination: node.recipient,
             origin: node.owner.address,
-            modelTx: node.tags.find((el) => el.name === 'Model-Transaction')?.value || '',
-            operation: node.tags.find((el) => el.name === 'Operation-Name')?.value || '',
-            operatorName: node.tags.find((el) => el.name === 'Operator-Name')?.value,
+            modelTx: findTag(el, 'modelTransaction') || '',
+            operation: findTag(el, 'operationName') || '',
+            operatorName: findTag(el, 'operatorName'),
           };
         });
 
@@ -157,7 +155,7 @@ const HistoryTable = ({ address }: { address?: string }) => {
         .map((el) => {
           const node = el.node;
           const timestamp =
-            parseInt(node.tags.find((tag) => tag.name === 'Unix-Time')?.value || '') ||
+            parseInt(findTag(el, 'unixTime') || '') ||
             node.block.timestamp;
           return {
             txid: node.id,
@@ -167,8 +165,8 @@ const HistoryTable = ({ address }: { address?: string }) => {
             appFee: formatNumbers(node.quantity.ar),
             destination: node.recipient,
             origin: node.owner.address,
-            modelTx: node.tags.find((el) => el.name === 'Model-Transaction')?.value || '',
-            operation: node.tags.find((el) => el.name === 'Operation-Name')?.value || '',
+            modelTx: findTag(el, 'modelTransaction') || '',
+            operation: findTag(el, 'operationName') || '',
           };
         });
 
@@ -183,7 +181,7 @@ const HistoryTable = ({ address }: { address?: string }) => {
       const requests = (txs as IEdge[]).map((el) => {
         const node = el.node;
         const timestamp =
-          parseInt(node.tags.find((tag) => tag.name === 'Unix-Time')?.value || '') ||
+          parseInt(findTag(el, 'unixTime') || '') ||
           node.block.timestamp;
         return {
           txid: node.id,
@@ -193,8 +191,8 @@ const HistoryTable = ({ address }: { address?: string }) => {
           appFee: formatNumbers(node.quantity.ar),
           destination: node.recipient,
           origin: node.owner.address,
-          modelTx: node.tags.find((el) => el.name === 'Model-Transaction')?.value || '',
-          operation: node.tags.find((el) => el.name === 'Operation-Name')?.value || '',
+          modelTx: findTag(el, 'modelTransaction') || '',
+          operation: findTag(el, 'operationName') || '',
         };
       });
       setReceivedRows([...requests]);

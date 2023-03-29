@@ -4,6 +4,7 @@ import { IEdge } from '@/interfaces/arweave';
 import { toSvg } from 'jdenticon';
 import { useNavigate } from 'react-router-dom';
 import { MouseEvent, useMemo } from 'react';
+import { findTag } from '@/utils/common';
 
 const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
   const navigate = useNavigate();
@@ -15,8 +16,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
   }, [model]);
 
   const getTimePassed = () => {
-    const timestamp =
-      model.node.tags.find((el) => el.name === 'Unix-Time')?.value || model.node.block.timestamp;
+    const timestamp = findTag(model, 'unixTime') || model.node.block.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
@@ -75,7 +75,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
         />
         <FiCardContent>
           <Tooltip
-            title={model.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Untitled'}
+            title={findTag(model, 'modelName') || 'Untitled'}
             placement={'top-start'}
           >
             <Typography
@@ -89,7 +89,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
               }}
               noWrap
             >
-              {model.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Untitled'}
+              {findTag(model, 'modelName') || 'Untitled'}
             </Typography>
           </Tooltip>
           <Tooltip title={model.node.owner.address} placement={'bottom-start'}>

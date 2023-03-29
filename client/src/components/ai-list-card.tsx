@@ -1,4 +1,5 @@
 import { IEdge } from '@/interfaces/arweave';
+import { findTag } from '@/utils/common';
 import { ApolloError } from '@apollo/client';
 import {
   Card,
@@ -31,8 +32,7 @@ const AiListCard = ({
   }, [model]);
 
   const getTimePassed = () => {
-    const timestamp =
-      model.node.tags.find((el) => el.name === 'Unix-Time')?.value || model.node.block.timestamp;
+    const timestamp = findTag(model, 'unixTime')|| model.node.block.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
@@ -123,7 +123,7 @@ const AiListCard = ({
               color: '#F4F4F4',
             }}
           >
-            {model.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Untitled'}
+            {findTag(model, 'modelName') || 'Untitled'}
           </Typography>
         </CardContent>
         <Box flexGrow={1}></Box>

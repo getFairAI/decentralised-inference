@@ -1,4 +1,4 @@
-import { DEFAULT_TAGS, REGISTER_OPERATION_TAG } from '@/constants';
+import { DEFAULT_TAGS, REGISTER_OPERATION, TAG_NAMES } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { parseWinston } from '@/utils/arweave';
@@ -7,6 +7,7 @@ import { Box, Button, Card, CardActionArea, Container, Skeleton, Typography } fr
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReplayIcon from '@mui/icons-material/Replay';
+import { findTag } from '@/utils/common';
 
 interface Element {
   name: string;
@@ -24,12 +25,12 @@ const ModelCard = ({ modelTx }: { modelTx: IEdge }) => {
 
   const tags = [
     ...DEFAULT_TAGS,
-    REGISTER_OPERATION_TAG,
+    { name: TAG_NAMES.operationName, values: [ REGISTER_OPERATION ]},
     {
-      name: 'Model-Name',
-      values: [modelTx.node.tags.find((tag) => tag.name === 'Model-Name')?.value],
+      name: TAG_NAMES.modelName,
+      values: [ findTag(modelTx, 'modelName') ],
     },
-    { name: 'Model-Creator', values: [modelTx.node.owner.address] },
+    { name: TAG_NAMES.modelCreator, values: [ findTag(modelTx, 'modelCreator') ] },
   ];
   // get all operatorsRegistration for the model
   const { data, loading, error, refetch, fetchMore } = useQuery(QUERY_REGISTERED_OPERATORS, {
@@ -66,20 +67,17 @@ const ModelCard = ({ modelTx }: { modelTx: IEdge }) => {
       );
 
       const opFees = uniqueOperators.map((op) => {
-        const fee = op.node.tags.find((el) => el.name === 'Operator-Fee')?.value;
+        const fee = findTag(op, 'operatorFee');
         if (fee) return parseFloat(fee);
         else return 0;
       });
       const average = (arr: number[]) => arr.reduce((p, c) => p + c, 0) / arr.length;
       const avgFee = parseWinston(average(opFees).toString());
-      const modelFee = modelTx.node.tags.find((el) => el.name === 'Model-Fee')?.value;
+      const modelFee = findTag(modelTx, 'modelFee');
 
       setCardData({
-        name:
-          modelTx.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Name not Available',
-        txid:
-          modelTx.node.tags.find((el) => el.name === 'Model-Transaction')?.value ||
-          'Transaction Not Available',
+        name: findTag(modelTx, 'modelName') || 'Name not Available',
+        txid: findTag(modelTx, 'modelTransaction') || 'Transaction Not Available',
         uploader: modelTx.node.owner.address,
         modelFee: parseWinston(modelFee) || 'Model Fee Not Available',
         avgFee,

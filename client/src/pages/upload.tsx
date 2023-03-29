@@ -26,7 +26,7 @@ import FundDialog from '@/components/fund-dialog';
 import CustomProgress from '@/components/progress';
 import { GET_IMAGES_TXIDS } from '@/queries/graphql';
 import fileReaderStream from 'filereader-stream';
-import { APP_VERSION, MARKETPLACE_FEE, NODE1_BUNDLR_URL, MARKETPLACE_ADDRESS } from '@/constants';
+import { APP_VERSION, MARKETPLACE_FEE, NODE1_BUNDLR_URL, MARKETPLACE_ADDRESS, TAG_NAMES, APP_NAME, MODEL_CREATION, MODEL_CREATION_PAYMENT } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
 import arweave from '@/utils/arweave';
@@ -151,17 +151,17 @@ const Upload = () => {
     // upload the file
     const readableStream = fileReaderStream(file);
     const tags = [];
-    tags.push({ name: 'App-Name', value: 'Fair Protocol' });
-    tags.push({ name: 'APP-Version', value: `${APP_VERSION}` });
-    tags.push({ name: 'Content-Type', value: file.type });
-    tags.push({ name: 'Model-Name', value: `${data.name}` });
-    tags.push({ name: 'Operation-Name', value: 'Model Creation' });
-    tags.push({ name: 'Notes', value: data.notes });
-    tags.push({ name: 'Category', value: data.category });
-    tags.push({ name: 'Model-Fee', value: arweave.ar.arToWinston(`${data.fee}`) });
-    if (data.avatar) tags.push({ name: 'AvatarUrl', value: data.avatar });
-    if (data.description) tags.push({ name: 'Description', value: data.description });
-    tags.push({ name: 'Unix-Time', value: (Date.now() / 1000).toString() });
+    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+    tags.push({ name: TAG_NAMES.appVersion, value: APP_NAME });
+    tags.push({ name: TAG_NAMES.contentType, value: file.type });
+    tags.push({ name: TAG_NAMES.modelName, value: `${data.name}` });
+    tags.push({ name: TAG_NAMES.operationName, value: MODEL_CREATION });
+    tags.push({ name: TAG_NAMES.notes, value: data.notes });
+    tags.push({ name: TAG_NAMES.category, value: data.category });
+    tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
+    if (data.avatar) tags.push({ name: TAG_NAMES.avatarUrl, value: data.avatar });
+    if (data.description) tags.push({ name: TAG_NAMES.description, value: data.description });
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
     setSnackbarOpen(true);
     reset(); // reset form
     try {
@@ -172,18 +172,18 @@ const Upload = () => {
           quantity: arweave.ar.arToWinston(MARKETPLACE_FEE),
           target: MARKETPLACE_ADDRESS,
         });
-        tx.addTag('App-Name', 'Fair Protocol');
-        tx.addTag('App-Version', APP_VERSION);
-        tx.addTag('Content-Type', file.type);
-        tx.addTag('Operation-Name', 'Model Creation Payment');
-        tx.addTag('Model-Name', data.name);
-        tx.addTag('Notes', data.notes);
-        tx.addTag('Category', data.category);
-        tx.addTag('Model-Fee', arweave.ar.arToWinston(`${data.fee}`));
-        if (data.avatar) tx.addTag('AvatarUrl', data.avatar);
-        if (data.description) tx.addTag('Description', data.description);
-        tx.addTag('Model-Transaction', res.data.id);
-        tx.addTag('Unix-Time', (Date.now() / 1000).toString());
+        tx.addTag(TAG_NAMES.appName, APP_NAME);
+        tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+        tx.addTag(TAG_NAMES.contentType, file.type);
+        tx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
+        tx.addTag(TAG_NAMES.modelName, data.name);
+        tx.addTag(TAG_NAMES.notes, data.notes);
+        tx.addTag(TAG_NAMES.category, data.category);
+        tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${data.fee}`));
+        if (data.avatar) tx.addTag(TAG_NAMES.avatarUrl, data.avatar);
+        if (data.description) tx.addTag(TAG_NAMES.description, data.description);
+        tx.addTag(TAG_NAMES.modelTransaction, res.data.id);
+        tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
         await arweave.transactions.sign(tx);
         const payRes = await arweave.transactions.post(tx);
         if (payRes.status === 200) {
