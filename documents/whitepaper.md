@@ -174,7 +174,7 @@ To solve the problem described above, we have created a solution that, to our kn
 </p>
 
 <p align="justify">
-Users pay the Creator instead of the Marketplace to compensate them for the effort of creating the script and the model and uploading them. If Creators require a price that is too high, Users may not choose it, and if they choose a price that is too low, Users may be malicious and make too many inferences without paying Operators. Due to these reasons, Operators can decide not to use the model. In case of disproportionate prices, Users or Operators may even create duplicates of the model, as explained in Section XI. Therefore, a Creator is encouraged to set a fair price and update it accordingly.
+Users pay the Creator instead of the Marketplace to compensate them for the effort of creating the script and the model and for the upload costs. If Creators require a price that is too high, Users may not choose it, and if they choose a price that is too low, Users may be malicious and make too many inferences without paying Operators. Due to these reasons, Operators can decide not to use the model. In case of disproportionate prices, Users or Operators may even create duplicates of the model, as explained in Section XI. Therefore, a Creator is encouraged to set a fair price and update it accordingly.
 </p>
 
 <p align="justify">
