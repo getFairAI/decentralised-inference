@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@bundlr-network/client": "^0.10.3",
+    "arweave": "^1.13.0",
+    "bundle-require": "^4.0.1",
+    "esbuild": "^0.17.8",
+    "graphql": "^16.6.0",
+    "request": "^2.88.2"
+  }
+}
