@@ -28,6 +28,8 @@ import {
   TAG_NAMES,
   MODEL_INFERENCE_REQUEST,
   MODEL_INFERENCE_RESPONSE,
+  APP_NAME,
+  INFERENCE_PAYMENT,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -499,16 +501,16 @@ const Chat = () => {
       return;
     }
     const tags = [];
-    tags.push({ name: 'App-Name', value: 'Fair Protocol' });
-    tags.push({ name: 'App-Version', value: APP_VERSION });
-    tags.push({ name: 'Model-Name', value: state.modelName });
-    tags.push({ name: 'Model-Creator', value: state.modelCreator });
-    tags.push({ name: 'Model-Transaction', value: state.modelTransaction });
-    tags.push({ name: 'Model-Operator', value: address });
-    tags.push({ name: 'Operation-Name', value: 'Model Inference Request' });
-    tags.push({ name: 'Conversation-Identifier', value: currentConversationId });
+    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
+    tags.push({ name: TAG_NAMES.modelName, value: state.modelName });
+    tags.push({ name: TAG_NAMES.modelCreator, value: state.modelCreator });
+    tags.push({ name: TAG_NAMES.modelTransaction, value: state.modelTransaction });
+    tags.push({ name: TAG_NAMES.modelOperator, value: address });
+    tags.push({ name: TAG_NAMES.operationName, value: MODEL_INFERENCE_REQUEST});
+    tags.push({ name: TAG_NAMES.conversationIdentifier, value: currentConversationId });
     const tempDate = Date.now() / 1000;
-    tags.push({ name: 'Unix-Time', value: tempDate.toString() });
+    tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
     try {
       const bundlrRes = await bundlr.upload(newMessage, { tags });
 
@@ -549,16 +551,16 @@ const Chat = () => {
         quantity: inferenceFee,
       });
 
-      tx.addTag('App-Name', 'Fair Protocol');
-      tx.addTag('App-Version', APP_VERSION);
-      tx.addTag('Operation-Name', 'Inference Payment');
-      tx.addTag('Model-Name', state.modelName);
-      tx.addTag('Model-Creator', state.modelCreator);
-      tx.addTag('Model-Transaction', state.modelTransaction);
-      tx.addTag('Model-Operator', address || '');
-      tx.addTag('Conversation-Identifier', currentConversationId);
-      tx.addTag('Inference-Transaction', bundlrRes.id);
-      tx.addTag('Unix-Time', (Date.now() / 1000).toString());
+      tx.addTag(TAG_NAMES.appName, APP_NAME);
+      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+      tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
+      tx.addTag(TAG_NAMES.modelName, state.modelName);
+      tx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
+      tx.addTag(TAG_NAMES.modelTransaction, state.modelTransaction);
+      tx.addTag(TAG_NAMES.modelOperator, address || '');
+      tx.addTag(TAG_NAMES.conversationIdentifier, currentConversationId);
+      tx.addTag(TAG_NAMES.inferenceTransaction, bundlrRes.id);
+      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
 
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);

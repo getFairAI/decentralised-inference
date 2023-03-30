@@ -53,6 +53,7 @@ const Register = () => {
         values: findTag(state, 'modelName') || '',
       });
       tags.push({ name: TAG_NAMES.modelCreator, values: state.node.owner.address });
+      tags.push({ name: TAG_NAMES.modelTransaction, values: findTag(state, 'modelTransaction') as string });
       tags.push({ name: TAG_NAMES.operatorFee, values: arweave.ar.arToWinston(rate) });
       tags.push({ name: TAG_NAMES.operationName, values: REGISTER_OPERATION });
       tags.push({ name: TAG_NAMES.operatorName, values: operatorName });
