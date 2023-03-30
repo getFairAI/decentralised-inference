@@ -265,3 +265,33 @@ Example:
   "Conversation-Identifier": "1", // chat id number
 }
 ```
+
+---
+```js
+// new tags WIP
+```
+## SCRIPTS UPLOAD
+
+Data transaction containing any necessary files to run a specific model
+
+| Tag-Name          | Optional    | Tag Value               | Description                                                 
+| ----------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------ |
+| Model-Name        | False       | < ExampleName >         | Name of the Model uploaded                                              |
+| Model-Creator     | False       | < Example Address >     | Address of the wallet that uploaded Model                               |
+| Model-Transaction | False       | < Transaction Id >      | Transaction id of the model uploaded through bundlr                                  |
+| Curator-Fee       | False       | < 1000000000000 >       | TBD                                 |
+| Operation-Name    | False       | Scripts Upload          | Name of the Operation executed in the application                                    |
+
+
+## SCRIPTS UPLOAD PAYMENT
+
+Wallet to Wallet transaction created to pay `TBD FEE` when uploading a script
+
+| Tag-Name          | Optional    | Tag Value               | Description                                                 
+| ----------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------ |
+| Model-Name        | False       | < ExampleName >         | Name of the Model uploaded                                              |
+| Model-Creator     | False       | < Example Address >     | Address of the wallet that uploaded Model                               |
+| Model-Transaction | False       | < Transaction Id >      | Transaction id of the model uploaded through bundlr                                  |
+| Curator-Fee       | False       | < 1000000000000 >       | TBD                                 |
+| Operation-Name    | False       | Scripts Upload Payment  | Name of the Operation executed in the application                                    |
+| Script-Transaction | False      | < Transaction Id >      | Transaction id of the script uploaded through bundlr                                 |
