@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { Box } from '@mui/system';
 import BasicTable from '@/components/basic-table';
-import { useLocation, useNavigate, useRouteLoaderData } from 'react-router-dom';
+import { useLoaderData, useLocation, useNavigate } from 'react-router-dom';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { DEFAULT_TAGS, REGISTER_OPERATION, TAG_NAMES } from '@/constants';
@@ -20,9 +20,10 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import arweave from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
+import { RouteLoaderResult } from '@/interfaces/router';
 
 const Detail = () => {
-  const updatedFee = useRouteLoaderData('model') as string;
+  const { updatedFee, avatarTxId }  = useLoaderData() as RouteLoaderResult;
   const { state, pathname } = useLocation();
   const navigate = useNavigate();
   const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
@@ -34,6 +35,9 @@ const Detail = () => {
   const elementsPerPage = 5;
 
   const imgUrl = useMemo(() => {
+    if (avatarTxId) {
+      return `https://arweave.net/${avatarTxId}`;
+    }
     const img = toSvg(state.node.id, 100);
     const svg = new Blob([img], { type: 'image/svg+xml' });
     return URL.createObjectURL(svg);

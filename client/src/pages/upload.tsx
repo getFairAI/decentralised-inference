@@ -7,7 +7,6 @@ import {
   CardContent,
   CardHeader,
   Container,
-  Dialog,
   Divider,
   MenuItem,
   Snackbar,
@@ -19,14 +18,12 @@ import TextControl from '@/components/text-control';
 import SelectControl from '@/components/select-control';
 import MarkdownControl from '@/components/md-control';
 import FileControl from '@/components/file-control';
-import { useLazyQuery } from '@apollo/client';
 import ImagePicker from '@/components/image-picker';
 import AvatarControl from '@/components/avatar-control';
 import FundDialog from '@/components/fund-dialog';
 import CustomProgress from '@/components/progress';
-import { GET_IMAGES_TXIDS } from '@/queries/graphql';
 import fileReaderStream from 'filereader-stream';
-import { APP_VERSION, MARKETPLACE_FEE, NODE1_BUNDLR_URL, MARKETPLACE_ADDRESS, TAG_NAMES, APP_NAME, MODEL_CREATION, MODEL_CREATION_PAYMENT } from '@/constants';
+import { APP_VERSION, MARKETPLACE_FEE, NODE1_BUNDLR_URL, MARKETPLACE_ADDRESS, TAG_NAMES, APP_NAME, MODEL_CREATION, MODEL_CREATION_PAYMENT, MODEL_ATTACHMENT, AVATAR_ATTACHMENT, NOTES_ATTACHMENT } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
 import arweave from '@/utils/arweave';
@@ -38,7 +35,7 @@ export interface CreateForm extends FieldValues {
   notes: string;
   file: File;
   description?: string;
-  avatar?: string;
+  avatar?: File;
 }
 const Upload = () => {
   const { handleSubmit, reset, control } = useForm<FieldValues>({
@@ -52,7 +49,6 @@ const Upload = () => {
       category: 'text',
     },
   });
-  const [open, setOpen] = useState(false);
   const [fundOpen, setFundOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -61,16 +57,6 @@ const Upload = () => {
   const totalChunks = useRef(0);
   const bundlrContext = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
-
-  const [getImageTxIds, { data, error, loading }] = useLazyQuery(GET_IMAGES_TXIDS);
-
-  const handleClickOpen = () => {
-    setOpen(true);
-    getImageTxIds();
-  };
-  const handleClose = () => {
-    setOpen(false);
-  };
 
   const onSubmit = async (data: FieldValues) => {
     setFormData(data as CreateForm);
@@ -105,16 +91,89 @@ const Upload = () => {
     return priceConverted.toNumber();
   };
 
-  const handleFundFinished = async (node: string, data?: CreateForm) => {
-    setOpen(false);
+  const uploadAvatarImage = async (modelTx: string, modelName: string, image: File) => {
     if (!bundlrContext || !bundlrContext.state) return;
-    if (!data) {
-      data = formData;
-    }
-    if (!data || !data.file) return;
-    const file = data.file;
 
-    if ((await getFilePrice(file.size)) > (await getNodeBalance())) return;
+    if ((await getFilePrice(image.size)) > (await getNodeBalance()))
+      enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
+
+    const uploader = bundlrContext.state.uploader.chunkedUploader;
+    const chunkSize = 25 * (1024 * 1024); // default is
+
+    // divide the total image size by the size of each chunk we'll upload
+    if (image.size < chunkSize) totalChunks.current = 1;
+    else {
+      totalChunks.current = Math.floor(image.size / chunkSize);
+    }
+    /** Register Event Callbacks */
+    // event callback: called for every chunk uploaded
+    uploader.on('chunkUpload', (chunkInfo) => {
+      console.log(chunkInfo);
+      console.log(
+        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
+      );
+      const chunkNumber = chunkInfo.id + 1;
+      // update the progress bar based on how much has been uploaded
+      if (chunkNumber >= totalChunks.current) setProgress(100);
+      else setProgress((chunkNumber / totalChunks.current) * 100);
+    });
+    // event callback: called if an error happens
+    uploader.on('chunkError', (e) => {
+      setSnackbarOpen(false);
+      console.error(`Error uploading chunk number ${e.id} - ${e.res.statusText}`);
+    });
+    // event callback: called when file is fully uploaded
+    uploader.on('done', (finishRes) => {
+      console.log(`Upload completed with ID ${finishRes.id}`);
+      // set the progress bar to 100
+      setProgress(100);
+      setSnackbarOpen(false);
+    });
+    // upload the file
+    const readableStream = fileReaderStream(image);
+    const tags = [];
+    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
+    tags.push({ name: TAG_NAMES.contentType, value: image.type });
+    tags.push({ name: TAG_NAMES.modelTransaction, value: modelTx });
+    tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
+    tags.push({ name: TAG_NAMES.attachmentName, value: image.name });
+    tags.push({ name: TAG_NAMES.attachmentRole, value: AVATAR_ATTACHMENT });
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
+    setSnackbarOpen(true);
+    try {
+      const res = await uploader.uploadData(readableStream, { tags });
+      if (res.status === 200) {
+        enqueueSnackbar(
+          <>
+            Uploaded Avatat Image
+            <br></br>
+            <a
+              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
+              target={'_blank'}
+              rel='noreferrer'
+            >
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
+          { variant: 'success' },
+        );
+      } else {
+        enqueueSnackbar(res.statusText, { variant: 'error' });
+      }
+    } catch (error) {
+      enqueueSnackbar('An Error Occured.', { variant: 'error' });
+    }
+  };
+
+  const uploadUsageNotes = async (modelTx: string, modelName: string, usageNotes: string) => {
+    if (!bundlrContext || !bundlrContext.state) return;
+    const file = new File([ usageNotes ], `${modelName}-usage.md`, {
+      type: 'text/markdown',
+    });
+
+    if ((await getFilePrice(file.size)) > (await getNodeBalance()))
+      enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
 
     const uploader = bundlrContext.state.uploader.chunkedUploader;
     const chunkSize = 25 * (1024 * 1024); // default is
@@ -152,18 +211,96 @@ const Upload = () => {
     const readableStream = fileReaderStream(file);
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
-    tags.push({ name: TAG_NAMES.appVersion, value: APP_NAME });
+    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
+    tags.push({ name: TAG_NAMES.contentType, value: file.type });
+    tags.push({ name: TAG_NAMES.modelTransaction, value: modelTx });
+    tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
+    tags.push({ name: TAG_NAMES.attachmentName, value: file.name });
+    tags.push({ name: TAG_NAMES.attachmentRole, value: NOTES_ATTACHMENT });
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
+    setSnackbarOpen(true);
+    try {
+      const res = await uploader.uploadData(readableStream, { tags });
+      if (res.status === 200) {
+        enqueueSnackbar(
+          <>
+            Uploaded Usage Notes File
+            <br></br>
+            <a
+              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
+              target={'_blank'}
+              rel='noreferrer'
+            >
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
+          { variant: 'success' },
+        );
+      } else {
+        enqueueSnackbar(res.statusText, { variant: 'error' });
+      }
+    } catch (error) {
+      enqueueSnackbar('An Error Occured.', { variant: 'error' });
+    }
+  };
+
+  const handleFundFinished = async (node: string, data?: CreateForm) => {
+    setFundOpen(false);
+    if (!bundlrContext || !bundlrContext.state) return;
+    if (!data) {
+      data = formData;
+    }
+    if (!data || !data.file) return;
+    const file = data.file;
+
+    if ((await getFilePrice(file.size)) > (await getNodeBalance()))
+      enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
+
+    const uploader = bundlrContext.state.uploader.chunkedUploader;
+    const chunkSize = 25 * (1024 * 1024); // default is
+
+    // divide the total file size by the size of each chunk we'll upload
+    if (file.size < chunkSize) totalChunks.current = 1;
+    else {
+      totalChunks.current = Math.floor(file.size / chunkSize);
+    }
+    /** Register Event Callbacks */
+    // event callback: called for every chunk uploaded
+    uploader.on('chunkUpload', (chunkInfo) => {
+      console.log(chunkInfo);
+      console.log(
+        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
+      );
+      const chunkNumber = chunkInfo.id + 1;
+      // update the progress bar based on how much has been uploaded
+      if (chunkNumber >= totalChunks.current) setProgress(100);
+      else setProgress((chunkNumber / totalChunks.current) * 100);
+    });
+    // event callback: called if an error happens
+    uploader.on('chunkError', (e) => {
+      setSnackbarOpen(false);
+      console.error(`Error uploading chunk number ${e.id} - ${e.res.statusText}`);
+    });
+    // event callback: called when file is fully uploaded
+    uploader.on('done', (finishRes) => {
+      console.log(`Upload completed with ID ${finishRes.id}`);
+      // set the progress bar to 100
+      setProgress(100);
+      setSnackbarOpen(false);
+    });
+    // upload the file
+    const readableStream = fileReaderStream(file);
+    const tags = [];
+    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
     tags.push({ name: TAG_NAMES.modelName, value: `${data.name}` });
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_CREATION });
-    tags.push({ name: TAG_NAMES.notes, value: data.notes });
     tags.push({ name: TAG_NAMES.category, value: data.category });
     tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
-    if (data.avatar) tags.push({ name: TAG_NAMES.avatarUrl, value: data.avatar });
     if (data.description) tags.push({ name: TAG_NAMES.description, value: data.description });
     tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
     setSnackbarOpen(true);
-    reset(); // reset form
     try {
       const res = await uploader.uploadData(readableStream, { tags });
       console.log(`Upload Success: https://arweave.net/${res.data.id}`);
@@ -177,10 +314,8 @@ const Upload = () => {
         tx.addTag(TAG_NAMES.contentType, file.type);
         tx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
         tx.addTag(TAG_NAMES.modelName, data.name);
-        tx.addTag(TAG_NAMES.notes, data.notes);
         tx.addTag(TAG_NAMES.category, data.category);
         tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${data.fee}`));
-        if (data.avatar) tx.addTag(TAG_NAMES.avatarUrl, data.avatar);
         if (data.description) tx.addTag(TAG_NAMES.description, data.description);
         tx.addTag(TAG_NAMES.modelTransaction, res.data.id);
         tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
@@ -201,6 +336,11 @@ const Upload = () => {
             </>,
             { variant: 'success' },
           );
+          await uploadUsageNotes(res.data.id, data.name, data.notes);
+          if (data.avatar && data.avatar instanceof File) {
+            await uploadAvatarImage(res.data.id, data.name, data.avatar);
+          }
+          reset(); // reset form
         } else {
           enqueueSnackbar(payRes.statusText, { variant: 'error' });
         }
@@ -268,17 +408,10 @@ const Upload = () => {
                 </tr>
                 <tr>
                   <td colSpan={2} rowSpan={1} style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Button onClick={handleClickOpen}>Upload</Button>
-                    <Dialog onClose={handleClose} open={open}>
-                      <ImagePicker
-                        data={data}
-                        loading={loading}
-                        error={error}
-                        name='avatar'
-                        control={control}
-                        closeHandler={handleClose}
-                      />
-                    </Dialog>
+                    <ImagePicker
+                      name='avatar'
+                      control={control}
+                    />
                   </td>
                 </tr>
                 <tr>
@@ -332,7 +465,7 @@ const Upload = () => {
       <Snackbar
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         open={snackbarOpen}
-        onClose={handleClose}
+        onClose={() => setSnackbarOpen(false)}
         ClickAwayListenerProps={{ onClickAway: () => null }}
       >
         <Alert severity='info' sx={{ width: '100%', minWidth: '100px' }}>

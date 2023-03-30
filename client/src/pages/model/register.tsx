@@ -1,6 +1,7 @@
 import { CustomStepper } from '@/components/stepper';
 import { MARKETPLACE_ADDRESS, APP_VERSION, TAG_NAMES, APP_NAME, REGISTER_OPERATION } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
+import { RouteLoaderResult } from '@/interfaces/router';
 import arweave from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import {
@@ -17,16 +18,26 @@ import {
   Divider,
   Typography,
 } from '@mui/material';
+import { toSvg } from 'jdenticon';
 import { useSnackbar } from 'notistack';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
-  const updatedFee = useRouteLoaderData('model') as string;
+  const { updatedFee, avatarTxId } = useRouteLoaderData('model-alt') as RouteLoaderResult || {};
   const { state }: { state: IEdge } = useLocation();
   const [isRegistered, setIsRegistered] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+
+  const imgUrl = useMemo(() => {
+    if (avatarTxId) {
+      return `https://arweave.net/${avatarTxId}`;
+    }
+    const img = toSvg(state.node.id, 100);
+    const svg = new Blob([img], { type: 'image/svg+xml' });
+    return URL.createObjectURL(svg);
+  }, [state, avatarTxId]);
 
   const handleRegister = async (rate: string, operatorName: string) => {
     try {
@@ -80,7 +91,7 @@ const Register = () => {
               <Box display={'flex'} flexDirection={'column'}>
                 <Avatar
                   sx={{ width: '200px', height: '200px' }}
-                  src={findTag(state, 'avatarUrl') || ''}
+                  src={imgUrl}
                 />
                 {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
                   <Button startIcon={<DownloadIcon />}>

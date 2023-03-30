@@ -28,11 +28,15 @@ export const TAG_NAMES = {
   conversationIdentifier: 'Conversation-Identifier',
   inferenceTransaction: 'Inference-Transaction',
   requestTransaction: 'Request-Transaction',
-  responseTransaction: 'Response-Transaction'
+  responseTransaction: 'Response-Transaction',
+  attachmentName: 'Attachment-Name',
+  attachmentRole: 'Attachment-Role'
 };
 
 // Operation Names
 export const MODEL_CREATION = 'Model Creation';
+
+export const MODEL_ATTACHMENT = 'Model Attachment';
 
 export const MODEL_CREATION_PAYMENT = 'Model Creation Payment';
 
@@ -51,6 +55,11 @@ export const INFERENCE_PAYMENT = 'Inference Payment';
 export const MODEL_INFERENCE_RESPONSE = 'Model Inference Response';
 
 export const INFERENCE_PAYMENT_DISTRIBUTION = 'Inference Payment Distribution';
+
+// Attachment Roles
+export const AVATAR_ATTACHMENT = 'avatar';
+
+export const NOTES_ATTACHMENT = 'notes';
 
 // misc
 export const DEV_BUNDLR_URL = 'https://devnet.bundlr.network/';
