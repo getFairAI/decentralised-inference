@@ -57,7 +57,7 @@ interface Message {
   msg: string;
   type: 'response' | 'request';
   timestamp: number;
-  cid?: string;
+  cid?: number;
 }
 
 const Chat = () => {
@@ -70,9 +70,9 @@ const Chat = () => {
   const [polledMessages, setPolledMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
-  const [conversationIds, setConversationIds] = useState<string[]>([]);
-  const [filteredConversationIds, setFilteredConversationIds] = useState<string[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
+  const [conversationIds, setConversationIds] = useState<number[]>([]);
+  const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<number | undefined>(undefined);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
@@ -153,13 +153,11 @@ const Chat = () => {
         (el: IEdge) =>
          findTag(el, 'conversationIdentifier'),
       );
-      const uniqueCids = Array.from(new Set(cids));
-      uniqueCids.sort((a: string, b: string) => {
-        const numberA = parseInt(a?.split('-')[1]);
-        const numberB = parseInt(b?.split('-')[1]);
+      const uniqueCids = Array.from(new Set(cids)).map((cid) =>
+        parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid)
+      );
+      uniqueCids.sort((a: number, b: number) => a < b ? -1 : 1);
 
-        return numberA < numberB ? -1 : 1;
-      });
       setConversationIds(uniqueCids);
       setFilteredConversationIds(uniqueCids);
       setCurrentConversationId(uniqueCids[uniqueCids.length - 1]);
@@ -413,14 +411,14 @@ const Chat = () => {
           parseInt(findTag(el, 'unixTime') || '') ||
           el.node.block?.timestamp ||
           Date.now() / 1000;
-        const cid = findTag(el, 'conversationIdentifier');
+        const cid = findTag(el, 'conversationIdentifier') as string;
         if (el.node.owner.address === userAddr) {
           temp.push({
             id: el.node.id,
             msg: data,
             type: 'request',
             timestamp: timestamp,
-            cid,
+            cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
           });
         } else {
           temp.push({
@@ -428,7 +426,7 @@ const Chat = () => {
             msg: data,
             type: 'response',
             timestamp: timestamp,
-            cid,
+            cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
           });
         }
       }),
@@ -459,18 +457,17 @@ const Chat = () => {
 
   useEffect(() => {
     if (conversationIds && conversationIds.length > 0) {
-      setFilteredConversationIds(conversationIds.filter((el) => el.includes(filterConversations)));
+      setFilteredConversationIds(conversationIds.filter((el) => `${el}`.includes(filterConversations)));
     }
   }, [filterConversations]);
 
-  const handleListItemClick = (cid: string) => {
+  const handleListItemClick = (cid: number) => {
     setCurrentConversationId(cid);
   };
 
   const handleAddConversation = () => {
     const lastConversation = conversationIds[conversationIds.length - 1];
-    const number = lastConversation?.split('-')[1];
-    const newConversationId = `C-${+number + 1}`;
+    const newConversationId = lastConversation + 1;
     setConversationIds([...conversationIds, newConversationId]);
     setFilteredConversationIds([...conversationIds, newConversationId]);
     setFilterConversations('');
@@ -508,7 +505,7 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.modelTransaction, value: state.modelTransaction });
     tags.push({ name: TAG_NAMES.modelOperator, value: address });
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_INFERENCE_REQUEST});
-    tags.push({ name: TAG_NAMES.conversationIdentifier, value: currentConversationId });
+    tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
     const tempDate = Date.now() / 1000;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
     try {
@@ -558,7 +555,7 @@ const Chat = () => {
       tx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
       tx.addTag(TAG_NAMES.modelTransaction, state.modelTransaction);
       tx.addTag(TAG_NAMES.modelOperator, address || '');
-      tx.addTag(TAG_NAMES.conversationIdentifier, currentConversationId);
+      tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
       tx.addTag(TAG_NAMES.inferenceTransaction, bundlrRes.id);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
 
@@ -601,14 +598,14 @@ const Chat = () => {
             parseInt(findTag(el, 'unixTime') || '') ||
             el.node.block?.timestamp ||
             Date.now() / 1000;
-          const cid = findTag(el, 'conversationIdentifier');
+          const cid = findTag(el, 'conversationIdentifier') as string;
           if (el.node.owner.address === userAddr) {
             temp.push({
               id: el.node.id,
               msg: data,
               type: 'request',
               timestamp: timestamp,
-              cid,
+              cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
             });
           } else {
             temp.push({
@@ -616,7 +613,7 @@ const Chat = () => {
               msg: data,
               type: 'response',
               timestamp: timestamp,
-              cid,
+              cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
             });
           }
         }),
