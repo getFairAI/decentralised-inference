@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { styled } from '@mui/material/styles';
 import Stack from '@mui/material/Stack';
 import Stepper from '@mui/material/Stepper';
@@ -30,6 +29,9 @@ import { IEdge } from '@/interfaces/arweave';
 import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
 import { NumericFormat } from 'react-number-format';
 import { findTag } from '@/utils/common';
+import { useRouteLoaderData } from 'react-router-dom';
+import { RouteLoaderResult } from '@/interfaces/router';
+import { getData } from '@/utils/arweave';
 
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -159,17 +161,15 @@ export const CustomStepper = (props: {
   handleSubmit: (rate: string, name: string) => Promise<void>;
   isRegistered: boolean;
 }) => {
+  const { notesTxId } = useRouteLoaderData('model-alt') as RouteLoaderResult || {};
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const [completed, setCompleted] = useState(new Set<number>());
   const [fileSize, setFileSize] = useState(0);
   const [operatorName, setOperatorName] = useState('');
+  const [ notes, setNotes ] = useState('');
 
   const [rate, setRate] = useState(0);
-
-  /* const isStepOptional = (step: number) => {
-    return step === 0 || step === 1;
-  }; */
 
   const isStepSkipped = (step: number) => {
     return skipped.has(step);
@@ -197,27 +197,6 @@ export const CustomStepper = (props: {
     setCompleted(completed);
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
-
-  /* const handleSkip = () => {
-    if (!isStepOptional(activeStep)) {
-      // You probably want to guard against something like this,
-      // it should never occur unless someone's actively trying to break something.
-      throw new Error('You can\'t skip a step that isn\'t optional.');
-    }
-
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    setSkipped((prevSkipped) => {
-      const newSkipped = new Set(prevSkipped.values());
-      newSkipped.add(activeStep);
-      return newSkipped;
-    });
-    setCompleted(completed.add(activeStep));
-  };
-
-  const handleReset = () => {
-    setActiveStep(0);
-    setCompleted(new Set<number>());
-  }; */
 
   const printSize = (args: File | number) => {
     let size;
@@ -276,6 +255,15 @@ export const CustomStepper = (props: {
     };
     getFileSize();
   }, [props.data]);
+
+  useEffect(() => {
+    const fetchNotesData = async () => {
+      setNotes(await getData(notesTxId as string));
+    };
+
+    if (notesTxId)
+      fetchNotesData();
+  }, [ notesTxId ]);
 
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
@@ -384,7 +372,7 @@ export const CustomStepper = (props: {
             }}
             hideToolbar={true}
             fullscreen={false}
-            value={findTag(props.data, 'notes')}
+            value={notes}
           ></MDEditor>
           <Box>
             <FormControl variant='outlined' fullWidth>

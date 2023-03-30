@@ -1,4 +1,5 @@
 import { APP_NAME, APP_VERSION, DEFAULT_TAGS, MODEL_FEE_PAYMENT, TAG_NAMES } from '@/constants';
+import { RouteLoaderResult } from '@/interfaces/router';
 import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { findTag } from '@/utils/common';
@@ -19,7 +20,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams, useRouteLoaderData } from 'react-router-dom';
 
 const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
-  const updatedFee = useRouteLoaderData('model') as string;
+  const { updatedFee } = useRouteLoaderData('model-alt') as RouteLoaderResult;
   const { txid } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();

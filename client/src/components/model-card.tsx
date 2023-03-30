@@ -30,7 +30,7 @@ const ModelCard = ({ modelTx }: { modelTx: IEdge }) => {
       name: TAG_NAMES.modelName,
       values: [ findTag(modelTx, 'modelName') ],
     },
-    { name: TAG_NAMES.modelCreator, values: [ findTag(modelTx, 'modelCreator') ] },
+    { name: TAG_NAMES.modelCreator, values: [ modelTx.node.owner.address ] },
   ];
   // get all operatorsRegistration for the model
   const { data, loading, error, refetch, fetchMore } = useQuery(QUERY_REGISTERED_OPERATORS, {
