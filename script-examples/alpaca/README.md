@@ -30,14 +30,20 @@ To use this library, you need to have:
 
 1. Using the terminal on the same folder, run the server script with
 
-    ./server
+```bash
+./server
+```
 
 1. Using the terminal on the same folder, run the alpaca script with 
-    
-    node alpaca.js
+   
+```bash
+node alpaca.js
+```
 
 *Optional:* If you want to test the inference first, after putting the model on the same folder as the other files run instead the test script with
 
-    node alpaca-inference-test.js
+```bash
+node alpaca-inference-test.js
+```
 
 #### This is all for today, congrats if you made this far!
