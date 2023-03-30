@@ -33,8 +33,7 @@ To use this library, you need to have:
 ```bash
 ./server
 ```
-
-1. Using the terminal on the same folder, run the alpaca script with 
+7. Using the terminal on the same folder, run the alpaca script with 
    
 ```bash
 node alpaca.js
