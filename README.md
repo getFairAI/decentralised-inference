@@ -1,7 +1,11 @@
-# Decentralized Inference
 
 ![Latest Development Changes](https://github.com/FAIR-Protocol/decentralized-inference/actions/workflows/development.yml/badge.svg?event=push)
-### File Structure
+
+# Decentralized Inference
+
+Welcome to the Fair Protocol GitHub! Please read our [Whitepaper](./documents/whitepaper.md) to understand more about this application.
+
+## File Structure
 ```bash
 ├── poc-ng-wireframes
 ├── client
@@ -29,7 +33,7 @@ Initiate the application in a local environment:
 npm run dev
 ```
 
-# Rules, Terms, and Conditions of the App
+## Rules, Terms, and Conditions of the App
 
 ### Terminology:
 
