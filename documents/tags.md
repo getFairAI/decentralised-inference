@@ -11,7 +11,7 @@ This Document provides detailed information about the transactions involved in t
   * Model upload payment [:link:](#model-upload-payment-to-marketplace)
   * Attachment [:link:](#attachment)
 * User Flow
-  * Script fee payment [:link:](#model-fee-payment)
+  * Script fee payment [:link:](#script-fee-payment)
   * Inference request [:link:](#model-inference-request)
   * Inference payment [:link:](#model-inference-payment)
 * Operator Flow
