@@ -311,7 +311,7 @@ In conclusion, big tech companies' centralization of AI computation has raised c
 </p>
 
 <p align="justify">
-In this whitepaper, we demonstrate that, with the help of the Arweave blockchain's permanent and decentralised storage, we can create a decentralised network for AI inference that could promote innovation in developing, deploying, and using AI technology. This approach can also assist in addressing concerns about potential biases in AI models.
+In this whitepaper, we demonstrate that with the help of the Arweave blockchain's permanent and decentralised storage, we can create a decentralised network for AI inference that could promote innovation in developing, deploying, and using AI technology. This approach can also assist in addressing concerns about potential biases in AI models.
 </p>
 
 <p align="justify">
