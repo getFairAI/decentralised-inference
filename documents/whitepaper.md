@@ -69,15 +69,15 @@ Operators are responsible for performing all the inferences a User requests and 
 ### Model Curators
 
 <p align="justify">
-Curators are all the participants who put model scripts on the Marketplace. To do so, they must upload those scripts to Arweave and relate them to at least one model listed in the Marketplace. The operators will then run the software with the input from the Users to infer these models. Curators will also define some fees that will be paid by Operators and Users when using the model script, as explained in Section V.
+Curators are all the participants who put model scripts on the Marketplace. To do so, they must upload those scripts to Arweave and link them to at least one model listed in the Marketplace. The Operators will then run the software with the input from the Users to realize the inference on these models.
 </p>
 
 <p align="justify">
-Curators are responsible for providing Operators with all the necessary instructions at the time of upload to run these models and scripts in the most comprehensive way possible, including as many operating systems as possible. The provided software must check for the constant confirmation of new inference requests by Users to Operators. It must also include the validations and protections against the incorrect execution of the code and possible attacks by Users against the Operators or vice versa.
+Curators are responsible for providing Operators with all the necessary instructions at the time of upload to run these models and scripts in the most comprehensive way possible. The provided software must check for the constant confirmation of new inference requests by Users to Operators. It must also include the validations and protections against the incorrect execution of the code and possible attacks by Users against the Operators or vice versa.
 </p>
 
 <p align="justify">
-Because describing the instructions for installing models and coding the scripts is laborious and time-consuming, Curators at the time of the upload must request two fees, one that will be paid by Users when they first want to use the model script and another one that will be paid by Operators when they register for their software.
+Because describing the instructions for installing models and coding the scripts is laborious and time-consuming, Curators at the time of the upload must solicit a fee that Users will pay when they first want to use the model script, as explained in Section V.
 </p>
 
 
