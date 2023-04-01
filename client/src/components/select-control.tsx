@@ -23,6 +23,7 @@ const SelectControl = (props: SelectControlProps & { children: ReactElement[] })
           defaultValue={props.children[0].props.value}
           onChange={field.onChange}
           onBlur={field.onBlur}
+          {...props.mat}
         >
           {props.children}
         </Select>

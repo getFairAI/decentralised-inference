@@ -9,6 +9,7 @@ import {
   Container,
   Divider,
   MenuItem,
+  OutlinedInput,
   Snackbar,
   Typography,
 } from '@mui/material';
@@ -369,90 +370,96 @@ const Upload = () => {
   return (
     <Container>
       <Box sx={{ marginTop: '8px' }}>
-        <Card>
+        <Card sx={{
+          background: 'rgba(61, 61, 61, 0.98)',
+          borderRadius: '30px',
+        }}>
           <CardHeader title='Create Your Model'>
             {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
           </CardHeader>
           <CardContent>
-            <Divider textAlign='left' role='presentation'>
-              <Typography variant='h6' gutterBottom>
-                General Information
-              </Typography>
-            </Divider>
-
-            <table style={{ width: '100%' }}>
-              <tbody>
-                <tr>
-                  <td colSpan={2} rowSpan={1} style={{ display: 'flex', justifyContent: 'center' }}>
-                    <AvatarControl name='avatar' control={control} />
-                  </td>
-                  <td colSpan={8} rowSpan={2}>
-                    <Box display={'flex'} justifyContent={'space-between'}>
-                      <TextControl
-                        name='name'
-                        control={control}
-                        rules={{ required: true }}
-                        mat={{ variant: 'outlined' }}
-                        style={{ width: '70%' }}
-                      />
-                      <TextControl
-                        name='fee'
-                        control={control}
-                        rules={{ required: true }}
-                        mat={{
-                          variant: 'outlined',
-                          type: 'number',
-                          inputProps: {
-                            step: 0.01,
-                            inputMode: 'numeric',
-                            min: 0.01 /* max: currentBalance */,
-                          },
-                        }}
-                        style={{ width: '25%' }}
-                      />
-                    </Box>
-                    <SelectControl name='category' control={control} rules={{ required: true }}>
-                      <MenuItem value={'text'}>Text</MenuItem>
-                      <MenuItem value={'audio'}>Audio</MenuItem>
-                      <MenuItem value={'video'}>Video</MenuItem>
-                    </SelectControl>
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan={2} rowSpan={1} style={{ display: 'flex', justifyContent: 'center' }}>
-                    <ImagePicker name='avatar' control={control} />
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan={10}>
-                    <TextControl
-                      name='description'
-                      control={control}
-                      mat={{
-                        variant: 'outlined',
-                        multiline: true,
-                        margin: 'normal',
-                        minRows: 2,
-                        maxRows: 3,
-                      }}
-                      style={{ width: '100%' }}
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <Divider textAlign='left' role='presentation'>
-              <Typography variant='h6' gutterBottom>
-                Usage Notes
-              </Typography>
-            </Divider>
+            <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
+              <Box width={'20%'}>
+                <AvatarControl name='avatar' control={control} />
+              </Box>
+              <Box display={'flex'} justifyContent={'space-between'} flexDirection='column' flexGrow={1} width={'30%'}>
+                <TextControl
+                  name='name'
+                  control={control}
+                  rules={{ required: true }}
+                  mat={{
+                    variant: 'outlined',
+                    InputProps: {
+                      sx: {
+                        borderWidth: '1px',
+                        borderColor: '#FFF',
+                        borderRadius: '16px',
+                      }
+                    },
+                  }}
+                  style={{ width: '100%' }}
+                />
+                <SelectControl
+                  name='category'
+                  control={control}
+                  rules={{ required: true }}
+                  mat={{
+                    sx: {
+                      borderWidth: '1px',
+                      borderColor: '#FFF',
+                      borderRadius: '16px'
+                    }
+                  }}
+                >
+                  <MenuItem value={'text'}>Text</MenuItem>
+                  <MenuItem value={'audio'}>Audio</MenuItem>
+                  <MenuItem value={'video'}>Video</MenuItem>
+                </SelectControl>
+                <TextControl
+                  name='fee'
+                  control={control}
+                  rules={{ required: true }}
+                  mat={{
+                    variant: 'outlined',
+                    type: 'number',
+                    inputProps: {
+                      step: 0.01,
+                      inputMode: 'numeric',
+                      min: 0.01 /* max: currentBalance */,
+                    },
+                    InputProps: {
+                      sx: {
+                        borderWidth: '1px',
+                        borderColor: '#FFF',
+                        borderRadius: '16px'
+                      }
+                    },
+                  }}
+                  style={{ width: '100%' }}
+                />
+              </Box>
+              <TextControl
+                name='description'
+                control={control}
+                mat={{
+                  variant: 'outlined',
+                  multiline: true,
+                  margin: 'normal',
+                  minRows: 6,
+                  maxRows: 6,
+                  InputProps: {
+                    sx: {
+                      borderWidth: '1px',
+                      borderColor: '#FFF',
+                      borderRadius: '23px'
+                    }
+                  },
+                }}
+                style={{ width: '40%'}}
+              />
+            </Box>
 
             <MarkdownControl name='notes' control={control} rules={{ required: true }} />
-            <Divider textAlign='left' role='presentation'>
-              <Typography variant='h6' gutterBottom>
-                Files
-              </Typography>
-            </Divider>
             {/* <FileUpload ></FileUpload> */}
             <FileControl name='file' control={control} rules={{ required: true }} />
           </CardContent>

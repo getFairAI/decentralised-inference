@@ -23,21 +23,43 @@ const FileControl = (props: FileControlProps) => {
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [filePrice, setFilePrice] = useState(0);
+  const [ hasFileDrag, setHasFileDrag ] = useState(false);
 
   const handleDragEnter = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    setHasFileDrag(true);
+  };
+
+  const handleDragLeave = (event: DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setHasFileDrag(false);
   };
 
   const handleDragOver = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    setHasFileDrag(true);
   };
 
   const handleDrop = (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    field.onChange(event.dataTransfer.files[0]);
+    setHasFileDrag(false);
+    // field.onChange(event.dataTransfer.files[0]);
+    if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+      const file = event.dataTransfer.files[0];
+      // field.onChange(JSON.stringify(file));
+      const fr = new FileReader();
+      fr.addEventListener('load', onFileLoad(fr, file));
+      fr.addEventListener('error', onFileError(fr, file));
+      fr.addEventListener('progress', onFileProgress());
+      fr.addEventListener('loadstart', onFileLoadStart(fr, file));
+      fr.readAsArrayBuffer(file);
+    } else {
+      setFile(undefined);
+    }
   };
 
   const onFileLoad = (fr: FileReader, file: File) => {
@@ -151,7 +173,6 @@ const FileControl = (props: FileControlProps) => {
           <FormControl variant='outlined' fullWidth>
             <TextField
               multiline
-              disabled
               minRows={1}
               value={file?.name}
               InputProps={{
@@ -163,6 +184,12 @@ const FileControl = (props: FileControlProps) => {
                   </InputAdornment>
                 ),
                 endAdornment: <InputAdornment position='start'>{printSize(file)}</InputAdornment>,
+                sx: {
+                  borderWidth: '1px',
+                  borderColor: '#FFF',
+                  borderRadius: '23px'
+                },
+                readOnly: true
               }}
             />
             {loading && <LinearProgress variant='determinate' value={progress} />}
@@ -180,13 +207,26 @@ const FileControl = (props: FileControlProps) => {
       <FormControl error={fieldState.invalid} variant='outlined' fullWidth>
         <TextField
           multiline
-          disabled
           minRows={5}
           value={'Drag and Drop to Upload \n Or'}
           inputProps={{
             style: { textAlign: 'center' },
           }}
+          InputProps={{
+            readOnly: true,
+            sx: {
+              borderRadius: '20px',
+              background: '#454545',
+              transform: hasFileDrag ? 'scale(1.02)' : 'scale(1)',
+              filter: hasFileDrag ? 'blur(2px)' : 'none',
+              backdropFilter: 'blur(2px)',
+              '&.MuiOutlinedInput-notchedOutline': {
+                borderColor: hasFileDrag ? '#fff' : 'rgba(255, 255, 255, 0.23)'
+              }
+            }
+          }}
           onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         />
@@ -194,16 +234,17 @@ const FileControl = (props: FileControlProps) => {
       <Box
         display={'flex'}
         width={'100%'}
-        style={{
+        sx={{
           position: 'relative',
           left: 0,
           right: 0,
           bottom: '70px',
+          filter: hasFileDrag ? 'blur(2px)' : 'none',
         }}
         justifyContent={'center'}
       >
         <Button variant='text' component='label'>
-          Upload Model
+          Browse Files to Upload
           <input type='file' hidden name={field.name} value={field.value} onChange={onFileChange} />
         </Button>
       </Box>
