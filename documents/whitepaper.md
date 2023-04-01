@@ -111,7 +111,7 @@ For this version of the Marketplace, we have divided the models' inference into 
 
 * Models that perform inference on text prompts;
 * Models that perform inference on files (audios, videos, images, text files, or others);
-* Models that perform inference on both text prompts or files.
+* Models that perform inference on both text prompts and files.
 
 <p align="justify">
 When the Curator is performing the upload process of a model script, he must choose which of the three scenarios best suits his software. This decision is critical regarding User Experience (UX) because it will limit Users from sending text prompts or files to Operators if the software does not support any of these formats.
@@ -301,7 +301,7 @@ Our team has some ideas that may be implemented in the future, which we intend t
 * **Implement ArProfile:** It can be interesting to associate ArProfile with Creators, Curators, Operators, or Users that want it to have a better integration of the application in Arweave's ecosystem;
 * **Payments with other currencies:** Currently, the Marketplace only supports payments in Arweave. It may make sense to accept additional coins or tokens in the future;
 * **[DataOS](https://q4xpz2buwrju4ai3gfzkfeu3vjn2rhb2crlw7epn77vzm6wg74cq.arweave.net/hy786DS0U04BGzFyopKbqluonDoUV2-R7f_rlnrG_wU "DataOS original article"):** Since Fair Protocol performs model inference in a decentralised manner, it may be interesting to build on top of it a system that would obtain information from Arweave or the broader internet and render it dynamically with code components;
-* **Decentralised training:** Our application only supports decentralised inference at the moment. To further solve the problems, presented in Section I, we may develop an application that performs model training in a decentralised manner.
+* **Decentralised training:** Our application only supports decentralised inference for the moment. To further solve the problems, presented in Section I, we may develop an application that performs model training in a decentralised manner.
 
 
 ## XIII. Conclusion
