@@ -15,19 +15,13 @@ import {
   Box,
   Card,
   CardContent,
-  Avatar,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Divider,
+  CardHeader,
   Typography,
+  Icon,
 } from '@mui/material';
 import { toSvg } from 'jdenticon';
 import { useSnackbar } from 'notistack';
 import { useMemo, useState } from 'react';
-import { NumericFormat } from 'react-number-format';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
@@ -95,78 +89,154 @@ const Register = () => {
   return (
     <Container>
       <Box sx={{ margin: '8px' }}>
-        <Card>
-          <CardContent>
-            <Box display={'flex'} justifyContent={'space-evenly'}>
-              <Box display={'flex'} flexDirection={'column'}>
-                <Avatar sx={{ width: '200px', height: '200px' }} src={imgUrl} />
-                {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
-                  <Button startIcon={<DownloadIcon />}>
-                    <a href={`http://localhost:1984/${txid}`} download>download</a>
-                  </Button>
-                  <Button endIcon={<OpenInNewIcon />} onClick={openDialog}>Usage Notes</Button>
-                </Box> */}
-                <Box>
-                  {/* <SvgIcon>
-                    <Stamp />
-                  </SvgIcon> */}
-                  {/* <IconButton aria-label="upvote">
-                    <ThumbUpIcon />
-                  </IconButton>
-                  38
-                  <IconButton aria-label="downvote">
-                    <ThumbDownIcon />
-                  </IconButton> */}
-                </Box>
+        <Card sx={{
+          background: 'rgba(61, 61, 61, 0.98)',
+          borderRadius: '30px',
+        }}>
+          <CardHeader title='Register Operator'></CardHeader>
+          <CardContent
+            sx={{
+              display: 'flex',
+              gap: '48px',
+              justifyContent: 'space-evenly',
+            }}
+          >
+            <Box
+              sx={{
+                background: 'linear-gradient(to bottom, #000000 10%, rgba(71, 71, 71, 0) 100%)',
+                borderRadius: '23px',
+                backgroundPosition: 'center',
+                width: 'fit-content',
+              }}
+            >
+              <img src={imgUrl} width='275px' height={'275px'} />
+            </Box>
+            <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
+              <Box>
+                <Typography
+                  sx={{
+                    fontStyle: 'normal',
+                    fontWeight: 700,
+                    fontSize: '23px',
+                    lineHeight: '31px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    color: '#FAFAFA',
+                  }}
+                >
+                  Name
+                </Typography>
+                <Typography
+                  sx={{
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: '23px',
+                    lineHeight: '31px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    color: '#FAFAFA',
+                  }}
+                >
+                  {findTag(state, 'modelName')}
+                </Typography>
               </Box>
               <Box>
-                <TextField
-                  label='Name'
-                  variant='outlined'
-                  value={findTag(state, 'modelName')}
-                  fullWidth
-                  inputProps={{ readOnly: true }}
-                />
-                <NumericFormat
-                  value={arweave.ar.winstonToAr(updatedFee || findTag(state, 'modelFee') || '0')}
-                  customInput={TextField}
-                  decimalScale={4}
-                  label='Fee'
-                  variant='outlined'
-                  decimalSeparator={'.'}
-                  inputProps={{ readOnly: true }}
-                  sx={{ width: '25%' }}
-                />
-                <FormControl fullWidth margin='normal'>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={findTag(state, 'category')}
-                    label='Category'
-                    inputProps={{ readOnly: true }}
+                <Typography
+                  sx={{
+                    fontStyle: 'normal',
+                    fontWeight: 700,
+                    fontSize: '23px',
+                    lineHeight: '31px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    color: '#FAFAFA',
+                  }}
+                >
+                  Category
+                </Typography>
+                <Typography
+                  sx={{
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: '23px',
+                    lineHeight: '31px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    color: '#FAFAFA',
+                  }}
+                >
+                  {findTag(state, 'category')}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontStyle: 'normal',
+                    fontWeight: 700,
+                    fontSize: '23px',
+                    lineHeight: '31px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    color: '#FAFAFA',
+                  }}
+                >
+                  Cost
+                </Typography>
+                <Box
+                  display={'flex'}
+                  alignItems={'center'}
+                  justifyContent='space-between'
+                  width={'80%'}
+                  height='60px'
+                >
+                  <Typography
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontStyle: 'normal',
+                      fontWeight: 700,
+                      fontSize: '60px',
+                      lineHeight: '106px',
+                      textAlign: 'center',
+                      color: '#FAFAFA',
+                    }}
                   >
-                    <MenuItem value={'text'}>Text</MenuItem>
-                    <MenuItem value={'audio'}>Audio</MenuItem>
-                    <MenuItem value={'video'}>Video</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField
-                  label='Description'
-                  variant='outlined'
-                  multiline
-                  value={findTag(state, 'description')}
-                  inputProps={{ readOnly: true }}
-                  style={{ width: '100%' }}
-                  margin='normal'
-                  minRows={2}
-                  maxRows={3}
-                />
+                    {arweave.ar.winstonToAr(updatedFee || findTag(state, 'modelFee') || '0')}
+                  </Typography>
+                  <Icon sx={{ height: '50px', width: '50px' }}>
+                    <img src='/arweave-logo.svg' width={'50px'} height={'50px'} />
+                  </Icon>
+                </Box>
               </Box>
             </Box>
-            <Divider textAlign='left'>
-              <Typography variant='h6' gutterBottom>
-                Register
-              </Typography>
-            </Divider>
+            <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
+              <Box>
+                <Typography
+                  sx={{
+                    fontStyle: 'normal',
+                    fontWeight: 700,
+                    fontSize: '23px',
+                    lineHeight: '31px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    color: '#FAFAFA',
+                  }}
+                >
+                  Description
+                </Typography>
+                <Typography>
+                  {findTag(state, 'description') || 'No Description Available'}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+          <CardContent>
             <CustomStepper data={state} handleSubmit={handleRegister} isRegistered={isRegistered} />
           </CardContent>
         </Card>
