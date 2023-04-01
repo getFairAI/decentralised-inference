@@ -3,7 +3,6 @@ import Stack from '@mui/material/Stack';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import Check from '@mui/icons-material/Check';
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
 import { StepIconProps } from '@mui/material/StepIcon';
 import {
@@ -33,66 +32,6 @@ import { useRouteLoaderData } from 'react-router-dom';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { getData } from '@/utils/arweave';
 
-const QontoConnector = styled(StepConnector)(({ theme }) => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: {
-    top: 10,
-    left: 'calc(-50% + 16px)',
-    right: 'calc(50% + 16px)',
-  },
-  [`&.${stepConnectorClasses.active}`]: {
-    [`& .${stepConnectorClasses.line}`]: {
-      borderColor: '#784af4',
-    },
-  },
-  [`&.${stepConnectorClasses.completed}`]: {
-    [`& .${stepConnectorClasses.line}`]: {
-      borderColor: '#784af4',
-    },
-  },
-  [`& .${stepConnectorClasses.line}`]: {
-    borderColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#eaeaf0',
-    borderTopWidth: 3,
-    borderRadius: 1,
-  },
-}));
-
-const QontoStepIconRoot = styled('div')<{ ownerState: { active?: boolean } }>(
-  ({ theme, ownerState }) => ({
-    color: theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#eaeaf0',
-    display: 'flex',
-    height: 22,
-    alignItems: 'center',
-    ...(ownerState.active && {
-      color: '#784af4',
-    }),
-    '& .QontoStepIcon-completedIcon': {
-      color: '#784af4',
-      zIndex: 1,
-      fontSize: 18,
-    },
-    '& .QontoStepIcon-circle': {
-      width: 8,
-      height: 8,
-      borderRadius: '50%',
-      backgroundColor: 'currentColor',
-    },
-  }),
-);
-
-function QontoStepIcon(props: StepIconProps) {
-  const { active, completed, className } = props;
-
-  return (
-    <QontoStepIconRoot ownerState={{ active }} className={className}>
-      {completed ? (
-        <Check className='QontoStepIcon-completedIcon' />
-      ) : (
-        <div className='QontoStepIcon-circle' />
-      )}
-    </QontoStepIconRoot>
-  );
-}
-
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
     top: 22,
@@ -100,13 +39,13 @@ const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.active}`]: {
     [`& .${stepConnectorClasses.line}`]: {
       backgroundImage:
-        'linear-gradient( 95deg,rgb(242,113,33) 0%,rgb(233,64,87) 50%,rgb(138,35,135) 100%)',
+      'linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%)',
     },
   },
   [`&.${stepConnectorClasses.completed}`]: {
     [`& .${stepConnectorClasses.line}`]: {
       backgroundImage:
-        'linear-gradient( 95deg,rgb(242,113,33) 0%,rgb(233,64,87) 50%,rgb(138,35,135) 100%)',
+        'linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%)',
     },
   },
   [`& .${stepConnectorClasses.line}`]: {
@@ -123,20 +62,20 @@ const ColorlibStepIconRoot = styled('div')<{
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#ccc',
   zIndex: 1,
   color: '#fff',
-  width: 50,
-  height: 50,
+  width: 40,
+  height: 40,
   display: 'flex',
-  borderRadius: '50%',
+  borderRadius: '16px',
   justifyContent: 'center',
   alignItems: 'center',
   ...(ownerState.active && {
     backgroundImage:
-      'linear-gradient( 136deg, rgb(242,113,33) 0%, rgb(233,64,87) 50%, rgb(138,35,135) 100%)',
+      'linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%)',
     boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
   }),
   ...(ownerState.completed && {
     backgroundImage:
-      'linear-gradient( 136deg, rgb(242,113,33) 0%, rgb(233,64,87) 50%, rgb(138,35,135) 100%)',
+      'linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%)',
   }),
 }));
 
@@ -260,31 +199,12 @@ export const CustomStepper = (props: {
 
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
-      <Stepper alternativeLabel activeStep={activeStep} connector={<QontoConnector />}>
-        <Step key='wrapEth'>
-          <StepLabel
-            StepIconComponent={QontoStepIcon}
-            StepIconProps={{ active: activeStep === 0, completed: completed.has(0) }}
-          />
-        </Step>
-        <Step key='swapWETHtoUSDC'>
-          <StepLabel
-            StepIconComponent={QontoStepIcon}
-            StepIconProps={{ active: activeStep === 1, completed: completed.has(1) }}
-          />
-        </Step>
-        <Step key='createTask'>
-          <StepLabel
-            StepIconComponent={QontoStepIcon}
-            StepIconProps={{ active: activeStep === 2, completed: completed.has(2) }}
-          />
-        </Step>
-      </Stepper>
       <Stepper alternativeLabel activeStep={activeStep} connector={<ColorlibConnector />}>
         <Step key='wrapEth'>
           <StepLabel
             StepIconComponent={ColorlibStepIcon}
             StepIconProps={{ active: activeStep === 0, completed: completed.has(0) }}
+
           >
             Information
           </StepLabel>
@@ -322,13 +242,21 @@ export const CustomStepper = (props: {
       ) : activeStep === 2 ? (
         <Fragment>
           <Box justifyContent={'space-between'} display={'flex'}>
-            {/* <TextField label={'Rates Endpoint'} sx={{ width: '70%'}}></TextField> */}
             <TextField
               value={operatorName}
               label={'Name'}
               onChange={handleNameChange}
-              sx={{ width: '72%' }}
-            ></TextField>
+              InputProps={{
+                sx: {
+                  borderWidth: '1px',
+                  borderColor: '#FFF',
+                  borderRadius: '23px'
+                }
+              }}
+              sx={{
+                width: '72%',
+              }}
+            />
             <NumericFormat
               value={rate}
               onChange={handleRateChange}
@@ -337,11 +265,18 @@ export const CustomStepper = (props: {
               label='Fee'
               variant='outlined'
               decimalSeparator={'.'}
-              sx={{ width: '25%' }}
+              InputProps={{
+                sx: {
+                  borderWidth: '1px',
+                  borderColor: '#FFF',
+                  borderRadius: '23px'
+                }
+              }}
+              sx={{ width: '25%', }}
             />
           </Box>
-          <Alert severity='warning' variant='outlined'>
-            Registration Requires {OPERATOR_REGISTRATION_AR_FEE} AR to prevent malicious actors.
+          <Alert severity='warning' variant='outlined' sx={{ borderRadius: '23px' }}>
+            <Typography>Registration Requires {OPERATOR_REGISTRATION_AR_FEE} AR to prevent malicious actors.</Typography>
           </Alert>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Button variant='outlined' onClick={handleBack}>
@@ -386,6 +321,11 @@ export const CustomStepper = (props: {
                     <InputAdornment position='start'>{printSize(fileSize)}</InputAdornment>
                   ),
                   readOnly: true,
+                  sx: {
+                    borderWidth: '1px',
+                    borderColor: '#FFF',
+                    borderRadius: '23px'
+                  },
                 }}
               />
             </FormControl>
