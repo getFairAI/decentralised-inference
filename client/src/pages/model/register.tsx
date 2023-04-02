@@ -114,11 +114,15 @@ const Register = () => {
         alignItems='center'
         lineHeight={0}
       >
-        <Typography sx={{
-          fontWeight: 500,
-          fontSize: '25px',
-          lineHeight: '34px',
-        }}>Register Operator</Typography>
+        <Typography
+          sx={{
+            fontWeight: 500,
+            fontSize: '25px',
+            lineHeight: '34px',
+          }}
+        >
+          Register Operator
+        </Typography>
         <IconButton onClick={handleClose}>
           <img src='/close-icon.svg' />
         </IconButton>
@@ -128,7 +132,7 @@ const Register = () => {
           display: 'flex',
           gap: '48px',
           padding: '0px 32px',
-          width: '100%'
+          width: '100%',
         }}
       >
         <Box
@@ -144,11 +148,11 @@ const Register = () => {
               display: 'block',
               position: 'relative',
               bottom: '281px',
-              borderRadius: '23px'
-            }
+              borderRadius: '23px',
+            },
           }}
         >
-          <img src={imgUrl} width='275px' height={'275px'} style={{ borderRadius: '23px' }}/>
+          <img src={imgUrl} width='275px' height={'275px'} style={{ borderRadius: '23px' }} />
         </Box>
         <Box display={'flex'} flexDirection={'column'} gap={'30px'} width={'30%'}>
           <Box>
@@ -273,9 +277,7 @@ const Register = () => {
             >
               Description
             </Typography>
-            <Typography>
-              {findTag(state, 'description') || 'No Description Available'}
-            </Typography>
+            <Typography>{findTag(state, 'description') || 'No Description Available'}</Typography>
           </Box>
         </Box>
       </CardContent>
