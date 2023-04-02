@@ -369,19 +369,29 @@ const Upload = () => {
   return (
     <Container>
       <Box sx={{ marginTop: '8px' }}>
-        <Card sx={{
-          background: 'rgba(61, 61, 61, 0.98)',
-          borderRadius: '30px',
-        }}>
-          <CardHeader title='Create Your Model' sx={{ paddingLeft: '48px', paddingTop: '32px'}}>
+        <Card
+          sx={{
+            background: 'rgba(61, 61, 61, 0.98)',
+            borderRadius: '30px',
+          }}
+        >
+          <CardHeader title='Create Your Model' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
             {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
           </CardHeader>
-          <CardContent sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}>
+          <CardContent
+            sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}
+          >
             <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
               <Box width={'22%'}>
                 <AvatarControl name='avatar' control={control} />
               </Box>
-              <Box display={'flex'} justifyContent={'space-between'} flexDirection='column' flexGrow={1} width={'30%'}>
+              <Box
+                display={'flex'}
+                justifyContent={'space-between'}
+                flexDirection='column'
+                flexGrow={1}
+                width={'30%'}
+              >
                 <TextControl
                   name='name'
                   control={control}
@@ -393,7 +403,7 @@ const Upload = () => {
                         borderWidth: '1px',
                         borderColor: '#FFF',
                         borderRadius: '16px',
-                      }
+                      },
                     },
                   }}
                   style={{ width: '100%' }}
@@ -406,8 +416,8 @@ const Upload = () => {
                     sx: {
                       borderWidth: '1px',
                       borderColor: '#FFF',
-                      borderRadius: '16px'
-                    }
+                      borderRadius: '16px',
+                    },
                   }}
                 >
                   <MenuItem value={'text'}>Text</MenuItem>
@@ -449,8 +459,8 @@ const Upload = () => {
                           alignItems: 'center',
                           textAlign: 'center',
                           color: '#FAFAFA',
-                          paddingRight: '8px'
-                        }
+                          paddingRight: '8px',
+                        },
                       }}
                     />
                     <Icon sx={{ height: '50px', width: '50px' }}>
@@ -473,8 +483,8 @@ const Upload = () => {
                       borderWidth: '1px',
                       borderColor: '#FFF',
                       borderRadius: '23px',
-                      height: '100%'
-                    }
+                      height: '100%',
+                    },
                   },
                 }}
                 style={{ width: '40%', marginTop: 0 }}
@@ -494,7 +504,7 @@ const Upload = () => {
                 border: '1px solid #F4F4F4',
                 borderRadius: '7px',
                 height: '39px',
-                width: '204px'
+                width: '204px',
               }}
             >
               <Typography
@@ -505,7 +515,9 @@ const Upload = () => {
                   lineHeight: '20px',
                   color: '#F4F4F4',
                 }}
-              >Reset to Default</Typography>
+              >
+                Reset to Default
+              </Typography>
             </Button>
             <Button
               onClick={handleSubmit(onSubmit)}
@@ -514,7 +526,7 @@ const Upload = () => {
                 background: '#F4F4F4',
                 borderRadius: '7px',
                 height: '39px',
-                width: '204px'
+                width: '204px',
               }}
             >
               <Typography
@@ -525,16 +537,14 @@ const Upload = () => {
                   lineHeight: '20px',
                   color: '#151515',
                 }}
-              >Submit</Typography>
+              >
+                Submit
+              </Typography>
             </Button>
           </CardActions>
         </Card>
       </Box>
-      <FundDialog
-        open={fundOpen}
-        setOpen={setFundOpen}
-        handleFundFinished={handleFundFinished}
-      />
+      <FundDialog open={fundOpen} setOpen={setFundOpen} handleFundFinished={handleFundFinished} />
       <Snackbar
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         open={snackbarOpen}
