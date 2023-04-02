@@ -13,7 +13,7 @@ const queryRegisteredOperatorsMock = [
       variables: {
         tags: [
           ...DEFAULT_TAGS,
-          { name: TAG_NAMES.operationName, values: [ REGISTER_OPERATION ]},
+          { name: TAG_NAMES.operationName, values: [REGISTER_OPERATION] },
           {
             name: 'Model-Creator',
             values: ['creator 1'],
