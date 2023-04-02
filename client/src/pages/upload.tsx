@@ -373,7 +373,7 @@ const Upload = () => {
           background: 'rgba(61, 61, 61, 0.98)',
           borderRadius: '30px',
         }}>
-          <CardHeader title='Create Your Model'>
+          <CardHeader title='Create Your Model' sx={{ paddingLeft: '48px', paddingTop: '32px'}}>
             {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
           </CardHeader>
           <CardContent sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}>
@@ -433,7 +433,7 @@ const Upload = () => {
                     display={'flex'}
                     alignItems={'center'}
                     justifyContent='space-between'
-                    width={'80%'}
+                    width={'45%'}
                     height='60px'
                   >
                     <NumberControl
@@ -449,6 +449,7 @@ const Upload = () => {
                           alignItems: 'center',
                           textAlign: 'center',
                           color: '#FAFAFA',
+                          paddingRight: '8px'
                         }
                       }}
                     />
@@ -471,17 +472,20 @@ const Upload = () => {
                     sx: {
                       borderWidth: '1px',
                       borderColor: '#FFF',
-                      borderRadius: '23px'
+                      borderRadius: '23px',
+                      height: '100%'
                     }
                   },
                 }}
                 style={{ width: '40%', marginTop: 0 }}
               />
             </Box>
-
-            <MarkdownControl name='notes' control={control} rules={{ required: true }} />
-            {/* <FileUpload ></FileUpload> */}
-            <FileControl name='file' control={control} rules={{ required: true }} />
+            <Box padding='0px 32px'>
+              <MarkdownControl name='notes' control={control} rules={{ required: true }} />
+            </Box>
+            <Box padding='0px 32px'>
+              <FileControl name='file' control={control} rules={{ required: true }} />
+            </Box>
           </CardContent>
           <CardActions sx={{ paddingBottom: '32px', justifyContent: 'center' }}>
             <Button
