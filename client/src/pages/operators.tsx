@@ -180,6 +180,92 @@ const Operators = () => {
         </Box>
       </Box>
       <Box>
+        <Box display={'flex'} justifyContent={'flex-start'} flexDirection={'row-reverse'} gap='30px' margin={'16px'}>
+          <Typography
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: '27px',
+              display: 'flex',
+              alignItems: 'center',
+              textAlign: 'center',
+              color: '#D2D2D2',
+            }}
+          >
+            Last updated
+          </Typography>
+          <Typography
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: '27px',
+              display: 'flex',
+              alignItems: 'center',
+              textAlign: 'center',
+              color: '#D2D2D2',
+            }}
+          >
+            Rating
+          </Typography>
+          <Typography
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: '27px',
+              display: 'flex',
+              alignItems: 'center',
+              textAlign: 'center',
+              color: '#D2D2D2',
+            }}
+          >
+            Usage
+          </Typography>
+          <Typography
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: '27px',
+              display: 'flex',
+              alignItems: 'center',
+              textAlign: 'center',
+              color: '#D2D2D2',
+            }}
+          >
+            Avg. Operators Fee
+          </Typography>
+          <Typography
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: '27px',
+              display: 'flex',
+              alignItems: 'center',
+              textAlign: 'center',
+              color: '#D2D2D2',
+            }}
+          >
+            Model Fee
+          </Typography>
+          <Typography
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: '27px',
+              display: 'flex',
+              alignItems: 'center',
+              textAlign: 'center',
+              color: '#D2D2D2',
+            }}
+          >
+            Current # of Operators
+          </Typography>
+        </Box>
         <Stack spacing={4} sx={{ margin: '16px' }}>
           {error ? (
             <Container>
