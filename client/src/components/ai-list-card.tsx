@@ -1,5 +1,15 @@
+import {
+  AVATAR_ATTACHMENT,
+  DEFAULT_TAGS,
+  MODEL_ATTACHMENT,
+  NET_ARWEAVE_URL,
+  TAG_NAMES,
+} from '@/constants';
+import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
-import { ApolloError } from '@apollo/client';
+import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
+import { findTag } from '@/utils/common';
+import { ApolloError, useLazyQuery } from '@apollo/client';
 import {
   Card,
   CardActionArea,
@@ -10,7 +20,7 @@ import {
   Box,
 } from '@mui/material';
 import { toSvg } from 'jdenticon';
-import { MouseEvent, useMemo } from 'react';
+import { MouseEvent, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AiListCard = ({
@@ -24,15 +34,46 @@ const AiListCard = ({
   error?: ApolloError;
 }) => {
   const navigate = useNavigate();
+  const { currentAddress } = useContext(WalletContext);
+  const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
+
+  useEffect(() => {
+    const modelId = findTag(model, 'modelTransaction');
+    const attachmentAvatarTags = [
+      ...DEFAULT_TAGS,
+      { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
+      { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
+      { name: TAG_NAMES.modelTransaction, values: [modelId] },
+    ];
+
+    getAvatar({
+      variables: {
+        tags: attachmentAvatarTags,
+        owner: currentAddress,
+      },
+    });
+  }, []);
+
   const imgUrl = useMemo(() => {
-    const img = toSvg(model.node.id, 100);
-    const svg = new Blob([img], { type: 'image/svg+xml' });
-    return URL.createObjectURL(svg);
-  }, [model]);
+    if (data) {
+      const avatarTxId =
+        data.transactions.edges && data.transactions.edges[0]
+          ? data.transactions.edges[0].node.id
+          : undefined;
+      if (avatarTxId) {
+        return `${NET_ARWEAVE_URL}/${avatarTxId}`;
+      }
+      const modelId = findTag(model, 'modelTransaction');
+      const img = toSvg(modelId, 100);
+      const svg = new Blob([img], { type: 'image/svg+xml' });
+      return URL.createObjectURL(svg);
+    } else {
+      return '';
+    }
+  }, [data]);
 
   const getTimePassed = () => {
-    const timestamp =
-      model.node.tags.find((el) => el.name === 'Unix-Time')?.value || model.node.block.timestamp;
+    const timestamp = findTag(model, 'unixTime') || model.node.block.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
@@ -62,7 +103,9 @@ const AiListCard = ({
 
   const handleCardClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    navigate(`/model/${encodeURIComponent(model.node.id)}/detail`, { state: model });
+    const modelId = findTag(model, 'modelTransaction');
+    if (!modelId) return;
+    navigate(`/model/${encodeURIComponent(modelId)}/detail`, { state: model });
   };
 
   return (
@@ -98,18 +141,36 @@ const AiListCard = ({
             color: '#CCCCCD',
           }}
         />
-        <CardMedia
-          src={loading ? '' : imgUrl}
-          sx={{
-            borderRadius: '16px',
-            height: '100px',
-            width: '100px',
-            background: `linear-gradient(to top, #000000 10%, rgba(71, 71, 71, 0) 100%), url(${
-              loading ? '' : imgUrl
-            })`,
-            backgroundPosition: 'center',
-          }}
-        />
+        {!imgUrl || loading || avatarLoading ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '317px',
+              height: '352px',
+              background: 'linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%)',
+              // backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover' /* <------ */,
+              backgroundPosition: 'center center',
+            }}
+          />
+        ) : (
+          <CardMedia
+            src={loading || avatarLoading ? '' : imgUrl}
+            sx={{
+              borderRadius: '16px',
+              height: '100px',
+              width: '100px',
+              background: `linear-gradient(to top, #000000 10%, rgba(71, 71, 71, 0) 100%), url(${
+                loading || avatarLoading ? '' : imgUrl
+              })`,
+              backgroundPosition: 'center',
+            }}
+          />
+        )}
+
         <CardContent>
           <Typography
             sx={{
@@ -123,7 +184,7 @@ const AiListCard = ({
               color: '#F4F4F4',
             }}
           >
-            {model.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Untitled'}
+            {findTag(model, 'modelName') || 'Untitled'}
           </Typography>
         </CardContent>
         <Box flexGrow={1}></Box>

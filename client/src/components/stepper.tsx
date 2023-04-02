@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { styled } from '@mui/material/styles';
 import Stack from '@mui/material/Stack';
 import Stepper from '@mui/material/Stepper';
@@ -26,9 +25,13 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import MDEditor from '@uiw/react-md-editor';
 import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
-import { IEdge, ITag } from '@/interfaces/arweave';
+import { IEdge } from '@/interfaces/arweave';
 import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
 import { NumericFormat } from 'react-number-format';
+import { findTag } from '@/utils/common';
+import { useRouteLoaderData } from 'react-router-dom';
+import { RouteLoaderResult } from '@/interfaces/router';
+import { getData } from '@/utils/arweave';
 
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -158,17 +161,15 @@ export const CustomStepper = (props: {
   handleSubmit: (rate: string, name: string) => Promise<void>;
   isRegistered: boolean;
 }) => {
+  const { notesTxId } = (useRouteLoaderData('model-alt') as RouteLoaderResult) || {};
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const [completed, setCompleted] = useState(new Set<number>());
   const [fileSize, setFileSize] = useState(0);
   const [operatorName, setOperatorName] = useState('');
+  const [notes, setNotes] = useState('');
 
   const [rate, setRate] = useState(0);
-
-  /* const isStepOptional = (step: number) => {
-    return step === 0 || step === 1;
-  }; */
 
   const isStepSkipped = (step: number) => {
     return skipped.has(step);
@@ -196,27 +197,6 @@ export const CustomStepper = (props: {
     setCompleted(completed);
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
-
-  /* const handleSkip = () => {
-    if (!isStepOptional(activeStep)) {
-      // You probably want to guard against something like this,
-      // it should never occur unless someone's actively trying to break something.
-      throw new Error('You can\'t skip a step that isn\'t optional.');
-    }
-
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    setSkipped((prevSkipped) => {
-      const newSkipped = new Set(prevSkipped.values());
-      newSkipped.add(activeStep);
-      return newSkipped;
-    });
-    setCompleted(completed.add(activeStep));
-  };
-
-  const handleReset = () => {
-    setActiveStep(0);
-    setCompleted(new Set<number>());
-  }; */
 
   const printSize = (args: File | number) => {
     let size;
@@ -252,12 +232,8 @@ export const CustomStepper = (props: {
 
   const download = () => {
     const a = document.createElement('a');
-    a.href = `${NET_ARWEAVE_URL}/${
-      props.data.node.tags.find((el) => el.name === 'Model-Transaction')?.value
-    }`;
-    a.download =
-      props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value ||
-      props.data.node.id;
+    a.href = `${NET_ARWEAVE_URL}/${findTag(props.data, 'modelTransaction')}`;
+    a.download = findTag(props.data, 'modelName') || props.data.node.id;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -266,15 +242,21 @@ export const CustomStepper = (props: {
   useEffect(() => {
     const getFileSize = async () => {
       const response = await fetch(
-        `${NET_ARWEAVE_URL}/${
-          props.data.node.tags.find((el) => el.name === 'Model-Transaction')?.value
-        }`,
+        `${NET_ARWEAVE_URL}/${findTag(props.data, 'modelTransaction')}`,
         { method: 'HEAD' },
       );
       setFileSize(parseInt(response.headers.get('Content-Length') || ''));
     };
     getFileSize();
   }, [props.data]);
+
+  useEffect(() => {
+    const fetchNotesData = async () => {
+      setNotes(await getData(notesTxId as string));
+    };
+
+    if (notesTxId) fetchNotesData();
+  }, [notesTxId]);
 
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
@@ -383,7 +365,7 @@ export const CustomStepper = (props: {
             }}
             hideToolbar={true}
             fullscreen={false}
-            value={props.data.node.tags.find((el) => el.name === 'Notes')?.value || ''}
+            value={notes}
           ></MDEditor>
           <Box>
             <FormControl variant='outlined' fullWidth>
@@ -391,7 +373,7 @@ export const CustomStepper = (props: {
                 multiline
                 disabled
                 minRows={1}
-                value={props.data.node.tags.find((tag: ITag) => tag.name === 'Model-Name')?.value}
+                value={findTag(props.data, 'modelName')}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>

@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Root from './root';
 import Home from '@/pages/home';
 import Upload from '@/pages/upload';
-import Model, { getModelFee } from '@/pages/model/model';
+import Model, { getModelFeeAndAttachments } from '@/pages/model/model';
 import './styles/main.css';
 import Operators from './pages/operators';
 import Register from './pages/model/register';
@@ -29,12 +29,10 @@ const router = createBrowserRouter([
           {
             path: 'model/:txid',
             element: <Model />,
-            /* loader: txLoader, */
-            loader: getModelFee,
-            id: 'model',
             children: [
               {
                 path: 'detail',
+                loader: getModelFeeAndAttachments,
                 element: <Detail />,
               },
             ],
@@ -49,7 +47,8 @@ const router = createBrowserRouter([
         path: 'model/:txid',
         element: <Model />,
         /* loader: txLoader, */
-        loader: getModelFee,
+        id: 'model-alt',
+        loader: getModelFeeAndAttachments,
         children: [
           {
             path: 'chat/:address',
@@ -63,6 +62,7 @@ const router = createBrowserRouter([
             children: [
               {
                 path: 'change-operator',
+                loader: getModelFeeAndAttachments,
                 element: <Detail />,
               },
             ],

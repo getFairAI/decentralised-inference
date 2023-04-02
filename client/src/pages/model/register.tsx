@@ -1,7 +1,15 @@
 import { CustomStepper } from '@/components/stepper';
-import { MARKETPLACE_ADDRESS, APP_VERSION } from '@/constants';
-import { IEdge, ITag } from '@/interfaces/arweave';
+import {
+  MARKETPLACE_ADDRESS,
+  APP_VERSION,
+  TAG_NAMES,
+  APP_NAME,
+  REGISTER_OPERATION,
+} from '@/constants';
+import { IEdge } from '@/interfaces/arweave';
+import { RouteLoaderResult } from '@/interfaces/router';
 import arweave from '@/utils/arweave';
+import { findTag } from '@/utils/common';
 import {
   Container,
   Box,
@@ -16,16 +24,26 @@ import {
   Divider,
   Typography,
 } from '@mui/material';
+import { toSvg } from 'jdenticon';
 import { useSnackbar } from 'notistack';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
-  const updatedFee = useRouteLoaderData('model') as string;
+  const { updatedFee, avatarTxId } = (useRouteLoaderData('model-alt') as RouteLoaderResult) || {};
   const { state }: { state: IEdge } = useLocation();
   const [isRegistered, setIsRegistered] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+
+  const imgUrl = useMemo(() => {
+    if (avatarTxId) {
+      return `https://arweave.net/${avatarTxId}`;
+    }
+    const img = toSvg(state.node.id, 100);
+    const svg = new Blob([img], { type: 'image/svg+xml' });
+    return URL.createObjectURL(svg);
+  }, [state, avatarTxId]);
 
   const handleRegister = async (rate: string, operatorName: string) => {
     try {
@@ -34,17 +52,21 @@ const Register = () => {
         quantity: arweave.ar.arToWinston('0.05'),
       });
       const tags = [];
-      tags.push({ name: 'App-Name', values: 'Fair Protocol' });
-      tags.push({ name: 'App-Version', values: APP_VERSION });
+      tags.push({ name: TAG_NAMES.appName, values: APP_NAME });
+      tags.push({ name: TAG_NAMES.appVersion, values: APP_VERSION });
       tags.push({
-        name: 'Model-Name',
-        values: state.node.tags.find((el: ITag) => el.name === 'Model-Name')?.value || '',
+        name: TAG_NAMES.modelName,
+        values: findTag(state, 'modelName') || '',
       });
-      tags.push({ name: 'Model-Creator', values: state.node.owner.address });
-      tags.push({ name: 'Operator-Fee', values: arweave.ar.arToWinston(rate) });
-      tags.push({ name: 'Operation-Name', values: 'Operator Registration' });
-      tags.push({ name: 'Operator-Name', values: operatorName });
-      tags.push({ name: 'Unix-Time', values: (Date.now() / 1000).toString() });
+      tags.push({ name: TAG_NAMES.modelCreator, values: state.node.owner.address });
+      tags.push({
+        name: TAG_NAMES.modelTransaction,
+        values: findTag(state, 'modelTransaction') as string,
+      });
+      tags.push({ name: TAG_NAMES.operatorFee, values: arweave.ar.arToWinston(rate) });
+      tags.push({ name: TAG_NAMES.operationName, values: REGISTER_OPERATION });
+      tags.push({ name: TAG_NAMES.operatorName, values: operatorName });
+      tags.push({ name: TAG_NAMES.unixTime, values: (Date.now() / 1000).toString() });
 
       tags.forEach((tag) => tx.addTag(tag.name, tag.values));
 
@@ -77,10 +99,7 @@ const Register = () => {
           <CardContent>
             <Box display={'flex'} justifyContent={'space-evenly'}>
               <Box display={'flex'} flexDirection={'column'}>
-                <Avatar
-                  sx={{ width: '200px', height: '200px' }}
-                  src={state.node.tags.find((el) => el.name === 'AvatarUrl')?.value || ''}
-                />
+                <Avatar sx={{ width: '200px', height: '200px' }} src={imgUrl} />
                 {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
                   <Button startIcon={<DownloadIcon />}>
                     <a href={`http://localhost:1984/${txid}`} download>download</a>
@@ -104,16 +123,12 @@ const Register = () => {
                 <TextField
                   label='Name'
                   variant='outlined'
-                  value={state.node.tags.find((el) => el.name === 'Model-Name')?.value}
+                  value={findTag(state, 'modelName')}
                   fullWidth
                   inputProps={{ readOnly: true }}
                 />
                 <NumericFormat
-                  value={arweave.ar.winstonToAr(
-                    updatedFee ||
-                      state.node.tags.find((el) => el.name === 'Model-Fee')?.value ||
-                      '0',
-                  )}
+                  value={arweave.ar.winstonToAr(updatedFee || findTag(state, 'modelFee') || '0')}
                   customInput={TextField}
                   decimalScale={4}
                   label='Fee'
@@ -125,7 +140,7 @@ const Register = () => {
                 <FormControl fullWidth margin='normal'>
                   <InputLabel>Category</InputLabel>
                   <Select
-                    value={state.node.tags.find((el) => el.name === 'Category')?.value}
+                    value={findTag(state, 'category')}
                     label='Category'
                     inputProps={{ readOnly: true }}
                   >
@@ -138,7 +153,7 @@ const Register = () => {
                   label='Description'
                   variant='outlined'
                   multiline
-                  value={state.node.tags.find((el) => el.name === 'Description')?.value}
+                  value={findTag(state, 'description')}
                   inputProps={{ readOnly: true }}
                   style={{ width: '100%' }}
                   margin='normal'

@@ -1,22 +1,64 @@
-import { Icon, Tooltip, Typography } from '@mui/material';
+import { Box, Icon, Tooltip, Typography } from '@mui/material';
 import { FiCard, FiCardActionArea, FiCardContent, FicardMedia } from './full-image-card';
 import { IEdge } from '@/interfaces/arweave';
 import { toSvg } from 'jdenticon';
 import { useNavigate } from 'react-router-dom';
-import { MouseEvent, useMemo } from 'react';
+import { MouseEvent, useContext, useEffect, useMemo } from 'react';
+import { findTag } from '@/utils/common';
+import { useLazyQuery } from '@apollo/client';
+import { WalletContext } from '@/context/wallet';
+import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
+import {
+  AVATAR_ATTACHMENT,
+  DEFAULT_TAGS,
+  MODEL_ATTACHMENT,
+  TAG_NAMES,
+  NET_ARWEAVE_URL,
+} from '@/constants';
 
 const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
   const navigate = useNavigate();
+  const { currentAddress } = useContext(WalletContext);
+
+  const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
+
+  useEffect(() => {
+    const modelId = findTag(model, 'modelTransaction');
+    const attachmentAvatarTags = [
+      ...DEFAULT_TAGS,
+      { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
+      { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
+      { name: TAG_NAMES.modelTransaction, values: [modelId] },
+    ];
+
+    getAvatar({
+      variables: {
+        tags: attachmentAvatarTags,
+        owner: currentAddress,
+      },
+    });
+  }, []);
 
   const imgUrl = useMemo(() => {
-    const img = toSvg(model.node.id, 100);
-    const svg = new Blob([img], { type: 'image/svg+xml' });
-    return URL.createObjectURL(svg);
-  }, [model]);
+    if (data) {
+      const avatarTxId =
+        data.transactions.edges && data.transactions.edges[0]
+          ? data.transactions.edges[0].node.id
+          : undefined;
+      if (avatarTxId) {
+        return `${NET_ARWEAVE_URL}/${avatarTxId}`;
+      }
+      const modelId = findTag(model, 'modelTransaction');
+      const img = toSvg(modelId, 100);
+      const svg = new Blob([img], { type: 'image/svg+xml' });
+      return URL.createObjectURL(svg);
+    } else {
+      return '';
+    }
+  }, [data]);
 
   const getTimePassed = () => {
-    const timestamp =
-      model.node.tags.find((el) => el.name === 'Unix-Time')?.value || model.node.block.timestamp;
+    const timestamp = findTag(model, 'unixTime') || model.node.block.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
@@ -46,7 +88,9 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
 
   const handleCardClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    navigate(`/model/${encodeURIComponent(model.node.id)}/detail`, { state: model });
+    const modelId = findTag(model, 'modelTransaction');
+    if (!modelId) return;
+    navigate(`/model/${encodeURIComponent(modelId)}/detail`, { state: model });
   };
 
   return (
@@ -56,28 +100,43 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
       }}
     >
       <FiCardActionArea onClick={handleCardClick}>
-        <FicardMedia
-          src={!loading ? imgUrl : ''}
-          sx={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: '317px',
-            height: '352px',
-            background: `linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%), url(${
-              !loading ? imgUrl : ''
-            })`,
-            // backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover' /* <------ */,
-            backgroundPosition: 'center center',
-          }}
-        />
+        {!imgUrl || loading || avatarLoading ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '317px',
+              height: '352px',
+              background: 'linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%)',
+              // backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover' /* <------ */,
+              backgroundPosition: 'center center',
+            }}
+          />
+        ) : (
+          <FicardMedia
+            src={imgUrl && !loading && !avatarLoading ? imgUrl : ''}
+            sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '317px',
+              height: '352px',
+              background: `linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%), url(${
+                imgUrl && !loading && !avatarLoading ? imgUrl : ''
+              })`,
+              // backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover' /* <------ */,
+              backgroundPosition: 'center center',
+            }}
+          />
+        )}
+
         <FiCardContent>
-          <Tooltip
-            title={model.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Untitled'}
-            placement={'top-start'}
-          >
+          <Tooltip title={findTag(model, 'modelName') || 'Untitled'} placement={'top-start'}>
             <Typography
               sx={{
                 fontStyle: 'normal',
@@ -89,7 +148,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
               }}
               noWrap
             >
-              {model.node.tags.find((el) => el.name === 'Model-Name')?.value || 'Untitled'}
+              {findTag(model, 'modelName') || 'Untitled'}
             </Typography>
           </Tooltip>
           <Tooltip title={model.node.owner.address} placement={'bottom-start'}>

@@ -19,6 +19,7 @@ import { MouseEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MARKETPLACE_FEE } from '@/constants';
 import { LIST_OWN_MODELS_QUERY } from '@/queries/graphql';
+import { findTag } from '@/utils/common';
 
 const History = () => {
   const navigate = useNavigate();
@@ -78,13 +79,7 @@ const History = () => {
             <Card>
               <CardActionArea
                 style={{ display: 'flex' }}
-                onClick={(e) =>
-                  handleCardClick(
-                    e,
-                    edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value,
-                    index,
-                  )
-                }
+                onClick={(e) => handleCardClick(e, findTag(edge, 'modelTransaction'), index)}
               >
                 <CardHeader
                   sx={{ marginRight: 0 }}
@@ -94,7 +89,7 @@ const History = () => {
                 <CardContent sx={{ maxWidth: '300px' }}>
                   <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
                     <Typography noWrap variant='body1'>
-                      {edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value}
+                      {findTag(edge, 'modelTransaction')}
                     </Typography>
                     <Box
                       sx={{
@@ -103,10 +98,7 @@ const History = () => {
                         alignContent: 'center',
                       }}
                     >
-                      <Chip
-                        label={edge.node.tags.find((el) => el.name === 'Category')?.value}
-                        color='primary'
-                      />
+                      <Chip label={findTag(edge, 'category')} color='primary' />
                       <Box sx={{ display: 'flex', alignContent: 'center' }}>
                         <Typography variant='body1'>11</Typography>
                         <ThumbUpIcon />

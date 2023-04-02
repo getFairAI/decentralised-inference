@@ -1,4 +1,9 @@
-import { DEFAULT_TAGS, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  OPERATOR_REGISTRATION_AR_FEE,
+  REGISTER_OPERATION,
+  TAG_NAMES,
+} from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_FIRST_REGISTRATION } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
@@ -16,6 +21,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { createAvatar } from '@dicebear/core';
 import { bottts } from '@dicebear/collection';
 import HistoryTable from '@/components/history-table';
+import { findTag } from '@/utils/common';
 
 const OperatorDetails = () => {
   const { address } = useParams();
@@ -26,7 +32,7 @@ const OperatorDetails = () => {
   const { data: firstRegistrationData } = useQuery(QUERY_FIRST_REGISTRATION, {
     variables: {
       owner: address,
-      tags: [...DEFAULT_TAGS, { name: 'Operation-Name', values: 'Operator Registration' }],
+      tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: REGISTER_OPERATION }],
     },
   });
 
@@ -51,8 +57,7 @@ const OperatorDetails = () => {
         // incorrect, fetch next
       } else {
         const timestamp =
-          parseInt(registration.node.tags.find((tag) => tag.name === 'Unix-time')?.value || '') ||
-          registration.node.block.timestamp;
+          parseInt(findTag(registration, 'unixTime') || '') || registration.node.block.timestamp;
         setFirstregistrationDate(new Date(timestamp * 1000).toLocaleDateString());
       }
     }

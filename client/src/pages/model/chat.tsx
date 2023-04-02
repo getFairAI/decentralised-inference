@@ -24,9 +24,12 @@ import {
   APP_VERSION,
   DEFAULT_TAGS,
   NODE1_BUNDLR_URL,
-  MODEL_INFERENCE_REQUEST_TAG,
-  MODEL_INFERENCE_RESULT_TAG,
   INFERENCE_PERCENTAGE_FEE,
+  TAG_NAMES,
+  MODEL_INFERENCE_REQUEST,
+  MODEL_INFERENCE_RESPONSE,
+  APP_NAME,
+  INFERENCE_PAYMENT,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -34,7 +37,7 @@ import {
   QUERY_CHAT_RESPONSES,
   QUERY_CHAT_RESPONSES_POLLING,
 } from '@/queries/graphql';
-import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
+import { IEdge, ITransactions } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import AddIcon from '@mui/icons-material/Add';
@@ -43,7 +46,7 @@ import { WebBundlr } from 'bundlr-custom';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { genLoadingArray } from '@/utils/common';
+import { findTag, genLoadingArray } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import useScrollLock from '@/hooks/useScrollLock';
@@ -54,7 +57,7 @@ interface Message {
   msg: string;
   type: 'response' | 'request';
   timestamp: number;
-  cid?: string;
+  cid?: number;
 }
 
 const Chat = () => {
@@ -67,9 +70,9 @@ const Chat = () => {
   const [polledMessages, setPolledMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
-  const [conversationIds, setConversationIds] = useState<string[]>([]);
-  const [filteredConversationIds, setFilteredConversationIds] = useState<string[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
+  const [conversationIds, setConversationIds] = useState<number[]>([]);
+  const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<number | undefined>(undefined);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
@@ -128,10 +131,13 @@ const Chat = () => {
     if (state && userAddr) {
       const commonTags = [
         ...DEFAULT_TAGS,
-        { name: 'Model-Name', values: [state.modelName] },
-        { name: 'Model-Creator', values: [state.modelCreator] },
+        { name: TAG_NAMES.modelName, values: [state.modelName] },
+        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
       ];
-      const tagsRequests = [...commonTags, MODEL_INFERENCE_REQUEST_TAG];
+      const tagsRequests = [
+        ...commonTags,
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
+      ];
       getChatRequests({
         variables: {
           first: elementsPerPage,
@@ -146,42 +152,35 @@ const Chat = () => {
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      const cids: string[] = requestsData.transactions.edges.map(
-        (el: IEdge) =>
-          el.node.tags.find((tag: ITag) => tag.name === 'Conversation-Identifier')?.value,
+      const cids: string[] = requestsData.transactions.edges.map((el: IEdge) =>
+        findTag(el, 'conversationIdentifier'),
       );
-      const uniqueCids = Array.from(new Set(cids));
-      uniqueCids.sort((a: string, b: string) => {
-        const numberA = parseInt(a?.split('-')[1]);
-        const numberB = parseInt(b?.split('-')[1]);
+      const uniqueCids = Array.from(new Set(cids)).map((cid) =>
+        parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid),
+      );
+      uniqueCids.sort((a: number, b: number) => (a < b ? -1 : 1));
 
-        return numberA < numberB ? -1 : 1;
-      });
       setConversationIds(uniqueCids);
       setFilteredConversationIds(uniqueCids);
       setCurrentConversationId(uniqueCids[uniqueCids.length - 1]);
 
       const commonTags = [
         ...DEFAULT_TAGS,
-        { name: 'Model-Name', values: [state.modelName] },
-        { name: 'Model-Creator', values: [state.modelCreator] },
+        { name: TAG_NAMES.modelName, values: [state.modelName] },
+        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
       ];
       const tagsResponses = [
         ...commonTags,
-        MODEL_INFERENCE_RESULT_TAG,
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: 'Model-User', values: [userAddr] },
+        { name: TAG_NAMES.modelUser, values: [userAddr] },
         {
-          name: 'Request-Transaction',
+          name: TAG_NAMES.requestTransaction,
           values: requestsData.transactions.edges.map((el: IEdge) => el.node.id),
         }, // slice from end to get latest requests
       ];
       const owners = Array.from(
-        new Set(
-          requestsData.transactions.edges.map(
-            (el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value,
-          ),
-        ),
+        new Set(requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'modelOperator'))),
       );
       getChatResponses({
         variables: {
@@ -204,11 +203,11 @@ const Chat = () => {
             const newData = fetchMoreResult.transactions.edges;
             newData.sort((a: IEdge, b: IEdge) => {
               const aTimestamp =
-                parseInt(a.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+                parseInt(findTag(a, 'unixTime') || '') ||
                 a.node.block?.timestamp ||
                 Date.now() / 1000;
               const bTimestamp =
-                parseInt(b.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+                parseInt(findTag(b, 'unixTime') || '') ||
                 b.node.block?.timestamp ||
                 Date.now() / 1000;
 
@@ -236,11 +235,14 @@ const Chat = () => {
         // start polling
         const commonTags = [
           ...DEFAULT_TAGS,
-          { name: 'Model-Name', values: [state.modelName] },
-          { name: 'Model-Creator', values: [state.modelCreator] },
+          { name: TAG_NAMES.modelName, values: [state.modelName] },
+          { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
         ];
 
-        const tagsRequests = [...commonTags, MODEL_INFERENCE_REQUEST_TAG];
+        const tagsRequests = [
+          ...commonTags,
+          { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
+        ];
 
         pollRequests({
           variables: {
@@ -268,11 +270,11 @@ const Chat = () => {
             const newData = fetchMoreResult.transactions.edges;
             newData.sort((a: IEdge, b: IEdge) => {
               const aTimestamp =
-                parseInt(a.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+                parseInt(findTag(a, 'unixTime') || '') ||
                 a.node.block?.timestamp ||
                 Date.now() / 1000;
               const bTimestamp =
-                parseInt(b.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+                parseInt(findTag(b, 'unixTime') || '') ||
                 b.node.block?.timestamp ||
                 Date.now() / 1000;
 
@@ -300,16 +302,16 @@ const Chat = () => {
         // start polling
         const commonTags = [
           ...DEFAULT_TAGS,
-          { name: 'Model-Name', values: [state.modelName] },
-          { name: 'Model-Creator', values: [state.modelCreator] },
+          { name: TAG_NAMES.modelName, values: [state.modelName] },
+          { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
         ];
         const tagsResponses = [
           ...commonTags,
-          MODEL_INFERENCE_RESULT_TAG,
+          { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
           // { name: 'Conversation-Identifier', values: [currentConversationId] },
-          { name: 'Model-User', values: [userAddr] },
+          { name: TAG_NAMES.modelUser, values: [userAddr] },
           {
-            name: 'Request-Transaction',
+            name: TAG_NAMES.requestTransaction,
             values: messages.map((el) => el.id).slice(-1),
           }, // slice from end to get latest requests
         ];
@@ -317,7 +319,7 @@ const Chat = () => {
           new Set(
             requestsData.transactions.edges
               .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
-              .map((el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value),
+              .map((el: IEdge) => findTag(el, 'modelOperator')),
           ),
         );
 
@@ -344,11 +346,11 @@ const Chat = () => {
       ];
       const tagsResponses = [
         ...commonTags,
-        MODEL_INFERENCE_RESULT_TAG,
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: 'Model-User', values: [userAddr] },
+        { name: TAG_NAMES.modelUser, values: [userAddr] },
         {
-          name: 'Request-Transaction',
+          name: TAG_NAMES.requestTransaction,
           values: messages.map((el) => el.id).slice(-1), // last 5 requests
         }, // slice from end to get latest requests
       ];
@@ -356,7 +358,7 @@ const Chat = () => {
         new Set(
           requestsData.transactions.edges
             .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
-            .map((el: IEdge) => el.node.tags.find((el) => el.name === 'Model-Operator')?.value),
+            .map((el: IEdge) => findTag(el, 'modelOperator')),
         ),
       );
 
@@ -407,17 +409,15 @@ const Chat = () => {
         const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
         const data = msgIdx < 0 ? await getData(el.node.id) : polledMessages[msgIdx].msg;
         const timestamp =
-          parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
-          el.node.block?.timestamp ||
-          Date.now() / 1000;
-        const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
+          parseInt(findTag(el, 'unixTime') || '') || el.node.block?.timestamp || Date.now() / 1000;
+        const cid = findTag(el, 'conversationIdentifier') as string;
         if (el.node.owner.address === userAddr) {
           temp.push({
             id: el.node.id,
             msg: data,
             type: 'request',
             timestamp: timestamp,
-            cid,
+            cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
           });
         } else {
           temp.push({
@@ -425,7 +425,7 @@ const Chat = () => {
             msg: data,
             type: 'response',
             timestamp: timestamp,
-            cid,
+            cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
           });
         }
       }),
@@ -456,18 +456,19 @@ const Chat = () => {
 
   useEffect(() => {
     if (conversationIds && conversationIds.length > 0) {
-      setFilteredConversationIds(conversationIds.filter((el) => el.includes(filterConversations)));
+      setFilteredConversationIds(
+        conversationIds.filter((el) => `${el}`.includes(filterConversations)),
+      );
     }
   }, [filterConversations]);
 
-  const handleListItemClick = (cid: string) => {
+  const handleListItemClick = (cid: number) => {
     setCurrentConversationId(cid);
   };
 
   const handleAddConversation = () => {
     const lastConversation = conversationIds[conversationIds.length - 1];
-    const number = lastConversation?.split('-')[1];
-    const newConversationId = `C-${+number + 1}`;
+    const newConversationId = lastConversation + 1;
     setConversationIds([...conversationIds, newConversationId]);
     setFilteredConversationIds([...conversationIds, newConversationId]);
     setFilterConversations('');
@@ -498,16 +499,16 @@ const Chat = () => {
       return;
     }
     const tags = [];
-    tags.push({ name: 'App-Name', value: 'Fair Protocol' });
-    tags.push({ name: 'App-Version', value: APP_VERSION });
-    tags.push({ name: 'Model-Name', value: state.modelName });
-    tags.push({ name: 'Model-Creator', value: state.modelCreator });
-    tags.push({ name: 'Model-Transaction', value: state.modelTransaction });
-    tags.push({ name: 'Model-Operator', value: address });
-    tags.push({ name: 'Operation-Name', value: 'Model Inference Request' });
-    tags.push({ name: 'Conversation-Identifier', value: currentConversationId });
+    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
+    tags.push({ name: TAG_NAMES.modelName, value: state.modelName });
+    tags.push({ name: TAG_NAMES.modelCreator, value: state.modelCreator });
+    tags.push({ name: TAG_NAMES.modelTransaction, value: state.modelTransaction });
+    tags.push({ name: TAG_NAMES.modelOperator, value: address });
+    tags.push({ name: TAG_NAMES.operationName, value: MODEL_INFERENCE_REQUEST });
+    tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
     const tempDate = Date.now() / 1000;
-    tags.push({ name: 'Unix-Time', value: tempDate.toString() });
+    tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
     try {
       const bundlrRes = await bundlr.upload(newMessage, { tags });
 
@@ -548,16 +549,16 @@ const Chat = () => {
         quantity: inferenceFee,
       });
 
-      tx.addTag('App-Name', 'Fair Protocol');
-      tx.addTag('App-Version', APP_VERSION);
-      tx.addTag('Operation-Name', 'Inference Payment');
-      tx.addTag('Model-Name', state.modelName);
-      tx.addTag('Model-Creator', state.modelCreator);
-      tx.addTag('Model-Transaction', state.modelTransaction);
-      tx.addTag('Model-Operator', address || '');
-      tx.addTag('Conversation-Identifier', currentConversationId);
-      tx.addTag('Inference-Transaction', bundlrRes.id);
-      tx.addTag('Unix-Time', (Date.now() / 1000).toString());
+      tx.addTag(TAG_NAMES.appName, APP_NAME);
+      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+      tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
+      tx.addTag(TAG_NAMES.modelName, state.modelName);
+      tx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
+      tx.addTag(TAG_NAMES.modelTransaction, state.modelTransaction);
+      tx.addTag(TAG_NAMES.modelOperator, address || '');
+      tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
+      tx.addTag(TAG_NAMES.inferenceTransaction, bundlrRes.id);
+      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
 
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);
@@ -586,26 +587,31 @@ const Chat = () => {
     const temp: Message[] = [];
     await Promise.all(
       allData
-        .filter(
-          (el: IEdge) =>
-            el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value ===
-            currentConversationId,
-        )
+        .filter((el: IEdge) => {
+          const cid = findTag(el, 'conversationIdentifier');
+          if (cid && cid.split('-').length > 1) {
+            return parseInt(cid.split('-')[1]) === currentConversationId;
+          } else if (cid) {
+            return parseInt(cid) === currentConversationId;
+          } else {
+            return false;
+          }
+        })
         .map(async (el: IEdge) => {
           const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
           const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;
           const timestamp =
-            parseInt(el.node.tags.find((el: ITag) => el.name === 'Unix-Time')?.value || '') ||
+            parseInt(findTag(el, 'unixTime') || '') ||
             el.node.block?.timestamp ||
             Date.now() / 1000;
-          const cid = el.node.tags.find((el) => el.name === 'Conversation-Identifier')?.value;
+          const cid = findTag(el, 'conversationIdentifier') as string;
           if (el.node.owner.address === userAddr) {
             temp.push({
               id: el.node.id,
               msg: data,
               type: 'request',
               timestamp: timestamp,
-              cid,
+              cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
             });
           } else {
             temp.push({
@@ -613,7 +619,7 @@ const Chat = () => {
               msg: data,
               type: 'response',
               timestamp: timestamp,
-              cid,
+              cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
             });
           }
         }),
