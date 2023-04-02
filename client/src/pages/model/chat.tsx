@@ -587,9 +587,16 @@ const Chat = () => {
     await Promise.all(
       allData
         .filter(
-          (el: IEdge) =>
-            findTag(el, 'conversationIdentifier') ===
-            currentConversationId,
+          (el: IEdge) => {
+            const cid = findTag(el, 'conversationIdentifier');
+            if (cid && cid.split('-').length > 1) {
+              return parseInt(cid.split('-')[1]) === currentConversationId;
+            } else if (cid) {
+              return parseInt(cid) === currentConversationId;
+            } else {
+              return false;
+            }
+          }
         )
         .map(async (el: IEdge) => {
           const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
