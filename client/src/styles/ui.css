@@ -138,8 +138,7 @@
   }
 }
 
-
 .img-gradient::after {
   background: linear-gradient(to bottom, #000000 10%, rgba(71, 71, 71, 0) 100%);
-  border-radius: 23px,
+  border-radius: 23px;
 }

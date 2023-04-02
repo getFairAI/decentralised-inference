@@ -89,7 +89,7 @@ const router = createBrowserRouter([
                 loader: getModelFeeAndAttachments,
                 element: <Register />,
               },
-            ]
+            ],
           },
         ],
       },
