@@ -12,6 +12,7 @@ import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import FilterContext from '@/context/filter';
+import { findTag } from '@/utils/common';
 
 export default function Home() {
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -84,7 +85,7 @@ export default function Home() {
     if (listData && filterValue)
       setTxs(
         listData.transactions.edges.filter((el: IEdge) =>
-          el.node.tags.find((tag) => tag.name === 'Model-Name')?.value.includes(filterValue),
+          findTag(el, 'modelName')?.includes(filterValue),
         ),
       );
   }, [filterValue]);

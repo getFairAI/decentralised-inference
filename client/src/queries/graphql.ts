@@ -1,12 +1,42 @@
 import { MARKETPLACE_ADDRESS } from '@/constants';
 import { gql } from '@apollo/client';
 
-export const GET_IMAGES_TXIDS = gql`
-  query GET_IMAGES_TXIDS {
-    transactions(first: 50, tags: [{ name: "Content-Type", values: ["image/png"] }]) {
+export const GET_LATEST_MODEL_ATTACHMENTS = gql`
+  query GET_MODEL_ATTACHMENTS($tags: [TagFilter!], $owner: String!) {
+    transactions(first: 1, tags: $tags, owners: [$owner], sort: HEIGHT_DESC) {
       edges {
         node {
           id
+        }
+      }
+    }
+  }
+`;
+
+export const GET_TX_OWNER = gql`
+  query GET_TX($id: ID!) {
+    transactions(first: 1, ids: [$id]) {
+      edges {
+        node {
+          owner {
+            address
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_IMAGES_TXIDS = gql`
+  query GET_IMAGES_TXIDS($first: Int, $after: String, $tags: [TagFilter!], $owner: String!) {
+    transactions(first: $first, after: $after, tags: $tags, owners: [$owner]) {
+      edges {
+        node {
+          id
+          tags {
+            name
+            value
+          }
         }
       }
     }
@@ -166,8 +196,8 @@ export const LIST_MODELS_QUERY = gql`
 `;
 
 export const GET_LATEST_FEE_UPDATE = gql`
-  query GET_LATEST_FEE_UPDATE($tags: [TagFilter!]) {
-    transactions(first: 1, tags: $tags, sort: HEIGHT_DESC) {
+  query GET_LATEST_FEE_UPDATE($tags: [TagFilter!], $owner: String!) {
+    transactions(first: 1, tags: $tags, sort: HEIGHT_DESC, owners: [$owner]) {
       edges {
         node {
           id

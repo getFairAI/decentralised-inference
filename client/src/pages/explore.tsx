@@ -22,7 +22,7 @@ import { MouseEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LIST_MODELS_QUERY } from '@/queries/graphql';
 import { MARKETPLACE_FEE } from '@/constants';
-import { genLoadingArray } from '@/utils/common';
+import { findTag, genLoadingArray } from '@/utils/common';
 import { Stack } from '@mui/system';
 import ReplayIcon from '@mui/icons-material/Replay';
 import useOnScreen from '@/hooks/useOnScreen';
@@ -129,13 +129,7 @@ const Explore = () => {
               <Card>
                 <CardActionArea
                   style={{ display: 'flex' }}
-                  onClick={(e) =>
-                    handleCardClick(
-                      e,
-                      edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value,
-                      index,
-                    )
-                  }
+                  onClick={(e) => handleCardClick(e, findTag(edge, 'modelTransaction'), index)}
                 >
                   <CardHeader
                     sx={{ marginRight: 0 }}
@@ -144,11 +138,8 @@ const Explore = () => {
                   />
                   <CardContent sx={{ maxWidth: '300px' }}>
                     <Box sx={{ textOverflow: 'ellipsis', flexWrap: 'wrap' }}>
-                      {/* <Typography noWrap variant='h6'>
-                        {edge.node.tags.find((el) => el.name === 'test')?.value}
-                      </Typography> */}
                       <Typography noWrap variant='body1'>
-                        {edge.node.tags.find((el) => el.name === 'Model-Transaction')?.value}
+                        {findTag(edge, 'modelTransaction')}
                       </Typography>
                       <Box
                         sx={{
@@ -157,10 +148,7 @@ const Explore = () => {
                           alignContent: 'center',
                         }}
                       >
-                        <Chip
-                          label={edge.node.tags.find((el) => el.name === 'Category')?.value}
-                          color='primary'
-                        />
+                        <Chip label={findTag(edge, 'category')} color='primary' />
                         <Box sx={{ display: 'flex', alignContent: 'center' }}>
                           <Typography variant='body1'>11</Typography>
                           <ThumbUpIcon />
