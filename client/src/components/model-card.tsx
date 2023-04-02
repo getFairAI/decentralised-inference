@@ -296,17 +296,55 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
             <Typography
               sx={{
                 fontStyle: 'normal',
-                fontWeight: 700,
+                fontWeight: 300,
                 fontSize: '20px',
                 lineHeight: '27px',
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#D2D2D2',
+                color: '#BFBFBF;',
               }}
             >
-              Usage
+              {cardData?.totalOperators}
             </Typography>
+          </Box>
+          <Box display={'flex'} flexDirection='column'>
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: 300,
+                fontSize: '20px',
+                lineHeight: '27px',
+                display: 'flex',
+                alignItems: 'center',
+                textAlign: 'center',
+                color: '#BFBFBF;',
+              }}
+            >
+              {Number.isNaN(cardData?.modelFee) || cardData?.modelFee === 'NaN'
+                ? 'Invalid Fee'
+                : `${cardData?.modelFee} AR`}
+            </Typography>
+          </Box>
+          <Box display={'flex'} flexDirection='column'>
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: 300,
+                fontSize: '20px',
+                lineHeight: '27px',
+                display: 'flex',
+                alignItems: 'center',
+                textAlign: 'center',
+                color: '#BFBFBF;',
+              }}
+            >
+              {Number.isNaN(cardData?.avgFee) || cardData?.avgFee === 'NaN'
+                ? 'Not enough Operators for Fee'
+                : `${cardData?.avgFee} AR`}
+            </Typography>
+          </Box>
+          <Box display={'flex'} flexDirection='column'>
             <Typography
               sx={{
                 fontStyle: 'normal',
@@ -326,20 +364,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
             <Typography
               sx={{
                 fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#D2D2D2',
-              }}
-            >
-              Rating
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
                 fontWeight: 300,
                 fontSize: '20px',
                 lineHeight: '27px',
@@ -353,20 +377,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
             </Typography>
           </Box>
           <Box display={'flex'} flexDirection='column'>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#D2D2D2',
-              }}
-            >
-              Last updated
-            </Typography>
             <Typography
               sx={{
                 fontStyle: 'normal',
