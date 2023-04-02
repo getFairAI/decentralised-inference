@@ -146,7 +146,7 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
   }, [data]); // data changes
 
   const handleCardClick = () => {
-    navigate(`/model/${encodeURIComponent(cardData?.txid || 'error')}/register`, {
+    navigate(`/operators/register/${encodeURIComponent(cardData?.txid || 'error')}`, {
       state: modelTx,
     });
   };

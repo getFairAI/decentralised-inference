@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from 'react';
 import ReplayIcon from '@mui/icons-material/Replay';
 import ModelCard from '@/components/model-card';
 import useOnScreen from '@/hooks/useOnScreen';
+import { Outlet } from 'react-router-dom';
 
 const Operators = () => {
   const [txs, setTxs] = useState<IEdge[]>([]);
@@ -69,7 +70,7 @@ const Operators = () => {
   const handleHighlight = (value: boolean) => setHighLightTop(value);
 
   return (
-    <Container
+    <><Container
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -129,8 +130,7 @@ const Operators = () => {
               border: '1px solid transparent',
               borderRadius: '10px',
               textTransform: 'none',
-              background:
-                'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+              background: 'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
               '& .MuiOutlinedInput-notchedOutline': {
                 borderWidth: 0,
               },
@@ -161,8 +161,7 @@ const Operators = () => {
               border: '1px solid transparent',
               padding: '8px',
               textTransform: 'none',
-              background:
-                'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+              background: 'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
             }}
           >
             <Typography
@@ -323,7 +322,7 @@ const Operators = () => {
         </Stack>
         <div ref={target}></div>
       </Box>
-    </Container>
+    </Container><Outlet /></>
   );
 };
 
