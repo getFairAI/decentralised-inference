@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing';
 import Detail from '@/pages/model/detail';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { DEFAULT_TAGS, REGISTER_OPERATION_TAG } from '@/constants';
+import { DEFAULT_TAGS, REGISTER_OPERATION, TAG_NAMES } from '@/constants';
 import { SnackbarProvider } from 'notistack';
 
 const queryRegisteredOperatorsMock = [
@@ -13,7 +13,7 @@ const queryRegisteredOperatorsMock = [
       variables: {
         tags: [
           ...DEFAULT_TAGS,
-          REGISTER_OPERATION_TAG,
+          { name: TAG_NAMES.operationName, values: [ REGISTER_OPERATION ]},
           {
             name: 'Model-Creator',
             values: ['creator 1'],
