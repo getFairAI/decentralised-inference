@@ -23,7 +23,19 @@ import AvatarControl from '@/components/avatar-control';
 import FundDialog from '@/components/fund-dialog';
 import CustomProgress from '@/components/progress';
 import fileReaderStream from 'filereader-stream';
-import { APP_VERSION, MARKETPLACE_FEE, NODE1_BUNDLR_URL, MARKETPLACE_ADDRESS, TAG_NAMES, APP_NAME, MODEL_CREATION, MODEL_CREATION_PAYMENT, MODEL_ATTACHMENT, AVATAR_ATTACHMENT, NOTES_ATTACHMENT } from '@/constants';
+import {
+  APP_VERSION,
+  MARKETPLACE_FEE,
+  NODE1_BUNDLR_URL,
+  MARKETPLACE_ADDRESS,
+  TAG_NAMES,
+  APP_NAME,
+  MODEL_CREATION,
+  MODEL_CREATION_PAYMENT,
+  MODEL_ATTACHMENT,
+  AVATAR_ATTACHMENT,
+  NOTES_ATTACHMENT,
+} from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
 import arweave from '@/utils/arweave';
@@ -168,7 +180,7 @@ const Upload = () => {
 
   const uploadUsageNotes = async (modelTx: string, modelName: string, usageNotes: string) => {
     if (!bundlrContext || !bundlrContext.state) return;
-    const file = new File([ usageNotes ], `${modelName}-usage.md`, {
+    const file = new File([usageNotes], `${modelName}-usage.md`, {
       type: 'text/markdown',
     });
 
@@ -408,10 +420,7 @@ const Upload = () => {
                 </tr>
                 <tr>
                   <td colSpan={2} rowSpan={1} style={{ display: 'flex', justifyContent: 'center' }}>
-                    <ImagePicker
-                      name='avatar'
-                      control={control}
-                    />
+                    <ImagePicker name='avatar' control={control} />
                   </td>
                 </tr>
                 <tr>

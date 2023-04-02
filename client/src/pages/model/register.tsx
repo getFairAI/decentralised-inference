@@ -1,5 +1,11 @@
 import { CustomStepper } from '@/components/stepper';
-import { MARKETPLACE_ADDRESS, APP_VERSION, TAG_NAMES, APP_NAME, REGISTER_OPERATION } from '@/constants';
+import {
+  MARKETPLACE_ADDRESS,
+  APP_VERSION,
+  TAG_NAMES,
+  APP_NAME,
+  REGISTER_OPERATION,
+} from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { RouteLoaderResult } from '@/interfaces/router';
 import arweave from '@/utils/arweave';
@@ -25,7 +31,7 @@ import { NumericFormat } from 'react-number-format';
 import { useLocation, useRouteLoaderData } from 'react-router-dom';
 
 const Register = () => {
-  const { updatedFee, avatarTxId } = useRouteLoaderData('model-alt') as RouteLoaderResult || {};
+  const { updatedFee, avatarTxId } = (useRouteLoaderData('model-alt') as RouteLoaderResult) || {};
   const { state }: { state: IEdge } = useLocation();
   const [isRegistered, setIsRegistered] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -53,7 +59,10 @@ const Register = () => {
         values: findTag(state, 'modelName') || '',
       });
       tags.push({ name: TAG_NAMES.modelCreator, values: state.node.owner.address });
-      tags.push({ name: TAG_NAMES.modelTransaction, values: findTag(state, 'modelTransaction') as string });
+      tags.push({
+        name: TAG_NAMES.modelTransaction,
+        values: findTag(state, 'modelTransaction') as string,
+      });
       tags.push({ name: TAG_NAMES.operatorFee, values: arweave.ar.arToWinston(rate) });
       tags.push({ name: TAG_NAMES.operationName, values: REGISTER_OPERATION });
       tags.push({ name: TAG_NAMES.operatorName, values: operatorName });
@@ -90,10 +99,7 @@ const Register = () => {
           <CardContent>
             <Box display={'flex'} justifyContent={'space-evenly'}>
               <Box display={'flex'} flexDirection={'column'}>
-                <Avatar
-                  sx={{ width: '200px', height: '200px' }}
-                  src={imgUrl}
-                />
+                <Avatar sx={{ width: '200px', height: '200px' }} src={imgUrl} />
                 {/* <Box marginTop={'8px'} display={'flex'} justifyContent={'flex-start'}>
                   <Button startIcon={<DownloadIcon />}>
                     <a href={`http://localhost:1984/${txid}`} download>download</a>
@@ -122,11 +128,7 @@ const Register = () => {
                   inputProps={{ readOnly: true }}
                 />
                 <NumericFormat
-                  value={arweave.ar.winstonToAr(
-                    updatedFee ||
-                      findTag(state, 'modelFee') ||
-                      '0',
-                  )}
+                  value={arweave.ar.winstonToAr(updatedFee || findTag(state, 'modelFee') || '0')}
                   customInput={TextField}
                   decimalScale={4}
                   label='Fee'

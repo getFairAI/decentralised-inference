@@ -2,8 +2,8 @@ import { MARKETPLACE_ADDRESS } from '@/constants';
 import { gql } from '@apollo/client';
 
 export const GET_LATEST_MODEL_ATTACHMENTS = gql`
-  query GET_MODEL_ATTACHMENTS( $tags: [TagFilter!], $owner: String!) {
-    transactions(first: 1, tags: $tags, owners: [ $owner ], sort: HEIGHT_DESC) {
+  query GET_MODEL_ATTACHMENTS($tags: [TagFilter!], $owner: String!) {
+    transactions(first: 1, tags: $tags, owners: [$owner], sort: HEIGHT_DESC) {
       edges {
         node {
           id
@@ -29,7 +29,7 @@ export const GET_TX_OWNER = gql`
 
 export const GET_IMAGES_TXIDS = gql`
   query GET_IMAGES_TXIDS($first: Int, $after: String, $tags: [TagFilter!], $owner: String!) {
-    transactions(first: $first, after: $after, tags: $tags, owners: [ $owner ]) {
+    transactions(first: $first, after: $after, tags: $tags, owners: [$owner]) {
       edges {
         node {
           id
@@ -197,7 +197,7 @@ export const LIST_MODELS_QUERY = gql`
 
 export const GET_LATEST_FEE_UPDATE = gql`
   query GET_LATEST_FEE_UPDATE($tags: [TagFilter!], $owner: String!) {
-    transactions(first: 1, tags: $tags, sort: HEIGHT_DESC, owners: [ $owner ]) {
+    transactions(first: 1, tags: $tags, sort: HEIGHT_DESC, owners: [$owner]) {
       edges {
         node {
           id

@@ -1,4 +1,9 @@
-import { DEFAULT_TAGS, OPERATOR_REGISTRATION_AR_FEE, REGISTER_OPERATION, TAG_NAMES } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  OPERATOR_REGISTRATION_AR_FEE,
+  REGISTER_OPERATION,
+  TAG_NAMES,
+} from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_FIRST_REGISTRATION } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
@@ -52,8 +57,7 @@ const OperatorDetails = () => {
         // incorrect, fetch next
       } else {
         const timestamp =
-          parseInt(findTag(registration, 'unixTime') || '') ||
-          registration.node.block.timestamp;
+          parseInt(findTag(registration, 'unixTime') || '') || registration.node.block.timestamp;
         setFirstregistrationDate(new Date(timestamp * 1000).toLocaleDateString());
       }
     }

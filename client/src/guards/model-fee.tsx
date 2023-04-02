@@ -70,8 +70,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
     ) {
       setIsAllowed(
         queryResult.data.transactions.edges[0].node.quantity.winston ===
-          (updatedFee ||
-            findTag(state.fullState, 'modelFee')),
+          (updatedFee || findTag(state.fullState, 'modelFee')),
       );
       setLoading(false);
     } else if (queryResult.data && queryResult.data && queryResult.data.transactions) {
@@ -87,8 +86,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
 
   const handleAccept = async () => {
     try {
-      const modelFee =
-        updatedFee || findTag(state.fullState, 'modelFee') as string;
+      const modelFee = updatedFee || (findTag(state.fullState, 'modelFee') as string);
       const tx = await arweave.createTransaction({
         target: state.modelCreator,
         quantity: modelFee,
@@ -180,7 +178,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
               In Order to prevent bad actors an user has to pay the model fee before being able to
               use it. The current Model fee is{' '}
               {arweave.ar.winstonToAr(
-                updatedFee || findTag(state.fullState, 'modelFee') as string
+                updatedFee || (findTag(state.fullState, 'modelFee') as string),
               )}{' '}
               <img src='/arweave-logo-warning.svg'></img>
             </Typography>

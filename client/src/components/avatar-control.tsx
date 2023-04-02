@@ -14,7 +14,7 @@ const AvatarControl = (props: UseControllerProps & { control: Control }) => {
   };
 
   useEffect(() => {
-    if ( field.value instanceof File) {
+    if (field.value instanceof File) {
       const file = field.value;
       const reader = new FileReader();
       reader.addEventListener('load', handleFileLoad(reader));
