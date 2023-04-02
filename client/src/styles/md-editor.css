@@ -1,13 +1,13 @@
 .w-md-editor {
   margin-bottom: 8px;
   border: 1px solid;
-  border-color:  rgba(255, 255, 255, 0.23);
+  border-color: rgba(255, 255, 255, 0.23);
   border-radius: 23px;
   background: rgba(61, 61, 61, 0.98);
 }
 
 .w-md-editor:hover {
-  border-color: #FFF;
+  border-color: #fff;
 }
 
 .w-md-editor:focus-within {

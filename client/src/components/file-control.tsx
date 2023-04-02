@@ -23,7 +23,7 @@ const FileControl = (props: FileControlProps) => {
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [filePrice, setFilePrice] = useState(0);
-  const [ hasFileDrag, setHasFileDrag ] = useState(false);
+  const [hasFileDrag, setHasFileDrag] = useState(false);
 
   const handleDragEnter = (event: DragEvent) => {
     event.preventDefault();
@@ -187,9 +187,9 @@ const FileControl = (props: FileControlProps) => {
                 sx: {
                   borderWidth: '1px',
                   borderColor: '#FFF',
-                  borderRadius: '23px'
+                  borderRadius: '23px',
                 },
-                readOnly: true
+                readOnly: true,
               }}
             />
             {loading && <LinearProgress variant='determinate' value={progress} />}
@@ -221,9 +221,9 @@ const FileControl = (props: FileControlProps) => {
               filter: hasFileDrag ? 'blur(2px)' : 'none',
               backdropFilter: 'blur(2px)',
               '&.MuiOutlinedInput-notchedOutline': {
-                borderColor: hasFileDrag ? '#fff' : 'rgba(255, 255, 255, 0.23)'
-              }
-            }
+                borderColor: hasFileDrag ? '#fff' : 'rgba(255, 255, 255, 0.23)',
+              },
+            },
           }}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
