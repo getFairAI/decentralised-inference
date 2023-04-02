@@ -193,7 +193,7 @@ const Detail = () => {
   return (
     <Dialog
       open={true}
-      maxWidth={'md'}
+      maxWidth={'lg'}
       fullWidth
       sx={{
         '& .MuiPaper-root': {

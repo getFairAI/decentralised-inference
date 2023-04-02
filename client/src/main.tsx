@@ -67,10 +67,6 @@ const router = createBrowserRouter([
               },
             ],
           },
-          {
-            path: 'register',
-            element: <Register />,
-          },
         ],
       },
       {
@@ -87,6 +83,13 @@ const router = createBrowserRouter([
           {
             path: '',
             element: <Operators />,
+            children: [
+              {
+                path: 'register/:txid/',
+                loader: getModelFeeAndAttachments,
+                element: <Register />,
+              },
+            ],
           },
         ],
       },
