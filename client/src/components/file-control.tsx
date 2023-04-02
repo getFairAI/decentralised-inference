@@ -242,6 +242,10 @@ const FileControl = (props: FileControlProps) => {
           filter: hasFileDrag ? 'blur(2px)' : 'none',
         }}
         justifyContent={'center'}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
       >
         <Button variant='text' component='label'>
           Browse Files to Upload
