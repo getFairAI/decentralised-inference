@@ -1,4 +1,10 @@
-import { AVATAR_ATTACHMENT, DEFAULT_TAGS, MODEL_ATTACHMENT, NET_ARWEAVE_URL, TAG_NAMES } from '@/constants';
+import {
+  AVATAR_ATTACHMENT,
+  DEFAULT_TAGS,
+  MODEL_ATTACHMENT,
+  NET_ARWEAVE_URL,
+  TAG_NAMES,
+} from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
@@ -29,28 +35,31 @@ const AiListCard = ({
 }) => {
   const navigate = useNavigate();
   const { currentAddress } = useContext(WalletContext);
-  const [ getAvatar, { data, loading: avatarLoading } ] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
+  const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
 
   useEffect(() => {
     const modelId = findTag(model, 'modelTransaction');
     const attachmentAvatarTags = [
       ...DEFAULT_TAGS,
-      { name: TAG_NAMES.operationName, values: [ MODEL_ATTACHMENT ] },
-      { name: TAG_NAMES.attachmentRole, values: [ AVATAR_ATTACHMENT ]},
-      { name: TAG_NAMES.modelTransaction, values: [ modelId ] },
+      { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
+      { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
+      { name: TAG_NAMES.modelTransaction, values: [modelId] },
     ];
 
     getAvatar({
       variables: {
         tags: attachmentAvatarTags,
-        owner: currentAddress
-      }
+        owner: currentAddress,
+      },
     });
   }, []);
 
   const imgUrl = useMemo(() => {
     if (data) {
-      const avatarTxId = data.transactions.edges && data.transactions.edges[0] ? data.transactions.edges[0].node.id : undefined;
+      const avatarTxId =
+        data.transactions.edges && data.transactions.edges[0]
+          ? data.transactions.edges[0].node.id
+          : undefined;
       if (avatarTxId) {
         return `${NET_ARWEAVE_URL}/${avatarTxId}`;
       }
@@ -61,10 +70,10 @@ const AiListCard = ({
     } else {
       return '';
     }
-  }, [ data ]);
+  }, [data]);
 
   const getTimePassed = () => {
-    const timestamp = findTag(model, 'unixTime')|| model.node.block.timestamp;
+    const timestamp = findTag(model, 'unixTime') || model.node.block.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
@@ -94,7 +103,7 @@ const AiListCard = ({
 
   const handleCardClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    const modelId =findTag(model, 'modelTransaction');
+    const modelId = findTag(model, 'modelTransaction');
     if (!modelId) return;
     navigate(`/model/${encodeURIComponent(modelId)}/detail`, { state: model });
   };
@@ -132,9 +141,9 @@ const AiListCard = ({
             color: '#CCCCCD',
           }}
         />
-        {
-          !imgUrl || loading || avatarLoading ?
-            <Box sx={{
+        {!imgUrl || loading || avatarLoading ? (
+          <Box
+            sx={{
               position: 'absolute',
               top: 0,
               right: 0,
@@ -145,21 +154,23 @@ const AiListCard = ({
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'cover' /* <------ */,
               backgroundPosition: 'center center',
-            }} />
-            : <CardMedia
-                src={loading || avatarLoading ? '' : imgUrl}
-                sx={{
-                  borderRadius: '16px',
-                  height: '100px',
-                  width: '100px',
-                  background: `linear-gradient(to top, #000000 10%, rgba(71, 71, 71, 0) 100%), url(${
-                    loading || avatarLoading ? '' : imgUrl
-                  })`,
-                  backgroundPosition: 'center',
-                }}
-              />
-        }
-        
+            }}
+          />
+        ) : (
+          <CardMedia
+            src={loading || avatarLoading ? '' : imgUrl}
+            sx={{
+              borderRadius: '16px',
+              height: '100px',
+              width: '100px',
+              background: `linear-gradient(to top, #000000 10%, rgba(71, 71, 71, 0) 100%), url(${
+                loading || avatarLoading ? '' : imgUrl
+              })`,
+              backgroundPosition: 'center',
+            }}
+          />
+        )}
+
         <CardContent>
           <Typography
             sx={{

@@ -14,5 +14,5 @@ export const genLoadingArray = (numElements: number) => {
 
 type tagName = keyof typeof TAG_NAMES;
 export const findTag = (tx: IEdge, tagName: tagName) => {
-  return tx.node.tags.find(tag => tag.name === TAG_NAMES[tagName])?.value; 
+  return tx.node.tags.find((tag) => tag.name === TAG_NAMES[tagName])?.value;
 };

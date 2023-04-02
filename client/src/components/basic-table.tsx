@@ -157,9 +157,7 @@ export default function BasicTable(props: {
                   key={row.node.id}
                   operatorTx={row}
                   modelCreator={props.state.node.owner.address}
-                  modelName={
-                    findTag(props.state, 'modelName') as string
-                  }
+                  modelName={findTag(props.state, 'modelName') as string}
                   state={props.state}
                   index={idx}
                   isSelected={props.selectedIdx === idx}

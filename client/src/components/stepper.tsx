@@ -161,13 +161,13 @@ export const CustomStepper = (props: {
   handleSubmit: (rate: string, name: string) => Promise<void>;
   isRegistered: boolean;
 }) => {
-  const { notesTxId } = useRouteLoaderData('model-alt') as RouteLoaderResult || {};
+  const { notesTxId } = (useRouteLoaderData('model-alt') as RouteLoaderResult) || {};
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const [completed, setCompleted] = useState(new Set<number>());
   const [fileSize, setFileSize] = useState(0);
   const [operatorName, setOperatorName] = useState('');
-  const [ notes, setNotes ] = useState('');
+  const [notes, setNotes] = useState('');
 
   const [rate, setRate] = useState(0);
 
@@ -232,12 +232,8 @@ export const CustomStepper = (props: {
 
   const download = () => {
     const a = document.createElement('a');
-    a.href = `${NET_ARWEAVE_URL}/${
-      findTag(props.data, 'modelTransaction')
-    }`;
-    a.download =
-      findTag(props.data, 'modelName') ||
-      props.data.node.id;
+    a.href = `${NET_ARWEAVE_URL}/${findTag(props.data, 'modelTransaction')}`;
+    a.download = findTag(props.data, 'modelName') || props.data.node.id;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -246,9 +242,7 @@ export const CustomStepper = (props: {
   useEffect(() => {
     const getFileSize = async () => {
       const response = await fetch(
-        `${NET_ARWEAVE_URL}/${
-          findTag(props.data, 'modelTransaction')
-        }`,
+        `${NET_ARWEAVE_URL}/${findTag(props.data, 'modelTransaction')}`,
         { method: 'HEAD' },
       );
       setFileSize(parseInt(response.headers.get('Content-Length') || ''));
@@ -261,9 +255,8 @@ export const CustomStepper = (props: {
       setNotes(await getData(notesTxId as string));
     };
 
-    if (notesTxId)
-      fetchNotesData();
-  }, [ notesTxId ]);
+    if (notesTxId) fetchNotesData();
+  }, [notesTxId]);
 
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>

@@ -134,7 +134,10 @@ const Chat = () => {
         { name: TAG_NAMES.modelName, values: [state.modelName] },
         { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
       ];
-      const tagsRequests = [...commonTags, { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_REQUEST ]}];
+      const tagsRequests = [
+        ...commonTags,
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
+      ];
       getChatRequests({
         variables: {
           first: elementsPerPage,
@@ -149,14 +152,13 @@ const Chat = () => {
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      const cids: string[] = requestsData.transactions.edges.map(
-        (el: IEdge) =>
-         findTag(el, 'conversationIdentifier'),
+      const cids: string[] = requestsData.transactions.edges.map((el: IEdge) =>
+        findTag(el, 'conversationIdentifier'),
       );
       const uniqueCids = Array.from(new Set(cids)).map((cid) =>
-        parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid)
+        parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid),
       );
-      uniqueCids.sort((a: number, b: number) => a < b ? -1 : 1);
+      uniqueCids.sort((a: number, b: number) => (a < b ? -1 : 1));
 
       setConversationIds(uniqueCids);
       setFilteredConversationIds(uniqueCids);
@@ -169,7 +171,7 @@ const Chat = () => {
       ];
       const tagsResponses = [
         ...commonTags,
-        { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_RESPONSE ] },
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
         { name: TAG_NAMES.modelUser, values: [userAddr] },
         {
@@ -178,11 +180,7 @@ const Chat = () => {
         }, // slice from end to get latest requests
       ];
       const owners = Array.from(
-        new Set(
-          requestsData.transactions.edges.map(
-            (el: IEdge) => findTag(el, 'modelOperator'),
-          ),
-        ),
+        new Set(requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'modelOperator'))),
       );
       getChatResponses({
         variables: {
@@ -241,7 +239,10 @@ const Chat = () => {
           { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
         ];
 
-        const tagsRequests = [...commonTags, { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_REQUEST ]}];
+        const tagsRequests = [
+          ...commonTags,
+          { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
+        ];
 
         pollRequests({
           variables: {
@@ -306,7 +307,7 @@ const Chat = () => {
         ];
         const tagsResponses = [
           ...commonTags,
-          { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_RESPONSE ] },
+          { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
           // { name: 'Conversation-Identifier', values: [currentConversationId] },
           { name: TAG_NAMES.modelUser, values: [userAddr] },
           {
@@ -345,7 +346,7 @@ const Chat = () => {
       ];
       const tagsResponses = [
         ...commonTags,
-        { name: TAG_NAMES.operationName, values: [ MODEL_INFERENCE_RESPONSE ] },
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
         { name: TAG_NAMES.modelUser, values: [userAddr] },
         {
@@ -408,9 +409,7 @@ const Chat = () => {
         const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
         const data = msgIdx < 0 ? await getData(el.node.id) : polledMessages[msgIdx].msg;
         const timestamp =
-          parseInt(findTag(el, 'unixTime') || '') ||
-          el.node.block?.timestamp ||
-          Date.now() / 1000;
+          parseInt(findTag(el, 'unixTime') || '') || el.node.block?.timestamp || Date.now() / 1000;
         const cid = findTag(el, 'conversationIdentifier') as string;
         if (el.node.owner.address === userAddr) {
           temp.push({
@@ -457,7 +456,9 @@ const Chat = () => {
 
   useEffect(() => {
     if (conversationIds && conversationIds.length > 0) {
-      setFilteredConversationIds(conversationIds.filter((el) => `${el}`.includes(filterConversations)));
+      setFilteredConversationIds(
+        conversationIds.filter((el) => `${el}`.includes(filterConversations)),
+      );
     }
   }, [filterConversations]);
 
@@ -504,7 +505,7 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.modelCreator, value: state.modelCreator });
     tags.push({ name: TAG_NAMES.modelTransaction, value: state.modelTransaction });
     tags.push({ name: TAG_NAMES.modelOperator, value: address });
-    tags.push({ name: TAG_NAMES.operationName, value: MODEL_INFERENCE_REQUEST});
+    tags.push({ name: TAG_NAMES.operationName, value: MODEL_INFERENCE_REQUEST });
     tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
     const tempDate = Date.now() / 1000;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
@@ -586,18 +587,16 @@ const Chat = () => {
     const temp: Message[] = [];
     await Promise.all(
       allData
-        .filter(
-          (el: IEdge) => {
-            const cid = findTag(el, 'conversationIdentifier');
-            if (cid && cid.split('-').length > 1) {
-              return parseInt(cid.split('-')[1]) === currentConversationId;
-            } else if (cid) {
-              return parseInt(cid) === currentConversationId;
-            } else {
-              return false;
-            }
+        .filter((el: IEdge) => {
+          const cid = findTag(el, 'conversationIdentifier');
+          if (cid && cid.split('-').length > 1) {
+            return parseInt(cid.split('-')[1]) === currentConversationId;
+          } else if (cid) {
+            return parseInt(cid) === currentConversationId;
+          } else {
+            return false;
           }
-        )
+        })
         .map(async (el: IEdge) => {
           const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
           const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;

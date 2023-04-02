@@ -14,7 +14,15 @@ import BasicTable from '@/components/basic-table';
 import { useLoaderData, useLocation, useNavigate } from 'react-router-dom';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
-import { APP_NAME, APP_VERSION, DEFAULT_TAGS, MARKETPLACE_ADDRESS, MODEL_FEE_UPDATE, REGISTER_OPERATION, TAG_NAMES } from '@/constants';
+import {
+  APP_NAME,
+  APP_VERSION,
+  DEFAULT_TAGS,
+  MARKETPLACE_ADDRESS,
+  MODEL_FEE_UPDATE,
+  REGISTER_OPERATION,
+  TAG_NAMES,
+} from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { ChangeEvent, useContext, useEffect, useMemo, useState } from 'react';
 import arweave from '@/utils/arweave';
@@ -25,9 +33,8 @@ import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import { NumericFormat } from 'react-number-format';
 
-
 const Detail = () => {
-  const { updatedFee, avatarTxId }  = useLoaderData() as RouteLoaderResult;
+  const { updatedFee, avatarTxId } = useLoaderData() as RouteLoaderResult;
   const { state, pathname } = useLocation();
   const navigate = useNavigate();
   const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
@@ -54,7 +61,7 @@ const Detail = () => {
     ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.operationName,
-      values: [ REGISTER_OPERATION ]
+      values: [REGISTER_OPERATION],
     },
     {
       name: TAG_NAMES.modelCreator,
@@ -62,7 +69,7 @@ const Detail = () => {
     },
     {
       name: TAG_NAMES.modelName,
-      values: [ findTag(state, 'modelName') ],
+      values: [findTag(state, 'modelName')],
     },
   ];
 
@@ -87,9 +94,7 @@ const Detail = () => {
         const arValue = arweave.ar.winstonToAr(updatedFee);
         setFeeValue(parseFloat(arValue));
       } else {
-        const arValue = arweave.ar.winstonToAr(
-          findTag(state, 'modelFee') as string
-        );
+        const arValue = arweave.ar.winstonToAr(findTag(state, 'modelFee') as string);
         setFeeValue(parseFloat(arValue));
       }
     }
@@ -150,10 +155,7 @@ const Detail = () => {
       tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
       tx.addTag(TAG_NAMES.operationName, MODEL_FEE_UPDATE);
       tx.addTag(TAG_NAMES.modelName, findTag(state, 'modelName') as string);
-      tx.addTag(
-        TAG_NAMES.modelTransaction,
-        findTag(state, 'modelTransaction') as string,
-      );
+      tx.addTag(TAG_NAMES.modelTransaction, findTag(state, 'modelTransaction') as string);
       tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${feeValue}`));
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
       await arweave.transactions.sign(tx);
@@ -173,7 +175,9 @@ const Detail = () => {
         );
         setFeeDirty(false);
       } else {
-        enqueueSnackbar(`Failed with error ${payRes.status}: ${payRes.statusText}`, { variant: 'error' });
+        enqueueSnackbar(`Failed with error ${payRes.status}: ${payRes.statusText}`, {
+          variant: 'error',
+        });
       }
     } catch (err) {
       enqueueSnackbar('Something Went Wrong', { variant: 'error' });
@@ -204,11 +208,7 @@ const Detail = () => {
         alignItems='center'
         lineHeight={0}
       >
-        {showOperators && (
-          <Typography>
-            {findTag(state, 'modelName')}
-          </Typography>
-        )}
+        {showOperators && <Typography>{findTag(state, 'modelName')}</Typography>}
         <IconButton onClick={handleClose}>
           <img src='/close-icon.svg' />
         </IconButton>
@@ -313,40 +313,40 @@ const Detail = () => {
               width={'80%'}
               height='60px'
             >
-              {
-                currentAddress === state.node.owner.address ?
-                  <NumericFormat
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontStyle: 'normal',
-                      fontWeight: 700,
-                      fontSize: '60px',
-                      lineHeight: '106px',
-                      textAlign: 'center',
-                      color: '#FAFAFA',
-                    }}
-                    value={feeValue}
-                    onChange={handleFeeChange}
-                    customInput={InputBase}
-                    decimalScale={3}
-                    decimalSeparator={'.'}
-                  />
-                : <Typography
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontStyle: 'normal',
-                      fontWeight: 700,
-                      fontSize: '60px',
-                      lineHeight: '106px',
-                      textAlign: 'center',
-                      color: '#FAFAFA',
-                    }}
-                  >
-                    {feeValue}
-                  </Typography>
-              }
+              {currentAddress === state.node.owner.address ? (
+                <NumericFormat
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontStyle: 'normal',
+                    fontWeight: 700,
+                    fontSize: '60px',
+                    lineHeight: '106px',
+                    textAlign: 'center',
+                    color: '#FAFAFA',
+                  }}
+                  value={feeValue}
+                  onChange={handleFeeChange}
+                  customInput={InputBase}
+                  decimalScale={3}
+                  decimalSeparator={'.'}
+                />
+              ) : (
+                <Typography
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontStyle: 'normal',
+                    fontWeight: 700,
+                    fontSize: '60px',
+                    lineHeight: '106px',
+                    textAlign: 'center',
+                    color: '#FAFAFA',
+                  }}
+                >
+                  {feeValue}
+                </Typography>
+              )}
               <Icon sx={{ height: '50px', width: '50px' }}>
                 <img src='/arweave-logo.svg' width={'50px'} height={'50px'} />
               </Icon>
@@ -369,10 +369,7 @@ const Detail = () => {
             >
               Description
             </Typography>
-            <Typography>
-              { findTag(state, 'description') ||
-                'No Description Available.'}
-            </Typography>
+            <Typography>{findTag(state, 'description') || 'No Description Available.'}</Typography>
           </Box>
           {currentAddress === state.node.owner.address ? (
             <Button variant='outlined' disabled={!feeDirty && feeValue >= 0} onClick={updateFee}>

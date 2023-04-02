@@ -1,4 +1,10 @@
-import { DEFAULT_TAGS, INFERENCE_PAYMENT, INFERENCE_PERCENTAGE_FEE, MODEL_INFERENCE_RESPONSE, TAG_NAMES } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  INFERENCE_PAYMENT,
+  INFERENCE_PERCENTAGE_FEE,
+  MODEL_INFERENCE_RESPONSE,
+  TAG_NAMES,
+} from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import {
   QUERY_PAID_FEE_OPERATORS,
@@ -61,7 +67,7 @@ const OperatorRow = ({
     },
     {
       name: TAG_NAMES.operationName,
-      values: [ INFERENCE_PAYMENT ],
+      values: [INFERENCE_PAYMENT],
     },
   ];
   const { data, /* loading, error,  */ fetchMore } = useQuery(QUERY_REQUESTS_FOR_OPERATOR, {
@@ -143,7 +149,7 @@ const OperatorRow = ({
         },
         {
           name: TAG_NAMES.operationName,
-          values: [ MODEL_INFERENCE_RESPONSE]
+          values: [MODEL_INFERENCE_RESPONSE],
         },
         {
           name: TAG_NAMES.requestTransaction,

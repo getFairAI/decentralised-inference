@@ -79,13 +79,7 @@ const History = () => {
             <Card>
               <CardActionArea
                 style={{ display: 'flex' }}
-                onClick={(e) =>
-                  handleCardClick(
-                    e,
-                    findTag(edge, 'modelTransaction'),
-                    index,
-                  )
-                }
+                onClick={(e) => handleCardClick(e, findTag(edge, 'modelTransaction'), index)}
               >
                 <CardHeader
                   sx={{ marginRight: 0 }}
@@ -104,10 +98,7 @@ const History = () => {
                         alignContent: 'center',
                       }}
                     >
-                      <Chip
-                        label={findTag(edge, 'category')}
-                        color='primary'
-                      />
+                      <Chip label={findTag(edge, 'category')} color='primary' />
                       <Box sx={{ display: 'flex', alignContent: 'center' }}>
                         <Typography variant='body1'>11</Typography>
                         <ThumbUpIcon />

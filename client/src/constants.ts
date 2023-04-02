@@ -30,7 +30,7 @@ export const TAG_NAMES = {
   requestTransaction: 'Request-Transaction',
   responseTransaction: 'Response-Transaction',
   attachmentName: 'Attachment-Name',
-  attachmentRole: 'Attachment-Role'
+  attachmentRole: 'Attachment-Role',
 };
 
 // Operation Names
@@ -72,6 +72,6 @@ export const NET_ARWEAVE_URL = 'https://arweave.net';
 export const N_PREVIOUS_BLOCKS = 7;
 
 export const DEFAULT_TAGS = [
-  { name: TAG_NAMES.appName, values: [ APP_NAME ]},
-  { name: TAG_NAMES.appVersion, values: [ APP_VERSION ]}
+  { name: TAG_NAMES.appName, values: [APP_NAME] },
+  { name: TAG_NAMES.appVersion, values: [APP_VERSION] },
 ];
