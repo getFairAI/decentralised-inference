@@ -69,15 +69,17 @@ const Operators = () => {
   const handleHighlight = (value: boolean) => setHighLightTop(value);
 
   return (
-    <Container sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-around',
-      alignContent: 'space-around',
-      '@media all': {
-        maxWidth: '100%',
-      },
-    }}>
+    <Container
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-around',
+        alignContent: 'space-around',
+        '@media all': {
+          maxWidth: '100%',
+        },
+      }}
+    >
       <Typography
         sx={{
           fontStyle: 'normal',
@@ -180,7 +182,13 @@ const Operators = () => {
         </Box>
       </Box>
       <Box>
-        <Box display={'flex'} justifyContent={'flex-start'} flexDirection={'row-reverse'} gap='30px' margin={'16px'}>
+        <Box
+          display={'flex'}
+          justifyContent={'flex-start'}
+          flexDirection={'row-reverse'}
+          gap='30px'
+          margin={'16px'}
+        >
           <Typography
             sx={{
               fontStyle: 'normal',
@@ -281,7 +289,9 @@ const Operators = () => {
               </Typography>
             </Container>
           ) : (
-            txs.map((el: IEdge, idx: number) => <ModelCard modelTx={el} key={el.node.id} index={idx}/>)
+            txs.map((el: IEdge, idx: number) => (
+              <ModelCard modelTx={el} key={el.node.id} index={idx} />
+            ))
           )}
           {loading &&
             mockArray.map((val) => (

@@ -1,9 +1,26 @@
-import { AVATAR_ATTACHMENT, DEFAULT_TAGS, MODEL_ATTACHMENT, NET_ARWEAVE_URL, REGISTER_OPERATION, TAG_NAMES } from '@/constants';
+import {
+  AVATAR_ATTACHMENT,
+  DEFAULT_TAGS,
+  MODEL_ATTACHMENT,
+  NET_ARWEAVE_URL,
+  REGISTER_OPERATION,
+  TAG_NAMES,
+} from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { GET_LATEST_MODEL_ATTACHMENTS, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { parseWinston } from '@/utils/arweave';
 import { useLazyQuery, useQuery } from '@apollo/client';
-import { Box, Button, Card, CardActionArea, CardContent, CardHeader, CardMedia, Container, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  CardHeader,
+  CardMedia,
+  Container,
+  Typography,
+} from '@mui/material';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -20,7 +37,7 @@ interface Element {
   totalOperators: number;
 }
 
-const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
+const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
   const navigate = useNavigate();
   const [cardData, setCardData] = useState<Element>();
   const elementsPerPage = 5;
@@ -41,7 +58,9 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
   });
 
   const { currentAddress } = useContext(WalletContext);
-  const [getAvatar, { data: avatarData, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
+  const [getAvatar, { data: avatarData, loading: avatarLoading }] = useLazyQuery(
+    GET_LATEST_MODEL_ATTACHMENTS,
+  );
 
   useEffect(() => {
     const modelId = findTag(modelTx, 'modelTransaction');
@@ -63,7 +82,7 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
   const imgUrl = useMemo(() => {
     if (avatarData) {
       const avatarTxId =
-      avatarData.transactions.edges && avatarData.transactions.edges[0]
+        avatarData.transactions.edges && avatarData.transactions.edges[0]
           ? avatarData.transactions.edges[0].node.id
           : undefined;
       if (avatarTxId) {
@@ -76,7 +95,7 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
     } else {
       return '';
     }
-  }, [ avatarData]);
+  }, [avatarData]);
 
   useEffect(() => {
     if (data && data.transactions && data.transactions.pageInfo.hasNextPage) {
@@ -162,11 +181,13 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
   };
 
   return (
-    <Card sx={{
-      background:
-        'linear-gradient(to bottom, rgba(118, 118, 118, 0.1) 2.17%, rgba(1, 1, 1, 0) 188.85%)',
-      borderRadius: '10px',
-    }}>
+    <Card
+      sx={{
+        background:
+          'linear-gradient(to bottom, rgba(118, 118, 118, 0.1) 2.17%, rgba(1, 1, 1, 0) 188.85%)',
+        borderRadius: '10px',
+      }}
+    >
       {error ? (
         <Container>
           <Typography alignItems='center' display='flex' flexDirection='column'>
@@ -238,162 +259,160 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge, index: number }) => {
               <Typography>Total Operators: {cardData?.totalOperators}</Typography>
             </>
           )} */}
-          {
-            !imgUrl || loading || avatarLoading ? (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '317px',
-                  height: '352px',
-                  background: 'linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%)',
-                  // backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: 'cover' /* <------ */,
-                  backgroundPosition: 'center center',
-                }}
-              />
-            ) : (
-              <CardMedia
-                src={loading || avatarLoading ? '' : imgUrl}
-                sx={{
-                  borderRadius: '16px',
-                  height: '100px',
-                  width: '100px',
-                  background: `linear-gradient(to top, #000000 10%, rgba(71, 71, 71, 0) 100%), url(${
-                    loading || avatarLoading ? '' : imgUrl
-                  })`,
-                  backgroundPosition: 'center',
-                }}
-              />
-            )
-          }
-        <CardContent>
-          <Typography
+          {!imgUrl || loading || avatarLoading ? (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                width: '317px',
+                height: '352px',
+                background: 'linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%)',
+                // backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover' /* <------ */,
+                backgroundPosition: 'center center',
+              }}
+            />
+          ) : (
+            <CardMedia
+              src={loading || avatarLoading ? '' : imgUrl}
+              sx={{
+                borderRadius: '16px',
+                height: '100px',
+                width: '100px',
+                background: `linear-gradient(to top, #000000 10%, rgba(71, 71, 71, 0) 100%), url(${
+                  loading || avatarLoading ? '' : imgUrl
+                })`,
+                backgroundPosition: 'center',
+              }}
+            />
+          )}
+          <CardContent>
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: 700,
+                fontSize: '20px',
+                lineHeight: '27px',
+                display: 'flex',
+                alignItems: 'center',
+                textAlign: 'center',
+                color: '#F4F4F4',
+              }}
+            >
+              {findTag(modelTx, 'modelName') || 'Untitled'}
+            </Typography>
+          </CardContent>
+          <Box flexGrow={1}></Box>
+          <CardContent
             sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '20px',
-              lineHeight: '27px',
               display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-              color: '#F4F4F4',
+              gap: '30px',
             }}
           >
-            {findTag(modelTx, 'modelName') || 'Untitled'}
-          </Typography>
-        </CardContent>
-        <Box flexGrow={1}></Box>
-        <CardContent
-          sx={{
-            display: 'flex',
-            gap: '30px',
-          }}
-        >
-          <Box display={'flex'} flexDirection='column'>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
-            >
-              {cardData?.totalOperators}
-            </Typography>
-          </Box>
-          <Box display={'flex'} flexDirection='column'>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
-            >
-              {Number.isNaN(cardData?.modelFee) || cardData?.modelFee === 'NaN'
-                ? 'Invalid Fee'
-                : `${cardData?.modelFee} AR`}
-            </Typography>
-          </Box>
-          <Box display={'flex'} flexDirection='column'>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
-            >
-              {Number.isNaN(cardData?.avgFee) || cardData?.avgFee === 'NaN'
-                ? 'Not enough Operators for Fee'
-                : `${cardData?.avgFee} AR`}
-            </Typography>
-          </Box>
-          <Box display={'flex'} flexDirection='column'>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
-            >
-              11k
-            </Typography>
-          </Box>
-          <Box display={'flex'} flexDirection='column'>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
-            >
-              12 Stamps
-            </Typography>
-          </Box>
-          <Box display={'flex'} flexDirection='column'>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
-            >
-              {getTimePassed()}
-            </Typography>
-          </Box>
-        </CardContent>
-      </CardActionArea>
+            <Box display={'flex'} flexDirection='column'>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 300,
+                  fontSize: '20px',
+                  lineHeight: '27px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  color: '#BFBFBF;',
+                }}
+              >
+                {cardData?.totalOperators}
+              </Typography>
+            </Box>
+            <Box display={'flex'} flexDirection='column'>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 300,
+                  fontSize: '20px',
+                  lineHeight: '27px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  color: '#BFBFBF;',
+                }}
+              >
+                {Number.isNaN(cardData?.modelFee) || cardData?.modelFee === 'NaN'
+                  ? 'Invalid Fee'
+                  : `${cardData?.modelFee} AR`}
+              </Typography>
+            </Box>
+            <Box display={'flex'} flexDirection='column'>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 300,
+                  fontSize: '20px',
+                  lineHeight: '27px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  color: '#BFBFBF;',
+                }}
+              >
+                {Number.isNaN(cardData?.avgFee) || cardData?.avgFee === 'NaN'
+                  ? 'Not enough Operators for Fee'
+                  : `${cardData?.avgFee} AR`}
+              </Typography>
+            </Box>
+            <Box display={'flex'} flexDirection='column'>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 300,
+                  fontSize: '20px',
+                  lineHeight: '27px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  color: '#BFBFBF;',
+                }}
+              >
+                11k
+              </Typography>
+            </Box>
+            <Box display={'flex'} flexDirection='column'>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 300,
+                  fontSize: '20px',
+                  lineHeight: '27px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  color: '#BFBFBF;',
+                }}
+              >
+                12 Stamps
+              </Typography>
+            </Box>
+            <Box display={'flex'} flexDirection='column'>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 300,
+                  fontSize: '20px',
+                  lineHeight: '27px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  color: '#BFBFBF;',
+                }}
+              >
+                {getTimePassed()}
+              </Typography>
+            </Box>
+          </CardContent>
+        </CardActionArea>
       )}
     </Card>
   );
