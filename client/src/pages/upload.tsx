@@ -7,9 +7,8 @@ import {
   CardContent,
   CardHeader,
   Container,
-  Divider,
+  Icon,
   MenuItem,
-  OutlinedInput,
   Snackbar,
   Typography,
 } from '@mui/material';
@@ -19,7 +18,6 @@ import TextControl from '@/components/text-control';
 import SelectControl from '@/components/select-control';
 import MarkdownControl from '@/components/md-control';
 import FileControl from '@/components/file-control';
-import ImagePicker from '@/components/image-picker';
 import AvatarControl from '@/components/avatar-control';
 import FundDialog from '@/components/fund-dialog';
 import CustomProgress from '@/components/progress';
@@ -40,6 +38,7 @@ import {
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
 import arweave from '@/utils/arweave';
+import NumberControl from '@/components/number-control';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -377,9 +376,9 @@ const Upload = () => {
           <CardHeader title='Create Your Model'>
             {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
           </CardHeader>
-          <CardContent>
+          <CardContent sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}>
             <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
-              <Box width={'20%'}>
+              <Box width={'22%'}>
                 <AvatarControl name='avatar' control={control} />
               </Box>
               <Box display={'flex'} justifyContent={'space-between'} flexDirection='column' flexGrow={1} width={'30%'}>
@@ -415,28 +414,49 @@ const Upload = () => {
                   <MenuItem value={'audio'}>Audio</MenuItem>
                   <MenuItem value={'video'}>Video</MenuItem>
                 </SelectControl>
-                <TextControl
-                  name='fee'
-                  control={control}
-                  rules={{ required: true }}
-                  mat={{
-                    variant: 'outlined',
-                    type: 'number',
-                    inputProps: {
-                      step: 0.01,
-                      inputMode: 'numeric',
-                      min: 0.01 /* max: currentBalance */,
-                    },
-                    InputProps: {
-                      sx: {
-                        borderWidth: '1px',
-                        borderColor: '#FFF',
-                        borderRadius: '16px'
-                      }
-                    },
-                  }}
-                  style={{ width: '100%' }}
-                />
+                <Box paddingLeft={'8px'}>
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 700,
+                      fontSize: '23px',
+                      lineHeight: '31px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      color: '#FAFAFA',
+                    }}
+                  >
+                    Cost
+                  </Typography>
+                  <Box
+                    display={'flex'}
+                    alignItems={'center'}
+                    justifyContent='space-between'
+                    width={'80%'}
+                    height='60px'
+                  >
+                    <NumberControl
+                      name='fee'
+                      control={control}
+                      mat={{
+                        sx: {
+                          fontStyle: 'normal',
+                          fontWeight: 700,
+                          fontSize: '23px',
+                          lineHeight: '31px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                          color: '#FAFAFA',
+                        }
+                      }}
+                    />
+                    <Icon sx={{ height: '50px', width: '50px' }}>
+                      <img src='/arweave-logo.svg' width={'50px'} height={'50px'} />
+                    </Icon>
+                  </Box>
+                </Box>
               </Box>
               <TextControl
                 name='description'
@@ -455,7 +475,7 @@ const Upload = () => {
                     }
                   },
                 }}
-                style={{ width: '40%'}}
+                style={{ width: '40%', marginTop: 0 }}
               />
             </Box>
 
@@ -463,21 +483,54 @@ const Upload = () => {
             {/* <FileUpload ></FileUpload> */}
             <FileControl name='file' control={control} rules={{ required: true }} />
           </CardContent>
-          <CardActions>
-            <Button onClick={handleSubmit(onSubmit)} disabled={control._formState.isValid}>
-              Submit
+          <CardActions sx={{ paddingBottom: '32px', justifyContent: 'center' }}>
+            <Button
+              onClick={() => reset()}
+              sx={{
+                border: '1px solid #F4F4F4',
+                borderRadius: '7px',
+                height: '39px',
+                width: '204px'
+              }}
+            >
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: '15px',
+                  lineHeight: '20px',
+                  color: '#F4F4F4',
+                }}
+              >Reset to Default</Typography>
             </Button>
-            <FundDialog
-              open={fundOpen}
-              setOpen={setFundOpen}
-              handleFundFinished={handleFundFinished}
-            />
-            <Button onClick={() => reset()} variant={'outlined'}>
-              Reset
+            <Button
+              onClick={handleSubmit(onSubmit)}
+              disabled={control._formState.isValid}
+              sx={{
+                background: '#F4F4F4',
+                borderRadius: '7px',
+                height: '39px',
+                width: '204px'
+              }}
+            >
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: '15px',
+                  lineHeight: '20px',
+                  color: '#151515',
+                }}
+              >Submit</Typography>
             </Button>
           </CardActions>
         </Card>
       </Box>
+      <FundDialog
+        open={fundOpen}
+        setOpen={setFundOpen}
+        handleFundFinished={handleFundFinished}
+      />
       <Snackbar
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         open={snackbarOpen}
