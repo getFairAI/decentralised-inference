@@ -1,5 +1,5 @@
-import { Box, Button, IconButton, Typography } from '@mui/material';
-import { ChangeEvent, useState } from 'react';
+import { Box, Button, Typography } from '@mui/material';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { Control, useController, UseControllerProps } from 'react-hook-form';
 
 const AvatarControl = (props: UseControllerProps & { control: Control }) => {
@@ -26,6 +26,12 @@ const AvatarControl = (props: UseControllerProps & { control: Control }) => {
     }
   };
 
+  useEffect(() => {
+    if (!field.value) {
+      setSrc('');
+    }
+  }, [ field.value ]);
+
   return <Button
     sx={{
       background: 'linear-gradient(to bottom, #000000 10%, rgba(71, 71, 71, 0) 100%)',
@@ -40,10 +46,7 @@ const AvatarControl = (props: UseControllerProps & { control: Control }) => {
     }}
     component='label'
   >
-    <IconButton sx={{ zIndex: 10 }} onClick={() => setSrc('')}>
-      <img src='/close-icon.svg' />
-    </IconButton>
-    <img src={src} width={'100%'} height={'100%'} style={{ borderTopLeftRadius: '23px',  borderTopRightRadius: '23px' }}/>
+    {src && <img src={src} width={'100%'} height={'100%'} style={{ borderTopLeftRadius: '23px',  borderTopRightRadius: '23px' }}/>}
     <input type='file' accept='image/*' hidden onChange={handleFileChosen} />
     
     <Box sx={{
