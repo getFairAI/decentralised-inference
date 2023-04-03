@@ -177,7 +177,7 @@ const Navbar = ({
                   Explore
                 </NavLink>
                 <NavLink to='/upload' className='navbar-links'>
-                  Create
+                  Curators
                 </NavLink>
                 <NavLink to='/operators' className='navbar-links'>
                   Operators

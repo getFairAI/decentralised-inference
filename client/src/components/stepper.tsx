@@ -17,7 +17,7 @@ import {
   List,
   ListItem,
 } from '@mui/material';
-import { ChangeEvent, Fragment, ReactElement, useEffect, useState } from 'react';
+import { ChangeEvent, Fragment, ReactElement, useEffect, useRef, useState } from 'react';
 import PaymentIcon from '@mui/icons-material/Payment';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -31,6 +31,7 @@ import { findTag } from '@/utils/common';
 import { useRouteLoaderData } from 'react-router-dom';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { getData } from '@/utils/arweave';
+import useOnScreen from '@/hooks/useOnScreen';
 
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -100,15 +101,17 @@ export const CustomStepper = (props: {
   handleSubmit: (rate: string, name: string) => Promise<void>;
   isRegistered: boolean;
 }) => {
-  const { notesTxId } = (useRouteLoaderData('model-alt') as RouteLoaderResult) || {};
+  const { notesTxId } = (useRouteLoaderData('register') as RouteLoaderResult) || {};
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const [completed, setCompleted] = useState(new Set<number>());
   const [fileSize, setFileSize] = useState(0);
   const [operatorName, setOperatorName] = useState('');
   const [notes, setNotes] = useState('');
-
   const [rate, setRate] = useState(0);
+  const target = useRef<HTMLDivElement>(null);
+  const isOnScreen = useOnScreen(target);
+  const [hasScrolledDown, setHasScrollDown] = useState(false);
 
   const isStepSkipped = (step: number) => {
     return skipped.has(step);
@@ -196,6 +199,12 @@ export const CustomStepper = (props: {
 
     if (notesTxId) fetchNotesData();
   }, [notesTxId]);
+
+  useEffect(() => {
+    if (!hasScrolledDown && isOnScreen) {
+      setHasScrollDown(true);
+    }
+  }, [isOnScreen]);
 
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
@@ -529,6 +538,7 @@ export const CustomStepper = (props: {
                 By clicking next, you accept all these rules, terms, and conditions specified above.
               </b>
             </Typography>
+            <div ref={target}></div>
           </Box>
           <Box display={'flex'} justifyContent={'flex-end'}>
             {/* <Button variant='contained' onClick={handleBack}>Back</Button> */}
@@ -539,7 +549,11 @@ export const CustomStepper = (props: {
                 borderRadius: '7px',
                 height: '39px',
                 width: '204px',
+                '&.Mui-disabled': {
+                  opacity: '0.1',
+                },
               }}
+              disabled={!hasScrolledDown}
             >
               <Typography
                 sx={{

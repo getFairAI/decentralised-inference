@@ -73,7 +73,7 @@ const AiListCard = ({
   }, [data]);
 
   const getTimePassed = () => {
-    const timestamp = findTag(model, 'unixTime') || model.node.block.timestamp;
+    const timestamp = findTag(model, 'unixTime') || model.node.block?.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 

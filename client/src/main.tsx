@@ -86,6 +86,7 @@ const router = createBrowserRouter([
             children: [
               {
                 path: 'register/:txid/',
+                id: 'register',
                 loader: getModelFeeAndAttachments,
                 element: <Register />,
               },
