@@ -334,7 +334,7 @@ const Detail = () => {
                     lineHeight: '106px',
                     textAlign: 'center',
                     color: '#FAFAFA',
-                    paddingRight: '8px'
+                    paddingRight: '8px',
                   }}
                   value={feeValue}
                   onChange={handleFeeChange}
@@ -353,7 +353,7 @@ const Detail = () => {
                     lineHeight: '106px',
                     textAlign: 'center',
                     color: '#FAFAFA',
-                    paddingRight: '8px'
+                    paddingRight: '8px',
                   }}
                 >
                   {feeValue}

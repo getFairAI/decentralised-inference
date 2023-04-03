@@ -427,7 +427,7 @@ export const CustomStepper = (props: {
               flexDirection: 'column',
               maxHeight: '500px',
               overflowY: 'auto',
-              paddingRight: '16px'
+              paddingRight: '16px',
             }}
           >
             <Typography variant='h4' textAlign={'justify'}>
