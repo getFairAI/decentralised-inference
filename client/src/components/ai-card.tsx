@@ -3,10 +3,9 @@ import { FiCard, FiCardActionArea, FiCardContent, FicardMedia } from './full-ima
 import { IEdge } from '@/interfaces/arweave';
 import { toSvg } from 'jdenticon';
 import { useNavigate } from 'react-router-dom';
-import { MouseEvent, useContext, useEffect, useMemo } from 'react';
+import { MouseEvent, useEffect, useMemo } from 'react';
 import { findTag } from '@/utils/common';
 import { useLazyQuery } from '@apollo/client';
-import { WalletContext } from '@/context/wallet';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import {
   AVATAR_ATTACHMENT,
@@ -18,7 +17,6 @@ import {
 
 const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
   const navigate = useNavigate();
-  const { currentAddress } = useContext(WalletContext);
 
   const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
 
@@ -34,7 +32,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
     getAvatar({
       variables: {
         tags: attachmentAvatarTags,
-        owner: currentAddress,
+        owner: model.node.owner.address,
       },
     });
   }, []);
@@ -108,7 +106,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
               right: 0,
               width: '317px',
               height: '352px',
-              background: 'linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%)',
+              background: 'linear-gradient(to top, #000000 -35%, rgba(71, 71, 71, 0) 100%)',
               // backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'cover' /* <------ */,
@@ -124,7 +122,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
               right: 0,
               width: '317px',
               height: '352px',
-              background: `linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%), url(${
+              background: `linear-gradient(to top, #000000 -35%, rgba(71, 71, 71, 0) 100%), url(${
                 imgUrl && !loading && !avatarLoading ? imgUrl : ''
               })`,
               // backgroundPosition: 'center',

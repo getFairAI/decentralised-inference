@@ -21,12 +21,11 @@ import {
   Container,
   Typography,
 } from '@mui/material';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { findTag } from '@/utils/common';
 import { toSvg } from 'jdenticon';
-import { WalletContext } from '@/context/wallet';
 
 interface Element {
   name: string;
@@ -57,7 +56,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
     skip: !modelTx,
   });
 
-  const { currentAddress } = useContext(WalletContext);
   const [getAvatar, { data: avatarData, loading: avatarLoading }] = useLazyQuery(
     GET_LATEST_MODEL_ATTACHMENTS,
   );
@@ -74,7 +72,7 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
     getAvatar({
       variables: {
         tags: attachmentAvatarTags,
-        owner: currentAddress,
+        owner: modelTx.node.owner.address,
       },
     });
   }, []);

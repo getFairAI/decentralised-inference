@@ -5,7 +5,6 @@ import {
   NET_ARWEAVE_URL,
   TAG_NAMES,
 } from '@/constants';
-import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { findTag } from '@/utils/common';
@@ -20,7 +19,7 @@ import {
   Box,
 } from '@mui/material';
 import { toSvg } from 'jdenticon';
-import { MouseEvent, useContext, useEffect, useMemo } from 'react';
+import { MouseEvent, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AiListCard = ({
@@ -34,7 +33,6 @@ const AiListCard = ({
   error?: ApolloError;
 }) => {
   const navigate = useNavigate();
-  const { currentAddress } = useContext(WalletContext);
   const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
 
   useEffect(() => {
@@ -49,8 +47,9 @@ const AiListCard = ({
     getAvatar({
       variables: {
         tags: attachmentAvatarTags,
-        owner: currentAddress,
+        owner: model.node.owner.address,
       },
+      fetchPolicy: 'no-cache',
     });
   }, []);
 

@@ -941,8 +941,10 @@ const Chat = () => {
                                       display: 'flex',
                                       alignItems: 'center',
                                       color: el.type === 'response' ? '#F4F4F4' : '#000',
+                                      whiteSpace: 'pre-wrap',
                                     }}
                                     gutterBottom
+                                    component={'pre'}
                                   >
                                     {el.msg}
                                   </Typography>

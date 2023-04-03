@@ -375,7 +375,7 @@ const Upload = () => {
             borderRadius: '30px',
           }}
         >
-          <CardHeader title='Curate Model' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
+          <CardHeader title='Upload Script' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
             {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
           </CardHeader>
           <CardContent
