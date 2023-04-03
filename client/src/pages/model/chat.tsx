@@ -464,7 +464,7 @@ const Chat = () => {
     if (!_.isEqual(messages, newMessages)) {
       setMessages(filteredNewMsgs);
     }
-    if (filteredNewMsgs[filteredNewMsgs.length - 1].type === 'response') {
+    if (filteredNewMsgs[filteredNewMsgs.length - 1]?.type === 'response') {
       setIsWaitingResponse(false);
       setResponseTimeout(false);
     }
@@ -484,7 +484,7 @@ const Chat = () => {
 
   const handleAddConversation = () => {
     const lastConversation = conversationIds[conversationIds.length - 1];
-    const newConversationId = lastConversation + 1;
+    const newConversationId = lastConversation ? lastConversation + 1 : 1;
     setConversationIds([...conversationIds, newConversationId]);
     setFilteredConversationIds([...conversationIds, newConversationId]);
     setFilterConversations('');
@@ -666,7 +666,7 @@ const Chat = () => {
       setMessages(filteredNewMsgs);
     }
 
-    if (filteredNewMsgs[filteredNewMsgs.length - 1].type === 'response') {
+    if (filteredNewMsgs[filteredNewMsgs.length - 1]?.type === 'response') {
       setIsWaitingResponse(false);
       setResponseTimeout(false);
     }

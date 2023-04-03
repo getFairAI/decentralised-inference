@@ -11,7 +11,7 @@ export const TAG_NAMES = {
   appName: 'App-Name',
   appVersion: 'App-Version',
   contentType: 'Content-Type',
-  unixTime: 'UnixTime',
+  unixTime: 'Unix-Time',
   modelName: 'Model-Name',
   modelCreator: 'Model-Creator',
   modelOperator: 'Model-Operator',
