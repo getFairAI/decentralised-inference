@@ -49,7 +49,7 @@ const AiListCard = ({
         tags: attachmentAvatarTags,
         owner: model.node.owner.address,
       },
-      fetchPolicy: 'no-cache'
+      fetchPolicy: 'no-cache',
     });
   }, []);
 
