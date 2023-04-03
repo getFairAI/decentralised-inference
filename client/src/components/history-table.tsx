@@ -211,11 +211,12 @@ const HistoryTable = ({ address }: { address?: string }) => {
         /* const cellWidth = tableWidth / tableCells.length;
         tableCells?.forEach((el) => el.setAttribute('width', `${cellWidth}px`)); */
         const tableHeadCells = document.querySelectorAll('thead tr th');
-        tableHeadCells.forEach((el, idx) => el.setAttribute('width', `${tableCells[idx].clientWidth}px`));
+        tableHeadCells.forEach((el, idx) =>
+          el.setAttribute('width', `${tableCells[idx].clientWidth}px`),
+        );
       }
     }
-    
-  }, [ rows ]);
+  }, [rows]);
 
   return (
     <Box>
@@ -289,12 +290,16 @@ const HistoryTable = ({ address }: { address?: string }) => {
                 </TableCell>
                 <TableCell align='right' sx={{ background: 'transparent' }}>
                   <Tooltip title={row.destination}>
-                    <Typography>{row.destination.slice(0, 7)}...{row.destination.slice(-2)}</Typography>
+                    <Typography>
+                      {row.destination.slice(0, 7)}...{row.destination.slice(-2)}
+                    </Typography>
                   </Tooltip>
                 </TableCell>
                 <TableCell align='right' sx={{ background: 'transparent' }}>
                   <Tooltip title={row.origin}>
-                    <Typography>{row.origin.slice(0, 7)}...{row.origin.slice(-2)}</Typography>
+                    <Typography>
+                      {row.origin.slice(0, 7)}...{row.origin.slice(-2)}
+                    </Typography>
                   </Tooltip>
                 </TableCell>
               </TableRow>
