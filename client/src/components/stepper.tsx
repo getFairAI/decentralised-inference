@@ -111,7 +111,7 @@ export const CustomStepper = (props: {
   const [rate, setRate] = useState(0);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
-  const [ hasScrolledDown, setHasScrollDown ] = useState(false);
+  const [hasScrolledDown, setHasScrollDown] = useState(false);
 
   const isStepSkipped = (step: number) => {
     return skipped.has(step);
@@ -204,7 +204,7 @@ export const CustomStepper = (props: {
     if (!hasScrolledDown && isOnScreen) {
       setHasScrollDown(true);
     }
-  }, [ isOnScreen ]);
+  }, [isOnScreen]);
 
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
@@ -550,8 +550,8 @@ export const CustomStepper = (props: {
                 height: '39px',
                 width: '204px',
                 '&.Mui-disabled': {
-                  opacity: '0.1'
-                }
+                  opacity: '0.1',
+                },
               }}
               disabled={!hasScrolledDown}
             >
