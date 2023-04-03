@@ -261,7 +261,7 @@ const Register = () => {
             </Box>
           </Box>
         </Box>
-        <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
+        <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'45%'}>
           <Box>
             <Typography
               sx={{
@@ -281,7 +281,7 @@ const Register = () => {
           </Box>
         </Box>
       </CardContent>
-      <DialogContent sx={{ padding: '0px 32px' }}>
+      <DialogContent sx={{ padding: '20px 32px' }}>
         <CustomStepper data={state} handleSubmit={handleRegister} isRegistered={isRegistered} />
       </DialogContent>
     </Dialog>

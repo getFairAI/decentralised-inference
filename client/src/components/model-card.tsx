@@ -152,7 +152,7 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
   };
 
   const getTimePassed = () => {
-    const timestamp = findTag(modelTx, 'unixTime') || modelTx.node.block.timestamp;
+    const timestamp = findTag(modelTx, 'unixTime') || modelTx.node.block?.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
