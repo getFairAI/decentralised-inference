@@ -13,8 +13,11 @@ import {
   Typography,
   TableContainer,
   TableBody,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 export interface Row {
   txid: string;
@@ -200,16 +203,19 @@ const HistoryTable = ({ address }: { address?: string }) => {
   }, [receivedRows, sentRows]);
 
   useEffect(() => {
-    const firstRow = document.querySelector('tbody tr:first-child');
-    const tableCells = firstRow?.querySelectorAll('td');
-    const tableWidth = document.querySelector('table')?.clientWidth;
-    if (tableWidth && tableCells) {
-      const cellWidth = tableWidth / tableCells.length;
-      tableCells?.forEach((el) => el.setAttribute('width', `${cellWidth}px`));
-      const tableHeadCells = document.querySelectorAll('thead tr th');
-      tableHeadCells.forEach((el) => el.setAttribute('width', `${cellWidth}px`));
+    if (rows && rows.length > 0) {
+      const firstRow = document.querySelector('tbody tr:first-child');
+      const tableCells = firstRow?.querySelectorAll('td');
+      const tableWidth = document.querySelector('table')?.clientWidth;
+      if (tableWidth && tableCells) {
+        /* const cellWidth = tableWidth / tableCells.length;
+        tableCells?.forEach((el) => el.setAttribute('width', `${cellWidth}px`)); */
+        const tableHeadCells = document.querySelectorAll('thead tr th');
+        tableHeadCells.forEach((el, idx) => el.setAttribute('width', `${tableCells[idx].clientWidth}px`));
+      }
     }
-  }, []);
+    
+  }, [ rows ]);
 
   return (
     <Box>
@@ -223,10 +229,10 @@ const HistoryTable = ({ address }: { address?: string }) => {
             <TableCell sx={{ background: 'transparent' }}>
               <Typography sx={{ fontWeight: 'bold' }}>Tx Id</Typography>
             </TableCell>
-            <TableCell sx={{ background: 'transparent' }}>
+            <TableCell align='right' sx={{ background: 'transparent' }}>
               <Typography sx={{ fontWeight: 'bold' }}>Type</Typography>
             </TableCell>
-            <TableCell sx={{ background: 'transparent' }}>
+            <TableCell align='right' sx={{ background: 'transparent' }}>
               <Typography sx={{ fontWeight: 'bold' }}>Operation</Typography>
             </TableCell>
             <TableCell align='right' sx={{ background: 'transparent' }}>
@@ -257,28 +263,39 @@ const HistoryTable = ({ address }: { address?: string }) => {
             {rows.map((row) => (
               <TableRow key={row.txid}>
                 <TableCell sx={{ background: 'transparent' }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{row.txid}</Typography>
-                </TableCell>
-                <TableCell sx={{ background: 'transparent' }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{row.type}</Typography>
-                </TableCell>
-                <TableCell sx={{ background: 'transparent' }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{row.operation}</Typography>
-                </TableCell>
-                <TableCell align='right' sx={{ background: 'transparent' }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{row.date}</Typography>
+                  <Tooltip title={row.txid}>
+                    <Typography>
+                      {row.txid.slice(0, 7)}...{row.txid.slice(-2)}
+                      <IconButton size='small' href={`https://viewblock.io/arweave/tx/${row.txid}`}>
+                        <OpenInNewIcon />
+                      </IconButton>
+                    </Typography>
+                  </Tooltip>
                 </TableCell>
                 <TableCell align='right' sx={{ background: 'transparent' }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{row.networkFee}</Typography>
+                  <Typography>{row.type}</Typography>
                 </TableCell>
                 <TableCell align='right' sx={{ background: 'transparent' }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{row.appFee}</Typography>
+                  <Typography>{row.operation}</Typography>
                 </TableCell>
                 <TableCell align='right' sx={{ background: 'transparent' }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{row.destination}</Typography>
+                  <Typography>{row.date}</Typography>
                 </TableCell>
                 <TableCell align='right' sx={{ background: 'transparent' }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{row.origin}</Typography>
+                  <Typography>{row.networkFee}</Typography>
+                </TableCell>
+                <TableCell align='right' sx={{ background: 'transparent' }}>
+                  <Typography>{row.appFee}</Typography>
+                </TableCell>
+                <TableCell align='right' sx={{ background: 'transparent' }}>
+                  <Tooltip title={row.destination}>
+                    <Typography>{row.destination.slice(0, 7)}...{row.destination.slice(-2)}</Typography>
+                  </Tooltip>
+                </TableCell>
+                <TableCell align='right' sx={{ background: 'transparent' }}>
+                  <Tooltip title={row.origin}>
+                    <Typography>{row.origin.slice(0, 7)}...{row.origin.slice(-2)}</Typography>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
