@@ -84,9 +84,9 @@ const Chat = () => {
   const elementsPerPage = 5;
   const scrollableRef = useRef<HTMLDivElement>(null);
   const setIsLocked = useScrollLock(scrollableRef);
-  const [ filterConversations, setFilterConversations ] = useState('');
-  const [ isWaitingResponse, setIsWaitingResponse ] = useState(false);
-  const [ responseTimeout, setResponseTimeout ] = useState(false);
+  const [filterConversations, setFilterConversations] = useState('');
+  const [isWaitingResponse, setIsWaitingResponse] = useState(false);
+  const [responseTimeout, setResponseTimeout] = useState(false);
 
   const [
     getChatRequests,
@@ -159,9 +159,9 @@ const Chat = () => {
       const cids: string[] = requestsData.transactions.edges.map((el: IEdge) =>
         findTag(el, 'conversationIdentifier'),
       );
-      const uniqueCids = Array.from(new Set(cids.map((cid) =>
-        parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid),
-      )));
+      const uniqueCids = Array.from(
+        new Set(cids.map((cid) => parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid))),
+      );
       uniqueCids.sort((a: number, b: number) => (a < b ? -1 : 1));
 
       setConversationIds(uniqueCids);
@@ -427,7 +427,7 @@ const Chat = () => {
             type: 'request',
             timestamp: timestamp,
             cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
-            height: el.node.block ? el.node.block.height : currentHeight
+            height: el.node.block ? el.node.block.height : currentHeight,
           });
         } else {
           temp.push({
@@ -436,7 +436,7 @@ const Chat = () => {
             type: 'response',
             timestamp: timestamp,
             cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
-            height: el.node.block ? el.node.block.height : currentHeight
+            height: el.node.block ? el.node.block.height : currentHeight,
           });
         }
       }),
@@ -464,7 +464,7 @@ const Chat = () => {
     if (!_.isEqual(messages, newMessages)) {
       setMessages(filteredNewMsgs);
     }
-    if (filteredNewMsgs[filteredNewMsgs.length -1 ].type === 'response') {
+    if (filteredNewMsgs[filteredNewMsgs.length - 1].type === 'response') {
       setIsWaitingResponse(false);
       setResponseTimeout(false);
     }
@@ -666,7 +666,7 @@ const Chat = () => {
       setMessages(filteredNewMsgs);
     }
 
-    if (filteredNewMsgs[filteredNewMsgs.length -1 ].type === 'response') {
+    if (filteredNewMsgs[filteredNewMsgs.length - 1].type === 'response') {
       setIsWaitingResponse(false);
       setResponseTimeout(false);
     }
@@ -677,8 +677,8 @@ const Chat = () => {
 
   const emptyPolling = async () => {
     const currentBlockHeight = (await arweave.blocks.getCurrent()).height;
-    const lastMessage = [ ...(messages.filter(el => el.cid === currentConversationId))].pop();
-    if (lastMessage  && lastMessage.type === 'request') {
+    const lastMessage = [...messages.filter((el) => el.cid === currentConversationId)].pop();
+    if (lastMessage && lastMessage.type === 'request') {
       if (currentBlockHeight - lastMessage.height > N_PREVIOUS_BLOCKS) {
         setIsWaitingResponse(false);
         setResponseTimeout(true);
@@ -1003,15 +1003,11 @@ const Chat = () => {
                           )}
                       </Container>
                     ))}
-                    {
-                      (isWaitingResponse && !responseTimeout) &&  <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
+                    {isWaitingResponse && !responseTimeout && (
+                      <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
                         <Stack spacing={4} flexDirection='row'>
                           <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                            <Box
-                              display={'flex'}
-                              alignItems='center'
-                              justifyContent={'flex-start'}
-                            >
+                            <Box display={'flex'} alignItems='center' justifyContent={'flex-start'}>
                               <Card
                                 elevation={8}
                                 raised={true}
@@ -1034,23 +1030,19 @@ const Chat = () => {
                                     alignItems: 'flex-start',
                                   }}
                                 >
-                                  <Box className='dot-pulse' sx={{ marginBottom: '0.35em' }}/>
+                                  <Box className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
                                 </CardContent>
                               </Card>
                             </Box>
                           </Box>
                         </Stack>
                       </Container>
-                    }
-                    { 
-                      (responseTimeout && !isWaitingResponse)  && <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
+                    )}
+                    {responseTimeout && !isWaitingResponse && (
+                      <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
                         <Stack spacing={4} flexDirection='row'>
                           <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                            <Box
-                              display={'flex'}
-                              alignItems='center'
-                              justifyContent={'center'}
-                            >
+                            <Box display={'flex'} alignItems='center' justifyContent={'center'}>
                               <Typography
                                 sx={{
                                   fontStyle: 'normal',
@@ -1062,13 +1054,14 @@ const Chat = () => {
                                   color: '#F4BA61',
                                 }}
                               >
-                                The last request has not received a response in the defined amount of time, please consider retrying with a new operator
+                                The last request has not received a response in the defined amount
+                                of time, please consider retrying with a new operator
                               </Typography>
                             </Box>
                           </Box>
                         </Stack>
                       </Container>
-                    }
+                    )}
                   </>
                 ) : !(messagesLoading || requestsLoading || responsesLoading) ? (
                   <Typography alignItems='center' display='flex' flexDirection='column'>
