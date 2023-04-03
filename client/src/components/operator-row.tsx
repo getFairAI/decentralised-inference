@@ -317,7 +317,7 @@ const OperatorRow = ({
           {}
         </TableCell>
         <TableCell align='right'>{row?.stamps}</TableCell>
-        <TableCell padding='checkbox'>
+        <TableCell align='right'>
           <Checkbox color='primary' checked={isSelected} onChange={() => setSelected(index)} />
         </TableCell>
       </TableRow>
