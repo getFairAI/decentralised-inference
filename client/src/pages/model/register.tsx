@@ -233,8 +233,8 @@ const Register = () => {
             <Box
               display={'flex'}
               alignItems={'center'}
-              justifyContent='space-between'
-              width={'80%'}
+              justifyContent='flex-start'
+              width={'100%'}
               height='60px'
             >
               <NumericFormat
