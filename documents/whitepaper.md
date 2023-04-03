@@ -186,7 +186,7 @@ Users pay the Curator instead of the Marketplace to compensate them for the uplo
 </p>
 
 <p align="justify">
-Curators also choose the "Registration Fee," settled by Operators to the Marketplace. This fee is paid to the Marketplace rather than the Curator because someone with malicious intent could be both an Operator and a Curator simultaneously and would have no incentives to respond to inferences from Users. Since there are only Users if at least one Operator is running the script, Curators are incentivised to write optimised code for Operators and balanced scripts between Operators and Users because Users pay them. Curators chose the fee amount to give them more control when managing safeguards between Operators and Users.
+Curators also choose the "Registration Fee," settled by Operators to the Marketplace. This fee is paid to the Marketplace rather than the Curator because someone with malicious intent could be both an Operator and a Curator simultaneously and would have no incentives to respond to inferences from Users. Since there are only Users if at least one Operator is running the script, Curators are incentivised to write optimised and resilient code for Operators and balanced scripts between Operators and Users because Users pay them. Curators chose the fee amount to give them more control when managing safeguards between Operators and Users.
 </p>
 
 <p align="justify">
@@ -277,7 +277,15 @@ Curators may eventually copy model scripts from each other, discouraging the cre
 </p>
 
 <p align="justify">
+Curators can use several Creators for their model script but only link one when uploading it. They can also indicate an inaccurate Creator, giving fees to the wrong person. To mitigate these problems, all participants who can vote for Curators and notice this should vote against this Curator, discouraging them from being bad actors. Also, other participants may duplicate their script and mention the correct Creators to get more positive votes and eventually high dividends from Users using their model script.
+</p>
+
+<p align="justify">
 The entire Marketplace application is frontend based. As such, the Marketplace code can be checked by anyone. We recommend that all the application participants confirm what the Marketplace code does and look for potential errors to verify that Marketplace Owners are good actors and have implemented the rules correctly.
+</p>
+
+<p align="justify">
+Marketplace Owners can eventually ruin Marketplace incentives if they are multiple participants simultaneously. For example, if Marketplace Owners are also wallet owners of a Curator and their respective Operators, the incentives to return messages to a User about that model script will disappear. However, Arweave is a blockchain where all transactions are publicly accessible, so anyone can cross-check data, find evidence that different wallets belong to the same person, and flag these risks publicly. Marketplace Owners are also incentivised to make the protocol work to receive more fee payments. Furthermore, if the marketplace is unreliable enough, there will be an incentive to create forks of the marketplace's code, removing the original Marketplace Owners from the rewards.
 </p>
 
 <p align="justify">
@@ -296,7 +304,6 @@ Our team has some ideas that may be implemented in the future, which we intend t
 * **Decentralised Gateway:** We intend to mitigate the risk of using a centralised gateway, presented in Section XI, by using a more decentralised gateway or by targeting multiple gateways;
 * **Multiple prices per Operator and model script:** An Operator can only choose one price per script, but inference may have different transaction costs depending on the size of the files or the number of prompts sent. It might be interesting to develop a greater diversification of prices per scenario;
 * **Limit chat size:** Although there are models that support multiple prompts or files as inputs, they always have a limit on the number of prompts or files they can receive. As such, it might be interesting to give Curators the ability to choose the maximum word or file size that model scripts support when uploading them to Arweave;
-* **Better unhappy flows on chat:** For example, when an Operator is offline during the last 7 blocks, a User will not get a response. In model scripts that consider the context of previous messages for inference, it may make sense to have some process that deals with this situation in case the person wants to change Operator immediately, without having to wait for the message from the Operator that is currently offline, for example cancelling the current sending and sending a new request to a new Operator. This way, it would be guaranteed that a specific exchange would not be ruined;
 * **Slow mode:** Currently, the app runs 100% with upfront payments when performing inferences. This situation increases the entrance fee for Users, and certain Users may want to test models or scripts before paying the "Script Fee". They may also only want to perform a single inference on a model. For those reasons, it may make sense for the application to have a way to make upfront payments of single requests, even if it takes 30 minutes between replies;
 * **Implement ArProfile:** It can be interesting to associate ArProfile with Creators, Curators, Operators, or Users that want it to have a better integration of the application in Arweave's ecosystem;
 * **Payments with other currencies:** Currently, the Marketplace only supports payments in Arweave. It may make sense to accept additional coins or tokens in the future;
