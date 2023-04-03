@@ -30,6 +30,7 @@ import {
   MODEL_INFERENCE_RESPONSE,
   APP_NAME,
   INFERENCE_PAYMENT,
+  N_PREVIOUS_BLOCKS,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -57,6 +58,7 @@ interface Message {
   msg: string;
   type: 'response' | 'request';
   timestamp: number;
+  height: number;
   cid?: number;
 }
 
@@ -83,6 +85,8 @@ const Chat = () => {
   const scrollableRef = useRef<HTMLDivElement>(null);
   const setIsLocked = useScrollLock(scrollableRef);
   const [filterConversations, setFilterConversations] = useState('');
+  const [isWaitingResponse, setIsWaitingResponse] = useState(false);
+  const [responseTimeout, setResponseTimeout] = useState(false);
 
   const [
     getChatRequests,
@@ -155,8 +159,8 @@ const Chat = () => {
       const cids: string[] = requestsData.transactions.edges.map((el: IEdge) =>
         findTag(el, 'conversationIdentifier'),
       );
-      const uniqueCids = Array.from(new Set(cids)).map((cid) =>
-        parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid),
+      const uniqueCids = Array.from(
+        new Set(cids.map((cid) => parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid))),
       );
       uniqueCids.sort((a: number, b: number) => (a < b ? -1 : 1));
 
@@ -376,6 +380,7 @@ const Chat = () => {
     if (currentConversationId && requestsData && responsesData) {
       setIsLocked(true);
       setMessagesLoading(true);
+      setIsWaitingResponse(false);
       reqData();
     }
   }, [currentConversationId]);
@@ -389,6 +394,9 @@ const Chat = () => {
       (res: IEdge) => !currentRespones.find((el: IEdge) => el.node.id === res.node.id),
     );
     if (newValidResponses.length > 0) asyncMap(newValidResponses);
+    else {
+      emptyPolling();
+    }
   }, [responsesPollingData]);
 
   useEffect(() => {
@@ -411,6 +419,7 @@ const Chat = () => {
         const timestamp =
           parseInt(findTag(el, 'unixTime') || '') || el.node.block?.timestamp || Date.now() / 1000;
         const cid = findTag(el, 'conversationIdentifier') as string;
+        const currentHeight = (await arweave.blocks.getCurrent()).height;
         if (el.node.owner.address === userAddr) {
           temp.push({
             id: el.node.id,
@@ -418,6 +427,7 @@ const Chat = () => {
             type: 'request',
             timestamp: timestamp,
             cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
+            height: el.node.block ? el.node.block.height : currentHeight,
           });
         } else {
           temp.push({
@@ -426,6 +436,7 @@ const Chat = () => {
             type: 'response',
             timestamp: timestamp,
             cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
+            height: el.node.block ? el.node.block.height : currentHeight,
           });
         }
       }),
@@ -449,8 +460,13 @@ const Chat = () => {
       return a.timestamp - b.timestamp;
     });
 
+    const filteredNewMsgs = newMessages.filter((el) => el.cid === currentConversationId);
     if (!_.isEqual(messages, newMessages)) {
-      setMessages(newMessages.filter((el) => el.cid === currentConversationId));
+      setMessages(filteredNewMsgs);
+    }
+    if (filteredNewMsgs[filteredNewMsgs.length - 1].type === 'response') {
+      setIsWaitingResponse(false);
+      setResponseTimeout(false);
     }
   };
 
@@ -519,9 +535,12 @@ const Chat = () => {
         timestamp: tempDate,
         id: bundlrRes.id,
         cid: currentConversationId,
+        height: (await arweave.blocks.getCurrent()).height,
       });
       setMessages(temp);
       setNewMessage('');
+      setIsWaitingResponse(true);
+      setResponseTimeout(false);
       enqueueSnackbar(
         <>
           Inference Request
@@ -605,6 +624,7 @@ const Chat = () => {
             el.node.block?.timestamp ||
             Date.now() / 1000;
           const cid = findTag(el, 'conversationIdentifier') as string;
+          const currentHeight = (await arweave.blocks.getCurrent()).height;
           if (el.node.owner.address === userAddr) {
             temp.push({
               id: el.node.id,
@@ -612,6 +632,7 @@ const Chat = () => {
               type: 'request',
               timestamp: timestamp,
               cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
+              height: el.node.block ? el.node.block.height : currentHeight,
             });
           } else {
             temp.push({
@@ -620,6 +641,7 @@ const Chat = () => {
               type: 'response',
               timestamp: timestamp,
               cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
+              height: el.node.block ? el.node.block.height : currentHeight,
             });
           }
         }),
@@ -638,13 +660,33 @@ const Chat = () => {
       return a.timestamp - b.timestamp;
     });
 
+    const filteredNewMsgs = newMessages.filter((el) => el.cid === currentConversationId);
     if (!_.isEqual(newMessages, messages)) {
       // remove duplicates
-      setMessages(newMessages.filter((el) => el.cid === currentConversationId));
+      setMessages(filteredNewMsgs);
+    }
+
+    if (filteredNewMsgs[filteredNewMsgs.length - 1].type === 'response') {
+      setIsWaitingResponse(false);
+      setResponseTimeout(false);
     }
 
     setIsLocked(false);
     setMessagesLoading(false);
+  };
+
+  const emptyPolling = async () => {
+    const currentBlockHeight = (await arweave.blocks.getCurrent()).height;
+    const lastMessage = [...messages.filter((el) => el.cid === currentConversationId)].pop();
+    if (lastMessage && lastMessage.type === 'request') {
+      if (currentBlockHeight - lastMessage.height > N_PREVIOUS_BLOCKS) {
+        setIsWaitingResponse(false);
+        setResponseTimeout(true);
+      } else {
+        setIsWaitingResponse(true);
+        setResponseTimeout(false);
+      }
+    }
   };
 
   return (
@@ -961,6 +1003,65 @@ const Chat = () => {
                           )}
                       </Container>
                     ))}
+                    {isWaitingResponse && !responseTimeout && (
+                      <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
+                        <Stack spacing={4} flexDirection='row'>
+                          <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
+                            <Box display={'flex'} alignItems='center' justifyContent={'flex-start'}>
+                              <Card
+                                elevation={8}
+                                raised={true}
+                                sx={{
+                                  width: 'fit-content',
+                                  maxWidth: '75%',
+                                  // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
+                                  border: '4px solid transparent',
+                                  background: 'rgba(52, 52, 52, 0.7)',
+                                  // opacity: '0.4',
+                                  borderRadius: '40px',
+                                }}
+                              >
+                                <CardContent
+                                  sx={{
+                                    padding: '24px 32px',
+                                    gap: '16px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                  }}
+                                >
+                                  <Box className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
+                                </CardContent>
+                              </Card>
+                            </Box>
+                          </Box>
+                        </Stack>
+                      </Container>
+                    )}
+                    {responseTimeout && !isWaitingResponse && (
+                      <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
+                        <Stack spacing={4} flexDirection='row'>
+                          <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
+                            <Box display={'flex'} alignItems='center' justifyContent={'center'}>
+                              <Typography
+                                sx={{
+                                  fontStyle: 'normal',
+                                  fontWeight: 600,
+                                  fontSize: '30px',
+                                  lineHeight: '41px',
+                                  display: 'block',
+                                  textAlign: 'center',
+                                  color: '#F4BA61',
+                                }}
+                              >
+                                The last request has not received a response in the defined amount
+                                of time, please consider retrying with a new operator
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Stack>
+                      </Container>
+                    )}
                   </>
                 ) : !(messagesLoading || requestsLoading || responsesLoading) ? (
                   <Typography alignItems='center' display='flex' flexDirection='column'>

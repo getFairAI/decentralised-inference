@@ -835,6 +835,7 @@ export const QUERY_REQUESTS_FOR_OPERATOR = gql`
             value
           }
           block {
+            height
             timestamp
           }
           quantity {
