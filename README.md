@@ -1,9 +1,9 @@
 
 ![Latest Development Changes](https://github.com/FAIR-Protocol/decentralized-inference/actions/workflows/development.yml/badge.svg?event=push)
 
-# Decentralized Inference
+# Fair Protocol
 
-Welcome to the Fair Protocol GitHub! Please read our [Whitepaper](./documents/whitepaper.md) to understand more about this application.
+Welcome to the Fair Protocol GitHub! Please read our [whitepaper](./documents/whitepaper.md) to understand more about this application.
 
 ## File Structure
 ```bash
