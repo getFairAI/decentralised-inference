@@ -168,6 +168,11 @@ const mockError: ApolloError = {
   graphQLErrors: [],
   networkError: null,
   extraInfo: null,
+  protocolErrors: [
+    {
+      message: '',
+    }
+  ]
 };
 
 const mockIntersectionObserver = class {
