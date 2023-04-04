@@ -11,6 +11,7 @@
 */node_modules
 npm-debug.log
 yarn-error.log
+*/package-lock.json
 
 # IDEs and editors
 .idea/
@@ -33,7 +34,7 @@ yarn-error.log
 */.angular/cache
 .sass-cache/
 /connect.lock
-/coverage
+**/coverage
 /libpeerconnection.log
 testem.log
 /typings
@@ -41,3 +42,9 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Rasa files
+/script-examples/wallet.json
+/script-examples/venv
+/script-examples/rasa-assistant
+/script-examples/node_modules
