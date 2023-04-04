@@ -3,7 +3,7 @@
 
 # Fair Protocol
 
-Welcome to the Fair Protocol GitHub! Please read our [Whitepaper](./documents/whitepaper.md) to understand more about this application.
+Welcome to the Fair Protocol GitHub! Please read our [whitepaper](./documents/whitepaper.md) to understand more about this application.
 
 ## File Structure
 ```bash
