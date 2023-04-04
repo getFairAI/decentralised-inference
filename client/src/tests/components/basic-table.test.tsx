@@ -171,8 +171,8 @@ const mockError: ApolloError = {
   protocolErrors: [
     {
       message: '',
-    }
-  ]
+    },
+  ],
 };
 
 const mockIntersectionObserver = class {
