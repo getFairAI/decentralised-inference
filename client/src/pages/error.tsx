@@ -5,31 +5,18 @@ import {
   Alert,
   Box,
   Container,
-  createTheme,
   CssBaseline,
-  ThemeProvider,
   Typography,
-  useMediaQuery,
 } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { AppThemeProvider } from '@/context/theme';
 
 const Error = () => {
   const error = useRouteError();
   const [errorMessage, setErrorMessage] = useState(<></>);
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: prefersDarkMode ? 'dark' : 'light',
-        },
-      }),
-    [prefersDarkMode],
-  );
 
   useEffect(() => {
     if (isRouteErrorResponse(error)) {
@@ -47,7 +34,7 @@ const Error = () => {
 
   return (
     <>
-      <ThemeProvider theme={theme}>
+      <AppThemeProvider>
         <SnackbarProvider maxSnack={3}>
           <WalletProvider>
             <BundlrProvider>
@@ -85,7 +72,7 @@ const Error = () => {
             </BundlrProvider>
           </WalletProvider>
         </SnackbarProvider>
-      </ThemeProvider>
+      </AppThemeProvider>
     </>
   );
 };

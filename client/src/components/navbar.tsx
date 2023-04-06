@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import { ChangeEvent, Dispatch, SetStateAction, useContext } from 'react';
-import { Button, Icon, IconButton, InputBase, styled, Tooltip } from '@mui/material';
+import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -19,6 +19,7 @@ const Banner = styled(Toolbar)(({ theme }) => ({
 }));
 
 const WalletState = () => {
+  const theme = useTheme();
   const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
 
   if (!currentAddress && currentAddress !== '') {
@@ -33,7 +34,6 @@ const WalletState = () => {
     <>
       <Box
         sx={{
-          background: '#222222',
           borderRadius: '23px',
           display: 'flex',
           flexDirection: 'row',
@@ -41,6 +41,7 @@ const WalletState = () => {
           alignItems: 'center',
           padding: 0,
           gap: '17px',
+          background: theme.palette.secondary.main,
         }}
       >
         <Box display={'flex'}>
@@ -51,13 +52,13 @@ const WalletState = () => {
         </Box>
         <Box
           sx={{
-            background: '#D9D9D9',
+            background: theme.palette.background.default,
             borderRadius: '43px',
             padding: '7px 20px 7px 20px',
           }}
         >
           <Tooltip title={currentAddress} placement={'left-start'}>
-            <Typography sx={{ color: '#222222' }}>
+            <Typography sx={{ color: theme.palette.text.primary }}>
               {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
             </Typography>
           </Tooltip>
@@ -79,15 +80,16 @@ const Navbar = ({
 }) => {
   const { pathname, state } = useLocation();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   return (
     <>
-      <AppBar className='navbar' sx={{ background: '#000000' }}>
+      <AppBar className='navbar'>
         {showBanner && (
           <Banner>
             <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-              <Typography variant='body1'>
-                This Application is in <b>ALPHA</b>. Please Make sure you understand before using
+              <Typography variant='h4'>
+                This Application is in <b>PRE-ALPHA</b>. Please Make sure you understand before using
                 any of the functionalities.
               </Typography>
             </Box>
@@ -108,18 +110,17 @@ const Navbar = ({
             {pathname && (pathname === '/' || pathname === '/explore') && (
               <Box
                 sx={{
-                  background: '#B1B1B1',
                   borderRadius: '30px',
                   margin: '0 50px',
                   display: 'flex',
                   justifyContent: 'space-between',
                   padding: '3px 20px 3px 50px',
                   alignItems: 'center',
+                  background: theme.palette.background.default
                 }}
               >
                 <InputBase
                   sx={{
-                    color: '#222',
                     fontStyle: 'normal',
                     fontWeight: 400,
                     fontSize: '18px',
@@ -160,7 +161,7 @@ const Navbar = ({
                       lineHeight: '24px',
                       display: 'flex',
                       alignItems: 'center',
-                      color: '#FFF',
+                      color: theme.palette.primary.contrastText,
                     }}
                   >
                     Change Operator

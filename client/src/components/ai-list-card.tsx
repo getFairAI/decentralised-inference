@@ -17,6 +17,7 @@ import {
   CardContent,
   Typography,
   Box,
+  useTheme,
 } from '@mui/material';
 import { toSvg } from 'jdenticon';
 import { MouseEvent, useEffect, useMemo } from 'react';
@@ -34,6 +35,7 @@ const AiListCard = ({
 }) => {
   const navigate = useNavigate();
   const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
+  const theme = useTheme();
 
   useEffect(() => {
     const modelId = findTag(model, 'modelTransaction');
@@ -111,8 +113,13 @@ const AiListCard = ({
     <Card
       sx={{
         background:
-          'linear-gradient(to bottom, rgba(118, 118, 118, 0.1) 2.17%, rgba(1, 1, 1, 0) 188.85%)',
+          'linear-gradient(177deg, rgba(118, 118, 118, 0.1) 2.17%, rgba(1, 1, 1, 0) 60%);',
         borderRadius: '10px',
+        boxShadow: 'none',
+        '&:hover': {
+          boxShadow: `0px 2px 24px -1px ${theme.palette.primary.main}, 0px 2px 1px 0px ${theme.palette.primary.main}, 0px 2px 7px 0px ${theme.palette.primary.main}`,
+          opacity: 1
+        }
       }}
     >
       <CardActionArea
@@ -137,7 +144,6 @@ const AiListCard = ({
             display: 'flex',
             alignItems: 'center',
             textAlign: 'center',
-            color: '#CCCCCD',
           }}
         />
         {!imgUrl || loading || avatarLoading ? (
@@ -148,11 +154,7 @@ const AiListCard = ({
               right: 0,
               width: '317px',
               height: '352px',
-              background: 'linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%)',
-              // backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: 'cover' /* <------ */,
-              backgroundPosition: 'center center',
+              background: 'linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)',
             }}
           />
         ) : (
@@ -162,26 +164,19 @@ const AiListCard = ({
               borderRadius: '16px',
               height: '100px',
               width: '100px',
-              background: `linear-gradient(to top, #000000 10%, rgba(71, 71, 71, 0) 100%), url(${
+              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)
+              , url(${
                 loading || avatarLoading ? '' : imgUrl
               })`,
               backgroundPosition: 'center',
+              backgroundSize: 'contain'
             }}
           />
         )}
 
         <CardContent>
           <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '20px',
-              lineHeight: '27px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-              color: '#F4F4F4',
-            }}
+            variant='h3'
           >
             {findTag(model, 'modelName') || 'Untitled'}
           </Typography>
@@ -195,90 +190,36 @@ const AiListCard = ({
         >
           <Box display={'flex'} flexDirection='column'>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#D2D2D2',
-              }}
+              variant='h3'
             >
               Usage
             </Typography>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
+              variant='h4'
             >
               11k
             </Typography>
           </Box>
           <Box display={'flex'} flexDirection='column'>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#D2D2D2',
-              }}
+              variant='h3'
             >
               Rating
             </Typography>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
+              variant='h4'
             >
               12 Stamps
             </Typography>
           </Box>
           <Box display={'flex'} flexDirection='column'>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#D2D2D2',
-              }}
+              variant='h3'
             >
               Last updated
             </Typography>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: '#BFBFBF;',
-              }}
+              variant='h4'
             >
               {getTimePassed()}
             </Typography>

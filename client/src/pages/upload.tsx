@@ -1,5 +1,6 @@
 import {
   Alert,
+  Backdrop,
   Box,
   Button,
   Card,
@@ -11,6 +12,7 @@ import {
   MenuItem,
   Snackbar,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useContext, useRef, useState } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
@@ -69,6 +71,7 @@ const Upload = () => {
   const totalChunks = useRef(0);
   const bundlrContext = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
 
   const onSubmit = async (data: FieldValues) => {
     setFormData(data as CreateForm);
@@ -367,90 +370,81 @@ const Upload = () => {
   };
 
   return (
-    <Container>
-      <Box sx={{ marginTop: '8px' }}>
-        <Card
-          sx={{
-            background: 'rgba(61, 61, 61, 0.98)',
-            borderRadius: '30px',
-          }}
-        >
-          <CardHeader title='Upload Script' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
-            {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
-          </CardHeader>
-          <CardContent
-            sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}
-          >
-            <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
-              <Box width={'22%'}>
-                <AvatarControl name='avatar' control={control} />
-              </Box>
-              <Box
-                display={'flex'}
-                justifyContent={'space-between'}
-                flexDirection='column'
-                flexGrow={1}
-                width={'30%'}
+    <Container
+      sx={{
+        padding: 0,
+        margin: 0,
+        height: '100%',
+        '@media all': {
+          maxWidth: '100%',
+          padding: 0,
+        },
+      }}
+    >
+      <Backdrop
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, position: 'relative', height: '100%', width: '100%' }}
+        open={true}
+      >
+        <Container maxWidth={'lg'}>
+          <Box sx={{ marginTop: '8px' }}>
+            <Card
+              sx={{
+                background: theme.palette.mode === 'dark' ? theme.palette.neutral.main : theme.palette.background.default,
+                borderRadius: '30px',
+              }}
+            >
+              <CardHeader title='Upload Script' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
+                {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
+              </CardHeader>
+              <CardContent
+                sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}
               >
-                <TextControl
-                  name='name'
-                  control={control}
-                  rules={{ required: true }}
-                  mat={{
-                    variant: 'outlined',
-                    InputProps: {
-                      sx: {
-                        borderWidth: '1px',
-                        borderColor: '#FFF',
-                        borderRadius: '16px',
-                      },
-                    },
-                  }}
-                  style={{ width: '100%' }}
-                />
-                <SelectControl
-                  name='category'
-                  control={control}
-                  rules={{ required: true }}
-                  mat={{
-                    sx: {
-                      borderWidth: '1px',
-                      borderColor: '#FFF',
-                      borderRadius: '16px',
-                    },
-                  }}
-                >
-                  <MenuItem value={'text'}>Text</MenuItem>
-                  <MenuItem value={'audio'}>Audio</MenuItem>
-                  <MenuItem value={'video'}>Video</MenuItem>
-                </SelectControl>
-                <Box paddingLeft={'8px'}>
-                  <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 700,
-                      fontSize: '23px',
-                      lineHeight: '31px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                      color: '#FAFAFA',
-                    }}
-                  >
-                    Cost
-                  </Typography>
+                <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
+                  <Box width={'22%'}>
+                    <AvatarControl name='avatar' control={control} />
+                  </Box>
                   <Box
                     display={'flex'}
-                    alignItems={'center'}
-                    justifyContent='space-between'
-                    width={'45%'}
-                    height='60px'
+                    justifyContent={'space-between'}
+                    flexDirection='column'
+                    flexGrow={1}
+                    width={'30%'}
                   >
-                    <NumberControl
-                      name='fee'
+                    <TextControl
+                      name='name'
                       control={control}
+                      rules={{ required: true }}
+                      mat={{
+                        variant: 'outlined',
+                        InputProps: {
+                          sx: {
+                            borderWidth: '1px',
+                            borderColor: theme.palette.text.primary,
+                            borderRadius: '16px',
+                          },
+                        },
+                      }}
+                      style={{ width: '100%' }}
+                    />
+                    <SelectControl
+                      name='category'
+                      control={control}
+                      rules={{ required: true }}
                       mat={{
                         sx: {
+                          borderWidth: '1px',
+                          borderColor: theme.palette.text.primary,
+                          borderRadius: '16px',
+                        },
+                      }}
+                    >
+                      <MenuItem value={'text'}>Text</MenuItem>
+                      <MenuItem value={'audio'}>Audio</MenuItem>
+                      <MenuItem value={'video'}>Video</MenuItem>
+                    </SelectControl>
+                    <Box paddingLeft={'8px'}>
+                      <Typography
+                        sx={{
                           fontStyle: 'normal',
                           fontWeight: 700,
                           fontSize: '23px',
@@ -458,104 +452,127 @@ const Upload = () => {
                           display: 'flex',
                           alignItems: 'center',
                           textAlign: 'center',
-                          color: '#FAFAFA',
-                          paddingRight: '8px',
-                        },
-                      }}
-                    />
-                    <Icon sx={{ height: '50px', width: '50px' }}>
-                      <img src='/arweave-logo.svg' width={'50px'} height={'50px'} />
-                    </Icon>
+                        }}
+                      >
+                        Cost
+                      </Typography>
+                      <Box
+                        display={'flex'}
+                        alignItems={'center'}
+                        justifyContent='space-between'
+                        width={'45%'}
+                        height='60px'
+                      >
+                        <NumberControl
+                          name='fee'
+                          control={control}
+                          mat={{
+                            sx: {
+                              fontStyle: 'normal',
+                              fontWeight: 700,
+                              fontSize: '23px',
+                              lineHeight: '31px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              textAlign: 'center',
+                              paddingRight: '8px',
+                            },
+                          }}
+                        />
+                        <Icon sx={{ height: '50px', width: '50px' }}>
+                          <img src={theme.palette.mode === 'dark' ? '/arweave-logo.svg' : '/arweave-logo-for-light.png'} width={'50px'} height={'50px'} />
+                        </Icon>
+                      </Box>
+                    </Box>
                   </Box>
+                  <TextControl
+                    name='description'
+                    control={control}
+                    mat={{
+                      variant: 'outlined',
+                      multiline: true,
+                      margin: 'normal',
+                      minRows: 6,
+                      maxRows: 6,
+                      InputProps: {
+                        sx: {
+                          borderWidth: '1px',
+                          borderColor: theme.palette.text.primary,
+                          borderRadius: '23px',
+                          height: '100%',
+                        },
+                      },
+                    }}
+                    style={{ width: '40%', marginTop: 0 }}
+                  />
                 </Box>
-              </Box>
-              <TextControl
-                name='description'
-                control={control}
-                mat={{
-                  variant: 'outlined',
-                  multiline: true,
-                  margin: 'normal',
-                  minRows: 6,
-                  maxRows: 6,
-                  InputProps: {
-                    sx: {
-                      borderWidth: '1px',
-                      borderColor: '#FFF',
-                      borderRadius: '23px',
-                      height: '100%',
-                    },
-                  },
-                }}
-                style={{ width: '40%', marginTop: 0 }}
-              />
-            </Box>
-            <Box padding='0px 32px'>
-              <MarkdownControl name='notes' control={control} rules={{ required: true }} />
-            </Box>
-            <Box padding='0px 32px'>
-              <FileControl name='file' control={control} rules={{ required: true }} />
-            </Box>
-          </CardContent>
-          <CardActions sx={{ paddingBottom: '32px', justifyContent: 'center' }}>
-            <Button
-              onClick={() => reset()}
-              sx={{
-                border: '1px solid #F4F4F4',
-                borderRadius: '7px',
-                height: '39px',
-                width: '204px',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  fontSize: '15px',
-                  lineHeight: '20px',
-                  color: '#F4F4F4',
-                }}
-              >
-                Reset to Default
-              </Typography>
-            </Button>
-            <Button
-              onClick={handleSubmit(onSubmit)}
-              disabled={control._formState.isValid}
-              sx={{
-                background: '#F4F4F4',
-                borderRadius: '7px',
-                height: '39px',
-                width: '204px',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  fontSize: '15px',
-                  lineHeight: '20px',
-                  color: '#151515',
-                }}
-              >
-                Submit
-              </Typography>
-            </Button>
-          </CardActions>
-        </Card>
-      </Box>
-      <FundDialog open={fundOpen} setOpen={setFundOpen} handleFundFinished={handleFundFinished} />
-      <Snackbar
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        open={snackbarOpen}
-        onClose={() => setSnackbarOpen(false)}
-        ClickAwayListenerProps={{ onClickAway: () => null }}
-      >
-        <Alert severity='info' sx={{ width: '100%', minWidth: '100px' }}>
-          Uploading...
-          <CustomProgress value={progress}></CustomProgress>
-        </Alert>
-      </Snackbar>
+                <Box padding='0px 32px'>
+                  <MarkdownControl props={{ name: 'notes', control, rules: { required: true }}} />
+                </Box>
+                <Box padding='0px 32px'>
+                  <FileControl name='file' control={control} rules={{ required: true }} />
+                </Box>
+              </CardContent>
+              <CardActions sx={{ paddingBottom: '32px', justifyContent: 'center' }}>
+                <Button
+                  onClick={() => reset()}
+                  sx={{
+                    // border: `1px solid ${theme.palette.text.primary}`,
+                    borderRadius: '7px',
+                    height: '39px',
+                    width: '204px',
+                  }}
+                  variant='outlined'
+                >
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 500,
+                      fontSize: '15px',
+                      lineHeight: '20px',
+                    }}
+                  >
+                    Reset to Default
+                  </Typography>
+                </Button>
+                <Button
+                  onClick={handleSubmit(onSubmit)}
+                  disabled={control._formState.isValid}
+                  sx={{
+                    borderRadius: '7px',
+                    height: '39px',
+                    width: '204px',
+                  }}
+                  variant='contained'
+                >
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 500,
+                      fontSize: '15px',
+                      lineHeight: '20px',
+                    }}
+                  >
+                    Submit
+                  </Typography>
+                </Button>
+              </CardActions>
+            </Card>
+          </Box>
+          <FundDialog open={fundOpen} setOpen={setFundOpen} handleFundFinished={handleFundFinished} />
+          <Snackbar
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            open={snackbarOpen}
+            onClose={() => setSnackbarOpen(false)}
+            ClickAwayListenerProps={{ onClickAway: () => null }}
+          >
+            <Alert severity='info' sx={{ width: '100%', minWidth: '100px' }}>
+              Uploading...
+              <CustomProgress value={progress}></CustomProgress>
+            </Alert>
+          </Snackbar>
+        </Container>
+      </Backdrop>
     </Container>
   );
 };

@@ -8,6 +8,7 @@ import {
   IconButton,
   InputBase,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import BasicTable from '@/components/basic-table';
@@ -48,6 +49,7 @@ const Detail = () => {
   const elementsPerPage = 5;
   const { enqueueSnackbar } = useSnackbar();
   const { currentAddress } = useContext(WalletContext);
+  const theme = useTheme();
 
   const imgUrl = useMemo(() => {
     if (avatarTxId) {
@@ -198,7 +200,7 @@ const Detail = () => {
       fullWidth
       sx={{
         '& .MuiPaper-root': {
-          background: 'rgba(61, 61, 61, 0.9)',
+          background: theme.palette.mode === 'dark' ? theme.palette.neutral.main : theme.palette.background.default,
           borderRadius: '30px',
         },
       }}
@@ -210,7 +212,7 @@ const Detail = () => {
         lineHeight={0}
       >
         {showOperators && <Typography>{findTag(state, 'modelName')}</Typography>}
-        <IconButton onClick={handleClose}>
+        <IconButton onClick={handleClose} sx={{ background: theme.palette.primary.main, '&:hover': {background: theme.palette.primary.main, opacity: 0.8} }}>
           <img src='/close-icon.svg' />
         </IconButton>
       </DialogTitle>
@@ -251,7 +253,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Name
@@ -265,7 +266,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               {findTag(state, 'modelName')}
@@ -281,7 +281,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Category
@@ -295,7 +294,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               {findTag(state, 'category')}
@@ -311,7 +309,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Cost
@@ -333,7 +330,7 @@ const Detail = () => {
                     fontSize: '60px',
                     lineHeight: '106px',
                     textAlign: 'center',
-                    color: '#FAFAFA',
+  
                     paddingRight: '8px',
                   }}
                   value={feeValue}
@@ -352,7 +349,7 @@ const Detail = () => {
                     fontSize: '60px',
                     lineHeight: '106px',
                     textAlign: 'center',
-                    color: '#FAFAFA',
+  
                     paddingRight: '8px',
                   }}
                 >
@@ -360,7 +357,7 @@ const Detail = () => {
                 </Typography>
               )}
               <Icon sx={{ height: '50px', width: '50px' }}>
-                <img src='/arweave-logo.svg' width={'50px'} height={'50px'} />
+                <img src={theme.palette.mode === 'dark' ? '/arweave-logo.svg' : '/arweave-logo-for-light.png'} width={'50px'} height={'50px'} />
               </Icon>
             </Box>
           </Box>
@@ -376,7 +373,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Description
@@ -390,7 +386,7 @@ const Detail = () => {
           ) : (
             <Button
               sx={{
-                border: '1px solid #FFFFFF',
+                border: `1px solid ${theme.palette.primary.main}`,
                 borderRadius: '10px',
                 boxSizing: 'border-box',
               }}
@@ -417,9 +413,9 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'flex-start',
                 textAlign: 'left',
-                color: '#FFFFFF',
                 borderRadius: '30px',
               }}
+              variant='contained'
               onClick={() => setShowOperators(false)}
             >
               <Box display='flex'>
@@ -489,9 +485,9 @@ const Detail = () => {
               display: 'flex',
               alignItems: 'center',
               textAlign: 'center',
-              color: '#FFFFFF',
               borderRadius: '30px',
             }}
+            variant='contained'
             onClick={() => setShowOperators(true)}
           >
             <Box display='flex'>
@@ -506,7 +502,7 @@ const Detail = () => {
       {selectedIdx >= 0 && (
         <Box
           sx={{
-            background: 'rgba(0, 0, 0, 0.7)',
+            background: 'transparent',  // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
             borderRadius: '7px',
             justifyContent: 'center',
             display: 'flex',
@@ -515,7 +511,8 @@ const Detail = () => {
           }}
         >
           <Button
-            sx={{ background: 'transparent', borderRadius: '7px', border: '1px solid #F4F4F4' }}
+            sx={{ borderRadius: '7px' }}
+            variant='outlined'
             onClick={() =>
               navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
                 state: {
@@ -536,14 +533,14 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#F4F4F4',
               }}
             >
               View History
             </Typography>
           </Button>
           <Button
-            sx={{ background: '#F4F4F4', borderRadius: '7px' }}
+            sx={{ borderRadius: '7px' }}
+            variant='contained'
             onClick={() =>
               navigate(
                 pathname.includes('chat')
@@ -573,7 +570,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#151515',
               }}
             >
               Use Operator
