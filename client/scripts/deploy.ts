@@ -30,7 +30,7 @@ const main = async () => {
     keepDeleted: false   // whether to keep now deleted items from previous uploads
   }); // returns the manifest ID
 
-  console.log(response?.id);
+  console.log(`SPA Uploaded https://arweave.net/${response?.id}`);
 };
 
 (async () => await main())();
