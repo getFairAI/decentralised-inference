@@ -138,7 +138,7 @@ const Register = () => {
             },
           }}
         >
-          <img src='/close-icon.svg' />
+          <img src='./close-icon.svg' />
         </IconButton>
       </DialogTitle>
       <CardContent

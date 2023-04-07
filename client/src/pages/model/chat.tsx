@@ -748,7 +748,7 @@ const Chat = () => {
                     height: '30px',
                   }}
                 >
-                  <img src='/search-icon.svg'></img>
+                  <img src='./search-icon.svg'></img>
                 </Icon>
               </Box>
             </Box>

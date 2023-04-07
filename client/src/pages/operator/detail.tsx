@@ -97,7 +97,7 @@ const OperatorDetails = () => {
               '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
             }}
           >
-            <img src='/close-icon.svg' />
+            <img src='./close-icon.svg' />
           </IconButton>
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', justifyContent: 'space-between' }}>

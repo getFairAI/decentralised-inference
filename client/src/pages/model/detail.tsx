@@ -222,7 +222,7 @@ const Detail = () => {
             '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
           }}
         >
-          <img src='/close-icon.svg' />
+          <img src='./close-icon.svg' />
         </IconButton>
       </DialogTitle>
       <DialogContent
@@ -437,7 +437,7 @@ const Detail = () => {
             >
               <Box display='flex'>
                 <Icon sx={{ rotate: '90deg' }}>
-                  <img src='/triangle.svg' />
+                  <img src='./triangle.svg' />
                 </Icon>
                 <Typography>{' Back to Details'}</Typography>
               </Box>
@@ -469,7 +469,7 @@ const Detail = () => {
                   height: '30px',
                 }}
               >
-                <img src='/search-icon.svg'></img>
+                <img src='./search-icon.svg'></img>
               </Icon>
             </Box>
           </DialogActions>
@@ -510,7 +510,7 @@ const Detail = () => {
             <Box display='flex'>
               <Typography>{'Choose an Operator '}</Typography>
               <Icon sx={{ rotate: '-90deg' }}>
-                <img src='/triangle.svg' />
+                <img src='./triangle.svg' />
               </Icon>
             </Box>
           </Button>

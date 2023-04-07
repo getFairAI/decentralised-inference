@@ -25,7 +25,7 @@ const WalletState = () => {
   if (!currentAddress && currentAddress !== '') {
     return (
       <IconButton onClick={connectWallet}>
-        <img src='/icon-empty-wallet.svg' />
+        <img src='./icon-empty-wallet.svg' />
       </IconButton>
     );
   }
@@ -48,7 +48,7 @@ const WalletState = () => {
           <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>
             {currentBalance.toFixed(4)}
           </Typography>
-          <img src='/arweave-small.svg' />
+          <img src='./arweave-small.svg' />
         </Box>
         <Box
           sx={{
@@ -143,7 +143,7 @@ const Navbar = ({
                     height: '30px',
                   }}
                 >
-                  <img src='/search-icon.svg'></img>
+                  <img src='./search-icon.svg'></img>
                 </Icon>
               </Box>
             )}
@@ -153,7 +153,7 @@ const Navbar = ({
               <>
                 <Button
                   sx={{ borderRadius: '20px', padding: '8px 16px' }}
-                  startIcon={<img src='/chevron-bottom.svg' />}
+                  startIcon={<img src='./chevron-bottom.svg' />}
                   onClick={() =>
                     navigate(`${pathname}/change-operator`, {
                       state: { ...state.fullState, ...state },
