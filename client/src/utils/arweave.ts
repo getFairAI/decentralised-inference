@@ -16,7 +16,7 @@ export const getWalletBalance = async () => {
 };
 
 export const getData = async (txid: string) => {
-  const result = await fetch('http://arweave.net/' + txid);
+  const result = await fetch(NET_ARWEAVE_URL + txid);
   const text = await (await result.blob()).text();
 
   return text;
