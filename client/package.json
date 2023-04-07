@@ -15,7 +15,8 @@
     "format:check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:cov": "vitest run --coverage"
+    "test:cov": "vitest run --coverage",
+    "deploy": "ts-node --esm ./scripts/deploy.ts"
   },
   "dependencies": {
     "@apollo/client": "^3.7.7",

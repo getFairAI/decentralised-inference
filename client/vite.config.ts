@@ -6,11 +6,11 @@ import eslint from 'vite-plugin-eslint';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [react(), tsconfigPaths(), nodePolyfills({ protocolImports: true }), eslint()],
+  optimizeDeps: {disabled: false},
   build: {
-    rollupOptions: {
-      external: '**/_*.tsx'
-    }
+    commonjsOptions: { include: [] }
   },
   test: {
     globals: true,

@@ -222,7 +222,7 @@ const Detail = () => {
             '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
           }}
         >
-          <img src='/close-icon.svg' />
+          <img src='./close-icon.svg' />
         </IconButton>
       </DialogTitle>
       <DialogContent
@@ -369,8 +369,8 @@ const Detail = () => {
                 <img
                   src={
                     theme.palette.mode === 'dark'
-                      ? '/arweave-logo.svg'
-                      : '/arweave-logo-for-light.png'
+                      ? './arweave-logo.svg'
+                      : './arweave-logo-for-light.png'
                   }
                   width={'50px'}
                   height={'50px'}
@@ -437,14 +437,15 @@ const Detail = () => {
             >
               <Box display='flex'>
                 <Icon sx={{ rotate: '90deg' }}>
-                  <img src='/triangle.svg' />
+                  <img src='./triangle.svg' />
                 </Icon>
                 <Typography>{' Back to Details'}</Typography>
               </Box>
             </Button>
             <Box
               sx={{
-                background: '#B1B1B1',
+                background: 'transparent',
+                border: '2px solid',
                 borderRadius: '30px',
                 margin: '0 20px',
                 display: 'flex',
@@ -455,7 +456,6 @@ const Detail = () => {
             >
               <InputBase
                 sx={{
-                  color: '#595959',
                   fontStyle: 'normal',
                   fontWeight: 400,
                   fontSize: '12px',
@@ -469,7 +469,7 @@ const Detail = () => {
                   height: '30px',
                 }}
               >
-                <img src='/search-icon.svg'></img>
+                <img src='./search-icon.svg'></img>
               </Icon>
             </Box>
           </DialogActions>
@@ -510,7 +510,7 @@ const Detail = () => {
             <Box display='flex'>
               <Typography>{'Choose an Operator '}</Typography>
               <Icon sx={{ rotate: '-90deg' }}>
-                <img src='/triangle.svg' />
+                <img src='./triangle.svg' />
               </Icon>
             </Box>
           </Button>

@@ -70,9 +70,11 @@ const ColorlibStepIconRoot = styled('div')<{
   ...(ownerState.active && {
     backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
     boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
+    color: theme.palette.primary.contrastText,
   }),
   ...(ownerState.completed && {
     backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
+    color: theme.palette.primary.contrastText,
   }),
 }));
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createHashRouter, RouterProvider } from 'react-router-dom';
 import Root from './root';
 import Home from '@/pages/home';
 import Upload from '@/pages/upload';
@@ -16,7 +16,7 @@ import ModelFeeGuard from './guards/model-fee';
 import BlockOperatorGuard from './guards/block-operator';
 import Error from '@/pages/error';
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <Root />,
