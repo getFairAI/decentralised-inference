@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: ReactElement }) {
       />
       <Container
         disableGutters
-        sx={{ width: '100%', height: showBanner ? 'calc(100% - 94px)' : 'calc(100% - 64px)' }}
+        sx={{ width: '100%', height: showBanner ? 'calc(100% - 88px)' : 'calc(100% - 64px)' }}
         maxWidth={false}
       >
         <Box height='100%'>

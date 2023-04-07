@@ -1,5 +1,14 @@
 import { NetworkStatus, useQuery } from '@apollo/client';
-import { Box, Button, Container, MenuItem, Select, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material';
 
 import { useContext, useEffect, useRef, useState } from 'react';
 
@@ -22,6 +31,7 @@ export default function Home() {
   const isOnScreen = useOnScreen(target);
   const filterValue = useContext(FilterContext);
   const [hightlightTop, setHighLightTop] = useState(false);
+  const theme = useTheme();
 
   const { data, loading, error } = useQuery(LIST_LATEST_MODELS_QUERY, {
     variables: {
@@ -103,29 +113,17 @@ export default function Home() {
           },
         }}
       >
-        <Typography
-          sx={{
-            fontStyle: 'normal',
-            fontWeight: 300,
-            fontSize: '30px',
-            lineHeight: '41px',
-            /* identical to box height */
-            // background: 'linear-gradient(101.22deg, rgba(14, 255, 168, 0.58) 30.84%, #9747FF 55.47%, rgba(84, 81, 228, 0) 78.13%), linear-gradient(0deg, #FFFFFF, #FFFFFF)',
-          }}
-        >
-          Choose your AI Model to start using.
-        </Typography>
         <Featured data={(data && data.transactions.edges) || []} loading={loading} error={error} />
         <Box className={'filter-box'} sx={{ display: 'flex' }}>
           <Box display='flex' gap={'50px'}>
             <Typography
               sx={{
                 fontStyle: 'normal',
-                fongWeight: 500,
+                fontWeight: 500,
                 fontSize: '30px',
                 fontHeight: '41px',
+                opacity: !hightlightTop ? 1 : 0.5,
               }}
-              className={hightlightTop ? 'trending-text' : 'trending-text highlight'}
               onClick={() => handleHighlight(false)}
             >
               Trending
@@ -133,16 +131,16 @@ export default function Home() {
             <Typography
               sx={{
                 fontStyle: 'normal',
-                fongWeight: 500,
+                fontWeight: 500,
                 fontSize: '30px',
                 fontHeight: '41px',
+                opacity: hightlightTop ? 1 : 0.5,
               }}
-              className={hightlightTop ? 'trending-text highlight' : 'trending-text'}
               onClick={() => handleHighlight(true)}
             >
               Top
             </Typography>
-            <div className='underline'></div>
+            {/* <div className='underline'></div> */}
             <Box flexGrow={1} />
           </Box>
           <Box flexGrow={1} />
@@ -150,11 +148,10 @@ export default function Home() {
             <Select
               sx={{
                 padding: '0px 8px',
-                border: '1px solid transparent',
+                border: '2px solid transparent',
                 borderRadius: '10px',
                 textTransform: 'none',
-                background:
-                  'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderWidth: 0,
                 },
@@ -169,7 +166,7 @@ export default function Home() {
                     fontSize: '20px',
                     lineHeight: '27px',
                     textAlign: 'center',
-                    color: '#F4F4F4',
+                    color: theme.palette.primary.main,
                   }}
                 >
                   24H
@@ -182,11 +179,10 @@ export default function Home() {
             <Button
               sx={{
                 borderRadius: '10px',
-                border: '1px solid transparent',
+                border: '2px solid transparent',
                 padding: '8px',
                 textTransform: 'none',
-                background:
-                  'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
               }}
             >
               <Typography
@@ -197,7 +193,6 @@ export default function Home() {
                   fontSize: '20px',
                   lineHeight: '27px',
                   textAlign: 'center',
-                  color: '#F4F4F4',
                 }}
               >
                 View All

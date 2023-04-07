@@ -1,4 +1,4 @@
-import { Box, Icon, Tooltip, Typography } from '@mui/material';
+import { Box, Icon, Tooltip, Typography, useTheme } from '@mui/material';
 import { FiCard, FiCardActionArea, FiCardContent, FicardMedia } from './full-image-card';
 import { IEdge } from '@/interfaces/arweave';
 import { toSvg } from 'jdenticon';
@@ -16,6 +16,7 @@ import {
 } from '@/constants';
 
 const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
+  const theme = useTheme();
   const navigate = useNavigate();
 
   const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
@@ -106,7 +107,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
               right: 0,
               width: '317px',
               height: '352px',
-              background: 'linear-gradient(to top, #000000 -35%, rgba(71, 71, 71, 0) 100%)',
+              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, ${theme.palette.background.default} 100%)`,
               // backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'cover' /* <------ */,
@@ -122,10 +123,10 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
               right: 0,
               width: '317px',
               height: '352px',
-              background: `linear-gradient(to top, #000000 -35%, rgba(71, 71, 71, 0) 100%), url(${
-                imgUrl && !loading && !avatarLoading ? imgUrl : ''
-              })`,
-              // backgroundPosition: 'center',
+              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, ${
+                theme.palette.background.default
+              } 100%), url(${imgUrl && !loading && !avatarLoading ? imgUrl : ''})`,
+              // backgroundPosition: 'center',s
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'cover' /* <------ */,
               backgroundPosition: 'center center',
@@ -135,45 +136,17 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
 
         <FiCardContent>
           <Tooltip title={findTag(model, 'modelName') || 'Untitled'} placement={'top-start'}>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: '700',
-                fontSize: '24px',
-                lineHeight: '32px',
-                color: '#FFFFFF',
-                maxWidth: '200px',
-              }}
-              noWrap
-            >
+            <Typography variant='h2' noWrap>
               {findTag(model, 'modelName') || 'Untitled'}
             </Typography>
           </Tooltip>
           <Tooltip title={model.node.owner.address} placement={'bottom-start'}>
-            <Typography
-              sx={{
-                color: '#B5B5B5',
-                fontStyle: 'normal',
-                fontWeight: '400',
-                fontSize: '12px',
-                lineHeight: '16px',
-              }}
-            >
+            <Typography variant='h6'>
               {model.node.owner.address.slice(0, 5)}...{model.node.owner.address.slice(-8)}
             </Typography>
           </Tooltip>
 
-          <Typography
-            sx={{
-              color: '#696969',
-              fontStyle: 'normal',
-              fontWeight: '400',
-              fontSize: '12px',
-              lineHeight: '16px',
-            }}
-          >
-            {getTimePassed()}
-          </Typography>
+          <Typography variant='h6'>{getTimePassed()}</Typography>
           <Icon
             sx={{
               position: 'relative',

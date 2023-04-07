@@ -9,12 +9,15 @@ import { QUERY_FIRST_REGISTRATION } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
 import {
   Box,
+  Button,
   CardMedia,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -28,6 +31,7 @@ const OperatorDetails = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const [firstRegistrationDate, setFirstregistrationDate] = useState('');
+  const theme = useTheme();
 
   const { data: firstRegistrationData } = useQuery(QUERY_FIRST_REGISTRATION, {
     variables: {
@@ -36,7 +40,7 @@ const OperatorDetails = () => {
     },
   });
 
-  const handleClose = () => navigate(-1);
+  const handleClose = () => navigate('/');
 
   const imgUrl = useMemo(() => {
     const avatar = createAvatar(bottts, {
@@ -71,7 +75,10 @@ const OperatorDetails = () => {
         fullWidth
         sx={{
           '& .MuiPaper-root': {
-            background: 'rgba(61, 61, 61, 0.9)',
+            background:
+              theme.palette.mode === 'dark'
+                ? theme.palette.neutral.main
+                : theme.palette.background.default,
             borderRadius: '30px',
           },
         }}
@@ -83,7 +90,13 @@ const OperatorDetails = () => {
           lineHeight={0}
         >
           <Typography>Operator Details</Typography>
-          <IconButton onClick={handleClose}>
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              background: theme.palette.primary.main,
+              '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
+            }}
+          >
             <img src='/close-icon.svg' />
           </IconButton>
         </DialogTitle>
@@ -103,6 +116,27 @@ const OperatorDetails = () => {
         <DialogContent>
           <HistoryTable address={address} />
         </DialogContent>
+        <DialogActions
+          sx={{
+            justifyContent: 'center',
+          }}
+        >
+          <Button sx={{ borderRadius: '7px' }} variant='outlined' onClick={() => navigate(-1)}>
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: 500,
+                fontSize: '15px',
+                lineHeight: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                textAlign: 'center',
+              }}
+            >
+              Go Back
+            </Typography>
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

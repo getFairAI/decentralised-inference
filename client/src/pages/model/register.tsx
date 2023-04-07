@@ -20,6 +20,7 @@ import {
   DialogTitle,
   IconButton,
   CardContent,
+  useTheme,
 } from '@mui/material';
 import { toSvg } from 'jdenticon';
 import { useSnackbar } from 'notistack';
@@ -34,6 +35,7 @@ const Register = () => {
   const [isRegistered, setIsRegistered] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const imgUrl = useMemo(() => {
     if (avatarTxId) {
@@ -103,7 +105,10 @@ const Register = () => {
       sx={{
         padding: '8px',
         '& .MuiPaper-root': {
-          background: 'rgba(61, 61, 61, 0.9)',
+          background:
+            theme.palette.mode === 'dark'
+              ? theme.palette.neutral.main
+              : theme.palette.background.default,
           borderRadius: '30px',
         },
       }}
@@ -123,7 +128,16 @@ const Register = () => {
         >
           Register Operator
         </Typography>
-        <IconButton onClick={handleClose}>
+        <IconButton
+          onClick={handleClose}
+          sx={{
+            background: theme.palette.primary.main,
+            '&:hover': {
+              background: theme.palette.primary.main,
+              opacity: 0.8,
+            },
+          }}
+        >
           <img src='/close-icon.svg' />
         </IconButton>
       </DialogTitle>
@@ -165,7 +179,6 @@ const Register = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Name
@@ -179,7 +192,6 @@ const Register = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               {findTag(state, 'modelName')}
@@ -195,7 +207,6 @@ const Register = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Category
@@ -209,7 +220,6 @@ const Register = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               {findTag(state, 'category')}
@@ -225,7 +235,6 @@ const Register = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Cost
@@ -250,13 +259,21 @@ const Register = () => {
                   fontSize: '60px',
                   lineHeight: '106px',
                   textAlign: 'center',
-                  color: '#FAFAFA',
+
                   paddingRight: '8px',
                 }}
                 disabled
               />
               <Icon sx={{ height: '50px', width: '50px' }}>
-                <img src='/arweave-logo.svg' width={'50px'} height={'50px'} />
+                <img
+                  src={
+                    theme.palette.mode === 'dark'
+                      ? '/arweave-logo.svg'
+                      : '/arweave-logo-for-light.png'
+                  }
+                  width={'50px'}
+                  height={'50px'}
+                />
               </Icon>
             </Box>
           </Box>
@@ -272,7 +289,6 @@ const Register = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Description

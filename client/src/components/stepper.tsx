@@ -21,7 +21,6 @@ import { ChangeEvent, Fragment, ReactElement, useEffect, useRef, useState } from
 import PaymentIcon from '@mui/icons-material/Payment';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';
-import MDEditor from '@uiw/react-md-editor';
 import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
 import { IEdge } from '@/interfaces/arweave';
@@ -32,6 +31,7 @@ import { useRouteLoaderData } from 'react-router-dom';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { getData } from '@/utils/arweave';
 import useOnScreen from '@/hooks/useOnScreen';
+import MarkdownControl from './md-control';
 
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -39,14 +39,12 @@ const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   },
   [`&.${stepConnectorClasses.active}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      backgroundImage:
-        'linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%)',
+      backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
     },
   },
   [`&.${stepConnectorClasses.completed}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      backgroundImage:
-        'linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%)',
+      backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
     },
   },
   [`& .${stepConnectorClasses.line}`]: {
@@ -62,7 +60,7 @@ const ColorlibStepIconRoot = styled('div')<{
 }>(({ theme, ownerState }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#ccc',
   zIndex: 1,
-  color: '#fff',
+  color: theme.palette.text.primary,
   width: 40,
   height: 40,
   display: 'flex',
@@ -70,13 +68,11 @@ const ColorlibStepIconRoot = styled('div')<{
   justifyContent: 'center',
   alignItems: 'center',
   ...(ownerState.active && {
-    backgroundImage:
-      'linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%)',
+    backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
     boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
   }),
   ...(ownerState.completed && {
-    backgroundImage:
-      'linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%)',
+    backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
   }),
 }));
 
@@ -297,6 +293,7 @@ export const CustomStepper = (props: {
                 height: '39px',
                 width: '204px',
               }}
+              variant='outlined'
             >
               <Typography
                 sx={{
@@ -304,7 +301,6 @@ export const CustomStepper = (props: {
                   fontWeight: 500,
                   fontSize: '15px',
                   lineHeight: '20px',
-                  color: '#F4F4F4',
                 }}
               >
                 Back
@@ -313,11 +309,11 @@ export const CustomStepper = (props: {
             <Button
               onClick={handleFinish}
               sx={{
-                background: '#F4F4F4',
                 borderRadius: '7px',
                 height: '39px',
                 width: '204px',
               }}
+              variant='contained'
             >
               <Typography
                 sx={{
@@ -325,7 +321,6 @@ export const CustomStepper = (props: {
                   fontWeight: 500,
                   fontSize: '15px',
                   lineHeight: '20px',
-                  color: '#151515',
                 }}
               >
                 Finish
@@ -335,15 +330,17 @@ export const CustomStepper = (props: {
         </Fragment>
       ) : activeStep === 1 ? (
         <Fragment>
-          <MDEditor
-            preview='preview'
-            previewOptions={{
-              rehypePlugins: [[rehypeSanitize]],
+          <MarkdownControl
+            viewProps={{
+              preview: 'preview',
+              previewOptions: {
+                rehypePlugins: [[rehypeSanitize]],
+              },
+              hideToolbar: true,
+              fullscreen: false,
+              value: notes,
             }}
-            hideToolbar={true}
-            fullscreen={false}
-            value={notes}
-          ></MDEditor>
+          />
           <Box>
             <FormControl variant='outlined' fullWidth>
               <TextField
@@ -381,6 +378,7 @@ export const CustomStepper = (props: {
                 height: '39px',
                 width: '204px',
               }}
+              variant='outlined'
             >
               <Typography
                 sx={{
@@ -388,7 +386,6 @@ export const CustomStepper = (props: {
                   fontWeight: 500,
                   fontSize: '15px',
                   lineHeight: '20px',
-                  color: '#F4F4F4',
                 }}
               >
                 Back
@@ -397,11 +394,11 @@ export const CustomStepper = (props: {
             <Button
               onClick={handleNext}
               sx={{
-                background: '#F4F4F4',
                 borderRadius: '7px',
                 height: '39px',
                 width: '204px',
               }}
+              variant='contained'
             >
               <Typography
                 sx={{
@@ -409,7 +406,6 @@ export const CustomStepper = (props: {
                   fontWeight: 500,
                   fontSize: '15px',
                   lineHeight: '20px',
-                  color: '#151515',
                 }}
               >
                 Next
@@ -534,19 +530,18 @@ export const CustomStepper = (props: {
               </b>{' '}
               <b>To do: detail more these rules</b>
             </Typography>
+            <div ref={target}></div>
             <Typography variant='body1' textAlign={'justify'}>
               <b>
                 By clicking next, you accept all these rules, terms, and conditions specified above.
               </b>
             </Typography>
-            <div ref={target}></div>
           </Box>
           <Box display={'flex'} justifyContent={'flex-end'}>
             {/* <Button variant='contained' onClick={handleBack}>Back</Button> */}
             <Button
               onClick={handleNext}
               sx={{
-                background: '#F4F4F4',
                 borderRadius: '7px',
                 height: '39px',
                 width: '204px',
@@ -554,6 +549,7 @@ export const CustomStepper = (props: {
                   opacity: '0.1',
                 },
               }}
+              variant='contained'
               disabled={!hasScrolledDown}
             >
               <Typography
@@ -562,7 +558,6 @@ export const CustomStepper = (props: {
                   fontWeight: 500,
                   fontSize: '15px',
                   lineHeight: '20px',
-                  color: '#151515',
                 }}
               >
                 Accept & Continue
