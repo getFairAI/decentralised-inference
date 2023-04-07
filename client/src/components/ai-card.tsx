@@ -123,7 +123,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
               right: 0,
               width: '317px',
               height: '352px',
-              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, ${
+              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 40%, ${
                 theme.palette.background.default
               } 100%), url(${imgUrl && !loading && !avatarLoading ? imgUrl : ''})`,
               // backgroundPosition: 'center',s

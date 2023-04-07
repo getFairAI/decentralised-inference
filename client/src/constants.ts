@@ -75,3 +75,6 @@ export const DEFAULT_TAGS = [
   { name: TAG_NAMES.appName, values: [APP_NAME] },
   { name: TAG_NAMES.appVersion, values: [APP_VERSION] },
 ];
+
+export const GITHUB_LINK = 'https://github.com/FAIR-Protocol/decentralized-inference';
+export const WHITEPAPER_LINK = '';

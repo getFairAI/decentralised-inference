@@ -792,7 +792,7 @@ const Chat = () => {
                     '&.Mui-selected, &.Mui-selected:hover': {
                       opacity: 1,
                       backdropFilter: 'brightness(0.5)',
-                      color: theme.palette.text.primary,
+                      color: theme.palette.primary.contrastText,
                       // border: '4px solid transparent',
                       // background: 'linear-gradient(#434343, #434343) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
                     },
@@ -843,10 +843,11 @@ const Chat = () => {
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
                 background: theme.palette.background.default,
+                boxShadow: 'none',
               }}
             >
               <Box
-                sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}
+                sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px', paddingBottom: '24px' }}
                 ref={scrollableRef}
               >
                 {messagesLoading &&
@@ -1094,9 +1095,10 @@ const Chat = () => {
           </Box>
           <Box
             sx={{
-              background: theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.primary.main,
+              background: theme.palette.mode === 'dark' ? '#1A1A1A' : 'transparent',
+              border: '2px solid',
               borderRadius: '20px',
-              margin: '0',
+              margin: '0 32px',
               display: 'flex',
               justifyContent: 'space-between',
               padding: '3px 20px 0px 50px',
@@ -1106,7 +1108,7 @@ const Chat = () => {
             <InputBase
               sx={{
                 color:
-                  theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.primary.contrastText,
+                  theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
                 fontStyle: 'normal',
                 fontWeight: 400,
                 fontSize: '20px',
@@ -1120,7 +1122,7 @@ const Chat = () => {
             />
             <IconButton
               onClick={handleSend}
-              sx={{ height: '60px', width: '60px', color: theme.palette.primary.contrastText }}
+              sx={{ height: '60px', width: '60px', color: theme.palette.neutral.contrastText }}
               disabled={!newMessage || newMessage === ''}
             >
               <SendIcon />

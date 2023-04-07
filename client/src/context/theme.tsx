@@ -87,9 +87,9 @@ const lightTheme = createTheme({
     },
     neutral: {
       // light: will be calculated from palette.primary.main,
-      light: '#ABCCCE',
-      main: '#ABCCCE',
-      dark: '#ABCCCE',
+      light: '#C0C0C0',
+      main: '#C0C0C0',
+      dark: '#C0C0C0',
       contrastText: '#223745',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
@@ -98,6 +98,35 @@ const lightTheme = createTheme({
       primary: '#355064', // same as rgba(34,55,69,255)
       secondary: 'rgba(34,55,69, 0.6)',
       disabled: 'rgba(34,55,69,0.3)',
+    },
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          scrollbarColor: '#C0C0C0 #C0C0C0',
+          '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
+            backgroundColor: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb': {
+            borderRadius: 8,
+            backgroundColor: '#C0C0C0',
+            minHeight: 24,
+          },
+          '&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus': {
+            backgroundColor: '#C0C0C0',
+          },
+          '&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active': {
+            backgroundColor: '#C0C0C0',
+          },
+          '&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover': {
+            backgroundColor: '#C0C0C0',
+          },
+          '&::-webkit-scrollbar-corner, & *::-webkit-scrollbar-corner': {
+            backgroundColor: '#C0C0C0',
+          },
+        },
+      },
     },
   },
 });

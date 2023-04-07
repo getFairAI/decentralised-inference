@@ -98,32 +98,43 @@ const Operators = () => {
           Choose a Model to Start Operating
         </Typography>
         <Box className={'filter-box'} sx={{ display: 'flex' }}>
-          <Box display='flex' gap={'50px'}>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 500,
-                fontSize: '30px',
-                fontHeight: '41px',
-                opacity: !hightlightTop ? 1 : 0.5,
-              }}
-              onClick={() => handleHighlight(false)}
-            >
-              Trending
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 500,
-                fontSize: '30px',
-                fontHeight: '41px',
-                opacity: hightlightTop ? 1 : 0.5,
-              }}
-              onClick={() => handleHighlight(true)}
-            >
-              Top
-            </Typography>
-            <Box flexGrow={1} />
+          <Box display={'flex'} flexDirection={'column'}>
+            <Box display='flex' gap={'50px'} width={'100%'}>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: '30px',
+                  fontHeight: '41px',
+                  opacity: !hightlightTop ? 1 : 0.5,
+                }}
+                onClick={() => handleHighlight(false)}
+              >
+                Trending
+              </Typography>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: '30px',
+                  fontHeight: '41px',
+                  opacity: hightlightTop ? 1 : 0.5,
+                }}
+                onClick={() => handleHighlight(true)}
+              >
+                Top
+              </Typography>
+              <Box flexGrow={1} />
+            </Box>
+            <Box display={'flex'} position='relative'>
+              <Box height={'6px'} sx={{
+                position: 'absolute',
+                width: hightlightTop ? '55px' : '119px',
+                left: hightlightTop ? '166px' : 0,
+                background: theme.palette.primary.main,
+                borderRadius: '8px'
+              }} />
+            </Box>
           </Box>
           <Box flexGrow={1} />
           <Box display='flex' gap={'50px'}>

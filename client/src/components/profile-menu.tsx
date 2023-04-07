@@ -6,11 +6,14 @@ import FundDialog from './fund-dialog';
 import { useNavigate } from 'react-router-dom';
 import { AppThemeContext } from '@/context/theme';
 import { Tooltip, Typography } from '@mui/material';
+import { GITHUB_LINK, WHITEPAPER_LINK } from '@/constants';
 
 const options = [
   'Bundlr Settings',
   'My Models',
   'Toggle Theme',
+  'Github',
+  'Whitepaper'
   // 'Disconnect'
 ];
 
@@ -46,6 +49,12 @@ export default function ProfileMenu() {
         break;
       case 'Toggle Theme':
         toggleTheme();
+        break;
+      case 'Github':
+        window.open(GITHUB_LINK, '_blank');
+        break;
+      case 'Whitepaper':
+        window.open(WHITEPAPER_LINK, '_blank');
         break;
       /* case 'Disconnect':
         await disconnect();

@@ -103,7 +103,7 @@ const Navbar = ({
         <Toolbar>
           <Box display={'flex'} flexDirection={'row'}>
             <Link to='/'>
-              <img src='/fair-protocol-logo.svg' />
+              <img src={theme.palette.mode === 'dark' ? '/fair-protocol-logo.svg' : '/fair-protocol-logo-light.svg'} />
             </Link>
           </Box>
           <Box sx={{ flexGrow: 1 }}>

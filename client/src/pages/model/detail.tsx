@@ -444,7 +444,8 @@ const Detail = () => {
             </Button>
             <Box
               sx={{
-                background: '#B1B1B1',
+                background: 'transparent',
+                border: '2px solid',
                 borderRadius: '30px',
                 margin: '0 20px',
                 display: 'flex',
@@ -455,7 +456,6 @@ const Detail = () => {
             >
               <InputBase
                 sx={{
-                  color: '#595959',
                   fontStyle: 'normal',
                   fontWeight: 400,
                   fontSize: '12px',
