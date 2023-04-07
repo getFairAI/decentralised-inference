@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useMediaQuery } from '@mui/material';
 import { useState } from 'react';
 import AiCard from './ai-card';
 import { IEdge } from '@/interfaces/arweave';
@@ -8,13 +8,16 @@ import { ApolloError } from '@apollo/client';
 const Featured = ({ data, loading }: { data: IEdge[]; loading: boolean; error?: ApolloError }) => {
   const [filterSelected, setFilterChanged] = useState(0);
   const filters = ['All', 'Text', 'Document'];
+  const smallScreen = useMediaQuery('(max-width:1600px)');
 
   const handleFilterChange = (newFilterIdx: number) => {
     setFilterChanged(newFilterIdx);
   };
   return (
     <>
-      <Box display={'flex'}>
+      <Box display={'flex'} sx={{
+        flexDirection: smallScreen ? 'column' : 'row'
+      }}>
         <Box display={'flex'} flexDirection={'column'} width={'40%'} justifyContent={'center'}>
           <Typography
             sx={{

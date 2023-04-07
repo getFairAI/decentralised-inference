@@ -12,7 +12,7 @@ const main = async () => {
   // the commented out line below to create a new Bundlr object.
   // const bundlr = new Bundlr("http://node1.bundlr.network", "arweave", jwk);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bundlr = new (Bundlr as any).default('http://node1.bundlr.network', 'arweave', jwk );
+  const bundlr: Bundlr = new (Bundlr as any).default('http://node1.bundlr.network', 'arweave', jwk );
   
   // Get loaded balance in atomic units
   const atomicBalance = await bundlr.getLoadedBalance();
@@ -26,7 +26,7 @@ const main = async () => {
   console.log(`wallet address = ${bundlr.address}`);
   const dist = './dist/';
   const response = await bundlr.uploadFolder(dist, {
-    indexFile: './dist/index.html', // optional index file (file the user will load when accessing the manifest)
+    indexFile: 'index.html', // optional index file (file the user will load when accessing the manifest)
     batchSize: 50, // number of items to upload at once
     keepDeleted: false   // whether to keep now deleted items from previous uploads
   }); // returns the manifest ID
