@@ -15,9 +15,12 @@ const Featured = ({ data, loading }: { data: IEdge[]; loading: boolean; error?: 
   };
   return (
     <>
-      <Box display={'flex'} sx={{
-        flexDirection: smallScreen ? 'column' : 'row'
-      }}>
+      <Box
+        display={'flex'}
+        sx={{
+          flexDirection: smallScreen ? 'column' : 'row',
+        }}
+      >
         <Box display={'flex'} flexDirection={'column'} width={'40%'} justifyContent={'center'}>
           <Typography
             sx={{
