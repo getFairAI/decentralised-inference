@@ -758,7 +758,7 @@ const Chat = () => {
                 sx={{
                   margin: '0 20px',
                   borderRadius: '30px',
-                  color: theme.palette.primary.contrastText
+                  color: theme.palette.primary.contrastText,
                 }}
               >
                 <AddIcon />
@@ -782,7 +782,8 @@ const Chat = () => {
                   selected={cid === currentConversationId}
                   onClick={() => handleListItemClick(cid)}
                   sx={{
-                    background: theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
+                    background:
+                      theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
                     borderRadius: '21px',
                     width: '100%',
                     justifyContent: 'center',
@@ -796,7 +797,7 @@ const Chat = () => {
                       // background: 'linear-gradient(#434343, #434343) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
                     },
                     '&:hover': {
-                      backdropFilter: 'brightness(0.5)'
+                      backdropFilter: 'brightness(0.5)',
                     },
                   }}
                 >
@@ -917,8 +918,12 @@ const Chat = () => {
                                   border: '4px solid transparent',
                                   background:
                                     el.type !== 'response'
-                                      ? theme.palette.mode === 'dark' ? 'rgba(204, 204, 204, 0.8)' : theme.palette.terciary.main
-                                      : theme.palette.mode === 'dark' ? 'rgba(52, 52, 52, 0.7)' : theme.palette.secondary.main,
+                                      ? theme.palette.mode === 'dark'
+                                        ? 'rgba(204, 204, 204, 0.8)'
+                                        : theme.palette.terciary.main
+                                      : theme.palette.mode === 'dark'
+                                      ? 'rgba(52, 52, 52, 0.7)'
+                                      : theme.palette.secondary.main,
                                   // opacity: '0.4',
                                   borderRadius: '40px',
                                 }}
@@ -940,7 +945,10 @@ const Chat = () => {
                                       lineHeight: '34px',
                                       display: 'flex',
                                       alignItems: 'center',
-                                      color: el.type === 'response' ? theme.palette.secondary.contrastText : theme.palette.terciary.contrastText,
+                                      color:
+                                        el.type === 'response'
+                                          ? theme.palette.secondary.contrastText
+                                          : theme.palette.terciary.contrastText,
                                       whiteSpace: 'pre-wrap',
                                     }}
                                     gutterBottom
@@ -957,7 +965,10 @@ const Chat = () => {
                                         lineHeight: '27px',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        color: el.type === 'response' ? theme.palette.secondary.contrastText : theme.palette.terciary.contrastText,
+                                        color:
+                                          el.type === 'response'
+                                            ? theme.palette.secondary.contrastText
+                                            : theme.palette.terciary.contrastText,
                                       }}
                                     >
                                       {new Date(el.timestamp * 1000).toLocaleTimeString()}
@@ -971,7 +982,10 @@ const Chat = () => {
                                         lineHeight: '27px',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        color: el.type === 'response' ? theme.palette.secondary.contrastText : theme.palette.terciary.contrastText,
+                                        color:
+                                          el.type === 'response'
+                                            ? theme.palette.secondary.contrastText
+                                            : theme.palette.terciary.contrastText,
                                       }}
                                     >
                                       {el.type === 'response' ? state.modelName : 'You'}
@@ -1017,7 +1031,10 @@ const Chat = () => {
                                   maxWidth: '75%',
                                   // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
                                   border: '4px solid transparent',
-                                  background:  theme.palette.mode === 'dark' ? 'rgba(52, 52, 52, 0.7)' : theme.palette.secondary.main,
+                                  background:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(52, 52, 52, 0.7)'
+                                      : theme.palette.secondary.main,
                                   // opacity: '0.4',
                                   borderRadius: '40px',
                                 }}
@@ -1088,12 +1105,13 @@ const Chat = () => {
           >
             <InputBase
               sx={{
-                color: theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.primary.contrastText,
+                color:
+                  theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.primary.contrastText,
                 fontStyle: 'normal',
                 fontWeight: 400,
                 fontSize: '20px',
                 lineHeight: '16px',
-                width: '100%'
+                width: '100%',
               }}
               value={newMessage}
               onChange={handleMessageChange}

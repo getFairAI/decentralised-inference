@@ -89,8 +89,8 @@ const Navbar = ({
           <Banner>
             <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
               <Typography variant='h4'>
-                This Application is in <b>PRE-ALPHA</b>. Please Make sure you understand before using
-                any of the functionalities.
+                This Application is in <b>PRE-ALPHA</b>. Please Make sure you understand before
+                using any of the functionalities.
               </Typography>
             </Box>
             <Box sx={{ flexGrow: 0 }}>
@@ -116,7 +116,7 @@ const Navbar = ({
                   justifyContent: 'space-between',
                   padding: '3px 20px 3px 50px',
                   alignItems: 'center',
-                  background: theme.palette.background.default
+                  background: theme.palette.background.default,
                 }}
               >
                 <InputBase

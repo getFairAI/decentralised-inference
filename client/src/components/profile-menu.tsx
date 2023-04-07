@@ -10,7 +10,7 @@ import { Tooltip, Typography } from '@mui/material';
 const options = [
   'Bundlr Settings',
   'My Models',
-  'Toggle Theme'
+  'Toggle Theme',
   // 'Disconnect'
 ];
 
@@ -84,15 +84,19 @@ export default function ProfileMenu() {
           },
         }}
       >
-        {options.map((option) => (
-          option === 'Toggle Theme' ?
+        {options.map((option) =>
+          option === 'Toggle Theme' ? (
             <MenuItem key={option} onClick={() => HandleOptionClick(option)} disabled>
-              <Tooltip title='This Feature is not Available at the moment'><Typography>{option}</Typography></Tooltip>
-            </MenuItem> : 
-              <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
+              <Tooltip title='This Feature is not Available at the moment'>
                 <Typography>{option}</Typography>
-              </MenuItem>
-        ))}
+              </Tooltip>
+            </MenuItem>
+          ) : (
+            <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
+              <Typography>{option}</Typography>
+            </MenuItem>
+          ),
+        )}
       </Menu>
       <FundDialog open={fundOpen} setOpen={setFundOpen} />
     </div>

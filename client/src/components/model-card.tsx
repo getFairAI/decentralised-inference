@@ -189,8 +189,8 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
         boxShadow: 'none',
         '&:hover': {
           boxShadow: `0px 2px 24px -1px ${theme.palette.primary.main}, 0px 2px 1px 0px ${theme.palette.primary.main}, 0px 2px 7px 0px ${theme.palette.primary.main}`,
-          opacity: 1
-        }
+          opacity: 1,
+        },
       }}
     >
       {error ? (
@@ -271,7 +271,8 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                 right: 0,
                 width: '317px',
                 height: '352px',
-                background: 'linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)',
+                background:
+                  'linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)',
                 // backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover' /* <------ */,
@@ -289,7 +290,7 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                   loading || avatarLoading ? '' : imgUrl
                 })`,
                 backgroundPosition: 'center',
-                backgroundSize: 'contain'
+                backgroundSize: 'contain',
               }}
             />
           )}

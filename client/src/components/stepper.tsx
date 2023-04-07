@@ -39,14 +39,12 @@ const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   },
   [`&.${stepConnectorClasses.active}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      backgroundImage:
-        `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
+      backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
     },
   },
   [`&.${stepConnectorClasses.completed}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      backgroundImage:
-        `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
+      backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
     },
   },
   [`& .${stepConnectorClasses.line}`]: {
@@ -70,13 +68,11 @@ const ColorlibStepIconRoot = styled('div')<{
   justifyContent: 'center',
   alignItems: 'center',
   ...(ownerState.active && {
-    backgroundImage:
-      `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
+    backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
     boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
   }),
   ...(ownerState.completed && {
-    backgroundImage:
-    `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
+    backgroundImage: `linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%)`,
   }),
 }));
 
@@ -342,7 +338,7 @@ export const CustomStepper = (props: {
               },
               hideToolbar: true,
               fullscreen: false,
-              value: notes
+              value: notes,
             }}
           />
           <Box>
@@ -563,7 +559,6 @@ export const CustomStepper = (props: {
                   fontSize: '15px',
                   lineHeight: '20px',
                 }}
-                
               >
                 Accept & Continue
               </Typography>

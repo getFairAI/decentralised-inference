@@ -36,7 +36,10 @@ const AvatarControl = (props: UseControllerProps & { control: Control }) => {
   return (
     <Button
       sx={{
-        background: theme.palette.mode === 'dark' ? 'linear-gradient(to bottom, #000000 10%, rgba(71, 71, 71, 0) 100%)' : theme.palette.secondary.main,
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(to bottom, #000000 10%, rgba(71, 71, 71, 0) 100%)'
+            : theme.palette.secondary.main,
         borderRadius: '23px',
         backgroundPosition: 'center',
         height: '100%',

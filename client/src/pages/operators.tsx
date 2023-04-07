@@ -90,7 +90,7 @@ const Operators = () => {
             fontWeight: 300,
             fontSize: '30px',
             lineHeight: '41px',
-            padding: '16px'
+            padding: '16px',
             /* identical to box height */
             // background: 'linear-gradient(101.22deg, rgba(14, 255, 168, 0.58) 30.84%, #9747FF 55.47%, rgba(84, 81, 228, 0) 78.13%), linear-gradient(0deg, #FFFFFF, #FFFFFF)',
           }}
@@ -105,7 +105,7 @@ const Operators = () => {
                 fontWeight: 500,
                 fontSize: '30px',
                 fontHeight: '41px',
-                opacity: !hightlightTop ? 1 : 0.5
+                opacity: !hightlightTop ? 1 : 0.5,
               }}
               onClick={() => handleHighlight(false)}
             >
@@ -117,7 +117,7 @@ const Operators = () => {
                 fontWeight: 500,
                 fontSize: '30px',
                 fontHeight: '41px',
-                opacity: hightlightTop ? 1 : 0.5
+                opacity: hightlightTop ? 1 : 0.5,
               }}
               onClick={() => handleHighlight(true)}
             >
@@ -133,8 +133,7 @@ const Operators = () => {
                 border: '2px solid transparent',
                 borderRadius: '10px',
                 textTransform: 'none',
-                background:
-                  `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderWidth: 0,
                 },
@@ -149,7 +148,7 @@ const Operators = () => {
                     fontSize: '20px',
                     lineHeight: '27px',
                     textAlign: 'center',
-                    color: theme.palette.primary.main
+                    color: theme.palette.primary.main,
                   }}
                 >
                   24H
@@ -165,8 +164,7 @@ const Operators = () => {
                 border: '2px solid transparent',
                 padding: '8px',
                 textTransform: 'none',
-                background:
-                `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
               }}
             >
               <Typography

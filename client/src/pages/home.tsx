@@ -1,5 +1,14 @@
 import { NetworkStatus, useQuery } from '@apollo/client';
-import { Box, Button, Container, MenuItem, Select, Stack, Typography, useTheme } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material';
 
 import { useContext, useEffect, useRef, useState } from 'react';
 
@@ -113,7 +122,7 @@ export default function Home() {
                 fontWeight: 500,
                 fontSize: '30px',
                 fontHeight: '41px',
-                opacity: !hightlightTop ? 1 : 0.5
+                opacity: !hightlightTop ? 1 : 0.5,
               }}
               onClick={() => handleHighlight(false)}
             >
@@ -125,7 +134,7 @@ export default function Home() {
                 fontWeight: 500,
                 fontSize: '30px',
                 fontHeight: '41px',
-                opacity: hightlightTop ? 1 : 0.5
+                opacity: hightlightTop ? 1 : 0.5,
               }}
               onClick={() => handleHighlight(true)}
             >
@@ -142,8 +151,7 @@ export default function Home() {
                 border: '2px solid transparent',
                 borderRadius: '10px',
                 textTransform: 'none',
-                background:
-                  `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderWidth: 0,
                 },
@@ -158,7 +166,7 @@ export default function Home() {
                     fontSize: '20px',
                     lineHeight: '27px',
                     textAlign: 'center',
-                    color: theme.palette.primary.main
+                    color: theme.palette.primary.main,
                   }}
                 >
                   24H
@@ -174,8 +182,7 @@ export default function Home() {
                 border: '2px solid transparent',
                 padding: '8px',
                 textTransform: 'none',
-                background:
-                `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
               }}
             >
               <Typography

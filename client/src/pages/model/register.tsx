@@ -105,7 +105,10 @@ const Register = () => {
       sx={{
         padding: '8px',
         '& .MuiPaper-root': {
-          background: theme.palette.mode === 'dark' ? theme.palette.neutral.main : theme.palette.background.default,
+          background:
+            theme.palette.mode === 'dark'
+              ? theme.palette.neutral.main
+              : theme.palette.background.default,
           borderRadius: '30px',
         },
       }}
@@ -125,13 +128,16 @@ const Register = () => {
         >
           Register Operator
         </Typography>
-        <IconButton onClick={handleClose} sx={{
-          background: theme.palette.primary.main,
-          '&:hover': {
+        <IconButton
+          onClick={handleClose}
+          sx={{
             background: theme.palette.primary.main,
-            opacity: 0.8
-          }
-        }}>
+            '&:hover': {
+              background: theme.palette.primary.main,
+              opacity: 0.8,
+            },
+          }}
+        >
           <img src='/close-icon.svg' />
         </IconButton>
       </DialogTitle>
@@ -259,7 +265,15 @@ const Register = () => {
                 disabled
               />
               <Icon sx={{ height: '50px', width: '50px' }}>
-                <img src={theme.palette.mode === 'dark' ? '/arweave-logo.svg' : '/arweave-logo-for-light.png'} width={'50px'} height={'50px'} />
+                <img
+                  src={
+                    theme.palette.mode === 'dark'
+                      ? '/arweave-logo.svg'
+                      : '/arweave-logo-for-light.png'
+                  }
+                  width={'50px'}
+                  height={'50px'}
+                />
               </Icon>
             </Box>
           </Box>

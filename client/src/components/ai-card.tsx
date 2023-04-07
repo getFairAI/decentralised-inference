@@ -123,9 +123,9 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
               right: 0,
               width: '317px',
               height: '352px',
-              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, ${theme.palette.background.default} 100%), url(${
-                imgUrl && !loading && !avatarLoading ? imgUrl : ''
-              })`,
+              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, ${
+                theme.palette.background.default
+              } 100%), url(${imgUrl && !loading && !avatarLoading ? imgUrl : ''})`,
               // backgroundPosition: 'center',s
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'cover' /* <------ */,
@@ -136,26 +136,17 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
 
         <FiCardContent>
           <Tooltip title={findTag(model, 'modelName') || 'Untitled'} placement={'top-start'}>
-            <Typography
-              variant='h2'
-              noWrap
-            >
+            <Typography variant='h2' noWrap>
               {findTag(model, 'modelName') || 'Untitled'}
             </Typography>
           </Tooltip>
           <Tooltip title={model.node.owner.address} placement={'bottom-start'}>
-            <Typography
-              variant='h6'
-            >
+            <Typography variant='h6'>
               {model.node.owner.address.slice(0, 5)}...{model.node.owner.address.slice(-8)}
             </Typography>
           </Tooltip>
 
-          <Typography
-            variant='h6'
-          >
-            {getTimePassed()}
-          </Typography>
+          <Typography variant='h6'>{getTimePassed()}</Typography>
           <Icon
             sx={{
               position: 'relative',

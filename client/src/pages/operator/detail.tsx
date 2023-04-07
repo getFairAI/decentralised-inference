@@ -75,7 +75,10 @@ const OperatorDetails = () => {
         fullWidth
         sx={{
           '& .MuiPaper-root': {
-            background: theme.palette.mode === 'dark' ? theme.palette.neutral.main : theme.palette.background.default,
+            background:
+              theme.palette.mode === 'dark'
+                ? theme.palette.neutral.main
+                : theme.palette.background.default,
             borderRadius: '30px',
           },
         }}
@@ -87,9 +90,15 @@ const OperatorDetails = () => {
           lineHeight={0}
         >
           <Typography>Operator Details</Typography>
-          <IconButton onClick={handleClose} sx={{ background: theme.palette.primary.main, '&:hover': {background: theme.palette.primary.main, opacity: 0.8} }}>
-          <img src='/close-icon.svg' />
-        </IconButton>
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              background: theme.palette.primary.main,
+              '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
+            }}
+          >
+            <img src='/close-icon.svg' />
+          </IconButton>
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Box display={'flex'}>
@@ -107,15 +116,12 @@ const OperatorDetails = () => {
         <DialogContent>
           <HistoryTable address={address} />
         </DialogContent>
-        <DialogActions sx={{
-          justifyContent: 'center',
-        }}>
-          <Button
-            sx={{ borderRadius: '7px' }}
-            variant='outlined'
-            onClick={() => navigate(-1)
-            }
-          >
+        <DialogActions
+          sx={{
+            justifyContent: 'center',
+          }}
+        >
+          <Button sx={{ borderRadius: '7px' }} variant='outlined' onClick={() => navigate(-1)}>
             <Typography
               sx={{
                 fontStyle: 'normal',

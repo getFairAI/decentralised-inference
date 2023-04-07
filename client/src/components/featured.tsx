@@ -29,7 +29,8 @@ const Featured = ({ data, loading }: { data: IEdge[]; loading: boolean; error?: 
             Choose your AI Model to start using.
           </Typography>
           <Typography variant='h4'>
-            Browse available AI models and choose what suits yourr task best. Fair Protocol brings Decentralized AI Computation at low cost with benefits for all participants.
+            Browse available AI models and choose what suits yourr task best. Fair Protocol brings
+            Decentralized AI Computation at low cost with benefits for all participants.
           </Typography>
         </Box>
         <Box display={'flex'} flexDirection={'column'} width={'100%'}>

@@ -118,8 +118,8 @@ const AiListCard = ({
         boxShadow: 'none',
         '&:hover': {
           boxShadow: `0px 2px 24px -1px ${theme.palette.primary.main}, 0px 2px 1px 0px ${theme.palette.primary.main}, 0px 2px 7px 0px ${theme.palette.primary.main}`,
-          opacity: 1
-        }
+          opacity: 1,
+        },
       }}
     >
       <CardActionArea
@@ -154,7 +154,8 @@ const AiListCard = ({
               right: 0,
               width: '317px',
               height: '352px',
-              background: 'linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)',
+              background:
+                'linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)',
             }}
           />
         ) : (
@@ -165,21 +166,15 @@ const AiListCard = ({
               height: '100px',
               width: '100px',
               background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)
-              , url(${
-                loading || avatarLoading ? '' : imgUrl
-              })`,
+              , url(${loading || avatarLoading ? '' : imgUrl})`,
               backgroundPosition: 'center',
-              backgroundSize: 'contain'
+              backgroundSize: 'contain',
             }}
           />
         )}
 
         <CardContent>
-          <Typography
-            variant='h3'
-          >
-            {findTag(model, 'modelName') || 'Untitled'}
-          </Typography>
+          <Typography variant='h3'>{findTag(model, 'modelName') || 'Untitled'}</Typography>
         </CardContent>
         <Box flexGrow={1}></Box>
         <CardContent
@@ -189,40 +184,16 @@ const AiListCard = ({
           }}
         >
           <Box display={'flex'} flexDirection='column'>
-            <Typography
-              variant='h3'
-            >
-              Usage
-            </Typography>
-            <Typography
-              variant='h4'
-            >
-              11k
-            </Typography>
+            <Typography variant='h3'>Usage</Typography>
+            <Typography variant='h4'>11k</Typography>
           </Box>
           <Box display={'flex'} flexDirection='column'>
-            <Typography
-              variant='h3'
-            >
-              Rating
-            </Typography>
-            <Typography
-              variant='h4'
-            >
-              12 Stamps
-            </Typography>
+            <Typography variant='h3'>Rating</Typography>
+            <Typography variant='h4'>12 Stamps</Typography>
           </Box>
           <Box display={'flex'} flexDirection='column'>
-            <Typography
-              variant='h3'
-            >
-              Last updated
-            </Typography>
-            <Typography
-              variant='h4'
-            >
-              {getTimePassed()}
-            </Typography>
+            <Typography variant='h3'>Last updated</Typography>
+            <Typography variant='h4'>{getTimePassed()}</Typography>
           </Box>
         </CardContent>
       </CardActionArea>

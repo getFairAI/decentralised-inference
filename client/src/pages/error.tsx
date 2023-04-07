@@ -1,13 +1,7 @@
 import Layout from '@/components/layout';
 import { BundlrProvider } from '@/context/bundlr';
 import { WalletProvider } from '@/context/wallet';
-import {
-  Alert,
-  Box,
-  Container,
-  CssBaseline,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Container, CssBaseline, Typography } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import { Fragment, useEffect, useState } from 'react';
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';

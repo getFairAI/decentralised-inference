@@ -220,10 +220,18 @@ const FileControl = (props: FileControlProps) => {
               borderRadius: '20px',
               background: theme.palette.background.default,
               transform: hasFileDrag ? 'scale(1.02)' : 'scale(1)',
-              filter: hasFileDrag ? `blur(2px)  ${theme.palette.mode === 'dark' ? 'contrast(0.65)' : 'brightness(0.9)'}` : theme.palette.mode === 'dark' ? 'contrast(0.65)' : 'brightness(0.9)',
+              filter: hasFileDrag
+                ? `blur(2px)  ${
+                    theme.palette.mode === 'dark' ? 'contrast(0.65)' : 'brightness(0.9)'
+                  }`
+                : theme.palette.mode === 'dark'
+                ? 'contrast(0.65)'
+                : 'brightness(0.9)',
               backdropFilter: 'blur(2px)',
               '&.MuiOutlinedInput-notchedOutline': {
-                borderColor: hasFileDrag ? theme.palette.text.primary : theme.palette.text.secondary,
+                borderColor: hasFileDrag
+                  ? theme.palette.text.primary
+                  : theme.palette.text.secondary,
               },
             },
           }}

@@ -200,7 +200,10 @@ const Detail = () => {
       fullWidth
       sx={{
         '& .MuiPaper-root': {
-          background: theme.palette.mode === 'dark' ? theme.palette.neutral.main : theme.palette.background.default,
+          background:
+            theme.palette.mode === 'dark'
+              ? theme.palette.neutral.main
+              : theme.palette.background.default,
           borderRadius: '30px',
         },
       }}
@@ -212,7 +215,13 @@ const Detail = () => {
         lineHeight={0}
       >
         {showOperators && <Typography>{findTag(state, 'modelName')}</Typography>}
-        <IconButton onClick={handleClose} sx={{ background: theme.palette.primary.main, '&:hover': {background: theme.palette.primary.main, opacity: 0.8} }}>
+        <IconButton
+          onClick={handleClose}
+          sx={{
+            background: theme.palette.primary.main,
+            '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
+          }}
+        >
           <img src='/close-icon.svg' />
         </IconButton>
       </DialogTitle>
@@ -330,7 +339,7 @@ const Detail = () => {
                     fontSize: '60px',
                     lineHeight: '106px',
                     textAlign: 'center',
-  
+
                     paddingRight: '8px',
                   }}
                   value={feeValue}
@@ -349,7 +358,7 @@ const Detail = () => {
                     fontSize: '60px',
                     lineHeight: '106px',
                     textAlign: 'center',
-  
+
                     paddingRight: '8px',
                   }}
                 >
@@ -357,7 +366,15 @@ const Detail = () => {
                 </Typography>
               )}
               <Icon sx={{ height: '50px', width: '50px' }}>
-                <img src={theme.palette.mode === 'dark' ? '/arweave-logo.svg' : '/arweave-logo-for-light.png'} width={'50px'} height={'50px'} />
+                <img
+                  src={
+                    theme.palette.mode === 'dark'
+                      ? '/arweave-logo.svg'
+                      : '/arweave-logo-for-light.png'
+                  }
+                  width={'50px'}
+                  height={'50px'}
+                />
               </Icon>
             </Box>
           </Box>
@@ -502,7 +519,7 @@ const Detail = () => {
       {selectedIdx >= 0 && (
         <Box
           sx={{
-            background: 'transparent',  // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
+            background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
             borderRadius: '7px',
             justifyContent: 'center',
             display: 'flex',

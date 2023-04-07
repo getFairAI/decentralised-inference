@@ -382,14 +382,22 @@ const Upload = () => {
       }}
     >
       <Backdrop
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, position: 'relative', height: '100%', width: '100%' }}
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          position: 'relative',
+          height: '100%',
+          width: '100%',
+        }}
         open={true}
       >
         <Container maxWidth={'lg'}>
           <Box sx={{ marginTop: '8px' }}>
             <Card
               sx={{
-                background: theme.palette.mode === 'dark' ? theme.palette.neutral.main : theme.palette.background.default,
+                background:
+                  theme.palette.mode === 'dark'
+                    ? theme.palette.neutral.main
+                    : theme.palette.background.default,
                 borderRadius: '30px',
               }}
             >
@@ -480,7 +488,15 @@ const Upload = () => {
                           }}
                         />
                         <Icon sx={{ height: '50px', width: '50px' }}>
-                          <img src={theme.palette.mode === 'dark' ? '/arweave-logo.svg' : '/arweave-logo-for-light.png'} width={'50px'} height={'50px'} />
+                          <img
+                            src={
+                              theme.palette.mode === 'dark'
+                                ? '/arweave-logo.svg'
+                                : '/arweave-logo-for-light.png'
+                            }
+                            width={'50px'}
+                            height={'50px'}
+                          />
                         </Icon>
                       </Box>
                     </Box>
@@ -507,7 +523,7 @@ const Upload = () => {
                   />
                 </Box>
                 <Box padding='0px 32px'>
-                  <MarkdownControl props={{ name: 'notes', control, rules: { required: true }}} />
+                  <MarkdownControl props={{ name: 'notes', control, rules: { required: true } }} />
                 </Box>
                 <Box padding='0px 32px'>
                   <FileControl name='file' control={control} rules={{ required: true }} />
@@ -559,7 +575,11 @@ const Upload = () => {
               </CardActions>
             </Card>
           </Box>
-          <FundDialog open={fundOpen} setOpen={setFundOpen} handleFundFinished={handleFundFinished} />
+          <FundDialog
+            open={fundOpen}
+            setOpen={setFundOpen}
+            handleFundFinished={handleFundFinished}
+          />
           <Snackbar
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             open={snackbarOpen}

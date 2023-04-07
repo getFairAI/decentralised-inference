@@ -8,8 +8,9 @@ const StyledEditor = styled(MDEditor)(({ theme }) => ({
   borderRadius: '23px',
   border: 'none',
   boxShadow: 'none',
-  
-  background: theme.palette.mode === 'dark' ? 'rgba(61, 61, 61, 0.98)' : theme.palette.secondary.main,
+
+  background:
+    theme.palette.mode === 'dark' ? 'rgba(61, 61, 61, 0.98)' : theme.palette.secondary.main,
   '.w-md-editor-toolbar': {
     background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
     borderRadius: '43px',
@@ -20,10 +21,16 @@ const StyledEditor = styled(MDEditor)(({ theme }) => ({
   '.w-md-editor-bar': {
     right: '10px',
     bottom: '4px',
-  } 
+  },
 }));
 
-const MarkdownControl = ({ props, viewProps}: {props?: UseControllerProps, viewProps?: MDEditorProps}) => {
+const MarkdownControl = ({
+  props,
+  viewProps,
+}: {
+  props?: UseControllerProps;
+  viewProps?: MDEditorProps;
+}) => {
   if (props) {
     const { field } = useController(props);
 
@@ -37,13 +44,8 @@ const MarkdownControl = ({ props, viewProps}: {props?: UseControllerProps, viewP
       />
     );
   } else {
-    return (
-      <StyledEditor
-        { ...viewProps}
-      />
-    );
+    return <StyledEditor {...viewProps} />;
   }
-  
 };
 
 export default MarkdownControl;

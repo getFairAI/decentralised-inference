@@ -8,10 +8,10 @@ declare module '@mui/material/styles' {
   }
   // allow configuration using `createTheme`
   interface PaletteOptions {
-   terciary: PaletteOptions['primary'];
-   neutral: PaletteOptions['primary'];
+    terciary: PaletteOptions['primary'];
+    neutral: PaletteOptions['primary'];
   }
-};
+}
 
 type themeOptions = 'light' | 'dark';
 interface AppThemeContext {
@@ -47,7 +47,7 @@ const lightTheme = createTheme({
       fontWeight: '400',
       fontSize: '12px',
       lineHeight: '16px',
-    }
+    },
   },
   shape: {
     borderRadius: 23,
@@ -56,23 +56,23 @@ const lightTheme = createTheme({
     mode: 'light',
     background: {
       default: '#FFFEFE',
-      paper: '#FFFEFE'
+      paper: '#FFFEFE',
     },
     primary: {
       // light: will be calculated from palette.primary.main,
-      light: '#09ABE6', 
+      light: '#09ABE6',
       main: '#09ABE6',
       dark: '#09ABE6',
-      contrastText: '#FFFFFF'
+      contrastText: '#FFFFFF',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     secondary: {
       // light: will be calculated from palette.primary.main,
-      light: '#007099', 
+      light: '#007099',
       main: '#007099',
       dark: '#007099',
-      contrastText: '#FFFFFF'
+      contrastText: '#FFFFFF',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
@@ -81,24 +81,24 @@ const lightTheme = createTheme({
       light: '#FF9524', // D04C5A // FF9524
       main: '#FF9524',
       dark: '#FF9524',
-      contrastText: '#223745'
+      contrastText: '#223745',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     neutral: {
       // light: will be calculated from palette.primary.main,
-      light: '#ABCCCE', 
+      light: '#ABCCCE',
       main: '#ABCCCE',
       dark: '#ABCCCE',
-      contrastText: '#223745'
+      contrastText: '#223745',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     text: {
       primary: '#355064', // same as rgba(34,55,69,255)
       secondary: 'rgba(34,55,69, 0.6)',
-      disabled: 'rgba(34,55,69,0.3)'
-    }
+      disabled: 'rgba(34,55,69,0.3)',
+    },
   },
 });
 
@@ -130,55 +130,55 @@ const darkTheme = createTheme({
       fontWeight: '400',
       fontSize: '12px',
       lineHeight: '16px',
-    }
+    },
   },
   palette: {
     mode: 'dark',
     background: {
       default: '#000',
-      paper: '#000'
+      paper: '#000',
     },
     primary: {
       // light: will be calculated from palette.primary.main,
-      light: '#223745', 
+      light: '#223745',
       main: '#223745',
       dark: '#223745',
-      contrastText: '#FFFFFF'
+      contrastText: '#FFFFFF',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     secondary: {
       // light: will be calculated from palette.primary.main,
-      light: '#355064', 
+      light: '#355064',
       main: '#355064',
       dark: '#355064',
-      contrastText: '#FFFFFF'
+      contrastText: '#FFFFFF',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     terciary: {
       // light: will be calculated from palette.primary.main,
-      light: '#01DFF0', 
+      light: '#01DFF0',
       main: '#01DFF0',
       dark: '#01DFF0',
-      contrastText: '#223745'
+      contrastText: '#223745',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     neutral: {
       // light: will be calculated from palette.primary.main,
-      light: 'rgba(61, 61, 61, 0.98)', 
+      light: 'rgba(61, 61, 61, 0.98)',
       main: 'rgba(61, 61, 61, 0.98)',
       dark: 'rgba(61, 61, 61, 0.98)',
-      contrastText: '#FAFAFA'
+      contrastText: '#FAFAFA',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     text: {
       primary: '#223745', // same as rgba(34,55,69,255)
       secondary: 'rgba(34,55,69, 0.6)',
-      disabled: 'rgba(34,55,69,0.3)'
-    }
+      disabled: 'rgba(34,55,69,0.3)',
+    },
   },
 });
 
@@ -195,19 +195,15 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
   };
 
-  
-  const theme = useMemo(
-    () => mode === 'light' ? lightTheme : darkTheme,
-    [ mode ],
-  );
+  const theme = useMemo(() => (mode === 'light' ? lightTheme : darkTheme), [mode]);
 
   useEffect(() => {
     setMode('light'); // force light mode for now
-  }, [ prefersDarkMode ]);
+  }, [prefersDarkMode]);
 
-  return <AppThemeContext.Provider value={{ currentTheme: mode, toggleTheme }}>
-    <ThemeProvider theme={theme}>
-      {children}
-    </ThemeProvider>
-  </AppThemeContext.Provider>;
+  return (
+    <AppThemeContext.Provider value={{ currentTheme: mode, toggleTheme }}>
+      <ThemeProvider theme={theme}>{children}</ThemeProvider>
+    </AppThemeContext.Provider>
+  );
 };
