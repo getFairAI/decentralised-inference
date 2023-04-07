@@ -9,6 +9,7 @@
 # Node
 /node_modules
 */node_modules
+**/node_modules
 npm-debug.log
 yarn-error.log
 */package-lock.json
@@ -47,7 +48,6 @@ Thumbs.db
 /script-examples/wallet.json
 /script-examples/venv
 /script-examples/rasa-assistant
-/script-examples/node_modules
 
 */wallet.json
 */dist-id.txt

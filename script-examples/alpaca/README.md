@@ -36,7 +36,8 @@ To use this library, you need to have:
 7. Using the terminal on the same folder, run the alpaca script with 
    
 ```bash
-node alpaca.js
+npm install
+npm start
 ```
 
 *Optional:* If you want to test the inference first, after putting the model on the same folder as the other files run instead the test script with
