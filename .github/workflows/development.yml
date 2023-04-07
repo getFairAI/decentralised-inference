@@ -112,7 +112,7 @@ jobs:
       uses: actions/upload-artifact@v3.1.2
       with:
         name: Build artifacts
-        path: client/dist/
+        path: ./client/dist/
       
   test:
     needs: [build-and-install-deps]
