@@ -137,7 +137,7 @@ Models that have dependencies on previous inferences are also supported. To acco
 The whole flow of the application regarding inference can be seen in Image 1:
 </p>
 
-|![Full inference flow](images/Full-Inference-Flow.png)| 
+|![Full inference flow](https://hofq3jrfghqgp3zwg7mu53yhyuwkzxglhdrxbyz75epnq3rwdlcq.arweave.net/O4sNpiUx4GfvNjfZTu8HxSys3Ms443DjP-ke2G42GsU)| 
 |:--:| 
 |***Image 1:*** *Full inference flow of the Fair Protocol.*|
 
@@ -156,7 +156,7 @@ After that, Users can choose any model and script they wish to use and which Ope
 The whole flow regarding the economics of the application can be seen in Image 2:
 </p>
 
-|![Full economic flow](images/Full-Economic-Flow.png)| 
+|![Full economic flow](https://nqjjltqbidehddas7t5zcwqeoxgodkwe55pt7mt6dwpjb5c6jdvq.arweave.net/bBKVzgFAyHGMEvz7kVoEdczhqsTvXz-yfh2ekPReSOs)| 
 |:--:| 
 |***Image 2:*** *Full economic flow of the Fair Protocol.*|
 
