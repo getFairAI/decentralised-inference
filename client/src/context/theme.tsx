@@ -100,9 +100,9 @@ const lightTheme = createTheme({
       dark: '#F4BA61', 
     },
     error: {
-      main: 'DC5141',
-      light: 'DC5141',
-      dark: 'DC5141',
+      main: '#DC5141',
+      light: '#DC5141',
+      dark: '#DC5141',
     },
     text: {
       primary: '#355064', // same as rgba(34,55,69,255)
