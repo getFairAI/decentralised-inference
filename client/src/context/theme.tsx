@@ -97,7 +97,7 @@ const lightTheme = createTheme({
     warning: {
       main: '#F4BA61',
       light: '#F4BA61',
-      dark: '#F4BA61', 
+      dark: '#F4BA61',
     },
     error: {
       main: '#DC5141',

@@ -50,11 +50,11 @@ const AvatarControl = (props: UseControllerProps & { control: Control }) => {
         justifyContent: 'flex-end',
         '&:hover': {
           background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(to bottom, #000000 10%, rgba(71, 71, 71, 0) 100%)'
-            : theme.palette.secondary.main,
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(to bottom, #000000 10%, rgba(71, 71, 71, 0) 100%)'
+              : theme.palette.secondary.main,
           filter: 'drop-shadow(2px 4px 6px black)',
-        }
+        },
       }}
       component='label'
     >

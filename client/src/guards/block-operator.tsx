@@ -26,7 +26,10 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
         fullWidth
         sx={{
           '& .MuiPaper-root': {
-            background: theme.palette.mode === 'dark' ? 'rgba(61, 61, 61, 0.9)' : theme.palette.background.default,
+            background:
+              theme.palette.mode === 'dark'
+                ? 'rgba(61, 61, 61, 0.9)'
+                : theme.palette.background.default,
             borderRadius: '30px',
           },
         }}
@@ -50,7 +53,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
             sx={{
               marginBottom: '16px',
               borderRadius: '10px',
-              color:theme.palette.error.main,
+              color: theme.palette.error.main,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',

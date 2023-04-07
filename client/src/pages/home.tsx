@@ -144,12 +144,16 @@ export default function Home() {
               <Box flexGrow={1} />
             </Box>
             <Box display={'flex'} position='relative'>
-              <Box height={'6px'} position='absolute' sx={{
-                width: hightlightTop ? '55px' : '119px',
-                left: hightlightTop ? '166px' : 0,
-                background: theme.palette.primary.main,
-                borderRadius: '8px'
-              }} />
+              <Box
+                height={'6px'}
+                position='absolute'
+                sx={{
+                  width: hightlightTop ? '55px' : '119px',
+                  left: hightlightTop ? '166px' : 0,
+                  background: theme.palette.primary.main,
+                  borderRadius: '8px',
+                }}
+              />
             </Box>
           </Box>
           <Box flexGrow={1} />

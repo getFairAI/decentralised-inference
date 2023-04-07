@@ -14,7 +14,7 @@ import {
   DialogContent,
   DialogTitle,
   Typography,
-  useTheme
+  useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { ReactNode, useEffect, useState } from 'react';
@@ -134,7 +134,10 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
         fullWidth
         sx={{
           '& .MuiPaper-root': {
-            background: theme.palette.mode === 'dark' ? 'rgba(61, 61, 61, 0.9)' : theme.palette.background.default,
+            background:
+              theme.palette.mode === 'dark'
+                ? 'rgba(61, 61, 61, 0.9)'
+                : theme.palette.background.default,
             borderRadius: '30px',
           },
         }}
@@ -208,7 +211,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
               '&:hover': {
                 background: theme.palette.success.light,
                 boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
-              }
+              },
             }}
           >
             Accept

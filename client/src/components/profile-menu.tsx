@@ -13,7 +13,7 @@ const options = [
   'My Models',
   'Toggle Theme',
   'Github',
-  'Whitepaper'
+  'Whitepaper',
   // 'Disconnect'
 ];
 

@@ -847,7 +847,12 @@ const Chat = () => {
               }}
             >
               <Box
-                sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px', paddingBottom: '24px' }}
+                sx={{
+                  overflow: 'auto',
+                  maxHeight: chatMaxHeight,
+                  pt: '150px',
+                  paddingBottom: '24px',
+                }}
                 ref={scrollableRef}
               >
                 {messagesLoading &&
