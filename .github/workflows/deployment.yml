@@ -2,7 +2,7 @@ name: "Deploy Workflow"
 
 on:
   release:
-    types: [ created ]
+    types: [ publised ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
