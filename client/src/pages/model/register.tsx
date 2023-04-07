@@ -268,8 +268,8 @@ const Register = () => {
                 <img
                   src={
                     theme.palette.mode === 'dark'
-                      ? '/arweave-logo.svg'
-                      : '/arweave-logo-for-light.png'
+                      ? './arweave-logo.svg'
+                      : './arweave-logo-for-light.png'
                   }
                   width={'50px'}
                   height={'50px'}

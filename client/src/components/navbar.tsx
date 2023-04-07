@@ -106,8 +106,8 @@ const Navbar = ({
               <img
                 src={
                   theme.palette.mode === 'dark'
-                    ? '/fair-protocol-logo.svg'
-                    : '/fair-protocol-logo-light.svg'
+                    ? './fair-protocol-logo.svg'
+                    : './fair-protocol-logo-light.svg'
                 }
               />
             </Link>
