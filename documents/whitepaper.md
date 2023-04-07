@@ -1,7 +1,7 @@
 # Fair Protocol
 #### **A Decentralised Inference Marketplace for Artificial Intelligence**
 #### **Authors: Tiago Ferreira, Luís Silvestre**
-#### **1 April 2023 (Version 0.02)**
+#### **7 April 2023 (Version 0.1)**
 
 ## Abstract
 
@@ -109,9 +109,11 @@ As these tasks take time and the Marketplace team intends to continue developing
 For this version of the Marketplace, we have divided the models' inference into three categories:
 </p>
 
-* Models that perform inference on text prompts;
-* Models that perform inference on files (audios, videos, images, text files, or others);
-* Models that perform inference on both text prompts and files.
+<ul>
+    <li align="justify">Models that perform inference on text prompts;</li>
+    <li align="justify">Models that perform inference on files (audios, videos, images, text files, or others);</li>
+    <li align="justify">Models that perform inference on both text prompts and files.</li>
+</ul>
 
 <p align="justify">
 When the Curator is performing the upload process of a model script, he must choose which of the three scenarios best suits his software. This decision is critical regarding User Experience (UX) because it will limit Users from sending text prompts or files to Operators if the software does not support any of these formats.
@@ -166,12 +168,14 @@ The Marketplace has a set of fees and payments between participants in the Marke
 A more detailed description of each of the fees, as well as their corresponding explanation, can be seen below:
 </p>
 
-* **Upload Fee:** When a Creator uploads a model, they pay a fee to the Marketplace. The purpose of this fee is to discourage submissions of dysfunctional or irrelevant models to the Marketplace. The cost is fixed and amounts to 1 AR;
-* **Model Fee:** All the model scripts must be associated with at least one model. When Curators upload the software, they need to pay all the “Model Fees” defined by the Creators whose models are associated with the model script;
-* **Script Fee:** Before requesting the first Inference of a model script, a user must pay a fee to the correspondent Curator, who determines its amount when uploading the software. A more detailed explanation of how this fee is calculated, as well as its purpose, can be found further down in this section;
-* **Registration Fee:** For an Operator to register on the Marketplace, it must pay a fee for each model script it starts working with. The Curators set the amount of this fee when uploading the software. A more detailed explanation of how this fee is calculated, as well as its purpose, can be found further down in this section;
-* **Inference Payment:** Because running inferences costs operators computing power and requires time and person-hours to set up, an Operator charges the User to do it. The Operator is responsible for responding to all the requests the Users execute, on the risk of being delisted from the Marketplace if they do not do so. If the User does not pay the necessary amount for the "Inference Payment", no penalty will occur to the Operator;
-* **Inference Fee:** A User disburses an "Inference Fee" of 5% of the amount charged by the Operator to the Marketplace. For the Users' convenience, this fee is paid in a single transaction along with the "Inference Payment" to the Operator, and the Operator then pays the same 5% to the Marketplace. If the Operator does not pay back to the Marketplace, they will automatically be delisted after 7 blocks. If the User does not reimburse the "Inference Fee", no penalty will occur to the Operator. The purpose of this fee is to pay for the work done during the creation of the Marketplace, the maintenance of the Marketplace, and to finance the team that developed the Marketplace for future projects and features. Some ideas for these developments can be found in Section XII.
+<ul>
+    <li align="justify"><b>Upload Fee:</b> When a Creator uploads a model, they pay a fee to the Marketplace. The purpose of this fee is to discourage submissions of dysfunctional or irrelevant models to the Marketplace. The cost is fixed and amounts to 1 AR;</li>
+    <li align="justify"><b>Model Fee:</b> All the model scripts must be associated with at least one model. When Curators upload the software, they need to pay all the “Model Fees” defined by the Creators whose models are associated with the model script;</li>
+    <li align="justify"><b>Script Fee:</b> Before requesting the first Inference of a model script, a user must pay a fee to the correspondent Curator, who determines its amount when uploading the software. A more detailed explanation of how this fee is calculated, as well as its purpose, can be found further down in this section;</li>
+    <li align="justify"><b>Registration Fee:</b> For an Operator to register on the Marketplace, it must pay a fee for each model script it starts working with. The Curators set the amount of this fee when uploading the software. A more detailed explanation of how this fee is calculated, as well as its purpose, can be found further down in this section;</li>
+    <li align="justify"><b>Inference Payment:</b> Because running inferences costs operators computing power and requires time and person-hours to set up, an Operator charges the User to do it. The Operator is responsible for responding to all the requests the Users execute, on the risk of being delisted from the Marketplace if they do not do so. If the User does not pay the necessary amount for the "Inference Payment", no penalty will occur to the Operator;</li>
+    <li align="justify"><b>Inference Fee:</b> A User disburses an "Inference Fee" of 5% of the amount charged by the Operator to the Marketplace. For the Users' convenience, this fee is paid in a single transaction along with the "Inference Payment" to the Operator, and the Operator then pays the same 5% to the Marketplace. If the Operator does not pay back to the Marketplace, they will automatically be delisted after 7 blocks. If the User does not reimburse the "Inference Fee", no penalty will occur to the Operator. The purpose of this fee is to pay for the work done during the creation of the Marketplace, the maintenance of the Marketplace, and to finance the team that developed the Marketplace for future projects and features. Some ideas for these developments can be found in Section XII.</li>
+</ul>
 
 <p align="justify">
 Arweave takes around 7 blocks to confirm a transaction, each taking approximately 2 minutes to create. If Operators only performed inference after receiving a payment from a User, and that exact inference would be shown to the same User only after the Operator paid the "Inference Fee" to the Marketplace, a User would have to wait approximately 30 minutes between requesting and receiving a response. Even if the User paid the fee to Marketplace instead of the Operator, it would still take about 15 minutes. Since we are in an increasingly dynamic world and many of the leading models used today are based on sending and receiving text messages, conversation-style, to us waiting that long does not seem acceptable.
@@ -204,10 +208,12 @@ Additionally, the Curator may place more protections in the script for Operators
 Due to the dynamics of the market, we allow the change of some prices submitted in the Marketplace, namely:
 </p>
 
-* "Inference Payment" can be updated by the Operators;
-* "Script Fee" can be edited by the Curators;
-* "Registration Fee" can be revised by the Curators;
-* "Model Fee" can be upgraded by Creators.
+<ul>
+    <li align="justify">"Inference Payment" can be updated by the Operators;</li>
+    <li align="justify">"Script Fee" can be edited by the Curators;</li>
+    <li align="justify">"Registration Fee" can be revised by the Curators;</li>
+    <li align="justify">"Model Fee" can be upgraded by Creators.</li>
+</ul>
 
 <p align="justify">
 We also support Creators and Curators to be able to update the information presented in the Marketplace about models and model scripts, respectively.
@@ -299,16 +305,18 @@ All the information displayed on the Marketplace is on Arweave. We used the "arw
 Our team has some ideas that may be implemented in the future, which we intend to finance using the fees paid by the Users to the Marketplace. We do not guarantee that these ideas will remain unchanged or that any of these ideas will be implemented, as everything depends on the application's success and the team's availability. Below is a list of them:
 </p>
 
-* **Review rules explained in this document:** As Fair Protocol is a novel implementation, we need to confirm how the conventions described above behave in a real scenario and review them if necessary for a future version of the application;
-* **Decentralised Autonomous Organization (DAO):** At this moment, the application is 100% managed by the Owners. We plan to create a DAO to manage the decisions and developments of the application if the application becomes successful enough and there is a large enough community;
-* **Decentralised Gateway:** We intend to mitigate the risk of using a centralised gateway, presented in Section XI, by using a more decentralised gateway or by targeting multiple gateways;
-* **Multiple prices per Operator and model script:** An Operator can only choose one price per script, but inference may have different transaction costs depending on the size of the files or the number of prompts sent. It might be interesting to develop a greater diversification of prices per scenario;
-* **Limit chat size:** Although there are models that support multiple prompts or files as inputs, they always have a limit on the number of prompts or files they can receive. As such, it might be interesting to give Curators the ability to choose the maximum word or file size that model scripts support when uploading them to Arweave;
-* **Slow mode:** Currently, the app runs 100% with upfront payments when performing inferences. This situation increases the entrance fee for Users, and certain Users may want to test models or scripts before paying the "Script Fee". They may also only want to perform a single inference on a model. For those reasons, it may make sense for the application to have a way to make upfront payments of single requests, even if it takes 30 minutes between replies;
-* **Implement ArProfile:** It can be interesting to associate ArProfile with Creators, Curators, Operators, or Users that want it to have a better integration of the application in Arweave's ecosystem;
-* **Payments with other currencies:** Currently, the Marketplace only supports payments in Arweave. It may make sense to accept additional coins or tokens in the future;
-* **[DataOS](https://q4xpz2buwrju4ai3gfzkfeu3vjn2rhb2crlw7epn77vzm6wg74cq.arweave.net/hy786DS0U04BGzFyopKbqluonDoUV2-R7f_rlnrG_wU "DataOS original article"):** Since Fair Protocol performs model inference in a decentralised manner, it may be interesting to build on top of it a system that would obtain information from Arweave or the broader internet and render it dynamically with code components;
-* **Decentralised training:** Our application only supports decentralised inference for the moment. To further solve the problems, presented in Section I, we may develop an application that performs model training in a decentralised manner.
+<ul>
+    <li align="justify"><b>Review rules explained in this document:</b> As Fair Protocol is a novel implementation, we need to confirm how the conventions described above behave in a real scenario and review them if necessary for a future version of the application;</li>
+    <li align="justify"><b>Decentralised Autonomous Organization (DAO):</b> At this moment, the application is 100% managed by the Owners. We plan to create a DAO to manage the decisions and developments of the application if the application becomes successful enough and there is a large enough community;</li>
+    <li align="justify"><b>Decentralised Gateway:</b> We intend to mitigate the risk of using a centralised gateway, presented in Section XI, by using a more decentralised gateway or by targeting multiple gateways;</li>
+    <li align="justify"><b>Multiple prices per Operator and model script:</b> An Operator can only choose one price per script, but inference may have different transaction costs depending on the size of the files or the number of prompts sent. It might be interesting to develop a greater diversification of prices per scenario;</li>
+    <li align="justify"><b>Limit chat size:</b> Although there are models that support multiple prompts or files as inputs, they always have a limit on the number of prompts or files they can receive. As such, it might be interesting to give Curators the ability to choose the maximum word or file size that model scripts support when uploading them to Arweave;</li>
+    <li align="justify"><b>Slow mode:</b> Currently, the app runs 100% with upfront payments when performing inferences. This situation increases the entrance fee for Users, and certain Users may want to test models or scripts before paying the "Script Fee". They may also only want to perform a single inference on a model. For those reasons, it may make sense for the application to have a way to make upfront payments of single requests, even if it takes 30 minutes between replies;</li>
+    <li align="justify"><b>Implement ArProfile:</b> It can be interesting to associate ArProfile with Creators, Curators, Operators, or Users that want it to have a better integration of the application in Arweave's ecosystem;</li>
+    <li align="justify"><b>Payments with other currencies:</b> Currently, the Marketplace only supports payments in Arweave. It may make sense to accept additional coins or tokens in the future to reach a broader market. Also, with different currencies, near-instant settlements could eventually be achievable;</li>
+    <li align="justify"><b><a href="https://q4xpz2buwrju4ai3gfzkfeu3vjn2rhb2crlw7epn77vzm6wg74cq.arweave.net/hy786DS0U04BGzFyopKbqluonDoUV2-R7f_rlnrG_wU ">DataOS:</a></b> Since Fair Protocol performs model inference in a decentralised manner, it may be interesting to build on top of it a system that would obtain information from Arweave or the broader internet and render it dynamically with code components;</li>
+    <li align="justify"><b>Decentralised training:</b> Our application only supports decentralised inference for the moment. To further solve the problems, presented in Section I, we may develop an application that performs model training in a decentralised manner.</li>
+</ul>
 
 
 ## XIII. Conclusion
