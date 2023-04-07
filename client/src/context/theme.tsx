@@ -94,6 +94,16 @@ const lightTheme = createTheme({
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
+    warning: {
+      main: '#F4BA61',
+      light: '#F4BA61',
+      dark: '#F4BA61', 
+    },
+    error: {
+      main: 'DC5141',
+      light: 'DC5141',
+      dark: 'DC5141',
+    },
     text: {
       primary: '#355064', // same as rgba(34,55,69,255)
       secondary: 'rgba(34,55,69, 0.6)',

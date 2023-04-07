@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogTitle,
   Typography,
+  useTheme
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { ReactNode, useEffect, useState } from 'react';
@@ -27,6 +28,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   const [isAllowed, setIsAllowed] = useState(false);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
   /* const { data, loading, error } = useQuery(QUERY_MODEL_FEE_PAYMENT, {
     variables: {
       recipient: state.modelCreator,
@@ -132,7 +134,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
         fullWidth
         sx={{
           '& .MuiPaper-root': {
-            background: 'rgba(61, 61, 61, 0.9)',
+            background: theme.palette.mode === 'dark' ? 'rgba(61, 61, 61, 0.9)' : theme.palette.background.default,
             borderRadius: '30px',
           },
         }}
@@ -140,7 +142,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
         <DialogTitle>
           <Typography
             sx={{
-              color: '#F4BA61',
+              color: theme.palette.warning.light,
               fontWeight: 700,
               fontSize: '23px',
               lineHeight: '31px',
@@ -156,7 +158,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
             sx={{
               marginBottom: '16px',
               borderRadius: '10px',
-              color: '#F4BA61',
+              color: theme.palette.warning.light,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
@@ -200,9 +202,13 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
           <Button
             onClick={handleAccept}
             sx={{
-              background: ' rgba(14, 255, 168, 0.58)',
+              background: theme.palette.success.light,
               borderRadius: '7px',
-              color: '#F4F4F4',
+              color: theme.palette.success.contrastText,
+              '&:hover': {
+                background: theme.palette.success.light,
+                boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
+              }
             }}
           >
             Accept
