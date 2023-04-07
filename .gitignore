@@ -48,3 +48,5 @@ Thumbs.db
 /script-examples/venv
 /script-examples/rasa-assistant
 /script-examples/node_modules
+
+*/wallet.json
