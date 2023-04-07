@@ -1,6 +1,6 @@
 # Fair Protocol Tags
 
-This document provides detailed information about the Fair Platform marketplace transactions, specifically the tags included in such transactions. Please read the [Fair Protocol whitepaper](https://github.com/FAIR-Protocol/decentralized-inference/blob/development/documents/whitepaper.md) to understand the context of this document or to have a deeper explanation of each one of the transactions.
+This document provides detailed information about the Fair Platform marketplace transactions, specifically the tags included in such transactions. Please read the [Fair Protocol whitepaper](https://lqcpjipmt2d2daazjknargowboxuhn3wgealzbqdsjmwxbgli52q.arweave.net/XAT0oeyeh6GAGUqaCJnWC69Dt3YxALyGA5JZa4TLR3U) to understand the context of this document or to have a deeper explanation of each one of the transactions.
 
 **Note**: Tag Values inside `<>` are example values, all other Tag Values are strict.
 
