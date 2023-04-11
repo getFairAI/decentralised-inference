@@ -43,7 +43,7 @@ npm start
 *Optional:* If you want to test the inference first, after putting the model on the same folder as the other files run instead the test script with
 
 ```bash
-node alpaca-inference-test.js
+ts-node alpaca-inference-test.ts
 ```
 
 #### This is all for today, congrats if you made this far!
