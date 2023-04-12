@@ -115,13 +115,18 @@ const Detail = () => {
       await Promise.all(
         queryData.transactions.edges.map(async (el: IEdge) => {
           const confirmed = await isTxConfirmed(el.node.id);
-          const existingIdx = filtered.findIndex(existing => el.node.owner.address === existing.node.owner.address);
-          const correctFee = parseInt(el.node.quantity.ar) === parseInt(OPERATOR_REGISTRATION_AR_FEE);
+          const existingIdx = filtered.findIndex(
+            (existing) => el.node.owner.address === existing.node.owner.address,
+          );
+          const correctFee =
+            parseInt(el.node.quantity.ar) === parseInt(OPERATOR_REGISTRATION_AR_FEE);
           if (confirmed && correctFee && existingIdx < 0) {
             filtered.push(el);
           } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
             // found a new tx for an existing op, check dates
-            const existingTimestamp = findTag(filtered[existingIdx], 'unixTime') || filtered[existingIdx].node.block.timestamp;
+            const existingTimestamp =
+              findTag(filtered[existingIdx], 'unixTime') ||
+              filtered[existingIdx].node.block.timestamp;
             const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
             if (newTimestamp > existingTimestamp) {
               // if new tx has more recent timestamp replace old one

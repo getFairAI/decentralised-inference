@@ -25,17 +25,22 @@ import { findTag } from '@/utils/common';
 import { isTxConfirmed } from '@/utils/arweave';
 
 export default function Home() {
-  const [ hasNextPage, setHasNextPage ] = useState(false);
-  const [ hightlightTop, setHighLightTop ] = useState(false);
-  const [ txs, setTxs ] = useState<IEdge[]>([]);
-  const [ featuredTxs, setFeaturedTxs ] = useState<IEdge[]>([]);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [hightlightTop, setHighLightTop] = useState(false);
+  const [txs, setTxs] = useState<IEdge[]>([]);
+  const [featuredTxs, setFeaturedTxs] = useState<IEdge[]>([]);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const filterValue = useContext(FilterContext);
   const theme = useTheme();
   const elementsPerPage = 5;
 
-  const { data, loading, error, networkStatus: featuredNetworkStatus } = useQuery(LIST_LATEST_MODELS_QUERY, {
+  const {
+    data,
+    loading,
+    error,
+    networkStatus: featuredNetworkStatus,
+  } = useQuery(LIST_LATEST_MODELS_QUERY, {
     variables: {
       first: 4,
     },
@@ -97,9 +102,7 @@ export default function Home() {
         }),
       );
       setHasNextPage(listData.transactions.pageInfo.hasNextPage);
-      setTxs(
-        filtered
-      );
+      setTxs(filtered);
     };
 
     if (listData && networkStatus === NetworkStatus.ready) {
@@ -120,9 +123,7 @@ export default function Home() {
             }
           }),
         );
-        setFeaturedTxs(
-          filtered
-        );
+        setFeaturedTxs(filtered);
       }
     };
     asyncWrapper();
@@ -136,14 +137,16 @@ export default function Home() {
           listData.transactions.edges.map(async (el: IEdge) => {
             const confirmed = await isTxConfirmed(el.node.id);
             const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
-            if (confirmed && correctFee && (findTag(el, 'modelName')?.includes(filterValue) || filterValue === '')) {
+            if (
+              confirmed &&
+              correctFee &&
+              (findTag(el, 'modelName')?.includes(filterValue) || filterValue === '')
+            ) {
               filtered.push(el);
             }
           }),
         );
-        setTxs(
-          filtered
-        );
+        setTxs(filtered);
       }
     };
     asyncWrapper();

@@ -79,9 +79,7 @@ const Operators = () => {
         }),
       );
       setHasNextPage(data.transactions.pageInfo.hasNextPage);
-      setTxs(
-        filtered,
-      );
+      setTxs(filtered);
     };
 
     if (data && networkStatus === NetworkStatus.ready) {
