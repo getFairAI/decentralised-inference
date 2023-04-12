@@ -21,6 +21,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import ModelCard from '@/components/model-card';
 import useOnScreen from '@/hooks/useOnScreen';
 import { Outlet } from 'react-router-dom';
+import { isTxConfirmed } from '@/utils/arweave';
 
 const Operators = () => {
   const [txs, setTxs] = useState<IEdge[]>([]);
@@ -60,12 +61,29 @@ const Operators = () => {
     }
   }, [isOnScreen, txs]);
 
+  /**
+   * @description Effect that runs on data changes;
+   * it is responsible to set the nextPage status and to update current loaded transactionsm
+   * filtering correct payments
+   */
   useEffect(() => {
-    if (data && networkStatus === NetworkStatus.ready) {
-      setHasNextPage(data.transactions.pageInfo.hasNextPage);
-      setTxs(
-        data.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
+    const asyncWrapper = async () => {
+      const filtered: IEdge[] = [];
+      await Promise.all(
+        data.transactions.edges.map(async (el: IEdge) => {
+          const confirmed = await isTxConfirmed(el.node.id);
+          const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+          if (confirmed && correctFee) {
+            filtered.push(el);
+          }
+        }),
       );
+      setHasNextPage(data.transactions.pageInfo.hasNextPage);
+      setTxs(filtered);
+    };
+
+    if (data && networkStatus === NetworkStatus.ready) {
+      asyncWrapper();
     }
   }, [data]);
 

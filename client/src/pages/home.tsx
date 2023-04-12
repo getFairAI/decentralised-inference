@@ -22,18 +22,25 @@ import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import FilterContext from '@/context/filter';
 import { findTag } from '@/utils/common';
+import { isTxConfirmed } from '@/utils/arweave';
 
 export default function Home() {
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [hightlightTop, setHighLightTop] = useState(false);
   const [txs, setTxs] = useState<IEdge[]>([]);
-  const elementsPerPage = 5;
+  const [featuredTxs, setFeaturedTxs] = useState<IEdge[]>([]);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const filterValue = useContext(FilterContext);
-  const [hightlightTop, setHighLightTop] = useState(false);
   const theme = useTheme();
+  const elementsPerPage = 5;
 
-  const { data, loading, error } = useQuery(LIST_LATEST_MODELS_QUERY, {
+  const {
+    data,
+    loading,
+    error,
+    networkStatus: featuredNetworkStatus,
+  } = useQuery(LIST_LATEST_MODELS_QUERY, {
     variables: {
       first: 4,
     },
@@ -57,7 +64,7 @@ export default function Home() {
     if (isOnScreen && hasNextPage) {
       fetchMore({
         variables: {
-          after: txs[txs.length - 1].cursor,
+          after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -83,21 +90,66 @@ export default function Home() {
   }, [useOnScreen, txs]);
 
   useEffect(() => {
-    if (listData && networkStatus === NetworkStatus.ready) {
-      setHasNextPage(listData.transactions.pageInfo.hasNextPage);
-      setTxs(
-        listData.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
+    const asyncWrapper = async () => {
+      const filtered: IEdge[] = [];
+      await Promise.all(
+        listData.transactions.edges.map(async (el: IEdge) => {
+          const confirmed = await isTxConfirmed(el.node.id);
+          const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+          if (confirmed && correctFee) {
+            filtered.push(el);
+          }
+        }),
       );
+      setHasNextPage(listData.transactions.pageInfo.hasNextPage);
+      setTxs(filtered);
+    };
+
+    if (listData && networkStatus === NetworkStatus.ready) {
+      asyncWrapper();
     }
   }, [listData]);
 
   useEffect(() => {
-    if (listData && filterValue)
-      setTxs(
-        listData.transactions.edges.filter((el: IEdge) =>
-          findTag(el, 'modelName')?.includes(filterValue),
-        ),
-      );
+    const asyncWrapper = async () => {
+      if (data && featuredNetworkStatus === NetworkStatus.ready) {
+        const filtered: IEdge[] = [];
+        await Promise.all(
+          data.transactions.edges.map(async (el: IEdge) => {
+            const confirmed = await isTxConfirmed(el.node.id);
+            const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+            if (confirmed && correctFee) {
+              filtered.push(el);
+            }
+          }),
+        );
+        setFeaturedTxs(filtered);
+      }
+    };
+    asyncWrapper();
+  }, [data]);
+
+  useEffect(() => {
+    const asyncWrapper = async () => {
+      if (listData && filterValue) {
+        const filtered: IEdge[] = [];
+        await Promise.all(
+          listData.transactions.edges.map(async (el: IEdge) => {
+            const confirmed = await isTxConfirmed(el.node.id);
+            const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+            if (
+              confirmed &&
+              correctFee &&
+              (findTag(el, 'modelName')?.includes(filterValue) || filterValue === '')
+            ) {
+              filtered.push(el);
+            }
+          }),
+        );
+        setTxs(filtered);
+      }
+    };
+    asyncWrapper();
   }, [filterValue]);
 
   return (
@@ -113,7 +165,7 @@ export default function Home() {
           },
         }}
       >
-        <Featured data={(data && data.transactions.edges) || []} loading={loading} error={error} />
+        <Featured data={featuredTxs} loading={loading} error={error} />
         <Box className={'filter-box'} sx={{ display: 'flex' }}>
           <Box display={'flex'} flexDirection={'column'}>
             <Box display='flex' gap={'50px'} width={'100%'}>
