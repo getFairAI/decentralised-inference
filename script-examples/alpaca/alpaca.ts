@@ -91,7 +91,7 @@ const inference = async function (message: string) {
 
 const sendFee = async function (
   arweave: Arweave,
-  fee: string,
+  operatorFeeWinston: number,
   fullText: string,
   appVersion: string,
   userAddress: string,
@@ -104,7 +104,7 @@ const sendFee = async function (
   let tx = await arweave.createTransaction(
     {
       target: CONFIG.marketplaceWallet,
-      quantity: arweave.ar.arToWinston(fee),
+      quantity: arweave.ar.arToWinston((operatorFeeWinston * CONFIG.inferencePercentageFee).toString()),
     },
     key
   );
@@ -115,7 +115,7 @@ const sendFee = async function (
   tx.addTag('Model-Name', CONFIG.modelName);
   tx.addTag('Model-User', userAddress);
   tx.addTag('Request-Transaction', requestTransaction);
-  tx.addTag('Operation-Name', 'Operator Fee Payment');
+  tx.addTag('Operation-Name', 'Fee Redistribution');
   tx.addTag('Conversation-Identifier', conversationIdentifier);
   tx.addTag('Content-Type', 'application/json');
   tx.addTag('Response-Transaction', responseTransaction);
@@ -327,7 +327,7 @@ const start = async function () {
 		    	tags: [
 			    	{
 					name: "Operation-Name",
-					values: ["Model Inference Response"]
+					values: ["Operator Registration"]
 				},
 				{
 					name: "Model-Creator",
@@ -569,10 +569,10 @@ const start = async function () {
 
       	var modelFeeWinston = -1;
       	for (let j = 0; j < modelFeeEdges[0].node.tags.length; j++) {
-	  if (modelFeeEdges[0].node.tags[j].name == "Model-Fee") {
-	    modelFeeWinston = parseFloat(modelFeeEdges[0].node.tags[j].value);
-	  } else {
-	  }
+			if (modelFeeEdges[0].node.tags[j].name == "Model-Fee") {
+				modelFeeWinston = parseFloat(modelFeeEdges[0].node.tags[j].value);
+			} else {
+			}
        	}
         
       	query = buildQueryCheckUserCreatorPayment(edges[i].node.owner.address);
@@ -609,8 +609,18 @@ const start = async function () {
      	    const operatorFeeWithLimit = await clientGateway.query(query);
       	    var operatorFeeWithLimitEdges = operatorFeeWithLimit.data.transactions.edges;
       	    console.log(operatorFeeWithLimitEdges[0]);
+
+			var operatorFeeWinston = -1;
+			for (let j = 0; j < operatorFeeWithLimitEdges[0].node.tags.length; j++) {
+			  if (operatorFeeWithLimitEdges[0].node.tags[j].name == "Operator-Fee") {
+				  operatorFeeWinston = parseFloat(modelFeeEdges[0].node.tags[j].value);
+			  } else {
+			  }
+			}
       	    
-      	    if (operatorFeeWithLimitEdges[0].node.quantity.winston < checkUserPaymentEdges[0].node.quantity.winston) {
+      	    if (operatorFeeWinston === -1) {
+			  console.log("Some problem when obtaining your fee!");
+			} else if (operatorFeeWinston < checkUserPaymentEdges[0].node.quantity.winston) {
       	      userHasPaidOperators = false;
       	    }
       	  }
@@ -648,9 +658,9 @@ const start = async function () {
                     console.log(transactionId?.toString());
                     if(transactionId) {
 	              await sendFee(
-		        arweave,
-		        "0.05",
-		        fullText,
+		        	arweave,
+					operatorFeeWinston,
+		        	fullText,
 	                appVersion,
 	                edges[i].node.owner.address,
 	                edges[i].node.id,

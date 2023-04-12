@@ -45,11 +45,32 @@ testem.log
 Thumbs.db
 
 # Rasa files
-/script-examples/wallet.json
-/script-examples/venv
-/script-examples/rasa-assistant
+/script-examples/rasa/venv
+/script-examples/rasa/rasa-assistant
 
-*/wallet.json
+# Build files
 */dist-id.txt
 */dist-manifest.csv
 */dist-manifest.json
+
+# Wallets
+/wallet.json
+/Marketplace.json
+/Creator.json
+/Curator.json
+/Operator.json
+/User.json
+
+*/wallet.json
+*/Marketplace.json
+*/Creator.json
+*/Curator.json
+*/Operator.json
+*/User.json
+
+**/wallet.json
+**/Marketplace.json
+**/Creator.json
+**/Curator.json
+**/Operator.json
+**/User.json
