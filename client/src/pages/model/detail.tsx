@@ -21,12 +21,13 @@ import {
   DEFAULT_TAGS,
   MARKETPLACE_ADDRESS,
   MODEL_FEE_UPDATE,
+  OPERATOR_REGISTRATION_AR_FEE,
   REGISTER_OPERATION,
   TAG_NAMES,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { ChangeEvent, useContext, useEffect, useMemo, useState } from 'react';
-import arweave from '@/utils/arweave';
+import arweave, { isTxConfirmed } from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
 import { RouteLoaderResult } from '@/interfaces/router';
@@ -103,18 +104,38 @@ const Detail = () => {
     }
   }, [state]);
 
+  /**
+   * @description Effect that runs on query data changes;
+   * it is responsible to set the nextPage status and to update current loaded transactionsm
+   * filtering correct payments and repeated operators
+   */
   useEffect(() => {
+    const asyncWrapper = async () => {
+      const filtered: IEdge[] = [];
+      await Promise.all(
+        queryData.transactions.edges.map(async (el: IEdge) => {
+          const confirmed = await isTxConfirmed(el.node.id);
+          const existingIdx = filtered.findIndex(existing => el.node.owner.address === existing.node.owner.address);
+          const correctFee = parseInt(el.node.quantity.ar) === parseInt(OPERATOR_REGISTRATION_AR_FEE);
+          if (confirmed && correctFee && existingIdx < 0) {
+            filtered.push(el);
+          } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
+            // found a new tx for an existing op, check dates
+            const existingTimestamp = findTag(filtered[existingIdx], 'unixTime') || filtered[existingIdx].node.block.timestamp;
+            const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
+            if (newTimestamp > existingTimestamp) {
+              // if new tx has more recent timestamp replace old one
+              filtered[existingIdx] = el;
+            }
+          }
+        }),
+      );
+      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
+      setOperatorsData(filtered);
+    };
     // check has paid correct registration fee
     if (queryData && networkStatus === NetworkStatus.ready) {
-      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
-      const uniqueOperators = Array.from(
-        new Set(queryData.transactions.edges.map((el: IEdge) => el.node.owner.address)),
-      );
-      setOperatorsData(
-        queryData.transactions.edges.filter(
-          (el: IEdge) => !!uniqueOperators.find((unique) => unique === el.node.owner.address),
-        ),
-      );
+      asyncWrapper();
     }
   }, [queryData]);
 

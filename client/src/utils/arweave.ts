@@ -1,4 +1,4 @@
-import { NET_ARWEAVE_URL } from '@/constants';
+import { MIN_CONFIRMATIONS, NET_ARWEAVE_URL } from '@/constants';
 import Arweave from 'arweave';
 
 const arweave = Arweave.init({
@@ -20,6 +20,17 @@ export const getData = async (txid: string) => {
   const text = await (await result.blob()).text();
 
   return text;
+};
+
+/**
+ * Checks if a specific transaction has at least 20 confirmations in the network
+ * @param txid id of the transaction to check
+ * @returns {boolean} true if the transaction is confirmed and has at least 20 confiramtions, false otherwise
+ */
+export const isTxConfirmed = async (txid: string) => {
+  const result = await arweave.transactions.getStatus(txid);
+
+  return !!result.confirmed && result.confirmed.number_of_confirmations > MIN_CONFIRMATIONS;
 };
 
 export const parseWinston = (value?: string) => {

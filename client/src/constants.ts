@@ -70,6 +70,7 @@ export const DEV_ARWEAVE_URL = 'https://arweave.dev';
 export const NET_ARWEAVE_URL = 'https://arweave.net';
 
 export const N_PREVIOUS_BLOCKS = 7;
+export const MIN_CONFIRMATIONS = 7;
 
 export const DEFAULT_TAGS = [
   { name: TAG_NAMES.appName, values: [APP_NAME] },
