@@ -7,6 +7,7 @@ import {
   LinearProgress,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import { ChangeEvent, CSSProperties, DragEvent, useEffect, useState } from 'react';
@@ -24,6 +25,7 @@ const FileControl = (props: FileControlProps) => {
   const [loading, setLoading] = useState(false);
   const [filePrice, setFilePrice] = useState(0);
   const [hasFileDrag, setHasFileDrag] = useState(false);
+  const theme = useTheme();
 
   const handleDragEnter = (event: DragEvent) => {
     event.preventDefault();
@@ -186,7 +188,7 @@ const FileControl = (props: FileControlProps) => {
                 endAdornment: <InputAdornment position='start'>{printSize(file)}</InputAdornment>,
                 sx: {
                   borderWidth: '1px',
-                  borderColor: '#FFF',
+                  borderColor: theme.palette.text.primary,
                   borderRadius: '23px',
                 },
                 readOnly: true,
@@ -216,12 +218,20 @@ const FileControl = (props: FileControlProps) => {
             readOnly: true,
             sx: {
               borderRadius: '20px',
-              background: '#454545',
+              background: theme.palette.background.default,
               transform: hasFileDrag ? 'scale(1.02)' : 'scale(1)',
-              filter: hasFileDrag ? 'blur(2px)' : 'none',
+              filter: hasFileDrag
+                ? `blur(2px)  ${
+                    theme.palette.mode === 'dark' ? 'contrast(0.65)' : 'brightness(0.9)'
+                  }`
+                : theme.palette.mode === 'dark'
+                ? 'contrast(0.65)'
+                : 'brightness(0.9)',
               backdropFilter: 'blur(2px)',
               '&.MuiOutlinedInput-notchedOutline': {
-                borderColor: hasFileDrag ? '#fff' : 'rgba(255, 255, 255, 0.23)',
+                borderColor: hasFileDrag
+                  ? theme.palette.text.primary
+                  : theme.palette.text.secondary,
               },
             },
           }}

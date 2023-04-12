@@ -84,7 +84,7 @@ jobs:
         with:
           path: ./client/node_modules
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-      - name: Run ESLint
+      - name: Run Format Check
         run: cd client && npm run format:check
   build:
     needs: [build-and-install-deps]
@@ -107,7 +107,15 @@ jobs:
         path: ./client/node_modules
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
     - name: Build
+      env:
+        NODE_OPTIONS: "--max_old_space_size=4096"
       run: cd client && npm run build
+    - name: Upload Build artifacts
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: Build artifacts
+        path: ./client/dist/
+      
   test:
     needs: [build-and-install-deps]
     runs-on: ubuntu-latest

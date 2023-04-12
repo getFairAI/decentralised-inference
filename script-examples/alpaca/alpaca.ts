@@ -1,20 +1,21 @@
-const CONFIG = require("./config.json");
-const fs = require("fs");
-const Bundlr = require("@bundlr-network/client");
-const Arweave = require("arweave");
-const { graphql, buildSchema } = require("graphql");
-const { ApolloClient, gql, InMemoryCache } = require("@apollo/client/core");
+import CONFIG from './config.json';
+import fs from 'fs';
+import Bundlr from '@bundlr-network/client';
+import Arweave from 'arweave';
+import { graphql, buildSchema } from 'graphql';
+import { ApolloClient, gql, InMemoryCache } from '@apollo/client/core';
+import { JWKInterface } from 'arweave/node/lib/wallet';
 
 const sendToBundlr = async function (
-  fullText,
-  appVersion,
-  userAddress,
-  requestTransaction,
-  conversationIdentifier,
-  JWK
+  fullText: string,
+  appVersion: string,
+  userAddress: string,
+  requestTransaction: string,
+  conversationIdentifier: string,
+  JWK: JWKInterface
 ) {
   // initailze the bundlr SDK
-  const bundlr = new Bundlr.default(
+  const bundlr: Bundlr = new (Bundlr as any).default(
     "http://node1.bundlr.network",
     "arweave",
     JWK
@@ -73,7 +74,7 @@ const sendToBundlr = async function (
   }
 };
 
-const inference = async function (message) {
+const inference = async function (message: string) {
 	const data = Buffer.from(message, 'utf-8').toString();
 	console.log(data);
 	var res = await fetch(CONFIG.url, {
@@ -89,17 +90,17 @@ const inference = async function (message) {
   };
 
 const sendFee = async function (
-  arweave,
-  fee,
-  fullText,
-  appVersion,
-  userAddress,
-  requestTransaction,
-  conversationIdentifier,
-  responseTransaction,
-  key
+  arweave: Arweave,
+  fee: string,
+  fullText: string,
+  appVersion: string,
+  userAddress: string,
+  requestTransaction: string,
+  conversationIdentifier: string,
+  responseTransaction: string,
+  key: JWKInterface
 ) {
-  //  create a wallet-to-wallet transaction sending 10.5AR to the target address
+  //  create a wallet-to-wallet transaction sending 0.05AR to the target address
   let tx = await arweave.createTransaction(
     {
       target: CONFIG.marketplaceWallet,
@@ -265,7 +266,7 @@ const start = async function () {
     return queryObjectTransactionsReceived;
   };
 
-  const buildQueryTransactionAnswered = (transactionId) => {
+  const buildQueryTransactionAnswered = (transactionId: string) => {
     const queryObjectTransactionAnswered = {
       query: gql`
 		query {
@@ -316,7 +317,7 @@ const start = async function () {
     return queryObjectTransactionAnswered;
   };
   
-  const buildQueryOperatorFeeWithLimit = (address, minBlockHeight, maxBlockHeight) => {
+  const buildQueryOperatorFeeWithLimit = (address: string, minBlockHeight: number, maxBlockHeight: number) => {
     const queryObjectTransactionsAnsweredWithLimit = {
       query: gql`
 		query {
@@ -364,7 +365,7 @@ const start = async function () {
     return queryObjectTransactionsAnsweredWithLimit;
   };
 
-  const buildQueryCheckUserModelRequests = (userAddress) => {
+  const buildQueryCheckUserModelRequests = (userAddress: string) => {
     const queryObjectCheckUserModelRequests = {
       query: gql`
 		query {
@@ -406,7 +407,7 @@ const start = async function () {
     return queryObjectCheckUserModelRequests;
   };
   
-  const buildQueryCheckUserPayment = (userAddress, inferenceTransaction) => {
+  const buildQueryCheckUserPayment = (userAddress: string, inferenceTransaction: string) => {
     const queryObjectCheckUserPayment = {
       query: gql`
 		query {
@@ -420,7 +421,7 @@ const start = async function () {
 				},
 				{
 					name: "Model-Creator",
-					values: ["${CONFIG.modelCreatmarketplaceFeeor}"]
+					values: ["${CONFIG.modelCreator}"]
 				},
 				{
 					name: "Model-Name",
@@ -453,7 +454,7 @@ const start = async function () {
     return queryObjectCheckUserPayment;
   };
 
-  const buildQueryModelFee = (userAddress) => {
+  const buildQueryModelFee = (userAddress: string) => {
     const queryObjectModelFee = {
       query: gql`
 		query {
@@ -492,7 +493,7 @@ const start = async function () {
     return queryObjectModelFee;
   };
   
-  const buildQueryCheckUserCreatorPayment = (userAddress) => {
+  const buildQueryCheckUserCreatorPayment = (userAddress: string) => {
     const queryObjectCheckUserCreatorPayment = {
       query: gql`
 		query {
@@ -644,18 +645,20 @@ const start = async function () {
                     conversationIdentifier,
                     JWK
                   ).then(async (transactionId) => {
-                    console.log(transactionId.toString());
-                    await sendFee(
-		      arweave,
-		      0.05,
-		      fullText,
-                      appVersion,
-                      edges[i].node.owner.address,
-                      edges[i].node.id,
-                      conversationIdentifier,
-                      transactionId,
-                      JWK
-		    );
+                    console.log(transactionId?.toString());
+                    if(transactionId) {
+	              await sendFee(
+		        arweave,
+		        "0.05",
+		        fullText,
+	                appVersion,
+	                edges[i].node.owner.address,
+	                edges[i].node.id,
+	                conversationIdentifier,
+	              	transactionId,
+	                JWK
+		      );
+		    }
                   });
                 });
               });
@@ -686,7 +689,7 @@ const start = async function () {
   }
 };
 
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

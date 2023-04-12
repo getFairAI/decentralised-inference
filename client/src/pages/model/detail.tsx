@@ -8,6 +8,7 @@ import {
   IconButton,
   InputBase,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import BasicTable from '@/components/basic-table';
@@ -20,12 +21,13 @@ import {
   DEFAULT_TAGS,
   MARKETPLACE_ADDRESS,
   MODEL_FEE_UPDATE,
+  OPERATOR_REGISTRATION_AR_FEE,
   REGISTER_OPERATION,
   TAG_NAMES,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { ChangeEvent, useContext, useEffect, useMemo, useState } from 'react';
-import arweave from '@/utils/arweave';
+import arweave, { isTxConfirmed } from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
 import { RouteLoaderResult } from '@/interfaces/router';
@@ -48,6 +50,7 @@ const Detail = () => {
   const elementsPerPage = 5;
   const { enqueueSnackbar } = useSnackbar();
   const { currentAddress } = useContext(WalletContext);
+  const theme = useTheme();
 
   const imgUrl = useMemo(() => {
     if (avatarTxId) {
@@ -101,18 +104,43 @@ const Detail = () => {
     }
   }, [state]);
 
+  /**
+   * @description Effect that runs on query data changes;
+   * it is responsible to set the nextPage status and to update current loaded transactionsm
+   * filtering correct payments and repeated operators
+   */
   useEffect(() => {
+    const asyncWrapper = async () => {
+      const filtered: IEdge[] = [];
+      await Promise.all(
+        queryData.transactions.edges.map(async (el: IEdge) => {
+          const confirmed = await isTxConfirmed(el.node.id);
+          const existingIdx = filtered.findIndex(
+            (existing) => el.node.owner.address === existing.node.owner.address,
+          );
+          const correctFee =
+            parseInt(el.node.quantity.ar) === parseInt(OPERATOR_REGISTRATION_AR_FEE);
+          if (confirmed && correctFee && existingIdx < 0) {
+            filtered.push(el);
+          } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
+            // found a new tx for an existing op, check dates
+            const existingTimestamp =
+              findTag(filtered[existingIdx], 'unixTime') ||
+              filtered[existingIdx].node.block.timestamp;
+            const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
+            if (newTimestamp > existingTimestamp) {
+              // if new tx has more recent timestamp replace old one
+              filtered[existingIdx] = el;
+            }
+          }
+        }),
+      );
+      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
+      setOperatorsData(filtered);
+    };
     // check has paid correct registration fee
     if (queryData && networkStatus === NetworkStatus.ready) {
-      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
-      const uniqueOperators = Array.from(
-        new Set(queryData.transactions.edges.map((el: IEdge) => el.node.owner.address)),
-      );
-      setOperatorsData(
-        queryData.transactions.edges.filter(
-          (el: IEdge) => !!uniqueOperators.find((unique) => unique === el.node.owner.address),
-        ),
-      );
+      asyncWrapper();
     }
   }, [queryData]);
 
@@ -198,7 +226,10 @@ const Detail = () => {
       fullWidth
       sx={{
         '& .MuiPaper-root': {
-          background: 'rgba(61, 61, 61, 0.9)',
+          background:
+            theme.palette.mode === 'dark'
+              ? theme.palette.neutral.main
+              : theme.palette.background.default,
           borderRadius: '30px',
         },
       }}
@@ -210,8 +241,14 @@ const Detail = () => {
         lineHeight={0}
       >
         {showOperators && <Typography>{findTag(state, 'modelName')}</Typography>}
-        <IconButton onClick={handleClose}>
-          <img src='/close-icon.svg' />
+        <IconButton
+          onClick={handleClose}
+          sx={{
+            background: theme.palette.primary.main,
+            '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
+          }}
+        >
+          <img src='./close-icon.svg' />
         </IconButton>
       </DialogTitle>
       <DialogContent
@@ -251,7 +288,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Name
@@ -265,7 +301,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               {findTag(state, 'modelName')}
@@ -281,7 +316,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Category
@@ -295,7 +329,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               {findTag(state, 'category')}
@@ -311,7 +344,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Cost
@@ -333,7 +365,7 @@ const Detail = () => {
                     fontSize: '60px',
                     lineHeight: '106px',
                     textAlign: 'center',
-                    color: '#FAFAFA',
+
                     paddingRight: '8px',
                   }}
                   value={feeValue}
@@ -352,7 +384,7 @@ const Detail = () => {
                     fontSize: '60px',
                     lineHeight: '106px',
                     textAlign: 'center',
-                    color: '#FAFAFA',
+
                     paddingRight: '8px',
                   }}
                 >
@@ -360,7 +392,15 @@ const Detail = () => {
                 </Typography>
               )}
               <Icon sx={{ height: '50px', width: '50px' }}>
-                <img src='/arweave-logo.svg' width={'50px'} height={'50px'} />
+                <img
+                  src={
+                    theme.palette.mode === 'dark'
+                      ? './arweave-logo.svg'
+                      : './arweave-logo-for-light.png'
+                  }
+                  width={'50px'}
+                  height={'50px'}
+                />
               </Icon>
             </Box>
           </Box>
@@ -376,7 +416,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#FAFAFA',
               }}
             >
               Description
@@ -390,7 +429,7 @@ const Detail = () => {
           ) : (
             <Button
               sx={{
-                border: '1px solid #FFFFFF',
+                border: `1px solid ${theme.palette.primary.main}`,
                 borderRadius: '10px',
                 boxSizing: 'border-box',
               }}
@@ -417,21 +456,22 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'flex-start',
                 textAlign: 'left',
-                color: '#FFFFFF',
                 borderRadius: '30px',
               }}
+              variant='contained'
               onClick={() => setShowOperators(false)}
             >
               <Box display='flex'>
                 <Icon sx={{ rotate: '90deg' }}>
-                  <img src='/triangle.svg' />
+                  <img src='./triangle.svg' />
                 </Icon>
                 <Typography>{' Back to Details'}</Typography>
               </Box>
             </Button>
             <Box
               sx={{
-                background: '#B1B1B1',
+                background: 'transparent',
+                border: '2px solid',
                 borderRadius: '30px',
                 margin: '0 20px',
                 display: 'flex',
@@ -442,7 +482,6 @@ const Detail = () => {
             >
               <InputBase
                 sx={{
-                  color: '#595959',
                   fontStyle: 'normal',
                   fontWeight: 400,
                   fontSize: '12px',
@@ -456,7 +495,7 @@ const Detail = () => {
                   height: '30px',
                 }}
               >
-                <img src='/search-icon.svg'></img>
+                <img src='./search-icon.svg'></img>
               </Icon>
             </Box>
           </DialogActions>
@@ -489,15 +528,15 @@ const Detail = () => {
               display: 'flex',
               alignItems: 'center',
               textAlign: 'center',
-              color: '#FFFFFF',
               borderRadius: '30px',
             }}
+            variant='contained'
             onClick={() => setShowOperators(true)}
           >
             <Box display='flex'>
               <Typography>{'Choose an Operator '}</Typography>
               <Icon sx={{ rotate: '-90deg' }}>
-                <img src='/triangle.svg' />
+                <img src='./triangle.svg' />
               </Icon>
             </Box>
           </Button>
@@ -506,7 +545,7 @@ const Detail = () => {
       {selectedIdx >= 0 && (
         <Box
           sx={{
-            background: 'rgba(0, 0, 0, 0.7)',
+            background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
             borderRadius: '7px',
             justifyContent: 'center',
             display: 'flex',
@@ -515,7 +554,8 @@ const Detail = () => {
           }}
         >
           <Button
-            sx={{ background: 'transparent', borderRadius: '7px', border: '1px solid #F4F4F4' }}
+            sx={{ borderRadius: '7px' }}
+            variant='outlined'
             onClick={() =>
               navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
                 state: {
@@ -536,14 +576,14 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#F4F4F4',
               }}
             >
               View History
             </Typography>
           </Button>
           <Button
-            sx={{ background: '#F4F4F4', borderRadius: '7px' }}
+            sx={{ borderRadius: '7px' }}
+            variant='contained'
             onClick={() =>
               navigate(
                 pathname.includes('chat')
@@ -573,7 +613,6 @@ const Detail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#151515',
               }}
             >
               Use Operator

@@ -1,5 +1,14 @@
 import { NetworkStatus, useQuery } from '@apollo/client';
-import { Box, Button, Container, MenuItem, Select, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material';
 
 import { useContext, useEffect, useRef, useState } from 'react';
 
@@ -13,17 +22,25 @@ import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import FilterContext from '@/context/filter';
 import { findTag } from '@/utils/common';
+import { isTxConfirmed } from '@/utils/arweave';
 
 export default function Home() {
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [hightlightTop, setHighLightTop] = useState(false);
   const [txs, setTxs] = useState<IEdge[]>([]);
-  const elementsPerPage = 5;
+  const [featuredTxs, setFeaturedTxs] = useState<IEdge[]>([]);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const filterValue = useContext(FilterContext);
-  const [hightlightTop, setHighLightTop] = useState(false);
+  const theme = useTheme();
+  const elementsPerPage = 5;
 
-  const { data, loading, error } = useQuery(LIST_LATEST_MODELS_QUERY, {
+  const {
+    data,
+    loading,
+    error,
+    networkStatus: featuredNetworkStatus,
+  } = useQuery(LIST_LATEST_MODELS_QUERY, {
     variables: {
       first: 4,
     },
@@ -47,7 +64,7 @@ export default function Home() {
     if (isOnScreen && hasNextPage) {
       fetchMore({
         variables: {
-          after: txs[txs.length - 1].cursor,
+          after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -73,21 +90,66 @@ export default function Home() {
   }, [useOnScreen, txs]);
 
   useEffect(() => {
-    if (listData && networkStatus === NetworkStatus.ready) {
-      setHasNextPage(listData.transactions.pageInfo.hasNextPage);
-      setTxs(
-        listData.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
+    const asyncWrapper = async () => {
+      const filtered: IEdge[] = [];
+      await Promise.all(
+        listData.transactions.edges.map(async (el: IEdge) => {
+          const confirmed = await isTxConfirmed(el.node.id);
+          const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+          if (confirmed && correctFee) {
+            filtered.push(el);
+          }
+        }),
       );
+      setHasNextPage(listData.transactions.pageInfo.hasNextPage);
+      setTxs(filtered);
+    };
+
+    if (listData && networkStatus === NetworkStatus.ready) {
+      asyncWrapper();
     }
   }, [listData]);
 
   useEffect(() => {
-    if (listData && filterValue)
-      setTxs(
-        listData.transactions.edges.filter((el: IEdge) =>
-          findTag(el, 'modelName')?.includes(filterValue),
-        ),
-      );
+    const asyncWrapper = async () => {
+      if (data && featuredNetworkStatus === NetworkStatus.ready) {
+        const filtered: IEdge[] = [];
+        await Promise.all(
+          data.transactions.edges.map(async (el: IEdge) => {
+            const confirmed = await isTxConfirmed(el.node.id);
+            const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+            if (confirmed && correctFee) {
+              filtered.push(el);
+            }
+          }),
+        );
+        setFeaturedTxs(filtered);
+      }
+    };
+    asyncWrapper();
+  }, [data]);
+
+  useEffect(() => {
+    const asyncWrapper = async () => {
+      if (listData && filterValue) {
+        const filtered: IEdge[] = [];
+        await Promise.all(
+          listData.transactions.edges.map(async (el: IEdge) => {
+            const confirmed = await isTxConfirmed(el.node.id);
+            const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+            if (
+              confirmed &&
+              correctFee &&
+              (findTag(el, 'modelName')?.includes(filterValue) || filterValue === '')
+            ) {
+              filtered.push(el);
+            }
+          }),
+        );
+        setTxs(filtered);
+      }
+    };
+    asyncWrapper();
   }, [filterValue]);
 
   return (
@@ -103,58 +165,58 @@ export default function Home() {
           },
         }}
       >
-        <Typography
-          sx={{
-            fontStyle: 'normal',
-            fontWeight: 300,
-            fontSize: '30px',
-            lineHeight: '41px',
-            /* identical to box height */
-            // background: 'linear-gradient(101.22deg, rgba(14, 255, 168, 0.58) 30.84%, #9747FF 55.47%, rgba(84, 81, 228, 0) 78.13%), linear-gradient(0deg, #FFFFFF, #FFFFFF)',
-          }}
-        >
-          Choose your AI Model to start using.
-        </Typography>
-        <Featured data={(data && data.transactions.edges) || []} loading={loading} error={error} />
+        <Featured data={featuredTxs} loading={loading} error={error} />
         <Box className={'filter-box'} sx={{ display: 'flex' }}>
-          <Box display='flex' gap={'50px'}>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fongWeight: 500,
-                fontSize: '30px',
-                fontHeight: '41px',
-              }}
-              className={hightlightTop ? 'trending-text' : 'trending-text highlight'}
-              onClick={() => handleHighlight(false)}
-            >
-              Trending
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fongWeight: 500,
-                fontSize: '30px',
-                fontHeight: '41px',
-              }}
-              className={hightlightTop ? 'trending-text highlight' : 'trending-text'}
-              onClick={() => handleHighlight(true)}
-            >
-              Top
-            </Typography>
-            <div className='underline'></div>
-            <Box flexGrow={1} />
+          <Box display={'flex'} flexDirection={'column'}>
+            <Box display='flex' gap={'50px'} width={'100%'}>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: '30px',
+                  fontHeight: '41px',
+                  opacity: !hightlightTop ? 1 : 0.5,
+                }}
+                onClick={() => handleHighlight(false)}
+              >
+                Trending
+              </Typography>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: '30px',
+                  fontHeight: '41px',
+                  opacity: hightlightTop ? 1 : 0.5,
+                }}
+                onClick={() => handleHighlight(true)}
+              >
+                Top
+              </Typography>
+              <Box flexGrow={1} />
+            </Box>
+            <Box display={'flex'} position='relative'>
+              <Box
+                height={'6px'}
+                position='absolute'
+                sx={{
+                  width: hightlightTop ? '55px' : '119px',
+                  left: hightlightTop ? '166px' : 0,
+                  background: theme.palette.primary.main,
+                  borderRadius: '8px',
+                }}
+              />
+            </Box>
           </Box>
           <Box flexGrow={1} />
           <Box display='flex' gap={'50px'}>
             <Select
               sx={{
                 padding: '0px 8px',
-                border: '1px solid transparent',
+                border: '2px solid transparent',
                 borderRadius: '10px',
                 textTransform: 'none',
-                background:
-                  'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderWidth: 0,
                 },
@@ -169,7 +231,7 @@ export default function Home() {
                     fontSize: '20px',
                     lineHeight: '27px',
                     textAlign: 'center',
-                    color: '#F4F4F4',
+                    color: theme.palette.primary.main,
                   }}
                 >
                   24H
@@ -182,11 +244,10 @@ export default function Home() {
             <Button
               sx={{
                 borderRadius: '10px',
-                border: '1px solid transparent',
+                border: '2px solid transparent',
                 padding: '8px',
                 textTransform: 'none',
-                background:
-                  'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
               }}
             >
               <Typography
@@ -197,7 +258,6 @@ export default function Home() {
                   fontSize: '20px',
                   lineHeight: '27px',
                   textAlign: 'center',
-                  color: '#F4F4F4',
                 }}
               >
                 View All

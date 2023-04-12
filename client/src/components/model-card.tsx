@@ -20,6 +20,7 @@ import {
   CardMedia,
   Container,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +41,7 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
   const navigate = useNavigate();
   const [cardData, setCardData] = useState<Element>();
   const elementsPerPage = 5;
+  const theme = useTheme();
 
   const tags = [
     ...DEFAULT_TAGS,
@@ -182,8 +184,13 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
     <Card
       sx={{
         background:
-          'linear-gradient(to bottom, rgba(118, 118, 118, 0.1) 2.17%, rgba(1, 1, 1, 0) 188.85%)',
+          'linear-gradient(177deg, rgba(118, 118, 118, 0.1) 2.17%, rgba(1, 1, 1, 0) 60%);',
         borderRadius: '10px',
+        boxShadow: 'none',
+        '&:hover': {
+          boxShadow: `0px 2px 24px -1px ${theme.palette.primary.main}, 0px 2px 1px 0px ${theme.palette.primary.main}, 0px 2px 7px 0px ${theme.palette.primary.main}`,
+          opacity: 1,
+        },
       }}
     >
       {error ? (
@@ -222,7 +229,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
               display: 'flex',
               alignItems: 'center',
               textAlign: 'center',
-              color: '#CCCCCD',
             }}
           />
           {/* <Typography>Name: {cardData?.name}</Typography>
@@ -265,7 +271,8 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                 right: 0,
                 width: '317px',
                 height: '352px',
-                background: 'linear-gradient(to top, #000000 0%, rgba(71, 71, 71, 0) 100%)',
+                background:
+                  'linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)',
                 // backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 backgroundSize: 'cover' /* <------ */,
@@ -279,10 +286,11 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                 borderRadius: '16px',
                 height: '100px',
                 width: '100px',
-                background: `linear-gradient(to top, #000000 10%, rgba(71, 71, 71, 0) 100%), url(${
+                background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%), url(${
                   loading || avatarLoading ? '' : imgUrl
                 })`,
                 backgroundPosition: 'center',
+                backgroundSize: 'contain',
               }}
             />
           )}
@@ -296,7 +304,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#F4F4F4',
               }}
             >
               {findTag(modelTx, 'modelName') || 'Untitled'}
@@ -319,7 +326,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                   display: 'flex',
                   alignItems: 'center',
                   textAlign: 'center',
-                  color: '#BFBFBF;',
                 }}
               >
                 {cardData?.totalOperators}
@@ -335,7 +341,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                   display: 'flex',
                   alignItems: 'center',
                   textAlign: 'center',
-                  color: '#BFBFBF;',
                 }}
               >
                 {Number.isNaN(cardData?.modelFee) || cardData?.modelFee === 'NaN'
@@ -353,7 +358,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                   display: 'flex',
                   alignItems: 'center',
                   textAlign: 'center',
-                  color: '#BFBFBF;',
                 }}
               >
                 {Number.isNaN(cardData?.avgFee) || cardData?.avgFee === 'NaN'
@@ -371,7 +375,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                   display: 'flex',
                   alignItems: 'center',
                   textAlign: 'center',
-                  color: '#BFBFBF;',
                 }}
               >
                 11k
@@ -387,7 +390,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                   display: 'flex',
                   alignItems: 'center',
                   textAlign: 'center',
-                  color: '#BFBFBF;',
                 }}
               >
                 12 Stamps
@@ -403,7 +405,6 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                   display: 'flex',
                   alignItems: 'center',
                   textAlign: 'center',
-                  color: '#BFBFBF;',
                 }}
               >
                 {getTimePassed()}

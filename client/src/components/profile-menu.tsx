@@ -4,10 +4,16 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import FundDialog from './fund-dialog';
 import { useNavigate } from 'react-router-dom';
+import { AppThemeContext } from '@/context/theme';
+import { Tooltip, Typography } from '@mui/material';
+import { GITHUB_LINK, WHITEPAPER_LINK } from '@/constants';
 
 const options = [
   'Bundlr Settings',
   'My Models',
+  'Toggle Theme',
+  'Github',
+  'Whitepaper',
   // 'Disconnect'
 ];
 
@@ -17,6 +23,8 @@ export default function ProfileMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [fundOpen, setFundOpen] = React.useState(false);
   const navigate = useNavigate();
+  const { toggleTheme } = React.useContext(AppThemeContext);
+
   /* const {  } = React.useContext(WalletContext); */
 
   const open = Boolean(anchorEl);
@@ -39,6 +47,15 @@ export default function ProfileMenu() {
         setAnchorEl(null);
         navigate('/history');
         break;
+      case 'Toggle Theme':
+        toggleTheme();
+        break;
+      case 'Github':
+        window.open(GITHUB_LINK, '_blank');
+        break;
+      case 'Whitepaper':
+        window.open(WHITEPAPER_LINK, '_blank');
+        break;
       /* case 'Disconnect':
         await disconnect();
         setAnchorEl(null);
@@ -59,7 +76,7 @@ export default function ProfileMenu() {
         aria-haspopup='true'
         onClick={handleClick}
       >
-        <img src='/icon-empty-wallet.svg' />
+        <img src='./icon-empty-wallet.svg' />
       </IconButton>
       <Menu
         id='long-menu'
@@ -76,11 +93,19 @@ export default function ProfileMenu() {
           },
         }}
       >
-        {options.map((option) => (
-          <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
-            {option}
-          </MenuItem>
-        ))}
+        {options.map((option) =>
+          option === 'Toggle Theme' ? (
+            <MenuItem key={option} onClick={() => HandleOptionClick(option)} disabled>
+              <Tooltip title='This Feature is not Available at the moment'>
+                <Typography>{option}</Typography>
+              </Tooltip>
+            </MenuItem>
+          ) : (
+            <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
+              <Typography>{option}</Typography>
+            </MenuItem>
+          ),
+        )}
       </Menu>
       <FundDialog open={fundOpen} setOpen={setFundOpen} />
     </div>

@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { ReactElement, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -15,6 +16,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
   const { address } = useParams();
   const navigate = useNavigate();
   const { currentAddress } = useContext(WalletContext);
+  const theme = useTheme();
 
   return (
     <>
@@ -24,7 +26,10 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
         fullWidth
         sx={{
           '& .MuiPaper-root': {
-            background: 'rgba(61, 61, 61, 0.9)',
+            background:
+              theme.palette.mode === 'dark'
+                ? 'rgba(61, 61, 61, 0.9)'
+                : theme.palette.background.default,
             borderRadius: '30px',
           },
         }}
@@ -32,7 +37,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
         <DialogTitle>
           <Typography
             sx={{
-              color: '#DC5141',
+              color: theme.palette.error.main,
               fontWeight: 700,
               fontSize: '23px',
               lineHeight: '31px',
@@ -48,16 +53,16 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
             sx={{
               marginBottom: '16px',
               borderRadius: '10px',
-              color: '#DC5141',
+              color: theme.palette.error.main,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               '& .MuiAlert-icon': {
                 justifyContent: 'center',
               },
-              borderColor: '#DC5141',
+              borderColor: theme.palette.error.main,
             }}
-            icon={<img src='/error-icon.svg' />}
+            icon={<img src='./error-icon.svg' />}
           >
             <Typography
               sx={{
@@ -83,10 +88,9 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
           <Button
             onClick={() => navigate(-1)}
             sx={{
-              border: '1px solid #F4F4F4',
               borderRadius: '7px',
-              color: '#F4F4F4',
             }}
+            variant='outlined'
           >
             Go Back
           </Button>

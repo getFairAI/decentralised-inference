@@ -15,6 +15,7 @@ import {
   Stack,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -87,6 +88,7 @@ const Chat = () => {
   const [filterConversations, setFilterConversations] = useState('');
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [responseTimeout, setResponseTimeout] = useState(false);
+  const theme = useTheme();
 
   const [
     getChatRequests,
@@ -711,7 +713,7 @@ const Chat = () => {
               height: '100%',
               // background: 'rgba(21, 21, 21, 1)',
               gap: '16px',
-              background: '#242424',
+              background: theme.palette.secondary.main,
               // opacity: '0.3',
               borderRadius: ' 0px 20px 20px 0px',
             }}
@@ -720,7 +722,7 @@ const Chat = () => {
             <Box marginTop={'16px'}>
               <Box
                 sx={{
-                  background: '#B1B1B1',
+                  background: theme.palette.common.white,
                   borderRadius: '30px',
                   margin: '0 20px',
                   display: 'flex',
@@ -731,7 +733,7 @@ const Chat = () => {
               >
                 <InputBase
                   sx={{
-                    color: '#595959',
+                    color: theme.palette.text.primary,
                     fontStyle: 'normal',
                     fontWeight: 400,
                     fontSize: '12px',
@@ -746,7 +748,7 @@ const Chat = () => {
                     height: '30px',
                   }}
                 >
-                  <img src='/search-icon.svg'></img>
+                  <img src='./search-icon.svg'></img>
                 </Icon>
               </Box>
             </Box>
@@ -756,6 +758,7 @@ const Chat = () => {
                 sx={{
                   margin: '0 20px',
                   borderRadius: '30px',
+                  color: theme.palette.primary.contrastText,
                 }}
               >
                 <AddIcon />
@@ -779,24 +782,22 @@ const Chat = () => {
                   selected={cid === currentConversationId}
                   onClick={() => handleListItemClick(cid)}
                   sx={{
-                    background: '#434343',
+                    background:
+                      theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
                     borderRadius: '21px',
                     width: '100%',
                     justifyContent: 'center',
                     height: '91px',
-                    opacity: 0.5,
-                    color: '#f4f4f4',
+                    color: theme.palette.secondary.contrastText,
                     '&.Mui-selected, &.Mui-selected:hover': {
                       opacity: 1,
-                      background: 'rgba(204, 204, 204, 0.8)',
-                      color: '#000',
+                      backdropFilter: 'brightness(0.5)',
+                      color: theme.palette.primary.contrastText,
                       // border: '4px solid transparent',
                       // background: 'linear-gradient(#434343, #434343) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
                     },
                     '&:hover': {
-                      opacity: 1,
-                      background: 'rgba(204, 204, 204, 0.8)',
-                      color: '#000',
+                      backdropFilter: 'brightness(0.5)',
                     },
                   }}
                 >
@@ -830,7 +831,7 @@ const Chat = () => {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
-            background: '#000',
+            background: theme.palette.background.default,
           }}
         >
           <Box flexGrow={1}>
@@ -841,11 +842,17 @@ const Chat = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
-                background: '#000',
+                background: theme.palette.background.default,
+                boxShadow: 'none',
               }}
             >
               <Box
-                sx={{ overflow: 'auto', maxHeight: chatMaxHeight, pt: '150px' }}
+                sx={{
+                  overflow: 'auto',
+                  maxHeight: chatMaxHeight,
+                  pt: '150px',
+                  paddingBottom: '24px',
+                }}
                 ref={scrollableRef}
               >
                 {messagesLoading &&
@@ -917,8 +924,12 @@ const Chat = () => {
                                   border: '4px solid transparent',
                                   background:
                                     el.type !== 'response'
-                                      ? 'rgba(204, 204, 204, 0.8)'
-                                      : 'rgba(52, 52, 52, 0.7)',
+                                      ? theme.palette.mode === 'dark'
+                                        ? 'rgba(204, 204, 204, 0.8)'
+                                        : theme.palette.terciary.main
+                                      : theme.palette.mode === 'dark'
+                                      ? 'rgba(52, 52, 52, 0.7)'
+                                      : theme.palette.secondary.main,
                                   // opacity: '0.4',
                                   borderRadius: '40px',
                                 }}
@@ -940,7 +951,10 @@ const Chat = () => {
                                       lineHeight: '34px',
                                       display: 'flex',
                                       alignItems: 'center',
-                                      color: el.type === 'response' ? '#F4F4F4' : '#000',
+                                      color:
+                                        el.type === 'response'
+                                          ? theme.palette.secondary.contrastText
+                                          : theme.palette.terciary.contrastText,
                                       whiteSpace: 'pre-wrap',
                                     }}
                                     gutterBottom
@@ -957,7 +971,10 @@ const Chat = () => {
                                         lineHeight: '27px',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        color: el.type === 'response' ? '#FFF' : '#000',
+                                        color:
+                                          el.type === 'response'
+                                            ? theme.palette.secondary.contrastText
+                                            : theme.palette.terciary.contrastText,
                                       }}
                                     >
                                       {new Date(el.timestamp * 1000).toLocaleTimeString()}
@@ -971,7 +988,10 @@ const Chat = () => {
                                         lineHeight: '27px',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        color: el.type === 'response' ? '#FFF' : '#222',
+                                        color:
+                                          el.type === 'response'
+                                            ? theme.palette.secondary.contrastText
+                                            : theme.palette.terciary.contrastText,
                                       }}
                                     >
                                       {el.type === 'response' ? state.modelName : 'You'}
@@ -994,7 +1014,6 @@ const Chat = () => {
                                   lineHeight: '27px',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  color: '#FFF',
                                 }}
                               >
                                 {new Date(
@@ -1018,7 +1037,10 @@ const Chat = () => {
                                   maxWidth: '75%',
                                   // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
                                   border: '4px solid transparent',
-                                  background: 'rgba(52, 52, 52, 0.7)',
+                                  background:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(52, 52, 52, 0.7)'
+                                      : theme.palette.secondary.main,
                                   // opacity: '0.4',
                                   borderRadius: '40px',
                                 }}
@@ -1078,10 +1100,10 @@ const Chat = () => {
           </Box>
           <Box
             sx={{
-              background: '#1A1A1A',
+              background: theme.palette.mode === 'dark' ? '#1A1A1A' : 'transparent',
+              border: '2px solid',
               borderRadius: '20px',
-              border: '1px solid #000000',
-              margin: '0 20px',
+              margin: '0 32px',
               display: 'flex',
               justifyContent: 'space-between',
               padding: '3px 20px 0px 50px',
@@ -1090,11 +1112,13 @@ const Chat = () => {
           >
             <InputBase
               sx={{
-                color: '#F4F4F4',
+                color:
+                  theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
                 fontStyle: 'normal',
                 fontWeight: 400,
                 fontSize: '20px',
                 lineHeight: '16px',
+                width: '100%',
               }}
               value={newMessage}
               onChange={handleMessageChange}
@@ -1103,7 +1127,7 @@ const Chat = () => {
             />
             <IconButton
               onClick={handleSend}
-              sx={{ height: '60px', width: '60px' }}
+              sx={{ height: '60px', width: '60px', color: theme.palette.neutral.contrastText }}
               disabled={!newMessage || newMessage === ''}
             >
               <SendIcon />

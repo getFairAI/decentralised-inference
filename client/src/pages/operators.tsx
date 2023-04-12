@@ -14,12 +14,14 @@ import {
   Skeleton,
   Select,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import ReplayIcon from '@mui/icons-material/Replay';
 import ModelCard from '@/components/model-card';
 import useOnScreen from '@/hooks/useOnScreen';
 import { Outlet } from 'react-router-dom';
+import { isTxConfirmed } from '@/utils/arweave';
 
 const Operators = () => {
   const [txs, setTxs] = useState<IEdge[]>([]);
@@ -28,6 +30,7 @@ const Operators = () => {
   const isOnScreen = useOnScreen(target);
   const elementsPerPage = 5;
   const [hightlightTop, setHighLightTop] = useState(false);
+  const theme = useTheme();
 
   const mockArray = genLoadingArray(6);
 
@@ -58,12 +61,29 @@ const Operators = () => {
     }
   }, [isOnScreen, txs]);
 
+  /**
+   * @description Effect that runs on data changes;
+   * it is responsible to set the nextPage status and to update current loaded transactionsm
+   * filtering correct payments
+   */
   useEffect(() => {
-    if (data && networkStatus === NetworkStatus.ready) {
-      setHasNextPage(data.transactions.pageInfo.hasNextPage);
-      setTxs(
-        data.transactions.edges.filter((el: IEdge) => el.node.quantity.ar !== MARKETPLACE_FEE),
+    const asyncWrapper = async () => {
+      const filtered: IEdge[] = [];
+      await Promise.all(
+        data.transactions.edges.map(async (el: IEdge) => {
+          const confirmed = await isTxConfirmed(el.node.id);
+          const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+          if (confirmed && correctFee) {
+            filtered.push(el);
+          }
+        }),
       );
+      setHasNextPage(data.transactions.pageInfo.hasNextPage);
+      setTxs(filtered);
+    };
+
+    if (data && networkStatus === NetworkStatus.ready) {
+      asyncWrapper();
     }
   }, [data]);
 
@@ -88,6 +108,7 @@ const Operators = () => {
             fontWeight: 300,
             fontSize: '30px',
             lineHeight: '41px',
+            padding: '16px',
             /* identical to box height */
             // background: 'linear-gradient(101.22deg, rgba(14, 255, 168, 0.58) 30.84%, #9747FF 55.47%, rgba(84, 81, 228, 0) 78.13%), linear-gradient(0deg, #FFFFFF, #FFFFFF)',
           }}
@@ -95,44 +116,56 @@ const Operators = () => {
           Choose a Model to Start Operating
         </Typography>
         <Box className={'filter-box'} sx={{ display: 'flex' }}>
-          <Box display='flex' gap={'50px'}>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fongWeight: 500,
-                fontSize: '30px',
-                fontHeight: '41px',
-              }}
-              className={hightlightTop ? 'trending-text' : 'trending-text highlight'}
-              onClick={() => handleHighlight(false)}
-            >
-              Trending
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fongWeight: 500,
-                fontSize: '30px',
-                fontHeight: '41px',
-              }}
-              className={hightlightTop ? 'trending-text highlight' : 'trending-text'}
-              onClick={() => handleHighlight(true)}
-            >
-              Top
-            </Typography>
-            <div className='underline'></div>
-            <Box flexGrow={1} />
+          <Box display={'flex'} flexDirection={'column'}>
+            <Box display='flex' gap={'50px'} width={'100%'}>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: '30px',
+                  fontHeight: '41px',
+                  opacity: !hightlightTop ? 1 : 0.5,
+                }}
+                onClick={() => handleHighlight(false)}
+              >
+                Trending
+              </Typography>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  fontSize: '30px',
+                  fontHeight: '41px',
+                  opacity: hightlightTop ? 1 : 0.5,
+                }}
+                onClick={() => handleHighlight(true)}
+              >
+                Top
+              </Typography>
+              <Box flexGrow={1} />
+            </Box>
+            <Box display={'flex'} position='relative'>
+              <Box
+                height={'6px'}
+                sx={{
+                  position: 'absolute',
+                  width: hightlightTop ? '55px' : '119px',
+                  left: hightlightTop ? '166px' : 0,
+                  background: theme.palette.primary.main,
+                  borderRadius: '8px',
+                }}
+              />
+            </Box>
           </Box>
           <Box flexGrow={1} />
           <Box display='flex' gap={'50px'}>
             <Select
               sx={{
                 padding: '0px 8px',
-                border: '1px solid transparent',
+                border: '2px solid transparent',
                 borderRadius: '10px',
                 textTransform: 'none',
-                background:
-                  'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderWidth: 0,
                 },
@@ -147,7 +180,7 @@ const Operators = () => {
                     fontSize: '20px',
                     lineHeight: '27px',
                     textAlign: 'center',
-                    color: '#F4F4F4',
+                    color: theme.palette.primary.main,
                   }}
                 >
                   24H
@@ -160,11 +193,10 @@ const Operators = () => {
             <Button
               sx={{
                 borderRadius: '10px',
-                border: '1px solid transparent',
+                border: '2px solid transparent',
                 padding: '8px',
                 textTransform: 'none',
-                background:
-                  'linear-gradient(#000, #000) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
+                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
               }}
             >
               <Typography
@@ -175,7 +207,6 @@ const Operators = () => {
                   fontSize: '20px',
                   lineHeight: '27px',
                   textAlign: 'center',
-                  color: '#F4F4F4',
                 }}
               >
                 View All
@@ -200,7 +231,6 @@ const Operators = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#D2D2D2',
               }}
             >
               Last updated
@@ -214,7 +244,6 @@ const Operators = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#D2D2D2',
               }}
             >
               Rating
@@ -228,7 +257,6 @@ const Operators = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#D2D2D2',
               }}
             >
               Usage
@@ -242,7 +270,6 @@ const Operators = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#D2D2D2',
               }}
             >
               Avg. Operators Fee
@@ -256,7 +283,6 @@ const Operators = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#D2D2D2',
               }}
             >
               Model Fee
@@ -270,7 +296,6 @@ const Operators = () => {
                 display: 'flex',
                 alignItems: 'center',
                 textAlign: 'center',
-                color: '#D2D2D2',
               }}
             >
               Current # of Operators

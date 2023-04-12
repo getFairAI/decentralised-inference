@@ -4,7 +4,6 @@
   box-sizing: border-box;
 
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 36px;
 }
 
@@ -29,8 +28,6 @@
   font-weight: 400;
   font-size: 18px;
   line-height: 24px;
-
-  color: #e3e3e3;
 }
 
 .navbar-links.active {
@@ -39,8 +36,6 @@
   font-weight: 700;
   font-size: 18px;
   line-height: 24px;
-
-  color: #e3e3e3;
 }
 
 .navbar-right-content {
@@ -55,7 +50,7 @@
 .feature-cards-row {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: flex-start;
   padding: 0px;
   gap: 36px;
@@ -88,35 +83,6 @@
     #9747ff 55.47%,
     rgba(84, 81, 228, 0) 78.13%
   );
-}
-
-.trending-text.highlight {
-  font-family: 'Satoshi';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 30px;
-  line-height: 41px;
-  /* identical to box height */
-  border-bottom: 6px solid;
-  border-image-slice: 1;
-  border-image-source: linear-gradient(
-    104.46deg,
-    rgba(14, 255, 168, 0.58) -238.05%,
-    #9747ff 301.04%,
-    rgba(84, 81, 228, 0) 797.01%
-  );
-
-  color: #f4f4f4;
-}
-
-.trending-text {
-  font-family: 'Satoshi';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 30px;
-  line-height: 41px;
-  /* identical to box height */
-  color: #6c6c6c;
 }
 
 .underline {
