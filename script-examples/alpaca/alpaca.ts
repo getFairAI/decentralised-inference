@@ -531,13 +531,13 @@ const start = async function () {
         // Creator Validations:
       	
       	query = buildQueryModelFee(edges[i].node.owner.address);
-      	const modelFee = await clientGateway.query(query);
-      	var modelFeeEdges = modelFee.data.transactions.edges;
+      	const modelFeeQuery = await clientGateway.query(query);
+      	var modelFeeEdges = modelFeeQuery.data.transactions.edges;
 
-      	var modelFeeWinston = -1;
+      	var modelFee = -1;
       	for (let j = 0; j < modelFeeEdges[0].node.tags.length; j++) {
 			if (modelFeeEdges[0].node.tags[j].name == "Model-Fee") {
-				modelFeeWinston = parseFloat(modelFeeEdges[0].node.tags[j].value);
+				modelFee = parseFloat(modelFeeEdges[0].node.tags[j].value);
 			}
        	}
         
@@ -553,7 +553,7 @@ const start = async function () {
 			creatorPaymentAmount = creatorPaymentAmount + userCreatorPaymentEdges[i].node.quantity.winston;
 			}
 			console.log(creatorPaymentAmount);
-			if (creatorPaymentAmount < modelFeeWinston) {
+			if (creatorPaymentAmount < modelFee) {
 			userHasPaidCreator = false;
 			}
 			console.log(userHasPaidCreator);
