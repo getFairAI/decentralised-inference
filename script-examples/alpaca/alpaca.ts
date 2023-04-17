@@ -578,17 +578,20 @@ const start = async function () {
       	query = buildQueryCheckUserCreatorPayment(edges[i].node.owner.address);
       	const userCreatorPayment = await clientGateway.query(query);
       	var userCreatorPaymentEdges = userCreatorPayment.data.transactions.edges;
-      	console.log(userCreatorPaymentEdges);
+		const getTransactionStatus = await arweave.transactions.getStatus(userCreatorPaymentEdges[0].node.id);
+		const isTransactionConfirmed = !!getTransactionStatus.confirmed && getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
 
-      	var creatorPaymentAmount = 0;
-      	for (let i = 0; i < userCreatorPaymentEdges.length; i++) {
-      	  creatorPaymentAmount = creatorPaymentAmount + userCreatorPaymentEdges[i].node.quantity.winston;
-      	}
-      	console.log(creatorPaymentAmount);
-      	if (creatorPaymentAmount < modelFeeWinston) {
-      	  userHasPaidCreator = false;
-      	}
-      	console.log(userHasPaidCreator);
+		if(isTransactionConfirmed) {
+			var creatorPaymentAmount = 0;
+			for (let i = 0; i < userCreatorPaymentEdges.length; i++) {
+			creatorPaymentAmount = creatorPaymentAmount + userCreatorPaymentEdges[i].node.quantity.winston;
+			}
+			console.log(creatorPaymentAmount);
+			if (creatorPaymentAmount < modelFeeWinston) {
+			userHasPaidCreator = false;
+			}
+			console.log(userHasPaidCreator);
+		}
     
     	
     	// Operator Validations:
@@ -597,7 +600,7 @@ const start = async function () {
       	  query = buildQueryCheckUserModelRequests(edges[i].node.owner.address);
      	  const checkUserModelRequests = await clientGateway.query(query);
       	  var checkUserModelRequestsEdges = checkUserModelRequests.data.transactions.edges;
-      	  console.log(checkUserModelRequestsEdges[0]);
+		  console.log(checkUserModelRequestsEdges[0]);
       	  
       	  for (let i = 0; i < checkUserModelRequestsEdges.length; i++) {
       	    query = buildQueryCheckUserPayment(edges[i].node.owner.address, checkUserModelRequestsEdges[i].node.id);
