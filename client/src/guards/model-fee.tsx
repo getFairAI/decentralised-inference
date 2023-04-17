@@ -1,7 +1,7 @@
 import { APP_NAME, APP_VERSION, DEFAULT_TAGS, MODEL_FEE_PAYMENT, TAG_NAMES } from '@/constants';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
+import arweave, { isTxConfirmed } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { useLazyQuery } from '@apollo/client';
 import {
@@ -26,6 +26,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const [isAllowed, setIsAllowed] = useState(false);
+  const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
@@ -65,21 +66,28 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (
-      queryResult.data &&
-      queryResult.data.transactions &&
-      queryResult.data.transactions.edges.length > 0
-    ) {
-      setIsAllowed(
-        queryResult.data.transactions.edges[0].node.quantity.winston ===
-          (updatedFee || findTag(state.fullState, 'modelFee')),
-      );
-      setLoading(false);
-    } else if (queryResult.data && queryResult.data && queryResult.data.transactions) {
-      // means there is no
-      setIsAllowed(false);
-      setLoading(false);
-    }
+    const asyncTxConfirmed = async () => {
+      if (
+        queryResult.data &&
+        queryResult.data.transactions &&
+        queryResult.data.transactions.edges.length > 0
+      ) {
+        setIsAllowed(
+          queryResult.data.transactions.edges[0].node.quantity.winston ===
+            (updatedFee || findTag(state.fullState, 'modelFee')) && await isTxConfirmed(queryResult.data.transactions.edges[0].node.id),
+        );
+        setHasPaid(
+          (queryResult.data.transactions.edges[0].node.quantity.winston ===
+            (updatedFee || findTag(state.fullState, 'modelFee'))) && !(await isTxConfirmed(queryResult.data.transactions.edges[0].node.id)),
+        );
+        setLoading(false);
+      } else if (queryResult.data && queryResult.data && queryResult.data.transactions) {
+        // means there is no
+        setIsAllowed(false);
+        setLoading(false);
+      }
+    };
+  asyncTxConfirmed();
   }, [queryResult.data]);
 
   const handleCancel = () => {
@@ -114,7 +122,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
           </>,
           { variant: 'success' },
         );
-        setIsAllowed(true);
+        setHasPaid(true);
       } else {
         enqueueSnackbar(`Failed with error ${res.status}: ${res.statusText}`, { variant: 'error' });
       }
@@ -171,52 +179,71 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
             }}
             icon={<img src='./warning-icon.svg'></img>}
           >
-            <Typography
-              sx={{
-                fontWeight: 400,
-                fontSize: '30px',
-                lineHeight: '41px',
-                display: 'block',
-                textAlign: 'center',
-              }}
-            >
-              In Order to prevent bad actors an user has to pay the model fee before being able to
-              use it. The current Model fee is{' '}
-              {arweave.ar.winstonToAr(
-                updatedFee || (findTag(state.fullState, 'modelFee') as string),
-              )}{' '}
-              <img src='./arweave-logo-warning.svg'></img>
-            </Typography>
+            {
+              hasPaid ?
+
+                <Typography
+                  sx={{
+                    fontWeight: 400,
+                    fontSize: '30px',
+                    lineHeight: '41px',
+                    display: 'block',
+                    textAlign: 'center',
+                  }}
+                >
+                  Awaiting payment confirmation. This could take around 15m.
+                </Typography>
+              :
+                <Typography
+                sx={{
+                  fontWeight: 400,
+                  fontSize: '30px',
+                  lineHeight: '41px',
+                  display: 'block',
+                  textAlign: 'center',
+                }}
+              >
+                In Order to prevent bad actors an user has to pay the model fee before being able to
+                use it. The current Model fee is{' '}
+                {arweave.ar.winstonToAr(
+                  updatedFee || (findTag(state.fullState, 'modelFee') as string),
+                )}{' '}
+                <img src='./arweave-logo-warning.svg'></img>
+              </Typography>
+            }
           </Alert>
         </DialogContent>
-        <DialogActions
-          sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
-        >
-          <Button
-            color='error'
-            onClick={handleCancel}
-            sx={{
-              border: '1px solid #DC5141',
-              borderRadius: '7px',
-            }}
+        {
+          !hasPaid &&
+          <DialogActions
+            sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
           >
-            Decline
-          </Button>
-          <Button
-            onClick={handleAccept}
-            sx={{
-              background: theme.palette.success.light,
-              borderRadius: '7px',
-              color: theme.palette.success.contrastText,
-              '&:hover': {
+            <Button
+              color='error'
+              onClick={handleCancel}
+              sx={{
+                border: '1px solid #DC5141',
+                borderRadius: '7px',
+              }}
+            >
+              Decline
+            </Button>
+            <Button
+              onClick={handleAccept}
+              sx={{
                 background: theme.palette.success.light,
-                boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
-              },
-            }}
-          >
-            Accept
-          </Button>
-        </DialogActions>
+                borderRadius: '7px',
+                color: theme.palette.success.contrastText,
+                '&:hover': {
+                  background: theme.palette.success.light,
+                  boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
+                },
+              }}
+            >
+              Accept
+            </Button>
+          </DialogActions>
+        }
       </Dialog>
       {isAllowed && children}
     </>
