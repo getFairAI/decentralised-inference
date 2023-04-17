@@ -74,11 +74,13 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
       ) {
         setIsAllowed(
           queryResult.data.transactions.edges[0].node.quantity.winston ===
-            (updatedFee || findTag(state.fullState, 'modelFee')) && await isTxConfirmed(queryResult.data.transactions.edges[0].node.id),
+            (updatedFee || findTag(state.fullState, 'modelFee')) &&
+            (await isTxConfirmed(queryResult.data.transactions.edges[0].node.id)),
         );
         setHasPaid(
-          (queryResult.data.transactions.edges[0].node.quantity.winston ===
-            (updatedFee || findTag(state.fullState, 'modelFee'))) && !(await isTxConfirmed(queryResult.data.transactions.edges[0].node.id)),
+          queryResult.data.transactions.edges[0].node.quantity.winston ===
+            (updatedFee || findTag(state.fullState, 'modelFee')) &&
+            !(await isTxConfirmed(queryResult.data.transactions.edges[0].node.id)),
         );
         setLoading(false);
       } else if (queryResult.data && queryResult.data && queryResult.data.transactions) {
@@ -87,7 +89,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     };
-  asyncTxConfirmed();
+    asyncTxConfirmed();
   }, [queryResult.data]);
 
   const handleCancel = () => {
@@ -179,22 +181,20 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
             }}
             icon={<img src='./warning-icon.svg'></img>}
           >
-            {
-              hasPaid ?
-
-                <Typography
-                  sx={{
-                    fontWeight: 400,
-                    fontSize: '30px',
-                    lineHeight: '41px',
-                    display: 'block',
-                    textAlign: 'center',
-                  }}
-                >
-                  Awaiting payment confirmation. This could take around 15m.
-                </Typography>
-              :
-                <Typography
+            {hasPaid ? (
+              <Typography
+                sx={{
+                  fontWeight: 400,
+                  fontSize: '30px',
+                  lineHeight: '41px',
+                  display: 'block',
+                  textAlign: 'center',
+                }}
+              >
+                Awaiting payment confirmation. This could take around 15m.
+              </Typography>
+            ) : (
+              <Typography
                 sx={{
                   fontWeight: 400,
                   fontSize: '30px',
@@ -210,11 +210,10 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
                 )}{' '}
                 <img src='./arweave-logo-warning.svg'></img>
               </Typography>
-            }
+            )}
           </Alert>
         </DialogContent>
-        {
-          !hasPaid &&
+        {!hasPaid && (
           <DialogActions
             sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
           >
@@ -243,7 +242,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
               Accept
             </Button>
           </DialogActions>
-        }
+        )}
       </Dialog>
       {isAllowed && children}
     </>
