@@ -4,7 +4,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.7.11",
-    "@bundlr-network/client": "^0.10.3",
+    "@bundlr-network/client": "^0.10.5",
     "arweave": "^1.13.0",
     "bundle-require": "^4.0.1",
     "esbuild": "^0.17.8",
