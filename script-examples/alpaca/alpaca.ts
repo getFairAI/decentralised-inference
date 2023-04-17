@@ -15,7 +15,8 @@ const sendToBundlr = async function (
   JWK: JWKInterface
 ) {
   // initailze the bundlr SDK
-  const bundlr: Bundlr = new (Bundlr as any).default(
+  //const bundlr: Bundlr = new (Bundlr as any).default(
+  const bundlr: Bundlr = new Bundlr(
     "http://node1.bundlr.network",
     "arweave",
     JWK
@@ -91,7 +92,7 @@ const inference = async function (message: string) {
 
 const sendFee = async function (
   arweave: Arweave,
-  operatorFeeWinston: number,
+  operatorFee: number,
   fullText: string,
   appVersion: string,
   userAddress: string,
@@ -100,11 +101,11 @@ const sendFee = async function (
   responseTransaction: string,
   key: JWKInterface
 ) {
-  //  create a wallet-to-wallet transaction sending 0.05AR to the target address
+  //  create a wallet-to-wallet transaction sending the marketplace fee to the target address
   let tx = await arweave.createTransaction(
     {
       target: CONFIG.marketplaceWallet,
-      quantity: arweave.ar.arToWinston((operatorFeeWinston * CONFIG.inferencePercentageFee).toString()),
+      quantity: (operatorFee * CONFIG.inferencePercentageFee).toString(),
     },
     key
   );
@@ -201,9 +202,23 @@ const start = async function () {
   var operatorFee = -1;
   try {
     const resultOperatorFee = await clientGateway.query(query);
-    var edges = resultOperatorFee.data.transactions.edges;
+    const edges = resultOperatorFee.data.transactions.edges;
+
+	var firstValidTransaction = -1;
+	for (let i = 0; i < edges.length; i++) {
+		const getTransactionStatus = await arweave.transactions.getStatus(edges[i].node.id);
+		const isTransactionConfirmed = !!getTransactionStatus.confirmed && getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
+		if (isTransactionConfirmed) {
+			firstValidTransaction = i;
+			break;
+		}
+	}
+	if (firstValidTransaction == -1) {
+		throw new Error("Program didn't found any conformed Operator-Fee.");
+	}
+
     // console.log(edges);
-    var tags = resultOperatorFee.data.transactions.edges[0].node.tags;
+    var tags = edges[firstValidTransaction].node.tags;
     for (let i = 0; i < tags.length; i++) {
       if (tags[i].name == "Operator-Fee") {
         operatorFee = tags[i].value;
@@ -211,7 +226,7 @@ const start = async function () {
       }
     }
     if (operatorFee == -1) {
-      throw new Error("Program didn't found a valid Operator-Fee.");
+      throw new Error("Program didn't found a valid Operator-Fee tag.");
     }
   } catch (e) {
     console.log("GraphQL query for Operator-Fee failed: ", e);
@@ -315,54 +330,6 @@ const start = async function () {
 	`,
     };
     return queryObjectTransactionAnswered;
-  };
-  
-  const buildQueryOperatorFeeWithLimit = (address: string, minBlockHeight: number, maxBlockHeight: number) => {
-    const queryObjectTransactionsAnsweredWithLimit = {
-      query: gql`
-		query {
-		    transactions(
-		    	first: 1,
-		    	owners:["${address}"],
-		    	tags: [
-			    	{
-					name: "Operation-Name",
-					values: ["Operator Registration"]
-				},
-				{
-					name: "Model-Creator",
-					values: ["${CONFIG.modelCreator}"]
-				},
-				{
-					name: "Model-Name",
-					values: ["${CONFIG.modelName}"]
-				}
-			],
-			block: {min: ${minBlockHeight}, max: ${maxBlockHeight}},
-			sort: HEIGHT_DESC
-		    ) {
-			edges {
-			    node {
-				id
-				owner {
-				    address
-				    key
-				}
-				quantity {
-				    winston
-				    ar
-				}
-				tags {
-				    name
-				    value
-				}
-			    }
-			}
-		    }
-		}
-	`,
-    };
-    return queryObjectTransactionsAnsweredWithLimit;
   };
 
   const buildQueryCheckUserModelRequests = (userAddress: string) => {
@@ -571,7 +538,6 @@ const start = async function () {
       	for (let j = 0; j < modelFeeEdges[0].node.tags.length; j++) {
 			if (modelFeeEdges[0].node.tags[j].name == "Model-Fee") {
 				modelFeeWinston = parseFloat(modelFeeEdges[0].node.tags[j].value);
-			} else {
 			}
        	}
         
@@ -608,22 +574,7 @@ const start = async function () {
       	    var checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
       	    console.log(checkUserPaymentEdges[0]);
       	    
-      	    query = buildQueryOperatorFeeWithLimit(edges[i].node.owner.address, 0, checkUserModelRequestsEdges[i].node.block.height - CONFIG.nPreviousBlocks);
-     	    const operatorFeeWithLimit = await clientGateway.query(query);
-      	    var operatorFeeWithLimitEdges = operatorFeeWithLimit.data.transactions.edges;
-      	    console.log(operatorFeeWithLimitEdges[0]);
-
-			var operatorFeeWinston = -1;
-			for (let j = 0; j < operatorFeeWithLimitEdges[0].node.tags.length; j++) {
-			  if (operatorFeeWithLimitEdges[0].node.tags[j].name == "Operator-Fee") {
-				  operatorFeeWinston = parseFloat(modelFeeEdges[0].node.tags[j].value);
-			  } else {
-			  }
-			}
-      	    
-      	    if (operatorFeeWinston === -1) {
-			  console.log("Some problem when obtaining your fee!");
-			} else if (operatorFeeWinston < checkUserPaymentEdges[0].node.quantity.winston) {
+			if (operatorFee < checkUserPaymentEdges[0].node.quantity.winston) {
       	      userHasPaidOperators = false;
       	    }
       	  }
@@ -640,7 +591,6 @@ const start = async function () {
               appVersion = edges[i].node.tags[j].value;
             } else if (edges[i].node.tags[j].name == "Conversation-Identifier") {
               conversationIdentifier = edges[i].node.tags[j].value;
-            } else {
             }
           }
         
@@ -662,7 +612,7 @@ const start = async function () {
                     if(transactionId) {
 	              await sendFee(
 		        	arweave,
-					operatorFeeWinston,
+					operatorFee,
 		        	fullText,
 	                appVersion,
 	                edges[i].node.owner.address,
@@ -687,14 +637,6 @@ const start = async function () {
 	    "' didn't paid enough amount."
   	  );
         }
-      } else {
-        /*
-        console.log(
-          "Transaction with ID '" +
-            edges[i].node.id +
-            "' already answered."
-        );
-        */
       }
     }
   } catch (e) {
