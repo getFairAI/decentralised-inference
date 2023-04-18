@@ -13,7 +13,7 @@ const sendToBundlr = async function (
   requestTransaction: string,
   conversationIdentifier: string,
   JWK: JWKInterface,
-	paymentQuantity: string,
+  paymentQuantity: string,
 ) {
   // initailze the bundlr SDK
   //const bundlr: Bundlr = new (Bundlr as any).default(
@@ -56,15 +56,15 @@ const sendToBundlr = async function (
   const tags = [
     { name: "App-Name", value: "Fair Protocol" },
     { name: "App-Version", value: appVersion },
-    { name: "Model-Creator", value: CONFIG.modelCreator },
-    { name: "Model-Name", value: CONFIG.modelName },
-    { name: "Model-User", value: userAddress },
+    { name: "Script-Curator", value: CONFIG.scriptCurator },
+    { name: "Script-Name", value: CONFIG.scriptName },
+    { name: "Script-User", value: userAddress },
     { name: "Request-Transaction", value: requestTransaction },
     { name: "Operation-Name", value: "Model Inference Response" },
     { name: "Conversation-Identifier", value: conversationIdentifier },
     { name: "Content-Type", value: "application/json" },
-		{ name: 'Payment-Quantity', value: paymentQuantity },
-		{ name: 'Payment-Target', value: CONFIG.marketplaceWallet },
+	{ name: 'Payment-Quantity', value: paymentQuantity },
+	{ name: 'Payment-Target', value: CONFIG.marketplaceWallet },
     { name: "Unix-Time", value: (Date.now() / 1000).toString() },
   ];
 
@@ -115,9 +115,9 @@ const sendFee = async function (
   
   tx.addTag('App-Name', 'Fair Protocol');
   tx.addTag('App-Version', appVersion);
-  tx.addTag('Model-Creator', CONFIG.modelCreator);
-  tx.addTag('Model-Name', CONFIG.modelName);
-  tx.addTag('Model-User', userAddress);
+  tx.addTag('Script-Curator', CONFIG.scriptCurator);
+  tx.addTag('Script-Name', CONFIG.scriptName);
+  tx.addTag('Script-User', userAddress);
   tx.addTag('Request-Transaction', requestTransaction);
   tx.addTag('Operation-Name', 'Fee Redistribution');
   tx.addTag('Conversation-Identifier', conversationIdentifier);
@@ -169,12 +169,12 @@ const start = async function () {
 					values: ["Operator Registration"]
 				},
 				{
-					name: "Model-Creator",
-					values: ["${CONFIG.modelCreator}"]
+					name: "Script-Curator",
+					values: ["${CONFIG.scriptCurator}"]
 				},
 				{
-					name: "Model-Name",
-					values: ["${CONFIG.modelName}"]
+					name: "Script-Name",
+					values: ["${CONFIG.scriptName}"]
 				}
 			],
 			sort: HEIGHT_DESC
@@ -243,15 +243,15 @@ const start = async function () {
 		    	tags: [
 			    	{
 					name: "Operation-Name",
-					values: ["Model Inference Request"]
+					values: ["Script Inference Request"]
 				},
 				{
-					name: "Model-Creator",
-					values: ["${CONFIG.modelCreator}"]
+					name: "Script-Curator",
+					values: ["${CONFIG.scriptCurator}"]
 				},
 				{
-					name: "Model-Name",
-					values: ["${CONFIG.modelName}"]
+					name: "Script-Name",
+					values: ["${CONFIG.scriptName}"]
 				},
 				{
 					name: "Model-Operator",
@@ -294,15 +294,15 @@ const start = async function () {
 		    	tags: [
 			    	{
 					name: "Operation-Name",
-					values: ["Model Inference Response"]
+					values: ["Script Inference Response"]
 				},
 				{
-					name: "Model-Creator",
-					values: ["${CONFIG.modelCreator}"]
+					name: "Script-Curator",
+					values: ["${CONFIG.scriptCurator}"]
 				},
 				{
-					name: "Model-Name",
-					values: ["${CONFIG.modelName}"]
+					name: "Script-Name",
+					values: ["${CONFIG.scriptName}"]
 				},
 				{
 					name: "Request-Transaction",
@@ -335,8 +335,8 @@ const start = async function () {
     return queryObjectTransactionAnswered;
   };
 
-  const buildQueryCheckUserModelRequests = (userAddress: string) => {
-    const queryObjectCheckUserModelRequests = {
+  const buildQueryCheckUserScriptRequests = (userAddress: string) => {
+    const queryObjectCheckUserScriptRequests = {
       query: gql`
 		query {
 		    transactions(
@@ -347,12 +347,12 @@ const start = async function () {
 					values: ["Inference Request"]
 				},
 				{
-					name: "Model-Creator",
-					values: ["${CONFIG.modelCreator}"]
+					name: "Script-Curator",
+					values: ["${CONFIG.scriptCurator}"]
 				},
 				{
-					name: "Model-Name",
-					values: ["${CONFIG.modelName}"]
+					name: "Script-Name",
+					values: ["${CONFIG.scriptName}"]
 				}
 			],
 			sort: HEIGHT_DESC
@@ -374,7 +374,7 @@ const start = async function () {
 		}
 	`,
     };
-    return queryObjectCheckUserModelRequests;
+    return queryObjectCheckUserScriptRequests;
   };
   
   const buildQueryCheckUserPayment = (userAddress: string, inferenceTransaction: string) => {
@@ -390,12 +390,12 @@ const start = async function () {
 					values: ["Inference Payment"]
 				},
 				{
-					name: "Model-Creator",
-					values: ["${CONFIG.modelCreator}"]
+					name: "Script-Curator",
+					values: ["${CONFIG.scriptCurator}"]
 				},
 				{
-					name: "Model-Name",
-					values: ["${CONFIG.modelName}"]
+					name: "Script-Name",
+					values: ["${CONFIG.scriptName}"]
 				},
 				{
 					name: "Inference-Transaction",
@@ -424,21 +424,21 @@ const start = async function () {
     return queryObjectCheckUserPayment;
   };
 
-  const buildQueryModelFee = (userAddress: string) => {
-    const queryObjectModelFee = {
+  const buildQueryScriptFee = (userAddress: string) => {
+    const queryObjectScriptFee = {
       query: gql`
 		query {
 		    transactions(
 		    	first: 1,
-		    	owners:["${CONFIG.modelCreator}"],
+		    	owners:["${CONFIG.scriptCurator}"],
 		    	tags: [
 			    	{
 					name: "Operation-Name",
-					values: ["Model Creation"]
+					values: ["Script Upload"]
 				},
 				{
-					name: "Model-Name",
-					values: ["${CONFIG.modelName}"]
+					name: "Script-Name",
+					values: ["${CONFIG.scriptName}"]
 				}
 			],
 			sort: HEIGHT_DESC
@@ -460,28 +460,28 @@ const start = async function () {
 		}
 	`,
     };
-    return queryObjectModelFee;
+    return queryObjectScriptFee;
   };
   
-  const buildQueryCheckUserCreatorPayment = (userAddress: string) => {
-    const queryObjectCheckUserCreatorPayment = {
+  const buildQueryCheckUserCuratorPayment = (userAddress: string) => {
+    const queryObjectCheckUserCuratorPayment = {
       query: gql`
 		query {
 		    transactions(
 		    	owners:["${userAddress}"],
-		    	recipients:["${CONFIG.modelCreator}"],
+		    	recipients:["${CONFIG.scriptCurator}"],
 		    	tags: [
 			    	{
 					name: "Operation-Name",
-					values: ["Model Fee Payment"]
+					values: ["Script Fee Payment"]
 				},
 				{
-					name: "Model-Creator",
-					values: ["${CONFIG.modelCreator}"]
+					name: "Script-Curator",
+					values: ["${CONFIG.scriptCurator}"]
 				},
 				{
-					name: "Model-Name",
-					values: ["${CONFIG.modelName}"]
+					name: "Script-Name",
+					values: ["${CONFIG.scriptName}"]
 				}
 			],
 			sort: HEIGHT_DESC
@@ -503,7 +503,7 @@ const start = async function () {
 		}
 	`,
     };
-    return queryObjectCheckUserCreatorPayment;
+    return queryObjectCheckUserCuratorPayment;
   };
 
   try {
@@ -518,7 +518,7 @@ const start = async function () {
     for (let i = 0; i < edges.length; i++) {
       // Initialization of variables:
       
-      var userHasPaidCreator = true;
+      var userHasPaidCurator = true;
       var userHasPaidOperators = true;
     
       // Check if request already answered:
@@ -531,48 +531,48 @@ const start = async function () {
       ) {
       
         
-        // Creator Validations:
+        // Curator Validations:
       	
-      	query = buildQueryModelFee(edges[i].node.owner.address);
-      	const modelFeeQuery = await clientGateway.query(query);
-      	var modelFeeEdges = modelFeeQuery.data.transactions.edges;
+      	query = buildQueryScriptFee(edges[i].node.owner.address);
+      	const scriptFeeQuery = await clientGateway.query(query);
+      	var scriptFeeEdges = scriptFeeQuery.data.transactions.edges;
 
-      	var modelFee = -1;
-      	for (let j = 0; j < modelFeeEdges[0].node.tags.length; j++) {
-			if (modelFeeEdges[0].node.tags[j].name == "Model-Fee") {
-				modelFee = parseFloat(modelFeeEdges[0].node.tags[j].value);
+      	var scriptFee = -1;
+      	for (let j = 0; j < scriptFeeEdges[0].node.tags.length; j++) {
+			if (scriptFeeEdges[0].node.tags[j].name == "Script-Fee") {
+				scriptFee = parseFloat(scriptFeeEdges[0].node.tags[j].value);
 			}
        	}
         
-      	query = buildQueryCheckUserCreatorPayment(edges[i].node.owner.address);
-      	const userCreatorPayment = await clientGateway.query(query);
-      	var userCreatorPaymentEdges = userCreatorPayment.data.transactions.edges;
-		const getTransactionStatus = await arweave.transactions.getStatus(userCreatorPaymentEdges[0].node.id);
+      	query = buildQueryCheckUserCuratorPayment(edges[i].node.owner.address);
+      	const userCuratorPayment = await clientGateway.query(query);
+      	var userCuratorPaymentEdges = userCuratorPayment.data.transactions.edges;
+		const getTransactionStatus = await arweave.transactions.getStatus(userCuratorPaymentEdges[0].node.id);
 		const isTransactionConfirmed = !!getTransactionStatus.confirmed && getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
 
 		if(isTransactionConfirmed) {
-			var creatorPaymentAmount = 0;
-			for (let i = 0; i < userCreatorPaymentEdges.length; i++) {
-			creatorPaymentAmount = creatorPaymentAmount + userCreatorPaymentEdges[i].node.quantity.winston;
+			var curatorPaymentAmount = 0;
+			for (let i = 0; i < userCuratorPaymentEdges.length; i++) {
+			curatorPaymentAmount = curatorPaymentAmount + userCuratorPaymentEdges[i].node.quantity.winston;
 			}
-			console.log(creatorPaymentAmount);
-			if (creatorPaymentAmount < modelFee) {
-			userHasPaidCreator = false;
+			console.log(curatorPaymentAmount);
+			if (curatorPaymentAmount < scriptFee) {
+			userHasPaidCurator = false;
 			}
-			console.log(userHasPaidCreator);
+			console.log(userHasPaidCurator);
 		}
     
     	
     	// Operator Validations:
     	
-    	if (userHasPaidCreator) {
-      	  query = buildQueryCheckUserModelRequests(edges[i].node.owner.address);
-     	  const checkUserModelRequests = await clientGateway.query(query);
-      	  var checkUserModelRequestsEdges = checkUserModelRequests.data.transactions.edges;
-		  console.log(checkUserModelRequestsEdges[0]);
+    	if (userHasPaidCurator) {
+      	  query = buildQueryCheckUserScriptRequests(edges[i].node.owner.address);
+     	  const checkUserScriptRequests = await clientGateway.query(query);
+      	  var checkUserScriptRequestsEdges = checkUserScriptRequests.data.transactions.edges;
+		  console.log(checkUserScriptRequestsEdges[0]);
       	  
-      	  for (let i = 0; i < checkUserModelRequestsEdges.length; i++) {
-      	    query = buildQueryCheckUserPayment(edges[i].node.owner.address, checkUserModelRequestsEdges[i].node.id);
+      	  for (let i = 0; i < checkUserScriptRequestsEdges.length; i++) {
+      	    query = buildQueryCheckUserPayment(edges[i].node.owner.address, checkUserScriptRequestsEdges[i].node.id);
      	    const checkUserPayment = await clientGateway.query(query);
       	    var checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
       	    console.log(checkUserPaymentEdges[0]);
@@ -586,7 +586,7 @@ const start = async function () {
       	
       	// Do Inference and send it to Bundlr:
 
-      	if (userHasPaidCreator && userHasPaidOperators) {
+      	if (userHasPaidCurator && userHasPaidOperators) {
           var appVersion = "null";
           var conversationIdentifier = "null";
           for (let j = 0; j < edges[i].node.tags.length; j++) {
@@ -603,7 +603,7 @@ const start = async function () {
                 console.log(inferenceText);
                 await inference(inferenceText).then(async (fullText) => {
                   console.log(fullText);
-									const quantity = arweave.ar.arToWinston((operatorFee * CONFIG.inferencePercentageFee).toString());
+				  const quantity = arweave.ar.arToWinston((operatorFee * CONFIG.inferencePercentageFee).toString());
                   await sendToBundlr(
                     fullText,
                     appVersion,
@@ -611,7 +611,7 @@ const start = async function () {
                     edges[i].node.id,
                     conversationIdentifier,
                     JWK,
-										quantity
+					quantity
                   ).then(async (transactionId) => {
                     console.log(transactionId?.toString());
                     if(transactionId) {
@@ -645,7 +645,7 @@ const start = async function () {
       }
     }
   } catch (e) {
-    console.log("GraphQL query for Model-Transactions failed: ", e);
+    console.log("GraphQL query for script transactions failed: ", e);
   }
 };
 
