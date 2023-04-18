@@ -1,4 +1,4 @@
-import { ThemeProvider, createTheme, useMediaQuery } from '@mui/material';
+import { ThemeProvider, createTheme, darken, useMediaQuery } from '@mui/material';
 import { ReactNode, createContext, useEffect, useMemo, useState } from 'react';
 
 declare module '@mui/material/styles' {
@@ -124,13 +124,13 @@ const lightTheme = createTheme({
             minHeight: 24,
           },
           '&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus': {
-            backgroundColor: '#C0C0C0',
+            backgroundColor: darken('#C0C0C0', 0.4),
           },
           '&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active': {
-            backgroundColor: '#C0C0C0',
+            backgroundColor: darken('#C0C0C0', 0.4),
           },
           '&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: '#C0C0C0',
+            backgroundColor: darken('#C0C0C0', 0.4),
           },
           '&::-webkit-scrollbar-corner, & *::-webkit-scrollbar-corner': {
             backgroundColor: '#C0C0C0',

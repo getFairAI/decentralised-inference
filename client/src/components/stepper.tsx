@@ -96,7 +96,7 @@ function ColorlibStepIcon(props: StepIconProps) {
 
 export const CustomStepper = (props: {
   data: IEdge;
-  handleSubmit: (rate: string, name: string) => Promise<void>;
+  handleSubmit: (rate: string, name: string, handleNext: () => void) => Promise<void>;
   isRegistered: boolean;
 }) => {
   const { notesTxId } = (useRouteLoaderData('register') as RouteLoaderResult) || {};
@@ -128,8 +128,8 @@ export const CustomStepper = (props: {
   };
 
   const handleFinish = () => {
-    props.handleSubmit(rate.toString(), operatorName);
-    handleNext();
+    props.handleSubmit(rate.toString(), operatorName, handleNext);
+    // handleNext();
   };
 
   const handleBack = () => {

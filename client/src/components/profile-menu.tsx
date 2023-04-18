@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppThemeContext } from '@/context/theme';
 import { Tooltip, Typography } from '@mui/material';
 import { GITHUB_LINK, WHITEPAPER_LINK } from '@/constants';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const options = [
   'Bundlr Settings',
@@ -76,7 +77,7 @@ export default function ProfileMenu() {
         aria-haspopup='true'
         onClick={handleClick}
       >
-        <img src='./icon-empty-wallet.svg' />
+        <MenuIcon color='action' />
       </IconButton>
       <Menu
         id='long-menu'

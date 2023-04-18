@@ -8,6 +8,7 @@ import { ChangeEvent, Dispatch, SetStateAction, useContext } from 'react';
 import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
+import Pending from './pending';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -63,8 +64,9 @@ const WalletState = () => {
             </Typography>
           </Tooltip>
         </Box>
-        <ProfileMenu />
+        <Pending />
       </Box>
+      <ProfileMenu />
     </>
   );
 };
