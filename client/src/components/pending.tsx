@@ -14,8 +14,8 @@ import { IEdge } from '@/interfaces/arweave';
 import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
-import { useEffect, useContext, useState, useRef, MouseEvent } from 'react';
-import { Badge, Box, IconButton, Menu, Typography } from '@mui/material';
+import { useEffect, useContext, useState, useRef, SyntheticEvent, forwardRef } from 'react';
+import { Box, ClickAwayListener, Grow, IconButton, Paper, Popper, Typography } from '@mui/material';
 import PendingCard from './pending-card';
 
 const Content = () => {
@@ -123,52 +123,77 @@ const Content = () => {
   );
 };
 
+const ContentForwardRef = forwardRef(function ContentForward() { return <Content />; });
+
 const Pending = () => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [badgeInvisible /* setBadgeInvisible */] = useState(true);
   const ITEM_HEIGHT = 64;
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+
+  const handleToggle = () => {
+    setOpen((prevOpen) => !prevOpen);
   };
 
-  const handleClick = (event: MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  const handleClose = (event: Event | SyntheticEvent) => {
+    if (
+      anchorRef.current &&
+      anchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+
+    setOpen(false);
   };
 
-  return (
-    <>
-      <IconButton
-        aria-label='more'
-        id='long-button'
-        aria-controls={anchorEl ? 'long-menu' : undefined}
-        aria-expanded={anchorEl ? 'true' : undefined}
-        aria-haspopup='true'
-        onClick={handleClick}
-      >
-        <Badge color='error' variant='dot' invisible={badgeInvisible} overlap='circular'>
-          <img src='./icon-empty-wallet.svg' />
-        </Badge>
-      </IconButton>
-      <Menu
-        id='long-menu'
-        MenuListProps={{
-          'aria-labelledby': 'long-button',
-        }}
-        anchorEl={anchorEl}
-        open={!!anchorEl}
-        onClose={handleClose}
-        PaperProps={{
-          style: {
+  // return focus to the button when we transitioned from !open -> open
+  const prevOpen =  useRef(open);
+  useEffect(() => {
+    if (prevOpen.current === true && open === false && anchorRef.current) {
+      anchorRef.current.focus();
+    }
+
+    prevOpen.current = open;
+  }, [open]);
+
+  return <>
+    <IconButton
+      ref={anchorRef}
+      id="composition-button"
+      aria-controls={open ? 'composition-menu' : undefined}
+      aria-expanded={open ? 'true' : undefined}
+      aria-haspopup="true"
+      onClick={handleToggle}
+    >
+      <img src='./icon-empty-wallet.svg' />
+    </IconButton>
+    <Popper
+      open={open}
+      anchorEl={anchorRef.current}
+      role={undefined}
+      placement='bottom-end'
+      transition
+      disablePortal
+    >
+      {({ TransitionProps }) => (
+        <Grow
+          {...TransitionProps}
+          style={{
+            transformOrigin: 'left-bottom',
             minHeight: ITEM_HEIGHT * 3,
             maxHeight: ITEM_HEIGHT * 5,
-          },
-        }}
-      >
-        <Content />
-      </Menu>
-    </>
-  );
+            overflowY: 'auto'
+          }}
+        >
+          <Paper>
+            <ClickAwayListener onClickAway={handleClose}>
+              <ContentForwardRef />
+            </ClickAwayListener>
+          </Paper>
+        </Grow>
+      )}
+    </Popper>
+  </>;
 };
 
 export default Pending;

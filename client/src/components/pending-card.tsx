@@ -33,6 +33,7 @@ import {
 import { useContext, useEffect, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 interface PaymentTx {
   id: string;
@@ -335,13 +336,16 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         </Box>
       </CardContent>
       {payment?.status === 'Failed' && (
-        <CardActions sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px' }}>
+        <CardActions sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', gap: '8px' }}>
           {!payment.target || !payment.quantity || Number.isNaN(payment.quantity) ? (
-            <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
+            <>
               <Button onClick={handleRetry} variant='outlined' disabled>
                 Retry
               </Button>
-            </Tooltip>
+              <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
+                <InfoOutlinedIcon />
+              </Tooltip>
+            </> 
           ) : (
             <Button onClick={handleRetry} variant='outlined'>
               Retry
