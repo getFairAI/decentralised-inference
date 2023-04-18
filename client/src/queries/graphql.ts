@@ -1001,7 +1001,14 @@ export const QUERY_USER_INTERACTIONS = gql`
     $first: Int
     $after: String
   ) {
-    transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, block: {min: $minBlockHeight}, first: $first, after: $after) {
+    transactions(
+      tags: $tags
+      owners: [$address]
+      sort: HEIGHT_DESC
+      block: { min: $minBlockHeight }
+      first: $first
+      after: $after
+    ) {
       edges {
         cursor
         node {
@@ -1032,12 +1039,8 @@ export const QUERY_USER_INTERACTIONS = gql`
   }
 `;
 
-
 export const QUERY_TX_WITH = gql`
-  query QUERY_TX_WITH(
-    $address: String!
-    $tags: [TagFilter!]
-  ) {
+  query QUERY_TX_WITH($address: String!, $tags: [TagFilter!]) {
     transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: 1) {
       edges {
         cursor

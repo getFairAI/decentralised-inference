@@ -33,7 +33,7 @@ export const TAG_NAMES = {
   attachmentRole: 'Attachment-Role',
   saveTransaction: 'Save-Transaction',
   paymentQuantity: 'Payment-Quantity',
-  paymentTarget: 'Payment-Target'
+  paymentTarget: 'Payment-Target',
 };
 
 // Operation Names

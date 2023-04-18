@@ -1,4 +1,13 @@
-import { DEFAULT_TAGS, MODEL_CREATION, MODEL_FEE_PAYMENT_SAVE, MODEL_INFERENCE_REQUEST, MODEL_INFERENCE_RESPONSE, N_PREVIOUS_BLOCKS, SAVE_REGISTER_OPERATION, TAG_NAMES } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  MODEL_CREATION,
+  MODEL_FEE_PAYMENT_SAVE,
+  MODEL_INFERENCE_REQUEST,
+  MODEL_INFERENCE_RESPONSE,
+  N_PREVIOUS_BLOCKS,
+  SAVE_REGISTER_OPERATION,
+  TAG_NAMES,
+} from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import useOnScreen from '@/hooks/useOnScreen';
 import { IEdge } from '@/interfaces/arweave';
@@ -12,9 +21,9 @@ import PendingCard from './pending-card';
 const Content = () => {
   const elementsPerPage = 5;
   const { currentAddress } = useContext(WalletContext);
-  const [ minHeight, setMinHeight ] = useState(0);
-  const [ hasNextPage, setHasNextPage ] = useState(false);
-  const [ lastProcessedIdx, setLastProcessedIdx ] = useState(0);
+  const [minHeight, setMinHeight] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [lastProcessedIdx, setLastProcessedIdx] = useState(0);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
 
@@ -26,15 +35,18 @@ const Content = () => {
         {
           name: TAG_NAMES.operationName,
           values: [
-            MODEL_CREATION, SAVE_REGISTER_OPERATION, MODEL_FEE_PAYMENT_SAVE,
-            MODEL_INFERENCE_RESPONSE, MODEL_INFERENCE_REQUEST
-          ]
-        }
+            MODEL_CREATION,
+            SAVE_REGISTER_OPERATION,
+            MODEL_FEE_PAYMENT_SAVE,
+            MODEL_INFERENCE_RESPONSE,
+            MODEL_INFERENCE_REQUEST,
+          ],
+        },
       ],
       minBlockHeight: 0,
-      first: elementsPerPage
+      first: elementsPerPage,
     },
-    skip: !currentAddress || minHeight <= 0
+    skip: !currentAddress || minHeight <= 0,
   });
 
   useEffect(() => {
@@ -83,34 +95,37 @@ const Content = () => {
     // pick only transactions from last index to avoid duplicate requests
     setHasNextPage(data.transactions.pageInfo.hasNextPage);
     setLastProcessedIdx(data.transactions.edges.length - 1);
-  }, [ data ]);
+  }, [data]);
 
-  return <>
-    {
-      error ? <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
-          <Typography textAlign={'center'}>There Was a Problem Fetching previous payments...</Typography>
+  return (
+    <>
+      {error ? (
+        <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
+          <Typography textAlign={'center'}>
+            There Was a Problem Fetching previous payments...
+          </Typography>
         </Box>
-      : loading ?
+      ) : loading ? (
         <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
           <Typography textAlign={'center'}>Fetching Latest Payments</Typography>
           <div className='dot-pulse'></div>
           <div ref={target}></div>
         </Box>
-      : data && data.transactions.edges.length === 0 ?
+      ) : data && data.transactions.edges.length === 0 ? (
         <Box>
           <Typography textAlign={'center'}>You Have No Pending Transactions</Typography>
         </Box>
-        : data && data.transactions.edges.map((tx: IEdge) =>
-          <PendingCard tx={tx} key={tx.node.id}/>
-        )
-    }
-    <div ref={target}></div>
-  </>;
+      ) : (
+        data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)
+      )}
+      <div ref={target}></div>
+    </>
+  );
 };
 
 const Pending = () => {
-  const [ anchorEl, setAnchorEl ] = useState<null | HTMLElement>(null);
-  const [ badgeInvisible, /* setBadgeInvisible */ ] = useState(true);  
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [badgeInvisible /* setBadgeInvisible */] = useState(true);
   const ITEM_HEIGHT = 64;
 
   const handleClose = () => {
@@ -121,37 +136,39 @@ const Pending = () => {
     setAnchorEl(event.currentTarget);
   };
 
-  return <>
-    <IconButton
-      aria-label='more'
-      id='long-button'
-      aria-controls={anchorEl ? 'long-menu' : undefined}
-      aria-expanded={anchorEl ? 'true' : undefined}
-      aria-haspopup='true'
-      onClick={handleClick}
-    >
-      <Badge color="error" variant="dot" invisible={badgeInvisible} overlap='circular'>
-        <img src='./icon-empty-wallet.svg' />
-      </Badge>
-    </IconButton>
-    <Menu
-      id='long-menu'
-      MenuListProps={{
-        'aria-labelledby': 'long-button',
-      }}
-      anchorEl={anchorEl}
-      open={!!anchorEl}
-      onClose={handleClose}
-      PaperProps={{
-        style: {
-          minHeight: ITEM_HEIGHT * 3,
-          maxHeight: ITEM_HEIGHT * 5,
-        },
-      }}
-    >
-      <Content />
-    </Menu>
-  </>;
+  return (
+    <>
+      <IconButton
+        aria-label='more'
+        id='long-button'
+        aria-controls={anchorEl ? 'long-menu' : undefined}
+        aria-expanded={anchorEl ? 'true' : undefined}
+        aria-haspopup='true'
+        onClick={handleClick}
+      >
+        <Badge color='error' variant='dot' invisible={badgeInvisible} overlap='circular'>
+          <img src='./icon-empty-wallet.svg' />
+        </Badge>
+      </IconButton>
+      <Menu
+        id='long-menu'
+        MenuListProps={{
+          'aria-labelledby': 'long-button',
+        }}
+        anchorEl={anchorEl}
+        open={!!anchorEl}
+        onClose={handleClose}
+        PaperProps={{
+          style: {
+            minHeight: ITEM_HEIGHT * 3,
+            maxHeight: ITEM_HEIGHT * 5,
+          },
+        }}
+      >
+        <Content />
+      </Menu>
+    </>
+  );
 };
 
 export default Pending;

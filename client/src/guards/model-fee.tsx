@@ -1,4 +1,11 @@
-import { APP_NAME, APP_VERSION, DEFAULT_TAGS, MODEL_FEE_PAYMENT, MODEL_FEE_PAYMENT_SAVE, TAG_NAMES } from '@/constants';
+import {
+  APP_NAME,
+  APP_VERSION,
+  DEFAULT_TAGS,
+  MODEL_FEE_PAYMENT,
+  MODEL_FEE_PAYMENT_SAVE,
+  TAG_NAMES,
+} from '@/constants';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
 import arweave, { isTxConfirmed } from '@/utils/arweave';
