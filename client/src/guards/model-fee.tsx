@@ -1,4 +1,11 @@
-import { APP_NAME, APP_VERSION, DEFAULT_TAGS, MODEL_FEE_PAYMENT, TAG_NAMES } from '@/constants';
+import {
+  APP_NAME,
+  APP_VERSION,
+  DEFAULT_TAGS,
+  MODEL_FEE_PAYMENT,
+  MODEL_FEE_PAYMENT_SAVE,
+  TAG_NAMES,
+} from '@/constants';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
 import arweave, { isTxConfirmed } from '@/utils/arweave';
@@ -99,6 +106,20 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   const handleAccept = async () => {
     try {
       const modelFee = updatedFee || (findTag(state.fullState, 'modelFee') as string);
+
+      const saveTx = await arweave.createTransaction({ data: 'Save Transaction' });
+      saveTx.addTag(TAG_NAMES.appName, APP_NAME);
+      saveTx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+      saveTx.addTag(TAG_NAMES.operationName, MODEL_FEE_PAYMENT_SAVE);
+      saveTx.addTag(TAG_NAMES.modelName, state.modelName);
+      saveTx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
+      saveTx.addTag(TAG_NAMES.modelFee, modelFee);
+      saveTx.addTag(TAG_NAMES.modelTransaction, txid || state.modelTransaction);
+      saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
+      saveTx.addTag(TAG_NAMES.paymentQuantity, modelFee);
+      saveTx.addTag(TAG_NAMES.paymentTarget, state.modelCreator);
+      const saveResult = await window.arweaveWallet.dispatch(saveTx);
+
       const tx = await arweave.createTransaction({
         target: state.modelCreator,
         quantity: modelFee,
@@ -111,6 +132,8 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
       tx.addTag(TAG_NAMES.operationName, MODEL_FEE_PAYMENT);
       tx.addTag(TAG_NAMES.modelTransaction, txid || state.modelTransaction);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
+      tx.addTag(TAG_NAMES.saveTransaction, saveResult.id);
+
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);
       if (res.status === 200) {

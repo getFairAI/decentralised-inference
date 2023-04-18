@@ -12,7 +12,8 @@ const sendToBundlr = async function (
   userAddress: string,
   requestTransaction: string,
   conversationIdentifier: string,
-  JWK: JWKInterface
+  JWK: JWKInterface,
+	paymentQuantity: string,
 ) {
   // initailze the bundlr SDK
   //const bundlr: Bundlr = new (Bundlr as any).default(
@@ -62,6 +63,8 @@ const sendToBundlr = async function (
     { name: "Operation-Name", value: "Model Inference Response" },
     { name: "Conversation-Identifier", value: conversationIdentifier },
     { name: "Content-Type", value: "application/json" },
+		{ name: 'Payment-Quantity', value: paymentQuantity },
+		{ name: 'Payment-Target', value: CONFIG.marketplaceWallet },
     { name: "Unix-Time", value: (Date.now() / 1000).toString() },
   ];
 
@@ -92,7 +95,7 @@ const inference = async function (message: string) {
 
 const sendFee = async function (
   arweave: Arweave,
-  operatorFee: number,
+  quantity: string,
   fullText: string,
   appVersion: string,
   userAddress: string,
@@ -105,7 +108,7 @@ const sendFee = async function (
   let tx = await arweave.createTransaction(
     {
       target: CONFIG.marketplaceWallet,
-      quantity: (operatorFee * CONFIG.inferencePercentageFee).toString(),
+      quantity,
     },
     key
   );
@@ -600,19 +603,21 @@ const start = async function () {
                 console.log(inferenceText);
                 await inference(inferenceText).then(async (fullText) => {
                   console.log(fullText);
+									const quantity = arweave.ar.arToWinston((operatorFee * CONFIG.inferencePercentageFee).toString());
                   await sendToBundlr(
                     fullText,
                     appVersion,
                     edges[i].node.owner.address,
                     edges[i].node.id,
                     conversationIdentifier,
-                    JWK
+                    JWK,
+										quantity
                   ).then(async (transactionId) => {
                     console.log(transactionId?.toString());
                     if(transactionId) {
 	              await sendFee(
 		        	arweave,
-					operatorFee,
+					quantity,
 		        	fullText,
 	                appVersion,
 	                edges[i].node.owner.address,

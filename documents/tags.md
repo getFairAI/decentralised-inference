@@ -6,6 +6,7 @@ This document provides detailed information about the Fair Platform marketplace 
 
 ## Index
 * [Common Tags](#common-tags)
+* [Save Transaction Tags](#save-transaction)
 * Creator Flow
   * [Model upload](#model-upload-to-Bundlr)
   * [Model upload payment](#model-upload-payment-to-marketplace)
@@ -43,6 +44,32 @@ Example:
 }
 ```
 
+## Save Transaction
+
+Dispatch Transaction submitted when any payment is done without an associated biundlr transaction. This Transaction serves as a guaranteed record keeping when a payment is done, registering every payment tags in order to be able to retry later if payment transaction fails to be included in the network.
+
+| Tag-Name         | Optional    | Tag Value                   | Description                                                  |
+| ---------------- | ----------- | --------------------------- | ------------------------------------------------------------ |
+| Operation-Name   | False       | < Model Fee Payment Save >  | Name of the Operationm, must be one of `'Model Fee Payment Save' \| 'Operator Registration Save'` |
+| Payment-Quantity | False       | < 1000000000000 >           | Quantity paid in the corresponding payment transaction       |
+| Paymnent-Target  | False       | < Example Address >         | Address of the recipient in the corresponding payment transaction |
+
+**NOTE: This Transaction will need to include all the same tags of the corresponding payment transaction** 
+
+Example:
+```json
+{
+  "Model-Name": "Example Name",
+  "Model-Creator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8", 
+  "Model-Transaction": "WRitxdSWNl51RgI9OYuGg7-_rb4YuP-rBxZ1jf_wnrA",
+  "Operator-Fee": "1000000000000", // winston value
+  "Operation-Name": "Operator Registration Save",
+  "Operator-Name": "Example Operator Name",
+  "Payment-Quantity": "1000000000000",
+  "Payment-Target": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8"
+}
+```
+
 ----
 
 ## Model upload to Bundlr
@@ -56,11 +83,12 @@ When a creator uploads a model to the platform the transaction occurs with the f
 | Operation-Name | False       | Model Creation          | Name of the Operation executed in the application.                                   |
 | Category       | False       | < text >                | Model Category, must `'text' \| 'document' \| 'both'`.                               |
 | Description    | True        | < Example Description > | Model Description.                                                                   |
+| Payment-Quantity | False       | < 1000000000000 >           | Quantity paid in the corresponding payment transaction                         |
+| Paymnent-Target  | False       | < Example Address >         | Address of the recipient in the corresponding payment transaction              |
 
 Example:
 ```json
 {
-  
   "Model-Name": "Example Name",
   "Model-Fee": "1000000000000", // winston value
   "Operation-Name": "Model Creation",
@@ -185,6 +213,8 @@ Data transaction containing the prompts to send to the model for inference, crea
 | Model-Operator          | False       | < Example Address >     | Address of the Operator that a User is using for the inference request.              |
 | Operation-Name          | False       | Model Inference Request | Name of the Operation executed in the applicaiton.                                   |
 | Conversation-Identifier | False       | < 1 >                   | Identifier to group messages for inference, by default inference will be run using context of all messages that belong to one identifier, generating a new identifier will reset the context.                                                                            |
+| Payment-Quantity | False       | < 1000000000000 >           | Quantity paid in the corresponding payment transaction       |
+| Paymnent-Target  | False       | < Example Address >         | Address of the recipient in the corresponding payment transaction |
 
 Example:
 ```json
@@ -242,6 +272,8 @@ Data Transaction created by the operator to respond to a inference request by th
 | Operation-Name          | False       | Model Inference Response | Name of the Operation executed in the application.                                   |
 | Request-Transaction     | False       | < Example Transaction >  | Transaction Identifier of the inference request.                                     |
 | Conversation-Identifier | False       | < 1 >                    | Identifier to group messages for inference, by default inference will be run using context of all messages that belong to one identifier, generating a new identifier will reset the context.                                                                                                                                                  |
+| Payment-Quantity | False       | < 1000000000000 >           | Quantity paid in the corresponding payment transaction       |
+| Paymnent-Target  | False       | < Example Address >         | Address of the recipient in the corresponding payment transaction |
 
 Example:
 ```json
@@ -301,6 +333,8 @@ Data transaction containing any necessary files to run a specific model, created
 | Script-Fee        | False       | < 1000000000000 >   | Fee to be paid by the User when first using a script.                                |
 | Registration-Fee  | False       | < 1000000000000 >   | Fee to be paid by the Operator when registering for a script.                        |
 | Operation-Name    | False       | Scripts Upload      | Name of the Operation executed in the application.                                   |
+| Payment-Quantity  | False       | < 1000000000000 >    | Quantity paid in the corresponding payment transaction       |
+| Paymnent-Target   | False       | < Example Address >  | Address of the recipient in the corresponding payment transaction |
 
 
 Example:

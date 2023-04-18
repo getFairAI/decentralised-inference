@@ -4,7 +4,7 @@
 # Fair Protocol
 
 Welcome to the Fair Protocol GitHub! Please read our [whitepaper](./documents/whitepaper.md) to understand more about this application.
-Online [demo](https://arweave.net/jkyDpMzcPjoLVkNPM3yT9QJwZWiu5slb5Fa64XHy5Hc) permanently on arweave.
+Online [demo](https://arweave.net/Q0XriVoaiIn-r4NWvFztbdrz7F7uzWzrrO78E_xc5Ug) permanently on arweave.
 
 ## File Structure
 ```bash

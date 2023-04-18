@@ -31,6 +31,9 @@ export const TAG_NAMES = {
   responseTransaction: 'Response-Transaction',
   attachmentName: 'Attachment-Name',
   attachmentRole: 'Attachment-Role',
+  saveTransaction: 'Save-Transaction',
+  paymentQuantity: 'Payment-Quantity',
+  paymentTarget: 'Payment-Target',
 };
 
 // Operation Names
@@ -42,11 +45,15 @@ export const MODEL_CREATION_PAYMENT = 'Model Creation Payment';
 
 export const REGISTER_OPERATION = 'Operator Registration';
 
+export const SAVE_REGISTER_OPERATION = 'Operator Registration Save';
+
 export const CANCEL_OPERATION = 'Operator Cancellation';
 
 export const MODEL_FEE_UPDATE = 'Model Fee Update';
 
 export const MODEL_FEE_PAYMENT = 'Model Fee Payment';
+
+export const MODEL_FEE_PAYMENT_SAVE = 'Model Fee Payment Save';
 
 export const MODEL_INFERENCE_REQUEST = 'Model Inference Request';
 
@@ -54,7 +61,7 @@ export const INFERENCE_PAYMENT = 'Inference Payment';
 
 export const MODEL_INFERENCE_RESPONSE = 'Model Inference Response';
 
-export const INFERENCE_PAYMENT_DISTRIBUTION = 'Inference Payment Distribution';
+export const INFERENCE_PAYMENT_DISTRIBUTION = 'Fee Redistribution';
 
 // Attachment Roles
 export const AVATAR_ATTACHMENT = 'avatar';

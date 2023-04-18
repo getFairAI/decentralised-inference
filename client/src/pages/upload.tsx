@@ -306,6 +306,8 @@ const Upload = () => {
     // upload the file
     const readableStream = fileReaderStream(file);
     const tags = [];
+    const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
+
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
@@ -313,6 +315,8 @@ const Upload = () => {
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_CREATION });
     tags.push({ name: TAG_NAMES.category, value: data.category });
     tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
+    tags.push({ name: TAG_NAMES.paymentTarget, value: MARKETPLACE_ADDRESS });
     if (data.description) tags.push({ name: TAG_NAMES.description, value: data.description });
     tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
     setSnackbarOpen(true);
@@ -321,7 +325,7 @@ const Upload = () => {
       console.log(`Upload Success: https://arweave.net/${res.data.id}`);
       try {
         const tx = await arweave.createTransaction({
-          quantity: arweave.ar.arToWinston(MARKETPLACE_FEE),
+          quantity: fee,
           target: MARKETPLACE_ADDRESS,
         });
         tx.addTag(TAG_NAMES.appName, APP_NAME);

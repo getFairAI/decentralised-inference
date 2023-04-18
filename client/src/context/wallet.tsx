@@ -9,6 +9,7 @@ const DEFAULT_PERMISSSIONS: PermissionType[] = [
   'ACCESS_ADDRESS',
   'ACCESS_ALL_ADDRESSES',
   'SIGN_TRANSACTION',
+  'DISPATCH',
 ];
 type WalletConnectedAction = { type: 'wallet_connected'; address: string };
 type WalletBalanceUpdatedAction = { type: 'wallet_balance_updated'; balance: number };
