@@ -1,8 +1,8 @@
 {
   "url": "http://127.0.0.1:8080",
   "sleepTimeSeconds": 7,
-  "modelCreator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8",
-  "modelName": "Alpaca v1.1",
+  "scriptCurator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8",
+  "scriptName": "Alpaca v1.1",
   "marketplaceWallet": "RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo",
   "inferencePercentageFee": 0.05,
   "nPreviousBlocks": 1,
