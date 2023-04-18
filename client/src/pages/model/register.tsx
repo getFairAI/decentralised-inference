@@ -5,6 +5,7 @@ import {
   TAG_NAMES,
   APP_NAME,
   REGISTER_OPERATION,
+  SAVE_REGISTER_OPERATION,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { RouteLoaderResult } from '@/interfaces/router';
@@ -46,8 +47,22 @@ const Register = () => {
     return URL.createObjectURL(svg);
   }, [state, avatarTxId]);
 
-  const handleRegister = async (rate: string, operatorName: string) => {
+  const handleRegister = async (rate: string, operatorName: string, handleNext: () => void) => {
     try {
+      const saveTx = await arweave.createTransaction({ data: 'Save Transaction' });
+      saveTx.addTag(TAG_NAMES.appName, APP_NAME);
+      saveTx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+      saveTx.addTag(TAG_NAMES.operationName, SAVE_REGISTER_OPERATION);
+      saveTx.addTag(TAG_NAMES.modelName, findTag(state, 'modelName') || '');
+      saveTx.addTag(TAG_NAMES.modelCreator, state.node.owner.address);
+      saveTx.addTag(TAG_NAMES.modelTransaction, findTag(state, 'modelTransaction') as string);
+      saveTx.addTag(TAG_NAMES.operatorFee, arweave.ar.arToWinston(rate));
+      saveTx.addTag(TAG_NAMES.operatorName, operatorName);
+      saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
+      saveTx.addTag(TAG_NAMES.paymentQuantity, arweave.ar.arToWinston('0.05'));
+      saveTx.addTag(TAG_NAMES.paymentTarget, MARKETPLACE_ADDRESS);
+      const saveResult = await window.arweaveWallet.dispatch(saveTx);
+
       const tx = await arweave.createTransaction({
         target: MARKETPLACE_ADDRESS,
         quantity: arweave.ar.arToWinston('0.05'),
@@ -68,6 +83,7 @@ const Register = () => {
       tags.push({ name: TAG_NAMES.operationName, values: REGISTER_OPERATION });
       tags.push({ name: TAG_NAMES.operatorName, values: operatorName });
       tags.push({ name: TAG_NAMES.unixTime, values: (Date.now() / 1000).toString() });
+      tags.push({ name: TAG_NAMES.saveTransaction, values: saveResult.id });
 
       tags.forEach((tag) => tx.addTag(tag.name, tag.values));
 
@@ -85,6 +101,7 @@ const Register = () => {
           { variant: 'success' },
         );
         setIsRegistered(true);
+        handleNext();
       } else {
         enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
       }

@@ -516,6 +516,12 @@ const Chat = () => {
       enqueueSnackbar('Bundlr Node does not have enough funds for upload', { variant: 'error' });
       return;
     }
+
+    const inferenceFee = (
+      parseFloat(state.fee) +
+      parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
+    ).toString();
+
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
@@ -525,6 +531,8 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.modelOperator, value: address });
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_INFERENCE_REQUEST });
     tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: inferenceFee });
+    tags.push({ name: TAG_NAMES.paymentTarget, value: address });
     const tempDate = Date.now() / 1000;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
     try {
@@ -559,11 +567,6 @@ const Chat = () => {
           variant: 'success',
         },
       );
-
-      const inferenceFee = (
-        parseFloat(state.fee) +
-        parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
-      ).toString();
 
       const tx = await arweave.createTransaction({
         target: address,
