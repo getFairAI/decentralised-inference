@@ -27,6 +27,7 @@ const createActions = (dispatch: Dispatch<BundlrAction>) => {
 };
 
 const asyncChangeNode = async (dispatch: Dispatch<BundlrAction>, node: bundlrNodeUrl) => {
+  if (!window.arweaveWallet) return;
   const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
   try {
     await bundlr.ready();
