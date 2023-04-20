@@ -1,7 +1,8 @@
 import { createContext, Dispatch, ReactNode, useEffect, useReducer } from 'react';
 import { INFERENCE_PAYMENT, INFERENCE_PAYMENT_DISTRIBUTION, MODEL_CREATION, MODEL_CREATION_PAYMENT, MODEL_FEE_PAYMENT, MODEL_FEE_PAYMENT_SAVE, MODEL_INFERENCE_REQUEST, MODEL_INFERENCE_RESPONSE, REGISTER_OPERATION, SAVE_REGISTER_OPERATION, TAG_NAMES } from '@/constants';
-import { ITag } from '@/interfaces/arweave';
 import arweave from '@/utils/arweave';
+import { Tag } from 'arweave/node/lib/transaction';
+import { ITag } from '@/interfaces/arweave';
 
 interface Job {
   workerRef: Worker;
@@ -10,6 +11,14 @@ interface Job {
 }
 
 interface WorkerInfo {
+  txid: string,
+  operationName: string;
+  address: string;
+  tags: Tag[] | ITag[];
+  encodedTags: boolean;
+}
+
+interface WorkerPayload {
   txid: string,
   operationName: string;
   address: string;
@@ -26,7 +35,7 @@ interface WorkerActions {
   payload: Job;
 }
 
-const subscribeMessages = (payload: WorkerInfo, dispatch: Dispatch<WorkerActions>, workerRef: Worker) => (
+const subscribeMessages = (payload: WorkerPayload, dispatch: Dispatch<WorkerActions>, workerRef: Worker) => (
   async (event: MessageEvent<string>) => {
     const currentJob = { address: payload.address, workerRef, operationName: payload.operationName };
     if (event.data === 'tx lost') {
@@ -40,6 +49,7 @@ const subscribeMessages = (payload: WorkerInfo, dispatch: Dispatch<WorkerActions
           operationName: payload.operationName,
           txid: result.txid,
           tags: result.tags,
+          encodedTags: true,
         });
       } else {
         // stop worker
@@ -134,10 +144,27 @@ const workerReducer = (state: WorkerContext, action: WorkerActions) => {
 
 const asyncStart = async (dispatch: Dispatch<WorkerActions>, payload: WorkerInfo) => { 
   const worker = new Worker(new URL('../workers/retry.ts', import.meta.url), { type: 'module' });
+
+  let tags: ITag[] = [];
+  if (payload.encodedTags) {
+    tags = (payload.tags as Tag[]).map((tag: Tag) => {
+      const key = tag.get('name', {decode: true, string: true});
+      const value = tag.get('value', {decode: true, string: true});
+      return { name: key, value };
+    });
+  } else {
+    tags = payload.tags as ITag[];
+  }
+  const workerPayload: WorkerPayload = {
+    address: payload.address,
+    operationName: payload.operationName,
+    tags,
+    txid: payload.txid
+  };
   
-  worker.onmessage = subscribeMessages(payload, dispatch, worker);
-  worker.postMessage(JSON.stringify(payload));
-  const job: Job = { address: payload.address, workerRef: worker, operationName: payload.operationName };
+  worker.onmessage = subscribeMessages(workerPayload, dispatch, worker);
+  worker.postMessage(JSON.stringify(workerPayload));
+  const job: Job = { address: workerPayload.address, workerRef: worker, operationName: workerPayload.operationName };
   dispatch({ type: 'handleStart', payload: job});
 };
 

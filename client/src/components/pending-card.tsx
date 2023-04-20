@@ -35,6 +35,7 @@ import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import _ from 'lodash';
+import { WorkerContext } from '@/context/worker';
 
 interface PaymentTx {
   id: string;
@@ -59,6 +60,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
   const [payment, setPayment] = useState<Partial<PaymentTx> | undefined>(undefined);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const { startJob } = useContext(WorkerContext);
 
   useEffect(() => {
     if (tx) {
@@ -252,6 +254,13 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         </>,
         { variant: 'success' },
       );
+      startJob({
+        address: currentAddress,
+        operationName: findTag(tx, 'operationName') as string,
+        tags: tx.node.tags,
+        txid: tx.node.id,
+        encodedTags: false
+      });
     } else {
       enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
     }
