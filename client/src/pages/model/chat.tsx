@@ -604,7 +604,7 @@ const Chat = () => {
           operationName: MODEL_INFERENCE_REQUEST,
           tags,
           txid: bundlrRes.id,
-          encodedTags: false
+          encodedTags: false,
         });
       } else {
         enqueueSnackbar(res.statusText, { variant: 'error' });

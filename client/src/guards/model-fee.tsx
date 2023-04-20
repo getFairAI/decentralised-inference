@@ -156,7 +156,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
           operationName: MODEL_FEE_PAYMENT_SAVE,
           tags: saveTx.tags,
           txid: saveTx.id,
-          encodedTags: true
+          encodedTags: true,
         });
         setHasPaid(true);
       } else {

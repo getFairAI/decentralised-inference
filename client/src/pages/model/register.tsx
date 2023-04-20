@@ -109,7 +109,7 @@ const Register = () => {
           operationName: SAVE_REGISTER_OPERATION,
           tags: saveTx.tags,
           txid: saveTx.id,
-          encodedTags: true
+          encodedTags: true,
         });
         setIsRegistered(true);
         handleNext();

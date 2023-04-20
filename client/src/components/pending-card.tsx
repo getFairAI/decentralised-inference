@@ -57,7 +57,8 @@ type operationNames =
 const PendingCard = ({ tx }: { tx: IEdge }) => {
   const { currentAddress } = useContext(WalletContext);
   const [operationName, setOperationName] = useState<operationNames | undefined>(undefined);
-  const [getPayment, { data: paymentData, previousData: previousPaymentData }] = useLazyQuery(QUERY_TX_WITH);
+  const [getPayment, { data: paymentData, previousData: previousPaymentData }] =
+    useLazyQuery(QUERY_TX_WITH);
   const [payment, setPayment] = useState<Partial<PaymentTx> | undefined>(undefined);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
@@ -161,7 +162,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
           operationName: findTag(tx, 'operationName') as string,
           tags: tx.node.tags,
           txid: tx.node.id,
-          encodedTags: false
+          encodedTags: false,
         });
       } else if (paymentData && paymentData.transactions.edges.length > 0) {
         // found payment tx show status
@@ -187,7 +188,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
     if (!_.isEqual(paymentData, previousPaymentData)) {
       asyncWrapper();
     }
-  }, [ paymentData ]);
+  }, [paymentData]);
 
   const handleRetry = async () => {
     // retry current tx
@@ -262,7 +263,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         operationName: findTag(tx, 'operationName') as string,
         tags: tx.node.tags,
         txid: tx.node.id,
-        encodedTags: false
+        encodedTags: false,
       });
     } else {
       enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
@@ -271,14 +272,22 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
 
   return (
     <Card sx={{ display: 'flex', flexDirection: 'column' }}>
-      <CardHeader title={operationName} sx={{ padding: '8px 16px' }} action={
-        <Tooltip title='View in Explorer'>
-          <IconButton size='small' href={`https://viewblock.io/arweave/tx/${payment?.id}`} target='_blank'>
-            <OpenInNewIcon />
-          </IconButton>
-        </Tooltip>
-      }/>
-      
+      <CardHeader
+        title={operationName}
+        sx={{ padding: '8px 16px' }}
+        action={
+          <Tooltip title='View in Explorer'>
+            <IconButton
+              size='small'
+              href={`https://viewblock.io/arweave/tx/${payment?.id}`}
+              target='_blank'
+            >
+              <OpenInNewIcon />
+            </IconButton>
+          </Tooltip>
+        }
+      />
+
       <CardContent
         sx={{ display: 'flex', gap: '16px', justifyContent: 'space-between', padding: '8px 16px' }}
       >
@@ -363,7 +372,9 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         </Box>
       </CardContent>
       {payment?.status === 'Failed' && (
-        <CardActions sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', gap: '8px' }}>
+        <CardActions
+          sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', gap: '8px' }}
+        >
           {!payment.target || !payment.quantity || Number.isNaN(payment.quantity) ? (
             <>
               <Button onClick={handleRetry} variant='outlined' disabled>
@@ -372,7 +383,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
               <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
                 <InfoOutlinedIcon />
               </Tooltip>
-            </> 
+            </>
           ) : (
             <Button onClick={handleRetry} variant='outlined'>
               Retry

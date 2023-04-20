@@ -364,7 +364,7 @@ const Upload = () => {
             operationName: MODEL_CREATION,
             tags,
             txid: res.data.id,
-            encodedTags: false
+            encodedTags: false,
           });
           await uploadUsageNotes(res.data.id, data.name, data.notes);
           if (data.avatar && data.avatar instanceof File) {

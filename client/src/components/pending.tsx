@@ -14,7 +14,19 @@ import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
 import { useEffect, useContext, useState, useRef, SyntheticEvent, forwardRef } from 'react';
-import { Backdrop, Box, Button, CircularProgress, ClickAwayListener, Grow, IconButton, Paper, Popper, Typography, useTheme } from '@mui/material';
+import {
+  Backdrop,
+  Box,
+  Button,
+  CircularProgress,
+  ClickAwayListener,
+  Grow,
+  IconButton,
+  Paper,
+  Popper,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import PendingCard from './pending-card';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
@@ -72,33 +84,42 @@ const Content = () => {
         <Box>
           <Typography textAlign={'center'}>You Have No Pending Transactions</Typography>
         </Box>
-      ) : <>
-        <Box display={'flex'} justifyContent={'center'} padding={'8px'}>
-          <Button
-            onClick={refreshClick}
-            endIcon={<RefreshIcon />}
-            variant='outlined'
-          >
-            <Typography>Refresh</Typography>
-          </Button>
-        </Box>
-        
-        { data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)}
-      </>}
-      {
-        loading && <Backdrop
-          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, borderRadius: '23px', backdropFilter: 'blur(4px)', display: 'flex', flexDirection: 'column' }}
+      ) : (
+        <>
+          <Box display={'flex'} justifyContent={'center'} padding={'8px'}>
+            <Button onClick={refreshClick} endIcon={<RefreshIcon />} variant='outlined'>
+              <Typography>Refresh</Typography>
+            </Button>
+          </Box>
+
+          {data &&
+            data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)}
+        </>
+      )}
+      {loading && (
+        <Backdrop
+          sx={{
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            borderRadius: '23px',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
           open={true}
         >
-          <Typography variant='h2' color={theme.palette.primary.main}>Fetching Latest Payments...</Typography>
+          <Typography variant='h2' color={theme.palette.primary.main}>
+            Fetching Latest Payments...
+          </Typography>
           <CircularProgress color='primary' />
         </Backdrop>
-        }
+      )}
     </>
   );
 };
 
-const ContentForwardRef = forwardRef(function ContentForward() { return <Content />; });
+const ContentForwardRef = forwardRef(function ContentForward() {
+  return <Content />;
+});
 
 const Pending = () => {
   const ITEM_HEIGHT = 64;
@@ -111,10 +132,7 @@ const Pending = () => {
   };
 
   const handleClose = (event: Event | SyntheticEvent) => {
-    if (
-      anchorRef.current &&
-      anchorRef.current.contains(event.target as HTMLElement)
-    ) {
+    if (anchorRef.current && anchorRef.current.contains(event.target as HTMLElement)) {
       return;
     }
 
@@ -122,7 +140,7 @@ const Pending = () => {
   };
 
   // return focus to the button when we transitioned from !open -> open
-  const prevOpen =  useRef(open);
+  const prevOpen = useRef(open);
   useEffect(() => {
     if (prevOpen.current === true && open === false && anchorRef.current) {
       anchorRef.current.focus();
@@ -131,45 +149,47 @@ const Pending = () => {
     prevOpen.current = open;
   }, [open]);
 
-  return <>
-    <IconButton
-      ref={anchorRef}
-      id="composition-button"
-      aria-controls={open ? 'composition-menu' : undefined}
-      aria-expanded={open ? 'true' : undefined}
-      aria-haspopup="true"
-      onClick={handleToggle}
-    >
-      <img src='./icon-empty-wallet.svg' />
-    </IconButton>
-    <Popper
-      open={open}
-      anchorEl={anchorRef.current}
-      role={undefined}
-      placement='bottom-end'
-      transition
-      disablePortal
-    >
-      {({ TransitionProps }) => (
-        <Grow
-          {...TransitionProps}
-          style={{
-            transformOrigin: 'left-bottom',
-            minHeight: ITEM_HEIGHT * 3,
-            maxHeight: ITEM_HEIGHT * 5,
-            overflowY: 'auto',
-            minWidth: '200px'
-          }}
-        >
-          <Paper>
-            <ClickAwayListener onClickAway={handleClose}>
-              <ContentForwardRef />
-            </ClickAwayListener>
-          </Paper>
-        </Grow>
-      )}
-    </Popper>
-  </>;
+  return (
+    <>
+      <IconButton
+        ref={anchorRef}
+        id='composition-button'
+        aria-controls={open ? 'composition-menu' : undefined}
+        aria-expanded={open ? 'true' : undefined}
+        aria-haspopup='true'
+        onClick={handleToggle}
+      >
+        <img src='./icon-empty-wallet.svg' />
+      </IconButton>
+      <Popper
+        open={open}
+        anchorEl={anchorRef.current}
+        role={undefined}
+        placement='bottom-end'
+        transition
+        disablePortal
+      >
+        {({ TransitionProps }) => (
+          <Grow
+            {...TransitionProps}
+            style={{
+              transformOrigin: 'left-bottom',
+              minHeight: ITEM_HEIGHT * 3,
+              maxHeight: ITEM_HEIGHT * 5,
+              overflowY: 'auto',
+              minWidth: '200px',
+            }}
+          >
+            <Paper>
+              <ClickAwayListener onClickAway={handleClose}>
+                <ContentForwardRef />
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
+    </>
+  );
 };
 
 export default Pending;
