@@ -49,9 +49,18 @@ const Operators = () => {
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
+          const newData = fetchMoreResult.transactions.edges;
+
+          const merged: IEdge[] =
+            prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+          for (let i = 0; i < newData.length; ++i) {
+            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
+              merged.push(newData[i]);
+            }
+          }
           const newResult = Object.assign({}, prev, {
             transactions: {
-              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              edges: merged,
               pageInfo: fetchMoreResult.transactions.pageInfo,
             },
           });

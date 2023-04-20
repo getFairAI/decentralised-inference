@@ -25,10 +25,12 @@ import {
 } from '@mui/material';
 import { toSvg } from 'jdenticon';
 import { useSnackbar } from 'notistack';
-import { useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
 import { useLoaderData, useLocation, useNavigate } from 'react-router-dom';
 import '@/styles/ui.css';
+import { WalletContext } from '@/context/wallet';
+import { WorkerContext } from '@/context/worker';
 
 const Register = () => {
   const { updatedFee, avatarTxId } = (useLoaderData() as RouteLoaderResult) || {};
@@ -37,6 +39,8 @@ const Register = () => {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const theme = useTheme();
+  const { currentAddress } = useContext(WalletContext);
+  const { startJob } = useContext(WorkerContext);
 
   const imgUrl = useMemo(() => {
     if (avatarTxId) {
@@ -100,6 +104,13 @@ const Register = () => {
           </>,
           { variant: 'success' },
         );
+        startJob({
+          address: currentAddress,
+          operationName: SAVE_REGISTER_OPERATION,
+          tags: saveTx.tags,
+          txid: saveTx.id,
+          encodedTags: true,
+        });
         setIsRegistered(true);
         handleNext();
       } else {

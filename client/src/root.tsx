@@ -7,6 +7,7 @@ import { BundlrProvider } from './context/bundlr';
 import { WalletProvider } from './context/wallet';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
+import { WorkerProvider } from './context/worker';
 
 export const Root = () => {
   return (
@@ -15,10 +16,12 @@ export const Root = () => {
         <SnackbarProvider maxSnack={3}>
           <WalletProvider>
             <BundlrProvider>
-              <CssBaseline />
-              <Layout>
-                <Outlet />
-              </Layout>
+              <WorkerProvider>
+                <CssBaseline />
+                <Layout>
+                  <Outlet />
+                </Layout>
+              </WorkerProvider>
             </BundlrProvider>
           </WalletProvider>
         </SnackbarProvider>

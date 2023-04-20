@@ -53,6 +53,7 @@ import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import useScrollLock from '@/hooks/useScrollLock';
 import '@/styles/main.css';
+import { WorkerContext } from '@/context/worker';
 
 interface Message {
   id: string;
@@ -89,6 +90,7 @@ const Chat = () => {
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
+  const { startJob } = useContext(WorkerContext);
 
   const [
     getChatRequests,
@@ -597,6 +599,13 @@ const Chat = () => {
           </>,
           { variant: 'success' },
         );
+        startJob({
+          address: userAddr,
+          operationName: MODEL_INFERENCE_REQUEST,
+          tags,
+          txid: bundlrRes.id,
+          encodedTags: false,
+        });
       } else {
         enqueueSnackbar(res.statusText, { variant: 'error' });
       }

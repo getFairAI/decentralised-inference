@@ -1,4 +1,4 @@
-import { MIN_CONFIRMATIONS, NET_ARWEAVE_URL } from '@/constants';
+import { MIN_CONFIRMATIONS, NET_ARWEAVE_URL } from '../constants';
 import Arweave from 'arweave';
 
 const arweave = Arweave.init({

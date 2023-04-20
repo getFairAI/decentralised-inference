@@ -6,6 +6,8 @@ import {
   MODEL_FEE_PAYMENT_SAVE,
   TAG_NAMES,
 } from '@/constants';
+import { WalletContext } from '@/context/wallet';
+import { WorkerContext } from '@/context/worker';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
 import arweave, { isTxConfirmed } from '@/utils/arweave';
@@ -24,7 +26,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams, useRouteLoaderData } from 'react-router-dom';
 
 const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
@@ -37,6 +39,8 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const { currentAddress } = useContext(WalletContext);
+  const { startJob } = useContext(WorkerContext);
   /* const { data, loading, error } = useQuery(QUERY_MODEL_FEE_PAYMENT, {
     variables: {
       recipient: state.modelCreator,
@@ -147,6 +151,13 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
           </>,
           { variant: 'success' },
         );
+        startJob({
+          address: currentAddress,
+          operationName: MODEL_FEE_PAYMENT_SAVE,
+          tags: saveTx.tags,
+          txid: saveTx.id,
+          encodedTags: true,
+        });
         setHasPaid(true);
       } else {
         enqueueSnackbar(`Failed with error ${res.status}: ${res.statusText}`, { variant: 'error' });

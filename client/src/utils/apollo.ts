@@ -1,5 +1,5 @@
-import { DEV_ARWEAVE_URL, NET_ARWEAVE_URL } from '@/constants';
-import { ITransactions } from '@/interfaces/arweave';
+import { DEV_ARWEAVE_URL, NET_ARWEAVE_URL } from '../constants';
+import { ITransactions } from '../interfaces/arweave';
 import { ApolloClient, ApolloLink, from, HttpLink, InMemoryCache, split } from '@apollo/client';
 
 const mapLink = new ApolloLink((operation, forward) =>

@@ -41,6 +41,8 @@ import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
 import arweave from '@/utils/arweave';
 import NumberControl from '@/components/number-control';
+import { WalletContext } from '@/context/wallet';
+import { WorkerContext } from '@/context/worker';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -72,6 +74,8 @@ const Upload = () => {
   const bundlrContext = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const { currentAddress } = useContext(WalletContext);
+  const { startJob } = useContext(WorkerContext);
 
   const onSubmit = async (data: FieldValues) => {
     setFormData(data as CreateForm);
@@ -355,6 +359,13 @@ const Upload = () => {
             </>,
             { variant: 'success' },
           );
+          startJob({
+            address: currentAddress,
+            operationName: MODEL_CREATION,
+            tags,
+            txid: res.data.id,
+            encodedTags: false,
+          });
           await uploadUsageNotes(res.data.id, data.name, data.notes);
           if (data.avatar && data.avatar instanceof File) {
             await uploadAvatarImage(res.data.id, data.name, data.avatar);

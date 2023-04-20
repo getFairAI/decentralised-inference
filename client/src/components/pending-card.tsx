@@ -33,6 +33,10 @@ import {
 import { useContext, useEffect, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import _ from 'lodash';
+import { WorkerContext } from '@/context/worker';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 interface PaymentTx {
   id: string;
@@ -53,10 +57,12 @@ type operationNames =
 const PendingCard = ({ tx }: { tx: IEdge }) => {
   const { currentAddress } = useContext(WalletContext);
   const [operationName, setOperationName] = useState<operationNames | undefined>(undefined);
-  const [getPayment, paymentResult] = useLazyQuery(QUERY_TX_WITH);
+  const [getPayment, { data: paymentData, previousData: previousPaymentData }] =
+    useLazyQuery(QUERY_TX_WITH);
   const [payment, setPayment] = useState<Partial<PaymentTx> | undefined>(undefined);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const { startJob } = useContext(WorkerContext);
 
   useEffect(() => {
     if (tx) {
@@ -140,7 +146,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
 
   useEffect(() => {
     const asyncWrapper = async () => {
-      if (paymentResult.data && paymentResult.data.transactions.edges.length === 0) {
+      if (paymentData && paymentData.transactions.edges.length === 0) {
         // paymentTx not found show retry option
         const quantity = findTag(tx, 'paymentQuantity') as string;
         const target = findTag(tx, 'paymentTarget');
@@ -151,9 +157,16 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
           timestamp,
           status: 'Failed',
         });
-      } else if (paymentResult.data && paymentResult.data.transactions.edges.length > 0) {
+        startJob({
+          address: currentAddress,
+          operationName: findTag(tx, 'operationName') as string,
+          tags: tx.node.tags,
+          txid: tx.node.id,
+          encodedTags: false,
+        });
+      } else if (paymentData && paymentData.transactions.edges.length > 0) {
         // found payment tx show status
-        const payment: IEdge = paymentResult.data.transactions.edges[0];
+        const payment: IEdge = paymentData.transactions.edges[0];
         const timestamp =
           parseFloat(findTag(payment, 'unixTime') as string) || payment.node.block.timestamp;
         const date = new Date(timestamp * 1000)
@@ -172,8 +185,10 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         });
       }
     };
-    asyncWrapper();
-  }, [paymentResult]);
+    if (!_.isEqual(paymentData, previousPaymentData)) {
+      asyncWrapper();
+    }
+  }, [paymentData]);
 
   const handleRetry = async () => {
     // retry current tx
@@ -243,6 +258,13 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         </>,
         { variant: 'success' },
       );
+      startJob({
+        address: currentAddress,
+        operationName: findTag(tx, 'operationName') as string,
+        tags: tx.node.tags,
+        txid: tx.node.id,
+        encodedTags: false,
+      });
     } else {
       enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
     }
@@ -250,7 +272,22 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
 
   return (
     <Card sx={{ display: 'flex', flexDirection: 'column' }}>
-      <CardHeader title={operationName} sx={{ padding: '8px 16px' }} />
+      <CardHeader
+        title={operationName}
+        sx={{ padding: '8px 16px' }}
+        action={
+          <Tooltip title='View in Explorer'>
+            <IconButton
+              size='small'
+              href={`https://viewblock.io/arweave/tx/${payment?.id}`}
+              target='_blank'
+            >
+              <OpenInNewIcon />
+            </IconButton>
+          </Tooltip>
+        }
+      />
+
       <CardContent
         sx={{ display: 'flex', gap: '16px', justifyContent: 'space-between', padding: '8px 16px' }}
       >
@@ -335,13 +372,18 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         </Box>
       </CardContent>
       {payment?.status === 'Failed' && (
-        <CardActions sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px' }}>
+        <CardActions
+          sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', gap: '8px' }}
+        >
           {!payment.target || !payment.quantity || Number.isNaN(payment.quantity) ? (
-            <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
+            <>
               <Button onClick={handleRetry} variant='outlined' disabled>
                 Retry
               </Button>
-            </Tooltip>
+              <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
+                <InfoOutlinedIcon />
+              </Tooltip>
+            </>
           ) : (
             <Button onClick={handleRetry} variant='outlined'>
               Retry
