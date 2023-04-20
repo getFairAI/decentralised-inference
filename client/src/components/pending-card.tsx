@@ -34,6 +34,7 @@ import { useContext, useEffect, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import _ from 'lodash';
 
 interface PaymentTx {
   id: string;
@@ -73,6 +74,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.modelTransaction, values: tx.node.id },
               ],
             },
+            pollInterval: 5000
           });
           setOperationName('Model Creation Payment');
           break;
@@ -87,6 +89,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
               ],
             },
+            pollInterval: 5000
           });
           setOperationName('Operator Registration Payment');
           break;
@@ -101,6 +104,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
               ],
             },
+            pollInterval: 5000
           });
           setOperationName('Model Fee Payment');
           break;
@@ -115,6 +119,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.inferenceTransaction, values: [tx.node.id] },
               ],
             },
+            pollInterval: 5000
           });
           setOperationName('Inference Request Payment');
           break;
@@ -129,6 +134,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.responseTransaction, values: [tx.node.id] },
               ],
             },
+            pollInterval: 5000
           });
           setOperationName('Inference Redistribution');
           break;
@@ -173,7 +179,9 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         });
       }
     };
-    asyncWrapper();
+    if (!_.isEqual(paymentResult.data, paymentResult.previousData)) {
+      asyncWrapper();
+    }
   }, [paymentResult]);
 
   const handleRetry = async () => {
