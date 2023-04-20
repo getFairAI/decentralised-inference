@@ -36,6 +36,7 @@ import { useSnackbar } from 'notistack';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import _ from 'lodash';
 import { WorkerContext } from '@/context/worker';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 interface PaymentTx {
   id: string;
@@ -56,7 +57,7 @@ type operationNames =
 const PendingCard = ({ tx }: { tx: IEdge }) => {
   const { currentAddress } = useContext(WalletContext);
   const [operationName, setOperationName] = useState<operationNames | undefined>(undefined);
-  const [getPayment, paymentResult] = useLazyQuery(QUERY_TX_WITH);
+  const [getPayment, { data: paymentData, previousData: previousPaymentData }] = useLazyQuery(QUERY_TX_WITH);
   const [payment, setPayment] = useState<Partial<PaymentTx> | undefined>(undefined);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
@@ -76,7 +77,6 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.modelTransaction, values: tx.node.id },
               ],
             },
-            pollInterval: 5000
           });
           setOperationName('Model Creation Payment');
           break;
@@ -91,7 +91,6 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
               ],
             },
-            pollInterval: 5000
           });
           setOperationName('Operator Registration Payment');
           break;
@@ -106,7 +105,6 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
               ],
             },
-            pollInterval: 5000
           });
           setOperationName('Model Fee Payment');
           break;
@@ -121,7 +119,6 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.inferenceTransaction, values: [tx.node.id] },
               ],
             },
-            pollInterval: 5000
           });
           setOperationName('Inference Request Payment');
           break;
@@ -136,7 +133,6 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
                 { name: TAG_NAMES.responseTransaction, values: [tx.node.id] },
               ],
             },
-            pollInterval: 5000
           });
           setOperationName('Inference Redistribution');
           break;
@@ -149,7 +145,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
 
   useEffect(() => {
     const asyncWrapper = async () => {
-      if (paymentResult.data && paymentResult.data.transactions.edges.length === 0) {
+      if (paymentData && paymentData.transactions.edges.length === 0) {
         // paymentTx not found show retry option
         const quantity = findTag(tx, 'paymentQuantity') as string;
         const target = findTag(tx, 'paymentTarget');
@@ -160,9 +156,16 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
           timestamp,
           status: 'Failed',
         });
-      } else if (paymentResult.data && paymentResult.data.transactions.edges.length > 0) {
+        startJob({
+          address: currentAddress,
+          operationName: findTag(tx, 'operationName') as string,
+          tags: tx.node.tags,
+          txid: tx.node.id,
+          encodedTags: false
+        });
+      } else if (paymentData && paymentData.transactions.edges.length > 0) {
         // found payment tx show status
-        const payment: IEdge = paymentResult.data.transactions.edges[0];
+        const payment: IEdge = paymentData.transactions.edges[0];
         const timestamp =
           parseFloat(findTag(payment, 'unixTime') as string) || payment.node.block.timestamp;
         const date = new Date(timestamp * 1000)
@@ -181,10 +184,10 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         });
       }
     };
-    if (!_.isEqual(paymentResult.data, paymentResult.previousData)) {
+    if (!_.isEqual(paymentData, previousPaymentData)) {
       asyncWrapper();
     }
-  }, [paymentResult]);
+  }, [ paymentData ]);
 
   const handleRetry = async () => {
     // retry current tx
@@ -268,7 +271,14 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
 
   return (
     <Card sx={{ display: 'flex', flexDirection: 'column' }}>
-      <CardHeader title={operationName} sx={{ padding: '8px 16px' }} />
+      <CardHeader title={operationName} sx={{ padding: '8px 16px' }} action={
+        <Tooltip title='View in Explorer'>
+          <IconButton size='small' href={`https://viewblock.io/arweave/tx/${payment?.id}`} target='_blank'>
+            <OpenInNewIcon />
+          </IconButton>
+        </Tooltip>
+      }/>
+      
       <CardContent
         sx={{ display: 'flex', gap: '16px', justifyContent: 'space-between', padding: '8px 16px' }}
       >

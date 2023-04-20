@@ -14,15 +14,17 @@ import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
 import { useEffect, useContext, useState, useRef, SyntheticEvent, forwardRef } from 'react';
-import { Box, ClickAwayListener, Grow, IconButton, Paper, Popper, Typography } from '@mui/material';
+import { Backdrop, Box, Button, CircularProgress, ClickAwayListener, Grow, IconButton, Paper, Popper, Typography, useTheme } from '@mui/material';
 import PendingCard from './pending-card';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 const Content = () => {
   const elementsPerPage = 10;
   const { currentAddress } = useContext(WalletContext);
   const [minHeight, setMinHeight] = useState(0);
+  const theme = useTheme();
 
-  const { data, error, loading } = useQuery(QUERY_USER_INTERACTIONS, {
+  const { data, error, loading, refetch } = useQuery(QUERY_USER_INTERACTIONS, {
     variables: {
       address: currentAddress,
       tags: [
@@ -42,7 +44,8 @@ const Content = () => {
       first: elementsPerPage,
     },
     skip: !currentAddress || minHeight <= 0,
-    pollInterval: 5000,
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'no-cache',
   });
 
   useEffect(() => {
@@ -53,26 +56,44 @@ const Content = () => {
     asyncWrapper();
   });
 
+  const refreshClick = () => {
+    refetch();
+  };
+
   return (
     <>
       {error ? (
-        <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
+        <Box display={'flex'} flexDirection={'column'} alignItems={'center'} padding={'16px'}>
           <Typography textAlign={'center'}>
             There Was a Problem Fetching previous payments...
           </Typography>
-        </Box>
-      ) : loading ? (
-        <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
-          <Typography textAlign={'center'}>Fetching Latest Payments</Typography>
-          <div className='dot-pulse'></div>
         </Box>
       ) : data && data.transactions.edges.length === 0 ? (
         <Box>
           <Typography textAlign={'center'}>You Have No Pending Transactions</Typography>
         </Box>
-      ) : (
-        data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)
-      )}
+      ) : <>
+        <Box display={'flex'} justifyContent={'center'} padding={'8px'}>
+          <Button
+            onClick={refreshClick}
+            endIcon={<RefreshIcon />}
+            variant='outlined'
+          >
+            <Typography>Refresh</Typography>
+          </Button>
+        </Box>
+        
+        { data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)}
+      </>}
+      {
+        loading && <Backdrop
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, borderRadius: '23px', backdropFilter: 'blur(4px)', display: 'flex', flexDirection: 'column' }}
+          open={true}
+        >
+          <Typography variant='h2' color={theme.palette.primary.main}>Fetching Latest Payments...</Typography>
+          <CircularProgress color='primary' />
+        </Backdrop>
+        }
     </>
   );
 };
@@ -136,7 +157,8 @@ const Pending = () => {
             transformOrigin: 'left-bottom',
             minHeight: ITEM_HEIGHT * 3,
             maxHeight: ITEM_HEIGHT * 5,
-            overflowY: 'auto'
+            overflowY: 'auto',
+            minWidth: '200px'
           }}
         >
           <Paper>
