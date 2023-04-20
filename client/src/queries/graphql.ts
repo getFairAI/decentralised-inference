@@ -1,4 +1,4 @@
-import { MARKETPLACE_ADDRESS } from '@/constants';
+import { MARKETPLACE_ADDRESS } from '../constants';
 import { gql } from '@apollo/client';
 
 export const GET_LATEST_MODEL_ATTACHMENTS = gql`

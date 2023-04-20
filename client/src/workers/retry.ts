@@ -12,11 +12,11 @@ import {
   REGISTER_OPERATION,
   SAVE_REGISTER_OPERATION,
   TAG_NAMES,
-} from '@/constants';
-import { ITransactions } from '@/interfaces/arweave';
-import { QUERY_TX_WITH } from '@/queries/graphql';
-import { client } from '@/utils/apollo';
-import arweave, { isTxConfirmed } from '@/utils/arweave';
+} from '../constants';
+import { ITransactions } from '../interfaces/arweave';
+import { QUERY_TX_WITH } from '../queries/graphql';
+import { client } from '../utils/apollo';
+import arweave, { isTxConfirmed } from '../utils/arweave';
 
 self.onmessage = async (e: MessageEvent<string>) => {
   const {
