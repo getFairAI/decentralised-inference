@@ -17,7 +17,15 @@ import {
   List,
   ListItem,
 } from '@mui/material';
-import { ChangeEvent, Fragment, ReactElement, useContext, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  Fragment,
+  ReactElement,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import PaymentIcon from '@mui/icons-material/Payment';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';

@@ -568,7 +568,9 @@ const Upload = () => {
                 </Button>
                 <Button
                   onClick={handleSubmit(onSubmit)}
-                  disabled={(!control._formState.isValid && control._formState.isDirty) || !currentAddress}
+                  disabled={
+                    (!control._formState.isValid && control._formState.isDirty) || !currentAddress
+                  }
                   sx={{
                     borderRadius: '7px',
                     height: '39px',

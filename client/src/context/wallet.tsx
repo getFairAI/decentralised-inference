@@ -38,7 +38,7 @@ interface WalletContext {
 
 const createActions = (dispatch: Dispatch<WalletAction>, state: WalletContext) => {
   return {
-    walletLoaded: async () => dispatch({ type: 'wallet_loaded'}),
+    walletLoaded: async () => dispatch({ type: 'wallet_loaded' }),
     walletDisconnect: async () => asyncDisconnectWallet(dispatch),
     connectWallet: async () => asyncConnectWallet(dispatch),
     switchWallet: async (newAddress: string) => asyncWalletSwitch(dispatch, newAddress),
@@ -112,7 +112,10 @@ const walletReducer = (state: WalletContext, action?: WalletAction) => {
       return { ...state, currentPermissions: action.permissions };
     case 'wallet_disconnect': {
       return {
-        ...state, currentAddress: '', currentPermissions: [], currentBalance: 0
+        ...state,
+        currentAddress: '',
+        currentPermissions: [],
+        currentBalance: 0,
       };
     }
     default:

@@ -16,14 +16,10 @@ const options = [
   'Toggle Theme',
   'Github',
   'Whitepaper',
-  'Disconnect'
+  'Disconnect',
 ];
 
-const disableableOptions = [
-  'Bundlr Settings',
-  'My Models',
-  'Disconnect'
-];
+const disableableOptions = ['Bundlr Settings', 'My Models', 'Disconnect'];
 
 const ITEM_HEIGHT = 48;
 
@@ -109,7 +105,7 @@ export default function ProfileMenu() {
                 </MenuItem>
               </span>
             </Tooltip>
-          ) : disableableOptions.includes(option) && (!currentAddress) ? (
+          ) : disableableOptions.includes(option) && !currentAddress ? (
             <Tooltip title='This Feature requires a wallet to be connected' key={option}>
               <span>
                 <MenuItem onClick={() => HandleOptionClick(option)} disabled>
@@ -117,9 +113,11 @@ export default function ProfileMenu() {
                 </MenuItem>
               </span>
             </Tooltip>
-          ) : <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
+          ) : (
+            <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
               <Typography>{option}</Typography>
             </MenuItem>
+          ),
         )}
       </Menu>
       <FundDialog open={fundOpen} setOpen={setFundOpen} />

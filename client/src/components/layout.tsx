@@ -1,13 +1,24 @@
 // components/layout.js
 import FilterContext from '@/context/filter';
-import { Alert, Box, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, Typography, useTheme } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { ReactElement, useContext, useEffect, useState } from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
 
 export default function Layout({ children }: { children: ReactElement }) {
   const [showBanner, setShowBanner] = useState(true);
-  const [ open, setOpen ] = useState(false);
+  const [open, setOpen] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const { isWalletLoaded, currentAddress } = useContext(WalletContext);
   const theme = useTheme();
@@ -15,11 +26,11 @@ export default function Layout({ children }: { children: ReactElement }) {
   useEffect(() => {
     // opens if wallet is not loaded
     setOpen(!isWalletLoaded);
-  }, [ isWalletLoaded ]);
+  }, [isWalletLoaded]);
 
   useEffect(() => {
     setOpen(!currentAddress || currentAddress === '');
-  }, [ currentAddress ]);
+  }, [currentAddress]);
 
   return (
     <>
@@ -37,7 +48,8 @@ export default function Layout({ children }: { children: ReactElement }) {
           <FilterContext.Provider value={filterValue}>
             <main style={{ height: '100%' }}>{children}</main>
             <Dialog
-              open={open} maxWidth={'md'}
+              open={open}
+              maxWidth={'md'}
               fullWidth
               sx={{
                 '& .MuiPaper-root': {
@@ -81,8 +93,8 @@ export default function Layout({ children }: { children: ReactElement }) {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '8px'
-                    }
+                      gap: '8px',
+                    },
                   }}
                   icon={<img src='./warning-icon.svg'></img>}
                 >
@@ -95,19 +107,28 @@ export default function Layout({ children }: { children: ReactElement }) {
                       textAlign: 'center',
                     }}
                   >
-                    {!isWalletLoaded ?
-                      'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.'
-                      : 'Wallet Not Connected! Please Connect Wallet to access All App Features.'
-                    }
+                    {!isWalletLoaded
+                      ? 'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.'
+                      : 'Wallet Not Connected! Please Connect Wallet to access All App Features.'}
                   </Typography>
                 </Alert>
               </DialogContent>
               <DialogActions
-                sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '30px',
+                  paddingBottom: '20px',
+                }}
               >
-                <Button onClick={() => setOpen(false)} variant='contained' color='warning' sx={{ width: 'fit-content' }}>
-                    <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
-                  </Button>
+                <Button
+                  onClick={() => setOpen(false)}
+                  variant='contained'
+                  color='warning'
+                  sx={{ width: 'fit-content' }}
+                >
+                  <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
+                </Button>
               </DialogActions>
             </Dialog>
           </FilterContext.Provider>

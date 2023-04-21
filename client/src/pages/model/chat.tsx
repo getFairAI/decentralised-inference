@@ -139,7 +139,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (!isWalletLoaded) navigate('/');
-  }, [ isWalletLoaded ]);
+  }, [isWalletLoaded]);
 
   useEffect(() => {
     if (state && userAddr) {
