@@ -112,7 +112,8 @@ const FundDialog = ({
               fontSize: '23px',
               lineHeight: '31px',
             }}
-          >Fund Bundlr Node
+          >
+            Fund Bundlr Node
           </Typography>
         </DialogTitle>
         <DialogContent>

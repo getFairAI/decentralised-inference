@@ -516,9 +516,9 @@ const Chat = () => {
     try {
       const messagePrice = await getPrice(dataSize);
       if (!nodeBalance || messagePrice.toNumber() > nodeBalance) {
-      enqueueSnackbar('Not Enough Bundlr Funds to send message', { variant: 'error' });
-      return;
-    }
+        enqueueSnackbar('Not Enough Bundlr Funds to send message', { variant: 'error' });
+        return;
+      }
     } catch (error) {
       enqueueSnackbar('Bundlr Error', { variant: 'error' });
       return;

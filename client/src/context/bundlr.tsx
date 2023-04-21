@@ -1,5 +1,14 @@
 import { WebBundlr } from 'bundlr-custom';
-import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useEffect, useMemo, useReducer } from 'react';
+import {
+  createContext,
+  Dispatch,
+  MutableRefObject,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+} from 'react';
 import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 import { WalletContext } from './wallet';
 import { ITag } from '@/interfaces/arweave';
@@ -25,10 +34,17 @@ interface BundlrContext {
   updateBalance: () => Promise<void>;
   fundNode: (value: string) => Promise<FundResponse>;
   retryConnection: () => Promise<void>;
-  getPrice: (bytes: number, currency?: string) => Promise<BigNumber>,
-  upload: (data: string, tags: ITag[]) => Promise<UploadResponse>,
+  getPrice: (bytes: number, currency?: string) => Promise<BigNumber>;
+  upload: (data: string, tags: ITag[]) => Promise<UploadResponse>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  chunkUpload: (file: File, tags: ITag[], totalChunks: MutableRefObject<number>, handleUpload: (value: ChunkInfo) => void, handleError: (e: ChunkError) => void, handleDone: (value: unknown) => void) => Promise<AxiosResponse<UploadResponse, any>>,
+  chunkUpload: (
+    file: File,
+    tags: ITag[],
+    totalChunks: MutableRefObject<number>,
+    handleUpload: (value: ChunkInfo) => void,
+    handleError: (e: ChunkError) => void,
+    handleDone: (value: unknown) => void,
+  ) => Promise<AxiosResponse<UploadResponse, any>>;
 }
 
 const createActions = (dispatch: Dispatch<BundlrAction>, bundlr?: WebBundlr) => {
@@ -65,19 +81,22 @@ const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr?: Web
   }
 };
 
-const bundlrReducer = (state: { bundlr?: WebBundlr, nodeBalance: number }, action?: BundlrAction) => {
+const bundlrReducer = (
+  state: { bundlr?: WebBundlr; nodeBalance: number },
+  action?: BundlrAction,
+) => {
   if (!action) return state;
   switch (action.type) {
     case 'node_changed':
       // eslint-disable-next-line no-case-declarations
       return {
         ...state,
-        bundlr: action.bundlr
+        bundlr: action.bundlr,
       };
     case 'update_balance':
       return {
         ...state,
-        nodeBalance: action.balance
+        nodeBalance: action.balance,
       };
     default:
       return state;
@@ -98,12 +117,10 @@ export const BundlrContext = createContext<BundlrContext>({
 
 export const BundlrProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(bundlrReducer, { bundlr: undefined, nodeBalance: 0 });
-  const actions = useMemo(
-    () => {
-      console.log(state.bundlr);
-      return createActions(dispatch, state.bundlr);
-    }
-  , [ state.bundlr ]);
+  const actions = useMemo(() => {
+    console.log(state.bundlr);
+    return createActions(dispatch, state.bundlr);
+  }, [state.bundlr]);
 
   const walletState = useContext(WalletContext);
 
@@ -118,7 +135,9 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
 
   const getPrice = async (bytes: number, currency?: string) => {
     if (state.bundlr) {
-      return currency ? await state.bundlr.utils.getPrice(currency, bytes) : await state.bundlr.getPrice(bytes);
+      return currency
+        ? await state.bundlr.utils.getPrice(currency, bytes)
+        : await state.bundlr.getPrice(bytes);
     } else {
       return new BigNumber(0);
     }
@@ -129,7 +148,14 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
     return state.bundlr.upload(data, { tags });
   };
 
-  const chunkUpload = async (file: File, tags: ITag[], totalChunks: MutableRefObject<number>, handleUpload: (value: ChunkInfo) => void, handleError: (e: ChunkError) => void, handleDone: (value: unknown) => void) => {
+  const chunkUpload = async (
+    file: File,
+    tags: ITag[],
+    totalChunks: MutableRefObject<number>,
+    handleUpload: (value: ChunkInfo) => void,
+    handleError: (e: ChunkError) => void,
+    handleDone: (value: unknown) => void,
+  ) => {
     if (!state.bundlr) throw new Error('Bundlr not Initialized');
 
     const uploader = state.bundlr.uploader.chunkedUploader;

@@ -107,11 +107,13 @@ const Upload = () => {
     // event callback: called if an error happens
     const handleError = (e: ChunkError) => {
       setSnackbarOpen(false);
-      console.error(`Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`);
+      console.error(
+        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+      );
     };
     // event callback: called when file is fully uploaded
     const handleDone = (finishRes: unknown) => {
-      console.log(`Upload completed with ID ${(finishRes  as { id: string }).id}`);
+      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
       // set the progress bar to 100
       setProgress(100);
       setSnackbarOpen(false);
@@ -129,7 +131,14 @@ const Upload = () => {
     setSnackbarOpen(true);
     try {
       // const res = await uploader.uploadData(readableStream, { tags });
-      const res = await chunkUpload(image, tags, totalChunks, handleUpload, handleError, handleDone);
+      const res = await chunkUpload(
+        image,
+        tags,
+        totalChunks,
+        handleUpload,
+        handleError,
+        handleDone,
+      );
       if (res.status === 200) {
         enqueueSnackbar(
           <>
@@ -176,7 +185,9 @@ const Upload = () => {
     // event callback: called if an error happens
     const handleError = (e: ChunkError) => {
       setSnackbarOpen(false);
-      console.error(`Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`);
+      console.error(
+        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+      );
     };
     // event callback: called when file is fully uploaded
     const handleDone = (finishRes: unknown) => {
@@ -247,7 +258,9 @@ const Upload = () => {
     // event callback: called if an error happens
     const handleError = (e: ChunkError) => {
       setSnackbarOpen(false);
-      console.error(`Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`);
+      console.error(
+        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+      );
     };
     // event callback: called when file is fully uploaded
     const handleDone = (finishRes: unknown) => {

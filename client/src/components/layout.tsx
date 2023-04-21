@@ -42,7 +42,7 @@ export default function Layout({ children }: { children: ReactElement }) {
     if (currentAddress && arBalance < 0.5) {
       setOpen(true);
     }
-  }, [ nodeBalance ]);
+  }, [nodeBalance]);
 
   const handleFundNow = () => {
     setOpen(false);
@@ -87,12 +87,11 @@ export default function Layout({ children }: { children: ReactElement }) {
                     lineHeight: '31px',
                   }}
                 >
-                  {
-                    !isWalletLoaded ?
-                      'Browser Wallet Not Detected' :
-                        !currentAddress ? 'Wallet Not Connected' :
-                          'Missing bundlr Funds'
-                  }
+                  {!isWalletLoaded
+                    ? 'Browser Wallet Not Detected'
+                    : !currentAddress
+                    ? 'Wallet Not Connected'
+                    : 'Missing bundlr Funds'}
                 </Typography>
               </DialogTitle>
               <DialogContent>
@@ -129,12 +128,11 @@ export default function Layout({ children }: { children: ReactElement }) {
                       textAlign: 'center',
                     }}
                   >
-                    {
-                      !isWalletLoaded
-                        ? 'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.' :
-                          !currentAddress ? 'Wallet Not Connected! Please Connect Wallet to access All App Features.' :
-                            'Current Bundlr Node Has no Loaded Funds. Please Fund Bundlr Node in order to utilize App'
-                    }
+                    {!isWalletLoaded
+                      ? 'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.'
+                      : !currentAddress
+                      ? 'Wallet Not Connected! Please Connect Wallet to access All App Features.'
+                      : 'Current Bundlr Node Has no Loaded Funds. Please Fund Bundlr Node in order to utilize App'}
                   </Typography>
                 </Alert>
               </DialogContent>
@@ -146,35 +144,35 @@ export default function Layout({ children }: { children: ReactElement }) {
                   paddingBottom: '20px',
                 }}
               >
-                {
-                  !isWalletLoaded || !currentAddress ?
+                {!isWalletLoaded || !currentAddress ? (
+                  <Button
+                    onClick={() => setOpen(false)}
+                    variant='contained'
+                    color='warning'
+                    sx={{ width: 'fit-content' }}
+                  >
+                    <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
+                  </Button>
+                ) : (
+                  <>
                     <Button
                       onClick={() => setOpen(false)}
+                      variant='outlined'
+                      color='warning'
+                      sx={{ width: 'fit-content' }}
+                    >
+                      <Typography color={theme.palette.warning.main}>Fund Later</Typography>
+                    </Button>
+                    <Button
+                      onClick={handleFundNow}
                       variant='contained'
                       color='warning'
                       sx={{ width: 'fit-content' }}
                     >
-                      <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
-                    </Button> :
-                      <>
-                        <Button
-                          onClick={() => setOpen(false)}
-                          variant='outlined'
-                          color='warning'
-                          sx={{ width: 'fit-content' }}
-                        >
-                          <Typography color={theme.palette.warning.main}>Fund Later</Typography>
-                        </Button>
-                        <Button
-                          onClick={handleFundNow}
-                          variant='contained'
-                          color='warning'
-                          sx={{ width: 'fit-content' }}
-                        >
-                          <Typography color={theme.palette.primary.contrastText}>Fund Now</Typography>
-                        </Button>
-                      </>
-                }
+                      <Typography color={theme.palette.primary.contrastText}>Fund Now</Typography>
+                    </Button>
+                  </>
+                )}
               </DialogActions>
             </Dialog>
           </FilterContext.Provider>

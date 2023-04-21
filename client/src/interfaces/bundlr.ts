@@ -3,7 +3,7 @@ export interface ChunkInfo {
   offset: number;
   size: number;
   totalUploaded: number;
-};
+}
 
 export interface ChunkError {
   id: number;
