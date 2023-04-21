@@ -145,7 +145,7 @@ const FundDialog = ({
             </FormControl>
             <TextField
               label='Current Node Balance'
-              value={nodeBalance}
+              value={arweave.ar.winstonToAr(nodeBalance.toString())}
               disabled
               margin='dense'
               InputProps={{

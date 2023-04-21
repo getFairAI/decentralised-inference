@@ -1,5 +1,5 @@
 import { WebBundlr } from 'bundlr-custom';
-import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useEffect, useReducer } from 'react';
+import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useEffect, useMemo, useReducer } from 'react';
 import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 import { WalletContext } from './wallet';
 import { ITag } from '@/interfaces/arweave';
@@ -44,11 +44,10 @@ const asyncChangeNode = async (dispatch: Dispatch<BundlrAction>, node: bundlrNod
   try {
     await bundlr.ready();
     dispatch({ type: 'node_changed', bundlr });
+    await asyncUpdateBalance(dispatch, bundlr);
   } catch (error) {
     console.log(error);
   }
-
-  await asyncUpdateBalance(dispatch, bundlr);
 };
 
 const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr?: WebBundlr) => {
@@ -73,7 +72,7 @@ const bundlrReducer = (state: { bundlr?: WebBundlr, nodeBalance: number }, actio
       // eslint-disable-next-line no-case-declarations
       return {
         ...state,
-        ref: action.bundlr
+        bundlr: action.bundlr
       };
     case 'update_balance':
       return {
@@ -99,7 +98,12 @@ export const BundlrContext = createContext<BundlrContext>({
 
 export const BundlrProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(bundlrReducer, { bundlr: undefined, nodeBalance: 0 });
-  const actions = createActions(dispatch, state.bundlr);
+  const actions = useMemo(
+    () => {
+      console.log(state.bundlr);
+      return createActions(dispatch, state.bundlr);
+    }
+  , [ state.bundlr ]);
 
   const walletState = useContext(WalletContext);
 

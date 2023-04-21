@@ -196,7 +196,7 @@ const FileControl = (props: FileControlProps) => {
             {loading && <LinearProgress variant='determinate' value={progress} />}
           </FormControl>
           <Typography variant='caption'>
-            Estimated price ${filePrice} {/* / {filePriceAR} AR */}
+            Estimated price {filePrice} AR{/* / {filePriceAR} AR */}
           </Typography>
         </Box>
       </>
