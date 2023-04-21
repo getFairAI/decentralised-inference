@@ -30,10 +30,9 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import _ from 'lodash';
 import { WorkerContext } from '@/context/worker';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -54,7 +53,7 @@ type operationNames =
   | 'Inference Request Payment'
   | 'Inference Redistribution';
 
-const PendingCard = ({ tx }: { tx: IEdge }) => {
+const PendingCard = ({ tx, autoRetry }: { tx: IEdge, autoRetry: boolean }) => {
   const { currentAddress } = useContext(WalletContext);
   const [operationName, setOperationName] = useState<operationNames | undefined>(undefined);
   const [getPayment, { data: paymentData, previousData: previousPaymentData }] =
@@ -64,7 +63,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
   const theme = useTheme();
   const { startJob } = useContext(WorkerContext);
 
-  useEffect(() => {
+  useMemo(() => {
     if (tx) {
       switch (findTag(tx, 'operationName')) {
         case MODEL_CREATION:
@@ -157,13 +156,16 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
           timestamp,
           status: 'Failed',
         });
-        startJob({
-          address: currentAddress,
-          operationName: findTag(tx, 'operationName') as string,
-          tags: tx.node.tags,
-          txid: tx.node.id,
-          encodedTags: false,
-        });
+        const canRetry = target && quantity && !Number.isNaN(quantity);
+        if (autoRetry && canRetry) {
+          startJob({
+            address: currentAddress,
+            operationName: findTag(tx, 'operationName') as string,
+            tags: tx.node.tags,
+            txid: tx.node.id,
+            encodedTags: false,
+          });
+        }
       } else if (paymentData && paymentData.transactions.edges.length > 0) {
         // found payment tx show status
         const payment: IEdge = paymentData.transactions.edges[0];
@@ -277,13 +279,16 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         sx={{ padding: '8px 16px' }}
         action={
           <Tooltip title='View in Explorer'>
-            <IconButton
-              size='small'
-              href={`https://viewblock.io/arweave/tx/${payment?.id}`}
-              target='_blank'
-            >
-              <OpenInNewIcon />
-            </IconButton>
+            <span>
+              <IconButton
+                size='small'
+                href={`https://viewblock.io/arweave/tx/${payment?.id}`}
+                target='_blank'
+                disabled={payment?.status === 'Failed'}
+              >
+                <OpenInNewIcon />
+              </IconButton>
+            </span>
           </Tooltip>
         }
       />
@@ -377,11 +382,12 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         >
           {!payment.target || !payment.quantity || Number.isNaN(payment.quantity) ? (
             <>
-              <Button onClick={handleRetry} variant='outlined' disabled>
-                Retry
-              </Button>
               <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
-                <InfoOutlinedIcon />
+                <span>
+                  <Button onClick={handleRetry} variant='outlined' disabled>
+                    Retry
+                  </Button>
+                </span>
               </Tooltip>
             </>
           ) : (

@@ -13,7 +13,7 @@ import { IEdge } from '@/interfaces/arweave';
 import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
-import { useEffect, useContext, useState, useRef, SyntheticEvent, forwardRef, RefObject } from 'react';
+import { useEffect, useContext, useState, useRef, SyntheticEvent, forwardRef, RefObject, SetStateAction, Dispatch } from 'react';
 import {
   Backdrop,
   Box,
@@ -34,7 +34,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import useScroll from '@/hooks/useScroll';
 import { useNavigate } from 'react-router-dom';
 
-const Content = ({ scrollableRef }: { scrollableRef: RefObject<HTMLElement>}) => {
+const Content = ({ scrollableRef, setOpen }: { scrollableRef: RefObject<HTMLElement>, setOpen: Dispatch<SetStateAction<boolean>> }) => {
   const elementsPerPage = 10;
   const { currentAddress } = useContext(WalletContext);
   const [minHeight, setMinHeight] = useState(0);
@@ -63,7 +63,7 @@ const Content = ({ scrollableRef }: { scrollableRef: RefObject<HTMLElement>}) =>
     },
     skip: !currentAddress || minHeight <= 0,
     notifyOnNetworkStatusChange: true,
-    fetchPolicy: 'no-cache',
+    fetchPolicy: 'network-only',
   });
 
   useEffect(() => {
@@ -76,6 +76,11 @@ const Content = ({ scrollableRef }: { scrollableRef: RefObject<HTMLElement>}) =>
 
   const refreshClick = () => {
     refetch();
+  };
+
+  const handleViewAll = () => {
+    setOpen(false);
+    navigate('/payments');
   };
 
   return (
@@ -99,7 +104,7 @@ const Content = ({ scrollableRef }: { scrollableRef: RefObject<HTMLElement>}) =>
           </Box>
 
           {
-            data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)
+            data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} autoRetry={true} />)
           }
           <Zoom
             in={isAtBottom}
@@ -110,7 +115,7 @@ const Content = ({ scrollableRef }: { scrollableRef: RefObject<HTMLElement>}) =>
             <Box display={'flex'} justifyContent={'center'} padding={'8px'}
               sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}
             >
-              <Fab variant="extended" size="medium" color="primary" aria-label="view all" onClick={() => navigate('/payments')}>
+              <Fab variant="extended" size="medium" color="primary" aria-label="view all" onClick={handleViewAll}>
                 <Typography>View All</Typography>
               </Fab>
             </Box>
@@ -139,8 +144,8 @@ const Content = ({ scrollableRef }: { scrollableRef: RefObject<HTMLElement>}) =>
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const ContentForwardRef = forwardRef(function ContentForward({ scrollableRef }: { scrollableRef: RefObject<HTMLElement> }, _ref) {
-  return <Content scrollableRef={scrollableRef}/>;
+const ContentForwardRef = forwardRef(function ContentForward({ scrollableRef, setOpen }: { scrollableRef: RefObject<HTMLElement>, setOpen: Dispatch<SetStateAction<boolean>> }, _ref) {
+  return <Content scrollableRef={scrollableRef} setOpen={setOpen} />;
 });
 
 const Pending = () => {
@@ -206,7 +211,7 @@ const Pending = () => {
           >
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
-                <ContentForwardRef scrollableRef={scrollableRef} />
+                <ContentForwardRef scrollableRef={scrollableRef} setOpen={setOpen}/>
               </ClickAwayListener>
             </Paper>
           </Grow>

@@ -6,7 +6,7 @@ import { IEdge } from '@/interfaces/arweave';
 import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
-import { Box, Typography, Button, Backdrop, CircularProgress, useTheme, Container } from '@mui/material';
+import { Box, Typography, Button, Backdrop, CircularProgress, useTheme, Container, Stack } from '@mui/material';
 import { useContext, useState, useEffect, useRef } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import _ from 'lodash';
@@ -42,8 +42,6 @@ const Payments = () => {
     },
     skip: !currentAddress || minHeight <= 0,
     notifyOnNetworkStatusChange: true,
-    fetchPolicy: 'no-cache',
-    pollInterval: 5000,
   });
 
   useEffect(() => {
@@ -88,7 +86,7 @@ const Payments = () => {
         },
       });
     }
-  }, [ isOnScreen, data ]);
+  }, [ isOnScreen, hasNextPage ]);
 
   const refreshClick = () => {
     refetch();
@@ -113,10 +111,9 @@ const Payments = () => {
               <Typography>Refresh</Typography>
             </Button>
           </Box>
-          {
-            data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)
-          }
-          <div ref={target}></div>
+          <Stack spacing={2}>
+              {data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} autoRetry={false}/>)}
+          </Stack>
         </>
       )}
       {loading && (
@@ -136,6 +133,7 @@ const Payments = () => {
           <CircularProgress color='primary' />
         </Backdrop>
       )}
+      <Box ref={target} sx={{ paddingBottom: '16px'}}></Box>
     </Container>
   );
 };
