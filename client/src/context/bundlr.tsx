@@ -1,7 +1,13 @@
 import { WebBundlr } from 'bundlr-custom';
-import { createContext, Dispatch, ReactNode, useContext, useEffect, useReducer } from 'react';
+import { createContext, Dispatch, MutableRefObject, ReactNode, useContext, useEffect, useReducer } from 'react';
 import { DEV_BUNDLR_URL, NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 import { WalletContext } from './wallet';
+import { ITag } from '@/interfaces/arweave';
+import fileReaderStream from 'filereader-stream';
+import BigNumber from 'bignumber.js';
+import { FundResponse, UploadResponse } from 'bundlr-custom/build/common/types';
+import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
+import { AxiosResponse } from 'axios';
 
 export type bundlrNodeUrl =
   | typeof DEV_BUNDLR_URL
@@ -9,20 +15,26 @@ export type bundlrNodeUrl =
   | typeof NODE2_BUNDLR_URL;
 type BundlrChangeNodeAction = { type: 'node_changed'; bundlr: WebBundlr };
 
-type BundlrGetBalanceAction = { type: 'get_balance' };
-type BundlrAction = BundlrChangeNodeAction | BundlrGetBalanceAction;
+type BundlrUpdateBalanceAction = { type: 'update_balance'; balance: number };
+type BundlrAction = BundlrChangeNodeAction | BundlrUpdateBalanceAction;
 
 interface BundlrContext {
-  state?: WebBundlr;
-  actions: {
-    changeNode: (value: bundlrNodeUrl) => Promise<void>;
-  };
+  bundlr?: WebBundlr;
+  nodeBalance: number;
+  changeNode: (value: bundlrNodeUrl) => Promise<void>;
+  updateBalance: () => Promise<void>;
+  fundNode: (value: string) => Promise<FundResponse>;
   retryConnection: () => Promise<void>;
+  getPrice: (bytes: number, currency?: string) => Promise<BigNumber>,
+  upload: (data: string, tags: ITag[]) => Promise<UploadResponse>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  chunkUpload: (file: File, tags: ITag[], totalChunks: MutableRefObject<number>, handleUpload: (value: ChunkInfo) => void, handleError: (e: ChunkError) => void, handleDone: (value: unknown) => void) => Promise<AxiosResponse<UploadResponse, any>>,
 }
 
-const createActions = (dispatch: Dispatch<BundlrAction>) => {
+const createActions = (dispatch: Dispatch<BundlrAction>, bundlr?: WebBundlr) => {
   return {
-    changeNode: async (value: bundlrNodeUrl) => asyncChangeNode(dispatch, value as bundlrNodeUrl),
+    changeNode: async (value: bundlrNodeUrl) => asyncChangeNode(dispatch, value),
+    updateBalance: async () => asyncUpdateBalance(dispatch, bundlr),
   };
 };
 
@@ -31,28 +43,63 @@ const asyncChangeNode = async (dispatch: Dispatch<BundlrAction>, node: bundlrNod
   const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
   try {
     await bundlr.ready();
+    dispatch({ type: 'node_changed', bundlr });
   } catch (error) {
     console.log(error);
   }
-  dispatch({ type: 'node_changed', bundlr });
+
+  await asyncUpdateBalance(dispatch, bundlr);
 };
 
-const bundlrReducer = (state?: WebBundlr, action?: BundlrAction) => {
+const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr?: WebBundlr) => {
+  if (!bundlr) {
+    dispatch({ type: 'update_balance', balance: 0 });
+    return;
+  }
+
+  try {
+    const balance = await bundlr.getLoadedBalance();
+    const numberBalance = balance.toNumber();
+    dispatch({ type: 'update_balance', balance: numberBalance });
+  } catch (error) {
+    dispatch({ type: 'update_balance', balance: 0 });
+  }
+};
+
+const bundlrReducer = (state: { bundlr?: WebBundlr, nodeBalance: number }, action?: BundlrAction) => {
   if (!action) return state;
   switch (action.type) {
     case 'node_changed':
       // eslint-disable-next-line no-case-declarations
-      return action.bundlr;
+      return {
+        ...state,
+        ref: action.bundlr
+      };
+    case 'update_balance':
+      return {
+        ...state,
+        nodeBalance: action.balance
+      };
     default:
       return state;
   }
 };
 
-export const BundlrContext = createContext<BundlrContext | undefined>(undefined);
+export const BundlrContext = createContext<BundlrContext>({
+  bundlr: undefined,
+  nodeBalance: 0,
+  retryConnection: async () => new Promise(() => null),
+  getPrice: async () => new Promise(() => null),
+  upload: async () => new Promise(() => null),
+  chunkUpload: async () => new Promise(() => null),
+  changeNode: async () => new Promise(() => null),
+  updateBalance: async () => new Promise(() => null),
+  fundNode: async () => new Promise(() => null),
+});
 
 export const BundlrProvider = ({ children }: { children: ReactNode }) => {
-  const [state, dispatch] = useReducer(bundlrReducer, undefined);
-  const actions = createActions(dispatch);
+  const [state, dispatch] = useReducer(bundlrReducer, { bundlr: undefined, nodeBalance: 0 });
+  const actions = createActions(dispatch, state.bundlr);
 
   const walletState = useContext(WalletContext);
 
@@ -60,12 +107,54 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
     const addressChanged = async () => {
       await actions.changeNode(NODE1_BUNDLR_URL);
     };
-    addressChanged();
+    if (walletState.currentAddress) addressChanged();
   }, [walletState.currentAddress]);
 
-  const retryConnection = async () => await state?.ready();
+  const retryConnection = async () => await state.bundlr?.ready();
 
-  const value = { state, actions, retryConnection };
+  const getPrice = async (bytes: number, currency?: string) => {
+    if (state.bundlr) {
+      return currency ? await state.bundlr.utils.getPrice(currency, bytes) : await state.bundlr.getPrice(bytes);
+    } else {
+      return new BigNumber(0);
+    }
+  };
+
+  const upload = async (data: string, tags: ITag[]) => {
+    if (!state.bundlr) throw new Error('Bundlr not Initialized');
+    return state.bundlr.upload(data, { tags });
+  };
+
+  const chunkUpload = async (file: File, tags: ITag[], totalChunks: MutableRefObject<number>, handleUpload: (value: ChunkInfo) => void, handleError: (e: ChunkError) => void, handleDone: (value: unknown) => void) => {
+    if (!state.bundlr) throw new Error('Bundlr not Initialized');
+
+    const uploader = state.bundlr.uploader.chunkedUploader;
+    const chunkSize = 25 * (1024 * 1024); // default is
+
+    // divide the total file size by the size of each chunk we'll upload
+    if (file.size < chunkSize) totalChunks.current = 1;
+    else {
+      totalChunks.current = Math.floor(file.size / chunkSize);
+    }
+    /** Register Event Callbacks */
+    // event callback: called for every chunk uploaded
+    uploader.on('chunkUpload', handleUpload);
+    // event callback: called if an error happens
+    uploader.on('chunkError', handleError);
+    // event callback: called when file is fully uploaded
+    uploader.on('done', handleDone);
+    // upload the file
+    const readableStream = fileReaderStream(file);
+    return uploader.uploadData(readableStream, { tags });
+  };
+
+  const fundNode = (value: string) => {
+    if (!state.bundlr) throw new Error('Bundlr not Initialized');
+
+    return state.bundlr.fund(value);
+  };
+
+  const value = { ...state, ...actions, retryConnection, getPrice, upload, chunkUpload, fundNode };
 
   return <BundlrContext.Provider value={value}>{children}</BundlrContext.Provider>;
 };

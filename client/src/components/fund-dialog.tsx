@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import LoadingButton from '@mui/lab/LoadingButton';
-import BigNumber from 'bignumber.js';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { NODE1_BUNDLR_URL, NODE2_BUNDLR_URL } from '@/constants';
 import { BundlrContext, bundlrNodeUrl } from '@/context/bundlr';
@@ -39,42 +38,30 @@ const FundDialog = ({
 }) => {
   const [node, setNode] = useState<bundlrNodeUrl>(NODE1_BUNDLR_URL);
   const [amount, setAmount] = useState(0);
-  const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  // const { curer}
-
-  const bundlrContext = useContext(BundlrContext);
+  const { nodeBalance, fundNode, updateBalance, changeNode } = useContext(BundlrContext);
   const { currentBalance: walletBalance, updateBalance: updateWalletBalance } =
     useContext(WalletContext);
 
-  const handleChange = (event: SelectChangeEvent) => {
+  const handleChange = async (event: SelectChangeEvent) => {
     setNode(event.target.value as bundlrNodeUrl);
-    bundlrContext && bundlrContext.actions.changeNode(event.target.value as bundlrNodeUrl);
+    await changeNode(event.target.value as bundlrNodeUrl);
   };
 
   const handleAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
     setAmount(+event.target.value);
   };
 
-  const updateNodeBalance = async () => {
-    // Get loaded balance in atomic units
-    const atomicBalance = await bundlrContext?.state?.getLoadedBalance();
-
-    // Convert balance to an easier to read format
-    if (atomicBalance) {
-      const convertedBalance = bundlrContext?.state?.utils.unitConverter(atomicBalance);
-      convertedBalance && setBalance(convertedBalance.toNumber());
-    }
+  const asyncGetNodeBalance = async () => {
+    await updateBalance();
   };
 
-  const updateNodeBalanceEffect = () => {
+  useEffect(() => {
     if (open) {
-      updateNodeBalance();
+      asyncGetNodeBalance();
     }
-  };
-
-  useEffect(updateNodeBalanceEffect, [node, open]); // run when node changes
+  }, [node, open]); // run when node changes
 
   useEffect(() => {
     const asyncgetWalletBalance = async () => {
@@ -90,20 +77,12 @@ const FundDialog = ({
   };
 
   const handleFund = async () => {
-    if (!bundlrContext || !bundlrContext.state) {
-      return;
-    }
-
     setLoading(true);
-    const bn = new BigNumber(amount);
-    const fundAmountParsed = bn.multipliedBy(bundlrContext.state.currencyConfig.base[1]);
+    // const bn = new BigNumber(amount);
+    const winstonAmount = arweave.ar.arToWinston(amount.toString());
     try {
-      const res = await bundlrContext.state.fund(fundAmountParsed.toString());
-      const atomicBalance = await bundlrContext.state.getLoadedBalance();
-
-      // Convert balance to an easier to read format
-      const convertedBalance = bundlrContext.state.utils.unitConverter(atomicBalance);
-      setBalance(convertedBalance.toNumber());
+      const res = await fundNode(winstonAmount);
+      await updateBalance();
       setAmount(0);
       enqueueSnackbar(
         <>
@@ -166,13 +145,13 @@ const FundDialog = ({
             </FormControl>
             <TextField
               label='Current Node Balance'
-              value={balance}
+              value={nodeBalance}
               disabled
               margin='dense'
               InputProps={{
                 endAdornment: (
                   <InputAdornment position='start'>
-                    <IconButton onClick={updateNodeBalance}>
+                    <IconButton onClick={asyncGetNodeBalance}>
                       <RefreshIcon />
                     </IconButton>
                   </InputAdornment>
@@ -211,7 +190,7 @@ const FundDialog = ({
               <Button
                 onClick={() => handleFundFinished(node)}
                 variant='contained'
-                disabled={balance <= 0}
+                disabled={nodeBalance <= 0}
               >
                 Continue
               </Button>

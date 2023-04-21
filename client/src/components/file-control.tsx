@@ -10,11 +10,11 @@ import {
   useTheme,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import { ChangeEvent, CSSProperties, DragEvent, useEffect, useState } from 'react';
+import { ChangeEvent, CSSProperties, DragEvent, useContext, useEffect, useState } from 'react';
 import { useController, UseControllerProps } from 'react-hook-form';
 import ClearIcon from '@mui/icons-material/Clear';
-import { WebBundlr } from 'bundlr-custom';
-import { NODE1_BUNDLR_URL } from '@/constants';
+import { BundlrContext } from '@/context/bundlr';
+import arweave from '@/utils/arweave';
 
 type FileControlProps = UseControllerProps & { mat?: InputProps; style?: CSSProperties };
 
@@ -26,6 +26,7 @@ const FileControl = (props: FileControlProps) => {
   const [filePrice, setFilePrice] = useState(0);
   const [hasFileDrag, setHasFileDrag] = useState(false);
   const theme = useTheme();
+  const { getPrice } = useContext(BundlrContext);
 
   const handleDragEnter = (event: DragEvent) => {
     event.preventDefault();
@@ -92,6 +93,7 @@ const FileControl = (props: FileControlProps) => {
       console.log(event.type);
       console.log(event.loaded);
       console.log(event.total);
+      setProgress(event.loaded);
     };
   };
   const onFileLoadStart = (fr: FileReader, file: File) => {
@@ -145,16 +147,13 @@ const FileControl = (props: FileControlProps) => {
     // Check the price to upload 1MB of data
     // The function accepts a number of bytes, so to check the price of
     // 1MB, check the price of 1,048,576 bytes.
-    const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
-    await bundlr.ready();
-    console.log(bundlr);
-    const atomicPrice = await bundlr.getPrice(fileSize);
+    const atomicPrice = await getPrice(fileSize);
     // To ensure accuracy when performing mathematical operations
     // on fractional numbers in JavaScript, it is common to use atomic units.
     // This is a way to represent a floating point (decimal) number using non-decimal notation.
     // Once we have the value in atomic units, we can convert it into something easier to read.
-    const priceConverted = bundlr.utils.unitConverter(atomicPrice);
-    setFilePrice(priceConverted.toNumber());
+    const priceConverted = arweave.ar.winstonToAr(atomicPrice.toString());
+    setFilePrice(parseFloat(priceConverted));
     // setFilePriceAR(parseFloat(arweave.ar.winstonToAr(atomicPrice.toString())));
   };
 
