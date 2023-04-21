@@ -17,7 +17,7 @@ import {
   List,
   ListItem,
 } from '@mui/material';
-import { ChangeEvent, Fragment, ReactElement, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, Fragment, ReactElement, useContext, useEffect, useRef, useState } from 'react';
 import PaymentIcon from '@mui/icons-material/Payment';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -32,6 +32,7 @@ import { RouteLoaderResult } from '@/interfaces/router';
 import { getData } from '@/utils/arweave';
 import useOnScreen from '@/hooks/useOnScreen';
 import MarkdownControl from './md-control';
+import { WalletContext } from '@/context/wallet';
 
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -110,6 +111,7 @@ export const CustomStepper = (props: {
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const [hasScrolledDown, setHasScrollDown] = useState(false);
+  const { currentAddress } = useContext(WalletContext);
 
   const isStepSkipped = (step: number) => {
     return skipped.has(step);
@@ -316,6 +318,7 @@ export const CustomStepper = (props: {
                 width: '204px',
               }}
               variant='contained'
+              disabled={!operatorName || !rate || !currentAddress}
             >
               <Typography
                 sx={{

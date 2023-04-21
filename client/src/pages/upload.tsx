@@ -568,7 +568,7 @@ const Upload = () => {
                 </Button>
                 <Button
                   onClick={handleSubmit(onSubmit)}
-                  disabled={control._formState.isValid}
+                  disabled={(!control._formState.isValid && control._formState.isDirty) || !currentAddress}
                   sx={{
                     borderRadius: '7px',
                     height: '39px',
@@ -601,7 +601,7 @@ const Upload = () => {
             onClose={() => setSnackbarOpen(false)}
             ClickAwayListenerProps={{ onClickAway: () => null }}
           >
-            <Alert severity='info' sx={{ width: '100%', minWidth: '100px' }}>
+            <Alert severity='info' sx={{ width: '100%', minWidth: '300px' }}>
               Uploading...
               <CustomProgress value={progress}></CustomProgress>
             </Alert>

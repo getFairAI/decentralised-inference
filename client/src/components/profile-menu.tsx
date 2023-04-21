@@ -8,6 +8,7 @@ import { AppThemeContext } from '@/context/theme';
 import { Tooltip, Typography } from '@mui/material';
 import { GITHUB_LINK, WHITEPAPER_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
+import { WalletContext } from '@/context/wallet';
 
 const options = [
   'Bundlr Settings',
@@ -15,7 +16,13 @@ const options = [
   'Toggle Theme',
   'Github',
   'Whitepaper',
-  // 'Disconnect'
+  'Disconnect'
+];
+
+const disableableOptions = [
+  'Bundlr Settings',
+  'My Models',
+  'Disconnect'
 ];
 
 const ITEM_HEIGHT = 48;
@@ -25,8 +32,7 @@ export default function ProfileMenu() {
   const [fundOpen, setFundOpen] = React.useState(false);
   const navigate = useNavigate();
   const { toggleTheme } = React.useContext(AppThemeContext);
-
-  /* const {  } = React.useContext(WalletContext); */
+  const { disconnectWallet, currentAddress } = React.useContext(WalletContext);
 
   const open = Boolean(anchorEl);
 
@@ -57,10 +63,10 @@ export default function ProfileMenu() {
       case 'Whitepaper':
         window.open(WHITEPAPER_LINK, '_blank');
         break;
-      /* case 'Disconnect':
-        await disconnect();
+      case 'Disconnect':
+        await disconnectWallet();
         setAnchorEl(null);
-        return; */
+        return;
       default:
         setAnchorEl(null);
         return;
@@ -96,16 +102,24 @@ export default function ProfileMenu() {
       >
         {options.map((option) =>
           option === 'Toggle Theme' ? (
-            <MenuItem key={option} onClick={() => HandleOptionClick(option)} disabled>
-              <Tooltip title='This Feature is not Available at the moment'>
-                <Typography>{option}</Typography>
-              </Tooltip>
-            </MenuItem>
-          ) : (
-            <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
+            <Tooltip title='This Feature is not Available at the moment' key={option}>
+              <span>
+                <MenuItem onClick={() => HandleOptionClick(option)} disabled>
+                  <Typography>{option}</Typography>
+                </MenuItem>
+              </span>
+            </Tooltip>
+          ) : disableableOptions.includes(option) && (!currentAddress) ? (
+            <Tooltip title='This Feature requires a wallet to be connected' key={option}>
+              <span>
+                <MenuItem onClick={() => HandleOptionClick(option)} disabled>
+                  <Typography>{option}</Typography>
+                </MenuItem>
+              </span>
+            </Tooltip>
+          ) : <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
               <Typography>{option}</Typography>
             </MenuItem>
-          ),
         )}
       </Menu>
       <FundDialog open={fundOpen} setOpen={setFundOpen} />

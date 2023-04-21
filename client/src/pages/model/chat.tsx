@@ -68,7 +68,7 @@ const Chat = () => {
   const { address } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { currentAddress: userAddr } = useContext(WalletContext);
+  const { currentAddress: userAddr, isWalletLoaded } = useContext(WalletContext);
   const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<Message[]>([]);
   const [polledMessages, setPolledMessages] = useState<Message[]>([]);
@@ -132,8 +132,14 @@ const Chat = () => {
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
       navigate(0);
+    } else if (!userAddr) {
+      navigate('/');
     }
   }, [userAddr]);
+
+  useEffect(() => {
+    if (!isWalletLoaded) navigate('/');
+  }, [ isWalletLoaded ]);
 
   useEffect(() => {
     if (state && userAddr) {
