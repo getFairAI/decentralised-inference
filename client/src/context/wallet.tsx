@@ -61,7 +61,9 @@ const asyncConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
     });
   } catch (error) {
     // manually remove arconnect overlay
-    const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll('.arconnect_connect_overlay_extension_temporary');
+    const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll(
+      '.arconnect_connect_overlay_extension_temporary',
+    );
     overlays.forEach((el) => el.remove());
   }
 };
