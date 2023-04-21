@@ -21,13 +21,58 @@ const Banner = styled(Toolbar)(({ theme }) => ({
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
+  const { currentAddress, currentBalance, connectWallet, isWalletLoaded } =
+    useContext(WalletContext);
 
-  if (!currentAddress && currentAddress !== '') {
+  if (!isWalletLoaded) {
     return (
-      <IconButton onClick={connectWallet}>
-        <img src='./icon-empty-wallet.svg' />
-      </IconButton>
+      <>
+        <Box
+          sx={{
+            borderRadius: '23px',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 0,
+            gap: '17px',
+            background: theme.palette.secondary.main,
+          }}
+        >
+          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>
+            Wallet Not Available
+          </Typography>
+          <IconButton sx={{ paddingRight: '16px' }} disabled>
+            <img src='./icon-empty-wallet.svg' />
+          </IconButton>
+        </Box>
+        <ProfileMenu />
+      </>
+    );
+  }
+
+  if (!currentAddress || currentAddress === '') {
+    return (
+      <>
+        <Box
+          sx={{
+            borderRadius: '23px',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 0,
+            gap: '17px',
+            background: theme.palette.secondary.main,
+          }}
+        >
+          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>Connect Wallet</Typography>
+          <IconButton onClick={connectWallet} sx={{ paddingRight: '16px' }}>
+            <img src='./icon-empty-wallet.svg' />
+          </IconButton>
+        </Box>
+        <ProfileMenu />
+      </>
     );
   }
 

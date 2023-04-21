@@ -542,7 +542,7 @@ const Detail = () => {
           </Button>
         </DialogActions>
       )}
-      {selectedIdx >= 0 && (
+      {showOperators && selectedIdx >= 0 && (
         <Box
           sx={{
             background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
@@ -603,6 +603,7 @@ const Detail = () => {
                 },
               )
             }
+            disabled={!currentAddress}
           >
             <Typography
               sx={{

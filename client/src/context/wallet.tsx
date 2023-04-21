@@ -11,6 +11,8 @@ const DEFAULT_PERMISSSIONS: PermissionType[] = [
   'SIGN_TRANSACTION',
   'DISPATCH',
 ];
+type WalletLoadedAction = { type: 'wallet_loaded' };
+type WalletDisconnectAction = { type: 'wallet_disconnect' };
 type WalletConnectedAction = { type: 'wallet_connected'; address: string };
 type WalletBalanceUpdatedAction = { type: 'wallet_balance_updated'; balance: number };
 type WalletPermissionsChangedAction = {
@@ -18,20 +20,26 @@ type WalletPermissionsChangedAction = {
   permissions: PermissionType[];
 };
 type WalletAction =
+  | WalletLoadedAction
   | WalletConnectedAction
+  | WalletDisconnectAction
   | WalletBalanceUpdatedAction
   | WalletPermissionsChangedAction;
 
 interface WalletContext {
+  isWalletLoaded: boolean;
   currentAddress: string;
   currentPermissions: PermissionType[];
   currentBalance: number;
   connectWallet: () => Promise<void>;
   updateBalance: () => Promise<void>;
+  disconnectWallet: () => Promise<void>;
 }
 
 const createActions = (dispatch: Dispatch<WalletAction>, state: WalletContext) => {
   return {
+    walletLoaded: async () => dispatch({ type: 'wallet_loaded' }),
+    walletDisconnect: async () => asyncDisconnectWallet(dispatch),
     connectWallet: async () => asyncConnectWallet(dispatch),
     switchWallet: async (newAddress: string) => asyncWalletSwitch(dispatch, newAddress),
     updateBalance: async () => asyncUpdateBalance(dispatch, state.currentAddress),
@@ -52,7 +60,20 @@ const asyncConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
       balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
     });
   } catch (error) {
-    console.log(error);
+    // manually remove arconnect overlay
+    const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll(
+      '.arconnect_connect_overlay_extension_temporary',
+    );
+    overlays.forEach((el) => el.remove());
+  }
+};
+
+const asyncDisconnectWallet = async (dispatch: Dispatch<WalletAction>) => {
+  try {
+    await window.arweaveWallet.disconnect();
+    dispatch({ type: 'wallet_disconnect' });
+  } catch (err) {
+    console.log(err);
   }
 };
 
@@ -84,6 +105,8 @@ const asyncUpdateBalance = async (dispatch: Dispatch<WalletAction>, addr: string
 const walletReducer = (state: WalletContext, action?: WalletAction) => {
   if (!action) return state;
   switch (action.type) {
+    case 'wallet_loaded':
+      return { ...state, isWalletLoaded: true };
     case 'wallet_connected':
       // eslint-disable-next-line no-case-declarations
       return { ...state, currentAddress: action.address };
@@ -91,12 +114,21 @@ const walletReducer = (state: WalletContext, action?: WalletAction) => {
       return { ...state, currentBalance: action.balance };
     case 'wallet_permissions_changed':
       return { ...state, currentPermissions: action.permissions };
+    case 'wallet_disconnect': {
+      return {
+        ...state,
+        currentAddress: '',
+        currentPermissions: [],
+        currentBalance: 0,
+      };
+    }
     default:
       return state;
   }
 };
 
 const initialState: WalletContext = {
+  isWalletLoaded: false,
   currentAddress: '',
   currentPermissions: [],
   currentBalance: 0,
@@ -104,6 +136,8 @@ const initialState: WalletContext = {
   connectWallet: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   updateBalance: async () => {},
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  disconnectWallet: async () => {},
 };
 
 export const WalletContext = createContext<WalletContext>(initialState);
@@ -119,9 +153,11 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     ...state,
     connectWallet: actions.connectWallet,
     updateBalance: actions.updateBalance,
+    disconnectWallet: actions.walletDisconnect,
   };
 
   const walletLoaded = async () => {
+    await actions.walletLoaded();
     await actions.connectWallet();
   };
 
