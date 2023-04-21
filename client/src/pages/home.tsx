@@ -87,7 +87,7 @@ export default function Home() {
         },
       });
     }
-  }, [useOnScreen, txs]);
+  }, [ isOnScreen, txs ]);
 
   useEffect(() => {
     const asyncWrapper = async () => {

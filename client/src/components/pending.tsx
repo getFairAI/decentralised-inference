@@ -13,28 +13,34 @@ import { IEdge } from '@/interfaces/arweave';
 import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
-import { useEffect, useContext, useState, useRef, SyntheticEvent, forwardRef } from 'react';
+import { useEffect, useContext, useState, useRef, SyntheticEvent, forwardRef, RefObject } from 'react';
 import {
   Backdrop,
   Box,
   Button,
   CircularProgress,
   ClickAwayListener,
+  Fab,
   Grow,
   IconButton,
   Paper,
   Popper,
   Typography,
+  Zoom,
   useTheme,
 } from '@mui/material';
 import PendingCard from './pending-card';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import useScroll from '@/hooks/useScroll';
+import { useNavigate } from 'react-router-dom';
 
-const Content = () => {
+const Content = ({ scrollableRef }: { scrollableRef: RefObject<HTMLElement>}) => {
   const elementsPerPage = 10;
   const { currentAddress } = useContext(WalletContext);
   const [minHeight, setMinHeight] = useState(0);
   const theme = useTheme();
+  const isAtBottom = useScroll(scrollableRef);
+  const navigate = useNavigate();
 
   const { data, error, loading, refetch } = useQuery(QUERY_USER_INTERACTIONS, {
     variables: {
@@ -92,8 +98,23 @@ const Content = () => {
             </Button>
           </Box>
 
-          {data &&
-            data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)}
+          {
+            data && data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)
+          }
+          <Zoom
+            in={isAtBottom}
+            timeout={500}
+            mountOnEnter
+            unmountOnExit
+          >
+            <Box display={'flex'} justifyContent={'center'} padding={'8px'}
+              sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}
+            >
+              <Fab variant="extended" size="medium" color="primary" aria-label="view all" onClick={() => navigate('/payments')}>
+                <Typography>View All</Typography>
+              </Fab>
+            </Box>
+          </Zoom> 
         </>
       )}
       {loading && (
@@ -117,8 +138,9 @@ const Content = () => {
   );
 };
 
-const ContentForwardRef = forwardRef(function ContentForward() {
-  return <Content />;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const ContentForwardRef = forwardRef(function ContentForward({ scrollableRef }: { scrollableRef: RefObject<HTMLElement> }, _ref) {
+  return <Content scrollableRef={scrollableRef}/>;
 });
 
 const Pending = () => {
@@ -126,6 +148,7 @@ const Pending = () => {
 
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  const scrollableRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -179,10 +202,11 @@ const Pending = () => {
               overflowY: 'auto',
               minWidth: '200px',
             }}
+            ref={scrollableRef}
           >
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
-                <ContentForwardRef />
+                <ContentForwardRef scrollableRef={scrollableRef} />
               </ClickAwayListener>
             </Paper>
           </Grow>

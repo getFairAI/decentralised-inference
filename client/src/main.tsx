@@ -1,20 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
-import Root from './root';
+import Root from '@/root';
 import Home from '@/pages/home';
 import Upload from '@/pages/upload';
 import Model, { getModelFeeAndAttachments } from '@/pages/model/model';
-import './styles/main.css';
-import Operators from './pages/operators';
-import Register from './pages/model/register';
-import Detail from './pages/model/detail';
-import OperatorDetails from './pages/operator/detail';
-import Chat from './pages/model/chat';
-import History from './pages/history';
-import ModelFeeGuard from './guards/model-fee';
-import BlockOperatorGuard from './guards/block-operator';
+import '@/styles/main.css';
+import Operators from '@/pages/operators';
+import Register from '@/pages/model/register';
+import Detail from '@/pages/model/detail';
+import OperatorDetails from '@/pages/operator/detail';
+import Chat from '@/pages/model/chat';
+import History from '@/pages/history';
+import ModelFeeGuard from '@/guards/model-fee';
+import BlockOperatorGuard from '@/guards/block-operator';
 import Error from '@/pages/error';
+import Payments from '@/pages/payments';
 
 const router = createHashRouter([
   {
@@ -94,6 +95,10 @@ const router = createHashRouter([
           },
         ],
       },
+      {
+        path: 'payments',
+        element: <Payments />
+      }
     ],
   },
 ]);
