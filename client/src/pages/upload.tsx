@@ -274,7 +274,25 @@ const Upload = () => {
     setSnackbarOpen(true);
     try {
       const res = await chunkUpload(file, tags, totalChunks, handleUpload, handleError, handleDone);
-      console.log(`Upload Success: https://arweave.net/${res.data.id}`);
+      if (res.status === 200) {
+        enqueueSnackbar(
+          <>
+            Uploaded Usage Notes File
+            <br></br>
+            <a
+              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
+              target={'_blank'}
+              rel='noreferrer'
+            >
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
+          { variant: 'success' },
+        );
+      } else {
+        enqueueSnackbar(res.statusText, { variant: 'error' });
+        return;
+      }
       try {
         const tx = await arweave.createTransaction({
           quantity: fee,
@@ -329,6 +347,7 @@ const Upload = () => {
       setSnackbarOpen(false);
       setProgress(0);
       setMessage('Upload error ');
+      enqueueSnackbar('An Error Occured.', { variant: 'error' });
     }
   };
 
