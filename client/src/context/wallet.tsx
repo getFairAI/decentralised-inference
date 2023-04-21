@@ -60,7 +60,9 @@ const asyncConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
       balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
     });
   } catch (error) {
-    console.log(error);
+    // manually remove arconnect overlay
+    const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll('.arconnect_connect_overlay_extension_temporary');
+    overlays.forEach((el) => el.remove());
   }
 };
 
