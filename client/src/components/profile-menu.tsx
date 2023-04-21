@@ -2,13 +2,13 @@ import * as React from 'react';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import FundDialog from './fund-dialog';
 import { useNavigate } from 'react-router-dom';
 import { AppThemeContext } from '@/context/theme';
 import { Tooltip, Typography } from '@mui/material';
 import { GITHUB_LINK, WHITEPAPER_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 import { WalletContext } from '@/context/wallet';
+import { FundContext } from '@/context/fund';
 
 const options = [
   'Bundlr Settings',
@@ -25,10 +25,10 @@ const ITEM_HEIGHT = 48;
 
 export default function ProfileMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [fundOpen, setFundOpen] = React.useState(false);
   const navigate = useNavigate();
   const { toggleTheme } = React.useContext(AppThemeContext);
   const { disconnectWallet, currentAddress } = React.useContext(WalletContext);
+  const { setOpen: setFundOpen } = React.useContext(FundContext);
 
   const open = Boolean(anchorEl);
 
@@ -120,7 +120,6 @@ export default function ProfileMenu() {
           ),
         )}
       </Menu>
-      <FundDialog open={fundOpen} setOpen={setFundOpen} />
     </div>
   );
 }

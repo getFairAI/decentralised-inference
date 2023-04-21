@@ -21,7 +21,6 @@ import SelectControl from '@/components/select-control';
 import MarkdownControl from '@/components/md-control';
 import FileControl from '@/components/file-control';
 import AvatarControl from '@/components/avatar-control';
-import FundDialog from '@/components/fund-dialog';
 import CustomProgress from '@/components/progress';
 import {
   APP_VERSION,
@@ -43,6 +42,7 @@ import NumberControl from '@/components/number-control';
 import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
+import { FundContext } from '@/context/fund';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -65,7 +65,6 @@ const Upload = () => {
       category: 'text',
     },
   });
-  const [fundOpen, setFundOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [, setMessage] = useState('');
@@ -76,6 +75,7 @@ const Upload = () => {
   const theme = useTheme();
   const { currentAddress } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
+  const { setOpen: setFundOpen } = useContext(FundContext);
 
   const onSubmit = async (data: FieldValues) => {
     await updateBalance();
@@ -540,11 +540,6 @@ const Upload = () => {
               </CardActions>
             </Card>
           </Box>
-          <FundDialog
-            open={fundOpen}
-            setOpen={setFundOpen}
-            handleFundFinished={handleFundFinished}
-          />
           <Snackbar
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             open={snackbarOpen}

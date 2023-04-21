@@ -105,23 +105,34 @@ const FundDialog = ({
   return (
     <>
       <Dialog open={open} maxWidth={'sm'} fullWidth onClose={handleClose}>
-        <DialogTitle>Fund Bundlr Node</DialogTitle>
+        <DialogTitle>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: '23px',
+              lineHeight: '31px',
+            }}
+          >Fund Bundlr Node
+          </Typography>
+        </DialogTitle>
         <DialogContent>
           <Alert variant='outlined' severity='info' sx={{ marginBottom: '16px' }}>
-            Funding a Node Bundlr can take up to 40 minutes. Current Pending transactions will not
-            be reflected on the node balance until they are confirmed.
-            <br />
-            You can view Bundlr Node transactions at:
-            <br />
-            <a
-              href='https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              <u>
-                https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs
-              </u>
-            </a>
+            <Typography>
+              Funding a Node Bundlr can take up to 40 minutes. Current Pending transactions will not
+              be reflected on the node balance until they are confirmed.
+              <br />
+              You can view Bundlr Node transactions at:
+              <br />
+              <a
+                href='https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs'
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                <u>
+                  https://viewblock.io/arweave/address/OXcT1sVRSA5eGwt2k6Yuz8-3e3g9WJi5uSE99CWqsBs
+                </u>
+              </a>
+            </Typography>
           </Alert>
           <Box
             display={'flex'}

@@ -15,13 +15,18 @@ import {
 import { ReactElement, useContext, useEffect, useState } from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
+import { BundlrContext } from '@/context/bundlr';
+import arweave from '@/utils/arweave';
+import { FundContext } from '@/context/fund';
 
 export default function Layout({ children }: { children: ReactElement }) {
   const [showBanner, setShowBanner] = useState(true);
   const [open, setOpen] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const { isWalletLoaded, currentAddress } = useContext(WalletContext);
+  const { nodeBalance } = useContext(BundlrContext);
   const theme = useTheme();
+  const { setOpen: setFundOpen } = useContext(FundContext);
 
   useEffect(() => {
     // opens if wallet is not loaded
@@ -31,6 +36,18 @@ export default function Layout({ children }: { children: ReactElement }) {
   useEffect(() => {
     setOpen(!currentAddress || currentAddress === '');
   }, [currentAddress]);
+
+  useEffect(() => {
+    const arBalance = parseFloat(arweave.ar.winstonToAr(nodeBalance.toString()));
+    if (currentAddress && arBalance < 0.5) {
+      setOpen(true);
+    }
+  }, [ nodeBalance ]);
+
+  const handleFundNow = () => {
+    setOpen(false);
+    setFundOpen(true);
+  };
 
   return (
     <>
@@ -70,7 +87,12 @@ export default function Layout({ children }: { children: ReactElement }) {
                     lineHeight: '31px',
                   }}
                 >
-                  {!isWalletLoaded ? 'Browser Wallet Not Detected' : 'Wallet Not Connected'}
+                  {
+                    !isWalletLoaded ?
+                      'Browser Wallet Not Detected' :
+                        !currentAddress ? 'Wallet Not Connected' :
+                          'Missing bundlr Funds'
+                  }
                 </Typography>
               </DialogTitle>
               <DialogContent>
@@ -107,9 +129,12 @@ export default function Layout({ children }: { children: ReactElement }) {
                       textAlign: 'center',
                     }}
                   >
-                    {!isWalletLoaded
-                      ? 'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.'
-                      : 'Wallet Not Connected! Please Connect Wallet to access All App Features.'}
+                    {
+                      !isWalletLoaded
+                        ? 'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.' :
+                          !currentAddress ? 'Wallet Not Connected! Please Connect Wallet to access All App Features.' :
+                            'Current Bundlr Node Has no Loaded Funds. Please Fund Bundlr Node in order to utilize App'
+                    }
                   </Typography>
                 </Alert>
               </DialogContent>
@@ -121,14 +146,35 @@ export default function Layout({ children }: { children: ReactElement }) {
                   paddingBottom: '20px',
                 }}
               >
-                <Button
-                  onClick={() => setOpen(false)}
-                  variant='contained'
-                  color='warning'
-                  sx={{ width: 'fit-content' }}
-                >
-                  <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
-                </Button>
+                {
+                  !isWalletLoaded || !currentAddress ?
+                    <Button
+                      onClick={() => setOpen(false)}
+                      variant='contained'
+                      color='warning'
+                      sx={{ width: 'fit-content' }}
+                    >
+                      <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
+                    </Button> :
+                      <>
+                        <Button
+                          onClick={() => setOpen(false)}
+                          variant='outlined'
+                          color='warning'
+                          sx={{ width: 'fit-content' }}
+                        >
+                          <Typography color={theme.palette.warning.main}>Fund Later</Typography>
+                        </Button>
+                        <Button
+                          onClick={handleFundNow}
+                          variant='contained'
+                          color='warning'
+                          sx={{ width: 'fit-content' }}
+                        >
+                          <Typography color={theme.palette.primary.contrastText}>Fund Now</Typography>
+                        </Button>
+                      </>
+                }
               </DialogActions>
             </Dialog>
           </FilterContext.Provider>
