@@ -24,7 +24,6 @@ import { ChangeEvent, useContext, useEffect, useRef, useState } from 'react';
 import {
   APP_VERSION,
   DEFAULT_TAGS,
-  NODE1_BUNDLR_URL,
   INFERENCE_PERCENTAGE_FEE,
   TAG_NAMES,
   MODEL_INFERENCE_REQUEST,
@@ -44,7 +43,6 @@ import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import AddIcon from '@mui/icons-material/Add';
 import { useSnackbar } from 'notistack';
-import { WebBundlr } from 'bundlr-custom';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
@@ -54,6 +52,7 @@ import _ from 'lodash';
 import useScrollLock from '@/hooks/useScrollLock';
 import '@/styles/main.css';
 import { WorkerContext } from '@/context/worker';
+import { BundlrContext } from '@/context/bundlr';
 
 interface Message {
   id: string;
@@ -91,6 +90,7 @@ const Chat = () => {
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
   const { startJob } = useContext(WorkerContext);
+  const { nodeBalance, upload, getPrice } = useContext(BundlrContext);
 
   const [
     getChatRequests,
@@ -511,17 +511,16 @@ const Chat = () => {
 
   const handleSend = async () => {
     if (!currentConversationId) return;
-    const bundlr = new WebBundlr(NODE1_BUNDLR_URL, 'arweave', window.arweaveWallet);
-    await bundlr.ready();
-    const atomicBalance = await bundlr.getLoadedBalance();
-
-    // Convert balance to an easier to read format
-    const convertedBalance = bundlr.utils.unitConverter(atomicBalance).toNumber();
     const dataSize = new TextEncoder().encode(newMessage).length;
-    const dataPrice = (await bundlr.getPrice(dataSize)).toNumber();
-    if (dataPrice < convertedBalance) {
-      // bundlr does not have enough funds
-      enqueueSnackbar('Bundlr Node does not have enough funds for upload', { variant: 'error' });
+
+    try {
+      const messagePrice = await getPrice(dataSize);
+      if (!nodeBalance || messagePrice.toNumber() > nodeBalance) {
+        enqueueSnackbar('Not Enough Bundlr Funds to send message', { variant: 'error' });
+        return;
+      }
+    } catch (error) {
+      enqueueSnackbar('Bundlr Error', { variant: 'error' });
       return;
     }
 
@@ -544,7 +543,7 @@ const Chat = () => {
     const tempDate = Date.now() / 1000;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
     try {
-      const bundlrRes = await bundlr.upload(newMessage, { tags });
+      const bundlrRes = await upload(newMessage, tags);
 
       const temp = [...messages];
       temp.push({

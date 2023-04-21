@@ -21,9 +21,7 @@ import SelectControl from '@/components/select-control';
 import MarkdownControl from '@/components/md-control';
 import FileControl from '@/components/file-control';
 import AvatarControl from '@/components/avatar-control';
-import FundDialog from '@/components/fund-dialog';
 import CustomProgress from '@/components/progress';
-import fileReaderStream from 'filereader-stream';
 import {
   APP_VERSION,
   MARKETPLACE_FEE,
@@ -43,6 +41,8 @@ import arweave from '@/utils/arweave';
 import NumberControl from '@/components/number-control';
 import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
+import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
+import { FundContext } from '@/context/fund';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -65,68 +65,36 @@ const Upload = () => {
       category: 'text',
     },
   });
-  const [fundOpen, setFundOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [, setMessage] = useState('');
   const [formData, setFormData] = useState<CreateForm | undefined>(undefined);
   const totalChunks = useRef(0);
-  const bundlrContext = useContext(BundlrContext);
+  const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const { currentAddress } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
+  const { setOpen: setFundOpen } = useContext(FundContext);
 
   const onSubmit = async (data: FieldValues) => {
+    await updateBalance();
     setFormData(data as CreateForm);
 
-    if ((await getNodeBalance()) <= 0) {
+    if (nodeBalance <= 0) {
       setFundOpen(true);
     } else {
       handleFundFinished(NODE1_BUNDLR_URL, data as CreateForm); // use default node
     }
   };
 
-  const getNodeBalance = async () => {
-    if (!bundlrContext || !bundlrContext.state) return 0;
-    const atomicBalance = await bundlrContext.state.getLoadedBalance();
-
-    // Convert balance to an easier to read format
-    const convertedBalance = bundlrContext.state.utils.unitConverter(atomicBalance);
-    return convertedBalance.toNumber();
-  };
-
-  const getFilePrice = async (fileSize: number) => {
-    if (!bundlrContext || !bundlrContext.state) return 0;
-    // Check the price to upload 1MB of data
-    // The function accepts a number of bytes, so to check the price of
-    // 1MB, check the price of 1,048,576 bytes.
-    const atomicPrice = await bundlrContext.state.getPrice(fileSize);
-    // To ensure accuracy when performing mathematical operations
-    // on fractional numbers in JavaScript, it is common to use atomic units.
-    // This is a way to represent a floating point (decimal) number using non-decimal notation.
-    // Once we have the value in atomic units, we can convert it into something easier to read.
-    const priceConverted = bundlrContext.state.utils.unitConverter(atomicPrice);
-    return priceConverted.toNumber();
-  };
-
   const uploadAvatarImage = async (modelTx: string, modelName: string, image: File) => {
-    if (!bundlrContext || !bundlrContext.state) return;
-
-    if ((await getFilePrice(image.size)) > (await getNodeBalance()))
+    if ((await getPrice(image.size)).toNumber() > nodeBalance)
       enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
 
-    const uploader = bundlrContext.state.uploader.chunkedUploader;
-    const chunkSize = 25 * (1024 * 1024); // default is
-
-    // divide the total image size by the size of each chunk we'll upload
-    if (image.size < chunkSize) totalChunks.current = 1;
-    else {
-      totalChunks.current = Math.floor(image.size / chunkSize);
-    }
     /** Register Event Callbacks */
     // event callback: called for every chunk uploaded
-    uploader.on('chunkUpload', (chunkInfo) => {
+    const handleUpload = (chunkInfo: ChunkInfo) => {
       console.log(chunkInfo);
       console.log(
         `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
@@ -135,21 +103,22 @@ const Upload = () => {
       // update the progress bar based on how much has been uploaded
       if (chunkNumber >= totalChunks.current) setProgress(100);
       else setProgress((chunkNumber / totalChunks.current) * 100);
-    });
+    };
     // event callback: called if an error happens
-    uploader.on('chunkError', (e) => {
+    const handleError = (e: ChunkError) => {
       setSnackbarOpen(false);
-      console.error(`Error uploading chunk number ${e.id} - ${e.res.statusText}`);
-    });
+      console.error(
+        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+      );
+    };
     // event callback: called when file is fully uploaded
-    uploader.on('done', (finishRes) => {
-      console.log(`Upload completed with ID ${finishRes.id}`);
+    const handleDone = (finishRes: unknown) => {
+      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
       // set the progress bar to 100
       setProgress(100);
       setSnackbarOpen(false);
-    });
+    };
     // upload the file
-    const readableStream = fileReaderStream(image);
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
@@ -161,7 +130,15 @@ const Upload = () => {
     tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
     setSnackbarOpen(true);
     try {
-      const res = await uploader.uploadData(readableStream, { tags });
+      // const res = await uploader.uploadData(readableStream, { tags });
+      const res = await chunkUpload(
+        image,
+        tags,
+        totalChunks,
+        handleUpload,
+        handleError,
+        handleDone,
+      );
       if (res.status === 200) {
         enqueueSnackbar(
           <>
@@ -186,25 +163,16 @@ const Upload = () => {
   };
 
   const uploadUsageNotes = async (modelTx: string, modelName: string, usageNotes: string) => {
-    if (!bundlrContext || !bundlrContext.state) return;
     const file = new File([usageNotes], `${modelName}-usage.md`, {
       type: 'text/markdown',
     });
 
-    if ((await getFilePrice(file.size)) > (await getNodeBalance()))
+    if ((await getPrice(file.size)).toNumber() > nodeBalance)
       enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
 
-    const uploader = bundlrContext.state.uploader.chunkedUploader;
-    const chunkSize = 25 * (1024 * 1024); // default is
-
-    // divide the total file size by the size of each chunk we'll upload
-    if (file.size < chunkSize) totalChunks.current = 1;
-    else {
-      totalChunks.current = Math.floor(file.size / chunkSize);
-    }
     /** Register Event Callbacks */
     // event callback: called for every chunk uploaded
-    uploader.on('chunkUpload', (chunkInfo) => {
+    const handleUpload = (chunkInfo: ChunkInfo) => {
       console.log(chunkInfo);
       console.log(
         `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
@@ -213,21 +181,22 @@ const Upload = () => {
       // update the progress bar based on how much has been uploaded
       if (chunkNumber >= totalChunks.current) setProgress(100);
       else setProgress((chunkNumber / totalChunks.current) * 100);
-    });
+    };
     // event callback: called if an error happens
-    uploader.on('chunkError', (e) => {
+    const handleError = (e: ChunkError) => {
       setSnackbarOpen(false);
-      console.error(`Error uploading chunk number ${e.id} - ${e.res.statusText}`);
-    });
+      console.error(
+        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+      );
+    };
     // event callback: called when file is fully uploaded
-    uploader.on('done', (finishRes) => {
-      console.log(`Upload completed with ID ${finishRes.id}`);
+    const handleDone = (finishRes: unknown) => {
+      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
       // set the progress bar to 100
       setProgress(100);
       setSnackbarOpen(false);
-    });
+    };
     // upload the file
-    const readableStream = fileReaderStream(file);
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
@@ -239,7 +208,7 @@ const Upload = () => {
     tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
     setSnackbarOpen(true);
     try {
-      const res = await uploader.uploadData(readableStream, { tags });
+      const res = await chunkUpload(file, tags, totalChunks, handleUpload, handleError, handleDone);
       if (res.status === 200) {
         enqueueSnackbar(
           <>
@@ -265,27 +234,18 @@ const Upload = () => {
 
   const handleFundFinished = async (node: string, data?: CreateForm) => {
     setFundOpen(false);
-    if (!bundlrContext || !bundlrContext.state) return;
     if (!data) {
       data = formData;
     }
     if (!data || !data.file) return;
     const file = data.file;
 
-    if ((await getFilePrice(file.size)) > (await getNodeBalance()))
+    if ((await getPrice(file.size)).toNumber() > nodeBalance)
       enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
 
-    const uploader = bundlrContext.state.uploader.chunkedUploader;
-    const chunkSize = 25 * (1024 * 1024); // default is
-
-    // divide the total file size by the size of each chunk we'll upload
-    if (file.size < chunkSize) totalChunks.current = 1;
-    else {
-      totalChunks.current = Math.floor(file.size / chunkSize);
-    }
     /** Register Event Callbacks */
     // event callback: called for every chunk uploaded
-    uploader.on('chunkUpload', (chunkInfo) => {
+    const handleUpload = (chunkInfo: ChunkInfo) => {
       console.log(chunkInfo);
       console.log(
         `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
@@ -294,21 +254,22 @@ const Upload = () => {
       // update the progress bar based on how much has been uploaded
       if (chunkNumber >= totalChunks.current) setProgress(100);
       else setProgress((chunkNumber / totalChunks.current) * 100);
-    });
+    };
     // event callback: called if an error happens
-    uploader.on('chunkError', (e) => {
+    const handleError = (e: ChunkError) => {
       setSnackbarOpen(false);
-      console.error(`Error uploading chunk number ${e.id} - ${e.res.statusText}`);
-    });
+      console.error(
+        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+      );
+    };
     // event callback: called when file is fully uploaded
-    uploader.on('done', (finishRes) => {
-      console.log(`Upload completed with ID ${finishRes.id}`);
+    const handleDone = (finishRes: unknown) => {
+      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
       // set the progress bar to 100
       setProgress(100);
       setSnackbarOpen(false);
-    });
+    };
     // upload the file
-    const readableStream = fileReaderStream(file);
     const tags = [];
     const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
 
@@ -325,8 +286,26 @@ const Upload = () => {
     tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
     setSnackbarOpen(true);
     try {
-      const res = await uploader.uploadData(readableStream, { tags });
-      console.log(`Upload Success: https://arweave.net/${res.data.id}`);
+      const res = await chunkUpload(file, tags, totalChunks, handleUpload, handleError, handleDone);
+      if (res.status === 200) {
+        enqueueSnackbar(
+          <>
+            Uploaded Usage Notes File
+            <br></br>
+            <a
+              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
+              target={'_blank'}
+              rel='noreferrer'
+            >
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
+          { variant: 'success' },
+        );
+      } else {
+        enqueueSnackbar(res.statusText, { variant: 'error' });
+        return;
+      }
       try {
         const tx = await arweave.createTransaction({
           quantity: fee,
@@ -381,6 +360,7 @@ const Upload = () => {
       setSnackbarOpen(false);
       setProgress(0);
       setMessage('Upload error ');
+      enqueueSnackbar('An Error Occured.', { variant: 'error' });
     }
   };
 
@@ -592,11 +572,6 @@ const Upload = () => {
               </CardActions>
             </Card>
           </Box>
-          <FundDialog
-            open={fundOpen}
-            setOpen={setFundOpen}
-            handleFundFinished={handleFundFinished}
-          />
           <Snackbar
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             open={snackbarOpen}

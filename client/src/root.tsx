@@ -8,6 +8,7 @@ import { WalletProvider } from './context/wallet';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
 import { WorkerProvider } from './context/worker';
+import { FundProvider } from './context/fund';
 
 export const Root = () => {
   return (
@@ -17,10 +18,12 @@ export const Root = () => {
           <WalletProvider>
             <BundlrProvider>
               <WorkerProvider>
-                <CssBaseline />
-                <Layout>
-                  <Outlet />
-                </Layout>
+                <FundProvider>
+                  <CssBaseline />
+                  <Layout>
+                    <Outlet />
+                  </Layout>
+                </FundProvider>
               </WorkerProvider>
             </BundlrProvider>
           </WalletProvider>
