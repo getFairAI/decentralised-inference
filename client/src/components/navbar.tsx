@@ -21,7 +21,30 @@ const Banner = styled(Toolbar)(({ theme }) => ({
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, currentBalance, connectWallet } = useContext(WalletContext);
+  const { currentAddress, currentBalance, connectWallet, isWalletLoaded } = useContext(WalletContext);
+
+  if (!isWalletLoaded) {
+    return (<>
+      <Box
+        sx={{
+          borderRadius: '23px',
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 0,
+          gap: '17px',
+          background: theme.palette.secondary.main,
+        }}
+      >
+        <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>Wallet Not Available</Typography>
+        <IconButton sx={{ paddingRight: '16px',}} disabled>
+          <img src='./icon-empty-wallet.svg' />
+        </IconButton>
+      </Box>
+      <ProfileMenu />
+    </>);
+  }
 
   if (!currentAddress || currentAddress === '') {
     return (
