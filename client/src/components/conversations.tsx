@@ -23,7 +23,7 @@ import { useSnackbar } from 'notistack';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 
-const LoadingContainer = styled('div')(( { theme }) => ({
+const LoadingContainer = styled('div')(({ theme }) => ({
   '&.dot-pulse': {
     position: 'relative',
     left: '-9999px',
@@ -275,7 +275,7 @@ const Conversations = ({
           padding: '0 20px',
         }}
       >
-        { conversationsLoading && <LoadingContainer  theme={theme} className='dot-pulse'/>}
+        {conversationsLoading && <LoadingContainer theme={theme} className='dot-pulse' />}
         {filteredConversationIds.map((cid, idx) => (
           <ListItemButton
             key={idx}
