@@ -928,7 +928,10 @@ const Chat = () => {
                                     alignItems: 'flex-start',
                                   }}
                                 >
-                                  <LoadingContainer className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
+                                  <LoadingContainer
+                                    className='dot-pulse'
+                                    sx={{ marginBottom: '0.35em' }}
+                                  />
                                 </CardContent>
                               </Card>
                             </Box>
