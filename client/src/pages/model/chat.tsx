@@ -5,11 +5,8 @@ import {
   Container,
   Divider,
   Grid,
-  Icon,
   IconButton,
   InputBase,
-  List,
-  ListItemButton,
   Paper,
   Skeleton,
   Stack,
@@ -41,7 +38,6 @@ import {
 import { IEdge, ITransactions } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import AddIcon from '@mui/icons-material/Add';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
@@ -49,10 +45,11 @@ import arweave, { getData } from '@/utils/arweave';
 import { findTag, genLoadingArray } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
-import useScrollLock from '@/hooks/useScrollLock';
 import '@/styles/main.css';
 import { WorkerContext } from '@/context/worker';
 import { BundlrContext } from '@/context/bundlr';
+import useOnScreen from '@/hooks/useOnScreen';
+import Conversations from '@/components/conversations';
 
 interface Message {
   id: string;
@@ -64,6 +61,7 @@ interface Message {
 }
 
 const Chat = () => {
+  const [ currentConversationId, setCurrentConversationId ] = useState(0);
   const { address } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -73,9 +71,6 @@ const Chat = () => {
   const [polledMessages, setPolledMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
-  const [conversationIds, setConversationIds] = useState<number[]>([]);
-  const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<number | undefined>(undefined);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
@@ -84,13 +79,18 @@ const Chat = () => {
   const { enqueueSnackbar } = useSnackbar();
   const elementsPerPage = 5;
   const scrollableRef = useRef<HTMLDivElement>(null);
-  const setIsLocked = useScrollLock(scrollableRef);
-  const [filterConversations, setFilterConversations] = useState('');
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
   const { startJob } = useContext(WorkerContext);
   const { nodeBalance, upload, getPrice } = useContext(BundlrContext);
+  const target = useRef<HTMLDivElement>(null);
+  const isOnScreen = useOnScreen(target);
+  const [ hasRequestNextPage, setHasRequestNextPage ] = useState(false);
+  const [ hasResponseNextPage, setHasResponseNextPage ] = useState(false);
+  const [ isFirstPage, setIsFirstPage ] = useState(true);
+  const [ previousResponses, setPreviousResponses ] = useState<IEdge[]>([]);
+  const [ lastEl, setLastEl ] = useState<Element | undefined>(undefined);
 
   const [
     getChatRequests,
@@ -126,7 +126,6 @@ const Chat = () => {
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
-    setIsLocked(true);
   }, [height]);
 
   useEffect(() => {
@@ -141,43 +140,9 @@ const Chat = () => {
     if (!isWalletLoaded) navigate('/');
   }, [isWalletLoaded]);
 
-  useEffect(() => {
-    if (state && userAddr) {
-      const commonTags = [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.modelName, values: [state.modelName] },
-        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
-      ];
-      const tagsRequests = [
-        ...commonTags,
-        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
-      ];
-      getChatRequests({
-        variables: {
-          first: elementsPerPage,
-          tagsRequests,
-          address: userAddr,
-          adfter: null,
-        },
-        notifyOnNetworkStatusChange: true,
-      });
-    }
-  }, [state, userAddr]);
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      const cids: string[] = requestsData.transactions.edges.map((el: IEdge) =>
-        findTag(el, 'conversationIdentifier'),
-      );
-      const uniqueCids = Array.from(
-        new Set(cids.map((cid) => parseInt(cid.split('-').length > 1 ? cid.split('-')[1] : cid))),
-      );
-      uniqueCids.sort((a: number, b: number) => (a < b ? -1 : 1));
-
-      setConversationIds(uniqueCids);
-      setFilteredConversationIds(uniqueCids);
-      setCurrentConversationId(uniqueCids[uniqueCids.length - 1]);
-
       const commonTags = [
         ...DEFAULT_TAGS,
         { name: TAG_NAMES.modelName, values: [state.modelName] },
@@ -199,159 +164,140 @@ const Chat = () => {
       getChatResponses({
         variables: {
           first: elementsPerPage,
-          after: null,
+          after: previousResponses.length > 0 ? previousResponses[previousResponses.length - 1].cursor : undefined,
           tagsResponses,
           owners,
         },
         notifyOnNetworkStatusChange: true,
       });
 
-      if (requestsData?.transactions?.pageInfo?.hasNextPage) {
-        requestFetchMore({
-          variables: {
-            after:
-              requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor,
-          },
-          updateQuery: (prev, { fetchMoreResult }) => {
-            if (!fetchMoreResult) return prev;
-            const newData = fetchMoreResult.transactions.edges;
-            newData.sort((a: IEdge, b: IEdge) => {
-              const aTimestamp =
-                parseInt(findTag(a, 'unixTime') || '') ||
-                a.node.block?.timestamp ||
-                Date.now() / 1000;
-              const bTimestamp =
-                parseInt(findTag(b, 'unixTime') || '') ||
-                b.node.block?.timestamp ||
-                Date.now() / 1000;
-
-              return aTimestamp - bTimestamp;
-            });
-
-            const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-            for (let i = 0; i < newData.length; ++i) {
-              if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-                merged.push(newData[i]);
-              }
-            }
-            const newResult: { transactions: ITransactions } = Object.assign({}, prev, {
-              transactions: {
-                edges: merged,
-                pageInfo: fetchMoreResult.transactions.pageInfo,
-              },
-            });
-
-            return newResult;
-          },
-        });
-      } else {
-        stopRequestPolling();
-        // start polling
-        const commonTags = [
-          ...DEFAULT_TAGS,
-          { name: TAG_NAMES.modelName, values: [state.modelName] },
-          { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
-        ];
-
-        const tagsRequests = [
-          ...commonTags,
-          { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
-        ];
-
-        pollRequests({
-          variables: {
-            first: elementsPerPage,
-            tagsRequests,
-            address: userAddr,
-          },
-          pollInterval: 5000,
-        });
-      }
+      setHasRequestNextPage(requestsData?.transactions?.pageInfo?.hasNextPage);
     }
   }, [requestsData]);
 
   useEffect(() => {
     if (responsesData && responseNetworkStatus === NetworkStatus.ready) {
-      reqData();
-      if (responsesData.transactions?.pageInfo?.hasNextPage) {
-        responsesFetchMore({
-          variables: {
-            after:
-              responsesData.transactions.edges[responsesData.transactions.edges.length - 1].cursor,
-          },
-          updateQuery: (prev, { fetchMoreResult }) => {
-            if (!fetchMoreResult) return prev;
-            const newData = fetchMoreResult.transactions.edges;
-            newData.sort((a: IEdge, b: IEdge) => {
-              const aTimestamp =
-                parseInt(findTag(a, 'unixTime') || '') ||
-                a.node.block?.timestamp ||
-                Date.now() / 1000;
-              const bTimestamp =
-                parseInt(findTag(b, 'unixTime') || '') ||
-                b.node.block?.timestamp ||
-                Date.now() / 1000;
-
-              return aTimestamp - bTimestamp;
-            });
-
-            const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-            for (let i = 0; i < newData.length; ++i) {
-              if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-                merged.push(newData[i]);
-              }
-            }
-            const newResult: { transactions: ITransactions } = Object.assign({}, prev, {
-              transactions: {
-                edges: merged,
-                pageInfo: fetchMoreResult.transactions.pageInfo,
-              },
-            });
-
-            return newResult;
-          },
-        });
-      } else {
-        stopResponsePolling();
-        // start polling
-        const commonTags = [
-          ...DEFAULT_TAGS,
-          { name: TAG_NAMES.modelName, values: [state.modelName] },
-          { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
-        ];
-        const tagsResponses = [
-          ...commonTags,
-          { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
-          // { name: 'Conversation-Identifier', values: [currentConversationId] },
-          { name: TAG_NAMES.modelUser, values: [userAddr] },
-          {
-            name: TAG_NAMES.requestTransaction,
-            values: messages.map((el) => el.id).slice(-1),
-          }, // slice from end to get latest requests
-        ];
-        const owners = Array.from(
-          new Set(
-            requestsData.transactions.edges
-              .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
-              .map((el: IEdge) => findTag(el, 'modelOperator')),
-          ),
-        );
-
-        pollResponses({
-          variables: {
-            tagsResponses,
-            owners,
-          },
-          pollInterval: 5000,
-        });
-      }
+      const newResponses = responsesData.transactions.edges.filter(
+        (previous: IEdge) => !previousResponses.find((current: IEdge) => current.node.id === previous.node.id)
+      );
+      setPreviousResponses([ ...previousResponses, ...newResponses ]);
+      reqData([ ...previousResponses, ...newResponses ]);
+      setHasResponseNextPage(responsesData?.transactions?.pageInfo?.hasNextPage || false);
     }
   }, [responsesData]);
 
   useEffect(() => {
-    scrollToBottom();
-    // start polling
-    if (messages && requestsData && !messagesLoading) {
+    if (isOnScreen && hasRequestNextPage) {
+      const messages = document.querySelectorAll('.message-container');
+      setLastEl(messages.item(0));
+      requestFetchMore({
+        variables: {
+          after:
+          requestsData.transactions.edges.length > 0 ? requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor : undefined,
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+          const newData = fetchMoreResult.transactions.edges;
+          newData.sort((a: IEdge, b: IEdge) => {
+            const aTimestamp =
+              parseInt(findTag(a, 'unixTime') || '') ||
+              a.node.block?.timestamp ||
+              Date.now() / 1000;
+            const bTimestamp =
+              parseInt(findTag(b, 'unixTime') || '') ||
+              b.node.block?.timestamp ||
+              Date.now() / 1000;
+
+            return aTimestamp - bTimestamp;
+          });
+
+          const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+          for (let i = 0; i < newData.length; ++i) {
+            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
+              merged.push(newData[i]);
+            }
+          }
+          const newResult: { transactions: ITransactions } = Object.assign({}, prev, {
+            transactions: {
+              edges: merged,
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            },
+          });
+
+          return newResult;
+        },
+      });
+    }
+  }, [isOnScreen, hasRequestNextPage]);
+
+  useEffect(() => {
+    if (hasResponseNextPage) {
+      responsesFetchMore({
+        variables: {
+          after:
+            responsesData.transactions.edges.length > 0 ? responsesData.transactions.edges[responsesData.transactions.edges.length - 1].cursor : undefined,
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+          const newData = fetchMoreResult.transactions.edges;
+          newData.sort((a: IEdge, b: IEdge) => {
+            const aTimestamp =
+              parseInt(findTag(a, 'unixTime') || '') ||
+              a.node.block?.timestamp ||
+              Date.now() / 1000;
+            const bTimestamp =
+              parseInt(findTag(b, 'unixTime') || '') ||
+              b.node.block?.timestamp ||
+              Date.now() / 1000;
+
+            return aTimestamp - bTimestamp;
+          });
+
+          const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+          for (let i = 0; i < newData.length; ++i) {
+            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
+              merged.push(newData[i]);
+            }
+          }
+          const newResult: { transactions: ITransactions } = Object.assign({}, prev, {
+            transactions: {
+              edges: merged,
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            },
+          });
+
+          return newResult;
+        },
+      });
+    }
+  }, [ hasResponseNextPage ]);
+
+  useEffect(() => {
+    // start polling only on latest messages
+    
+    if (messages && requestsData && !messagesLoading && isFirstPage) {
+      scrollToBottom();
+      setIsFirstPage(false);
+      stopRequestPolling();
+      const pollTags = [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.modelName, values: [state.modelName] },
+        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
+      ];
+
+      const tagsRequests = [
+        ...pollTags,
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
+      ];
+
+      pollRequests({
+        variables: {
+          first: elementsPerPage,
+          tagsRequests,
+          address: userAddr,
+        },
+        pollInterval: 5000,
+      });
       stopResponsePolling();
       const commonTags = [
         ...DEFAULT_TAGS,
@@ -383,15 +329,36 @@ const Chat = () => {
         },
         pollInterval: 5000,
       });
+    } else {
+      scrollToLast();
     }
   }, [messages]);
 
   useEffect(() => {
-    if (currentConversationId && requestsData && responsesData) {
-      setIsLocked(true);
+    if (currentConversationId) {
       setMessagesLoading(true);
-      setIsWaitingResponse(false);
-      reqData();
+      setPreviousResponses([]); // clear previous responses
+      setIsFirstPage(true);
+      // get messages for current conversation
+      const commonTags = [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.modelName, values: [state.modelName] },
+        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
+      ];
+      const tagsRequests = [
+        ...commonTags,
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
+        { name: TAG_NAMES.conversationIdentifier, values: [ `${currentConversationId}` ]},
+      ];
+      getChatRequests({
+        variables: {
+          first: elementsPerPage,
+          tagsRequests,
+          address: userAddr,
+          after: null,
+        },
+        notifyOnNetworkStatusChange: true,
+      });
     }
   }, [currentConversationId]);
 
@@ -478,31 +445,6 @@ const Chat = () => {
       setIsWaitingResponse(false);
       setResponseTimeout(false);
     }
-  };
-
-  useEffect(() => {
-    if (conversationIds && conversationIds.length > 0) {
-      setFilteredConversationIds(
-        conversationIds.filter((el) => `${el}`.includes(filterConversations)),
-      );
-    }
-  }, [filterConversations]);
-
-  const handleListItemClick = (cid: number) => {
-    setCurrentConversationId(cid);
-  };
-
-  const handleAddConversation = () => {
-    const lastConversation = conversationIds[conversationIds.length - 1];
-    const newConversationId = lastConversation ? lastConversation + 1 : 1;
-    setConversationIds([...conversationIds, newConversationId]);
-    setFilteredConversationIds([...conversationIds, newConversationId]);
-    setFilterConversations('');
-    setCurrentConversationId(newConversationId);
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   };
 
   const handleMessageChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -619,8 +561,10 @@ const Chat = () => {
     }
   };
 
-  const reqData = async () => {
-    const allData = [...requestsData.transactions.edges, ...responsesData.transactions.edges];
+  const reqData = async (allResponses: IEdge[]) => {
+    // slice number of responses = to number of requests
+    const limitResponses = allResponses.slice(requestsData.transactions.length);
+    const allData = [ ...requestsData.transactions.edges, ...limitResponses ];
 
     const temp: Message[] = [];
     await Promise.all(
@@ -664,7 +608,7 @@ const Chat = () => {
             });
           }
         }),
-    );
+    ); 
 
     const uniquePolledMessages = polledMessages.filter(
       (el) => !messages.find((msg) => msg.id === el.id) && !temp.find((msg) => msg.id === el.id),
@@ -690,7 +634,7 @@ const Chat = () => {
       setResponseTimeout(false);
     }
 
-    setIsLocked(false);
+    // setIsLocked(false);
     setMessagesLoading(false);
   };
 
@@ -708,6 +652,14 @@ const Chat = () => {
     }
   };
 
+  const scrollToBottom = async () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToLast = async () => {
+    lastEl?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <>
       <Grid container spacing={0} sx={{ height: '100%' }}>
@@ -722,121 +674,7 @@ const Chat = () => {
             justifyContent: 'flex-end',
           }}
         >
-          <Paper
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-              height: '100%',
-              // background: 'rgba(21, 21, 21, 1)',
-              gap: '16px',
-              background: theme.palette.secondary.main,
-              // opacity: '0.3',
-              borderRadius: ' 0px 20px 20px 0px',
-            }}
-            elevation={4}
-          >
-            <Box marginTop={'16px'}>
-              <Box
-                sx={{
-                  background: theme.palette.common.white,
-                  borderRadius: '30px',
-                  margin: '0 20px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '3px 20px 3px 50px',
-                  alignItems: 'center',
-                }}
-              >
-                <InputBase
-                  sx={{
-                    color: theme.palette.text.primary,
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '12px',
-                    lineHeight: '16px',
-                  }}
-                  placeholder='Search Conversations...'
-                  value={filterConversations}
-                  onChange={(event) => setFilterConversations(event.target.value)}
-                />
-                <Icon
-                  sx={{
-                    height: '30px',
-                  }}
-                >
-                  <img src='./search-icon.svg'></img>
-                </Icon>
-              </Box>
-            </Box>
-            <Tooltip title='Start a new Conversation'>
-              <IconButton
-                onClick={handleAddConversation}
-                sx={{
-                  margin: '0 20px',
-                  borderRadius: '30px',
-                  color: theme.palette.primary.contrastText,
-                }}
-              >
-                <AddIcon />
-              </IconButton>
-            </Tooltip>
-            <List
-              sx={{
-                display: 'flex',
-                gap: '16px',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '100%',
-                padding: '0 20px',
-              }}
-            >
-              {requestsLoading && <div className='dot-pulse'></div>}
-              {filteredConversationIds.map((cid, idx) => (
-                <ListItemButton
-                  key={idx}
-                  alignItems='center'
-                  selected={cid === currentConversationId}
-                  onClick={() => handleListItemClick(cid)}
-                  sx={{
-                    background:
-                      theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
-                    borderRadius: '21px',
-                    width: '100%',
-                    justifyContent: 'center',
-                    height: '91px',
-                    color: theme.palette.secondary.contrastText,
-                    '&.Mui-selected, &.Mui-selected:hover': {
-                      opacity: 1,
-                      backdropFilter: 'brightness(0.5)',
-                      color: theme.palette.primary.contrastText,
-                      // border: '4px solid transparent',
-                      // background: 'linear-gradient(#434343, #434343) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
-                    },
-                    '&:hover': {
-                      backdropFilter: 'brightness(0.5)',
-                    },
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 700,
-                      fontSize: '15px',
-                      lineHeight: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                      color: 'inherit',
-                    }}
-                  >
-                    Conversation {cid}
-                  </Typography>
-                </ListItemButton>
-              ))}
-            </List>
-            <Box flexGrow={1}></Box>
-          </Paper>
+          <Conversations currentConversationId={currentConversationId} setCurrentConversationId={setCurrentConversationId} state={state} userAddr={userAddr} />
         </Grid>
         <Grid
           item
@@ -872,7 +710,8 @@ const Chat = () => {
                 }}
                 ref={scrollableRef}
               >
-                {messagesLoading &&
+                <Box ref={target} sx={{ padding: '8px'}}></Box>
+                {(messagesLoading || requestsLoading || responsesLoading) &&
                   mockArray.map((el: number) => {
                     return (
                       <Container key={el} maxWidth={false}>
@@ -915,7 +754,7 @@ const Chat = () => {
                       {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
                     </Divider>
                     {messages.reverse().map((el: Message, index: number) => (
-                      <Container key={index} maxWidth={false} sx={{ paddingTop: '16px' }}>
+                      <Container key={el.id} maxWidth={false} sx={{ paddingTop: '16px' }} className='message-container'>
                         <Stack spacing={4} flexDirection='row'>
                           <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
                             <Box
@@ -1111,7 +950,7 @@ const Chat = () => {
                 ) : (
                   <></>
                 )}
-                <div ref={messagesEndRef} />
+                <Box ref={messagesEndRef} sx={{ padding: '8px'}}></Box>
               </Box>
             </Paper>
           </Box>
@@ -1145,7 +984,7 @@ const Chat = () => {
             <IconButton
               onClick={handleSend}
               sx={{ height: '60px', width: '60px', color: theme.palette.neutral.contrastText }}
-              disabled={!newMessage || newMessage === ''}
+              disabled={!newMessage || newMessage === '' || !currentConversationId}
             >
               <SendIcon />
             </IconButton>

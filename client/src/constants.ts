@@ -63,6 +63,8 @@ export const MODEL_INFERENCE_RESPONSE = 'Model Inference Response';
 
 export const INFERENCE_PAYMENT_DISTRIBUTION = 'Fee Redistribution';
 
+export const CONVERSATION_START = 'Conversation Start';
+
 // Attachment Roles
 export const AVATAR_ATTACHMENT = 'avatar';
 
