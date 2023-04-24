@@ -44,6 +44,7 @@ interface BundlrContext {
     handleUpload: (value: ChunkInfo) => void,
     handleError: (e: ChunkError) => void,
     handleDone: (value: unknown) => void,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) => Promise<AxiosResponse<UploadResponse, any>>;
 }
 

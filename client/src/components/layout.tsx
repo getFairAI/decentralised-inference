@@ -39,7 +39,7 @@ export default function Layout({ children }: { children: ReactElement }) {
 
   useEffect(() => {
     const arBalance = parseFloat(arweave.ar.winstonToAr(nodeBalance.toString()));
-    if (currentAddress && arBalance < 0.5) {
+    if (currentAddress && arBalance <= 0) {
       setOpen(true);
     }
   }, [nodeBalance]);
