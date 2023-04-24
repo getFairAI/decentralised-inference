@@ -357,7 +357,7 @@ const Operators = () => {
                 </Card>
               ))}
           </Stack>
-          <Box ref={target} sx={{ paddingBottom: '16px'}}></Box>
+          <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
         </Box>
       </Container>
       <Outlet />

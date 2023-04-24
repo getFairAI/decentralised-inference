@@ -1,12 +1,32 @@
 import PendingCard from '@/components/pending-card';
-import { DEFAULT_TAGS, TAG_NAMES, MODEL_CREATION, SAVE_REGISTER_OPERATION, MODEL_FEE_PAYMENT_SAVE, MODEL_INFERENCE_RESPONSE, MODEL_INFERENCE_REQUEST, N_PREVIOUS_BLOCKS } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  TAG_NAMES,
+  MODEL_CREATION,
+  SAVE_REGISTER_OPERATION,
+  MODEL_FEE_PAYMENT_SAVE,
+  MODEL_INFERENCE_RESPONSE,
+  MODEL_INFERENCE_REQUEST,
+  N_PREVIOUS_BLOCKS,
+} from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import useOnScreen from '@/hooks/useOnScreen';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
-import { Box, Typography, Button, Backdrop, CircularProgress, useTheme, Container, Stack, InputBase, Icon } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Button,
+  Backdrop,
+  CircularProgress,
+  useTheme,
+  Container,
+  Stack,
+  InputBase,
+  Icon,
+} from '@mui/material';
 import { useContext, useState, useEffect, useRef, ChangeEvent } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import _ from 'lodash';
@@ -18,37 +38,40 @@ const Payments = () => {
   const elementsPerPage = 10;
   const { currentAddress } = useContext(WalletContext);
   const [minHeight, setMinHeight] = useState(0);
-  const [hasNextPage, setHasNextPage ] = useState(false);
-  const [ filterValue, setFilterValue ] = useState('');
-  const [ filteredValues, setFilteredValues ] = useState<IEdge[]>([]);
-  const [ startDateFilter, setStartDateFilter ] = useState<string | null>(null);
-  const [ endDateFilter, setEndDateFilter ] = useState<string | null>(null);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [filterValue, setFilterValue] = useState('');
+  const [filteredValues, setFilteredValues] = useState<IEdge[]>([]);
+  const [startDateFilter, setStartDateFilter] = useState<string | null>(null);
+  const [endDateFilter, setEndDateFilter] = useState<string | null>(null);
   const theme = useTheme();
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
 
-  const { data, previousData, error, loading, refetch, fetchMore } = useQuery(QUERY_USER_INTERACTIONS, {
-    variables: {
-      address: currentAddress,
-      tags: [
-        ...DEFAULT_TAGS,
-        {
-          name: TAG_NAMES.operationName,
-          values: [
-            MODEL_CREATION,
-            SAVE_REGISTER_OPERATION,
-            MODEL_FEE_PAYMENT_SAVE,
-            MODEL_INFERENCE_RESPONSE,
-            MODEL_INFERENCE_REQUEST,
-          ],
-        },
-      ],
-      minBlockHeight: 0,
-      first: elementsPerPage,
+  const { data, previousData, error, loading, refetch, fetchMore } = useQuery(
+    QUERY_USER_INTERACTIONS,
+    {
+      variables: {
+        address: currentAddress,
+        tags: [
+          ...DEFAULT_TAGS,
+          {
+            name: TAG_NAMES.operationName,
+            values: [
+              MODEL_CREATION,
+              SAVE_REGISTER_OPERATION,
+              MODEL_FEE_PAYMENT_SAVE,
+              MODEL_INFERENCE_RESPONSE,
+              MODEL_INFERENCE_REQUEST,
+            ],
+          },
+        ],
+        minBlockHeight: 0,
+        first: elementsPerPage,
+      },
+      skip: !currentAddress || minHeight <= 0,
+      notifyOnNetworkStatusChange: true,
     },
-    skip: !currentAddress || minHeight <= 0,
-    notifyOnNetworkStatusChange: true,
-  });
+  );
 
   useEffect(() => {
     const asyncWrapper = async () => {
@@ -62,7 +85,7 @@ const Payments = () => {
     if (data && !_.isEqual(data, previousData)) {
       setHasNextPage(data.transactions.pageInfo.hasNextPage);
     }
-  }, [ data ]);
+  }, [data]);
 
   useEffect(() => {
     if (isOnScreen && hasNextPage) {
@@ -92,14 +115,15 @@ const Payments = () => {
         },
       });
     }
-  }, [ isOnScreen, hasNextPage ]);
+  }, [isOnScreen, hasNextPage]);
 
   useEffect(() => {
     if (filterValue && data) {
-      const filteredData = data.transactions.edges.filter((el: IEdge) => 
-      el.node.id.toLowerCase().indexOf(filterValue) !== -1 ||
-        el.node.recipient.toLowerCase().indexOf(filterValue) !== -1 ||
-          findTag(el, 'operationName')?.toLowerCase().indexOf(filterValue) !== -1
+      const filteredData = data.transactions.edges.filter(
+        (el: IEdge) =>
+          el.node.id.toLowerCase().indexOf(filterValue) !== -1 ||
+          el.node.recipient.toLowerCase().indexOf(filterValue) !== -1 ||
+          findTag(el, 'operationName')?.toLowerCase().indexOf(filterValue) !== -1,
       );
       setFilteredValues(filteredData);
     } else if (data) {
@@ -107,20 +131,19 @@ const Payments = () => {
     } else {
       setFilteredValues([]);
     }
-  }, [ filterValue, data ]);
+  }, [filterValue, data]);
 
   useEffect(() => {
     /* console.log(startDateFilter);
     console.log(endDateFilter); */
-  }, [ startDateFilter, endDateFilter ]);
+  }, [startDateFilter, endDateFilter]);
 
   const refreshClick = () => {
     refetch();
   };
 
   return (
-    
-    <Container sx={{ paddingTop: '16px'}} maxWidth='lg'>
+    <Container sx={{ paddingTop: '16px' }} maxWidth='lg'>
       {error ? (
         <Box display={'flex'} flexDirection={'column'} alignItems={'center'} padding={'16px'}>
           <Typography textAlign={'center'}>
@@ -142,13 +165,13 @@ const Payments = () => {
             <Box display={'flex'} gap={'8px'}>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
-                  label="Start Date"
+                  label='Start Date'
                   value={startDateFilter}
                   disabled
                   onChange={(newValue: string | null) => setStartDateFilter(newValue)}
                 />
                 <DatePicker
-                  label="End Date"
+                  label='End Date'
                   value={endDateFilter}
                   disabled
                   onChange={(newValue: string | null) => setEndDateFilter(newValue)}
@@ -189,7 +212,9 @@ const Payments = () => {
             </Box>
           </Box>
           <Stack spacing={2}>
-              {filteredValues.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} autoRetry={false}/>)}
+            {filteredValues.map((tx: IEdge) => (
+              <PendingCard tx={tx} key={tx.node.id} autoRetry={false} />
+            ))}
           </Stack>
         </>
       )}
@@ -210,7 +235,7 @@ const Payments = () => {
           <CircularProgress color='primary' />
         </Backdrop>
       )}
-      <Box ref={target} sx={{ paddingBottom: '16px'}}></Box>
+      <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
     </Container>
   );
 };

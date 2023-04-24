@@ -87,7 +87,7 @@ export default function Home() {
         },
       });
     }
-  }, [ isOnScreen, txs ]);
+  }, [isOnScreen, txs]);
 
   useEffect(() => {
     const asyncWrapper = async () => {
@@ -275,7 +275,7 @@ export default function Home() {
               error={listError}
             />
           ))}
-          <Box ref={target} sx={{ paddingBottom: '16px'}}></Box>
+          <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
         </Stack>
       </Container>
       <Outlet />

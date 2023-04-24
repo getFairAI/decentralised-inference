@@ -167,7 +167,7 @@ export default function BasicTable(props: {
             )}
           </TableBody>
         </Table>
-        <Box ref={target} sx={{ paddingBottom: '8px'}}></Box>
+        <Box ref={target} sx={{ paddingBottom: '8px' }}></Box>
       </TableContainer>
     </Box>
   );

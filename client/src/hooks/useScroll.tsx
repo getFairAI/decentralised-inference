@@ -1,12 +1,12 @@
 import { RefObject, useEffect, useState } from 'react';
 
 const useScroll = (ref: RefObject<HTMLElement>) => {
-  const [ isAtBottom, setIsAtBottom] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
 
   const handleScrollEvent = (e: Event) => {
     if (e && e.currentTarget) {
       const target = e.currentTarget as HTMLElement;
-      const bottom = target.scrollHeight - target.scrollTop <= (target.clientHeight) + 100;
+      const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
       setIsAtBottom(bottom);
     }
   };

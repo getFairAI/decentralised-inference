@@ -97,8 +97,8 @@ const router = createHashRouter([
       },
       {
         path: 'payments',
-        element: <Payments />
-      }
+        element: <Payments />,
+      },
     ],
   },
 ]);

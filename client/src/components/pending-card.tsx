@@ -53,7 +53,7 @@ type operationNames =
   | 'Inference Request Payment'
   | 'Inference Redistribution';
 
-const PendingCard = ({ tx, autoRetry }: { tx: IEdge, autoRetry: boolean }) => {
+const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
   const { currentAddress } = useContext(WalletContext);
   const [operationName, setOperationName] = useState<operationNames | undefined>(undefined);
   const [getPayment, { data: paymentData, previousData: previousPaymentData }] =
