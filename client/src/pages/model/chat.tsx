@@ -50,6 +50,7 @@ import { WorkerContext } from '@/context/worker';
 import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
+import LoadingContainer from '@/styles/components';
 
 interface Message {
   id: string;
@@ -927,7 +928,7 @@ const Chat = () => {
                                     alignItems: 'flex-start',
                                   }}
                                 >
-                                  <Box className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
+                                  <LoadingContainer className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
                                 </CardContent>
                               </Card>
                             </Box>
