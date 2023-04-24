@@ -164,12 +164,12 @@ const Content = ({
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ContentForwardRef = forwardRef(function ContentForward(
   {
     scrollableRef,
     setOpen,
   }: { scrollableRef: RefObject<HTMLElement>; setOpen: Dispatch<SetStateAction<boolean>> },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _ref,
 ) {
   return <Content scrollableRef={scrollableRef} setOpen={setOpen} />;
