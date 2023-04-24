@@ -1068,3 +1068,23 @@ export const QUERY_TX_WITH = gql`
     }
   }
 `;
+
+export const QUERY_CONVERSATIONS = gql`
+  query QUERY_CONVERSATIONS($address: String!, $tags: [TagFilter!], $first: Int, $after: String) {
+    transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          id
+          tags {
+            name
+            value
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+`;
