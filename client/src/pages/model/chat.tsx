@@ -61,7 +61,7 @@ interface Message {
 }
 
 const Chat = () => {
-  const [ currentConversationId, setCurrentConversationId ] = useState(0);
+  const [currentConversationId, setCurrentConversationId] = useState(0);
   const { address } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -86,11 +86,11 @@ const Chat = () => {
   const { nodeBalance, upload, getPrice } = useContext(BundlrContext);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
-  const [ hasRequestNextPage, setHasRequestNextPage ] = useState(false);
-  const [ hasResponseNextPage, setHasResponseNextPage ] = useState(false);
-  const [ isFirstPage, setIsFirstPage ] = useState(true);
-  const [ previousResponses, setPreviousResponses ] = useState<IEdge[]>([]);
-  const [ lastEl, setLastEl ] = useState<Element | undefined>(undefined);
+  const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
+  const [hasResponseNextPage, setHasResponseNextPage] = useState(false);
+  const [isFirstPage, setIsFirstPage] = useState(true);
+  const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
+  const [lastEl, setLastEl] = useState<Element | undefined>(undefined);
 
   const [
     getChatRequests,
@@ -140,7 +140,6 @@ const Chat = () => {
     if (!isWalletLoaded) navigate('/');
   }, [isWalletLoaded]);
 
-
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       const commonTags = [
@@ -164,7 +163,10 @@ const Chat = () => {
       getChatResponses({
         variables: {
           first: elementsPerPage,
-          after: previousResponses.length > 0 ? previousResponses[previousResponses.length - 1].cursor : undefined,
+          after:
+            previousResponses.length > 0
+              ? previousResponses[previousResponses.length - 1].cursor
+              : undefined,
           tagsResponses,
           owners,
         },
@@ -178,10 +180,11 @@ const Chat = () => {
   useEffect(() => {
     if (responsesData && responseNetworkStatus === NetworkStatus.ready) {
       const newResponses = responsesData.transactions.edges.filter(
-        (previous: IEdge) => !previousResponses.find((current: IEdge) => current.node.id === previous.node.id)
+        (previous: IEdge) =>
+          !previousResponses.find((current: IEdge) => current.node.id === previous.node.id),
       );
-      setPreviousResponses([ ...previousResponses, ...newResponses ]);
-      reqData([ ...previousResponses, ...newResponses ]);
+      setPreviousResponses([...previousResponses, ...newResponses]);
+      reqData([...previousResponses, ...newResponses]);
       setHasResponseNextPage(responsesData?.transactions?.pageInfo?.hasNextPage || false);
     }
   }, [responsesData]);
@@ -193,7 +196,9 @@ const Chat = () => {
       requestFetchMore({
         variables: {
           after:
-          requestsData.transactions.edges.length > 0 ? requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor : undefined,
+            requestsData.transactions.edges.length > 0
+              ? requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor
+              : undefined,
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -235,7 +240,9 @@ const Chat = () => {
       responsesFetchMore({
         variables: {
           after:
-            responsesData.transactions.edges.length > 0 ? responsesData.transactions.edges[responsesData.transactions.edges.length - 1].cursor : undefined,
+            responsesData.transactions.edges.length > 0
+              ? responsesData.transactions.edges[responsesData.transactions.edges.length - 1].cursor
+              : undefined,
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -270,11 +277,11 @@ const Chat = () => {
         },
       });
     }
-  }, [ hasResponseNextPage ]);
+  }, [hasResponseNextPage]);
 
   useEffect(() => {
     // start polling only on latest messages
-    
+
     if (messages && requestsData && !messagesLoading && isFirstPage) {
       scrollToBottom();
       setIsFirstPage(false);
@@ -348,7 +355,7 @@ const Chat = () => {
       const tagsRequests = [
         ...commonTags,
         { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
-        { name: TAG_NAMES.conversationIdentifier, values: [ `${currentConversationId}` ]},
+        { name: TAG_NAMES.conversationIdentifier, values: [`${currentConversationId}`] },
       ];
       getChatRequests({
         variables: {
@@ -564,7 +571,7 @@ const Chat = () => {
   const reqData = async (allResponses: IEdge[]) => {
     // slice number of responses = to number of requests
     const limitResponses = allResponses.slice(requestsData.transactions.length);
-    const allData = [ ...requestsData.transactions.edges, ...limitResponses ];
+    const allData = [...requestsData.transactions.edges, ...limitResponses];
 
     const temp: Message[] = [];
     await Promise.all(
@@ -608,7 +615,7 @@ const Chat = () => {
             });
           }
         }),
-    ); 
+    );
 
     const uniquePolledMessages = polledMessages.filter(
       (el) => !messages.find((msg) => msg.id === el.id) && !temp.find((msg) => msg.id === el.id),
@@ -674,7 +681,12 @@ const Chat = () => {
             justifyContent: 'flex-end',
           }}
         >
-          <Conversations currentConversationId={currentConversationId} setCurrentConversationId={setCurrentConversationId} state={state} userAddr={userAddr} />
+          <Conversations
+            currentConversationId={currentConversationId}
+            setCurrentConversationId={setCurrentConversationId}
+            state={state}
+            userAddr={userAddr}
+          />
         </Grid>
         <Grid
           item
@@ -710,7 +722,7 @@ const Chat = () => {
                 }}
                 ref={scrollableRef}
               >
-                <Box ref={target} sx={{ padding: '8px'}}></Box>
+                <Box ref={target} sx={{ padding: '8px' }}></Box>
                 {(messagesLoading || requestsLoading || responsesLoading) &&
                   mockArray.map((el: number) => {
                     return (
@@ -754,7 +766,12 @@ const Chat = () => {
                       {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
                     </Divider>
                     {messages.reverse().map((el: Message, index: number) => (
-                      <Container key={el.id} maxWidth={false} sx={{ paddingTop: '16px' }} className='message-container'>
+                      <Container
+                        key={el.id}
+                        maxWidth={false}
+                        sx={{ paddingTop: '16px' }}
+                        className='message-container'
+                      >
                         <Stack spacing={4} flexDirection='row'>
                           <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
                             <Box
@@ -950,7 +967,7 @@ const Chat = () => {
                 ) : (
                   <></>
                 )}
-                <Box ref={messagesEndRef} sx={{ padding: '8px'}}></Box>
+                <Box ref={messagesEndRef} sx={{ padding: '8px' }}></Box>
               </Box>
             </Paper>
           </Box>

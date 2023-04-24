@@ -7,9 +7,9 @@ export interface RouteLoaderResult {
 }
 
 export interface NavigationState {
-  modelName: string,
-  modelCreator: string,
-  fee: string,
-  modelTransaction: string,
-  fullState: IEdge,
+  modelName: string;
+  modelCreator: string;
+  fee: string;
+  modelTransaction: string;
+  fullState: IEdge;
 }

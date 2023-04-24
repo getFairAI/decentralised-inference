@@ -6,37 +6,65 @@ import { QUERY_CONVERSATIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';
-import { Paper, Box, InputBase, Icon, Tooltip, IconButton, List, ListItemButton, Typography, useTheme } from '@mui/material';
+import {
+  Paper,
+  Box,
+  InputBase,
+  Icon,
+  Tooltip,
+  IconButton,
+  List,
+  ListItemButton,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 
-const Conversations = ({ currentConversationId, setCurrentConversationId, state, userAddr }: { currentConversationId: number, setCurrentConversationId: Dispatch<SetStateAction<number>>, state: NavigationState, userAddr: string }) => {
-  const [ hasConversationNextPage, setHasConversationNextPage ] = useState(false);
-  const [ conversationIds, setConversationIds ] = useState<number[]>([]);
-  const [ filteredConversationIds, setFilteredConversationIds ] = useState<number[]>([]);
+const Conversations = ({
+  currentConversationId,
+  setCurrentConversationId,
+  state,
+  userAddr,
+}: {
+  currentConversationId: number;
+  setCurrentConversationId: Dispatch<SetStateAction<number>>;
+  state: NavigationState;
+  userAddr: string;
+}) => {
+  const [hasConversationNextPage, setHasConversationNextPage] = useState(false);
+  const [conversationIds, setConversationIds] = useState<number[]>([]);
+  const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
   const [filterConversations, setFilterConversations] = useState('');
   const conversationsTarget = useRef<HTMLDivElement>(null);
   const isConversationOnScreen = useOnScreen(conversationsTarget);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
 
-  const { data: conversationsData, loading: conversationsLoading, fetchMore: conversationsFetchMore, refetch: conversationsRefetch } = useQuery(QUERY_CONVERSATIONS, {
+  const {
+    data: conversationsData,
+    loading: conversationsLoading,
+    fetchMore: conversationsFetchMore,
+    refetch: conversationsRefetch,
+  } = useQuery(QUERY_CONVERSATIONS, {
     variables: {
       address: userAddr,
       tags: [
         ...DEFAULT_TAGS,
         {
-          name: TAG_NAMES.operationName, values: [ CONVERSATION_START ]
+          name: TAG_NAMES.operationName,
+          values: [CONVERSATION_START],
         },
         {
-          name: TAG_NAMES.modelTransaction, values: [ state.modelTransaction ]
+          name: TAG_NAMES.modelTransaction,
+          values: [state.modelTransaction],
         },
         { name: TAG_NAMES.modelName, values: [state.modelName] },
         { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
-      ]
+      ],
     },
-    skip: !userAddr || !state
+    skip: !userAddr || !state,
   });
 
   const createNewConversation = async (id: number) => {
@@ -61,7 +89,9 @@ const Conversations = ({ currentConversationId, setCurrentConversationId, state,
   useEffect(() => {
     if (conversationsData && conversationsData.transactions.edges.length > 0) {
       setHasConversationNextPage(conversationsData.transactions.pageInfo.hasNextPage);
-      const cids: number[] = conversationsData.transactions.edges.map((el: IEdge) => parseFloat(findTag(el, 'conversationIdentifier') as string ));
+      const cids: number[] = conversationsData.transactions.edges.map((el: IEdge) =>
+        parseFloat(findTag(el, 'conversationIdentifier') as string),
+      );
       setConversationIds(Array.from(new Set(cids)));
       setFilteredConversationIds(Array.from(new Set(cids)));
       setCurrentConversationId(Array.from(new Set(cids))[0]);
@@ -71,14 +101,15 @@ const Conversations = ({ currentConversationId, setCurrentConversationId, state,
       createNewConversation(1);
       setCurrentConversationId(1);
     }
-  }, [ conversationsData ]);
+  }, [conversationsData]);
 
   useEffect(() => {
     if (isConversationOnScreen && hasConversationNextPage) {
       const conversations = conversationsData.transactions.edges;
       conversationsFetchMore({
         variables: {
-          after: conversations.length > 0 ? conversations[conversations.length - 1].cursor : undefined,
+          after:
+            conversations.length > 0 ? conversations[conversations.length - 1].cursor : undefined,
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -101,7 +132,7 @@ const Conversations = ({ currentConversationId, setCurrentConversationId, state,
         },
       });
     }
-  }, [ isConversationOnScreen, hasConversationNextPage ]);
+  }, [isConversationOnScreen, hasConversationNextPage]);
 
   useEffect(() => {
     if (conversationIds && conversationIds.length > 0) {
@@ -115,14 +146,15 @@ const Conversations = ({ currentConversationId, setCurrentConversationId, state,
     if (currentConversationId) {
       setCurrentConversationId(currentConversationId);
     }
-  }, [ currentConversationId ]);;
+  }, [currentConversationId]);
 
   const handleListItemClick = (cid: number) => {
     setCurrentConversationId(cid);
   };
 
   const handleAddConversation = async () => {
-    const last: IEdge = conversationsData.transactions.edges[conversationsData.transactions.edges.length - 1];
+    const last: IEdge =
+      conversationsData.transactions.edges[conversationsData.transactions.edges.length - 1];
     const cid = findTag(last, 'conversationIdentifier') as string;
     await createNewConversation(parseFloat(cid) + 1);
     setFilterConversations('');
@@ -207,8 +239,7 @@ const Conversations = ({ currentConversationId, setCurrentConversationId, state,
             selected={cid === currentConversationId}
             onClick={() => handleListItemClick(cid)}
             sx={{
-              background:
-                theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
+              background: theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
               borderRadius: '21px',
               width: '100%',
               justifyContent: 'center',
@@ -242,7 +273,7 @@ const Conversations = ({ currentConversationId, setCurrentConversationId, state,
             </Typography>
           </ListItemButton>
         ))}
-        <Box sx={{paddingBottom: '8px'}} ref={conversationsTarget}></Box>
+        <Box sx={{ paddingBottom: '8px' }} ref={conversationsTarget}></Box>
       </List>
       <Box flexGrow={1}></Box>
     </Paper>
