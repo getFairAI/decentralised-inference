@@ -606,16 +606,15 @@ const Chat = () => {
     }
   };
 
-  
   const keyDownHandler = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.code === 'Enter') {
       event.preventDefault();
       const dataSize = new TextEncoder().encode(newMessage).length;
-      if(dataSize > 0){
+      if (dataSize > 0) {
         handleSend();
+      }
     }
-  }
-};
+  };
 
   const reqData = async (allResponses: IEdge[]) => {
     // slice number of responses = to number of requests
