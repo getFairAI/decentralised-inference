@@ -12,40 +12,23 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { ReactElement, useContext, useEffect, useState } from 'react';
+import { ReactElement, useContext, useState } from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
 import { BundlrContext } from '@/context/bundlr';
-import arweave from '@/utils/arweave';
 import { FundContext } from '@/context/fund';
 
 export default function Layout({ children }: { children: ReactElement }) {
   const [showBanner, setShowBanner] = useState(true);
-  const [open, setOpen] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const { isWalletLoaded, currentAddress } = useContext(WalletContext);
   const { nodeBalance } = useContext(BundlrContext);
+  const [ignore, setIgnore] = useState(false);
   const theme = useTheme();
   const { setOpen: setFundOpen } = useContext(FundContext);
 
-  useEffect(() => {
-    // opens if wallet is not loaded
-    setOpen(!isWalletLoaded);
-  }, [isWalletLoaded]);
-
-  useEffect(() => {
-    setOpen(!currentAddress || currentAddress === '');
-  }, [currentAddress]);
-
-  useEffect(() => {
-    const arBalance = parseFloat(arweave.ar.winstonToAr(nodeBalance.toString()));
-    if (currentAddress && arBalance < 0.5) {
-      setOpen(true);
-    }
-  }, [nodeBalance]);
-
   const handleFundNow = () => {
-    setOpen(false);
+    setIgnore(true);
     setFundOpen(true);
   };
 
@@ -65,7 +48,7 @@ export default function Layout({ children }: { children: ReactElement }) {
           <FilterContext.Provider value={filterValue}>
             <main style={{ height: '100%' }}>{children}</main>
             <Dialog
-              open={open}
+              open={(!isWalletLoaded || !currentAddress || nodeBalance <= 0) && !ignore}
               maxWidth={'md'}
               fullWidth
               sx={{
@@ -146,7 +129,7 @@ export default function Layout({ children }: { children: ReactElement }) {
               >
                 {!isWalletLoaded || !currentAddress ? (
                   <Button
-                    onClick={() => setOpen(false)}
+                    onClick={() => setIgnore(true)}
                     variant='contained'
                     color='warning'
                     sx={{ width: 'fit-content' }}
@@ -156,7 +139,7 @@ export default function Layout({ children }: { children: ReactElement }) {
                 ) : (
                   <>
                     <Button
-                      onClick={() => setOpen(false)}
+                      onClick={() => setIgnore(true)}
                       variant='outlined'
                       color='warning'
                       sx={{ width: 'fit-content' }}

@@ -44,6 +44,7 @@ interface BundlrContext {
     handleUpload: (value: ChunkInfo) => void,
     handleError: (e: ChunkError) => void,
     handleDone: (value: unknown) => void,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) => Promise<AxiosResponse<UploadResponse, any>>;
 }
 
@@ -117,10 +118,7 @@ export const BundlrContext = createContext<BundlrContext>({
 
 export const BundlrProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(bundlrReducer, { bundlr: undefined, nodeBalance: 0 });
-  const actions = useMemo(() => {
-    console.log(state.bundlr);
-    return createActions(dispatch, state.bundlr);
-  }, [state.bundlr]);
+  const actions = useMemo(() => createActions(dispatch, state.bundlr), [state.bundlr]);
 
   const walletState = useContext(WalletContext);
 

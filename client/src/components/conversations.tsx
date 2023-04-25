@@ -21,6 +21,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
+import LoadingContainer from '@/styles/components';
 
 const Conversations = ({
   currentConversationId,
@@ -231,7 +232,7 @@ const Conversations = ({
           padding: '0 20px',
         }}
       >
-        {conversationsLoading && <div className='dot-pulse'></div>}
+        {conversationsLoading && <LoadingContainer theme={theme} className='dot-pulse' />}
         {filteredConversationIds.map((cid, idx) => (
           <ListItemButton
             key={idx}
