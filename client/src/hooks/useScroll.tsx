@@ -2,12 +2,15 @@ import { RefObject, useEffect, useState } from 'react';
 
 const useScroll = (ref: RefObject<HTMLElement>) => {
   const [isAtBottom, setIsAtBottom] = useState(false);
+  const [ isTopHalf, setIsTopHalf ] = useState(false);
 
   const handleScrollEvent = (e: Event) => {
     if (e && e.currentTarget) {
       const target = e.currentTarget as HTMLElement;
       const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
       setIsAtBottom(bottom);
+      const topHalf = target.scrollTop < (target.scrollHeight / 2);
+      setIsTopHalf(topHalf);
     }
   };
 
@@ -18,7 +21,7 @@ const useScroll = (ref: RefObject<HTMLElement>) => {
     }
   }, [ref]);
 
-  return isAtBottom;
+  return { isAtBottom, isTopHalf };
 };
 
 export default useScroll;

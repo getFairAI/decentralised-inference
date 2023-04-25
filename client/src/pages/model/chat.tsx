@@ -51,6 +51,7 @@ import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
 import LoadingContainer from '@/styles/components';
+import useScroll from '@/hooks/useScroll';
 
 interface Message {
   id: string;
@@ -92,6 +93,7 @@ const Chat = () => {
   const [isFirstPage, setIsFirstPage] = useState(true);
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
   const [lastEl, setLastEl] = useState<Element | undefined>(undefined);
+  const { isTopHalf } = useScroll(scrollableRef);
 
   const [
     getChatRequests,
@@ -282,9 +284,12 @@ const Chat = () => {
 
   useEffect(() => {
     // start polling only on latest messages
-
-    if (messages && requestsData && !messagesLoading && isFirstPage) {
+    if (!isTopHalf) {
       scrollToBottom();
+    } else {
+      scrollToLast();
+    }
+    if (messages && requestsData && !messagesLoading && isFirstPage) {
       setIsFirstPage(false);
       stopRequestPolling();
       const pollTags = [
@@ -337,8 +342,39 @@ const Chat = () => {
         },
         pollInterval: 5000,
       });
-    } else {
-      scrollToLast();
+    } else if (messages && requestsData && !messagesLoading) {
+      // restart responses polling on new messages
+      stopResponsePolling();
+      const commonTags = [
+        ...DEFAULT_TAGS,
+        { name: 'Model-Name', values: [state.modelName] },
+        { name: 'Model-Creator', values: [state.modelCreator] },
+      ];
+      const tagsResponses = [
+        ...commonTags,
+        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
+        // { name: 'Conversation-Identifier', values: [currentConversationId] },
+        { name: TAG_NAMES.modelUser, values: [userAddr] },
+        {
+          name: TAG_NAMES.requestTransaction,
+          values: messages.map((el) => el.id).slice(-1), // last 5 requests
+        }, // slice from end to get latest requests
+      ];
+      const owners = Array.from(
+        new Set(
+          requestsData.transactions.edges
+            .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
+            .map((el: IEdge) => findTag(el, 'modelOperator')),
+        ),
+      );
+
+      pollResponses({
+        variables: {
+          tagsResponses,
+          owners,
+        },
+        pollInterval: 5000,
+      });
     }
   }, [messages]);
 
