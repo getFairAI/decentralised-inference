@@ -194,6 +194,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (isOnScreen && hasRequestNextPage) {
+      if (!requestsData) return;
       const messages = document.querySelectorAll('.message-container');
       setLastEl(messages.item(0));
       requestFetchMore({
@@ -284,7 +285,7 @@ const Chat = () => {
 
   useEffect(() => {
     // start polling only on latest messages
-    if (!isTopHalf) {
+    if (!isTopHalf || isFirstPage) {
       scrollToBottom();
     } else {
       scrollToLast();
