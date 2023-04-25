@@ -19,11 +19,11 @@ import { BundlrContext } from '@/context/bundlr';
 import { FundContext } from '@/context/fund';
 
 export default function Layout({ children }: { children: ReactElement }) {
-  const [ showBanner, setShowBanner ] = useState(true);
-  const [ filterValue, setFilterValue ] = useState('');
+  const [showBanner, setShowBanner] = useState(true);
+  const [filterValue, setFilterValue] = useState('');
   const { isWalletLoaded, currentAddress } = useContext(WalletContext);
   const { nodeBalance } = useContext(BundlrContext);
-  const [ ignore, setIgnore ] = useState(false);
+  const [ignore, setIgnore] = useState(false);
   const theme = useTheme();
   const { setOpen: setFundOpen } = useContext(FundContext);
 
@@ -48,7 +48,7 @@ export default function Layout({ children }: { children: ReactElement }) {
           <FilterContext.Provider value={filterValue}>
             <main style={{ height: '100%' }}>{children}</main>
             <Dialog
-              open={(!isWalletLoaded || !currentAddress || nodeBalance <= 0) && !ignore }
+              open={(!isWalletLoaded || !currentAddress || nodeBalance <= 0) && !ignore}
               maxWidth={'md'}
               fullWidth
               sx={{
