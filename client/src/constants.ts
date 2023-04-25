@@ -36,7 +36,7 @@ export const TAG_NAMES = {
   paymentTarget: 'Payment-Target',
   scriptTransaction: 'Script-Transaction',
   scriptName: 'Script-Name',
-  scriptFee: 'Script-Fee'
+  scriptFee: 'Script-Fee',
 };
 
 // Operation Names

@@ -75,7 +75,7 @@ const Curators = () => {
   const [progress, setProgress] = useState(0);
   const [, setMessage] = useState('');
   const [formData, setFormData] = useState<CreateForm | undefined>(undefined);
-  const [ hasModelsNextPage, setHasModelsNextPage ] = useState(false);
+  const [hasModelsNextPage, setHasModelsNextPage] = useState(false);
   const totalChunks = useRef(0);
   const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
@@ -83,22 +83,24 @@ const Curators = () => {
   const { currentAddress } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
-  
 
-  const { data: modelsData, loading: modelsLoading, error: modelsError, fetchMore: modelsFetchMore } = useQuery(
-    LIST_MODELS_QUERY, {
-      variables: {
-        first: elementsPerPage
-      },
-      notifyOnNetworkStatusChange: true,
-    }
-  );
+  const {
+    data: modelsData,
+    loading: modelsLoading,
+    error: modelsError,
+    fetchMore: modelsFetchMore,
+  } = useQuery(LIST_MODELS_QUERY, {
+    variables: {
+      first: elementsPerPage,
+    },
+    notifyOnNetworkStatusChange: true,
+  });
 
   useEffect(() => {
     if (modelsData) {
       setHasModelsNextPage(modelsData?.transactions?.pageInfo?.hasNextPage || false);
     }
-  }, [ modelsData ]);
+  }, [modelsData]);
 
   const onSubmit = async (data: FieldValues) => {
     await updateBalance();
@@ -394,13 +396,17 @@ const Curators = () => {
   };
 
   const selectLoadMore = (event: UIEvent<HTMLDivElement>) => {
-    const bottom = event.currentTarget.scrollHeight - event.currentTarget.scrollTop <= event.currentTarget.clientHeight + 100;
+    const bottom =
+      event.currentTarget.scrollHeight - event.currentTarget.scrollTop <=
+      event.currentTarget.clientHeight + 100;
     if (bottom && hasModelsNextPage) {
       // user is at the end of the list so load more items
       modelsFetchMore({
         variables: {
-          after: modelsData && modelsData.transactions.edges.length > 0 ?
-            modelsData.transactions.edges[modelsData.transactions.edges.length - 1 ].cursor : undefined
+          after:
+            modelsData && modelsData.transactions.edges.length > 0
+              ? modelsData.transactions.edges[modelsData.transactions.edges.length - 1].cursor
+              : undefined,
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -561,7 +567,7 @@ const Curators = () => {
                     }}
                     style={{ width: '40%', marginTop: 0 }}
                   />
-                </Box> 
+                </Box>
                 <Box padding='0px 32px'>
                   <SelectControl
                     name='model'
@@ -575,14 +581,21 @@ const Curators = () => {
                         borderRadius: '16px',
                       },
                       renderValue: (selected) => (
-                        <Box sx={{
-                          display: 'flex',
-                          gap: '16px'
-                        }}>
-                          <Typography>{findTag(JSON.parse(selected as string), 'modelName')}</Typography>
-                          <Typography sx={{ opacity: '0.5'}}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: '16px',
+                          }}
+                        >
+                          <Typography>
+                            {findTag(JSON.parse(selected as string), 'modelName')}
+                          </Typography>
+                          <Typography sx={{ opacity: '0.5' }}>
                             {JSON.parse(selected as string).node.owner.address}
-                            {` (Creator: ${JSON.parse(selected as string).node.owner.address.slice(0, 10)}...${JSON.parse(selected as string).node.owner.address.slice(-3)})`}
+                            {` (Creator: ${JSON.parse(selected as string).node.owner.address.slice(
+                              0,
+                              10,
+                            )}...${JSON.parse(selected as string).node.owner.address.slice(-3)})`}
                           </Typography>
                         </Box>
                       ),
@@ -591,14 +604,13 @@ const Curators = () => {
                           onScroll: selectLoadMore,
                           sx: {
                             maxHeight: '144px',
-                            overflowY: modelsLoading ? 'hidden' : 'auto'
+                            overflowY: modelsLoading ? 'hidden' : 'auto',
                           },
                         },
-                      }
+                      },
                     }}
                   >
-                    {
-                      modelsLoading && 
+                    {modelsLoading && (
                       <Backdrop
                         sx={{
                           zIndex: (theme) => theme.zIndex.drawer + 1,
@@ -607,32 +619,42 @@ const Curators = () => {
                           display: 'flex',
                           flexDirection: 'column',
                           position: 'absolute',
-                          height: '144px'
+                          height: '144px',
                         }}
                         open={true}
                       >
                         <CircularProgress color='primary'></CircularProgress>
                       </Backdrop>
-                    }
-                    { 
-                      modelsError ? <Box>
+                    )}
+                    {modelsError ? (
+                      <Box>
                         <Typography>Could Not Fetch Available Models</Typography>
-                      </Box> :
-                      modelsData && modelsData.transactions.edges.length > 0 ? modelsData.transactions.edges.map((el: IEdge) =>
-                        <MenuItem key={el.node.id} value={JSON.stringify(el)} sx={{
-                          display: 'flex',
-                          gap: '16px'
-                        }}>
+                      </Box>
+                    ) : modelsData && modelsData.transactions.edges.length > 0 ? (
+                      modelsData.transactions.edges.map((el: IEdge) => (
+                        <MenuItem
+                          key={el.node.id}
+                          value={JSON.stringify(el)}
+                          sx={{
+                            display: 'flex',
+                            gap: '16px',
+                          }}
+                        >
                           <Typography>{findTag(el, 'modelName')}</Typography>
-                          <Typography sx={{ opacity: '0.5'}}>
+                          <Typography sx={{ opacity: '0.5' }}>
                             {el.node.id}
-                            {` (Creator: ${el.node.owner.address.slice(0, 10)}...${el.node.owner.address.slice(-3)})`}
+                            {` (Creator: ${el.node.owner.address.slice(
+                              0,
+                              10,
+                            )}...${el.node.owner.address.slice(-3)})`}
                           </Typography>
                         </MenuItem>
-                      ) : <Box>
+                      ))
+                    ) : (
+                      <Box>
                         <Typography>There Are no Available Models</Typography>
                       </Box>
-                    }
+                    )}
                   </SelectControl>
                 </Box>
                 <Box padding='0px 32px'>
