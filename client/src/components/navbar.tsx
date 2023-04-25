@@ -230,6 +230,9 @@ const Navbar = ({
                 <NavLink to='/' className='navbar-links'>
                   Explore
                 </NavLink>
+                <NavLink to='/upload-creator' className='navbar-links'>
+                  Creators
+                </NavLink>
                 <NavLink to='/upload' className='navbar-links'>
                   Curators
                 </NavLink>
