@@ -34,10 +34,17 @@ export const TAG_NAMES = {
   saveTransaction: 'Save-Transaction',
   paymentQuantity: 'Payment-Quantity',
   paymentTarget: 'Payment-Target',
+  scriptTransaction: 'Script-Transaction',
+  scriptName: 'Script-Name',
+  scriptFee: 'Script-Fee',
 };
 
 // Operation Names
 export const MODEL_CREATION = 'Model Creation';
+
+export const SCRIPT_CREATION = 'Script Creation';
+
+export const SCRIPT_CREATION_PAYMENT = 'Script Creation Payment';
 
 export const MODEL_ATTACHMENT = 'Model Attachment';
 

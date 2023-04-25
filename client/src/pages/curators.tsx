@@ -7,6 +7,7 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  CircularProgress,
   Container,
   Icon,
   MenuItem,
@@ -14,7 +15,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { useContext, useRef, useState } from 'react';
+import { UIEvent, useContext, useEffect, useRef, useState } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
 import TextControl from '@/components/text-control';
 import SelectControl from '@/components/select-control';
@@ -29,11 +30,11 @@ import {
   MARKETPLACE_ADDRESS,
   TAG_NAMES,
   APP_NAME,
-  MODEL_CREATION,
-  MODEL_CREATION_PAYMENT,
   MODEL_ATTACHMENT,
   AVATAR_ATTACHMENT,
   NOTES_ATTACHMENT,
+  SCRIPT_CREATION,
+  SCRIPT_CREATION_PAYMENT,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
@@ -43,17 +44,22 @@ import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
+import { useQuery } from '@apollo/client';
+import { LIST_MODELS_QUERY } from '@/queries/graphql';
+import { IEdge } from '@/interfaces/arweave';
+import { findTag } from '@/utils/common';
 
 export interface CreateForm extends FieldValues {
   name: string;
   fee: number;
-  category: string;
   notes: string;
   file: File;
+  model: string;
   description?: string;
   avatar?: File;
 }
-const Upload = () => {
+const Curators = () => {
+  const elementsPerPage = 5;
   const { handleSubmit, reset, control } = useForm<FieldValues>({
     defaultValues: {
       name: '',
@@ -62,13 +68,14 @@ const Upload = () => {
       notes: '',
       avatar: '',
       file: '',
-      category: 'text',
+      model: '',
     },
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [, setMessage] = useState('');
   const [formData, setFormData] = useState<CreateForm | undefined>(undefined);
+  const [hasModelsNextPage, setHasModelsNextPage] = useState(false);
   const totalChunks = useRef(0);
   const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
@@ -76,6 +83,24 @@ const Upload = () => {
   const { currentAddress } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
+
+  const {
+    data: modelsData,
+    loading: modelsLoading,
+    error: modelsError,
+    fetchMore: modelsFetchMore,
+  } = useQuery(LIST_MODELS_QUERY, {
+    variables: {
+      first: elementsPerPage,
+    },
+    notifyOnNetworkStatusChange: true,
+  });
+
+  useEffect(() => {
+    if (modelsData) {
+      setHasModelsNextPage(modelsData?.transactions?.pageInfo?.hasNextPage || false);
+    }
+  }, [modelsData]);
 
   const onSubmit = async (data: FieldValues) => {
     await updateBalance();
@@ -88,7 +113,7 @@ const Upload = () => {
     }
   };
 
-  const uploadAvatarImage = async (modelTx: string, modelName: string, image: File) => {
+  const uploadAvatarImage = async (scriptTx: string, modelName: string, image: File) => {
     if ((await getPrice(image.size)).toNumber() > nodeBalance)
       enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
 
@@ -123,7 +148,7 @@ const Upload = () => {
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.contentType, value: image.type });
-    tags.push({ name: TAG_NAMES.modelTransaction, value: modelTx });
+    tags.push({ name: TAG_NAMES.scriptTransaction, value: scriptTx });
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
     tags.push({ name: TAG_NAMES.attachmentName, value: image.name });
     tags.push({ name: TAG_NAMES.attachmentRole, value: AVATAR_ATTACHMENT });
@@ -142,7 +167,7 @@ const Upload = () => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Uploaded Avatat Image
+            Uploaded Avatar Image
             <br></br>
             <a
               href={`https://viewblock.io/arweave/tx/${res.data.id}`}
@@ -162,7 +187,7 @@ const Upload = () => {
     }
   };
 
-  const uploadUsageNotes = async (modelTx: string, modelName: string, usageNotes: string) => {
+  const uploadUsageNotes = async (scriptTx: string, modelName: string, usageNotes: string) => {
     const file = new File([usageNotes], `${modelName}-usage.md`, {
       type: 'text/markdown',
     });
@@ -201,7 +226,7 @@ const Upload = () => {
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
-    tags.push({ name: TAG_NAMES.modelTransaction, value: modelTx });
+    tags.push({ name: TAG_NAMES.scriptTransaction, value: scriptTx });
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
     tags.push({ name: TAG_NAMES.attachmentName, value: file.name });
     tags.push({ name: TAG_NAMES.attachmentRole, value: NOTES_ATTACHMENT });
@@ -273,13 +298,17 @@ const Upload = () => {
     const tags = [];
     const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
 
+    const modelData = JSON.parse(data.model) as IEdge;
+
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
-    tags.push({ name: TAG_NAMES.modelName, value: `${data.name}` });
-    tags.push({ name: TAG_NAMES.operationName, value: MODEL_CREATION });
-    tags.push({ name: TAG_NAMES.category, value: data.category });
-    tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
+    tags.push({ name: TAG_NAMES.scriptName, value: `${data.name}` });
+    tags.push({ name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string });
+    tags.push({ name: TAG_NAMES.modelCreator, value: modelData.node.owner.address });
+    tags.push({ name: TAG_NAMES.modelTransaction, value: modelData.node.id });
+    tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_CREATION });
+    tags.push({ name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: MARKETPLACE_ADDRESS });
     if (data.description) tags.push({ name: TAG_NAMES.description, value: data.description });
@@ -314,12 +343,14 @@ const Upload = () => {
         tx.addTag(TAG_NAMES.appName, APP_NAME);
         tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
         tx.addTag(TAG_NAMES.contentType, file.type);
-        tx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
-        tx.addTag(TAG_NAMES.modelName, data.name);
-        tx.addTag(TAG_NAMES.category, data.category);
-        tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${data.fee}`));
+        tx.addTag(TAG_NAMES.operationName, SCRIPT_CREATION_PAYMENT);
+        tx.addTag(TAG_NAMES.scriptName, `${data.name}`);
+        tx.addTag(TAG_NAMES.modelName, findTag(modelData, 'modelName') as string);
+        tx.addTag(TAG_NAMES.modelCreator, modelData.node.owner.address);
+        tx.addTag(TAG_NAMES.modelTransaction, modelData.node.id);
+        tx.addTag(TAG_NAMES.scriptFee, arweave.ar.arToWinston(`${data.fee}`));
+        tx.addTag(TAG_NAMES.scriptTransaction, res.data.id);
         if (data.description) tx.addTag(TAG_NAMES.description, data.description);
-        tx.addTag(TAG_NAMES.modelTransaction, res.data.id);
         tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
         await arweave.transactions.sign(tx);
         const payRes = await arweave.transactions.post(tx);
@@ -340,7 +371,7 @@ const Upload = () => {
           );
           startJob({
             address: currentAddress,
-            operationName: MODEL_CREATION,
+            operationName: SCRIPT_CREATION,
             tags,
             txid: res.data.id,
             encodedTags: false,
@@ -361,6 +392,42 @@ const Upload = () => {
       setProgress(0);
       setMessage('Upload error ');
       enqueueSnackbar('An Error Occured.', { variant: 'error' });
+    }
+  };
+
+  const selectLoadMore = (event: UIEvent<HTMLDivElement>) => {
+    const bottom =
+      event.currentTarget.scrollHeight - event.currentTarget.scrollTop <=
+      event.currentTarget.clientHeight + 100;
+    if (bottom && hasModelsNextPage) {
+      // user is at the end of the list so load more items
+      modelsFetchMore({
+        variables: {
+          after:
+            modelsData && modelsData.transactions.edges.length > 0
+              ? modelsData.transactions.edges[modelsData.transactions.edges.length - 1].cursor
+              : undefined,
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult) return prev;
+          const newData = fetchMoreResult.transactions.edges;
+
+          const merged: IEdge[] =
+            prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+          for (let i = 0; i < newData.length; ++i) {
+            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
+              merged.push(newData[i]);
+            }
+          }
+          const newResult = Object.assign({}, prev, {
+            transactions: {
+              edges: merged,
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            },
+          });
+          return newResult;
+        },
+      });
     }
   };
 
@@ -429,22 +496,6 @@ const Upload = () => {
                       }}
                       style={{ width: '100%' }}
                     />
-                    <SelectControl
-                      name='category'
-                      control={control}
-                      rules={{ required: true }}
-                      mat={{
-                        sx: {
-                          borderWidth: '1px',
-                          borderColor: theme.palette.text.primary,
-                          borderRadius: '16px',
-                        },
-                      }}
-                    >
-                      <MenuItem value={'text'}>Text</MenuItem>
-                      <MenuItem value={'audio'}>Audio</MenuItem>
-                      <MenuItem value={'video'}>Video</MenuItem>
-                    </SelectControl>
                     <Box paddingLeft={'8px'}>
                       <Typography
                         sx={{
@@ -518,6 +569,95 @@ const Upload = () => {
                   />
                 </Box>
                 <Box padding='0px 32px'>
+                  <SelectControl
+                    name='model'
+                    control={control}
+                    rules={{ required: true }}
+                    mat={{
+                      placeholder: 'Choose a Model',
+                      sx: {
+                        borderWidth: '1px',
+                        borderColor: theme.palette.text.primary,
+                        borderRadius: '16px',
+                      },
+                      renderValue: (selected) => (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: '16px',
+                          }}
+                        >
+                          <Typography>
+                            {findTag(JSON.parse(selected as string), 'modelName')}
+                          </Typography>
+                          <Typography sx={{ opacity: '0.5' }}>
+                            {JSON.parse(selected as string).node.owner.address}
+                            {` (Creator: ${JSON.parse(selected as string).node.owner.address.slice(
+                              0,
+                              10,
+                            )}...${JSON.parse(selected as string).node.owner.address.slice(-3)})`}
+                          </Typography>
+                        </Box>
+                      ),
+                      MenuProps: {
+                        PaperProps: {
+                          onScroll: selectLoadMore,
+                          sx: {
+                            maxHeight: '144px',
+                            overflowY: modelsLoading ? 'hidden' : 'auto',
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    {modelsLoading && (
+                      <Backdrop
+                        sx={{
+                          zIndex: (theme) => theme.zIndex.drawer + 1,
+                          borderRadius: '23px',
+                          backdropFilter: 'blur(1px)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          position: 'absolute',
+                          height: '144px',
+                        }}
+                        open={true}
+                      >
+                        <CircularProgress color='primary'></CircularProgress>
+                      </Backdrop>
+                    )}
+                    {modelsError ? (
+                      <Box>
+                        <Typography>Could Not Fetch Available Models</Typography>
+                      </Box>
+                    ) : modelsData && modelsData.transactions.edges.length > 0 ? (
+                      modelsData.transactions.edges.map((el: IEdge) => (
+                        <MenuItem
+                          key={el.node.id}
+                          value={JSON.stringify(el)}
+                          sx={{
+                            display: 'flex',
+                            gap: '16px',
+                          }}
+                        >
+                          <Typography>{findTag(el, 'modelName')}</Typography>
+                          <Typography sx={{ opacity: '0.5' }}>
+                            {el.node.id}
+                            {` (Creator: ${el.node.owner.address.slice(
+                              0,
+                              10,
+                            )}...${el.node.owner.address.slice(-3)})`}
+                          </Typography>
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <Box>
+                        <Typography>There Are no Available Models</Typography>
+                      </Box>
+                    )}
+                  </SelectControl>
+                </Box>
+                <Box padding='0px 32px'>
                   <MarkdownControl props={{ name: 'notes', control, rules: { required: true } }} />
                 </Box>
                 <Box padding='0px 32px'>
@@ -589,4 +729,4 @@ const Upload = () => {
   );
 };
 
-export default Upload;
+export default Curators;
