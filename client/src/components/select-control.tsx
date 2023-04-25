@@ -16,11 +16,10 @@ const SelectControl = (props: SelectControlProps & { children: ReactElement[] })
   return (
     <>
       <FormControl fullWidth margin='normal' error={fieldState.invalid}>
-        <InputLabel>{field.name}</InputLabel>
+        <InputLabel>{props.mat?.placeholder || field.name}</InputLabel>
         <Select
-          label={field.name}
+          label={props.mat?.placeholder || field.name}
           value={field.value}
-          defaultValue={props.children[0].props.value}
           onChange={field.onChange}
           onBlur={field.onBlur}
           {...props.mat}

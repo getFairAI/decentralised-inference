@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import Root from '@/root';
 import Home from '@/pages/home';
-import Upload from '@/pages/upload';
+import Curators from '@/pages/curators';
 import Model, { getModelFeeAndAttachments } from '@/pages/model/model';
 import '@/styles/main.css';
 import Operators from '@/pages/operators';
@@ -76,7 +76,7 @@ const router = createHashRouter([
       },
       {
         path: 'upload',
-        element: <Upload />,
+        element: <Curators />,
       },
       {
         path: 'operators',
