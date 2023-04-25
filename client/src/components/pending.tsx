@@ -55,7 +55,7 @@ const Content = ({
   const { currentAddress } = useContext(WalletContext);
   const [minHeight, setMinHeight] = useState(0);
   const theme = useTheme();
-  const isAtBottom = useScroll(scrollableRef);
+  const { isAtBottom } = useScroll(scrollableRef);
   const navigate = useNavigate();
 
   const { data, error, loading, refetch } = useQuery(QUERY_USER_INTERACTIONS, {
