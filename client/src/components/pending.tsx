@@ -146,7 +146,6 @@ const Content = ({
       {loading && (
         <Backdrop
           sx={{
-            zIndex: (theme) => theme.zIndex.drawer + 1,
             borderRadius: '23px',
             backdropFilter: 'blur(4px)',
             display: 'flex',
@@ -222,7 +221,9 @@ const Pending = () => {
         role={undefined}
         placement='bottom-end'
         transition
-        disablePortal
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+        }}
       >
         {({ TransitionProps }) => (
           <Grow

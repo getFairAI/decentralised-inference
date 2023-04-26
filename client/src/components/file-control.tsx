@@ -1,6 +1,7 @@
 import {
   Button,
   FormControl,
+  FormHelperText,
   IconButton,
   InputAdornment,
   InputProps,
@@ -167,6 +168,12 @@ const FileControl = (props: FileControlProps) => {
     getPrice();
   }, [field.value]);
 
+  const showError = () => {
+    if (fieldState.invalid) {
+      return <FormHelperText>This Field is Required</FormHelperText>;
+    }
+  };
+
   if (file) {
     return (
       <>
@@ -196,7 +203,7 @@ const FileControl = (props: FileControlProps) => {
             {loading && <LinearProgress variant='determinate' value={progress} />}
           </FormControl>
           <Typography variant='caption'>
-            Estimated price {filePrice} AR{/* / {filePriceAR} AR */}
+            Estimated price {filePrice} AR
           </Typography>
         </Box>
       </>
@@ -205,7 +212,7 @@ const FileControl = (props: FileControlProps) => {
 
   return (
     <Box>
-      <FormControl error={fieldState.invalid} variant='outlined' fullWidth>
+      <FormControl error={fieldState.invalid} variant='outlined' fullWidth margin='normal'>
         <TextField
           multiline
           minRows={5}
@@ -227,10 +234,10 @@ const FileControl = (props: FileControlProps) => {
                 ? 'contrast(0.65)'
                 : 'brightness(0.9)',
               backdropFilter: 'blur(2px)',
-              '&.MuiOutlinedInput-notchedOutline': {
-                borderColor: hasFileDrag
-                  ? theme.palette.text.primary
-                  : theme.palette.text.secondary,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: hasFileDrag ? theme.palette.text.primary
+                  : fieldState.invalid ? theme.palette.error.main
+                    : theme.palette.text.secondary,
               },
             },
           }}
@@ -239,6 +246,7 @@ const FileControl = (props: FileControlProps) => {
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         />
+        {showError()}
       </FormControl>
       <Box
         display={'flex'}
@@ -256,7 +264,7 @@ const FileControl = (props: FileControlProps) => {
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        <Button variant='text' component='label'>
+        <Button variant='text' component='label' color={fieldState.invalid ? 'error' : 'primary'}>
           Browse Files to Upload
           <input type='file' hidden name={field.name} value={field.value} onChange={onFileChange} />
         </Button>
