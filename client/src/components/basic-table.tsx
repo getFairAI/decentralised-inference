@@ -17,6 +17,8 @@ import OperatorRow from './operator-row';
 import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
 import { useEffect, useRef } from 'react';
 import useOnScreen from '@/hooks/useOnScreen';
+import { operatorHeaders, scriptHeaders } from '@/constants';
+import ScriptRow from './script-row';
 
 type fetchMoreFn = <
   TFetchData = unknown,
@@ -33,8 +35,11 @@ type fetchMoreFn = <
   },
 ) => Promise<ApolloQueryResult<TFetchData | undefined>>;
 
+type tableType = 'operators' | 'scripts';
+
 export default function BasicTable(props: {
-  operators: IEdge[];
+  type: tableType;
+  data: IEdge[];
   loading: boolean;
   error?: ApolloError;
   state: IEdge;
@@ -52,7 +57,7 @@ export default function BasicTable(props: {
     if (isOnScreen && props.hasNextPage) {
       props.fetchMore({
         variables: {
-          after: props.operators[props.operators.length - 1].cursor,
+          after: props.data[props.data.length - 1].cursor,
         },
         updateQuery: (prev: { transactions: ITransactions }, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -66,7 +71,7 @@ export default function BasicTable(props: {
         },
       });
     }
-  }, [isOnScreen, props.operators]);
+  }, [isOnScreen, props.data]);
 
   useEffect(() => {
     const firstRow = document.querySelector('tbody tr:first-child');
@@ -78,7 +83,7 @@ export default function BasicTable(props: {
       const tableHeadCells = document.querySelectorAll('thead tr th');
       tableHeadCells.forEach((el) => el.setAttribute('width', `${cellWidth}px`));
     }
-  }, []);
+  }, [ props.data ]);
 
   return (
     <Box>
@@ -95,32 +100,27 @@ export default function BasicTable(props: {
         >
           <TableHead sx={{ display: 'block' }}>
             <TableRow>
-              <TableCell sx={{ background: 'transparent' }}>
-                <Typography sx={{ fontWeight: 'bold' }}>Address</Typography>
-              </TableCell>
-              <TableCell sx={{ background: 'transparent' }}>
-                <Typography sx={{ fontWeight: 'bold' }}>Name</Typography>
-              </TableCell>
-              <TableCell align='right' sx={{ background: 'transparent' }}>
-                <Typography sx={{ fontWeight: 'bold' }}>Registration&nbsp;</Typography>
-              </TableCell>
-              <TableCell align='right' sx={{ background: 'transparent' }}>
-                <Typography sx={{ fontWeight: 'bold' }}>Fee&nbsp;(Ar)</Typography>
-              </TableCell>
-              <TableCell align='right' sx={{ background: 'transparent' }}>
-                <Tooltip
-                  title={'Represents the operator availability in the last 100 transactions'}
-                  placement='top'
-                >
-                  <Typography sx={{ fontWeight: 'bold' }}>Status</Typography>
-                </Tooltip>
-              </TableCell>
-              <TableCell align='right' sx={{ background: 'transparent' }}>
-                <Typography sx={{ fontWeight: 'bold' }}>Stamps&nbsp;</Typography>
-              </TableCell>
-              <TableCell align='right' sx={{ background: 'transparent' }}>
-                <Typography sx={{ fontWeight: 'bold' }}>Selected&nbsp;</Typography>
-              </TableCell>
+              {
+                props.type === 'operators' ? 
+                  operatorHeaders.map((header, idx) =>
+                      <TableCell sx={{ background: 'transparent' }} key={header} align={idx > 0 ? 'right' : 'left'}>
+                        {
+                          header === 'Status' ? <Tooltip
+                            title={'Represents the operator availability in the last 100 transactions'}
+                            placement='top'
+                          >
+                            <Typography sx={{ fontWeight: 'bold' }}>{header}</Typography>
+                          </Tooltip>
+                          : <Typography sx={{ fontWeight: 'bold' }}>{header}</Typography>
+                        }
+                      </TableCell>
+                  ) :
+                  scriptHeaders.map((header, idx) =>
+                    <TableCell sx={{ background: 'transparent' }} key={header} align={idx > 0 ? 'right' : 'left'}>
+                      <Typography sx={{ fontWeight: 'bold' }}>{header}</Typography>
+                    </TableCell>
+                  )
+              }
             </TableRow>
           </TableHead>
           <TableBody sx={{ display: 'block', overflowY: 'auto', overflowX: 'hidden' }}>
@@ -128,7 +128,9 @@ export default function BasicTable(props: {
               <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell colSpan={6}>
                   <Typography alignItems='center' display='flex' flexDirection='column'>
-                    Could not Fetch Registered Operators for this Model.
+                    { props.type === 'operators' ? 'Could not Fetch Registered Operators for this Model.'
+                      : 'Could not Fetch Scripts for this Model.'
+                    }
                     <Button
                       sx={{ width: 'fit-content' }}
                       endIcon={<ReplayIcon />}
@@ -152,17 +154,24 @@ export default function BasicTable(props: {
                 );
               })
             ) : (
-              props.operators.map((row, idx) => (
-                <OperatorRow
-                  key={row.node.id}
-                  operatorTx={row}
-                  modelCreator={props.state.node.owner.address}
-                  modelName={findTag(props.state, 'modelName') as string}
-                  state={props.state}
-                  index={idx}
-                  isSelected={props.selectedIdx === idx}
-                  setSelected={props.handleSelected}
-                />
+              props.data.map((row, idx) => (
+                props.type === 'operators' ? <OperatorRow
+                    key={row.node.id}
+                    operatorTx={row}
+                    modelCreator={props.state.node.owner.address}
+                    modelName={findTag(props.state, 'modelName') as string}
+                    state={props.state}
+                    index={idx}
+                    isSelected={props.selectedIdx === idx}
+                    setSelected={props.handleSelected}
+                  /> : 
+                  <ScriptRow
+                    key={row.node.id}
+                    scriptTx={row}
+                    index={idx}
+                    isSelected={props.selectedIdx === idx}
+                    setSelected={props.handleSelected}
+                  />
               ))
             )}
           </TableBody>

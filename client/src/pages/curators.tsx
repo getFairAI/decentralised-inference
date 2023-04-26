@@ -309,7 +309,7 @@ const Curators = () => {
     tags.push({ name: TAG_NAMES.category, value: data.category });
     tags.push({ name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string });
     tags.push({ name: TAG_NAMES.modelCreator, value: modelData.node.owner.address });
-    tags.push({ name: TAG_NAMES.modelTransaction, value: modelData.node.id });
+    tags.push({ name: TAG_NAMES.modelTransaction, value: findTag(modelData, 'modelTransaction' ) as string});
     tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_CREATION });
     tags.push({ name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
@@ -351,7 +351,7 @@ const Curators = () => {
         tx.addTag(TAG_NAMES.category, data.category);
         tx.addTag(TAG_NAMES.modelName, findTag(modelData, 'modelName') as string);
         tx.addTag(TAG_NAMES.modelCreator, modelData.node.owner.address);
-        tx.addTag(TAG_NAMES.modelTransaction, modelData.node.id);
+        tx.addTag(TAG_NAMES.modelTransaction, findTag(modelData, 'modelTransaction') as string);
         tx.addTag(TAG_NAMES.scriptFee, arweave.ar.arToWinston(`${data.fee}`));
         tx.addTag(TAG_NAMES.scriptTransaction, res.data.id);
         if (data.description) tx.addTag(TAG_NAMES.description, data.description);

@@ -11,45 +11,38 @@ import {
   useTheme,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import BasicTable from '@/components/basic-table';
 import { useLoaderData, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { NetworkStatus, useQuery } from '@apollo/client';
-import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import {
   APP_NAME,
   APP_VERSION,
-  DEFAULT_TAGS,
   MARKETPLACE_ADDRESS,
   MODEL_FEE_UPDATE,
-  OPERATOR_REGISTRATION_AR_FEE,
-  REGISTER_OPERATION,
   TAG_NAMES,
 } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
 import { ChangeEvent, useContext, useEffect, useMemo, useState } from 'react';
-import arweave, { isTxConfirmed } from '@/utils/arweave';
+import arweave from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import { NumericFormat } from 'react-number-format';
+import ChooseOperator from '@/components/choose-operator';
+import ChooseScript from '@/components/choose-script';
+import { IEdge } from '@/interfaces/arweave';
 
 const Detail = () => {
   const { updatedFee, avatarTxId } = useLoaderData() as RouteLoaderResult;
   const { state, pathname } = useLocation();
   const { txid } = useParams();
   const navigate = useNavigate();
-  const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(false);
   const [feeValue, setFeeValue] = useState(0);
   const [feeDirty, setFeeDirty] = useState(false);
   const [showOperators, setShowOperators] = useState(false);
-  const [selectedIdx, setSelectedIdx] = useState(-1);
-  const [filterValue, setFilterValue] = useState('');
-  const elementsPerPage = 5;
-  const { enqueueSnackbar } = useSnackbar();
+  const [ showScripts, setShowScripts ] = useState(false);
+  const [ scriptTx, setScriptTx ] = useState<IEdge | undefined>(undefined);
   const { currentAddress } = useContext(WalletContext);
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
 
   const imgUrl = useMemo(() => {
@@ -61,117 +54,12 @@ const Detail = () => {
     return URL.createObjectURL(svg);
   }, [state]);
 
-  const tags = [
-    ...DEFAULT_TAGS,
-    {
-      name: TAG_NAMES.operationName,
-      values: [REGISTER_OPERATION],
-    },
-    {
-      name: TAG_NAMES.modelCreator,
-      values: [state.node.owner.address],
-    },
-    {
-      name: TAG_NAMES.modelName,
-      values: [findTag(state, 'modelName')],
-    },
-  ];
-
-  const {
-    data: queryData,
-    loading,
-    error,
-    networkStatus,
-    refetch,
-    fetchMore,
-  } = useQuery(QUERY_REGISTERED_OPERATORS, {
-    variables: { tags, first: elementsPerPage },
-  });
-
-  const handleRetry = () => {
-    refetch({ tags });
-  };
-
-  useEffect(() => {
-    if (state) {
-      if (updatedFee) {
-        const arValue = arweave.ar.winstonToAr(updatedFee);
-        setFeeValue(parseFloat(arValue));
-      } else {
-        const arValue = arweave.ar.winstonToAr(findTag(state, 'modelFee') as string);
-        setFeeValue(parseFloat(arValue));
-      }
-    }
-  }, [state]);
-
-  /**
-   * @description Effect that runs on query data changes;
-   * it is responsible to set the nextPage status and to update current loaded transactionsm
-   * filtering correct payments and repeated operators
-   */
-  useEffect(() => {
-    const asyncWrapper = async () => {
-      const filtered: IEdge[] = [];
-      await Promise.all(
-        queryData.transactions.edges.map(async (el: IEdge) => {
-          const confirmed = await isTxConfirmed(el.node.id);
-          const existingIdx = filtered.findIndex(
-            (existing) => el.node.owner.address === existing.node.owner.address,
-          );
-          const correctFee =
-            parseInt(el.node.quantity.ar) === parseInt(OPERATOR_REGISTRATION_AR_FEE);
-          if (confirmed && correctFee && existingIdx < 0) {
-            filtered.push(el);
-          } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
-            // found a new tx for an existing op, check dates
-            const existingTimestamp =
-              findTag(filtered[existingIdx], 'unixTime') ||
-              filtered[existingIdx].node.block.timestamp;
-            const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
-            if (newTimestamp > existingTimestamp) {
-              // if new tx has more recent timestamp replace old one
-              filtered[existingIdx] = el;
-            }
-          }
-        }),
-      );
-      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
-      setOperatorsData(filtered);
-    };
-    // check has paid correct registration fee
-    if (queryData && networkStatus === NetworkStatus.ready) {
-      asyncWrapper();
-    }
-  }, [queryData]);
-
-  useEffect(() => {
-    if (queryData && filterValue) {
-      setOperatorsData(
-        queryData.transactions.edges.filter((el: IEdge) =>
-          findTag(el, 'operatorName')?.includes(filterValue),
-        ),
-      );
-    }
-  }, [filterValue]);
-
   const handleClose = () => {
     if (pathname.includes('change-operator')) {
       navigate(pathname.split('/change-operator')[0], { state });
       return;
     }
     navigate('/', { state });
-  };
-
-  const handleSelected = (index: number) => {
-    if (selectedIdx === index) {
-      setSelectedIdx(-1); // unselect if clicked on same
-    } else {
-      setSelectedIdx(index);
-    }
-  };
-
-  const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setFilterValue(event.target.value);
   };
 
   const updateFee = async () => {
@@ -219,6 +107,23 @@ const Detail = () => {
     setFeeDirty(true);
   };
 
+  useEffect(() => {
+    if (state) {
+      if (updatedFee) {
+        const arValue = arweave.ar.winstonToAr(updatedFee);
+        setFeeValue(parseFloat(arValue));
+      } else {
+        const arValue = arweave.ar.winstonToAr(findTag(state, 'modelFee') as string);
+        setFeeValue(parseFloat(arValue));
+      }
+    }
+  }, [state]);
+
+  const handleScriptChosen = (scriptTx: IEdge) => {
+    setShowOperators(true);
+    setScriptTx(scriptTx);
+  };
+
   return (
     <Dialog
       open={true}
@@ -236,11 +141,11 @@ const Detail = () => {
     >
       <DialogTitle
         display='flex'
-        justifyContent={showOperators ? 'space-between' : 'flex-end'}
+        justifyContent={showOperators || showScripts ? 'space-between' : 'flex-end'}
         alignItems='center'
         lineHeight={0}
       >
-        {showOperators && <Typography>{findTag(state, 'modelName')}</Typography>}
+        {(showOperators || showScripts) && <Typography>{findTag(state, 'modelName')}</Typography>}
         <IconButton
           onClick={handleClose}
           sx={{
@@ -253,7 +158,7 @@ const Detail = () => {
       </DialogTitle>
       <DialogContent
         sx={{
-          display: showOperators ? 'none' : 'flex',
+          display: showOperators || showScripts ? 'none' : 'flex',
           gap: '48px',
           justifyContent: 'space-evenly',
         }}
@@ -439,188 +344,40 @@ const Detail = () => {
           )}
         </Box>
       </DialogContent>
-      {showOperators ? (
-        <>
-          <DialogActions
-            sx={{
-              justifyContent: 'space-between',
-              padding: '32px 12px 8px 20px',
-            }}
-          >
-            <Button
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'flex-start',
-                textAlign: 'left',
-                borderRadius: '30px',
-              }}
-              variant='contained'
-              onClick={() => setShowOperators(false)}
-            >
-              <Box display='flex'>
-                <Icon sx={{ rotate: '90deg' }}>
-                  <img src='./triangle.svg' />
-                </Icon>
-                <Typography>{' Back to Details'}</Typography>
-              </Box>
-            </Button>
-            <Box
-              sx={{
-                background: 'transparent',
-                border: '2px solid',
-                borderRadius: '30px',
-                margin: '0 20px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '3px 20px 3px 20px',
-                alignItems: 'center',
-              }}
-            >
-              <InputBase
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 400,
-                  fontSize: '12px',
-                  lineHeight: '16px',
-                }}
-                placeholder='Search operator...'
-                onChange={handleFilterChange}
-              />
-              <Icon
-                sx={{
-                  height: '30px',
-                }}
-              >
-                <img src='./search-icon.svg'></img>
-              </Icon>
-            </Box>
-          </DialogActions>
-          <DialogContent sx={{ overflow: 'unset' }}>
-            <BasicTable
-              operators={operatorsData}
-              loading={loading}
-              error={error}
-              state={state}
-              retry={handleRetry}
-              hasNextPage={hasNextPage}
-              fetchMore={fetchMore}
-              selectedIdx={selectedIdx}
-              handleSelected={handleSelected}
-            ></BasicTable>
-          </DialogContent>
-        </>
-      ) : (
-        <DialogActions
-          sx={{
-            justifyContent: 'center',
-          }}
-        >
-          <Button
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-              borderRadius: '30px',
-            }}
-            variant='contained'
-            onClick={() => setShowOperators(true)}
-          >
-            <Box display='flex'>
-              <Typography>{'Choose an Operator '}</Typography>
-              <Icon sx={{ rotate: '-90deg' }}>
-                <img src='./triangle.svg' />
-              </Icon>
-            </Box>
-          </Button>
-        </DialogActions>
-      )}
-      {showOperators && selectedIdx >= 0 && (
-        <Box
-          sx={{
-            background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
-            borderRadius: '7px',
-            justifyContent: 'center',
-            display: 'flex',
-            gap: '32px',
-            padding: '24px',
-          }}
-        >
-          <Button
-            sx={{ borderRadius: '7px' }}
-            variant='outlined'
-            onClick={() =>
-              navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
-                state: {
-                  modelName: findTag(state, 'modelName'),
-                  modelCreator: state.node.owner.address,
-                  operatorFee: findTag(operatorsData[selectedIdx], 'operatorFee'),
-                  operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
-                },
-              })
-            }
-          >
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 500,
-                fontSize: '15px',
-                lineHeight: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              View History
-            </Typography>
-          </Button>
-          <Button
-            sx={{ borderRadius: '7px' }}
-            variant='contained'
-            onClick={() =>
-              navigate(
-                pathname.includes('chat')
-                  ? pathname.replace(
-                      pathname.split('/chat/')[1],
-                      operatorsData[selectedIdx].node.owner.address,
-                    )
-                  : `../chat/${operatorsData[selectedIdx].node.owner.address}`,
-                {
-                  state: {
-                    modelName: findTag(state, 'modelName'),
-                    modelCreator: state.node.owner.address,
-                    fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
-                    modelTransaction: findTag(state, 'modelTransaction'),
-                    fullState: state,
-                  },
-                },
+      { showOperators ?
+        <ChooseOperator setShowOperators={setShowOperators} scriptTx={scriptTx}/> :
+          showScripts ? 
+            <ChooseScript setShowScripts={setShowScripts} handleScriptChosen={handleScriptChosen} defaultScriptTx={scriptTx}/> :
+              (
+                <DialogActions
+                  sx={{
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Button
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 700,
+                      fontSize: '23px',
+                      lineHeight: '31px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      borderRadius: '30px',
+                    }}
+                    variant='contained'
+                    onClick={() => setShowScripts(true)}
+                  >
+                    <Box display='flex'>
+                      <Typography>{'Choose a Script '}</Typography>
+                      <Icon sx={{ rotate: '-90deg' }}>
+                        <img src='./triangle.svg' />
+                      </Icon>
+                    </Box>
+                  </Button>
+                </DialogActions>
               )
-            }
-            disabled={!currentAddress}
-          >
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 500,
-                fontSize: '15px',
-                lineHeight: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Use Operator
-            </Typography>
-          </Button>
-        </Box>
-      )}
+      }
     </Dialog>
   );
 };
