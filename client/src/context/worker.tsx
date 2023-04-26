@@ -10,6 +10,8 @@ import {
   MODEL_INFERENCE_RESPONSE,
   REGISTER_OPERATION,
   SAVE_REGISTER_OPERATION,
+  SCRIPT_CREATION,
+  SCRIPT_CREATION_PAYMENT,
   TAG_NAMES,
 } from '@/constants';
 import arweave from '@/utils/arweave';
@@ -115,6 +117,10 @@ const handleRetry = async (originalTags: ITag[], operationName: string, txid: st
       case MODEL_CREATION:
         retryTx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
         retryTx.addTag(TAG_NAMES.modelTransaction, txid);
+        break;
+      case SCRIPT_CREATION:
+        retryTx.addTag(TAG_NAMES.operationName, SCRIPT_CREATION_PAYMENT);
+        retryTx.addTag(TAG_NAMES.scriptTransaction, txid);
         break;
       case SAVE_REGISTER_OPERATION:
         retryTx.addTag(TAG_NAMES.operationName, REGISTER_OPERATION);

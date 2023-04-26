@@ -11,6 +11,8 @@ import {
   MODEL_INFERENCE_RESPONSE,
   REGISTER_OPERATION,
   SAVE_REGISTER_OPERATION,
+  SCRIPT_CREATION,
+  SCRIPT_CREATION_PAYMENT,
   TAG_NAMES,
 } from '../constants';
 import { ITransactions } from '../interfaces/arweave';
@@ -36,6 +38,17 @@ self.onmessage = async (e: MessageEvent<string>) => {
             ...DEFAULT_TAGS,
             { name: TAG_NAMES.operationName, values: [MODEL_CREATION_PAYMENT] },
             { name: TAG_NAMES.modelTransaction, values: txid },
+          ],
+        };
+        break;
+      case SCRIPT_CREATION:
+        // find payment for model creation
+        variables = {
+          address: currentAddress,
+          tags: [
+            ...DEFAULT_TAGS,
+            { name: TAG_NAMES.operationName, values: [ SCRIPT_CREATION_PAYMENT] },
+            { name: TAG_NAMES.scriptTransaction, values: txid },
           ],
         };
         break;

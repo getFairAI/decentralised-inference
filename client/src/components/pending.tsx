@@ -6,6 +6,7 @@ import {
   MODEL_INFERENCE_RESPONSE,
   N_PREVIOUS_BLOCKS,
   SAVE_REGISTER_OPERATION,
+  SCRIPT_CREATION,
   TAG_NAMES,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
@@ -67,6 +68,7 @@ const Content = ({
           name: TAG_NAMES.operationName,
           values: [
             MODEL_CREATION,
+            SCRIPT_CREATION,
             SAVE_REGISTER_OPERATION,
             MODEL_FEE_PAYMENT_SAVE,
             MODEL_INFERENCE_RESPONSE,
