@@ -60,7 +60,7 @@ const UploadCreator = () => {
       description: '',
       notes: '',
       avatar: '',
-      file: ''
+      file: '',
     },
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
