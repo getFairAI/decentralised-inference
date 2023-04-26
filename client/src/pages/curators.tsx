@@ -52,6 +52,7 @@ import { findTag } from '@/utils/common';
 export interface CreateForm extends FieldValues {
   name: string;
   fee: number;
+  category: string;
   notes: string;
   file: File;
   model: string;
@@ -64,6 +65,7 @@ const Curators = () => {
     defaultValues: {
       name: '',
       fee: 0,
+      category: 'text',
       description: '',
       notes: '',
       avatar: '',
@@ -304,6 +306,7 @@ const Curators = () => {
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
     tags.push({ name: TAG_NAMES.scriptName, value: `${data.name}` });
+    tags.push({ name: TAG_NAMES.category, value: data.category });
     tags.push({ name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string });
     tags.push({ name: TAG_NAMES.modelCreator, value: modelData.node.owner.address });
     tags.push({ name: TAG_NAMES.modelTransaction, value: modelData.node.id });
@@ -345,6 +348,7 @@ const Curators = () => {
         tx.addTag(TAG_NAMES.contentType, file.type);
         tx.addTag(TAG_NAMES.operationName, SCRIPT_CREATION_PAYMENT);
         tx.addTag(TAG_NAMES.scriptName, `${data.name}`);
+        tx.addTag(TAG_NAMES.category, data.category);
         tx.addTag(TAG_NAMES.modelName, findTag(modelData, 'modelName') as string);
         tx.addTag(TAG_NAMES.modelCreator, modelData.node.owner.address);
         tx.addTag(TAG_NAMES.modelTransaction, modelData.node.id);
@@ -496,6 +500,23 @@ const Curators = () => {
                       }}
                       style={{ width: '100%' }}
                     />
+                    <SelectControl
+                      name='category'
+                      control={control}
+                      rules={{ required: true }}
+                      mat={{
+                        sx: {
+                          borderWidth: '1px',
+                          borderColor: theme.palette.text.primary,
+                          borderRadius: '16px',
+                        },
+                        placeholder: 'Select a Category'
+                      }}
+                    >
+                      <MenuItem value={'text'}>Text</MenuItem>
+                      <MenuItem value={'audio'}>Audio</MenuItem>
+                      <MenuItem value={'video'}>Video</MenuItem>
+                    </SelectControl>
                     <Box paddingLeft={'8px'}>
                       <Typography
                         sx={{
