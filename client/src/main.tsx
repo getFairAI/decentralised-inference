@@ -4,6 +4,7 @@ import { createHashRouter, RouterProvider } from 'react-router-dom';
 import Root from '@/root';
 import Home from '@/pages/home';
 import Curators from '@/pages/curators';
+import UploadCreator from '@/pages/upload-creator';
 import Model, { getModelFeeAndAttachments } from '@/pages/model/model';
 import '@/styles/main.css';
 import Operators from '@/pages/operators';
@@ -73,6 +74,10 @@ const router = createHashRouter([
       {
         path: 'history',
         element: <History />,
+      },
+      {
+        path: 'upload-creator',
+        element: <UploadCreator />,
       },
       {
         path: 'upload',
