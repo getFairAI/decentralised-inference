@@ -47,13 +47,12 @@ import { FundContext } from '@/context/fund';
 export interface CreateForm extends FieldValues {
   name: string;
   fee: number;
-  category: string;
   notes: string;
   file: File;
   description?: string;
   avatar?: File;
 }
-const UploadOperator = () => {
+const UploadCreator = () => {
   const { handleSubmit, reset, control } = useForm<FieldValues>({
     defaultValues: {
       name: '',
@@ -61,8 +60,7 @@ const UploadOperator = () => {
       description: '',
       notes: '',
       avatar: '',
-      file: '',
-      category: 'text',
+      file: ''
     },
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -278,7 +276,6 @@ const UploadOperator = () => {
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
     tags.push({ name: TAG_NAMES.modelName, value: `${data.name}` });
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_CREATION });
-    tags.push({ name: TAG_NAMES.category, value: data.category });
     tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: MARKETPLACE_ADDRESS });
@@ -316,7 +313,6 @@ const UploadOperator = () => {
         tx.addTag(TAG_NAMES.contentType, file.type);
         tx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
         tx.addTag(TAG_NAMES.modelName, data.name);
-        tx.addTag(TAG_NAMES.category, data.category);
         tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${data.fee}`));
         if (data.description) tx.addTag(TAG_NAMES.description, data.description);
         tx.addTag(TAG_NAMES.modelTransaction, res.data.id);
@@ -396,7 +392,7 @@ const UploadOperator = () => {
                 borderRadius: '30px',
               }}
             >
-              <CardHeader title='Upload Script' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
+              <CardHeader title='Upload model' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
                 {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
               </CardHeader>
               <CardContent
@@ -429,22 +425,6 @@ const UploadOperator = () => {
                       }}
                       style={{ width: '100%' }}
                     />
-                    <SelectControl
-                      name='category'
-                      control={control}
-                      rules={{ required: true }}
-                      mat={{
-                        sx: {
-                          borderWidth: '1px',
-                          borderColor: theme.palette.text.primary,
-                          borderRadius: '16px',
-                        },
-                      }}
-                    >
-                      <MenuItem value={'text'}>Text</MenuItem>
-                      <MenuItem value={'audio'}>Audio</MenuItem>
-                      <MenuItem value={'video'}>Video</MenuItem>
-                    </SelectControl>
                     <Box paddingLeft={'8px'}>
                       <Typography
                         sx={{
@@ -589,4 +569,4 @@ const UploadOperator = () => {
   );
 };
 
-export default UploadOperator;
+export default UploadCreator;
