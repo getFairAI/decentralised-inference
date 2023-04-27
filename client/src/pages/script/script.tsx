@@ -6,10 +6,7 @@ import {
   TAG_NAMES,
 } from '@/constants';
 import { RouteLoaderResult } from '@/interfaces/router';
-import {
-  GET_LATEST_MODEL_ATTACHMENTS,
-  GET_TX_OWNER,
-} from '@/queries/graphql';
+import { GET_LATEST_MODEL_ATTACHMENTS, GET_TX_OWNER } from '@/queries/graphql';
 import { client } from '@/utils/apollo';
 import { Outlet, Params } from 'react-router-dom';
 

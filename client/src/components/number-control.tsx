@@ -22,7 +22,7 @@ const NumberControl = (props: NumberControlProps) => {
         decimalScale={3}
         decimalSeparator={'.'}
         sx={props.mat.sx}
-        required={ props.rules && !!props.rules.required }
+        required={props.rules && !!props.rules.required}
       />
       {showError()}
     </FormControl>

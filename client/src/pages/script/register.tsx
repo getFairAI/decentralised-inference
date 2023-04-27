@@ -64,7 +64,10 @@ const Register = () => {
       saveTx.addTag(TAG_NAMES.operatorFee, arweave.ar.arToWinston(rate));
       saveTx.addTag(TAG_NAMES.operatorName, operatorName);
       saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      saveTx.addTag(TAG_NAMES.paymentQuantity, arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE));
+      saveTx.addTag(
+        TAG_NAMES.paymentQuantity,
+        arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE),
+      );
       saveTx.addTag(TAG_NAMES.paymentTarget, MARKETPLACE_ADDRESS);
       const saveResult = await window.arweaveWallet.dispatch(saveTx);
 

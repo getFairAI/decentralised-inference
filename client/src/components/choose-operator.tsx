@@ -43,11 +43,11 @@ const ChooseOperator = ({
     ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.operationName,
-      values: [ REGISTER_OPERATION ],
+      values: [REGISTER_OPERATION],
     },
     {
       name: TAG_NAMES.scriptCurator,
-      values: [ scriptTx?.node.owner.address ],
+      values: [scriptTx?.node.owner.address],
     },
     {
       name: TAG_NAMES.scriptName,
@@ -64,7 +64,7 @@ const ChooseOperator = ({
     fetchMore,
   } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags, first: elementsPerPage },
-    skip: !scriptTx
+    skip: !scriptTx,
   });
 
   const handleRetry = () => {

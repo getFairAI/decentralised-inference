@@ -33,7 +33,7 @@ import { IEdge } from '@/interfaces/arweave';
 
 const Detail = () => {
   const { updatedFee, avatarTxId } = useLoaderData() as RouteLoaderResult;
-  const { state, pathname }: { state: ModelNavigationState, pathname: string } = useLocation();
+  const { state, pathname }: { state: ModelNavigationState; pathname: string } = useLocation();
   const { txid } = useParams();
   const navigate = useNavigate();
   const [feeValue, setFeeValue] = useState(0);
@@ -325,7 +325,9 @@ const Detail = () => {
             >
               Description
             </Typography>
-            <Typography>{findTag(state.fullState, 'description') || 'No Description Available.'}</Typography>
+            <Typography>
+              {findTag(state.fullState, 'description') || 'No Description Available.'}
+            </Typography>
           </Box>
           {currentAddress === state.modelCreator ? (
             <Button variant='outlined' disabled={!feeDirty && feeValue >= 0} onClick={updateFee}>

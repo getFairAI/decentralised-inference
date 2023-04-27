@@ -38,17 +38,20 @@ const Operators = () => {
     ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.operationName,
-      values: [ SCRIPT_CREATION_PAYMENT ],
+      values: [SCRIPT_CREATION_PAYMENT],
     },
   ];
 
-  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(QUERY_REGISTERED_SCRIPTS, {
-    variables: {
-      tags,
-      first: elementsPerPage,
+  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(
+    QUERY_REGISTERED_SCRIPTS,
+    {
+      variables: {
+        tags,
+        first: elementsPerPage,
+      },
+      notifyOnNetworkStatusChange: true,
     },
-    notifyOnNetworkStatusChange: true,
-  });
+  );
 
   useEffect(() => {
     if (isOnScreen && hasNextPage) {

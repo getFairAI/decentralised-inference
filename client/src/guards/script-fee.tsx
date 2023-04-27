@@ -77,8 +77,9 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
         queryResult.data.transactions.edges.length > 0
       ) {
         setIsAllowed(
-          queryResult.data.transactions.edges[0].node.quantity.winston === findTag(state.fullState, 'scriptFee') &&
-            (await isTxConfirmed(queryResult.data.transactions.edges[0].node.id))
+          queryResult.data.transactions.edges[0].node.quantity.winston ===
+            findTag(state.fullState, 'scriptFee') &&
+            (await isTxConfirmed(queryResult.data.transactions.edges[0].node.id)),
         );
         setHasPaid(
           queryResult.data.transactions.edges[0].node.quantity.winston ===
@@ -229,8 +230,8 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
                   textAlign: 'center',
                 }}
               >
-                In Order to prevent bad actors an user has to pay the script fee before being able to
-                use it. The current Script fee is{' '}
+                In Order to prevent bad actors an user has to pay the script fee before being able
+                to use it. The current Script fee is{' '}
                 {parseWinston(findTag(state.fullState, 'scriptFee') as string)}{' '}
                 <img src='./arweave-logo-warning.svg'></img>
               </Typography>
@@ -266,17 +267,15 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
               Accept
             </Button>
           </DialogActions>
-        ) : <DialogActions
-              sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
-            >
-            <Button
-              onClick={() => navigate('/')}
-              variant='contained'
-            >
+        ) : (
+          <DialogActions
+            sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
+          >
+            <Button onClick={() => navigate('/')} variant='contained'>
               Back to Home
             </Button>
           </DialogActions>
-        }
+        )}
       </Dialog>
       {isAllowed && children}
     </>

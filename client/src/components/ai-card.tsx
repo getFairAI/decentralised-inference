@@ -91,15 +91,14 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
     const modelId = findTag(model, 'modelTransaction');
     if (!modelId) return;
     navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
-        state: {
-          modelName: findTag(model, 'modelName'),
-          modelCreator: model.node.owner.address,
-          fee: findTag(model, 'modelFee'),
-          modelTransaction: modelId,
-          fullState: model,
-        }
-      } as { state: ModelNavigationState
-    });
+      state: {
+        modelName: findTag(model, 'modelName'),
+        modelCreator: model.node.owner.address,
+        fee: findTag(model, 'modelFee'),
+        modelTransaction: modelId,
+        fullState: model,
+      },
+    } as { state: ModelNavigationState });
   };
 
   return (

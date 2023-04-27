@@ -5,7 +5,7 @@ import { styled } from '@mui/material/styles';
 import { FormControl, FormHelperText } from '@mui/material';
 
 const StyledEditor = styled(MDEditor, {
-  shouldForwardProp: prop => prop !== 'invalid',
+  shouldForwardProp: (prop) => prop !== 'invalid',
 })<{ invalid: boolean }>(({ theme, invalid }) => ({
   marginBottom: '8px',
   borderRadius: '23px',

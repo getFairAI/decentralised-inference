@@ -32,7 +32,7 @@ const ChooseScript = ({
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
-  const { state }: { state: ModelNavigationState} = useLocation();
+  const { state }: { state: ModelNavigationState } = useLocation();
   const { currentAddress } = useContext(WalletContext);
   const elementsPerPage = 5;
 

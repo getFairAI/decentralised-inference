@@ -113,7 +113,7 @@ const AiListCard = ({
         fee: findTag(model, 'modelFee'),
         modelTransaction: modelId,
         fullState: model,
-      }
+      },
     });
   };
 
