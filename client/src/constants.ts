@@ -36,6 +36,9 @@ export const TAG_NAMES = {
   paymentTarget: 'Payment-Target',
   scriptTransaction: 'Script-Transaction',
   scriptName: 'Script-Name',
+  scriptCreator: 'Script-Creator',
+  scriptOperator: 'Script-Operator',
+  scriptUser: 'Script-User',
   scriptFee: 'Script-Fee',
 };
 

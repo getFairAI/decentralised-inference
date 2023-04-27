@@ -8,7 +8,7 @@ import UploadCreator from '@/pages/upload-creator';
 import Model, { getModelFeeAndAttachments } from '@/pages/model/model';
 import '@/styles/main.css';
 import Operators from '@/pages/operators';
-import Register from '@/pages/model/register';
+import Register from '@/pages/script/register';
 import Detail from '@/pages/model/detail';
 import OperatorDetails from '@/pages/operator/detail';
 import Chat from '@/pages/model/chat';
@@ -17,6 +17,7 @@ import ModelFeeGuard from '@/guards/model-fee';
 import BlockOperatorGuard from '@/guards/block-operator';
 import Error from '@/pages/error';
 import Payments from '@/pages/payments';
+import { getScriptAttachments } from './pages/script/script';
 
 const router = createHashRouter([
   {
@@ -93,7 +94,7 @@ const router = createHashRouter([
               {
                 path: 'register/:txid/',
                 id: 'register',
-                loader: getModelFeeAndAttachments,
+                loader: getScriptAttachments,
                 element: <Register />,
               },
             ],

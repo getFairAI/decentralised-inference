@@ -182,8 +182,8 @@ export const CustomStepper = (props: {
 
   const download = () => {
     const a = document.createElement('a');
-    a.href = `${NET_ARWEAVE_URL}/${findTag(props.data, 'modelTransaction')}`;
-    a.download = findTag(props.data, 'modelName') || props.data.node.id;
+    a.href = `${NET_ARWEAVE_URL}/${findTag(props.data, 'scriptTransaction')}`;
+    a.download = findTag(props.data, 'scriptName') || props.data.node.id;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -192,7 +192,7 @@ export const CustomStepper = (props: {
   useEffect(() => {
     const getFileSize = async () => {
       const response = await fetch(
-        `${NET_ARWEAVE_URL}/${findTag(props.data, 'modelTransaction')}`,
+        `${NET_ARWEAVE_URL}/${findTag(props.data, 'scriptTransaction')}`,
         { method: 'HEAD' },
       );
       setFileSize(parseInt(response.headers.get('Content-Length') || ''));
@@ -360,7 +360,7 @@ export const CustomStepper = (props: {
                 multiline
                 disabled
                 minRows={1}
-                value={findTag(props.data, 'modelName')}
+                value={findTag(props.data, 'scriptName')}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
