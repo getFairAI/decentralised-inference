@@ -8,6 +8,7 @@ import {
   MODEL_INFERENCE_RESPONSE,
   MODEL_INFERENCE_REQUEST,
   N_PREVIOUS_BLOCKS,
+  SCRIPT_CREATION,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import useOnScreen from '@/hooks/useOnScreen';
@@ -62,6 +63,7 @@ const Payments = () => {
               MODEL_FEE_PAYMENT_SAVE,
               MODEL_INFERENCE_RESPONSE,
               MODEL_INFERENCE_REQUEST,
+              SCRIPT_CREATION,
             ],
           },
         ],

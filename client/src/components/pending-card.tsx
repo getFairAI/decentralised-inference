@@ -11,6 +11,8 @@ import {
   INFERENCE_PAYMENT,
   MODEL_INFERENCE_RESPONSE,
   INFERENCE_PAYMENT_DISTRIBUTION,
+  SCRIPT_CREATION_PAYMENT,
+  SCRIPT_CREATION,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
@@ -48,6 +50,7 @@ interface PaymentTx {
 
 type operationNames =
   | 'Model Creation Payment'
+  | 'Script Creation Payment'
   | 'Operator Registration Payment'
   | 'Model Fee Payment'
   | 'Inference Request Payment'
@@ -79,6 +82,20 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
             },
           });
           setOperationName('Model Creation Payment');
+          break;
+        case SCRIPT_CREATION:
+          // find payment for model creation
+          getPayment({
+            variables: {
+              address: currentAddress,
+              tags: [
+                ...DEFAULT_TAGS,
+                { name: TAG_NAMES.operationName, values: [SCRIPT_CREATION_PAYMENT] },
+                { name: TAG_NAMES.scriptTransaction, values: tx.node.id },
+              ],
+            },
+          });
+          setOperationName('Script Creation Payment');
           break;
         case SAVE_REGISTER_OPERATION:
           // check there is register operation for this tx
@@ -156,7 +173,7 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
           timestamp,
           status: 'Failed',
         });
-        const canRetry = target && quantity && !Number.isNaN(quantity);
+        const canRetry = target && quantity && !Number.isNaN(quantity) && target !== currentAddress;
         if (autoRetry && canRetry) {
           startJob({
             address: currentAddress,
@@ -229,6 +246,10 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
       case 'Model Creation Payment':
         retryTx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
         retryTx.addTag(TAG_NAMES.modelTransaction, tx.node.id);
+        break;
+      case 'Script Creation Payment':
+        retryTx.addTag(TAG_NAMES.operationName, SCRIPT_CREATION_PAYMENT);
+        retryTx.addTag(TAG_NAMES.scriptTransaction, tx.node.id);
         break;
       case 'Operator Registration Payment':
         retryTx.addTag(TAG_NAMES.operationName, REGISTER_OPERATION);
@@ -380,7 +401,10 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
         <CardActions
           sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', gap: '8px' }}
         >
-          {!payment.target || !payment.quantity || Number.isNaN(payment.quantity) ? (
+          {!payment.target ||
+          !payment.quantity ||
+          Number.isNaN(payment.quantity) ||
+          payment.target === currentAddress ? (
             <>
               <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
                 <span>

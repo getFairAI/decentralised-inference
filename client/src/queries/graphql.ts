@@ -1088,3 +1088,57 @@ export const QUERY_CONVERSATIONS = gql`
     }
   }
 `;
+
+export const QUERY_REGISTERED_SCRIPTS = gql`
+  query QUERY_REGISTERED_SCRIPTS($tags: [TagFilter!], $first: Int, $after: String) {
+    transactions(
+      recipients:["${MARKETPLACE_ADDRESS}"],
+      tags: $tags
+      sort: HEIGHT_DESC,
+      first: $first,
+      after: $after
+    )
+    {
+      pageInfo {
+        hasNextPage
+      }
+      edges {
+          cursor
+          node {
+              id
+              signature
+              recipient
+              owner {
+                  address
+                  key
+              }
+              fee {
+                  winston
+                  ar
+              }
+              quantity {
+                  winston
+                  ar
+              }
+              data {
+                  size
+                  type
+              }
+              tags {
+                  name
+                  value
+              }
+              block {
+                  id
+                  timestamp
+                  height
+                  previous
+              }
+              bundledIn {
+                  id
+              }
+          }
+      }
+    }
+  }
+`;

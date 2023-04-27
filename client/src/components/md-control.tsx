@@ -2,18 +2,23 @@ import MDEditor, { MDEditorProps } from '@uiw/react-md-editor';
 import { useController, UseControllerProps } from 'react-hook-form';
 import rehypeSanitize from 'rehype-sanitize';
 import { styled } from '@mui/system';
+import { FormControl, FormHelperText } from '@mui/material';
 
-const StyledEditor = styled(MDEditor)(({ theme }) => ({
+const StyledEditor = styled(MDEditor)<{ invalid: boolean }>(({ theme, invalid }) => ({
   marginBottom: '8px',
   borderRadius: '23px',
   border: 'none',
   boxShadow: 'none',
-
+  ...(invalid && {
+    border: `1px solid ${theme.palette.error.main}`,
+    color: theme.palette.error.main,
+  }),
   background:
     theme.palette.mode === 'dark' ? 'rgba(61, 61, 61, 0.98)' : theme.palette.secondary.main,
   '.w-md-editor-toolbar': {
-    background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+    background: `linear-gradient(180deg, transparent 0%, ${theme.palette.primary.main} 100%)`,
     borderRadius: '43px',
+    ...(invalid && { borderTop: theme.palette.error.main }),
   },
   '.wmde-markdown': {
     background: 'transparent',
@@ -32,19 +37,33 @@ const MarkdownControl = ({
   viewProps?: MDEditorProps;
 }) => {
   if (props) {
-    const { field } = useController(props);
+    const { field, fieldState } = useController(props);
+
+    const showError = () => {
+      if (fieldState.invalid) {
+        return <FormHelperText>This Field is Required</FormHelperText>;
+      }
+    };
 
     return (
-      <StyledEditor
-        value={field.value}
-        onChange={field.onChange}
-        previewOptions={{
-          rehypePlugins: [[rehypeSanitize]],
-        }}
-      />
+      <FormControl fullWidth margin='normal' error={fieldState.invalid}>
+        <StyledEditor
+          value={field.value}
+          onChange={field.onChange}
+          previewOptions={{
+            rehypePlugins: [[rehypeSanitize]],
+          }}
+          invalid={fieldState.invalid}
+        />
+        {showError()}
+      </FormControl>
     );
   } else {
-    return <StyledEditor {...viewProps} />;
+    return (
+      <FormControl fullWidth margin='normal'>
+        <StyledEditor {...viewProps} invalid={false} />
+      </FormControl>
+    );
   }
 };
 

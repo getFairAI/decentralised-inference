@@ -203,7 +203,8 @@ describe('components/basic-table.tsx', () => {
     render(
       <MockedProvider>
         <BasicTable
-          operators={mocks}
+          type='operators'
+          data={mocks}
           loading={false}
           retry={fakeRetry}
           fetchMore={fakeFetchMore}
@@ -225,7 +226,8 @@ describe('components/basic-table.tsx', () => {
   it.skip('should display loading', () => {
     render(
       <BasicTable
-        operators={mocks}
+        type='operators'
+        data={mocks}
         loading={true}
         retry={fakeRetry}
         fetchMore={fakeFetchMore}
@@ -247,7 +249,8 @@ describe('components/basic-table.tsx', () => {
   it.skip('should display error', () => {
     render(
       <BasicTable
-        operators={mocks}
+        type='operators'
+        data={mocks}
         loading={false}
         retry={fakeRetry}
         fetchMore={fakeFetchMore}

@@ -289,7 +289,7 @@ const OperatorRow = ({
             </Typography>
           </Tooltip>
         </TableCell>
-        <TableCell align='left'>{row?.operatorName}</TableCell>
+        <TableCell align='right'>{row?.operatorName}</TableCell>
         <TableCell align='right'>{row?.registrationTimestamp}</TableCell>
         <TableCell align='right'>{parseWinston(row?.fee)}</TableCell>
         <TableCell align='right'>
