@@ -23,11 +23,11 @@ import {
   DEFAULT_TAGS,
   INFERENCE_PERCENTAGE_FEE,
   TAG_NAMES,
-  MODEL_INFERENCE_REQUEST,
-  MODEL_INFERENCE_RESPONSE,
   APP_NAME,
   INFERENCE_PAYMENT,
   N_PREVIOUS_BLOCKS,
+  SCRIPT_INFERENCE_RESPONSE,
+  SCRIPT_INFERENCE_REQUEST,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -147,21 +147,21 @@ const Chat = () => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       const commonTags = [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.modelName, values: [state.modelName] },
-        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
+        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
+        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
       ];
       const tagsResponses = [
         ...commonTags,
-        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
+        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: TAG_NAMES.modelUser, values: [userAddr] },
+        { name: TAG_NAMES.scriptUser, values: [userAddr] },
         {
           name: TAG_NAMES.requestTransaction,
           values: requestsData.transactions.edges.map((el: IEdge) => el.node.id),
         }, // slice from end to get latest requests
       ];
       const owners = Array.from(
-        new Set(requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'modelOperator'))),
+        new Set(requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator'))),
       );
       getChatResponses({
         variables: {
@@ -295,13 +295,13 @@ const Chat = () => {
       stopRequestPolling();
       const pollTags = [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.modelName, values: [state.modelName] },
-        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
+        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
+        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
       ];
 
       const tagsRequests = [
         ...pollTags,
-        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
+        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
       ];
 
       pollRequests({
@@ -315,14 +315,14 @@ const Chat = () => {
       stopResponsePolling();
       const commonTags = [
         ...DEFAULT_TAGS,
-        { name: 'Model-Name', values: [state.modelName] },
-        { name: 'Model-Creator', values: [state.modelCreator] },
+        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
+        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
       ];
       const tagsResponses = [
         ...commonTags,
-        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
+        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: TAG_NAMES.modelUser, values: [userAddr] },
+        { name: TAG_NAMES.scriptUser, values: [userAddr] },
         {
           name: TAG_NAMES.requestTransaction,
           values: messages.map((el) => el.id).slice(-1), // last 5 requests
@@ -332,7 +332,7 @@ const Chat = () => {
         new Set(
           requestsData.transactions.edges
             .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
-            .map((el: IEdge) => findTag(el, 'modelOperator')),
+            .map((el: IEdge) => findTag(el, 'scriptOperator')),
         ),
       );
 
@@ -348,14 +348,14 @@ const Chat = () => {
       stopResponsePolling();
       const commonTags = [
         ...DEFAULT_TAGS,
-        { name: 'Model-Name', values: [state.modelName] },
-        { name: 'Model-Creator', values: [state.modelCreator] },
+        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
+        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
       ];
       const tagsResponses = [
         ...commonTags,
-        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_RESPONSE] },
+        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: TAG_NAMES.modelUser, values: [userAddr] },
+        { name: TAG_NAMES.scriptUser, values: [userAddr] },
         {
           name: TAG_NAMES.requestTransaction,
           values: messages.map((el) => el.id).slice(-1), // last 5 requests
@@ -365,7 +365,7 @@ const Chat = () => {
         new Set(
           requestsData.transactions.edges
             .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
-            .map((el: IEdge) => findTag(el, 'modelOperator')),
+            .map((el: IEdge) => findTag(el, 'scriptOperator')),
         ),
       );
 
@@ -387,12 +387,12 @@ const Chat = () => {
       // get messages for current conversation
       const commonTags = [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.modelName, values: [state.modelName] },
-        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
+        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
+        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
       ];
       const tagsRequests = [
         ...commonTags,
-        { name: TAG_NAMES.operationName, values: [MODEL_INFERENCE_REQUEST] },
+        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
         { name: TAG_NAMES.conversationIdentifier, values: [`${currentConversationId}`] },
       ];
       getChatRequests({
@@ -519,11 +519,11 @@ const Chat = () => {
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
-    tags.push({ name: TAG_NAMES.modelName, value: state.modelName });
-    tags.push({ name: TAG_NAMES.modelCreator, value: state.modelCreator });
-    tags.push({ name: TAG_NAMES.modelTransaction, value: state.modelTransaction });
-    tags.push({ name: TAG_NAMES.modelOperator, value: address });
-    tags.push({ name: TAG_NAMES.operationName, value: MODEL_INFERENCE_REQUEST });
+    tags.push({ name: TAG_NAMES.scriptName, value: state.scriptName });
+    tags.push({ name: TAG_NAMES.scriptCurator, value: state.scriptCurator });
+    tags.push({ name: TAG_NAMES.scriptTransaction, value: state.scriptTransaction });
+    tags.push({ name: TAG_NAMES.scriptOperator, value: address });
+    tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_INFERENCE_REQUEST });
     tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: inferenceFee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
@@ -570,10 +570,10 @@ const Chat = () => {
       tx.addTag(TAG_NAMES.appName, APP_NAME);
       tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
       tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
-      tx.addTag(TAG_NAMES.modelName, state.modelName);
-      tx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
-      tx.addTag(TAG_NAMES.modelTransaction, state.modelTransaction);
-      tx.addTag(TAG_NAMES.modelOperator, address || '');
+      tx.addTag(TAG_NAMES.scriptName, state.scriptName);
+      tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
+      tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
+      tx.addTag(TAG_NAMES.scriptOperator, address || '');
       tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
       tx.addTag(TAG_NAMES.inferenceTransaction, bundlrRes.id);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
@@ -593,7 +593,7 @@ const Chat = () => {
         );
         startJob({
           address: userAddr,
-          operationName: MODEL_INFERENCE_REQUEST,
+          operationName: SCRIPT_INFERENCE_REQUEST,
           tags,
           txid: bundlrRes.id,
           encodedTags: false,
@@ -915,7 +915,7 @@ const Chat = () => {
                                             : theme.palette.terciary.contrastText,
                                       }}
                                     >
-                                      {el.type === 'response' ? state.modelName : 'You'}
+                                      {el.type === 'response' ? state.scriptName : 'You'}
                                     </Typography>
                                   </Box>
                                 </CardContent>

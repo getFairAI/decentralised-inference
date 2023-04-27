@@ -5,10 +5,11 @@ import {
   MODEL_CREATION,
   SAVE_REGISTER_OPERATION,
   MODEL_FEE_PAYMENT_SAVE,
-  MODEL_INFERENCE_RESPONSE,
-  MODEL_INFERENCE_REQUEST,
+  SCRIPT_INFERENCE_REQUEST,
+  SCRIPT_INFERENCE_RESPONSE,
   N_PREVIOUS_BLOCKS,
   SCRIPT_CREATION,
+  SCRIPT_FEE_PAYMENT_SAVE,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import useOnScreen from '@/hooks/useOnScreen';
@@ -61,8 +62,9 @@ const Payments = () => {
               MODEL_CREATION,
               SAVE_REGISTER_OPERATION,
               MODEL_FEE_PAYMENT_SAVE,
-              MODEL_INFERENCE_RESPONSE,
-              MODEL_INFERENCE_REQUEST,
+              SCRIPT_FEE_PAYMENT_SAVE,
+              SCRIPT_INFERENCE_REQUEST,
+              SCRIPT_INFERENCE_RESPONSE,
               SCRIPT_CREATION,
             ],
           },

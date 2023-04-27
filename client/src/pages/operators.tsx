@@ -1,6 +1,6 @@
-import { MARKETPLACE_FEE } from '@/constants';
+import { DEFAULT_TAGS, MARKETPLACE_FEE, SCRIPT_CREATION_PAYMENT, TAG_NAMES } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { LIST_MODELS_QUERY } from '@/queries/graphql';
+import { QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
 import { genLoadingArray } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import ReplayIcon from '@mui/icons-material/Replay';
-import ModelCard from '@/components/model-card';
+import ScriptCard from '@/components/script-card';
 import useOnScreen from '@/hooks/useOnScreen';
 import { Outlet } from 'react-router-dom';
 import { isTxConfirmed } from '@/utils/arweave';
@@ -34,12 +34,24 @@ const Operators = () => {
 
   const mockArray = genLoadingArray(6);
 
-  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(LIST_MODELS_QUERY, {
-    variables: {
-      first: elementsPerPage,
+  const tags = [
+    ...DEFAULT_TAGS,
+    {
+      name: TAG_NAMES.operationName,
+      values: [SCRIPT_CREATION_PAYMENT],
     },
-    notifyOnNetworkStatusChange: true,
-  });
+  ];
+
+  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(
+    QUERY_REGISTERED_SCRIPTS,
+    {
+      variables: {
+        tags,
+        first: elementsPerPage,
+      },
+      notifyOnNetworkStatusChange: true,
+    },
+  );
 
   useEffect(() => {
     if (isOnScreen && hasNextPage) {
@@ -122,7 +134,7 @@ const Operators = () => {
             // background: 'linear-gradient(101.22deg, rgba(14, 255, 168, 0.58) 30.84%, #9747FF 55.47%, rgba(84, 81, 228, 0) 78.13%), linear-gradient(0deg, #FFFFFF, #FFFFFF)',
           }}
         >
-          Choose a Model to Start Operating
+          Choose a Script to Start Operating
         </Typography>
         <Box className={'filter-box'} sx={{ display: 'flex' }}>
           <Box display={'flex'} flexDirection={'column'}>
@@ -294,7 +306,7 @@ const Operators = () => {
                 textAlign: 'center',
               }}
             >
-              Model Fee
+              Script Fee
             </Typography>
             <Typography
               sx={{
@@ -326,7 +338,7 @@ const Operators = () => {
               </Container>
             ) : (
               txs.map((el: IEdge, idx: number) => (
-                <ModelCard modelTx={el} key={el.node.id} index={idx} />
+                <ScriptCard scriptTx={el} key={el.node.id} index={idx} />
               ))
             )}
             {loading &&

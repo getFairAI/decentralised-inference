@@ -7,13 +7,15 @@ import {
   MODEL_CREATION_PAYMENT,
   MODEL_FEE_PAYMENT,
   MODEL_FEE_PAYMENT_SAVE,
-  MODEL_INFERENCE_REQUEST,
-  MODEL_INFERENCE_RESPONSE,
+  SCRIPT_INFERENCE_REQUEST,
+  SCRIPT_INFERENCE_RESPONSE,
   REGISTER_OPERATION,
   SAVE_REGISTER_OPERATION,
   SCRIPT_CREATION,
   SCRIPT_CREATION_PAYMENT,
   TAG_NAMES,
+  SCRIPT_FEE_PAYMENT_SAVE,
+  SCRIPT_FEE_PAYMENT,
 } from '../constants';
 import { ITransactions } from '../interfaces/arweave';
 import { QUERY_TX_WITH } from '../queries/graphql';
@@ -73,7 +75,18 @@ self.onmessage = async (e: MessageEvent<string>) => {
           ],
         };
         break;
-      case MODEL_INFERENCE_REQUEST:
+      case SCRIPT_FEE_PAYMENT_SAVE:
+        // check there is a model fee payment for this tx
+        variables = {
+          address: currentAddress,
+          tags: [
+            ...DEFAULT_TAGS,
+            { name: TAG_NAMES.operationName, values: [SCRIPT_FEE_PAYMENT] },
+            { name: TAG_NAMES.saveTransaction, values: [txid] },
+          ],
+        };
+        break;
+      case SCRIPT_INFERENCE_REQUEST:
         // check there is a inference payment for this tx
         variables = {
           address: currentAddress,
@@ -84,7 +97,7 @@ self.onmessage = async (e: MessageEvent<string>) => {
           ],
         };
         break;
-      case MODEL_INFERENCE_RESPONSE:
+      case SCRIPT_INFERENCE_RESPONSE:
         // check there is a inferen payment distribution for this tx
         variables = {
           address: currentAddress,

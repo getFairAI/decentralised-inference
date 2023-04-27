@@ -23,7 +23,7 @@ import { ChangeEvent, useContext, useEffect, useMemo, useState } from 'react';
 import arweave from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
-import { RouteLoaderResult } from '@/interfaces/router';
+import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import { NumericFormat } from 'react-number-format';
@@ -33,7 +33,7 @@ import { IEdge } from '@/interfaces/arweave';
 
 const Detail = () => {
   const { updatedFee, avatarTxId } = useLoaderData() as RouteLoaderResult;
-  const { state, pathname } = useLocation();
+  const { state, pathname }: { state: ModelNavigationState; pathname: string } = useLocation();
   const { txid } = useParams();
   const navigate = useNavigate();
   const [feeValue, setFeeValue] = useState(0);
@@ -71,8 +71,8 @@ const Detail = () => {
       tx.addTag(TAG_NAMES.appName, APP_NAME);
       tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
       tx.addTag(TAG_NAMES.operationName, MODEL_FEE_UPDATE);
-      tx.addTag(TAG_NAMES.modelName, findTag(state, 'modelName') as string);
-      tx.addTag(TAG_NAMES.modelTransaction, findTag(state, 'modelTransaction') as string);
+      tx.addTag(TAG_NAMES.modelName, state.modelName);
+      tx.addTag(TAG_NAMES.modelTransaction, state.modelTransaction);
       tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${feeValue}`));
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
       await arweave.transactions.sign(tx);
@@ -113,7 +113,7 @@ const Detail = () => {
         const arValue = arweave.ar.winstonToAr(updatedFee);
         setFeeValue(parseFloat(arValue));
       } else {
-        const arValue = arweave.ar.winstonToAr(findTag(state, 'modelFee') as string);
+        const arValue = arweave.ar.winstonToAr(state.fee);
         setFeeValue(parseFloat(arValue));
       }
     }
@@ -145,7 +145,7 @@ const Detail = () => {
         alignItems='center'
         lineHeight={0}
       >
-        {(showOperators || showScripts) && <Typography>{findTag(state, 'modelName')}</Typography>}
+        {(showOperators || showScripts) && <Typography>{state.modelName}</Typography>}
         <IconButton
           onClick={handleClose}
           sx={{
@@ -208,7 +208,7 @@ const Detail = () => {
                 textAlign: 'center',
               }}
             >
-              {findTag(state, 'modelName')}
+              {state.modelName}
             </Typography>
           </Box>
           <Box>
@@ -236,7 +236,7 @@ const Detail = () => {
                 textAlign: 'center',
               }}
             >
-              {findTag(state, 'category')}
+              {findTag(state.fullState, 'category')}
             </Typography>
           </Box>
           <Box>
@@ -260,7 +260,7 @@ const Detail = () => {
               width={'100%'}
               height='60px'
             >
-              {currentAddress === state.node.owner.address ? (
+              {currentAddress === state.modelCreator ? (
                 <NumericFormat
                   sx={{
                     display: 'flex',
@@ -325,9 +325,11 @@ const Detail = () => {
             >
               Description
             </Typography>
-            <Typography>{findTag(state, 'description') || 'No Description Available.'}</Typography>
+            <Typography>
+              {findTag(state.fullState, 'description') || 'No Description Available.'}
+            </Typography>
           </Box>
-          {currentAddress === state.node.owner.address ? (
+          {currentAddress === state.modelCreator ? (
             <Button variant='outlined' disabled={!feeDirty && feeValue >= 0} onClick={updateFee}>
               Update
             </Button>

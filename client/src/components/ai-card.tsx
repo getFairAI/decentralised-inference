@@ -14,6 +14,7 @@ import {
   TAG_NAMES,
   NET_ARWEAVE_URL,
 } from '@/constants';
+import { ModelNavigationState } from '@/interfaces/router';
 
 const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
   const theme = useTheme();
@@ -89,7 +90,15 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
     event.preventDefault();
     const modelId = findTag(model, 'modelTransaction');
     if (!modelId) return;
-    navigate(`/model/${encodeURIComponent(modelId)}/detail`, { state: model });
+    navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
+      state: {
+        modelName: findTag(model, 'modelName'),
+        modelCreator: model.node.owner.address,
+        fee: findTag(model, 'modelFee'),
+        modelTransaction: modelId,
+        fullState: model,
+      },
+    } as { state: ModelNavigationState });
   };
 
   return (

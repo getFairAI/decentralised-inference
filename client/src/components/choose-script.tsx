@@ -17,6 +17,7 @@ import {
 import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import BasicTable from './basic-table';
+import { ModelNavigationState } from '@/interfaces/router';
 
 const ChooseScript = ({
   setShowScripts,
@@ -31,7 +32,7 @@ const ChooseScript = ({
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
-  const { state } = useLocation();
+  const { state }: { state: ModelNavigationState } = useLocation();
   const { currentAddress } = useContext(WalletContext);
   const elementsPerPage = 5;
 
@@ -43,15 +44,15 @@ const ChooseScript = ({
     },
     {
       name: TAG_NAMES.modelCreator,
-      values: [state.node.owner.address],
+      values: [state.modelCreator],
     },
     {
       name: TAG_NAMES.modelName,
-      values: [findTag(state, 'modelName')],
+      values: [state.modelName],
     },
     {
       name: TAG_NAMES.modelTransaction,
-      values: [findTag(state, 'modelTransaction')],
+      values: [state.modelTransaction],
     },
   ];
 
@@ -200,7 +201,7 @@ const ChooseScript = ({
           data={scriptsData}
           loading={loading}
           error={error}
-          state={state}
+          state={state.fullState}
           retry={handleRetry}
           hasNextPage={hasNextPage}
           fetchMore={fetchMore}

@@ -6,6 +6,7 @@ import {
   APP_NAME,
   REGISTER_OPERATION,
   SAVE_REGISTER_OPERATION,
+  OPERATOR_REGISTRATION_AR_FEE,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { RouteLoaderResult } from '@/interfaces/router';
@@ -33,7 +34,7 @@ import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
 
 const Register = () => {
-  const { updatedFee, avatarTxId } = (useLoaderData() as RouteLoaderResult) || {};
+  const { avatarTxId } = (useLoaderData() as RouteLoaderResult) || {};
   const { state }: { state: IEdge } = useLocation();
   const [isRegistered, setIsRegistered] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -46,7 +47,7 @@ const Register = () => {
     if (avatarTxId) {
       return `https://arweave.net/${avatarTxId}`;
     }
-    const img = toSvg(state.node.id, 100);
+    const img = toSvg(findTag(state, 'scriptTransaction'), 100);
     const svg = new Blob([img], { type: 'image/svg+xml' });
     return URL.createObjectURL(svg);
   }, [state, avatarTxId]);
@@ -57,31 +58,34 @@ const Register = () => {
       saveTx.addTag(TAG_NAMES.appName, APP_NAME);
       saveTx.addTag(TAG_NAMES.appVersion, APP_VERSION);
       saveTx.addTag(TAG_NAMES.operationName, SAVE_REGISTER_OPERATION);
-      saveTx.addTag(TAG_NAMES.modelName, findTag(state, 'modelName') || '');
-      saveTx.addTag(TAG_NAMES.modelCreator, state.node.owner.address);
-      saveTx.addTag(TAG_NAMES.modelTransaction, findTag(state, 'modelTransaction') as string);
+      saveTx.addTag(TAG_NAMES.scriptName, findTag(state, 'scriptName') || '');
+      saveTx.addTag(TAG_NAMES.scriptCurator, state.node.owner.address);
+      saveTx.addTag(TAG_NAMES.scriptTransaction, findTag(state, 'scriptTransaction') as string);
       saveTx.addTag(TAG_NAMES.operatorFee, arweave.ar.arToWinston(rate));
       saveTx.addTag(TAG_NAMES.operatorName, operatorName);
       saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      saveTx.addTag(TAG_NAMES.paymentQuantity, arweave.ar.arToWinston('0.05'));
+      saveTx.addTag(
+        TAG_NAMES.paymentQuantity,
+        arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE),
+      );
       saveTx.addTag(TAG_NAMES.paymentTarget, MARKETPLACE_ADDRESS);
       const saveResult = await window.arweaveWallet.dispatch(saveTx);
 
       const tx = await arweave.createTransaction({
         target: MARKETPLACE_ADDRESS,
-        quantity: arweave.ar.arToWinston('0.05'),
+        quantity: arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE),
       });
       const tags = [];
       tags.push({ name: TAG_NAMES.appName, values: APP_NAME });
       tags.push({ name: TAG_NAMES.appVersion, values: APP_VERSION });
       tags.push({
-        name: TAG_NAMES.modelName,
-        values: findTag(state, 'modelName') || '',
+        name: TAG_NAMES.scriptName,
+        values: findTag(state, 'scriptName') || '',
       });
-      tags.push({ name: TAG_NAMES.modelCreator, values: state.node.owner.address });
+      tags.push({ name: TAG_NAMES.scriptCurator, values: state.node.owner.address });
       tags.push({
-        name: TAG_NAMES.modelTransaction,
-        values: findTag(state, 'modelTransaction') as string,
+        name: TAG_NAMES.scriptTransaction,
+        values: findTag(state, 'scriptTransaction') as string,
       });
       tags.push({ name: TAG_NAMES.operatorFee, values: arweave.ar.arToWinston(rate) });
       tags.push({ name: TAG_NAMES.operationName, values: REGISTER_OPERATION });
@@ -222,7 +226,7 @@ const Register = () => {
                 textAlign: 'center',
               }}
             >
-              {findTag(state, 'modelName')}
+              {findTag(state, 'scriptName')}
             </Typography>
           </Box>
           <Box>
@@ -275,7 +279,7 @@ const Register = () => {
               height='60px'
             >
               <NumericFormat
-                value={arweave.ar.winstonToAr(updatedFee || findTag(state, 'modelFee') || '0')}
+                value={arweave.ar.winstonToAr(findTag(state, 'scriptFee') || '0')}
                 customInput={InputBase}
                 decimalScale={3}
                 decimalSeparator={'.'}

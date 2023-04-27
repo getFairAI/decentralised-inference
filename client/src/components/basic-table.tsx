@@ -183,8 +183,8 @@ export default function BasicTable(props: {
                   <OperatorRow
                     key={row.node.id}
                     operatorTx={row}
-                    modelCreator={props.state.node.owner.address}
-                    modelName={findTag(props.state, 'modelName') as string}
+                    scriptCurator={props.state.node.owner.address}
+                    scriptName={findTag(props.state, 'scriptName') as string}
                     state={props.state}
                     index={idx}
                     isSelected={props.selectedIdx === idx}

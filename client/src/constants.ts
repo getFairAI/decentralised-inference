@@ -36,6 +36,9 @@ export const TAG_NAMES = {
   paymentTarget: 'Payment-Target',
   scriptTransaction: 'Script-Transaction',
   scriptName: 'Script-Name',
+  scriptCurator: 'Script-Curator',
+  scriptOperator: 'Script-Operator',
+  scriptUser: 'Script-User',
   scriptFee: 'Script-Fee',
 };
 
@@ -62,15 +65,19 @@ export const MODEL_FEE_PAYMENT = 'Model Fee Payment';
 
 export const MODEL_FEE_PAYMENT_SAVE = 'Model Fee Payment Save';
 
-export const MODEL_INFERENCE_REQUEST = 'Model Inference Request';
+export const SCRIPT_INFERENCE_REQUEST = 'Script Inference Request';
 
 export const INFERENCE_PAYMENT = 'Inference Payment';
 
-export const MODEL_INFERENCE_RESPONSE = 'Model Inference Response';
+export const SCRIPT_INFERENCE_RESPONSE = 'Script Inference Response';
 
 export const INFERENCE_PAYMENT_DISTRIBUTION = 'Fee Redistribution';
 
 export const CONVERSATION_START = 'Conversation Start';
+
+export const SCRIPT_FEE_PAYMENT = 'Script Fee Payment';
+
+export const SCRIPT_FEE_PAYMENT_SAVE = 'Script Fee Payment Save';
 
 // Attachment Roles
 export const AVATAR_ATTACHMENT = 'avatar';

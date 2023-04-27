@@ -34,7 +34,7 @@ const ChooseOperator = ({
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
-  const { state, pathname } = useLocation();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const { currentAddress } = useContext(WalletContext);
   const elementsPerPage = 5;
@@ -46,12 +46,12 @@ const ChooseOperator = ({
       values: [REGISTER_OPERATION],
     },
     {
-      name: TAG_NAMES.modelCreator,
-      values: [state.node.owner.address],
+      name: TAG_NAMES.scriptCurator,
+      values: [scriptTx?.node.owner.address],
     },
     {
-      name: TAG_NAMES.modelName,
-      values: [findTag(state, 'modelName')],
+      name: TAG_NAMES.scriptName,
+      values: [findTag(scriptTx as IEdge, 'scriptName')],
     },
   ];
 
@@ -64,6 +64,7 @@ const ChooseOperator = ({
     fetchMore,
   } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags, first: elementsPerPage },
+    skip: !scriptTx,
   });
 
   const handleRetry = () => {
@@ -200,7 +201,7 @@ const ChooseOperator = ({
           data={operatorsData}
           loading={loading}
           error={error}
-          state={state}
+          state={scriptTx as IEdge}
           retry={handleRetry}
           hasNextPage={hasNextPage}
           fetchMore={fetchMore}
@@ -224,12 +225,7 @@ const ChooseOperator = ({
             variant='outlined'
             onClick={() =>
               navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
-                state: {
-                  modelName: findTag(state, 'modelName'),
-                  modelCreator: state.node.owner.address,
-                  operatorFee: findTag(operatorsData[selectedIdx], 'operatorFee'),
-                  operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
-                },
+                state: { operatorName: findTag(operatorsData[selectedIdx], 'operatorName') },
               })
             }
           >
@@ -260,11 +256,11 @@ const ChooseOperator = ({
                   : `../chat/${operatorsData[selectedIdx].node.owner.address}`,
                 {
                   state: {
-                    modelName: findTag(state, 'modelName'),
-                    modelCreator: state.node.owner.address,
+                    scriptName: findTag(scriptTx as IEdge, 'scriptName'),
+                    scriptCurator: (scriptTx as IEdge).node.owner.address,
                     fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
-                    modelTransaction: findTag(state, 'modelTransaction'),
-                    fullState: state,
+                    scriptTransaction: (scriptTx as IEdge).node.id,
+                    fullState: scriptTx,
                   },
                 },
               )

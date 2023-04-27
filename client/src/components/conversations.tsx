@@ -1,7 +1,7 @@
 import { APP_NAME, APP_VERSION, CONVERSATION_START, DEFAULT_TAGS, TAG_NAMES } from '@/constants';
 import useOnScreen from '@/hooks/useOnScreen';
 import { IEdge } from '@/interfaces/arweave';
-import { NavigationState } from '@/interfaces/router';
+import { ScriptNavigationState } from '@/interfaces/router';
 import { QUERY_CONVERSATIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { findTag } from '@/utils/common';
@@ -31,7 +31,7 @@ const Conversations = ({
 }: {
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
-  state: NavigationState;
+  state: ScriptNavigationState;
   userAddr: string;
 }) => {
   const [hasConversationNextPage, setHasConversationNextPage] = useState(false);
@@ -58,11 +58,11 @@ const Conversations = ({
           values: [CONVERSATION_START],
         },
         {
-          name: TAG_NAMES.modelTransaction,
-          values: [state.modelTransaction],
+          name: TAG_NAMES.scriptTransaction,
+          values: [state.scriptTransaction],
         },
-        { name: TAG_NAMES.modelName, values: [state.modelName] },
-        { name: TAG_NAMES.modelCreator, values: [state.modelCreator] },
+        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
+        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
       ],
     },
     skip: !userAddr || !state,
@@ -74,9 +74,9 @@ const Conversations = ({
       tx.addTag(TAG_NAMES.appName, APP_NAME);
       tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
       tx.addTag(TAG_NAMES.operationName, CONVERSATION_START);
-      tx.addTag(TAG_NAMES.modelName, state.modelName);
-      tx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
-      tx.addTag(TAG_NAMES.modelTransaction, state.modelTransaction as string);
+      tx.addTag(TAG_NAMES.scriptName, state.scriptName);
+      tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
+      tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction as string);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
       tx.addTag(TAG_NAMES.conversationIdentifier, `${id}`);
       const result = await window.arweaveWallet.dispatch(tx);

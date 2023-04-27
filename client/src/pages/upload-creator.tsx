@@ -9,7 +9,6 @@ import {
   CardHeader,
   Container,
   Icon,
-  MenuItem,
   Snackbar,
   Typography,
   useTheme,
@@ -17,7 +16,6 @@ import {
 import { useContext, useRef, useState } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
 import TextControl from '@/components/text-control';
-import SelectControl from '@/components/select-control';
 import MarkdownControl from '@/components/md-control';
 import FileControl from '@/components/file-control';
 import AvatarControl from '@/components/avatar-control';
