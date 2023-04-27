@@ -60,7 +60,7 @@ const sendToBundlr = async function (
     { name: "Script-Name", value: CONFIG.scriptName },
     { name: "Script-User", value: userAddress },
     { name: "Request-Transaction", value: requestTransaction },
-    { name: "Operation-Name", value: "Model Inference Response" },
+    { name: "Operation-Name", value: "Script Inference Response" },
     { name: "Conversation-Identifier", value: conversationIdentifier },
     { name: "Content-Type", value: "application/json" },
 	{ name: 'Payment-Quantity', value: paymentQuantity },
@@ -254,7 +254,7 @@ const start = async function () {
 					values: ["${CONFIG.scriptName}"]
 				},
 				{
-					name: "Model-Operator",
+					name: "Script-Operator",
 					values: ["${address}"]
 				}
 			],
@@ -344,7 +344,7 @@ const start = async function () {
 		    	tags: [
 			    	{
 					name: "Operation-Name",
-					values: ["Inference Request"]
+					values: ["Script Inference Request"]
 				},
 				{
 					name: "Script-Curator",
@@ -434,7 +434,7 @@ const start = async function () {
 		    	tags: [
 			    	{
 					name: "Operation-Name",
-					values: ["Script Upload"]
+					values: ["Script Creation"]
 				},
 				{
 					name: "Script-Name",
