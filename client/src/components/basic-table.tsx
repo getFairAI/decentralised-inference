@@ -51,7 +51,7 @@ export default function BasicTable(props: {
 }) {
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
-  const mockArray = genLoadingArray(10);
+  const mockArray = genLoadingArray(5);
 
   useEffect(() => {
     if (isOnScreen && props.hasNextPage) {
@@ -83,7 +83,7 @@ export default function BasicTable(props: {
       const tableHeadCells = document.querySelectorAll('thead tr th');
       tableHeadCells.forEach((el) => el.setAttribute('width', `${cellWidth}px`));
     }
-  }, [ props.data ]);
+  }, [props.data]);
 
   return (
     <Box>
@@ -100,27 +100,36 @@ export default function BasicTable(props: {
         >
           <TableHead sx={{ display: 'block' }}>
             <TableRow>
-              {
-                props.type === 'operators' ? 
-                  operatorHeaders.map((header, idx) =>
-                      <TableCell sx={{ background: 'transparent' }} key={header} align={idx > 0 ? 'right' : 'left'}>
-                        {
-                          header === 'Status' ? <Tooltip
-                            title={'Represents the operator availability in the last 100 transactions'}
-                            placement='top'
-                          >
-                            <Typography sx={{ fontWeight: 'bold' }}>{header}</Typography>
-                          </Tooltip>
-                          : <Typography sx={{ fontWeight: 'bold' }}>{header}</Typography>
-                        }
-                      </TableCell>
-                  ) :
-                  scriptHeaders.map((header, idx) =>
-                    <TableCell sx={{ background: 'transparent' }} key={header} align={idx > 0 ? 'right' : 'left'}>
+              {props.type === 'operators'
+                ? operatorHeaders.map((header, idx) => (
+                    <TableCell
+                      sx={{ background: 'transparent' }}
+                      key={header}
+                      align={idx > 0 ? 'right' : 'left'}
+                    >
+                      {header === 'Status' ? (
+                        <Tooltip
+                          title={
+                            'Represents the operator availability in the last 100 transactions'
+                          }
+                          placement='top'
+                        >
+                          <Typography sx={{ fontWeight: 'bold' }}>{header}</Typography>
+                        </Tooltip>
+                      ) : (
+                        <Typography sx={{ fontWeight: 'bold' }}>{header}</Typography>
+                      )}
+                    </TableCell>
+                  ))
+                : scriptHeaders.map((header, idx) => (
+                    <TableCell
+                      sx={{ background: 'transparent' }}
+                      key={header}
+                      align={idx > 0 ? 'right' : 'left'}
+                    >
                       <Typography sx={{ fontWeight: 'bold' }}>{header}</Typography>
                     </TableCell>
-                  )
-              }
+                  ))}
             </TableRow>
           </TableHead>
           <TableBody sx={{ display: 'block', overflowY: 'auto', overflowX: 'hidden' }}>
@@ -128,9 +137,9 @@ export default function BasicTable(props: {
               <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell colSpan={6}>
                   <Typography alignItems='center' display='flex' flexDirection='column'>
-                    { props.type === 'operators' ? 'Could not Fetch Registered Operators for this Model.'
-                      : 'Could not Fetch Scripts for this Model.'
-                    }
+                    {props.type === 'operators'
+                      ? 'Could not Fetch Registered Operators for this Model.'
+                      : 'Could not Fetch Scripts for this Model.'}
                     <Button
                       sx={{ width: 'fit-content' }}
                       endIcon={<ReplayIcon />}
@@ -153,9 +162,25 @@ export default function BasicTable(props: {
                   </TableRow>
                 );
               })
+            ) : props.data.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={
+                    props.type === 'operators' ? operatorHeaders.length : scriptHeaders.length
+                  }
+                  align='center'
+                >
+                  <Typography>
+                    {props.type === 'operators'
+                      ? 'Could not find available Operators.'
+                      : 'Could not find available Scripts'}
+                  </Typography>
+                </TableCell>
+              </TableRow>
             ) : (
-              props.data.map((row, idx) => (
-                props.type === 'operators' ? <OperatorRow
+              props.data.map((row, idx) =>
+                props.type === 'operators' ? (
+                  <OperatorRow
                     key={row.node.id}
                     operatorTx={row}
                     modelCreator={props.state.node.owner.address}
@@ -164,7 +189,8 @@ export default function BasicTable(props: {
                     index={idx}
                     isSelected={props.selectedIdx === idx}
                     setSelected={props.handleSelected}
-                  /> : 
+                  />
+                ) : (
                   <ScriptRow
                     key={row.node.id}
                     scriptTx={row}
@@ -172,7 +198,8 @@ export default function BasicTable(props: {
                     isSelected={props.selectedIdx === idx}
                     setSelected={props.handleSelected}
                   />
-              ))
+                ),
+              )
             )}
           </TableBody>
         </Table>

@@ -9,7 +9,10 @@ const StyledEditor = styled(MDEditor)<{ invalid: boolean }>(({ theme, invalid })
   borderRadius: '23px',
   border: 'none',
   boxShadow: 'none',
-  ...(invalid && { border: `1px solid ${theme.palette.error.main }`, color: theme.palette.error.main }),
+  ...(invalid && {
+    border: `1px solid ${theme.palette.error.main}`,
+    color: theme.palette.error.main,
+  }),
   background:
     theme.palette.mode === 'dark' ? 'rgba(61, 61, 61, 0.98)' : theme.palette.secondary.main,
   '.w-md-editor-toolbar': {
@@ -56,12 +59,11 @@ const MarkdownControl = ({
       </FormControl>
     );
   } else {
-    return <FormControl fullWidth margin='normal'>
-      <StyledEditor
-        { ...viewProps}
-        invalid={false}
-      />
-    </FormControl>;
+    return (
+      <FormControl fullWidth margin='normal'>
+        <StyledEditor {...viewProps} invalid={false} />
+      </FormControl>
+    );
   }
 };
 

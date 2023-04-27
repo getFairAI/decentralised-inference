@@ -401,7 +401,10 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
         <CardActions
           sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', gap: '8px' }}
         >
-          {!payment.target || !payment.quantity || Number.isNaN(payment.quantity) || payment.target === currentAddress ? (
+          {!payment.target ||
+          !payment.quantity ||
+          Number.isNaN(payment.quantity) ||
+          payment.target === currentAddress ? (
             <>
               <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
                 <span>

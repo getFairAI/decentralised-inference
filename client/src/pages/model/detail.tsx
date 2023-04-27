@@ -39,8 +39,8 @@ const Detail = () => {
   const [feeValue, setFeeValue] = useState(0);
   const [feeDirty, setFeeDirty] = useState(false);
   const [showOperators, setShowOperators] = useState(false);
-  const [ showScripts, setShowScripts ] = useState(false);
-  const [ scriptTx, setScriptTx ] = useState<IEdge | undefined>(undefined);
+  const [showScripts, setShowScripts] = useState(false);
+  const [scriptTx, setScriptTx] = useState<IEdge | undefined>(undefined);
   const { currentAddress } = useContext(WalletContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
@@ -344,40 +344,43 @@ const Detail = () => {
           )}
         </Box>
       </DialogContent>
-      { showOperators ?
-        <ChooseOperator setShowOperators={setShowOperators} scriptTx={scriptTx}/> :
-          showScripts ? 
-            <ChooseScript setShowScripts={setShowScripts} handleScriptChosen={handleScriptChosen} defaultScriptTx={scriptTx}/> :
-              (
-                <DialogActions
-                  sx={{
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Button
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 700,
-                      fontSize: '23px',
-                      lineHeight: '31px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                      borderRadius: '30px',
-                    }}
-                    variant='contained'
-                    onClick={() => setShowScripts(true)}
-                  >
-                    <Box display='flex'>
-                      <Typography>{'Choose a Script '}</Typography>
-                      <Icon sx={{ rotate: '-90deg' }}>
-                        <img src='./triangle.svg' />
-                      </Icon>
-                    </Box>
-                  </Button>
-                </DialogActions>
-              )
-      }
+      {showOperators ? (
+        <ChooseOperator setShowOperators={setShowOperators} scriptTx={scriptTx} />
+      ) : showScripts ? (
+        <ChooseScript
+          setShowScripts={setShowScripts}
+          handleScriptChosen={handleScriptChosen}
+          defaultScriptTx={scriptTx}
+        />
+      ) : (
+        <DialogActions
+          sx={{
+            justifyContent: 'center',
+          }}
+        >
+          <Button
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '23px',
+              lineHeight: '31px',
+              display: 'flex',
+              alignItems: 'center',
+              textAlign: 'center',
+              borderRadius: '30px',
+            }}
+            variant='contained'
+            onClick={() => setShowScripts(true)}
+          >
+            <Box display='flex'>
+              <Typography>{'Choose a Script '}</Typography>
+              <Icon sx={{ rotate: '-90deg' }}>
+                <img src='./triangle.svg' />
+              </Icon>
+            </Box>
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };

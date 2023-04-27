@@ -202,9 +202,7 @@ const FileControl = (props: FileControlProps) => {
             />
             {loading && <LinearProgress variant='determinate' value={progress} />}
           </FormControl>
-          <Typography variant='caption'>
-            Estimated price {filePrice} AR
-          </Typography>
+          <Typography variant='caption'>Estimated price {filePrice} AR</Typography>
         </Box>
       </>
     );
@@ -235,9 +233,11 @@ const FileControl = (props: FileControlProps) => {
                 : 'brightness(0.9)',
               backdropFilter: 'blur(2px)',
               '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: hasFileDrag ? theme.palette.text.primary
-                  : fieldState.invalid ? theme.palette.error.main
-                    : theme.palette.text.secondary,
+                borderColor: hasFileDrag
+                  ? theme.palette.text.primary
+                  : fieldState.invalid
+                  ? theme.palette.error.main
+                  : theme.palette.text.secondary,
               },
             },
           }}

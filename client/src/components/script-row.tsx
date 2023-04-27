@@ -20,7 +20,6 @@ const ScriptRow = ({
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
-
   return (
     <>
       <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
@@ -32,7 +31,8 @@ const ScriptRow = ({
               <IconButton
                 size='small'
                 onClick={() => {
-                  scriptTx.node.owner.address && navigator.clipboard.writeText(scriptTx.node.owner.address);
+                  scriptTx.node.owner.address &&
+                    navigator.clipboard.writeText(scriptTx.node.owner.address);
                 }}
               >
                 <CopyIcon fontSize='inherit' />
@@ -41,7 +41,9 @@ const ScriptRow = ({
           </Tooltip>
         </TableCell>
         <TableCell align='right'>{findTag(scriptTx, 'scriptName')}</TableCell>
-        <TableCell align='right'>{new Date(parseFloat(findTag(scriptTx, 'unixTime') as string) * 1000).toLocaleString()}</TableCell>
+        <TableCell align='right'>
+          {new Date(parseFloat(findTag(scriptTx, 'unixTime') as string) * 1000).toLocaleString()}
+        </TableCell>
         <TableCell align='right'>{parseWinston(findTag(scriptTx, 'scriptFee'))}</TableCell>
         <TableCell align='right'>{0}</TableCell>
         <TableCell align='right'>

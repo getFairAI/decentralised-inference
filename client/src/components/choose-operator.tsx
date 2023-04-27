@@ -1,16 +1,35 @@
-import { DEFAULT_TAGS, TAG_NAMES, REGISTER_OPERATION, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  TAG_NAMES,
+  REGISTER_OPERATION,
+  OPERATOR_REGISTRATION_AR_FEE,
+} from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { isTxConfirmed } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
-import { Box, Button, DialogActions, DialogContent, Icon, InputBase, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  DialogActions,
+  DialogContent,
+  Icon,
+  InputBase,
+  Typography,
+} from '@mui/material';
 import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const ChooseOperator = ({ setShowOperators, scriptTx }: { setShowOperators: Dispatch<SetStateAction<boolean>>, scriptTx?: IEdge }) => {
+const ChooseOperator = ({
+  setShowOperators,
+  scriptTx,
+}: {
+  setShowOperators: Dispatch<SetStateAction<boolean>>;
+  scriptTx?: IEdge;
+}) => {
   const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
@@ -115,7 +134,6 @@ const ChooseOperator = ({ setShowOperators, scriptTx }: { setShowOperators: Disp
     }
   }, [filterValue]);
 
-
   return (
     <>
       <DialogActions
@@ -190,7 +208,7 @@ const ChooseOperator = ({ setShowOperators, scriptTx }: { setShowOperators: Disp
           handleSelected={handleSelected}
         ></BasicTable>
       </DialogContent>
-      { selectedIdx >= 0 &&
+      {selectedIdx >= 0 && (
         <Box
           sx={{
             background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
@@ -268,7 +286,7 @@ const ChooseOperator = ({ setShowOperators, scriptTx }: { setShowOperators: Disp
             </Typography>
           </Button>
         </Box>
-      }
+      )}
     </>
   );
 };

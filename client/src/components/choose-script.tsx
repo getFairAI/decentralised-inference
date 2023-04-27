@@ -5,16 +5,32 @@ import { QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
 import { isTxConfirmed } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
-import { DialogActions, Button, Box, Icon, Typography, InputBase, DialogContent } from '@mui/material';
+import {
+  DialogActions,
+  Button,
+  Box,
+  Icon,
+  Typography,
+  InputBase,
+  DialogContent,
+} from '@mui/material';
 import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import BasicTable from './basic-table';
 
-const ChooseScript = ({ setShowScripts, handleScriptChosen, defaultScriptTx }: { setShowScripts: Dispatch<SetStateAction<boolean>>, handleScriptChosen: (scriptTx: IEdge) => void, defaultScriptTx?: IEdge}) => {
-  const [ scriptsData , setScriptsData ] = useState<IEdge[]>([]);
-  const [ hasNextPage, setHasNextPage ] = useState(false);
-  const [ filterValue, setFilterValue ] = useState('');
-  const [ selectedIdx, setSelectedIdx ] = useState(-1);
+const ChooseScript = ({
+  setShowScripts,
+  handleScriptChosen,
+  defaultScriptTx,
+}: {
+  setShowScripts: Dispatch<SetStateAction<boolean>>;
+  handleScriptChosen: (scriptTx: IEdge) => void;
+  defaultScriptTx?: IEdge;
+}) => {
+  const [scriptsData, setScriptsData] = useState<IEdge[]>([]);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [filterValue, setFilterValue] = useState('');
+  const [selectedIdx, setSelectedIdx] = useState(-1);
   const { state } = useLocation();
   const { currentAddress } = useContext(WalletContext);
   const elementsPerPage = 5;
@@ -27,15 +43,15 @@ const ChooseScript = ({ setShowScripts, handleScriptChosen, defaultScriptTx }: {
     },
     {
       name: TAG_NAMES.modelCreator,
-      values: [ state.node.owner.address ],
+      values: [state.node.owner.address],
     },
     {
       name: TAG_NAMES.modelName,
-      values: [ findTag(state, 'modelName') ],
+      values: [findTag(state, 'modelName')],
     },
     {
       name: TAG_NAMES.modelTransaction,
-      values: [ findTag(state, 'modelTransaction') ]
+      values: [findTag(state, 'modelTransaction')],
     },
   ];
 
@@ -49,7 +65,7 @@ const ChooseScript = ({ setShowScripts, handleScriptChosen, defaultScriptTx }: {
   } = useQuery(QUERY_REGISTERED_SCRIPTS, {
     variables: { tags, first: elementsPerPage },
   });
-  
+
   const handleRetry = () => {
     refetch({ tags });
   };
@@ -80,8 +96,7 @@ const ChooseScript = ({ setShowScripts, handleScriptChosen, defaultScriptTx }: {
           const existingIdx = filtered.findIndex(
             (existing) => el.node.owner.address === existing.node.owner.address,
           );
-          const correctFee =
-            parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+          const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
           if (correctFee && existingIdx < 0) {
             filtered.push(el);
           } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
@@ -99,7 +114,7 @@ const ChooseScript = ({ setShowScripts, handleScriptChosen, defaultScriptTx }: {
       );
       setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
       setScriptsData(filtered);
-      setSelectedIdx(filtered.findIndex(el => el.node.id === defaultScriptTx?.node?.id));
+      setSelectedIdx(filtered.findIndex((el) => el.node.id === defaultScriptTx?.node?.id));
     };
     // check has paid correct registration fee
     if (queryData && networkStatus === NetworkStatus.ready) {
@@ -119,132 +134,135 @@ const ChooseScript = ({ setShowScripts, handleScriptChosen, defaultScriptTx }: {
     }
   }, [filterValue]);
 
-  return <>
-    <DialogActions
-      sx={{
-        justifyContent: 'space-between',
-        padding: '32px 12px 8px 20px',
-      }}
-    >
-      <Button
+  return (
+    <>
+      <DialogActions
         sx={{
-          fontStyle: 'normal',
-          fontWeight: 700,
-          fontSize: '23px',
-          lineHeight: '31px',
-          display: 'flex',
-          alignItems: 'flex-start',
-          textAlign: 'left',
-          borderRadius: '30px',
-        }}
-        variant='contained'
-        onClick={() => setShowScripts(false)}
-      >
-        <Box display='flex'>
-          <Icon sx={{ rotate: '90deg' }}>
-            <img src='./triangle.svg' />
-          </Icon>
-          <Typography>{' Back to Details'}</Typography>
-        </Box>
-      </Button>
-      <Box
-        sx={{
-          background: 'transparent',
-          border: '2px solid',
-          borderRadius: '30px',
-          margin: '0 20px',
-          display: 'flex',
           justifyContent: 'space-between',
-          padding: '3px 20px 3px 20px',
-          alignItems: 'center',
+          padding: '32px 12px 8px 20px',
         }}
       >
-        <InputBase
+        <Button
           sx={{
             fontStyle: 'normal',
-            fontWeight: 400,
-            fontSize: '12px',
-            lineHeight: '16px',
+            fontWeight: 700,
+            fontSize: '23px',
+            lineHeight: '31px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            textAlign: 'left',
+            borderRadius: '30px',
           }}
-          placeholder='Search Script...'
-          onChange={handleFilterChange}
-        />
-        <Icon
-          sx={{
-            height: '30px',
-          }}
-        >
-          <img src='./search-icon.svg'></img>
-        </Icon>
-      </Box>
-    </DialogActions>
-    <DialogContent sx={{ overflow: 'unset' }}>
-      <BasicTable
-        type='scripts'
-        data={scriptsData}
-        loading={loading}
-        error={error}
-        state={state}
-        retry={handleRetry}
-        hasNextPage={hasNextPage}
-        fetchMore={fetchMore}
-        selectedIdx={selectedIdx}
-        handleSelected={handleSelected}
-      ></BasicTable>
-    </DialogContent>
-    { selectedIdx >= 0 &&
-      <Box
-        sx={{
-          background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
-          borderRadius: '7px',
-          justifyContent: 'center',
-          display: 'flex',
-          gap: '32px',
-          padding: '24px',
-        }}
-      >
-        <Button
-          sx={{ borderRadius: '7px' }}
-          variant='outlined'
+          variant='contained'
           onClick={() => setShowScripts(false)}
         >
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 500,
-              fontSize: '15px',
-              lineHeight: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            View History
-          </Typography>
+          <Box display='flex'>
+            <Icon sx={{ rotate: '90deg' }}>
+              <img src='./triangle.svg' />
+            </Icon>
+            <Typography>{' Back to Details'}</Typography>
+          </Box>
         </Button>
-        <Button
-          sx={{ borderRadius: '7px' }}
-          variant='contained'
-          onClick={() => handleScriptChosen(scriptsData[selectedIdx])}
-          disabled={!currentAddress}
+        <Box
+          sx={{
+            background: 'transparent',
+            border: '2px solid',
+            borderRadius: '30px',
+            margin: '0 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: '3px 20px 3px 20px',
+            alignItems: 'center',
+          }}
         >
-          <Typography
+          <InputBase
             sx={{
               fontStyle: 'normal',
-              fontWeight: 500,
-              fontSize: '15px',
-              lineHeight: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
+              fontWeight: 400,
+              fontSize: '12px',
+              lineHeight: '16px',
+            }}
+            placeholder='Search Script...'
+            onChange={handleFilterChange}
+          />
+          <Icon
+            sx={{
+              height: '30px',
             }}
           >
-            Use Script
-          </Typography>
-        </Button>
-      </Box>
-    }
-  </>;
+            <img src='./search-icon.svg'></img>
+          </Icon>
+        </Box>
+      </DialogActions>
+      <DialogContent sx={{ overflow: 'unset' }}>
+        <BasicTable
+          type='scripts'
+          data={scriptsData}
+          loading={loading}
+          error={error}
+          state={state}
+          retry={handleRetry}
+          hasNextPage={hasNextPage}
+          fetchMore={fetchMore}
+          selectedIdx={selectedIdx}
+          handleSelected={handleSelected}
+        ></BasicTable>
+      </DialogContent>
+      {selectedIdx >= 0 && (
+        <Box
+          sx={{
+            background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
+            borderRadius: '7px',
+            justifyContent: 'center',
+            display: 'flex',
+            gap: '32px',
+            padding: '24px',
+          }}
+        >
+          <Button
+            sx={{ borderRadius: '7px' }}
+            variant='outlined'
+            /* onClick={() => setShowScripts(false)} */
+            disabled
+          >
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: 500,
+                fontSize: '15px',
+                lineHeight: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                textAlign: 'center',
+              }}
+            >
+              View History
+            </Typography>
+          </Button>
+          <Button
+            sx={{ borderRadius: '7px' }}
+            variant='contained'
+            onClick={() => handleScriptChosen(scriptsData[selectedIdx])}
+            disabled={!currentAddress}
+          >
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: 500,
+                fontSize: '15px',
+                lineHeight: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                textAlign: 'center',
+              }}
+            >
+              Use Script
+            </Typography>
+          </Button>
+        </Box>
+      )}
+    </>
+  );
 };
 
 export default ChooseScript;

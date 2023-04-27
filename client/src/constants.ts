@@ -104,14 +104,7 @@ export const operatorHeaders = [
   'Fee (AR)',
   'Status',
   'Stamps',
-  'Selected'
+  'Selected',
 ];
 
-export const scriptHeaders = [
-  'Creator',
-  'Name',
-  'Registration',
-  'Fee (AR)',
-  'Stamps',
-  'Selected'
-];
+export const scriptHeaders = ['Creator', 'Name', 'Registration', 'Fee (AR)', 'Stamps', 'Selected'];

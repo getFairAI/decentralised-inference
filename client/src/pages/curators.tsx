@@ -309,7 +309,10 @@ const Curators = () => {
     tags.push({ name: TAG_NAMES.category, value: data.category });
     tags.push({ name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string });
     tags.push({ name: TAG_NAMES.modelCreator, value: modelData.node.owner.address });
-    tags.push({ name: TAG_NAMES.modelTransaction, value: findTag(modelData, 'modelTransaction' ) as string});
+    tags.push({
+      name: TAG_NAMES.modelTransaction,
+      value: findTag(modelData, 'modelTransaction') as string,
+    });
     tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_CREATION });
     tags.push({ name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
@@ -510,7 +513,7 @@ const Curators = () => {
                           borderColor: theme.palette.text.primary,
                           borderRadius: '16px',
                         },
-                        placeholder: 'Select a Category'
+                        placeholder: 'Select a Category',
                       }}
                     >
                       <MenuItem value={'text'}>Text</MenuItem>

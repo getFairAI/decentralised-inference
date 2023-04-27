@@ -47,7 +47,7 @@ self.onmessage = async (e: MessageEvent<string>) => {
           address: currentAddress,
           tags: [
             ...DEFAULT_TAGS,
-            { name: TAG_NAMES.operationName, values: [ SCRIPT_CREATION_PAYMENT] },
+            { name: TAG_NAMES.operationName, values: [SCRIPT_CREATION_PAYMENT] },
             { name: TAG_NAMES.scriptTransaction, values: txid },
           ],
         };
