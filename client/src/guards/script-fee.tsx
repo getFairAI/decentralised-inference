@@ -10,7 +10,7 @@ import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
 import { ScriptNavigationState } from '@/interfaces/router';
 import { QUERY_FEE_PAYMENT } from '@/queries/graphql';
-import arweave, { isTxConfirmed } from '@/utils/arweave';
+import arweave, { isTxConfirmed, parseWinston } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { useLazyQuery } from '@apollo/client';
 import {
@@ -135,7 +135,7 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Model Fee Paid: {arweave.ar.winstonToAr(scriptFee)} AR.
+            Script Fee Paid: {arweave.ar.winstonToAr(scriptFee)} AR.
             <br></br>
             <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
               <u>View Transaction in Explorer</u>
@@ -187,7 +187,7 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
               lineHeight: '31px',
             }}
           >
-            Model Fee Payment
+            Script Fee Payment
           </Typography>
         </DialogTitle>
         <DialogContent>
@@ -229,15 +229,15 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
                   textAlign: 'center',
                 }}
               >
-                In Order to prevent bad actors an user has to pay the model fee before being able to
-                use it. The current Model fee is{' '}
-                {arweave.ar.winstonToAr(findTag(state.fullState, 'scriptFee') as string)}{' '}
+                In Order to prevent bad actors an user has to pay the script fee before being able to
+                use it. The current Script fee is{' '}
+                {parseWinston(findTag(state.fullState, 'scriptFee') as string)}{' '}
                 <img src='./arweave-logo-warning.svg'></img>
               </Typography>
             )}
           </Alert>
         </DialogContent>
-        {!hasPaid && (
+        {!hasPaid ? (
           <DialogActions
             sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
           >
@@ -266,7 +266,17 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
               Accept
             </Button>
           </DialogActions>
-        )}
+        ) : <DialogActions
+              sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
+            >
+            <Button
+              onClick={() => navigate('/')}
+              variant='contained'
+            >
+              Back to Home
+            </Button>
+          </DialogActions>
+        }
       </Dialog>
       {isAllowed && children}
     </>
