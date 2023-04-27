@@ -33,11 +33,11 @@ interface Element {
   txid: string;
   uploader: string;
   avgFee: string;
-  modelFee: string;
+  scriptFee: string;
   totalOperators: number;
 }
 
-const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
+const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => {
   const navigate = useNavigate();
   const [cardData, setCardData] = useState<Element>();
   const elementsPerPage = 5;
@@ -47,15 +47,15 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
     ...DEFAULT_TAGS,
     { name: TAG_NAMES.operationName, values: [REGISTER_OPERATION] },
     {
-      name: TAG_NAMES.modelName,
-      values: [findTag(modelTx, 'modelName')],
+      name: TAG_NAMES.scriptName,
+      values: [findTag(scriptTx, 'scriptName')],
     },
-    { name: TAG_NAMES.modelCreator, values: [modelTx.node.owner.address] },
+    { name: TAG_NAMES.scriptCreator, values: [scriptTx.node.owner.address] },
   ];
   // get all operatorsRegistration for the model
   const { data, loading, error, refetch, fetchMore } = useQuery(QUERY_REGISTERED_OPERATORS, {
     variables: { tags, first: elementsPerPage },
-    skip: !modelTx,
+    skip: !scriptTx,
   });
 
   const [getAvatar, { data: avatarData, loading: avatarLoading }] = useLazyQuery(
@@ -63,18 +63,18 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
   );
 
   useEffect(() => {
-    const modelId = findTag(modelTx, 'modelTransaction');
+    const scriptId = findTag(scriptTx, 'scriptTransaction');
     const attachmentAvatarTags = [
       ...DEFAULT_TAGS,
       { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
       { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-      { name: TAG_NAMES.modelTransaction, values: [modelId] },
+      { name: TAG_NAMES.scriptTransaction, values: [scriptId] },
     ];
 
     getAvatar({
       variables: {
         tags: attachmentAvatarTags,
-        owner: modelTx.node.owner.address,
+        owner: scriptTx.node.owner.address,
       },
     });
   }, []);
@@ -88,8 +88,8 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
       if (avatarTxId) {
         return `${NET_ARWEAVE_URL}/${avatarTxId}`;
       }
-      const modelId = findTag(modelTx, 'modelTransaction');
-      const img = toSvg(modelId, 100);
+      const scriptId = findTag(scriptTx, 'scriptTransaction');
+      const img = toSvg(scriptId, 100);
       const svg = new Blob([img], { type: 'image/svg+xml' });
       return URL.createObjectURL(svg);
     } else {
@@ -132,13 +132,13 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
       });
       const average = (arr: number[]) => arr.reduce((p, c) => p + c, 0) / arr.length;
       const avgFee = parseWinston(average(opFees).toString());
-      const modelFee = findTag(modelTx, 'modelFee');
+      const scriptFee = findTag(scriptTx, 'scriptFee');
 
       setCardData({
-        name: findTag(modelTx, 'modelName') || 'Name not Available',
-        txid: findTag(modelTx, 'modelTransaction') || 'Transaction Not Available',
-        uploader: modelTx.node.owner.address,
-        modelFee: parseWinston(modelFee) || 'Model Fee Not Available',
+        name: findTag(scriptTx, 'scriptName') || 'Name not Available',
+        txid: findTag(scriptTx, 'scriptTransaction') || 'Transaction Not Available',
+        uploader: scriptTx.node.owner.address,
+        scriptFee: parseWinston(scriptFee) || 'Script Fee Not Available',
         avgFee,
         totalOperators: uniqueOperators.length,
       });
@@ -147,12 +147,12 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
 
   const handleCardClick = () => {
     navigate(`/operators/register/${encodeURIComponent(cardData?.txid || 'error')}`, {
-      state: modelTx,
+      state: scriptTx,
     });
   };
 
   const getTimePassed = () => {
-    const timestamp = findTag(modelTx, 'unixTime') || modelTx.node.block?.timestamp;
+    const timestamp = findTag(scriptTx, 'unixTime') || scriptTx.node.block?.timestamp;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
@@ -250,9 +250,9 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
             <>
               <Typography>
                 Model Fee:{' '}
-                {Number.isNaN(cardData?.modelFee) || cardData?.modelFee === 'NaN'
+                {Number.isNaN(cardData?.scriptFee) || cardData?.scriptFee === 'NaN'
                   ? 'Invalid Fee'
-                  : `${cardData?.modelFee} AR`}
+                  : `${cardData?.scriptFee} AR`}
               </Typography>
               <Typography>
                 Average Fee:{' '}
@@ -306,7 +306,7 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                 textAlign: 'center',
               }}
             >
-              {findTag(modelTx, 'modelName') || 'Untitled'}
+              {findTag(scriptTx, 'scriptName') || 'Untitled'}
             </Typography>
           </CardContent>
           <Box flexGrow={1}></Box>
@@ -343,9 +343,9 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
                   textAlign: 'center',
                 }}
               >
-                {Number.isNaN(cardData?.modelFee) || cardData?.modelFee === 'NaN'
+                {Number.isNaN(cardData?.scriptFee) || cardData?.scriptFee === 'NaN'
                   ? 'Invalid Fee'
-                  : `${cardData?.modelFee} AR`}
+                  : `${cardData?.scriptFee} AR`}
               </Typography>
             </Box>
             <Box display={'flex'} flexDirection='column'>
@@ -417,4 +417,4 @@ const ModelCard = ({ modelTx, index }: { modelTx: IEdge; index: number }) => {
   );
 };
 
-export default ModelCard;
+export default ScriptCard;
