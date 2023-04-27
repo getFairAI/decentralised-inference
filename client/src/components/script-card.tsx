@@ -50,7 +50,7 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
       name: TAG_NAMES.scriptName,
       values: [findTag(scriptTx, 'scriptName')],
     },
-    { name: TAG_NAMES.scriptCreator, values: [scriptTx.node.owner.address] },
+    { name: TAG_NAMES.scriptCurator, values: [scriptTx.node.owner.address] },
   ];
   // get all operatorsRegistration for the model
   const { data, loading, error, refetch, fetchMore } = useQuery(QUERY_REGISTERED_OPERATORS, {

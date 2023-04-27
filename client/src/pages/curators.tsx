@@ -115,7 +115,7 @@ const Curators = () => {
     }
   };
 
-  const uploadAvatarImage = async (scriptTx: string, modelName: string, image: File) => {
+  const uploadAvatarImage = async (scriptTx: string, image: File) => {
     if ((await getPrice(image.size)).toNumber() > nodeBalance)
       enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
 
@@ -189,8 +189,8 @@ const Curators = () => {
     }
   };
 
-  const uploadUsageNotes = async (scriptTx: string, modelName: string, usageNotes: string) => {
-    const file = new File([usageNotes], `${modelName}-usage.md`, {
+  const uploadUsageNotes = async (scriptTx: string, scriptName: string, usageNotes: string) => {
+    const file = new File([usageNotes], `${scriptName}-usage.md`, {
       type: 'text/markdown',
     });
 
@@ -385,7 +385,7 @@ const Curators = () => {
           });
           await uploadUsageNotes(res.data.id, data.name, data.notes);
           if (data.avatar && data.avatar instanceof File) {
-            await uploadAvatarImage(res.data.id, data.name, data.avatar);
+            await uploadAvatarImage(res.data.id, data.avatar);
           }
           reset(); // reset form
         } else {
@@ -544,6 +544,7 @@ const Curators = () => {
                         <NumberControl
                           name='fee'
                           control={control}
+                          rules={{ required: true, min: 0.001 }}
                           mat={{
                             sx: {
                               fontStyle: 'normal',

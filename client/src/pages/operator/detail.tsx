@@ -28,7 +28,7 @@ import { findTag } from '@/utils/common';
 
 const OperatorDetails = () => {
   const { address } = useParams();
-  const { state } = useLocation();
+  const { state }: { state: { operatorName: string } } = useLocation();
   const navigate = useNavigate();
   const [firstRegistrationDate, setFirstregistrationDate] = useState('');
   const theme = useTheme();

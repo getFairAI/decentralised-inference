@@ -106,7 +106,15 @@ const AiListCard = ({
     event.preventDefault();
     const modelId = findTag(model, 'modelTransaction');
     if (!modelId) return;
-    navigate(`/model/${encodeURIComponent(modelId)}/detail`, { state: model });
+    navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
+      state: {
+        modelName: findTag(model, 'modelName'),
+        modelCreator: model.node.owner.address,
+        fee: findTag(model, 'modelFee'),
+        modelTransaction: modelId,
+        fullState: model,
+      }
+    });
   };
 
   return (

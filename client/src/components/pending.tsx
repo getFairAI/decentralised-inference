@@ -2,12 +2,13 @@ import {
   DEFAULT_TAGS,
   MODEL_CREATION,
   MODEL_FEE_PAYMENT_SAVE,
-  MODEL_INFERENCE_REQUEST,
-  MODEL_INFERENCE_RESPONSE,
+  SCRIPT_INFERENCE_REQUEST,
+  SCRIPT_INFERENCE_RESPONSE,
   N_PREVIOUS_BLOCKS,
   SAVE_REGISTER_OPERATION,
   SCRIPT_CREATION,
   TAG_NAMES,
+  SCRIPT_FEE_PAYMENT_SAVE,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
@@ -71,8 +72,9 @@ const Content = ({
             SCRIPT_CREATION,
             SAVE_REGISTER_OPERATION,
             MODEL_FEE_PAYMENT_SAVE,
-            MODEL_INFERENCE_RESPONSE,
-            MODEL_INFERENCE_REQUEST,
+            SCRIPT_FEE_PAYMENT_SAVE,
+            SCRIPT_INFERENCE_REQUEST,
+            SCRIPT_INFERENCE_RESPONSE,
           ],
         },
       ],

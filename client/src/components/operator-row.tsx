@@ -2,7 +2,7 @@ import {
   DEFAULT_TAGS,
   INFERENCE_PAYMENT,
   INFERENCE_PERCENTAGE_FEE,
-  MODEL_INFERENCE_RESPONSE,
+  SCRIPT_INFERENCE_RESPONSE,
   TAG_NAMES,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
@@ -26,9 +26,9 @@ export interface RowData {
   availability: number;
   stamps: number;
   registrationTimestamp: string;
-  modelName: string;
-  modelCreator: string;
-  modelTransaction: string;
+  scriptName: string;
+  scriptCurator: string;
+  scriptTransaction: string;
   operatorName: string;
 }
 
@@ -39,16 +39,16 @@ export interface RowData {
  */
 const OperatorRow = ({
   operatorTx,
-  modelCreator,
-  modelName,
+  scriptCurator,
+  scriptName,
   state,
   index,
   isSelected,
   setSelected,
 }: {
   operatorTx: IEdge;
-  modelCreator: string;
-  modelName: string;
+  scriptCurator: string;
+  scriptName: string;
   state: IEdge;
   index: number;
   isSelected: boolean;
@@ -58,12 +58,12 @@ const OperatorRow = ({
   const requestTags = [
     ...DEFAULT_TAGS,
     {
-      name: TAG_NAMES.modelCreator,
-      values: [modelCreator],
+      name: TAG_NAMES.scriptCurator,
+      values: [scriptCurator],
     },
     {
-      name: TAG_NAMES.modelName,
-      values: [modelName],
+      name: TAG_NAMES.scriptName,
+      values: [scriptName],
     },
     {
       name: TAG_NAMES.operationName,
@@ -71,7 +71,7 @@ const OperatorRow = ({
     },
   ];
   const { data, /* loading, error,  */ fetchMore } = useQuery(QUERY_REQUESTS_FOR_OPERATOR, {
-    skip: !operatorTx.node.owner.address && !modelCreator && !modelName,
+    skip: !operatorTx.node.owner.address && !scriptCurator && !scriptName,
     variables: {
       first: 10,
       recipient: operatorTx.node.owner.address,
@@ -94,9 +94,9 @@ const OperatorRow = ({
     const registrationTimestamp = operatorTx.node.block
       ? new Date(operatorTx.node.block.timestamp * 1000).toLocaleString()
       : 'Pending';
-    const modelTransaction = findTag(state, 'modelTransaction');
-    const modelName = findTag(state, 'modelName');
-    const modelCreator = state.node.owner.address;
+    const scriptTransaction = findTag(state, 'scriptTransaction');
+    const scriptName = findTag(state, 'scriptName');
+    const scriptCurator = state.node.owner.address;
     const operatorName = findTag(operatorTx, 'operatorName') || 'No Name';
 
     setRow({
@@ -105,9 +105,9 @@ const OperatorRow = ({
       stamps,
       fee,
       registrationTimestamp,
-      modelTransaction,
-      modelName,
-      modelCreator,
+      scriptTransaction,
+      scriptName,
+      scriptCurator,
       operatorName,
     });
   }, [operatorTx]);
@@ -140,16 +140,16 @@ const OperatorRow = ({
       const responseTags = [
         ...DEFAULT_TAGS,
         {
-          name: TAG_NAMES.modelCreator,
-          values: [modelCreator],
+          name: TAG_NAMES.scriptCurator,
+          values: [scriptCurator],
         },
         {
-          name: TAG_NAMES.modelName,
-          values: [modelName],
+          name: TAG_NAMES.scriptName,
+          values: [scriptName],
         },
         {
           name: TAG_NAMES.operationName,
-          values: [MODEL_INFERENCE_RESPONSE],
+          values: [SCRIPT_INFERENCE_RESPONSE],
         },
         {
           name: TAG_NAMES.requestTransaction,

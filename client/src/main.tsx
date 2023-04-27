@@ -13,11 +13,11 @@ import Detail from '@/pages/model/detail';
 import OperatorDetails from '@/pages/operator/detail';
 import Chat from '@/pages/model/chat';
 import History from '@/pages/history';
-import ModelFeeGuard from '@/guards/model-fee';
 import BlockOperatorGuard from '@/guards/block-operator';
 import Error from '@/pages/error';
 import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
+import ScriptFeeGuard from '@/guards/script-fee';
 
 const router = createHashRouter([
   {
@@ -57,9 +57,9 @@ const router = createHashRouter([
             path: 'chat/:address',
             element: (
               <BlockOperatorGuard>
-                <ModelFeeGuard>
+                <ScriptFeeGuard>
                   <Chat />
-                </ModelFeeGuard>
+                </ScriptFeeGuard>
               </BlockOperatorGuard>
             ),
             children: [

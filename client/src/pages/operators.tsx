@@ -303,7 +303,7 @@ const Operators = () => {
                 textAlign: 'center',
               }}
             >
-              Model Fee
+              Script Fee
             </Typography>
             <Typography
               sx={{

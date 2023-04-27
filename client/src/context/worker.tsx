@@ -6,13 +6,15 @@ import {
   MODEL_CREATION_PAYMENT,
   MODEL_FEE_PAYMENT,
   MODEL_FEE_PAYMENT_SAVE,
-  MODEL_INFERENCE_REQUEST,
-  MODEL_INFERENCE_RESPONSE,
+  SCRIPT_INFERENCE_REQUEST,
+  SCRIPT_INFERENCE_RESPONSE,
   REGISTER_OPERATION,
   SAVE_REGISTER_OPERATION,
   SCRIPT_CREATION,
   SCRIPT_CREATION_PAYMENT,
   TAG_NAMES,
+  SCRIPT_FEE_PAYMENT,
+  SCRIPT_FEE_PAYMENT_SAVE,
 } from '@/constants';
 import arweave from '@/utils/arweave';
 import { Tag } from 'arweave/node/lib/transaction';
@@ -102,7 +104,7 @@ const handleRetry = async (originalTags: ITag[], operationName: string, txid: st
       quantity,
     });
     switch (operationName) {
-      case MODEL_INFERENCE_RESPONSE:
+      case SCRIPT_INFERENCE_RESPONSE:
         retryTx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT_DISTRIBUTION);
         retryTx.addTag(TAG_NAMES.responseTransaction, txid);
         break;
@@ -110,7 +112,11 @@ const handleRetry = async (originalTags: ITag[], operationName: string, txid: st
         retryTx.addTag(TAG_NAMES.operationName, MODEL_FEE_PAYMENT);
         retryTx.addTag(TAG_NAMES.saveTransaction, txid);
         break;
-      case MODEL_INFERENCE_REQUEST:
+      case SCRIPT_FEE_PAYMENT_SAVE:
+        retryTx.addTag(TAG_NAMES.operationName, SCRIPT_FEE_PAYMENT);
+        retryTx.addTag(TAG_NAMES.saveTransaction, txid);
+        break;
+      case SCRIPT_INFERENCE_REQUEST:
         retryTx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
         retryTx.addTag(TAG_NAMES.inferenceTransaction, txid);
         break;

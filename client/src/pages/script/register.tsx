@@ -59,7 +59,7 @@ const Register = () => {
       saveTx.addTag(TAG_NAMES.appVersion, APP_VERSION);
       saveTx.addTag(TAG_NAMES.operationName, SAVE_REGISTER_OPERATION);
       saveTx.addTag(TAG_NAMES.scriptName, findTag(state, 'scriptName') || '');
-      saveTx.addTag(TAG_NAMES.scriptCreator, state.node.owner.address);
+      saveTx.addTag(TAG_NAMES.scriptCurator, state.node.owner.address);
       saveTx.addTag(TAG_NAMES.scriptTransaction, findTag(state, 'scriptTransaction') as string);
       saveTx.addTag(TAG_NAMES.operatorFee, arweave.ar.arToWinston(rate));
       saveTx.addTag(TAG_NAMES.operatorName, operatorName);
@@ -79,7 +79,7 @@ const Register = () => {
         name: TAG_NAMES.scriptName,
         values: findTag(state, 'scriptName') || '',
       });
-      tags.push({ name: TAG_NAMES.scriptCreator, values: state.node.owner.address });
+      tags.push({ name: TAG_NAMES.scriptCurator, values: state.node.owner.address });
       tags.push({
         name: TAG_NAMES.scriptTransaction,
         values: findTag(state, 'scriptTransaction') as string,

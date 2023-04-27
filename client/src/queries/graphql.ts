@@ -487,7 +487,7 @@ export const QUERY_CANCELLED_OPERATORS = gql`
   }
 `;
 
-export const QUERY_MODEL_FEE_PAYMENT = gql`
+export const QUERY_FEE_PAYMENT = gql`
   query QUERY_MODEL_FEE_PAYMENT($owner: String!, $tags: [TagFilter!], $recipient: String!) {
     transactions(first: 1, owners: [$owner], recipients: [$recipient], tags: $tags) {
       edges {

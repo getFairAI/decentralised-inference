@@ -6,7 +6,15 @@ export interface RouteLoaderResult {
   notesTxId?: string;
 }
 
-export interface NavigationState {
+export interface ScriptNavigationState {
+  scriptName: string;
+  scriptCurator: string;
+  fee: string;
+  scriptTransaction: string;
+  fullState: IEdge;
+}
+
+export interface ModelNavigationState {
   modelName: string;
   modelCreator: string;
   fee: string;

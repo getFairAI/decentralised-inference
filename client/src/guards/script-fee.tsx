@@ -2,14 +2,14 @@ import {
   APP_NAME,
   APP_VERSION,
   DEFAULT_TAGS,
-  MODEL_FEE_PAYMENT,
-  MODEL_FEE_PAYMENT_SAVE,
+  SCRIPT_FEE_PAYMENT,
+  SCRIPT_FEE_PAYMENT_SAVE,
   TAG_NAMES,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
-import { RouteLoaderResult } from '@/interfaces/router';
-import { QUERY_MODEL_FEE_PAYMENT } from '@/queries/graphql';
+import { ScriptNavigationState } from '@/interfaces/router';
+import { QUERY_FEE_PAYMENT } from '@/queries/graphql';
 import arweave, { isTxConfirmed } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { useLazyQuery } from '@apollo/client';
@@ -27,12 +27,11 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { ReactNode, useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate, useParams, useRouteLoaderData } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
-  const { updatedFee } = useRouteLoaderData('model-alt') as RouteLoaderResult;
+const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
   const { txid } = useParams();
-  const { state } = useLocation();
+  const { state }: { state: ScriptNavigationState } = useLocation();
   const navigate = useNavigate();
   const [isAllowed, setIsAllowed] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
@@ -41,14 +40,8 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
   const theme = useTheme();
   const { currentAddress } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
-  /* const { data, loading, error } = useQuery(QUERY_MODEL_FEE_PAYMENT, {
-    variables: {
-      recipient: state.modelCreator,
-      owner:
-    }
-  }); */
 
-  const [getLazyFeePayment, queryResult] = useLazyQuery(QUERY_MODEL_FEE_PAYMENT);
+  const [getLazyFeePayment, queryResult] = useLazyQuery(QUERY_FEE_PAYMENT);
 
   useEffect(() => {
     const getAddress = async () => {
@@ -57,13 +50,13 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
         const addr = await window.arweaveWallet.getActiveAddress();
         const tags = [
           ...DEFAULT_TAGS,
-          { name: TAG_NAMES.modelTransaction, values: txid },
-          { name: TAG_NAMES.operationName, values: MODEL_FEE_PAYMENT },
+          { name: TAG_NAMES.scriptTransaction, values: txid },
+          { name: TAG_NAMES.operationName, values: SCRIPT_FEE_PAYMENT },
         ];
         getLazyFeePayment({
           variables: {
             owner: addr,
-            recipient: state.modelCreator,
+            recipient: state.scriptCurator,
             tags,
           },
         });
@@ -84,13 +77,12 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
         queryResult.data.transactions.edges.length > 0
       ) {
         setIsAllowed(
-          queryResult.data.transactions.edges[0].node.quantity.winston ===
-            (updatedFee || findTag(state.fullState, 'modelFee')) &&
-            (await isTxConfirmed(queryResult.data.transactions.edges[0].node.id)),
+          queryResult.data.transactions.edges[0].node.quantity.winston === findTag(state.fullState, 'scriptFee') &&
+            (await isTxConfirmed(queryResult.data.transactions.edges[0].node.id))
         );
         setHasPaid(
           queryResult.data.transactions.edges[0].node.quantity.winston ===
-            (updatedFee || findTag(state.fullState, 'modelFee')) &&
+            findTag(state.fullState, 'scriptFee') &&
             !(await isTxConfirmed(queryResult.data.transactions.edges[0].node.id)),
         );
         setLoading(false);
@@ -109,32 +101,32 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
 
   const handleAccept = async () => {
     try {
-      const modelFee = updatedFee || (findTag(state.fullState, 'modelFee') as string);
+      const scriptFee = findTag(state.fullState, 'scriptFee') as string;
 
       const saveTx = await arweave.createTransaction({ data: 'Save Transaction' });
       saveTx.addTag(TAG_NAMES.appName, APP_NAME);
       saveTx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      saveTx.addTag(TAG_NAMES.operationName, MODEL_FEE_PAYMENT_SAVE);
-      saveTx.addTag(TAG_NAMES.modelName, state.modelName);
-      saveTx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
-      saveTx.addTag(TAG_NAMES.modelFee, modelFee);
-      saveTx.addTag(TAG_NAMES.modelTransaction, txid || state.modelTransaction);
+      saveTx.addTag(TAG_NAMES.operationName, SCRIPT_FEE_PAYMENT_SAVE);
+      saveTx.addTag(TAG_NAMES.scriptName, state.scriptName);
+      saveTx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
+      saveTx.addTag(TAG_NAMES.scriptFee, scriptFee);
+      saveTx.addTag(TAG_NAMES.scriptTransaction, txid || state.scriptTransaction);
       saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      saveTx.addTag(TAG_NAMES.paymentQuantity, modelFee);
-      saveTx.addTag(TAG_NAMES.paymentTarget, state.modelCreator);
+      saveTx.addTag(TAG_NAMES.paymentQuantity, scriptFee);
+      saveTx.addTag(TAG_NAMES.paymentTarget, state.scriptCurator);
       const saveResult = await window.arweaveWallet.dispatch(saveTx);
 
       const tx = await arweave.createTransaction({
-        target: state.modelCreator,
-        quantity: modelFee,
+        target: state.scriptCurator,
+        quantity: scriptFee,
       });
       tx.addTag(TAG_NAMES.appName, APP_NAME);
       tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.modelName, state.modelName);
-      tx.addTag(TAG_NAMES.modelCreator, state.modelCreator);
-      tx.addTag(TAG_NAMES.modelFee, modelFee);
-      tx.addTag(TAG_NAMES.operationName, MODEL_FEE_PAYMENT);
-      tx.addTag(TAG_NAMES.modelTransaction, txid || state.modelTransaction);
+      tx.addTag(TAG_NAMES.scriptName, state.scriptName);
+      tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
+      tx.addTag(TAG_NAMES.scriptFee, scriptFee);
+      tx.addTag(TAG_NAMES.operationName, SCRIPT_FEE_PAYMENT);
+      tx.addTag(TAG_NAMES.scriptTransaction, txid || state.scriptTransaction);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
       tx.addTag(TAG_NAMES.saveTransaction, saveResult.id);
 
@@ -143,7 +135,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Model Fee Paid: {arweave.ar.winstonToAr(modelFee)} AR.
+            Model Fee Paid: {arweave.ar.winstonToAr(scriptFee)} AR.
             <br></br>
             <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
               <u>View Transaction in Explorer</u>
@@ -153,7 +145,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
         );
         startJob({
           address: currentAddress,
-          operationName: MODEL_FEE_PAYMENT_SAVE,
+          operationName: SCRIPT_FEE_PAYMENT_SAVE,
           tags: saveTx.tags,
           txid: saveTx.id,
           encodedTags: true,
@@ -239,9 +231,7 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
               >
                 In Order to prevent bad actors an user has to pay the model fee before being able to
                 use it. The current Model fee is{' '}
-                {arweave.ar.winstonToAr(
-                  updatedFee || (findTag(state.fullState, 'modelFee') as string),
-                )}{' '}
+                {arweave.ar.winstonToAr(findTag(state.fullState, 'scriptFee') as string)}{' '}
                 <img src='./arweave-logo-warning.svg'></img>
               </Typography>
             )}
@@ -282,4 +272,4 @@ const ModelFeeGuard = ({ children }: { children: ReactNode }) => {
     </>
   );
 };
-export default ModelFeeGuard;
+export default ScriptFeeGuard;

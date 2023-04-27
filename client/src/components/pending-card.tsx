@@ -7,12 +7,14 @@ import {
   REGISTER_OPERATION,
   MODEL_FEE_PAYMENT_SAVE,
   MODEL_FEE_PAYMENT,
-  MODEL_INFERENCE_REQUEST,
   INFERENCE_PAYMENT,
-  MODEL_INFERENCE_RESPONSE,
+  SCRIPT_INFERENCE_REQUEST,
+  SCRIPT_INFERENCE_RESPONSE,
   INFERENCE_PAYMENT_DISTRIBUTION,
   SCRIPT_CREATION_PAYMENT,
   SCRIPT_CREATION,
+  SCRIPT_FEE_PAYMENT_SAVE,
+  SCRIPT_FEE_PAYMENT,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
@@ -53,6 +55,7 @@ type operationNames =
   | 'Script Creation Payment'
   | 'Operator Registration Payment'
   | 'Model Fee Payment'
+  | 'Script Fee Payment'
   | 'Inference Request Payment'
   | 'Inference Redistribution';
 
@@ -125,7 +128,21 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
           });
           setOperationName('Model Fee Payment');
           break;
-        case MODEL_INFERENCE_REQUEST:
+        case SCRIPT_FEE_PAYMENT_SAVE:
+          // check there is a model fee payment for this tx
+          getPayment({
+            variables: {
+              address: currentAddress,
+              tags: [
+                ...DEFAULT_TAGS,
+                { name: TAG_NAMES.operationName, values: [SCRIPT_FEE_PAYMENT] },
+                { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
+              ],
+            },
+          });
+          setOperationName('Script Fee Payment');
+          break;
+        case SCRIPT_INFERENCE_REQUEST:
           // check there is a inference payment for this tx
           getPayment({
             variables: {
@@ -139,7 +156,7 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
           });
           setOperationName('Inference Request Payment');
           break;
-        case MODEL_INFERENCE_RESPONSE:
+        case SCRIPT_INFERENCE_RESPONSE:
           // check there is a inferen payment distribution for this tx
           getPayment({
             variables: {
@@ -237,6 +254,10 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
         break;
       case 'Model Fee Payment':
         retryTx.addTag(TAG_NAMES.operationName, MODEL_FEE_PAYMENT);
+        retryTx.addTag(TAG_NAMES.saveTransaction, tx.node.id);
+        break;
+      case 'Script Fee Payment':
+        retryTx.addTag(TAG_NAMES.operationName, SCRIPT_FEE_PAYMENT);
         retryTx.addTag(TAG_NAMES.saveTransaction, tx.node.id);
         break;
       case 'Inference Request Payment':
