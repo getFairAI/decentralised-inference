@@ -1,10 +1,12 @@
 import MDEditor, { MDEditorProps } from '@uiw/react-md-editor';
 import { useController, UseControllerProps } from 'react-hook-form';
 import rehypeSanitize from 'rehype-sanitize';
-import { styled } from '@mui/system';
+import { styled } from '@mui/material/styles';
 import { FormControl, FormHelperText } from '@mui/material';
 
-const StyledEditor = styled(MDEditor)<{ invalid: boolean }>(({ theme, invalid }) => ({
+const StyledEditor = styled(MDEditor, {
+  shouldForwardProp: prop => prop !== 'invalid',
+})<{ invalid: boolean }>(({ theme, invalid }) => ({
   marginBottom: '8px',
   borderRadius: '23px',
   border: 'none',
