@@ -87,7 +87,7 @@ const Curators = () => {
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
   const { field: modelField } = useController({ name: 'model', control });
-  const [ selectedModelFee, setSelectedModelFee ] = useState(0);
+  const [selectedModelFee, setSelectedModelFee] = useState(0);
 
   const {
     data: modelsData,
@@ -101,10 +101,8 @@ const Curators = () => {
     notifyOnNetworkStatusChange: true,
   });
 
-  const [
-    getSelectedModelFeeUpdates,
-    { data: updatedFeeData },
-  ] = useLazyQuery(GET_LATEST_FEE_UPDATE);
+  const [getSelectedModelFeeUpdates, { data: updatedFeeData }] =
+    useLazyQuery(GET_LATEST_FEE_UPDATE);
 
   useEffect(() => {
     if (modelsData) {
@@ -113,23 +111,23 @@ const Curators = () => {
   }, [modelsData]);
 
   useEffect(() => {
-    if (modelField.value && modelField.value as IEdge) {
+    if (modelField.value && (modelField.value as IEdge)) {
       const value = JSON.parse(modelField.value);
       const updateFeeTags = [
         ...DEFAULT_TAGS,
         { name: TAG_NAMES.operationName, values: [MODEL_FEE_UPDATE] },
-        { name: TAG_NAMES.modelTransaction, values: [ value.node.id] },
+        { name: TAG_NAMES.modelTransaction, values: [value.node.id] },
       ];
       getSelectedModelFeeUpdates({
         variables: {
           tags: updateFeeTags,
-          owner: value.node.owner.address
-        }
+          owner: value.node.owner.address,
+        },
       });
     } else {
       setSelectedModelFee(0);
     }
-  }, [ modelField.value ]);
+  }, [modelField.value]);
 
   useEffect(() => {
     if (modelField.value && updatedFeeData && updatedFeeData.transactions.edges.length > 0) {
@@ -139,7 +137,7 @@ const Curators = () => {
       const modelFee = findTag(JSON.parse(modelField.value), 'modelFee');
       setSelectedModelFee(parseFloat(parseWinston(modelFee)));
     }
-  }, [ updatedFeeData ]);
+  }, [updatedFeeData]);
 
   const onSubmit = async (data: FieldValues) => {
     await updateBalance();
@@ -633,7 +631,9 @@ const Curators = () => {
                     name='model'
                     control={control}
                     rules={{ required: true }}
-                    helperText={selectedModelFee ? `Selected Model Fee is ${selectedModelFee} AR` : ''}
+                    helperText={
+                      selectedModelFee ? `Selected Model Fee is ${selectedModelFee} AR` : ''
+                    }
                     mat={{
                       placeholder: 'Choose a Model',
                       sx: {
@@ -750,7 +750,9 @@ const Curators = () => {
                 <Button
                   onClick={handleSubmit(onSubmit)}
                   disabled={
-                    (!control._formState.isValid && control._formState.isDirty) || !currentAddress || !selectedModelFee
+                    (!control._formState.isValid && control._formState.isDirty) ||
+                    !currentAddress ||
+                    !selectedModelFee
                   }
                   sx={{
                     borderRadius: '7px',

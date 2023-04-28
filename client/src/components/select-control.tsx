@@ -2,7 +2,11 @@ import { FormControl, FormHelperText, InputLabel, Select, SelectProps } from '@m
 import { CSSProperties, ReactElement } from 'react';
 import { useController, UseControllerProps } from 'react-hook-form';
 
-type SelectControlProps = UseControllerProps & { mat?: SelectProps; style?: CSSProperties, helperText?: string };
+type SelectControlProps = UseControllerProps & {
+  mat?: SelectProps;
+  style?: CSSProperties;
+  helperText?: string;
+};
 
 const SelectControl = (props: SelectControlProps & { children: ReactElement[] }) => {
   const { field, fieldState } = useController(props);

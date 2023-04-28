@@ -98,10 +98,11 @@ const Operators = () => {
             query: GET_TX,
             variables: {
               id: findTag(el, 'modelTransaction'),
-            }
+            },
           });
           const modelTx = queryResult.data.transactions.edges[0];
-          const correctFee = parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
+          const correctFee =
+            parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
           if (confirmed && correctFee) {
             filtered.push(el);
           }
