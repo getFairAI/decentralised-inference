@@ -529,6 +529,7 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
     const tempDate = Date.now() / 1000;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
+    tags.push({ name: TAG_NAMES.contentType, value: 'text/plain' });
     try {
       const bundlrRes = await upload(newMessage, tags);
 
@@ -577,6 +578,7 @@ const Chat = () => {
       tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
       tx.addTag(TAG_NAMES.inferenceTransaction, bundlrRes.id);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
+      tx.addTag(TAG_NAMES.contentType, 'text/plain');
 
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);

@@ -1,7 +1,7 @@
-import { DEFAULT_TAGS, MARKETPLACE_FEE, SCRIPT_CREATION_PAYMENT, TAG_NAMES } from '@/constants';
+import { DEFAULT_TAGS, SCRIPT_CREATION_PAYMENT, TAG_NAMES } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
-import { genLoadingArray } from '@/utils/common';
+import { GET_TX, QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
+import { findTag, genLoadingArray } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Container,
@@ -22,6 +22,7 @@ import ScriptCard from '@/components/script-card';
 import useOnScreen from '@/hooks/useOnScreen';
 import { Outlet } from 'react-router-dom';
 import { isTxConfirmed } from '@/utils/arweave';
+import { client } from '@/utils/apollo';
 
 const Operators = () => {
   const [txs, setTxs] = useState<IEdge[]>([]);
@@ -93,7 +94,15 @@ const Operators = () => {
       await Promise.all(
         data.transactions.edges.map(async (el: IEdge) => {
           const confirmed = await isTxConfirmed(el.node.id);
-          const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+          const queryResult = await client.query({
+            query: GET_TX,
+            variables: {
+              id: findTag(el, 'modelTransaction'),
+            },
+          });
+          const modelTx = queryResult.data.transactions.edges[0];
+          const correctFee =
+            parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
           if (confirmed && correctFee) {
             filtered.push(el);
           }

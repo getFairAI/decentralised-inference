@@ -1,7 +1,7 @@
-import { DEFAULT_TAGS, TAG_NAMES, SCRIPT_CREATION_PAYMENT, MARKETPLACE_FEE } from '@/constants';
+import { DEFAULT_TAGS, TAG_NAMES, SCRIPT_CREATION_PAYMENT } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
+import { GET_TX, QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
 import { isTxConfirmed } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
@@ -18,6 +18,7 @@ import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState 
 import { useLocation } from 'react-router-dom';
 import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
+import { client } from '@/utils/apollo';
 
 const ChooseScript = ({
   setShowScripts,
@@ -97,7 +98,15 @@ const ChooseScript = ({
           const existingIdx = filtered.findIndex(
             (existing) => el.node.owner.address === existing.node.owner.address,
           );
-          const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+          const queryResult = await client.query({
+            query: GET_TX,
+            variables: {
+              id: findTag(el, 'modelTransaction'),
+            },
+          });
+          const modelTx = queryResult.data.transactions.edges[0];
+          const correctFee =
+            parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
           if (correctFee && existingIdx < 0) {
             filtered.push(el);
           } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {

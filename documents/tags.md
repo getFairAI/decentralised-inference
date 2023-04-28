@@ -8,21 +8,21 @@ This document provides detailed information about the Fair Platform marketplace 
 * [Common Tags](#common-tags)
 * [Save Transaction Tags](#save-transaction)
 * Creator Flow
-  * [Model upload](#model-upload-to-Bundlr)
+  * [Model upload](#model-upload-to-bundlr)
   * [Model upload payment](#model-upload-payment-to-marketplace)
   * [Attachment](#attachment)
 * User Flow
   * [Script fee payment](#script-fee-payment)
-  * [Script fee payment](#model-inference-request)
-  * [Inference payment](#model-inference-payment)
+  * [Script inference request](#script-inference-request)
+  * [Script inference payment](#script-inference-payment)
+  * [Conversation Start](#conversation-start)
 * Operator Flow
   * [Registration](#operator-registration)
-  * [Inference response](#model-inference-response)
-  * [Inference Fee](#inference-fee)
+  * [Script Inference response](#script-inference-response)
+  * [Fee Redistribution](#inference-redistribution)
 * Curator Flow
   * [Script upload](#scripts-upload)
   * [Script upload payment](#scripts-upload-payment)
-  * [Attachment](#attachment)
 
 ## Common Tags
 This Tags are applied in all the transactions executed in the platform
@@ -72,7 +72,7 @@ Example:
 
 ----
 
-## Model upload to Bundlr
+# Model upload to Bundlr
 
 When a creator uploads a model to the platform the transaction occurs with the following tags:
 
@@ -81,7 +81,6 @@ When a creator uploads a model to the platform the transaction occurs with the f
 | Model-Name     | False       | < ExampleName >         | Name of the model uploaded.                                                          |
 | Model-Fee      | False       | < 1000000000000 >       | Fee To be paid to Creator by the Curator when uploading scrips for a model.          |
 | Operation-Name | False       | Model Creation          | Name of the Operation executed in the application.                                   |
-| Category       | False       | < text >                | Model Category, must `'text' \| 'document' \| 'both'`.                               |
 | Description    | True        | < Example Description > | Model Description.                                                                   |
 | Payment-Quantity | False       | < 1000000000000 >           | Quantity paid in the corresponding payment transaction                         |
 | Paymnent-Target  | False       | < Example Address >         | Address of the recipient in the corresponding payment transaction              |
@@ -94,6 +93,8 @@ Example:
   "Operation-Name": "Model Creation",
   "Category": "text",
   "Description?": "Example Description", // Optional
+  "Payment-Quantity": "1000000000000",
+  "Paymnet-Target": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8"
 }
 ```
 
@@ -108,7 +109,6 @@ Besides the model upload, a second transaction is sent to arweave corresponding 
 | Model-Name        | False       | < ExampleName >         | Name of the model uploaded.                                                          |
 | Model-Fee         | False       | < 1000000000000 >       | Fee To be paid to Creator by the Curator when uploading scrips for a model.          |
 | Operation-Name    | False       | Model Creation Payment  | Name of the Operation executed in the application.                                   |
-| Category          | False       | < text >                | Model Category, must be `'text' \| 'document' \| 'both'`.                            |
 | Model-Transaction | False       | < Transaction Id >      | Transaction Identifier of the model uploaded through Bundlr.                         |
 | Description       | True        | < Example Description > | Model Description.                                                                   |
 
@@ -119,7 +119,6 @@ Example:
   "Model-Name": "Example Name",
   "Model-Fee": "1000000000000", // winston value
   "Operation-Name": "Model Creation Payment",
-  "Category": "text",
   "Model-Transaction": "WRitxdSWNl51RgI9OYuGg7-_rb4YuP-rBxZ1jf_wnrA",
   "Description?": "Example Description", // Optional
 }
@@ -157,22 +156,28 @@ When an operator registers for the model, a wallet to wallet transaction is crea
 
 | Tag-Name          | Optional    | Tag Value               | Description                                                 
 | ----------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| Model-Name        | False       | < ExampleName >         | Name of the model uploaded.                                                          |
-| Model-Creator     | False       | < Example Address >     | Address of the wallet that uploaded model.                                           |
-| Model-Transaction | False       | < Model transaction >   | Transaction Identifier of the uploaded model.                                        |
+| Script-Name        | False       | < ExampleName >         | Name of the Script uploaded.                                                          |
+| Script-Curator     | False       | < Example Address >     | Address of the wallet that uploaded Script.                                           |
+| Script-Transaction | False       | < Script transaction >   | Transaction Identifier of the uploaded Script.                                        |
 | Operator-Fee      | False       | < 1000000000000 >       | Fee Charged by the Operator to run inferences to the User.                           |
 | Operation-Name    | False       | Operator Registration   | Name of the Operation executed in the application.                                   |
 | Operator-Name     | False       | < Eample Name >         | Name Provided by the Operator when regisering to better be identified by Users.      |
+| Payment-Quantity | False       | < 1000000000000 >           | Quantity paid in the corresponding payment transaction                         |
+| Paymnent-Target  | False       | < Example Address >         | Address of the recipient in the corresponding payment transaction              |
+| Save-Transaction | False       | < Save transaction >   | Transaction Identifier of the dispatched save transaction.                                        |
 
 Example:
 ```json
 {
-  "Model-Name": "Example Name",
-  "Model-Creator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8", 
-  "Model-Transaction": "WRitxdSWNl51RgI9OYuGg7-_rb4YuP-rBxZ1jf_wnrA",
+  "Script-Name": "Example Name",
+  "Script-Creator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8", 
+  "Script-Transaction": "WRitxdSWNl51RgI9OYuGg7-_rb4YuP-rBxZ1jf_wnrA",
   "Operator-Fee": "1000000000000", // winston value
   "Operation-Name": "Operator Registration",
   "Operator-Name": "Example Operator Name",
+  "Payment-Quantity": "1000000000000",
+  "Paymnet-Target": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8",
+  "Save-Transaction": "WRitxdSWNl51RgI9OYuGg7-_rb4YuP-rBxZ1jf_wnrA",
 }
 ```
 
@@ -182,36 +187,38 @@ When an user first chooses to use a model a wallet to wallet transaction is crea
 
 | Tag-Name          | Optional    | Tag Value               | Description                                                 
 | ----------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| Model-Name        | False       | < ExampleName >         | Name of the model uploaded.                                                          |
-| Model-Creator     | False       | < Example Address >     | Address of the wallet that uploaded model.                                           |
-| Model-Transaction | False       | < Model transaction >   | Transaction Identifier of the uploaded model.                                        |
-| Model-Fee         | False       | < 1000000000000 >       | Fee To be paid to Creator on first model usage, value must be in winston.            |
+| Script-Name        | False       | < ExampleName >         | Name of the Script uploaded.                                                          |
+| Script-Curator     | False       | < Example Address >     | Address of the wallet that uploaded Script.                                           |
+| Script-Transaction | False       | < Script transaction >   | Transaction Identifier of the uploaded Script.                                        |
+| Script-Fee         | False       | < 1000000000000 >       | Fee To be paid to Creator on first Script usage, value must be in winston.            |
 | Operation-Name    | False       | Script Fee Payment       | Name of the Operation executed in the application.                                  |
+| Save-Transaction | False       | < Save transaction >   | Transaction Identifier of the dispatched save transaction.                                        |
 
 Example:
 ```json
 {
-  "Model-Name": "Example Name",
-  "Model-Creator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
-  "Model-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
-  "Model-Fee": "1000000000000", // winston value
-  "Operation-Name": "Script Fee Payment"
+  "Script-Name": "Example Name",
+  "Script-Curator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
+  "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
+  "Script-Fee": "1000000000000", // winston value
+  "Operation-Name": "Script Fee Payment",
+  "Save-Transaction": "WRitxdSWNl51RgI9OYuGg7-_rb4YuP-rBxZ1jf_wnrA",
 }
 ```
 
 ----
 
-## Model Inference Request
+## Script Inference Request
 
-Data transaction containing the prompts to send to the model for inference, created with the following tags:
+Data transaction containing the prompts to send to the script for inference, created with the following tags:
 
 | Tag-Name                | Optional    | Tag Value               | Description                                                 
 | ----------------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| Model-Name              | False       | < ExampleName >         | Name of the model uploaded.                                                          |
-| Model-Creator           | False       | < Example Address >     | Address of the wallet that uploaded model.                                           |
-| Model-Transaction       | False       | < Model transaction >   | Transaction Identifier of the uploaded model.                                        |
-| Model-Operator          | False       | < Example Address >     | Address of the Operator that a User is using for the inference request.              |
-| Operation-Name          | False       | Model Inference Request | Name of the Operation executed in the applicaiton.                                   |
+| Script-Name              | False       | < ExampleName >         | Name of the Script uploaded.                                                          |
+| Script-Curator           | False       | < Example Address >     | Address of the wallet that uploaded Script.                                           |
+| Script-Transaction       | False       | < Script transaction >   | Transaction Identifier of the uploaded Script.                                        |
+| Script-Operator          | False       | < Example Address >     | Address of the Operator that a User is using for the inference request.              |
+| Operation-Name          | False       | Script Inference Request | Name of the Operation executed in the applicaiton.                                   |
 | Conversation-Identifier | False       | < 1 >                   | Identifier to group messages for inference, by default inference will be run using context of all messages that belong to one identifier, generating a new identifier will reset the context.                                                                            |
 | Payment-Quantity | False       | < 1000000000000 >           | Quantity paid in the corresponding payment transaction       |
 | Paymnent-Target  | False       | < Example Address >         | Address of the recipient in the corresponding payment transaction |
@@ -219,27 +226,29 @@ Data transaction containing the prompts to send to the model for inference, crea
 Example:
 ```json
 {
-  "Model-Name": "Example Name",
-  "Model-Creator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
-  "Model-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
-  "Model-Operator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ",
-  "Operation-Name": "Model Inference Request",
+  "Script-Name": "Example Name",
+  "Script-Curator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
+  "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
+  "Script-Operator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ",
+  "Operation-Name": "Script Inference Request",
   "Conversation-Identifier": "1", // chat id number
+  "Payment-Quantity": "1000000000000",
+  "Paymnet-Target": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8"
 }
 ```
 
 ----
 
-## Model Inference Payment
+## Script Inference Payment
 
 Wallet to Wallet transaction to pay for the `Inference Payment` fee. This transaction corresponds to the `Inference Payment` detailed in the [economy section of the whitepaper](./whitepaper.md#v-marketplace-economy) and contains the folllowing tags:
 
 | Tag-Name                | Optional    | Tag Value               | Description                                                 
 | ----------------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| Model-Name              | False       | < ExampleName >         | Name of the model uploaded.                                                          |
-| Model-Creator           | False       | < Example Address >     | Address of the wallet that uploaded model.                                           |
-| Model-Transaction       | False       | < Model transaction >   | Transaction Identifier of the uploaded model.                                        |
-| Model-Operator          | False       | < Example Address >     | Address of the Operator that a User is using for the inference request.              |
+| Script-Name              | False       | < ExampleName >         | Name of the Script uploaded.                                                          |
+| Script-Curator           | False       | < Example Address >     | Address of the wallet that uploaded Script.                                           |
+| Script-Transaction       | False       | < Script transaction >   | Transaction Identifier of the uploaded Script.                                        |
+| Script-Operator          | False       | < Example Address >     | Address of the Operator that a User is using for the inference request.              |
 | Operation-Name          | False       | Inference Payment       | Name of the Operation executed in the application.                                   |
 | Inference-Transaction   | False       | < Example Transaction > | Transaction Identifier of the inference request.                                     |
 | Conversation-Identifier | False       | < 1 >                   | Identifier to group messages for inference, by default inference will be run using context of all messages that belong to one identifier, generating a new identifier will reset the context.                                                                            |
@@ -247,10 +256,10 @@ Wallet to Wallet transaction to pay for the `Inference Payment` fee. This transa
 Example
 ```json
 {
-  "Model-Name": "Example Name",
-  "Model-Creator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
-  "Model-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
-  "Model-Operator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ",
+  "Script-Name": "Example Name",
+  "Script-Curator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
+  "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
+  "Script-Operator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ",
   "Operation-Name": "Inference Payment",
   "Conversation-Identifier": "1",
   "Inference-Transaction": "LXKYYdE_7zX7t5OSjFQXlgf1TexvuEXkmt6BkrCRdy8",
@@ -259,17 +268,17 @@ Example
 
 ---
 
-## Model Inference Response
+## Script Inference Response
 
 Data Transaction created by the operator to respond to a inference request by the user. It contains the response data with the following tags:
 
 | Tag-Name                | Optional    | Tag Value                | Description                                                 
 | ----------------------- | ----------- | ------------------------ | ------------------------------------------------------------------------------------ |
-| Model-Name              | False       | < ExampleName >          | Name of the model uploaded.                                                          |
-| Model-Creator           | False       | < Example Address >      | Address of the wallet that uploaded model.                                           |
-| Model-Transaction       | False       | < Model transaction >    | Transaction Identifier of the uploaded model.                                        |
-| Model-User              | False       | < Example Address >      | Address of the User that requested inference.                                        |
-| Operation-Name          | False       | Model Inference Response | Name of the Operation executed in the application.                                   |
+| Script-Name              | False       | < ExampleName >          | Name of the Script uploaded.                                                          |
+| Script-Curator           | False       | < Example Address >      | Address of the wallet that uploaded Script.                                           |
+| Script-Transaction       | False       | < Script transaction >    | Transaction Identifier of the uploaded Script.                                        |
+| Script-User              | False       | < Example Address >      | Address of the User that requested inference.                                        |
+| Operation-Name          | False       | Script Inference Response | Name of the Operation executed in the application.                                   |
 | Request-Transaction     | False       | < Example Transaction >  | Transaction Identifier of the inference request.                                     |
 | Conversation-Identifier | False       | < 1 >                    | Identifier to group messages for inference, by default inference will be run using context of all messages that belong to one identifier, generating a new identifier will reset the context.                                                                                                                                                  |
 | Payment-Quantity | False       | < 1000000000000 >           | Quantity paid in the corresponding payment transaction       |
@@ -278,28 +287,30 @@ Data Transaction created by the operator to respond to a inference request by th
 Example:
 ```json
 {
-  "Model-Name": "Example Name",
-  "Model-Creator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
-  "Model-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
-  "Model-User": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ",
-  "Operation-Name": "Model Inference Response",
+  "Script-Name": "Example Name",
+  "Script-Curator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
+  "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
+  "Script-User": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ",
+  "Operation-Name": "Script Inference Response",
   "Request-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
   "Conversation-Identifier": "1", // chat id number
+  "Payment-Quantity": "1000000000000",
+  "Paymnet-Target": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8"
 }
 ```
 
 ---
 
-## Inference Fee
+## Inference Redistribution
 
 When an operator receives a request payment from the user he is responsible to take the extra 5% sent by the user and distribute it to the marketplace, paying the `inference fee` in a wallet to wallet transaction with the following tags:
 
 | Tag-Name                | Optional    | Tag Value                      | Description                                                 
 | ----------------------- | ----------- | ------------------------------ | ------------------------------------------------------------------------------------ |
-| Model-Name              | False       | < ExampleName >                | Name of the model uploaded.                                                          |
-| Model-Creator           | False       | < Example Address >            | Address of the wallet that uploaded model.                                           |
-| Model-Transaction       | False       | < Model transaction >          | Transaction Identifier of the uploaded model.                                        |
-| Model-User              | False       | < Example Address >            | Address of the User that requested inference.                                        |
+| Script-Name              | False       | < ExampleName >                | Name of the Script uploaded.                                                          |
+| Script-Curator           | False       | < Example Address >            | Address of the wallet that uploaded Script.                                           |
+| Script-Transaction       | False       | < Script transaction >          | Transaction Identifier of the uploaded Script.                                        |
+| Script-User              | False       | < Example Address >            | Address of the User that requested inference.                                        |
 | Operation-Name          | False       | Inference-Fee                  | Name of the Operation executed in the application.                                   |
 | Request-Transaction     | False       | < Example Transaction >        | Transaction Identifier of the inference request.                                     |
 | Response-Transaction    | False       | < Example Transaction >        | Transaction Identifier of the inference response.                                    |
@@ -308,11 +319,11 @@ When an operator receives a request payment from the user he is responsible to t
 Example:
 ```json
 {
-  "Model-Name": "Example Name",
-  "Model-Creator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
-  "Model-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
-  "Model-User": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ",
-  "Operation-Name": "Inference Fee",
+  "Script-Name": "Example Name",
+  "Script-Curator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
+  "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
+  "Script-User": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ",
+  "Operation-Name": "Fee Redistribution",
   "Request-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
   "Response-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
   "Conversation-Identifier": "1", // chat id number
@@ -336,6 +347,7 @@ Data transaction containing any necessary files to run a specific model, created
 | Payment-Quantity  | False       | < 1000000000000 >    | Quantity paid in the corresponding payment transaction       |
 | Paymnent-Target   | False       | < Example Address >  | Address of the recipient in the corresponding payment transaction |
 
+**NOTE:** Registration-Fee  not implemented yet
 
 Example:
 ```json
@@ -345,7 +357,9 @@ Example:
   "Model-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
   "Script-Fee": "1000000000000", // winston value
   "Registration-Fee": "1000000000000", // winston value
-  "Operation-Name": "Script Upload",
+  "Operation-Name": "Script Creation",
+  "Payment-Quantity": "1000000000000",
+  "Paymnet-Target": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8"
 }
 ```
 
@@ -363,6 +377,8 @@ Wallet to Wallet transaction created to pay `Model Fee` to the Creator when uplo
 | Operation-Name     | False       | Model Fee Payment   | Name of the Operation executed in the application.                                   |
 | Script-Transaction | False       | < Transaction Id >  | Transaction Identifier of the script uploaded through Bundlr.                        |
 
+**NOTE:** Registration-Fee  not implemented yet
+
 Example:
 ```json
 {
@@ -371,7 +387,32 @@ Example:
   "Model-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
   "Script-Fee": "1000000000000", // winston value
   "Registration-Fee": "1000000000000", // winston value
-  "Operation-Name": "Model Fee Payment",
+  "Operation-Name": "Script Fee Payment",
   "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34"
+}
+```
+
+## Conversation Start
+
+Dispatch Transaction to register the start of a conversation in chat
+
+| Tag-Name           | Optional    | Tag Value           | Description                                                 
+| ------------------ | ----------- | ------------------- | ------------------------------------------------------------------------------------ |
+| Script-Name         | False       | < ExampleName >     | Name of the Script uploaded.                                                          |
+| Script-Curator      | False       | < Example Address > | Address of the wallet that uploaded Script.                                           |
+| Script-Transaction  | False       | < Transaction Id >  | Transaction Identifier of the Script uploaded through Bundlr.                         |
+| Operation-Name     | False       | Conversation Start   | Name of the Operation executed in the application.                                   |
+| Conversation-Identifier | False       | < 1 >                          | Identifier to group messages for inference, by default inference will be run using context of all messages that belong to one identifier, generating a new identifier will reset the context. |
+
+**NOTE:** Registration-Fee  not implemented yet
+
+Example:
+```json
+{
+  "Script-Name": "Example Name",
+  "Script-Curator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
+  "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
+  "Operation-Name": "Conversation Start",
+  "Conversation-Identifier": "1"
 }
 ```
