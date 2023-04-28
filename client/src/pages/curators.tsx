@@ -16,7 +16,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { UIEvent, useContext, useEffect, useRef, useState } from 'react';
-import { FieldValues, useForm } from 'react-hook-form';
+import { FieldValues, useController, useForm } from 'react-hook-form';
 import TextControl from '@/components/text-control';
 import SelectControl from '@/components/select-control';
 import MarkdownControl from '@/components/md-control';
@@ -27,7 +27,6 @@ import {
   APP_VERSION,
   MARKETPLACE_FEE,
   NODE1_BUNDLR_URL,
-  MARKETPLACE_ADDRESS,
   TAG_NAMES,
   APP_NAME,
   MODEL_ATTACHMENT,
@@ -35,17 +34,19 @@ import {
   NOTES_ATTACHMENT,
   SCRIPT_CREATION,
   SCRIPT_CREATION_PAYMENT,
+  DEFAULT_TAGS,
+  MODEL_FEE_UPDATE,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
-import arweave from '@/utils/arweave';
+import arweave, { parseWinston } from '@/utils/arweave';
 import NumberControl from '@/components/number-control';
 import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
-import { useQuery } from '@apollo/client';
-import { LIST_MODELS_QUERY } from '@/queries/graphql';
+import { useLazyQuery, useQuery } from '@apollo/client';
+import { GET_LATEST_FEE_UPDATE, LIST_MODELS_QUERY } from '@/queries/graphql';
 import { IEdge } from '@/interfaces/arweave';
 import { findTag } from '@/utils/common';
 
@@ -85,6 +86,8 @@ const Curators = () => {
   const { currentAddress } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
+  const { field: modelField } = useController({ name: 'model', control });
+  const [ selectedModelFee, setSelectedModelFee ] = useState(0);
 
   const {
     data: modelsData,
@@ -98,11 +101,45 @@ const Curators = () => {
     notifyOnNetworkStatusChange: true,
   });
 
+  const [
+    getSelectedModelFeeUpdates,
+    { data: updatedFeeData },
+  ] = useLazyQuery(GET_LATEST_FEE_UPDATE);
+
   useEffect(() => {
     if (modelsData) {
       setHasModelsNextPage(modelsData?.transactions?.pageInfo?.hasNextPage || false);
     }
   }, [modelsData]);
+
+  useEffect(() => {
+    if (modelField.value && modelField.value as IEdge) {
+      const value = JSON.parse(modelField.value);
+      const updateFeeTags = [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.operationName, values: [MODEL_FEE_UPDATE] },
+        { name: TAG_NAMES.modelTransaction, values: [ value.node.id] },
+      ];
+      getSelectedModelFeeUpdates({
+        variables: {
+          tags: updateFeeTags,
+          owner: value.node.owner.address
+        }
+      });
+    } else {
+      setSelectedModelFee(0);
+    }
+  }, [ modelField.value ]);
+
+  useEffect(() => {
+    if (modelField.value && updatedFeeData && updatedFeeData.transactions.edges.length > 0) {
+      const updateFee = findTag(updatedFeeData.transactions.edges[0], 'modelFee');
+      setSelectedModelFee(parseFloat(parseWinston(updateFee)));
+    } else if (modelField.value) {
+      const modelFee = findTag(JSON.parse(modelField.value), 'modelFee');
+      setSelectedModelFee(parseFloat(parseWinston(modelFee)));
+    }
+  }, [ updatedFeeData ]);
 
   const onSubmit = async (data: FieldValues) => {
     await updateBalance();
@@ -298,8 +335,6 @@ const Curators = () => {
     };
     // upload the file
     const tags = [];
-    const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
-
     const modelData = JSON.parse(data.model) as IEdge;
 
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
@@ -315,8 +350,8 @@ const Curators = () => {
     });
     tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_CREATION });
     tags.push({ name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) });
-    tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
-    tags.push({ name: TAG_NAMES.paymentTarget, value: MARKETPLACE_ADDRESS });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: selectedModelFee.toString() });
+    tags.push({ name: TAG_NAMES.paymentTarget, value: modelData.node.owner.address });
     if (data.description) tags.push({ name: TAG_NAMES.description, value: data.description });
     tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
     setSnackbarOpen(true);
@@ -343,8 +378,8 @@ const Curators = () => {
       }
       try {
         const tx = await arweave.createTransaction({
-          quantity: fee,
-          target: MARKETPLACE_ADDRESS,
+          quantity: selectedModelFee.toString(),
+          target: modelData.node.owner.address,
         });
         tx.addTag(TAG_NAMES.appName, APP_NAME);
         tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
@@ -598,6 +633,7 @@ const Curators = () => {
                     name='model'
                     control={control}
                     rules={{ required: true }}
+                    helperText={selectedModelFee ? `Selected Model Fee is ${selectedModelFee} AR` : ''}
                     mat={{
                       placeholder: 'Choose a Model',
                       sx: {
@@ -714,7 +750,7 @@ const Curators = () => {
                 <Button
                   onClick={handleSubmit(onSubmit)}
                   disabled={
-                    (!control._formState.isValid && control._formState.isDirty) || !currentAddress
+                    (!control._formState.isValid && control._formState.isDirty) || !currentAddress || !selectedModelFee
                   }
                   sx={{
                     borderRadius: '7px',
