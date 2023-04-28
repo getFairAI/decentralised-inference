@@ -577,7 +577,7 @@ const start = async function () {
       	    var checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
       	    console.log(checkUserPaymentEdges[0]);
       	    
-			if (operatorFee < checkUserPaymentEdges[0].node.quantity.winston) {
+			if (operatorFee > checkUserPaymentEdges[0].node.quantity.winston) {
       	      userHasPaidOperators = false;
       	    }
       	  }
@@ -603,7 +603,7 @@ const start = async function () {
                 console.log(inferenceText);
                 await inference(inferenceText).then(async (fullText) => {
                   console.log(fullText);
-				  const quantity = arweave.ar.arToWinston((operatorFee * CONFIG.inferencePercentageFee).toString());
+				 					const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
                   await sendToBundlr(
                     fullText,
                     appVersion,
