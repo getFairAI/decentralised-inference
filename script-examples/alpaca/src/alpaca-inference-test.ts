@@ -1,4 +1,4 @@
-import CONFIG from '../config.json';
+import CONFIG from '../config.json' assert { type: 'json' };
 
 const inference = async function (message: string) {
   const data = Buffer.from(message, 'utf-8').toString();

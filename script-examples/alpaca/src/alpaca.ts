@@ -1,4 +1,4 @@
-import CONFIG from '../config.json';
+import CONFIG from '../config.json' assert { type: 'json' };
 import fs from 'fs';
 import Bundlr from '@bundlr-network/client';
 import Arweave from 'arweave';
