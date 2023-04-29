@@ -2,7 +2,6 @@ import CONFIG from '../config.json';
 import fs from 'fs';
 import Bundlr from '@bundlr-network/client';
 import Arweave from 'arweave';
-import { graphql, buildSchema } from 'graphql';
 import { ApolloClient, gql, InMemoryCache } from '@apollo/client/core';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 
@@ -85,8 +84,7 @@ const inference = async function (message: string) {
 	  method: 'POST',
 	  body: message
 	});
-	let tempJSON;
-	tempJSON = await res.json();
+	const tempJSON = await res.json();
 	const fullText = tempJSON.output;
 	console.log(fullText);
 
@@ -208,7 +206,7 @@ const start = async function () {
     const edges = resultOperatorFee.data.transactions.edges;
 
 	let firstValidTransaction = -1;
-	for (let i = 0; i < edges.length; i++) {
+	for (let i = 0; i < edges.length; i++) {
 		const getTransactionStatus = await arweave.transactions.getStatus(edges[i].node.id);
 		const isTransactionConfirmed = !!getTransactionStatus.confirmed && getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
 		if (isTransactionConfirmed) {
@@ -424,7 +422,7 @@ const start = async function () {
     return queryObjectCheckUserPayment;
   };
 
-  const buildQueryScriptFee = (userAddress: string) => {
+  const buildQueryScriptFee = () => {
     const queryObjectScriptFee = {
       query: gql`
 		query {
@@ -533,7 +531,7 @@ const start = async function () {
         
         // Curator Validations:
       	
-      	query = buildQueryScriptFee(edges[i].node.owner.address);
+      	query = buildQueryScriptFee();
       	const scriptFeeQuery = await clientGateway.query(query);
       	const scriptFeeEdges = scriptFeeQuery.data.transactions.edges;
 
@@ -587,8 +585,8 @@ const start = async function () {
       	// Do Inference and send it to Bundlr:
 
       	if (userHasPaidCurator && userHasPaidOperators) {
-          var appVersion = 'null';
-          var conversationIdentifier = 'null';
+          let appVersion = 'null';
+          let conversationIdentifier = 'null';
           for (let j = 0; j < edges[i].node.tags.length; j++) {
             if (edges[i].node.tags[j].name == 'App-Version') {
               appVersion = edges[i].node.tags[j].value;
@@ -654,6 +652,7 @@ function sleep(ms: number) {
 }
 
 async function cycle() {
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     await start();
     await sleep(CONFIG.sleepTimeSeconds * 1000);
