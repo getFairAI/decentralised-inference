@@ -18,6 +18,7 @@ import Error from '@/pages/error';
 import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
 import ScriptFeeGuard from '@/guards/script-fee';
+import ScriptDetails from './pages/script/detail';
 
 const router = createHashRouter([
   {
@@ -105,6 +106,11 @@ const router = createHashRouter([
         path: 'payments',
         element: <Payments />,
       },
+      {
+        path: 'scripts/:txid/detail',
+        loader: getScriptAttachments,
+        element: <ScriptDetails />
+      }
     ],
   },
 ]);

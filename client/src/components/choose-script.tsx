@@ -15,7 +15,7 @@ import {
   DialogContent,
 } from '@mui/material';
 import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
 import { client } from '@/utils/apollo';
@@ -35,6 +35,7 @@ const ChooseScript = ({
   const [selectedIdx, setSelectedIdx] = useState(-1);
   const { state }: { state: ModelNavigationState } = useLocation();
   const { currentAddress } = useContext(WalletContext);
+  const navigate = useNavigate();
   const elementsPerPage = 5;
 
   const tags = [
@@ -105,8 +106,7 @@ const ChooseScript = ({
             },
           });
           const modelTx = queryResult.data.transactions.edges[0];
-          const correctFee =
-            parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
+          const correctFee = parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
           if (correctFee && existingIdx < 0) {
             filtered.push(el);
           } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
@@ -232,8 +232,15 @@ const ChooseScript = ({
           <Button
             sx={{ borderRadius: '7px' }}
             variant='outlined'
-            /* onClick={() => setShowScripts(false)} */
-            disabled
+            onClick={() => navigate(`/scripts/${findTag(scriptsData[selectedIdx], 'scriptTransaction')}/detail`, {
+              state: {
+                fee: findTag(scriptsData[selectedIdx], 'scriptFee'),
+                scriptName: findTag(scriptsData[selectedIdx], 'scriptName'),
+                scriptTransaction: findTag(scriptsData[selectedIdx], 'scriptTransaction'),
+                scriptCurator: findTag(scriptsData[selectedIdx], 'scriptCurator'),
+                fullState: scriptsData[selectedIdx]
+              }
+            })}
           >
             <Typography
               sx={{
@@ -246,7 +253,7 @@ const ChooseScript = ({
                 textAlign: 'center',
               }}
             >
-              View History
+              View Details
             </Typography>
           </Button>
           <Button

@@ -121,7 +121,7 @@ const OperatorDetails = () => {
             justifyContent: 'center',
           }}
         >
-          <Button sx={{ borderRadius: '7px' }} variant='outlined' onClick={() => navigate(-1)}>
+          <Button variant='outlined' onClick={() => navigate(-1)}>
             <Typography
               sx={{
                 fontStyle: 'normal',
