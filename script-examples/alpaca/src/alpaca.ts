@@ -16,11 +16,7 @@ const sendToBundlr = async function (
 ) {
   // initailze the bundlr SDK
   // const bundlr: Bundlr = new (Bundlr as any).default(
-  const bundlr: Bundlr = new Bundlr(
-    'http://node1.bundlr.network',
-    'arweave',
-    JWK
-  );
+  const bundlr: Bundlr = new Bundlr('http://node1.bundlr.network', 'arweave', JWK);
 
   // Print your wallet address
   console.log(`wallet address = ${bundlr.address}`);
@@ -62,8 +58,8 @@ const sendToBundlr = async function (
     { name: 'Operation-Name', value: 'Script Inference Response' },
     { name: 'Conversation-Identifier', value: conversationIdentifier },
     { name: 'Content-Type', value: 'application/json' },
-	{ name: 'Payment-Quantity', value: paymentQuantity },
-	{ name: 'Payment-Target', value: CONFIG.marketplaceWallet },
+    { name: 'Payment-Quantity', value: paymentQuantity },
+    { name: 'Payment-Target', value: CONFIG.marketplaceWallet },
     { name: 'Unix-Time', value: (Date.now() / 1000).toString() },
   ];
 
@@ -78,18 +74,18 @@ const sendToBundlr = async function (
 };
 
 const inference = async function (message: string) {
-	const data = Buffer.from(message, 'utf-8').toString();
-	console.log(data);
-	const res = await fetch(CONFIG.url, {
-	  method: 'POST',
-	  body: message
-	});
-	const tempJSON = await res.json();
-	const fullText = tempJSON.output;
-	console.log(fullText);
+  const data = Buffer.from(message, 'utf-8').toString();
+  console.log(data);
+  const res = await fetch(CONFIG.url, {
+    method: 'POST',
+    body: message,
+  });
+  const tempJSON = await res.json();
+  const fullText = tempJSON.output;
+  console.log(fullText);
 
-	return fullText;
-  };
+  return fullText;
+};
 
 const sendFee = async function (
   arweave: Arweave,
@@ -100,7 +96,7 @@ const sendFee = async function (
   requestTransaction: string,
   conversationIdentifier: string,
   responseTransaction: string,
-  key: JWKInterface
+  key: JWKInterface,
 ) {
   //  create a wallet-to-wallet transaction sending the marketplace fee to the target address
   const tx = await arweave.createTransaction(
@@ -108,9 +104,9 @@ const sendFee = async function (
       target: CONFIG.marketplaceWallet,
       quantity,
     },
-    key
+    key,
   );
-  
+
   tx.addTag('App-Name', 'Fair Protocol');
   tx.addTag('App-Version', appVersion);
   tx.addTag('Script-Curator', CONFIG.scriptCurator);
@@ -125,7 +121,7 @@ const sendFee = async function (
 
   // you must sign the transaction with your key before posting
   await arweave.transactions.sign(tx, key);
-  
+
   console.log(tx);
 
   // post the transaction
@@ -205,18 +201,20 @@ const start = async function () {
     const resultOperatorFee = await clientGateway.query(query);
     const edges = resultOperatorFee.data.transactions.edges;
 
-	let firstValidTransaction = -1;
-	for (let i = 0; i < edges.length; i++) {
-		const getTransactionStatus = await arweave.transactions.getStatus(edges[i].node.id);
-		const isTransactionConfirmed = !!getTransactionStatus.confirmed && getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
-		if (isTransactionConfirmed) {
-			firstValidTransaction = i;
-			break;
-		}
-	}
-	if (firstValidTransaction == -1) {
-		throw new Error("Program didn't found any conformed Operator-Fee.");
-	}
+    let firstValidTransaction = -1;
+    for (let i = 0; i < edges.length; i++) {
+      const getTransactionStatus = await arweave.transactions.getStatus(edges[i].node.id);
+      const isTransactionConfirmed =
+        !!getTransactionStatus.confirmed &&
+        getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
+      if (isTransactionConfirmed) {
+        firstValidTransaction = i;
+        break;
+      }
+    }
+    if (firstValidTransaction == -1) {
+      throw new Error("Program didn't found any conformed Operator-Fee.");
+    }
 
     // console.log(edges);
     const tags = edges[firstValidTransaction].node.tags;
@@ -374,7 +372,7 @@ const start = async function () {
     };
     return queryObjectCheckUserScriptRequests;
   };
-  
+
   const buildQueryCheckUserPayment = (userAddress: string, inferenceTransaction: string) => {
     const queryObjectCheckUserPayment = {
       query: gql`
@@ -460,7 +458,7 @@ const start = async function () {
     };
     return queryObjectScriptFee;
   };
-  
+
   const buildQueryCheckUserCuratorPayment = (userAddress: string) => {
     const queryObjectCheckUserCuratorPayment = {
       query: gql`
@@ -515,76 +513,77 @@ const start = async function () {
 
     for (let i = 0; i < edges.length; i++) {
       // Initialization of variables:
-      
+
       let userHasPaidCurator = true;
       let userHasPaidOperators = true;
-    
+
       // Check if request already answered:
-      
+
       query = buildQueryTransactionAnswered(edges[i].node.id);
       const resultTransactionAnswered = await clientGateway.query(query);
-      if (
-        JSON.stringify(resultTransactionAnswered.data.transactions.edges) ===
-        '[]'
-      ) {
-      
-        
+      if (JSON.stringify(resultTransactionAnswered.data.transactions.edges) === '[]') {
         // Curator Validations:
-      	
-      	query = buildQueryScriptFee();
-      	const scriptFeeQuery = await clientGateway.query(query);
-      	const scriptFeeEdges = scriptFeeQuery.data.transactions.edges;
 
-      	let scriptFee = -1;
-      	for (let j = 0; j < scriptFeeEdges[0].node.tags.length; j++) {
-			if (scriptFeeEdges[0].node.tags[j].name == 'Script-Fee') {
-				scriptFee = parseFloat(scriptFeeEdges[0].node.tags[j].value);
-			}
-       	}
-        
-      	query = buildQueryCheckUserCuratorPayment(edges[i].node.owner.address);
-      	const userCuratorPayment = await clientGateway.query(query);
-      	const userCuratorPaymentEdges = userCuratorPayment.data.transactions.edges;
-		const getTransactionStatus = await arweave.transactions.getStatus(userCuratorPaymentEdges[0].node.id);
-		const isTransactionConfirmed = !!getTransactionStatus.confirmed && getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
+        query = buildQueryScriptFee();
+        const scriptFeeQuery = await clientGateway.query(query);
+        const scriptFeeEdges = scriptFeeQuery.data.transactions.edges;
 
-		if(isTransactionConfirmed) {
-			let curatorPaymentAmount = 0;
-			for (let i = 0; i < userCuratorPaymentEdges.length; i++) {
-			curatorPaymentAmount = curatorPaymentAmount + userCuratorPaymentEdges[i].node.quantity.winston;
-			}
-			console.log(curatorPaymentAmount);
-			if (curatorPaymentAmount < scriptFee) {
-			userHasPaidCurator = false;
-			}
-			console.log(userHasPaidCurator);
-		}
-    
-    	
-    	// Operator Validations:
-    	
-    	if (userHasPaidCurator) {
-      	  query = buildQueryCheckUserScriptRequests(edges[i].node.owner.address);
-     	  const checkUserScriptRequests = await clientGateway.query(query);
-      	  const checkUserScriptRequestsEdges = checkUserScriptRequests.data.transactions.edges;
-		  console.log(checkUserScriptRequestsEdges[0]);
-      	  
-      	  for (let i = 0; i < checkUserScriptRequestsEdges.length; i++) {
-      	    query = buildQueryCheckUserPayment(edges[i].node.owner.address, checkUserScriptRequestsEdges[i].node.id);
-     	    const checkUserPayment = await clientGateway.query(query);
-      	    const checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
-      	    console.log(checkUserPaymentEdges[0]);
-      	    
-			if (operatorFee > checkUserPaymentEdges[0].node.quantity.winston) {
-      	      userHasPaidOperators = false;
-      	    }
-      	  }
-      	}
-      	
-      	
-      	// Do Inference and send it to Bundlr:
+        let scriptFee = -1;
+        for (let j = 0; j < scriptFeeEdges[0].node.tags.length; j++) {
+          if (scriptFeeEdges[0].node.tags[j].name == 'Script-Fee') {
+            scriptFee = parseFloat(scriptFeeEdges[0].node.tags[j].value);
+          }
+        }
 
-      	if (userHasPaidCurator && userHasPaidOperators) {
+        query = buildQueryCheckUserCuratorPayment(edges[i].node.owner.address);
+        const userCuratorPayment = await clientGateway.query(query);
+        const userCuratorPaymentEdges = userCuratorPayment.data.transactions.edges;
+        const getTransactionStatus = await arweave.transactions.getStatus(
+          userCuratorPaymentEdges[0].node.id,
+        );
+        const isTransactionConfirmed =
+          !!getTransactionStatus.confirmed &&
+          getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
+
+        if (isTransactionConfirmed) {
+          let curatorPaymentAmount = 0;
+          for (let i = 0; i < userCuratorPaymentEdges.length; i++) {
+            curatorPaymentAmount =
+              curatorPaymentAmount + userCuratorPaymentEdges[i].node.quantity.winston;
+          }
+          console.log(curatorPaymentAmount);
+          if (curatorPaymentAmount < scriptFee) {
+            userHasPaidCurator = false;
+          }
+          console.log(userHasPaidCurator);
+        }
+
+        // Operator Validations:
+
+        if (userHasPaidCurator) {
+          query = buildQueryCheckUserScriptRequests(edges[i].node.owner.address);
+          const checkUserScriptRequests = await clientGateway.query(query);
+          const checkUserScriptRequestsEdges = checkUserScriptRequests.data.transactions.edges;
+          console.log(checkUserScriptRequestsEdges[0]);
+
+          for (let i = 0; i < checkUserScriptRequestsEdges.length; i++) {
+            query = buildQueryCheckUserPayment(
+              edges[i].node.owner.address,
+              checkUserScriptRequestsEdges[i].node.id,
+            );
+            const checkUserPayment = await clientGateway.query(query);
+            const checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
+            console.log(checkUserPaymentEdges[0]);
+
+            if (operatorFee > checkUserPaymentEdges[0].node.quantity.winston) {
+              userHasPaidOperators = false;
+            }
+          }
+        }
+
+        // Do Inference and send it to Bundlr:
+
+        if (userHasPaidCurator && userHasPaidOperators) {
           let appVersion = 'null';
           let conversationIdentifier = 'null';
           for (let j = 0; j < edges[i].node.tags.length; j++) {
@@ -594,14 +593,14 @@ const start = async function () {
               conversationIdentifier = edges[i].node.tags[j].value;
             }
           }
-        
+
           await fetch('https://arweave.net/' + edges[i].node.id).then(async (data) => {
             await data.blob().then(async (blob) => {
               await blob.text().then(async (inferenceText) => {
                 console.log(inferenceText);
                 await inference(inferenceText).then(async (fullText) => {
                   console.log(fullText);
-				 					const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
+                  const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
                   await sendToBundlr(
                     fullText,
                     appVersion,
@@ -609,36 +608,30 @@ const start = async function () {
                     edges[i].node.id,
                     conversationIdentifier,
                     JWK,
-					quantity
+                    quantity,
                   ).then(async (transactionId) => {
                     console.log(transactionId?.toString());
-                    if(transactionId) {
-	              await sendFee(
-		        	arweave,
-					quantity,
-		        	fullText,
-	                appVersion,
-	                edges[i].node.owner.address,
-	                edges[i].node.id,
-	                conversationIdentifier,
-	              	transactionId,
-	                JWK
-		      );
-		    }
+                    if (transactionId) {
+                      await sendFee(
+                        arweave,
+                        quantity,
+                        fullText,
+                        appVersion,
+                        edges[i].node.owner.address,
+                        edges[i].node.id,
+                        conversationIdentifier,
+                        transactionId,
+                        JWK,
+                      );
+                    }
                   });
                 });
               });
             });
           });
         } else {
-          console.log(
-            typeof resultTransactionAnswered.data.transactions.edges
-          );
-          console.log(
-	    "Transaction with ID '" +
-	    edges[i].node.id +
-	    "' didn't paid enough amount."
-  	  );
+          console.log(typeof resultTransactionAnswered.data.transactions.edges);
+          console.log("Transaction with ID '" + edges[i].node.id + "' didn't paid enough amount.");
         }
       }
     }
@@ -656,9 +649,7 @@ async function cycle() {
   while (true) {
     await start();
     await sleep(CONFIG.sleepTimeSeconds * 1000);
-    console.log(
-      `Slept for ${CONFIG.sleepTimeSeconds} second(s). Restarting cycle now...`
-    );
+    console.log(`Slept for ${CONFIG.sleepTimeSeconds} second(s). Restarting cycle now...`);
   }
 }
 
