@@ -1,4 +1,4 @@
-const CONFIG = require("./config.json");
+const CONFIG = require("../config.json");
 
 const inference = async function (message: string) {
 	const data = Buffer.from(message, 'utf-8').toString();

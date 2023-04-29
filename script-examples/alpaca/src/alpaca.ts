@@ -1,4 +1,4 @@
-import CONFIG from './config.json';
+import CONFIG from '../config.json';
 import fs from 'fs';
 import Bundlr from '@bundlr-network/client';
 import Arweave from 'arweave';
@@ -16,10 +16,10 @@ const sendToBundlr = async function (
   paymentQuantity: string,
 ) {
   // initailze the bundlr SDK
-  //const bundlr: Bundlr = new (Bundlr as any).default(
+  // const bundlr: Bundlr = new (Bundlr as any).default(
   const bundlr: Bundlr = new Bundlr(
-    "http://node1.bundlr.network",
-    "arweave",
+    'http://node1.bundlr.network',
+    'arweave',
     JWK
   );
 
@@ -46,26 +46,26 @@ const sendToBundlr = async function (
   */
 
   // Get loaded balance in atomic units
-  let atomicBalance = await bundlr.getLoadedBalance();
+  const atomicBalance = await bundlr.getLoadedBalance();
   console.log(`node balance (atomic units) = ${atomicBalance}`);
 
   // Convert balance to an easier to read format
-  let convertedBalance = bundlr.utils.unitConverter(atomicBalance);
+  const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
   console.log(`node balance (converted) = ${convertedBalance}`);
 
   const tags = [
-    { name: "App-Name", value: "Fair Protocol" },
-    { name: "App-Version", value: appVersion },
-    { name: "Script-Curator", value: CONFIG.scriptCurator },
-    { name: "Script-Name", value: CONFIG.scriptName },
-    { name: "Script-User", value: userAddress },
-    { name: "Request-Transaction", value: requestTransaction },
-    { name: "Operation-Name", value: "Script Inference Response" },
-    { name: "Conversation-Identifier", value: conversationIdentifier },
-    { name: "Content-Type", value: "application/json" },
+    { name: 'App-Name', value: 'Fair Protocol' },
+    { name: 'App-Version', value: appVersion },
+    { name: 'Script-Curator', value: CONFIG.scriptCurator },
+    { name: 'Script-Name', value: CONFIG.scriptName },
+    { name: 'Script-User', value: userAddress },
+    { name: 'Request-Transaction', value: requestTransaction },
+    { name: 'Operation-Name', value: 'Script Inference Response' },
+    { name: 'Conversation-Identifier', value: conversationIdentifier },
+    { name: 'Content-Type', value: 'application/json' },
 	{ name: 'Payment-Quantity', value: paymentQuantity },
 	{ name: 'Payment-Target', value: CONFIG.marketplaceWallet },
-    { name: "Unix-Time", value: (Date.now() / 1000).toString() },
+    { name: 'Unix-Time', value: (Date.now() / 1000).toString() },
   ];
 
   try {
@@ -74,20 +74,20 @@ const sendToBundlr = async function (
     console.log(`Data uploaded ==> https://arweave.net/${transaction.id}`);
     return transaction.id;
   } catch (e) {
-    console.log("Error uploading file ", e);
+    console.log('Error uploading file ', e);
   }
 };
 
 const inference = async function (message: string) {
 	const data = Buffer.from(message, 'utf-8').toString();
 	console.log(data);
-	var res = await fetch(CONFIG.url, {
-	  method: "POST",
+	const res = await fetch(CONFIG.url, {
+	  method: 'POST',
 	  body: message
 	});
-	var tempJSON;
+	let tempJSON;
 	tempJSON = await res.json();
-	var fullText = tempJSON.output;
+	const fullText = tempJSON.output;
 	console.log(fullText);
 
 	return fullText;
@@ -105,7 +105,7 @@ const sendFee = async function (
   key: JWKInterface
 ) {
   //  create a wallet-to-wallet transaction sending the marketplace fee to the target address
-  let tx = await arweave.createTransaction(
+  const tx = await arweave.createTransaction(
     {
       target: CONFIG.marketplaceWallet,
       quantity,
@@ -133,7 +133,7 @@ const sendFee = async function (
   // post the transaction
   const res = await arweave.transactions.post(tx);
   if (res.status === 200) {
-    console.log("Fee paid successfully to the Marketplace.");
+    console.log('Fee paid successfully to the Marketplace.');
   } else {
     console.log(res);
   }
@@ -141,17 +141,17 @@ const sendFee = async function (
 
 const start = async function () {
   // load the JWK wallet key file from disk
-  const JWK = JSON.parse(fs.readFileSync("wallet.json").toString());
+  const JWK = JSON.parse(fs.readFileSync('wallet.json').toString());
 
   const clientGateway = new ApolloClient({
-    uri: "https://arweave.net:443/graphql",
+    uri: 'https://arweave.net:443/graphql',
     cache: new InMemoryCache(),
   });
 
   const arweave = Arweave.init({
-    host: "arweave.net",
+    host: 'arweave.net',
     port: 443,
-    protocol: "https",
+    protocol: 'https',
   });
 
   const address = await arweave.wallets.jwkToAddress(JWK);
@@ -201,13 +201,13 @@ const start = async function () {
     return queryObjectOperatorFee;
   };
 
-  var query = buildQueryOperatorFee();
-  var operatorFee = -1;
+  let query = buildQueryOperatorFee();
+  let operatorFee = -1;
   try {
     const resultOperatorFee = await clientGateway.query(query);
     const edges = resultOperatorFee.data.transactions.edges;
 
-	var firstValidTransaction = -1;
+	let firstValidTransaction = -1;
 	for (let i = 0; i < edges.length; i++) {
 		const getTransactionStatus = await arweave.transactions.getStatus(edges[i].node.id);
 		const isTransactionConfirmed = !!getTransactionStatus.confirmed && getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
@@ -221,9 +221,9 @@ const start = async function () {
 	}
 
     // console.log(edges);
-    var tags = edges[firstValidTransaction].node.tags;
+    const tags = edges[firstValidTransaction].node.tags;
     for (let i = 0; i < tags.length; i++) {
-      if (tags[i].name == "Operator-Fee") {
+      if (tags[i].name == 'Operator-Fee') {
         operatorFee = tags[i].value;
         console.log(tags[i].value);
       }
@@ -232,7 +232,7 @@ const start = async function () {
       throw new Error("Program didn't found a valid Operator-Fee tag.");
     }
   } catch (e) {
-    console.log("GraphQL query for Operator-Fee failed: ", e);
+    console.log('GraphQL query for Operator-Fee failed: ', e);
   }
 
   const buildQueryTransactionsReceived = () => {
@@ -508,26 +508,26 @@ const start = async function () {
 
   try {
     // load the JWK wallet key file from disk
-    const JWK = JSON.parse(fs.readFileSync("wallet.json").toString());
+    const JWK = JSON.parse(fs.readFileSync('wallet.json').toString());
 
     query = buildQueryTransactionsReceived();
     const resultTransactionsReceived = await clientGateway.query(query);
-    var edges = resultTransactionsReceived.data.transactions.edges;
-    //console.log(resultTransactionsReceived.data.transactions.edges);
+    const edges = resultTransactionsReceived.data.transactions.edges;
+    // console.log(resultTransactionsReceived.data.transactions.edges);
 
     for (let i = 0; i < edges.length; i++) {
       // Initialization of variables:
       
-      var userHasPaidCurator = true;
-      var userHasPaidOperators = true;
+      let userHasPaidCurator = true;
+      let userHasPaidOperators = true;
     
       // Check if request already answered:
       
       query = buildQueryTransactionAnswered(edges[i].node.id);
-      var resultTransactionAnswered = await clientGateway.query(query);
+      const resultTransactionAnswered = await clientGateway.query(query);
       if (
         JSON.stringify(resultTransactionAnswered.data.transactions.edges) ===
-        "[]"
+        '[]'
       ) {
       
         
@@ -535,23 +535,23 @@ const start = async function () {
       	
       	query = buildQueryScriptFee(edges[i].node.owner.address);
       	const scriptFeeQuery = await clientGateway.query(query);
-      	var scriptFeeEdges = scriptFeeQuery.data.transactions.edges;
+      	const scriptFeeEdges = scriptFeeQuery.data.transactions.edges;
 
-      	var scriptFee = -1;
+      	let scriptFee = -1;
       	for (let j = 0; j < scriptFeeEdges[0].node.tags.length; j++) {
-			if (scriptFeeEdges[0].node.tags[j].name == "Script-Fee") {
+			if (scriptFeeEdges[0].node.tags[j].name == 'Script-Fee') {
 				scriptFee = parseFloat(scriptFeeEdges[0].node.tags[j].value);
 			}
        	}
         
       	query = buildQueryCheckUserCuratorPayment(edges[i].node.owner.address);
       	const userCuratorPayment = await clientGateway.query(query);
-      	var userCuratorPaymentEdges = userCuratorPayment.data.transactions.edges;
+      	const userCuratorPaymentEdges = userCuratorPayment.data.transactions.edges;
 		const getTransactionStatus = await arweave.transactions.getStatus(userCuratorPaymentEdges[0].node.id);
 		const isTransactionConfirmed = !!getTransactionStatus.confirmed && getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
 
 		if(isTransactionConfirmed) {
-			var curatorPaymentAmount = 0;
+			let curatorPaymentAmount = 0;
 			for (let i = 0; i < userCuratorPaymentEdges.length; i++) {
 			curatorPaymentAmount = curatorPaymentAmount + userCuratorPaymentEdges[i].node.quantity.winston;
 			}
@@ -568,13 +568,13 @@ const start = async function () {
     	if (userHasPaidCurator) {
       	  query = buildQueryCheckUserScriptRequests(edges[i].node.owner.address);
      	  const checkUserScriptRequests = await clientGateway.query(query);
-      	  var checkUserScriptRequestsEdges = checkUserScriptRequests.data.transactions.edges;
+      	  const checkUserScriptRequestsEdges = checkUserScriptRequests.data.transactions.edges;
 		  console.log(checkUserScriptRequestsEdges[0]);
       	  
       	  for (let i = 0; i < checkUserScriptRequestsEdges.length; i++) {
       	    query = buildQueryCheckUserPayment(edges[i].node.owner.address, checkUserScriptRequestsEdges[i].node.id);
      	    const checkUserPayment = await clientGateway.query(query);
-      	    var checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
+      	    const checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
       	    console.log(checkUserPaymentEdges[0]);
       	    
 			if (operatorFee > checkUserPaymentEdges[0].node.quantity.winston) {
@@ -587,17 +587,17 @@ const start = async function () {
       	// Do Inference and send it to Bundlr:
 
       	if (userHasPaidCurator && userHasPaidOperators) {
-          var appVersion = "null";
-          var conversationIdentifier = "null";
+          var appVersion = 'null';
+          var conversationIdentifier = 'null';
           for (let j = 0; j < edges[i].node.tags.length; j++) {
-            if (edges[i].node.tags[j].name == "App-Version") {
+            if (edges[i].node.tags[j].name == 'App-Version') {
               appVersion = edges[i].node.tags[j].value;
-            } else if (edges[i].node.tags[j].name == "Conversation-Identifier") {
+            } else if (edges[i].node.tags[j].name == 'Conversation-Identifier') {
               conversationIdentifier = edges[i].node.tags[j].value;
             }
           }
         
-          await fetch("https://arweave.net/" + edges[i].node.id).then(async (data) => {
+          await fetch('https://arweave.net/' + edges[i].node.id).then(async (data) => {
             await data.blob().then(async (blob) => {
               await blob.text().then(async (inferenceText) => {
                 console.log(inferenceText);
@@ -645,7 +645,7 @@ const start = async function () {
       }
     }
   } catch (e) {
-    console.log("GraphQL query for script transactions failed: ", e);
+    console.log('GraphQL query for script transactions failed: ', e);
   }
 };
 
