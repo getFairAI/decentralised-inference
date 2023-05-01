@@ -379,7 +379,9 @@ const Detail = () => {
       </DialogContent>
       {showOperators ? (
         <ChooseOperator setShowOperators={setShowOperators} scriptTx={scriptTx} />
-      ) : showScriptsFragment()}
+      ) : (
+        showScriptsFragment()
+      )}
     </Dialog>
   );
 };

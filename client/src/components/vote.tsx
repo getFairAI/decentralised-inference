@@ -1,4 +1,11 @@
-import { APP_NAME, APP_VERSION, DEFAULT_TAGS, DOWN_VOTE_MODEL, TAG_NAMES, UP_VOTE_MODEL } from '@/constants';
+import {
+  APP_NAME,
+  APP_VERSION,
+  DEFAULT_TAGS,
+  DOWN_VOTE_MODEL,
+  TAG_NAMES,
+  UP_VOTE_MODEL,
+} from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_REGISTERED_SCRIPTS, QUERY_USER_HAS_VOTED, QUERY_VOTES } from '@/queries/graphql';
@@ -13,46 +20,56 @@ import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import { client } from '@/utils/apollo';
 import { commonUpdateQuery } from '@/utils/common';
 
-const Vote = ({ txid, fee, owner }: { txid: string, fee: number, owner: string }) => {
+const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }) => {
   const [upVotesCount, setUpVotesCount] = useState(0);
   const [downVotesCount, setDownVotesCount] = useState(0);
   const [hasVoted, setHasVoted] = useState(false);
   const [canVote, setCanVote] = useState(false);
   const { currentAddress, isWalletVouched } = useContext(WalletContext);
-  
+
   const { data, loading, error } = useQuery(QUERY_USER_HAS_VOTED, {
     variables: {
       first: 1,
       address: currentAddress,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [ UP_VOTE_MODEL, DOWN_VOTE_MODEL ]},
-        { name: TAG_NAMES.modelTransaction, values: [ txid ]},
-      ]
+        { name: TAG_NAMES.operationName, values: [UP_VOTE_MODEL, DOWN_VOTE_MODEL] },
+        { name: TAG_NAMES.modelTransaction, values: [txid] },
+      ],
     },
     skip: !currentAddress || !txid,
   });
 
-  const { data: upVotesData, loading: upVotesLoading, error: upVotesError, fetchMore: upVotesFetchMore } = useQuery(QUERY_VOTES, {
+  const {
+    data: upVotesData,
+    loading: upVotesLoading,
+    error: upVotesError,
+    fetchMore: upVotesFetchMore,
+  } = useQuery(QUERY_VOTES, {
     variables: {
       first: 10,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [ UP_VOTE_MODEL ]},
-        { name: TAG_NAMES.modelTransaction, values: [ txid ]},
-      ]
+        { name: TAG_NAMES.operationName, values: [UP_VOTE_MODEL] },
+        { name: TAG_NAMES.modelTransaction, values: [txid] },
+      ],
     },
     skip: !txid,
   });
 
-  const { data: downVotesData, loading: downVotesLoading, error: downVotesError, fetchMore: downVotesFetchMore } = useQuery(QUERY_VOTES, {
+  const {
+    data: downVotesData,
+    loading: downVotesLoading,
+    error: downVotesError,
+    fetchMore: downVotesFetchMore,
+  } = useQuery(QUERY_VOTES, {
     variables: {
       first: 10,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [ DOWN_VOTE_MODEL ]},
-        { name: TAG_NAMES.modelTransaction, values: [ txid ]},
-      ]
+        { name: TAG_NAMES.operationName, values: [DOWN_VOTE_MODEL] },
+        { name: TAG_NAMES.modelTransaction, values: [txid] },
+      ],
     },
     skip: !txid,
   });
@@ -66,30 +83,30 @@ const Vote = ({ txid, fee, owner }: { txid: string, fee: number, owner: string }
       };
       asyncWrapper();
     }
-  }, [ data ]);
-  
-  useEffect(() =>  {
+  }, [data]);
+
+  useEffect(() => {
     if (upVotesData && upVotesData.transactions.pageInfo.hasNextPage) {
       const txs = upVotesData.transactions.edges;
       upVotesFetchMore({
         variables: {
           after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
-        }, 
-        updateQuery: commonUpdateQuery
+        },
+        updateQuery: commonUpdateQuery,
       });
     } else if (upVotesData) {
       countVouchedVotes(true);
     }
   }, [upVotesData]);
 
-  useEffect(() =>  {
+  useEffect(() => {
     if (downVotesData && downVotesData.transactions.pageInfo.hasNextPage) {
       const txs = downVotesData.transactions.edges;
       downVotesFetchMore({
         variables: {
           after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
-        }, 
-        updateQuery: commonUpdateQuery
+        },
+        updateQuery: commonUpdateQuery,
       });
     } else if (downVotesData) {
       countVouchedVotes(false);
@@ -101,18 +118,18 @@ const Vote = ({ txid, fee, owner }: { txid: string, fee: number, owner: string }
       ...DEFAULT_TAGS,
       {
         name: TAG_NAMES.modelTransaction,
-        values: [ txid ],
+        values: [txid],
       },
     ];
     const queryResult = await client.query({
       query: QUERY_REGISTERED_SCRIPTS,
-      variables: { tags, first: 1, addresses: [ addr ? addr : currentAddress ], recipients: [ owner ] },
+      variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
     });
     if (queryResult.data.transactions.edges.length > 0) {
       const scriptTx = queryResult.data.transactions.edges[0];
       const correctFee = fee === parseInt(scriptTx.node.quantity.ar);
       const correctTarget = scriptTx.node.recipient === owner;
-  
+
       return correctFee && correctTarget;
     }
     return false;
@@ -146,7 +163,11 @@ const Vote = ({ txid, fee, owner }: { txid: string, fee: number, owner: string }
         <>
           Updated Model Fee
           <br></br>
-          <a href={`https://viewblock.io/arweave/tx/${result.id}`} target={'_blank'} rel='noreferrer'>
+          <a
+            href={`https://viewblock.io/arweave/tx/${result.id}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
             <u>View Transaction in Explorer</u>
           </a>
         </>,
@@ -159,30 +180,40 @@ const Vote = ({ txid, fee, owner }: { txid: string, fee: number, owner: string }
     }
   };
 
-  if (loading || upVotesLoading || downVotesLoading) return <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
-    <CircularProgress />
-  </Box>;
+  if (loading || upVotesLoading || downVotesLoading)
+    return (
+      <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
+        <CircularProgress />
+      </Box>
+    );
 
-  if (error || upVotesError || downVotesError) return <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
-    <Typography>
-      Could Not Fetch Voting Data
-    </Typography>
-  </Box>;
+  if (error || upVotesError || downVotesError)
+    return (
+      <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
+        <Typography>Could Not Fetch Voting Data</Typography>
+      </Box>
+    );
 
-  return <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
-    <Typography>
-      {upVotesCount}
-    </Typography>
-    <IconButton disabled={!isWalletVouched || hasVoted || !canVote} color='primary' onClick={() => vote(true)}>
-      <ThumbUpOffAltIcon />
-    </IconButton>
-    <Typography>
-      {downVotesCount}
-    </Typography>
-    <IconButton disabled={!isWalletVouched || hasVoted || !canVote} color='primary' onClick={() => vote(false)}>
-      <ThumbDownOffAltIcon />
-    </IconButton>
-  </Box>;
+  return (
+    <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
+      <Typography>{upVotesCount}</Typography>
+      <IconButton
+        disabled={!isWalletVouched || hasVoted || !canVote}
+        color='primary'
+        onClick={() => vote(true)}
+      >
+        <ThumbUpOffAltIcon />
+      </IconButton>
+      <Typography>{downVotesCount}</Typography>
+      <IconButton
+        disabled={!isWalletVouched || hasVoted || !canVote}
+        color='primary'
+        onClick={() => vote(false)}
+      >
+        <ThumbDownOffAltIcon />
+      </IconButton>
+    </Box>
+  );
 };
 
 export default Vote;

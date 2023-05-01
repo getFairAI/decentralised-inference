@@ -1040,60 +1040,59 @@ export const QUERY_CONVERSATIONS = gql`
 
 export const QUERY_REGISTERED_SCRIPTS = gql`
   query QUERY_REGISTERED_SCRIPTS(
-    $tags: [TagFilter!],
-    $recipients: [String!],
-    $first: Int,
-    $after: String,
+    $tags: [TagFilter!]
+    $recipients: [String!]
+    $first: Int
+    $after: String
     $addresses: [String!]
   ) {
     transactions(
       recipients: $recipients
       tags: $tags
-      sort: HEIGHT_DESC,
-      first: $first,
-      after: $after,
+      sort: HEIGHT_DESC
+      first: $first
+      after: $after
       owners: $addresses
-    )
-    {
+    ) {
       pageInfo {
         hasNextPage
       }
       edges {
-          cursor
-          node {
-              id
-              signature
-              recipient
-              owner {
-                  address
-                  key
-              }
-              fee {
-                  winston
-                  ar
-              }
-              quantity {
-                  winston
-                  ar
-              }
-              data {
-                  size
-                  type
-              }
-              tags {
-                  name
-                  value
-              }
-              block {
-                  id
-                  timestamp
-                  height
-                  previous
-              }
-              bundledIn {
-                  id
-              }
+        cursor
+        node {
+          id
+          signature
+          recipient
+          owner {
+            address
+            key
           }
+          fee {
+            winston
+            ar
+          }
+          quantity {
+            winston
+            ar
+          }
+          data {
+            size
+            type
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            id
+            timestamp
+            height
+            previous
+          }
+          bundledIn {
+            id
+          }
+        }
       }
     }
   }
@@ -1101,18 +1100,12 @@ export const QUERY_REGISTERED_SCRIPTS = gql`
 
 export const QUERY_USER_HAS_VOTED = gql`
   query QUERY_USER_HAS_VOTED($tags: [TagFilter!], $first: Int, $address: String!) {
-    transactions(
-      owners: [$address],
-      tags: $tags
-      sort: HEIGHT_DESC,
-      first: $first,
-    )
-    {
+    transactions(owners: [$address], tags: $tags, sort: HEIGHT_DESC, first: $first) {
       edges {
-          cursor
-          node {
-              id
-          }
+        cursor
+        node {
+          id
+        }
       }
     }
   }
@@ -1120,25 +1113,19 @@ export const QUERY_USER_HAS_VOTED = gql`
 
 export const QUERY_VOTES = gql`
   query QUERY_VOTES($tags: [TagFilter!], $first: Int, $after: String) {
-    transactions(
-      tags: $tags
-      sort: HEIGHT_DESC,
-      first: $first,
-      after: $after
-    )
-    {
+    transactions(tags: $tags, sort: HEIGHT_DESC, first: $first, after: $after) {
       pageInfo {
         hasNextPage
       }
       edges {
-          cursor
-          node {
-              id
-              owner {
-                  address
-                  key
-              }
+        cursor
+        node {
+          id
+          owner {
+            address
+            key
           }
+        }
       }
     }
   }

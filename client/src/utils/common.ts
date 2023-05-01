@@ -19,14 +19,16 @@ export const findTag = (tx: IEdge, tagName: tagName) => {
 
 interface QueryContent {
   transactions: ITransactions;
-};
+}
 
-export const commonUpdateQuery = (prev: QueryContent, { fetchMoreResult }: { fetchMoreResult: QueryContent }) => {
+export const commonUpdateQuery = (
+  prev: QueryContent,
+  { fetchMoreResult }: { fetchMoreResult: QueryContent },
+) => {
   if (!fetchMoreResult) return prev;
   const newData: IEdge[] = fetchMoreResult.transactions.edges;
 
-  const merged: IEdge[] =
-    prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+  const merged: IEdge[] = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
   for (const i of newData) {
     if (!merged.find((el: IEdge) => el.node.id === i.node.id)) {
       merged.push(i);

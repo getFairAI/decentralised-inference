@@ -148,7 +148,7 @@ const initialState: WalletContext = {
   currentBalance: 0,
   isWalletVouched: false,
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  connectWallet: async () => {}, 
+  connectWallet: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   updateBalance: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -164,12 +164,15 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const connectWalletSubscriptionRef = useRef<boolean>(false);
   const switchWalletSubscriptionRef = useRef<boolean>(false);
 
-  const value: WalletContext = useMemo(() => ({
-    ...state,
-    connectWallet: actions.connectWallet,
-    updateBalance: actions.updateBalance,
-    disconnectWallet: actions.walletDisconnect,
-  }), [state, actions]);
+  const value: WalletContext = useMemo(
+    () => ({
+      ...state,
+      connectWallet: actions.connectWallet,
+      updateBalance: actions.updateBalance,
+      disconnectWallet: actions.walletDisconnect,
+    }),
+    [state, actions],
+  );
 
   const walletLoaded = async () => {
     await actions.walletLoaded();
