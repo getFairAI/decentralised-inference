@@ -1,6 +1,5 @@
-
-[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=FAIR-Protocol_decentralised-inference)](https://sonarcloud.io/summary/new_code?id=FAIR-Protocol_decentralised-inference)
 ![Latest Development Changes](https://github.com/FAIR-Protocol/decentralized-inference/actions/workflows/development.yml/badge.svg?event=push)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FAIR-Protocol_decentralised-inference&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FAIR-Protocol_decentralised-inference)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=FAIR-Protocol_decentralised-inference&metric=bugs)](https://sonarcloud.io/summary/new_code?id=FAIR-Protocol_decentralised-inference)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=FAIR-Protocol_decentralised-inference&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=FAIR-Protocol_decentralised-inference)
 
