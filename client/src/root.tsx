@@ -15,10 +15,13 @@ export const Root = () => {
   return (
     <ApolloProvider client={client}>
       <AppThemeProvider>
-        <SnackbarProvider maxSnack={3} Components={{
-          error: StyledMaterialDesignContent,
-          success: StyledMaterialDesignContent
-        }}>
+        <SnackbarProvider
+          maxSnack={3}
+          Components={{
+            error: StyledMaterialDesignContent,
+            success: StyledMaterialDesignContent,
+          }}
+        >
           <WalletProvider>
             <BundlrProvider>
               <WorkerProvider>

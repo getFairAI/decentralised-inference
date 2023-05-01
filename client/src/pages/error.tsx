@@ -30,10 +30,13 @@ const Error = () => {
   return (
     <>
       <AppThemeProvider>
-        <SnackbarProvider maxSnack={3} Components={{
-          error: StyledMaterialDesignContent,
-          success: StyledMaterialDesignContent
-        }}>
+        <SnackbarProvider
+          maxSnack={3}
+          Components={{
+            error: StyledMaterialDesignContent,
+            success: StyledMaterialDesignContent,
+          }}
+        >
           <WalletProvider>
             <BundlrProvider>
               <CssBaseline />
