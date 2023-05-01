@@ -45,6 +45,11 @@ const router = createHashRouter([
             path: 'operators/details/:address',
             element: <OperatorDetails />,
           },
+          {
+            path: 'scripts/:txid/detail',
+            loader: getScriptAttachments,
+            element: <ScriptDetails />
+          }
         ],
       },
       {
@@ -106,11 +111,6 @@ const router = createHashRouter([
         path: 'payments',
         element: <Payments />,
       },
-      {
-        path: 'scripts/:txid/detail',
-        loader: getScriptAttachments,
-        element: <ScriptDetails />
-      }
     ],
   },
 ]);
