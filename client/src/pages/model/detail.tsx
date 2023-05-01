@@ -30,6 +30,7 @@ import { NumericFormat } from 'react-number-format';
 import ChooseOperator from '@/components/choose-operator';
 import ChooseScript from '@/components/choose-script';
 import { IEdge } from '@/interfaces/arweave';
+import Vote from '@/components/vote';
 
 const Detail = () => {
   const { updatedFee, avatarTxId } = useLoaderData() as RouteLoaderResult;
@@ -122,6 +123,44 @@ const Detail = () => {
   const handleScriptChosen = (scriptTx: IEdge) => {
     setShowOperators(true);
     setScriptTx(scriptTx);
+  };
+
+  const showScriptsFragment = () => {
+    return showScripts ? (
+      <ChooseScript
+        setShowScripts={setShowScripts}
+        handleScriptChosen={handleScriptChosen}
+        defaultScriptTx={scriptTx}
+      />
+    ) : (
+      <DialogActions
+        sx={{
+          justifyContent: 'center',
+        }}
+      >
+        <Button
+          sx={{
+            fontStyle: 'normal',
+            fontWeight: 700,
+            fontSize: '23px',
+            lineHeight: '31px',
+            display: 'flex',
+            alignItems: 'center',
+            textAlign: 'center',
+            borderRadius: '30px',
+          }}
+          variant='contained'
+          onClick={() => setShowScripts(true)}
+        >
+          <Box display='flex'>
+            <Typography>{'Choose a Script '}</Typography>
+            <Icon sx={{ rotate: '-90deg' }}>
+              <img src='./triangle.svg' />
+            </Icon>
+          </Box>
+        </Button>
+      </DialogActions>
+    );
   };
 
   return (
@@ -334,54 +373,14 @@ const Detail = () => {
               Update
             </Button>
           ) : (
-            <Button
-              sx={{
-                border: `1px solid ${theme.palette.primary.main}`,
-                borderRadius: '10px',
-                boxSizing: 'border-box',
-              }}
-            >
-              <Typography>Stamp</Typography>
-            </Button>
+            <Vote txid={txid as string} fee={feeValue} owner={state.modelCreator} />
           )}
         </Box>
       </DialogContent>
       {showOperators ? (
         <ChooseOperator setShowOperators={setShowOperators} scriptTx={scriptTx} />
-      ) : showScripts ? (
-        <ChooseScript
-          setShowScripts={setShowScripts}
-          handleScriptChosen={handleScriptChosen}
-          defaultScriptTx={scriptTx}
-        />
       ) : (
-        <DialogActions
-          sx={{
-            justifyContent: 'center',
-          }}
-        >
-          <Button
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-              borderRadius: '30px',
-            }}
-            variant='contained'
-            onClick={() => setShowScripts(true)}
-          >
-            <Box display='flex'>
-              <Typography>{'Choose a Script '}</Typography>
-              <Icon sx={{ rotate: '-90deg' }}>
-                <img src='./triangle.svg' />
-              </Icon>
-            </Box>
-          </Button>
-        </DialogActions>
+        showScriptsFragment()
       )}
     </Dialog>
   );

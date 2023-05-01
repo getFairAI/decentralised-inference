@@ -1,7 +1,8 @@
-import { createContext, Dispatch, ReactNode, useEffect, useReducer, useRef } from 'react';
+import { createContext, Dispatch, ReactNode, useEffect, useMemo, useReducer, useRef } from 'react';
 import { PermissionType } from 'arconnect';
 import arweave from '@/utils/arweave';
 import _ from 'lodash';
+import { isVouched } from 'vouchdao';
 
 const DEFAULT_PERMISSSIONS: PermissionType[] = [
   'ACCESS_PUBLIC_KEY',
@@ -19,18 +20,21 @@ type WalletPermissionsChangedAction = {
   type: 'wallet_permissions_changed';
   permissions: PermissionType[];
 };
+type WalletVouchedAction = { type: 'wallet_vouched'; isWalletVouched: boolean };
 type WalletAction =
   | WalletLoadedAction
   | WalletConnectedAction
   | WalletDisconnectAction
   | WalletBalanceUpdatedAction
-  | WalletPermissionsChangedAction;
+  | WalletPermissionsChangedAction
+  | WalletVouchedAction;
 
 interface WalletContext {
   isWalletLoaded: boolean;
   currentAddress: string;
   currentPermissions: PermissionType[];
   currentBalance: number;
+  isWalletVouched: boolean;
   connectWallet: () => Promise<void>;
   updateBalance: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
@@ -59,6 +63,8 @@ const asyncConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
       type: 'wallet_balance_updated',
       balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
     });
+    const isAddrVouched = await isVouched(addr);
+    dispatch({ type: 'wallet_vouched', isWalletVouched: isAddrVouched });
   } catch (error) {
     // manually remove arconnect overlay
     const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll(
@@ -85,6 +91,8 @@ const asyncWalletSwitch = async (dispatch: Dispatch<WalletAction>, newAddress: s
       type: 'wallet_balance_updated',
       balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
     });
+    const isAddrVouched = await isVouched(newAddress);
+    dispatch({ type: 'wallet_vouched', isWalletVouched: isAddrVouched });
   } catch (error) {
     console.log(error);
   }
@@ -122,6 +130,12 @@ const walletReducer = (state: WalletContext, action?: WalletAction) => {
         currentBalance: 0,
       };
     }
+    case 'wallet_vouched': {
+      return {
+        ...state,
+        isWalletVouched: action.isWalletVouched,
+      };
+    }
     default:
       return state;
   }
@@ -132,6 +146,7 @@ const initialState: WalletContext = {
   currentAddress: '',
   currentPermissions: [],
   currentBalance: 0,
+  isWalletVouched: false,
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   connectWallet: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -149,12 +164,15 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const connectWalletSubscriptionRef = useRef<boolean>(false);
   const switchWalletSubscriptionRef = useRef<boolean>(false);
 
-  const value: WalletContext = {
-    ...state,
-    connectWallet: actions.connectWallet,
-    updateBalance: actions.updateBalance,
-    disconnectWallet: actions.walletDisconnect,
-  };
+  const value: WalletContext = useMemo(
+    () => ({
+      ...state,
+      connectWallet: actions.connectWallet,
+      updateBalance: actions.updateBalance,
+      disconnectWallet: actions.walletDisconnect,
+    }),
+    [state, actions],
+  );
 
   const walletLoaded = async () => {
     await actions.walletLoaded();

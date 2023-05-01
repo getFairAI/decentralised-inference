@@ -79,6 +79,10 @@ export const SCRIPT_FEE_PAYMENT = 'Script Fee Payment';
 
 export const SCRIPT_FEE_PAYMENT_SAVE = 'Script Fee Payment Save';
 
+export const UP_VOTE_MODEL = 'Up Vote Model';
+
+export const DOWN_VOTE_MODEL = 'Down Vote Model';
+
 // Attachment Roles
 export const AVATAR_ATTACHMENT = 'avatar';
 

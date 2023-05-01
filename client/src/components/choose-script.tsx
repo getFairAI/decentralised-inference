@@ -66,7 +66,7 @@ const ChooseScript = ({
     refetch,
     fetchMore,
   } = useQuery(QUERY_REGISTERED_SCRIPTS, {
-    variables: { tags, first: elementsPerPage },
+    variables: { tags, first: elementsPerPage, recipients: [state.modelCreator] },
   });
 
   const handleRetry = () => {
