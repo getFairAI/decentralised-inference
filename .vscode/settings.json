@@ -1,2 +1,6 @@
 {
+    "sonarlint.connectedMode.project": {
+        "connectionId": "VS Code",
+        "projectKey": "FAIR-Protocol_decentralised-inference"
+    }
 }
