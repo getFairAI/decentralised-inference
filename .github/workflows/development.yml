@@ -58,7 +58,7 @@ jobs:
           cache-name: cache-deps
         with:
           path: ./client/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
       - name: Run ESLint
         run: cd client && npm run lint
   format-check:
@@ -81,7 +81,7 @@ jobs:
           cache-name: cache-deps
         with:
           path: ./client/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
       - name: Run Format Check
         run: cd client && npm run format:check
   build:
