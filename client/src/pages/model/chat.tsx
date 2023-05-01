@@ -717,6 +717,54 @@ const Chat = () => {
     lastEl?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const getTimePassed = (unixTimestamp: number, index: number) => {
+    const timestampNow = Date.now() / 1000;
+    const secondsDiff = timestampNow - unixTimestamp;
+
+    const min = 60;
+    const hour = 60 * 60;
+    const day = hour * 24;
+    const week = day * 7;
+    const month = week * 4;
+    const year = day * 365;
+
+    if (secondsDiff < min) {
+      const timer = setInterval(() => {
+        const elements = document.querySelectorAll('.timeLabel');
+        const current = elements.item(index);
+        if (!current) {
+          clearInterval(timer);
+          return;
+        }
+        const newTimestamp = Date.now() / 1000;
+        const newSecondsDiff = newTimestamp - unixTimestamp;
+        if (newSecondsDiff < 60) {
+          current.textContent = `${newSecondsDiff.toFixed(0)} Seconds Ago `;
+        } else {
+          current.textContent = '1 Minute Ago';
+          clearInterval(timer);
+        }
+      }, 5000);
+      return secondsDiff === 1 ? '1 Second Ago ' : `${secondsDiff.toFixed(0)} Seconds Ago `;
+    } else if (secondsDiff < hour) {
+      return secondsDiff === min
+        ? '1 Minute Ago '
+        : `${(secondsDiff / min).toFixed(0)} Minutes Ago `;
+    } else if (secondsDiff < day) {
+      return secondsDiff === hour ? '1 Hour Ago ' : `${(secondsDiff / hour).toFixed(0)} Hours Ago `;
+    } else if (secondsDiff < week) {
+      return secondsDiff === day ? '1 Day Ago ' : `${(secondsDiff / day).toFixed(0)} Days Ago `;
+    } else if (secondsDiff < month) {
+      return secondsDiff === week ? '1 Week Ago ' : `${(secondsDiff / week).toFixed(0)} Weeks Ago `;
+    } else if (secondsDiff < year) {
+      return secondsDiff === month
+        ? '1 Month Ago '
+        : `${(secondsDiff / month).toFixed(0)} Months Ago `;
+    } else {
+      return secondsDiff >= year && secondsDiff < 2 * year ? '1 Year Ago' : 'Over an Year Ago';
+    }
+  };
+
   return (
     <>
       <Grid container spacing={0} sx={{ height: '100%' }}>
@@ -887,6 +935,7 @@ const Chat = () => {
                                   </Typography>
                                   <Box display={'flex'}>
                                     <Typography
+                                      className='timeLabel'
                                       sx={{
                                         fontStyle: 'normal',
                                         fontWeight: 300,
@@ -900,7 +949,7 @@ const Chat = () => {
                                             : theme.palette.terciary.contrastText,
                                       }}
                                     >
-                                      {new Date(el.timestamp * 1000).toLocaleTimeString()}
+                                      {getTimePassed(el.timestamp, index)}
                                       {' -  '}
                                     </Typography>
                                     <Typography
