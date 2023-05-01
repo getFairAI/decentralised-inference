@@ -41,7 +41,8 @@
     "react-hook-form": "7.43.1",
     "react-number-format": "5.1.4",
     "react-router-dom": "6.8.1",
-    "rehype-sanitize": "5.0.1"
+    "rehype-sanitize": "5.0.1",
+    "vouchdao": "0.2.6"
   },
   "devDependencies": {
     "@testing-library/react": "14.0.0",
