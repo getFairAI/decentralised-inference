@@ -30,15 +30,13 @@ jobs:
           cache-name: cache-deps
         with:
           path: ./client/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
       - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
         name: Could not find cache, Creating
         continue-on-error: true
-        run: |
-          git submodule update --init --remote --recursive
-          cd client && npm run build-deps && npm install
+        run: cd client && npm install
   lint:
     needs: build-and-install-deps
     name: ESLint
@@ -105,7 +103,7 @@ jobs:
         cache-name: cache-deps
       with:
         path: ./client/node_modules
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
     - name: Build
       env:
         NODE_OPTIONS: "--max_old_space_size=4096"
@@ -135,7 +133,7 @@ jobs:
         cache-name: cache-deps
       with:
         path: ./client/node_modules
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
     - name: Build
       run: cd client && npm run test:cov
   analyze:

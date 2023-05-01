@@ -17,15 +17,10 @@ Online [demo](https://arweave.net/Q0XriVoaiIn-r4NWvFztbdrz7F7uzWzrrO78E_xc5Ug) p
 ```
 
 ## Installation
-Initialize Submodule:
-```
-git submodule update  --init --recursive --remote
-```
-
 Enter Client directory and install dependencies:
 ```
 cd client
-npm run build-deps && npm install
+npm install
 ```
 
 ## Running
