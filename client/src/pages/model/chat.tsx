@@ -747,15 +747,19 @@ const Chat = () => {
       }, 5000);
       return secondsDiff === 1 ? '1 Second Ago ' : `${secondsDiff.toFixed(0)} Seconds Ago `;
     } else if (secondsDiff < hour) {
-      return secondsDiff === min ? '1 Minute Ago ' : `${(secondsDiff / min).toFixed(0)} Minutes Ago `;
+      return secondsDiff === min
+        ? '1 Minute Ago '
+        : `${(secondsDiff / min).toFixed(0)} Minutes Ago `;
     } else if (secondsDiff < day) {
-      return secondsDiff === hour ? '1 Hour Ago ': `${(secondsDiff / hour).toFixed(0)} Hours Ago `;
+      return secondsDiff === hour ? '1 Hour Ago ' : `${(secondsDiff / hour).toFixed(0)} Hours Ago `;
     } else if (secondsDiff < week) {
       return secondsDiff === day ? '1 Day Ago ' : `${(secondsDiff / day).toFixed(0)} Days Ago `;
     } else if (secondsDiff < month) {
       return secondsDiff === week ? '1 Week Ago ' : `${(secondsDiff / week).toFixed(0)} Weeks Ago `;
     } else if (secondsDiff < year) {
-      return secondsDiff === month ? '1 Month Ago ' : `${(secondsDiff / month).toFixed(0)} Months Ago `;
+      return secondsDiff === month
+        ? '1 Month Ago '
+        : `${(secondsDiff / month).toFixed(0)} Months Ago `;
     } else {
       return secondsDiff >= year && secondsDiff < 2 * year ? '1 Year Ago' : 'Over an Year Ago';
     }
