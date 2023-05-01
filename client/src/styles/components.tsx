@@ -1,6 +1,7 @@
 import { styled } from '@mui/material';
+import { MaterialDesignContent } from 'notistack';
 
-const LoadingContainer = styled('div')(({ theme }) => ({
+export const LoadingContainer = styled('div')(({ theme }) => ({
   '&.dot-pulse': {
     position: 'relative',
     left: '-9999px',
@@ -43,4 +44,13 @@ const LoadingContainer = styled('div')(({ theme }) => ({
   },
 }));
 
-export default LoadingContainer;
+export const StyledMaterialDesignContent = styled(MaterialDesignContent)(({ theme }) => ({
+  '&.notistack-MuiContent-success': {
+    borderRadius: '23px',
+    backgroundColor: theme.palette.success.main,
+  },
+  '&.notistack-MuiContent-error': {
+    borderRadius: '23px',
+    backgroundColor: theme.palette.error.main,
+  },
+}));

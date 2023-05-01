@@ -7,6 +7,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { AppThemeProvider } from '@/context/theme';
+import { StyledMaterialDesignContent } from '@/styles/components';
 
 const Error = () => {
   const error = useRouteError();
@@ -29,7 +30,13 @@ const Error = () => {
   return (
     <>
       <AppThemeProvider>
-        <SnackbarProvider maxSnack={3}>
+        <SnackbarProvider
+          maxSnack={3}
+          Components={{
+            error: StyledMaterialDesignContent,
+            success: StyledMaterialDesignContent,
+          }}
+        >
           <WalletProvider>
             <BundlrProvider>
               <CssBaseline />
