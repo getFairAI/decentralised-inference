@@ -1,5 +1,6 @@
 
 ![Latest Development Changes](https://github.com/FAIR-Protocol/decentralized-inference/actions/workflows/development.yml/badge.svg?event=push)
+[![DeepScan grade](https://deepscan.io/api/teams/21103/projects/24522/branches/756869/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=21103&pid=24522&bid=756869)
 
 # Fair Protocol
 
