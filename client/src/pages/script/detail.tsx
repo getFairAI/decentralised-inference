@@ -32,7 +32,7 @@ const ScriptDetails = () => {
   const [showAttachments, setShowAttachments] = useState(false);
   const theme = useTheme();
   const [notes, setNotes] = useState('');
-  const [ fileSize, setFileSize ] = useState(0);
+  const [fileSize, setFileSize] = useState(0);
 
   useEffect(() => {
     const fetchNotesData = async () => {
@@ -50,7 +50,7 @@ const ScriptDetails = () => {
       const svg = new Blob([img], { type: 'image/svg+xml' });
       return URL.createObjectURL(svg);
     }
-  }, [ avatarTxId, txid]);
+  }, [avatarTxId, txid]);
 
   const handleClose = () => {
     navigate(-1);
@@ -78,7 +78,6 @@ const ScriptDetails = () => {
     }
   };
 
-
   const download = () => {
     const a = document.createElement('a');
     a.href = `${NET_ARWEAVE_URL}/${state.scriptTransaction}`;
@@ -90,10 +89,9 @@ const ScriptDetails = () => {
 
   useEffect(() => {
     const getFileSize = async () => {
-      const response = await fetch(
-        `${NET_ARWEAVE_URL}/${state.scriptTransaction}`,
-        { method: 'HEAD' },
-      );
+      const response = await fetch(`${NET_ARWEAVE_URL}/${state.scriptTransaction}`, {
+        method: 'HEAD',
+      });
       setFileSize(parseInt(response.headers.get('Content-Length') || ''));
     };
     getFileSize();
@@ -120,7 +118,7 @@ const ScriptDetails = () => {
         alignItems='center'
         lineHeight={0}
       >
-        {(showAttachments) && <Typography>{state.scriptName}</Typography>}
+        {showAttachments && <Typography>{state.scriptName}</Typography>}
         <IconButton
           onClick={handleClose}
           sx={{
@@ -283,19 +281,19 @@ const ScriptDetails = () => {
               {findTag(state.fullState, 'description') || 'No Description Available.'}
             </Typography>
           </Box>
-            <Button
-              sx={{
-                border: `1px solid ${theme.palette.primary.main}`,
-                borderRadius: '10px',
-                boxSizing: 'border-box',
-              }}
-            >
-              <Typography>Stamp</Typography>
-            </Button>
+          <Button
+            sx={{
+              border: `1px solid ${theme.palette.primary.main}`,
+              borderRadius: '10px',
+              boxSizing: 'border-box',
+            }}
+          >
+            <Typography>Stamp</Typography>
+          </Button>
         </Box>
       </DialogContent>
-      {
-        showAttachments ? <>
+      {showAttachments ? (
+        <>
           <DialogContent sx={{ overflow: 'unset' }}>
             <MarkdownControl
               viewProps={{
@@ -309,33 +307,33 @@ const ScriptDetails = () => {
               }}
             />
             <Box>
-            <FormControl variant='outlined' fullWidth>
-              <TextField
-                multiline
-                disabled
-                minRows={1}
-                value={state.scriptName}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <IconButton aria-label='download' onClick={() => download()}>
-                        <DownloadIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position='start'>{printSize(fileSize)}</InputAdornment>
-                  ),
-                  readOnly: true,
-                  sx: {
-                    borderWidth: '1px',
-                    borderColor: '#FFF',
-                    borderRadius: '23px',
-                  },
-                }}
-              />
-            </FormControl>
-          </Box>
+              <FormControl variant='outlined' fullWidth>
+                <TextField
+                  multiline
+                  disabled
+                  minRows={1}
+                  value={state.scriptName}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position='start'>
+                        <IconButton aria-label='download' onClick={() => download()}>
+                          <DownloadIcon />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position='start'>{printSize(fileSize)}</InputAdornment>
+                    ),
+                    readOnly: true,
+                    sx: {
+                      borderWidth: '1px',
+                      borderColor: '#FFF',
+                      borderRadius: '23px',
+                    },
+                  }}
+                />
+              </FormControl>
+            </Box>
           </DialogContent>
           <DialogActions
             sx={{
@@ -358,7 +356,9 @@ const ScriptDetails = () => {
               </Typography>
             </Button>
           </DialogActions>
-        </> : <DialogActions
+        </>
+      ) : (
+        <DialogActions
           sx={{
             justifyContent: 'center',
           }}
@@ -385,7 +385,7 @@ const ScriptDetails = () => {
             </Box>
           </Button>
         </DialogActions>
-      }
+      )}
     </Dialog>
   );
 };

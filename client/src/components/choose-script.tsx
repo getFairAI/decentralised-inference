@@ -106,7 +106,8 @@ const ChooseScript = ({
             },
           });
           const modelTx = queryResult.data.transactions.edges[0];
-          const correctFee = parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
+          const correctFee =
+            parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
           if (correctFee && existingIdx < 0) {
             filtered.push(el);
           } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
@@ -232,15 +233,20 @@ const ChooseScript = ({
           <Button
             sx={{ borderRadius: '7px' }}
             variant='outlined'
-            onClick={() => navigate(`/scripts/${findTag(scriptsData[selectedIdx], 'scriptTransaction')}/detail`, {
-              state: {
-                fee: findTag(scriptsData[selectedIdx], 'scriptFee'),
-                scriptName: findTag(scriptsData[selectedIdx], 'scriptName'),
-                scriptTransaction: findTag(scriptsData[selectedIdx], 'scriptTransaction'),
-                scriptCurator: findTag(scriptsData[selectedIdx], 'scriptCurator'),
-                fullState: scriptsData[selectedIdx]
-              }
-            })}
+            onClick={() =>
+              navigate(
+                `/scripts/${findTag(scriptsData[selectedIdx], 'scriptTransaction')}/detail`,
+                {
+                  state: {
+                    fee: findTag(scriptsData[selectedIdx], 'scriptFee'),
+                    scriptName: findTag(scriptsData[selectedIdx], 'scriptName'),
+                    scriptTransaction: findTag(scriptsData[selectedIdx], 'scriptTransaction'),
+                    scriptCurator: findTag(scriptsData[selectedIdx], 'scriptCurator'),
+                    fullState: scriptsData[selectedIdx],
+                  },
+                },
+              )
+            }
           >
             <Typography
               sx={{

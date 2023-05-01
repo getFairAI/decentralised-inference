@@ -48,8 +48,8 @@ const router = createHashRouter([
           {
             path: 'scripts/:txid/detail',
             loader: getScriptAttachments,
-            element: <ScriptDetails />
-          }
+            element: <ScriptDetails />,
+          },
         ],
       },
       {
