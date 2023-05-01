@@ -9,12 +9,16 @@ import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
 import { WorkerProvider } from './context/worker';
 import { FundProvider } from './context/fund';
+import { StyledMaterialDesignContent } from './styles/components';
 
 export const Root = () => {
   return (
     <ApolloProvider client={client}>
       <AppThemeProvider>
-        <SnackbarProvider maxSnack={3}>
+        <SnackbarProvider maxSnack={3} Components={{
+          error: StyledMaterialDesignContent,
+          success: StyledMaterialDesignContent
+        }}>
           <WalletProvider>
             <BundlrProvider>
               <WorkerProvider>

@@ -50,7 +50,7 @@ import { WorkerContext } from '@/context/worker';
 import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
-import LoadingContainer from '@/styles/components';
+import { LoadingContainer } from '@/styles/components';
 import useScroll from '@/hooks/useScroll';
 
 interface Message {

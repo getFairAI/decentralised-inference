@@ -21,7 +21,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
-import LoadingContainer from '@/styles/components';
+import { LoadingContainer } from '@/styles/components';
 
 const Conversations = ({
   currentConversationId,
