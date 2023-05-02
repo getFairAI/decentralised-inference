@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: ReactElement }) {
   const [showBanner, setShowBanner] = useState(true);
   const [filterValue, setFilterValue] = useState('');
   const { isWalletLoaded, currentAddress } = useContext(WalletContext);
-  const { nodeBalance } = useContext(BundlrContext);
+  const { nodeBalance, isLoading } = useContext(BundlrContext);
   const [ignore, setIgnore] = useState(false);
   const theme = useTheme();
   const { setOpen: setFundOpen } = useContext(FundContext);
@@ -30,6 +30,20 @@ export default function Layout({ children }: { children: ReactElement }) {
   const handleFundNow = () => {
     setIgnore(true);
     setFundOpen(true);
+  };
+
+  const getDialogTitle = () => {
+    if (!isWalletLoaded) return 'Browser Wallet Not Detected';
+    if (!currentAddress) return 'Wallet Not Connected';
+    return 'Missing Bundlr Funds';
+  };
+
+  const getDialogContent = () => {
+    if (!isWalletLoaded)
+      return 'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.';
+    if (!currentAddress)
+      return 'Wallet Not Connected! App Functionalities will be limited, please consider connecting your wallet.';
+    return 'You do not have enough Bundlr Funds to use this app. Please fund your Bundlr Node to continue.';
   };
 
   return (
@@ -48,7 +62,7 @@ export default function Layout({ children }: { children: ReactElement }) {
           <FilterContext.Provider value={filterValue}>
             <main style={{ height: '100%' }}>{children}</main>
             <Dialog
-              open={(!isWalletLoaded || !currentAddress || nodeBalance <= 0) && !ignore}
+              open={!ignore && ((!isLoading && nodeBalance === 0 && currentAddress && isWalletLoaded)  || (!isWalletLoaded || !currentAddress))} 
               maxWidth={'md'}
               fullWidth
               sx={{
@@ -70,11 +84,7 @@ export default function Layout({ children }: { children: ReactElement }) {
                     lineHeight: '31px',
                   }}
                 >
-                  {!isWalletLoaded
-                    ? 'Browser Wallet Not Detected'
-                    : !currentAddress
-                    ? 'Wallet Not Connected'
-                    : 'Missing bundlr Funds'}
+                  {getDialogTitle()}
                 </Typography>
               </DialogTitle>
               <DialogContent>
@@ -111,11 +121,7 @@ export default function Layout({ children }: { children: ReactElement }) {
                       textAlign: 'center',
                     }}
                   >
-                    {!isWalletLoaded
-                      ? 'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.'
-                      : !currentAddress
-                      ? 'Wallet Not Connected! Please Connect Wallet to access All App Features.'
-                      : 'Current Bundlr Node Has no Loaded Funds. Please Fund Bundlr Node in order to utilize App'}
+                    {getDialogContent()}
                   </Typography>
                 </Alert>
               </DialogContent>
