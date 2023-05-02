@@ -45,6 +45,10 @@ export const LoadingContainer = styled('div')(({ theme }) => ({
 }));
 
 export const StyledMaterialDesignContent = styled(MaterialDesignContent)(({ theme }) => ({
+  '&.notistack-MuiContent-info': {
+    borderRadius: '23px',
+    backgroundColor: theme.palette.primary.main,
+  },
   '&.notistack-MuiContent-success': {
     borderRadius: '23px',
     backgroundColor: theme.palette.success.main,
