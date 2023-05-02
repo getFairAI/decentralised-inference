@@ -88,7 +88,7 @@ const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr?: Web
 };
 
 const bundlrReducer = (
-  state: { bundlr?: WebBundlr; nodeBalance: number, isLoading: boolean },
+  state: { bundlr?: WebBundlr; nodeBalance: number; isLoading: boolean },
   action?: BundlrAction,
 ) => {
   if (!action) return state;
@@ -128,7 +128,11 @@ export const BundlrContext = createContext<BundlrContext>({
 });
 
 export const BundlrProvider = ({ children }: { children: ReactNode }) => {
-  const [state, dispatch] = useReducer(bundlrReducer, { bundlr: undefined, nodeBalance: 0, isLoading: false });
+  const [state, dispatch] = useReducer(bundlrReducer, {
+    bundlr: undefined,
+    nodeBalance: 0,
+    isLoading: false,
+  });
   const actions = useMemo(() => createActions(dispatch, state.bundlr), [state.bundlr]);
 
   const walletState = useContext(WalletContext);
@@ -194,7 +198,10 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
     return state.bundlr.fund(value);
   };
 
-  const value = useMemo(() => ({ ...state, ...actions, retryConnection, getPrice, upload, chunkUpload, fundNode }), [ state, actions ]);
+  const value = useMemo(
+    () => ({ ...state, ...actions, retryConnection, getPrice, upload, chunkUpload, fundNode }),
+    [state, actions],
+  );
 
   return <BundlrContext.Provider value={value}>{children}</BundlrContext.Provider>;
 };

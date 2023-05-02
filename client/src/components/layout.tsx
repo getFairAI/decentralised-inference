@@ -62,7 +62,12 @@ export default function Layout({ children }: { children: ReactElement }) {
           <FilterContext.Provider value={filterValue}>
             <main style={{ height: '100%' }}>{children}</main>
             <Dialog
-              open={!ignore && ((!isLoading && nodeBalance === 0 && currentAddress && isWalletLoaded)  || (!isWalletLoaded || !currentAddress))} 
+              open={
+                !ignore &&
+                ((!isLoading && nodeBalance === 0 && currentAddress && isWalletLoaded) ||
+                  !isWalletLoaded ||
+                  !currentAddress)
+              }
               maxWidth={'md'}
               fullWidth
               sx={{
