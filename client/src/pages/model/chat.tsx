@@ -195,7 +195,7 @@ const Chat = () => {
               ? requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor
               : undefined,
         },
-        updateQuery: commonUpdateQuery
+        updateQuery: commonUpdateQuery,
       });
     }
   }, [isOnScreen, hasRequestNextPage]);
@@ -209,7 +209,7 @@ const Chat = () => {
               ? responsesData.transactions.edges[responsesData.transactions.edges.length - 1].cursor
               : undefined,
         },
-        updateQuery: commonUpdateQuery
+        updateQuery: commonUpdateQuery,
       });
     }
   }, [hasResponseNextPage]);
@@ -370,7 +370,7 @@ const Chat = () => {
       parseInt(findTag(el, 'unixTime') || '') || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
     const currentHeight = (await arweave.blocks.getCurrent()).height;
-    const isRequest  = el.node.owner.address === userAddr;
+    const isRequest = el.node.owner.address === userAddr;
 
     const msg: IMessage = {
       id: el.node.id,
@@ -379,7 +379,7 @@ const Chat = () => {
       timestamp: timestamp,
       cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
       height: el.node.block ? el.node.block.height : currentHeight,
-      to: isRequest ? findTag(el, 'scriptOperator') as string : userAddr,
+      to: isRequest ? (findTag(el, 'scriptOperator') as string) : userAddr,
       from: isRequest ? userAddr : el.node.owner.address,
     };
 
@@ -388,9 +388,7 @@ const Chat = () => {
 
   const asyncMap = async (newData: IEdge[]) => {
     const temp: IMessage[] = [];
-    await Promise.all(
-      newData.map(async el => temp.push(await mapTransactionsToMessages(el)))
-    );
+    await Promise.all(newData.map(async (el) => temp.push(await mapTransactionsToMessages(el))));
 
     if (!_.isEqual(temp, polledMessages)) {
       setPolledMessages([...polledMessages, ...temp]);
@@ -643,9 +641,7 @@ const Chat = () => {
                       alignItems: 'center',
                     }}
                   >
-                    {new Date(
-                      messages[index + 1].timestamp * 1000,
-                    ).toLocaleDateString()}
+                    {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
                   </Typography>
                 </Divider>
               )}
@@ -681,10 +677,7 @@ const Chat = () => {
                         alignItems: 'flex-start',
                       }}
                     >
-                      <LoadingContainer
-                        className='dot-pulse'
-                        sx={{ marginBottom: '0.35em' }}
-                      />
+                      <LoadingContainer className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
                     </CardContent>
                   </Card>
                 </Box>
@@ -708,8 +701,8 @@ const Chat = () => {
                       color: '#F4BA61',
                     }}
                   >
-                    The last request has not received a response in the defined amount
-                    of time, please consider retrying with a new operator
+                    The last request has not received a response in the defined amount of time,
+                    please consider retrying with a new operator
                   </Typography>
                 </Box>
               </Box>
@@ -717,7 +710,9 @@ const Chat = () => {
           </Container>
         )}
       </>
-    ) : hasNoMessagesFragment();
+    ) : (
+      hasNoMessagesFragment()
+    );
   };
 
   const hasNoMessagesFragment = () => {
@@ -729,7 +724,7 @@ const Chat = () => {
       <></>
     );
   };
-  
+
   return (
     <>
       <Grid container spacing={0} sx={{ height: '100%' }}>
@@ -823,7 +818,9 @@ const Chat = () => {
                   <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
                     Could not Fetch Conversation History.
                   </Typography>
-                ) : hasNoErrorsFragment() }
+                ) : (
+                  hasNoErrorsFragment()
+                )}
                 <Box ref={messagesEndRef} sx={{ padding: '8px' }}></Box>
               </Box>
             </Paper>

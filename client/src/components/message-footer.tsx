@@ -6,14 +6,14 @@ import { useLocation } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import MessageDetail from './message-detail';
 
-const MessageFooter = ({ message, index }: { message: IMessage, index: number }) => {
+const MessageFooter = ({ message, index }: { message: IMessage; index: number }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const theme = useTheme();
   const { state } = useLocation();
-  const [ dialogOpen, setDialogOpen ] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const updateMessageTime = (timer: NodeJS.Timer, unixTimestamp: number,  index: number) => {
+  const updateMessageTime = (timer: NodeJS.Timer, unixTimestamp: number, index: number) => {
     const elements = document.querySelectorAll('.timeLabel');
     const current = elements.item(index);
     if (!current) {
@@ -42,7 +42,10 @@ const MessageFooter = ({ message, index }: { message: IMessage, index: number })
     const year = day * 365;
 
     if (secondsDiff < min) {
-      const timer: NodeJS.Timer = setInterval(() => updateMessageTime(timer, unixTimestamp, index), 5000);
+      const timer: NodeJS.Timer = setInterval(
+        () => updateMessageTime(timer, unixTimestamp, index),
+        5000,
+      );
       return `${secondsDiff.toFixed(0)} Second(s) Ago`;
     } else if (secondsDiff < hour) {
       return `${(secondsDiff / min).toFixed(0)} Minute(s) Ago`;
@@ -82,79 +85,86 @@ const MessageFooter = ({ message, index }: { message: IMessage, index: number })
     setDialogOpen(true);
   };
 
-  return <>
-    <Box display={'flex'} justifyContent={'space-between'} width={'100%'} flexDirection={message.type === 'response' ? 'row' : 'row-reverse'}>
-      <Box display={'flex'}>
-        <Typography
-          className='timeLabel'
-          sx={{
-            fontStyle: 'normal',
-            fontWeight: 300,
-            fontSize: '20px',
-            lineHeight: '27px',
-            display: 'flex',
-            alignItems: 'center',
-            color:
-            message.type === 'response'
-                ? theme.palette.secondary.contrastText
-                : theme.palette.terciary.contrastText,
-          }}
-        >
-          {getTimePassed(message.timestamp, index)}
-          {'  -  '}
-        </Typography>
-        <Typography
-          sx={{
-            fontStyle: 'normal',
-            fontWeight: 700,
-            fontSize: '20px',
-            lineHeight: '27px',
-            display: 'flex',
-            alignItems: 'center',
-            color:
-            message.type === 'response'
-                ? theme.palette.secondary.contrastText
-                : theme.palette.terciary.contrastText,
-          }}
-        >
-          {message.type === 'response' ? state.scriptName : 'You'}
-        </Typography>
+  return (
+    <>
+      <Box
+        display={'flex'}
+        justifyContent={'space-between'}
+        width={'100%'}
+        flexDirection={message.type === 'response' ? 'row' : 'row-reverse'}
+      >
+        <Box display={'flex'}>
+          <Typography
+            className='timeLabel'
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 300,
+              fontSize: '20px',
+              lineHeight: '27px',
+              display: 'flex',
+              alignItems: 'center',
+              color:
+                message.type === 'response'
+                  ? theme.palette.secondary.contrastText
+                  : theme.palette.terciary.contrastText,
+            }}
+          >
+            {getTimePassed(message.timestamp, index)}
+            {'  -  '}
+          </Typography>
+          <Typography
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: '27px',
+              display: 'flex',
+              alignItems: 'center',
+              color:
+                message.type === 'response'
+                  ? theme.palette.secondary.contrastText
+                  : theme.palette.terciary.contrastText,
+            }}
+          >
+            {message.type === 'response' ? state.scriptName : 'You'}
+          </Typography>
+        </Box>
+        <Box display={'flex'} alignItems='center'>
+          <IconButton
+            sx={{
+              color:
+                message.type === 'response'
+                  ? theme.palette.secondary.contrastText
+                  : theme.palette.terciary.contrastText,
+            }}
+            onClick={handleClick}
+          >
+            <MoreHorizIcon fontSize='large' />
+          </IconButton>
+          <Menu
+            id='demo-positioned-menu'
+            aria-labelledby='demo-positioned-button'
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+          >
+            <MenuItem onClick={handleCopy}>Copy Content</MenuItem>
+            <MenuItem onClick={handleViewTx}>View Transaction</MenuItem>
+            <MenuItem onClick={handleViewDetails}>View Details</MenuItem>
+          </Menu>
+        </Box>
       </Box>
-      <Box display={'flex'} alignItems='center'>
-        <IconButton
-          sx={{
-            color:
-            message.type === 'response'
-              ? theme.palette.secondary.contrastText
-              : theme.palette.terciary.contrastText,
-          }}
-          onClick={handleClick}
-        >
-          <MoreHorizIcon fontSize='large' />
-        </IconButton>
-        <Menu
-          id="demo-positioned-menu"
-          aria-labelledby="demo-positioned-button"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-          }}
-        >
-          <MenuItem onClick={handleCopy}>Copy Content</MenuItem>
-          <MenuItem onClick={handleViewTx}>View Transaction</MenuItem>
-          <MenuItem onClick={handleViewDetails}>View Details</MenuItem>
-        </Menu>
-      </Box>
-    </Box>
-    <MessageDetail open={dialogOpen} setOpen={setDialogOpen} message={message} />
-  </>;
+      <MessageDetail open={dialogOpen} setOpen={setDialogOpen} message={message} />
+    </>
+  );
 };
 
 export default MessageFooter;
