@@ -10,7 +10,6 @@ import {
   Paper,
   Skeleton,
   Stack,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -35,14 +34,13 @@ import {
   QUERY_CHAT_RESPONSES,
   QUERY_CHAT_RESPONSES_POLLING,
 } from '@/queries/graphql';
-import { IEdge, ITransactions } from '@/interfaces/arweave';
+import { IEdge } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { findTag, genLoadingArray } from '@/utils/common';
+import { commonUpdateQuery, findTag, genLoadingArray } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
@@ -52,25 +50,18 @@ import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
 import { LoadingContainer } from '@/styles/components';
 import useScroll from '@/hooks/useScroll';
-
-interface Message {
-  id: string;
-  msg: string;
-  type: 'response' | 'request';
-  timestamp: number;
-  height: number;
-  cid?: number;
-}
+import Message from '@/components/message';
+import { IMessage } from '@/interfaces/common';
 
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const { address } = useParams();
-  const { state } = useLocation();
   const navigate = useNavigate();
+  const { state } = useLocation();
   const { currentAddress: userAddr, isWalletLoaded } = useContext(WalletContext);
   const previousAddr = usePrevious<string>(userAddr);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [polledMessages, setPolledMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<IMessage[]>([]);
+  const [polledMessages, setPolledMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
@@ -204,37 +195,7 @@ const Chat = () => {
               ? requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor
               : undefined,
         },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          const newData = fetchMoreResult.transactions.edges;
-          newData.sort((a: IEdge, b: IEdge) => {
-            const aTimestamp =
-              parseInt(findTag(a, 'unixTime') || '') ||
-              a.node.block?.timestamp ||
-              Date.now() / 1000;
-            const bTimestamp =
-              parseInt(findTag(b, 'unixTime') || '') ||
-              b.node.block?.timestamp ||
-              Date.now() / 1000;
-
-            return aTimestamp - bTimestamp;
-          });
-
-          const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-          for (let i = 0; i < newData.length; ++i) {
-            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-              merged.push(newData[i]);
-            }
-          }
-          const newResult: { transactions: ITransactions } = Object.assign({}, prev, {
-            transactions: {
-              edges: merged,
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-
-          return newResult;
-        },
+        updateQuery: commonUpdateQuery,
       });
     }
   }, [isOnScreen, hasRequestNextPage]);
@@ -248,37 +209,7 @@ const Chat = () => {
               ? responsesData.transactions.edges[responsesData.transactions.edges.length - 1].cursor
               : undefined,
         },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          const newData = fetchMoreResult.transactions.edges;
-          newData.sort((a: IEdge, b: IEdge) => {
-            const aTimestamp =
-              parseInt(findTag(a, 'unixTime') || '') ||
-              a.node.block?.timestamp ||
-              Date.now() / 1000;
-            const bTimestamp =
-              parseInt(findTag(b, 'unixTime') || '') ||
-              b.node.block?.timestamp ||
-              Date.now() / 1000;
-
-            return aTimestamp - bTimestamp;
-          });
-
-          const merged = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-          for (let i = 0; i < newData.length; ++i) {
-            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-              merged.push(newData[i]);
-            }
-          }
-          const newResult: { transactions: ITransactions } = Object.assign({}, prev, {
-            transactions: {
-              edges: merged,
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-
-          return newResult;
-        },
+        updateQuery: commonUpdateQuery,
       });
     }
   }, [hasResponseNextPage]);
@@ -432,37 +363,32 @@ const Chat = () => {
     if (newValidRequests.length > 0) asyncMap(newValidRequests);
   }, [requestsPollingData]);
 
+  const mapTransactionsToMessages = async (el: IEdge) => {
+    const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
+    const data = msgIdx < 0 ? await getData(el.node.id) : polledMessages[msgIdx].msg;
+    const timestamp =
+      parseInt(findTag(el, 'unixTime') || '') || el.node.block?.timestamp || Date.now() / 1000;
+    const cid = findTag(el, 'conversationIdentifier') as string;
+    const currentHeight = (await arweave.blocks.getCurrent()).height;
+    const isRequest = el.node.owner.address === userAddr;
+
+    const msg: IMessage = {
+      id: el.node.id,
+      msg: data,
+      type: isRequest ? 'request' : 'response',
+      timestamp: timestamp,
+      cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
+      height: el.node.block ? el.node.block.height : currentHeight,
+      to: isRequest ? (findTag(el, 'scriptOperator') as string) : userAddr,
+      from: isRequest ? userAddr : el.node.owner.address,
+    };
+
+    return msg;
+  };
+
   const asyncMap = async (newData: IEdge[]) => {
-    const temp: Message[] = [];
-    await Promise.all(
-      newData.map(async (el: IEdge) => {
-        const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
-        const data = msgIdx < 0 ? await getData(el.node.id) : polledMessages[msgIdx].msg;
-        const timestamp =
-          parseInt(findTag(el, 'unixTime') || '') || el.node.block?.timestamp || Date.now() / 1000;
-        const cid = findTag(el, 'conversationIdentifier') as string;
-        const currentHeight = (await arweave.blocks.getCurrent()).height;
-        if (el.node.owner.address === userAddr) {
-          temp.push({
-            id: el.node.id,
-            msg: data,
-            type: 'request',
-            timestamp: timestamp,
-            cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
-            height: el.node.block ? el.node.block.height : currentHeight,
-          });
-        } else {
-          temp.push({
-            id: el.node.id,
-            msg: data,
-            type: 'response',
-            timestamp: timestamp,
-            cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
-            height: el.node.block ? el.node.block.height : currentHeight,
-          });
-        }
-      }),
-    );
+    const temp: IMessage[] = [];
+    await Promise.all(newData.map(async (el) => temp.push(await mapTransactionsToMessages(el))));
 
     if (!_.isEqual(temp, polledMessages)) {
       setPolledMessages([...polledMessages, ...temp]);
@@ -473,14 +399,7 @@ const Chat = () => {
     );
     const newMessages = [...messages, ...uniqueNewMessages];
 
-    newMessages.sort((a, b) => {
-      if (a.timestamp === b.timestamp && a.type !== b.type) {
-        return a.type === 'request' ? -1 : 1;
-      } else if (a.timestamp === b.timestamp) {
-        return a.id < b.id ? -1 : 1;
-      }
-      return a.timestamp - b.timestamp;
-    });
+    sortMessages(newMessages);
 
     const filteredNewMsgs = newMessages.filter((el) => el.cid === currentConversationId);
     if (!_.isEqual(messages, newMessages)) {
@@ -541,6 +460,8 @@ const Chat = () => {
         id: bundlrRes.id,
         cid: currentConversationId,
         height: (await arweave.blocks.getCurrent()).height,
+        to: address as string,
+        from: userAddr,
       });
       setMessages(temp);
       setNewMessage('');
@@ -618,60 +539,8 @@ const Chat = () => {
     }
   };
 
-  const reqData = async (allResponses: IEdge[]) => {
-    // slice number of responses = to number of requests
-    const limitResponses = allResponses.slice(requestsData.transactions.length);
-    const allData = [...requestsData.transactions.edges, ...limitResponses];
-
-    const temp: Message[] = [];
-    await Promise.all(
-      allData
-        .filter((el: IEdge) => {
-          const cid = findTag(el, 'conversationIdentifier');
-          if (cid && cid.split('-').length > 1) {
-            return parseInt(cid.split('-')[1]) === currentConversationId;
-          } else if (cid) {
-            return parseInt(cid) === currentConversationId;
-          } else {
-            return false;
-          }
-        })
-        .map(async (el: IEdge) => {
-          const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
-          const data = msgIdx < 0 ? await getData(el.node.id) : messages[msgIdx].msg;
-          const timestamp =
-            parseInt(findTag(el, 'unixTime') || '') ||
-            el.node.block?.timestamp ||
-            Date.now() / 1000;
-          const cid = findTag(el, 'conversationIdentifier') as string;
-          const currentHeight = (await arweave.blocks.getCurrent()).height;
-          if (el.node.owner.address === userAddr) {
-            temp.push({
-              id: el.node.id,
-              msg: data,
-              type: 'request',
-              timestamp: timestamp,
-              cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
-              height: el.node.block ? el.node.block.height : currentHeight,
-            });
-          } else {
-            temp.push({
-              id: el.node.id,
-              msg: data,
-              type: 'response',
-              timestamp: timestamp,
-              cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
-              height: el.node.block ? el.node.block.height : currentHeight,
-            });
-          }
-        }),
-    );
-
-    const uniquePolledMessages = polledMessages.filter(
-      (el) => !messages.find((msg) => msg.id === el.id) && !temp.find((msg) => msg.id === el.id),
-    );
-    const newMessages = [...temp, ...uniquePolledMessages];
-    newMessages.sort((a, b) => {
+  const sortMessages = (messages: IMessage[]) => {
+    messages.sort((a, b) => {
       if (a.timestamp === b.timestamp && a.type !== b.type) {
         return a.type === 'request' ? -1 : 1;
       } else if (a.timestamp === b.timestamp) {
@@ -679,6 +548,34 @@ const Chat = () => {
       }
       return a.timestamp - b.timestamp;
     });
+  };
+
+  const reqData = async (allResponses: IEdge[]) => {
+    // slice number of responses = to number of requests
+    const limitResponses = allResponses.slice(requestsData.transactions.length);
+    const allData = [...requestsData.transactions.edges, ...limitResponses];
+
+    const filteredData = allData.filter((el: IEdge) => {
+      const cid = findTag(el, 'conversationIdentifier');
+      if (cid && cid.split('-').length > 1) {
+        return parseInt(cid.split('-')[1]) === currentConversationId;
+      } else if (cid) {
+        return parseInt(cid) === currentConversationId;
+      } else {
+        return false;
+      }
+    });
+
+    const temp: IMessage[] = [];
+    await Promise.all(
+      filteredData.map(async (el: IEdge) => temp.push(await mapTransactionsToMessages(el))),
+    );
+
+    const uniquePolledMessages = polledMessages.filter(
+      (el) => !messages.find((msg) => msg.id === el.id) && !temp.find((msg) => msg.id === el.id),
+    );
+    const newMessages = [...temp, ...uniquePolledMessages];
+    sortMessages(newMessages);
 
     const filteredNewMsgs = newMessages.filter((el) => el.cid === currentConversationId);
     if (!_.isEqual(newMessages, messages)) {
@@ -690,8 +587,6 @@ const Chat = () => {
       setIsWaitingResponse(false);
       setResponseTimeout(false);
     }
-
-    // setIsLocked(false);
     setMessagesLoading(false);
   };
 
@@ -717,52 +612,117 @@ const Chat = () => {
     lastEl?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const getTimePassed = (unixTimestamp: number, index: number) => {
-    const timestampNow = Date.now() / 1000;
-    const secondsDiff = timestampNow - unixTimestamp;
+  const hasNoErrorsFragment = () => {
+    const reverseArray = messages.slice().reverse();
+    return messages.length > 0 && !messagesLoading ? (
+      <>
+        <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
+          {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
+        </Divider>
+        {reverseArray.map((el: IMessage, index: number) => (
+          <Container
+            key={el.id}
+            maxWidth={false}
+            sx={{ paddingTop: '16px' }}
+            className='message-container'
+          >
+            <Message message={el} index={index} pendingTxs={pendingTxs} />
+            {index < messages.length - 1 &&
+              new Date(el.timestamp * 1000).getDay() !==
+                new Date(messages[index + 1].timestamp * 1000).getDay() && (
+                <Divider textAlign='center'>
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 300,
+                      fontSize: '20px',
+                      lineHeight: '27px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
+                  </Typography>
+                </Divider>
+              )}
+          </Container>
+        ))}
+        {isWaitingResponse && !responseTimeout && (
+          <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
+            <Stack spacing={4} flexDirection='row'>
+              <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
+                <Box display={'flex'} alignItems='center' justifyContent={'flex-start'}>
+                  <Card
+                    elevation={8}
+                    raised={true}
+                    sx={{
+                      width: 'fit-content',
+                      maxWidth: '75%',
+                      // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
+                      border: '4px solid transparent',
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(52, 52, 52, 0.7)'
+                          : theme.palette.secondary.main,
+                      // opacity: '0.4',
+                      borderRadius: '40px',
+                    }}
+                  >
+                    <CardContent
+                      sx={{
+                        padding: '24px 32px',
+                        gap: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                      }}
+                    >
+                      <LoadingContainer className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
+                    </CardContent>
+                  </Card>
+                </Box>
+              </Box>
+            </Stack>
+          </Container>
+        )}
+        {responseTimeout && !isWaitingResponse && (
+          <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
+            <Stack spacing={4} flexDirection='row'>
+              <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
+                <Box display={'flex'} alignItems='center' justifyContent={'center'}>
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 600,
+                      fontSize: '30px',
+                      lineHeight: '41px',
+                      display: 'block',
+                      textAlign: 'center',
+                      color: '#F4BA61',
+                    }}
+                  >
+                    The last request has not received a response in the defined amount of time,
+                    please consider retrying with a new operator
+                  </Typography>
+                </Box>
+              </Box>
+            </Stack>
+          </Container>
+        )}
+      </>
+    ) : (
+      hasNoMessagesFragment()
+    );
+  };
 
-    const min = 60;
-    const hour = 60 * 60;
-    const day = hour * 24;
-    const week = day * 7;
-    const month = week * 4;
-    const year = day * 365;
-
-    if (secondsDiff < min) {
-      const timer = setInterval(() => {
-        const elements = document.querySelectorAll('.timeLabel');
-        const current = elements.item(index);
-        if (!current) {
-          clearInterval(timer);
-          return;
-        }
-        const newTimestamp = Date.now() / 1000;
-        const newSecondsDiff = newTimestamp - unixTimestamp;
-        if (newSecondsDiff < 60) {
-          current.textContent = `${newSecondsDiff.toFixed(0)} Seconds Ago `;
-        } else {
-          current.textContent = '1 Minute Ago';
-          clearInterval(timer);
-        }
-      }, 5000);
-      return secondsDiff === 1 ? '1 Second Ago ' : `${secondsDiff.toFixed(0)} Seconds Ago `;
-    } else if (secondsDiff < hour) {
-      return secondsDiff === min
-        ? '1 Minute Ago '
-        : `${(secondsDiff / min).toFixed(0)} Minutes Ago `;
-    } else if (secondsDiff < day) {
-      return secondsDiff === hour ? '1 Hour Ago ' : `${(secondsDiff / hour).toFixed(0)} Hours Ago `;
-    } else if (secondsDiff < week) {
-      return secondsDiff === day ? '1 Day Ago ' : `${(secondsDiff / day).toFixed(0)} Days Ago `;
-    } else if (secondsDiff < month) {
-      return secondsDiff === week ? '1 Week Ago ' : `${(secondsDiff / week).toFixed(0)} Weeks Ago `;
-    } else if (secondsDiff < year) {
-      return secondsDiff === month
-        ? '1 Month Ago '
-        : `${(secondsDiff / month).toFixed(0)} Months Ago `;
-    } else {
-      return secondsDiff >= year && secondsDiff < 2 * year ? '1 Year Ago' : 'Over an Year Ago';
-    }
+  const hasNoMessagesFragment = () => {
+    return !(messagesLoading || requestsLoading || responsesLoading) ? (
+      <Typography alignItems='center' display='flex' flexDirection='column'>
+        Starting a new conversation.
+      </Typography>
+    ) : (
+      <></>
+    );
   };
 
   return (
@@ -858,216 +818,8 @@ const Chat = () => {
                   <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
                     Could not Fetch Conversation History.
                   </Typography>
-                ) : messages.length > 0 && !messagesLoading ? (
-                  <>
-                    <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
-                      {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
-                    </Divider>
-                    {messages.reverse().map((el: Message, index: number) => (
-                      <Container
-                        key={el.id}
-                        maxWidth={false}
-                        sx={{ paddingTop: '16px' }}
-                        className='message-container'
-                      >
-                        <Stack spacing={4} flexDirection='row'>
-                          <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                            <Box
-                              display={'flex'}
-                              alignItems='center'
-                              justifyContent={el.type === 'response' ? 'flex-start' : 'flex-end'}
-                            >
-                              {!!pendingTxs.find((pending) => el.id === pending.id) && (
-                                <Tooltip
-                                  title='This transaction is still not confirmed by the network'
-                                  sx={{ margin: '8px' }}
-                                >
-                                  <PendingActionsIcon />
-                                </Tooltip>
-                              )}
-                              <Card
-                                elevation={8}
-                                raised={true}
-                                sx={{
-                                  width: 'fit-content',
-                                  maxWidth: '75%',
-                                  // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
-                                  border: '4px solid transparent',
-                                  background:
-                                    el.type !== 'response'
-                                      ? theme.palette.mode === 'dark'
-                                        ? 'rgba(204, 204, 204, 0.8)'
-                                        : theme.palette.terciary.main
-                                      : theme.palette.mode === 'dark'
-                                      ? 'rgba(52, 52, 52, 0.7)'
-                                      : theme.palette.secondary.main,
-                                  // opacity: '0.4',
-                                  borderRadius: '40px',
-                                }}
-                              >
-                                <CardContent
-                                  sx={{
-                                    padding: '24px 32px',
-                                    gap: '16px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: el.type === 'response' ? 'flex-start' : 'flex-end',
-                                  }}
-                                >
-                                  <Typography
-                                    sx={{
-                                      fontStyle: 'normal',
-                                      fontWeight: 400,
-                                      fontSize: '25px',
-                                      lineHeight: '34px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      color:
-                                        el.type === 'response'
-                                          ? theme.palette.secondary.contrastText
-                                          : theme.palette.terciary.contrastText,
-                                      whiteSpace: 'pre-wrap',
-                                    }}
-                                    gutterBottom
-                                    component={'pre'}
-                                  >
-                                    {el.msg}
-                                  </Typography>
-                                  <Box display={'flex'}>
-                                    <Typography
-                                      className='timeLabel'
-                                      sx={{
-                                        fontStyle: 'normal',
-                                        fontWeight: 300,
-                                        fontSize: '20px',
-                                        lineHeight: '27px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        color:
-                                          el.type === 'response'
-                                            ? theme.palette.secondary.contrastText
-                                            : theme.palette.terciary.contrastText,
-                                      }}
-                                    >
-                                      {getTimePassed(el.timestamp, index)}
-                                      {' -  '}
-                                    </Typography>
-                                    <Typography
-                                      sx={{
-                                        fontStyle: 'normal',
-                                        fontWeight: 700,
-                                        fontSize: '20px',
-                                        lineHeight: '27px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        color:
-                                          el.type === 'response'
-                                            ? theme.palette.secondary.contrastText
-                                            : theme.palette.terciary.contrastText,
-                                      }}
-                                    >
-                                      {el.type === 'response' ? state.scriptName : 'You'}
-                                    </Typography>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            </Box>
-                          </Box>
-                        </Stack>
-                        {index < messages.length - 1 &&
-                          new Date(el.timestamp * 1000).getDay() !==
-                            new Date(messages[index + 1].timestamp * 1000).getDay() && (
-                            <Divider textAlign='center'>
-                              <Typography
-                                sx={{
-                                  fontStyle: 'normal',
-                                  fontWeight: 300,
-                                  fontSize: '20px',
-                                  lineHeight: '27px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                {new Date(
-                                  messages[index + 1].timestamp * 1000,
-                                ).toLocaleDateString()}
-                              </Typography>
-                            </Divider>
-                          )}
-                      </Container>
-                    ))}
-                    {isWaitingResponse && !responseTimeout && (
-                      <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
-                        <Stack spacing={4} flexDirection='row'>
-                          <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                            <Box display={'flex'} alignItems='center' justifyContent={'flex-start'}>
-                              <Card
-                                elevation={8}
-                                raised={true}
-                                sx={{
-                                  width: 'fit-content',
-                                  maxWidth: '75%',
-                                  // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
-                                  border: '4px solid transparent',
-                                  background:
-                                    theme.palette.mode === 'dark'
-                                      ? 'rgba(52, 52, 52, 0.7)'
-                                      : theme.palette.secondary.main,
-                                  // opacity: '0.4',
-                                  borderRadius: '40px',
-                                }}
-                              >
-                                <CardContent
-                                  sx={{
-                                    padding: '24px 32px',
-                                    gap: '16px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'flex-start',
-                                  }}
-                                >
-                                  <LoadingContainer
-                                    className='dot-pulse'
-                                    sx={{ marginBottom: '0.35em' }}
-                                  />
-                                </CardContent>
-                              </Card>
-                            </Box>
-                          </Box>
-                        </Stack>
-                      </Container>
-                    )}
-                    {responseTimeout && !isWaitingResponse && (
-                      <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
-                        <Stack spacing={4} flexDirection='row'>
-                          <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                            <Box display={'flex'} alignItems='center' justifyContent={'center'}>
-                              <Typography
-                                sx={{
-                                  fontStyle: 'normal',
-                                  fontWeight: 600,
-                                  fontSize: '30px',
-                                  lineHeight: '41px',
-                                  display: 'block',
-                                  textAlign: 'center',
-                                  color: '#F4BA61',
-                                }}
-                              >
-                                The last request has not received a response in the defined amount
-                                of time, please consider retrying with a new operator
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Stack>
-                      </Container>
-                    )}
-                  </>
-                ) : !(messagesLoading || requestsLoading || responsesLoading) ? (
-                  <Typography alignItems='center' display='flex' flexDirection='column'>
-                    Starting a new conversation.
-                  </Typography>
                 ) : (
-                  <></>
+                  hasNoErrorsFragment()
                 )}
                 <Box ref={messagesEndRef} sx={{ padding: '8px' }}></Box>
               </Box>

@@ -20,6 +20,7 @@ export const Root = () => {
           Components={{
             error: StyledMaterialDesignContent,
             success: StyledMaterialDesignContent,
+            info: StyledMaterialDesignContent,
           }}
         >
           <WalletProvider>

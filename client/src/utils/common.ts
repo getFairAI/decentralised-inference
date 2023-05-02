@@ -27,6 +27,14 @@ export const commonUpdateQuery = (
 ) => {
   if (!fetchMoreResult) return prev;
   const newData: IEdge[] = fetchMoreResult.transactions.edges;
+  newData.sort((a: IEdge, b: IEdge) => {
+    const aTimestamp =
+      parseInt(findTag(a, 'unixTime') || '') || a.node.block?.timestamp || Date.now() / 1000;
+    const bTimestamp =
+      parseInt(findTag(b, 'unixTime') || '') || b.node.block?.timestamp || Date.now() / 1000;
+
+    return aTimestamp - bTimestamp;
+  });
 
   const merged: IEdge[] = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
   for (const i of newData) {
