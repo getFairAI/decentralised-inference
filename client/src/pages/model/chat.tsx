@@ -178,8 +178,8 @@ const Chat = () => {
           !previousResponses.find((current: IEdge) => current.node.id === previous.node.id),
       );
       setPreviousResponses([...previousResponses, ...newResponses]);
-      reqData([...previousResponses, ...newResponses]);
       setHasResponseNextPage(responsesData?.transactions?.pageInfo?.hasNextPage || false);
+      reqData([...previousResponses, ...newResponses]);
     }
   }, [responsesData]);
 
@@ -529,12 +529,12 @@ const Chat = () => {
     }
   };
 
-  const keyDownHandler = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.code === 'Enter') {
       event.preventDefault();
       const dataSize = new TextEncoder().encode(newMessage).length;
       if (dataSize > 0) {
-        handleSend();
+        await handleSend();
       }
     }
   };
@@ -604,11 +604,11 @@ const Chat = () => {
     }
   };
 
-  const scrollToBottom = async () => {
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const scrollToLast = async () => {
+  const scrollToLast = () => {
     lastEl?.scrollIntoView({ behavior: 'smooth' });
   };
 

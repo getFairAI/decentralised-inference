@@ -69,9 +69,9 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
     setAnchorEl(null);
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     setAnchorEl(null);
-    navigator.clipboard.writeText(message.msg);
+    await navigator.clipboard.writeText(message.msg);
     enqueueSnackbar('Copied to clipboard', { variant: 'info' });
   };
 
