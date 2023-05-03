@@ -1,17 +1,17 @@
 /*
  * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
  * Copyright (C) 2023 Fair Protocol
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
@@ -51,7 +51,13 @@ import { IEdge } from '@/interfaces/arweave';
 import { isVouched } from 'vouchdao';
 import { client } from '@/utils/apollo';
 
-const countVouchedVotes = async (txid: string, fee: number, owner: string, voteTxs: IEdge[], voteFor: voteForOptions) => {
+const countVouchedVotes = async (
+  txid: string,
+  fee: number,
+  owner: string,
+  voteTxs: IEdge[],
+  voteFor: voteForOptions,
+) => {
   const filtered: IEdge[] = [];
   await Promise.all(
     voteTxs.map(async (el: IEdge) => {
@@ -67,8 +73,8 @@ const countVouchedVotes = async (txid: string, fee: number, owner: string, voteT
         case 'operator':
           paidFee = await checkUserPaidFee(txid, fee, owner, el.node.owner.address);
           break;
-        default:  // do nothing
-      };
+        default: // do nothing
+      }
       if (vouched && paidFee) {
         filtered.push(el);
       }
@@ -88,7 +94,7 @@ const checkCuratorPaidFee = async (txid: string, fee: number, owner: string, add
   ];
   const queryResult = await client.query({
     query: QUERY_REGISTERED_SCRIPTS,
-    variables: { tags, first: 1, addresses: [ addr ], recipients: [owner] },
+    variables: { tags, first: 1, addresses: [addr], recipients: [owner] },
   });
   if (queryResult.data.transactions.edges.length > 0) {
     const paymentTx = queryResult.data.transactions.edges[0];
@@ -108,7 +114,7 @@ const checkUserPaidFee = async (txid: string, fee: number, owner: string, addr: 
   ];
   const queryResult = await client.query({
     query: QUERY_FEE_PAYMENT,
-    variables: { tags, first: 1, addresses: [ addr ], recipients: [owner] },
+    variables: { tags, first: 1, addresses: [addr], recipients: [owner] },
   });
   if (queryResult.data.transactions.edges.length > 0) {
     const paymentTx = queryResult.data.transactions.edges[0];
@@ -134,7 +140,7 @@ const checkOperatorPaidFee = async (txid: string, fee: number, owner: string, ad
   ];
   const queryResult = await client.query({
     query: QUERY_REGISTERED_OPERATORS,
-    variables: { tags, first: 1, addresses: [ addr ], recipients: [owner] },
+    variables: { tags, first: 1, addresses: [addr], recipients: [owner] },
   });
   if (queryResult.data.transactions.edges.length > 0) {
     const paymentTx = queryResult.data.transactions.edges[0];
@@ -160,11 +166,7 @@ const vote = async (txid: string, voteForTag: string, up: boolean) => {
       <>
         Updated Model Fee
         <br></br>
-        <a
-          href={`https://viewblock.io/arweave/tx/${result.id}`}
-          target={'_blank'}
-          rel='noreferrer'
-        >
+        <a href={`https://viewblock.io/arweave/tx/${result.id}`} target={'_blank'} rel='noreferrer'>
           <u>View Transaction in Explorer</u>
         </a>
       </>,
@@ -180,55 +182,52 @@ const vote = async (txid: string, voteForTag: string, up: boolean) => {
 const UpVote = ({
   upVotesCount,
   disabled,
-  clickHandler
+  clickHandler,
 }: {
   upVotesCount: number;
   disabled: boolean;
   clickHandler: () => Promise<void>;
 }) => {
-  
-  return <>
-    <Typography>{upVotesCount}</Typography>
-    <IconButton
-      disabled={disabled}
-      color='primary'
-      onClick={clickHandler}
-    >
-      <ThumbUpOffAltIcon />
-    </IconButton>
-  </>;
+  return (
+    <>
+      <Typography>{upVotesCount}</Typography>
+      <IconButton disabled={disabled} color='primary' onClick={clickHandler}>
+        <ThumbUpOffAltIcon />
+      </IconButton>
+    </>
+  );
 };
 
-const DownVote =({
+const DownVote = ({
   downVotesCount,
   disabled,
-  clickHandler
+  clickHandler,
 }: {
   downVotesCount: number;
   disabled: boolean;
   clickHandler: () => Promise<void>;
 }) => {
-
-
-  return <>
-    <Typography>{downVotesCount}</Typography>
-    <IconButton
-      disabled={disabled}
-      color='primary'
-      onClick={clickHandler}
-    >
-      <ThumbDownOffAltIcon />
-    </IconButton>
-  </>;
+  return (
+    <>
+      <Typography>{downVotesCount}</Typography>
+      <IconButton disabled={disabled} color='primary' onClick={clickHandler}>
+        <ThumbDownOffAltIcon />
+      </IconButton>
+    </>
+  );
 };
 
-const Loading = () => <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
-  <CircularProgress />
-</Box>;
+const Loading = () => (
+  <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
+    <CircularProgress />
+  </Box>
+);
 
-const ShowError = () => <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
-  <Typography>Could Not Fetch Voting Data</Typography>
-</Box>;
+const ShowError = () => (
+  <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
+    <Typography>Could Not Fetch Voting Data</Typography>
+  </Box>
+);
 
 const Vote = ({
   txid,
@@ -241,12 +240,12 @@ const Vote = ({
   owner: string;
   voteFor: voteForOptions;
 }) => {
-  const [ hasVoted, setHasVoted ] = useState(false);
-  const [ canVote, setCanVote ] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [canVote, setCanVote] = useState(false);
   const { currentAddress, isWalletVouched } = useContext(WalletContext);
   const [upVotesCount, setUpVotesCount] = useState(0);
   const [downVotesCount, setDownVotesCount] = useState(0);
- 
+
   const voteForTag = useMemo(() => {
     switch (voteFor) {
       case 'script':
@@ -256,7 +255,7 @@ const Vote = ({
       case 'model':
       default:
         return VOTE_FOR_MODEL;
-    };
+    }
   }, [voteFor]);
 
   const { data, loading, error } = useQuery(QUERY_USER_HAS_VOTED, {
@@ -309,9 +308,18 @@ const Vote = ({
     skip: !txid,
   });
 
-  const isLoading = useMemo(() => [loading, upVotesLoading, downVotesLoading].some(Boolean), [loading, upVotesLoading, downVotesLoading]);
-  const hasError = useMemo(() => [error, upVotesError, downVotesError].some(Boolean), [error, upVotesError, downVotesError]);
-  const disabled = useMemo(() => !currentAddress || !isWalletVouched || hasVoted || !canVote, [currentAddress, isWalletVouched, hasVoted, canVote]);
+  const isLoading = useMemo(
+    () => [loading, upVotesLoading, downVotesLoading].some(Boolean),
+    [loading, upVotesLoading, downVotesLoading],
+  );
+  const hasError = useMemo(
+    () => [error, upVotesError, downVotesError].some(Boolean),
+    [error, upVotesError, downVotesError],
+  );
+  const disabled = useMemo(
+    () => !currentAddress || !isWalletVouched || hasVoted || !canVote,
+    [currentAddress, isWalletVouched, hasVoted, canVote],
+  );
 
   useEffect(() => {
     if (upVotesData && upVotesData.transactions.pageInfo.hasNextPage) {
@@ -324,7 +332,7 @@ const Vote = ({
       });
     } else if (upVotesData) {
       const upVotes: IEdge[] = upVotesData.transactions.edges;
-      ( async () => setUpVotesCount(await countVouchedVotes(txid, fee, owner, upVotes, voteFor)))();
+      (async () => setUpVotesCount(await countVouchedVotes(txid, fee, owner, upVotes, voteFor)))();
     } else {
       // do nothing
     }
@@ -341,7 +349,8 @@ const Vote = ({
       });
     } else if (downVotesData) {
       const downVotes: IEdge[] = downVotesData.transactions.edges;
-      ( async () => setDownVotesCount(await countVouchedVotes(txid, fee, owner, downVotes, voteFor)))();
+      (async () =>
+        setDownVotesCount(await countVouchedVotes(txid, fee, owner, downVotes, voteFor)))();
     } else {
       // do nothing
     }
@@ -370,13 +379,13 @@ const Vote = ({
         paidFee = await checkUserPaidFee(txid, fee, owner, currentAddress);
         break;
       default: // do nothing;
-    };
+    }
 
     return paidFee;
   }, []);
 
-  const upVote = useCallback(() => vote(txid, voteForTag, true), [ vote ]);
-  const downVote = useCallback(() => vote(txid, voteForTag, false), [ vote ]);
+  const upVote = useCallback(() => vote(txid, voteForTag, true), [vote]);
+  const downVote = useCallback(() => vote(txid, voteForTag, false), [vote]);
 
   if (isLoading) {
     return <Loading />;
@@ -393,8 +402,8 @@ const Vote = ({
       justifyContent={voteFor === 'operator' ? 'flex-start' : 'flex-end'}
       paddingRight={'16px'}
     >
-      <UpVote upVotesCount={upVotesCount} disabled={disabled} clickHandler={upVote}/>
-      <DownVote downVotesCount={downVotesCount} disabled={disabled} clickHandler={downVote}/>
+      <UpVote upVotesCount={upVotesCount} disabled={disabled} clickHandler={upVote} />
+      <DownVote downVotesCount={downVotesCount} disabled={disabled} clickHandler={downVote} />
     </Box>
   );
 };

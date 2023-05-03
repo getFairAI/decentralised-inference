@@ -1,17 +1,17 @@
 /*
  * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
  * Copyright (C) 2023 Fair Protocol
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
@@ -26,10 +26,12 @@ export const formatNumbers = (value: string) => {
   }
 };
 
-export const genLoadingArray = (numElements: number) => Array.from({ length: numElements }, (_, index) => index);
+export const genLoadingArray = (numElements: number) =>
+  Array.from({ length: numElements }, (_, index) => index);
 
 type tagName = keyof typeof TAG_NAMES;
-export const findTag = (tx: IEdge, tagName: tagName) => tx.node.tags.find((tag) => tag.name === TAG_NAMES[tagName])?.value;
+export const findTag = (tx: IEdge, tagName: tagName) =>
+  tx.node.tags.find((tag) => tag.name === TAG_NAMES[tagName])?.value;
 
 interface QueryContent {
   transactions: ITransactions;
@@ -45,9 +47,13 @@ export const commonUpdateQuery = (
   const newData: IEdge[] = fetchMoreResult.transactions.edges;
   newData.sort((a: IEdge, b: IEdge) => {
     const aTimestamp =
-      parseInt(findTag(a, 'unixTime') || '', 10) || a.node.block?.timestamp || Date.now() / secondInMS;
+      parseInt(findTag(a, 'unixTime') || '', 10) ||
+      a.node.block?.timestamp ||
+      Date.now() / secondInMS;
     const bTimestamp =
-      parseInt(findTag(b, 'unixTime') || '', 10) || b.node.block?.timestamp || Date.now() / secondInMS;
+      parseInt(findTag(b, 'unixTime') || '', 10) ||
+      b.node.block?.timestamp ||
+      Date.now() / secondInMS;
 
     return aTimestamp - bTimestamp;
   });

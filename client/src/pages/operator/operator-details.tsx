@@ -1,17 +1,17 @@
 /*
  * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
  * Copyright (C) 2023 Fair Protocol
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
@@ -61,9 +61,9 @@ const OperatorDetails = () => {
     },
   });
 
-  const handleClose = useCallback(() => navigate('/'), [ navigate ]);
+  const handleClose = useCallback(() => navigate('/'), [navigate]);
 
-  const handleBack = useCallback(() => navigate(-1), [ navigate ]);
+  const handleBack = useCallback(() => navigate(-1), [navigate]);
 
   const imgUrl = useMemo(() => {
     const avatar = createAvatar(bottts, {
@@ -80,11 +80,14 @@ const OperatorDetails = () => {
     const registration = firstRegistrationData?.transactions?.edges[0] as IEdge;
     if (registration) {
       // check fee
-      if (parseInt(registration.node.quantity.ar, 10) !== parseInt(OPERATOR_REGISTRATION_AR_FEE, 10)) {
+      if (
+        parseInt(registration.node.quantity.ar, 10) !== parseInt(OPERATOR_REGISTRATION_AR_FEE, 10)
+      ) {
         // incorrect, fetch next
       } else {
         const timestamp =
-          parseInt(findTag(registration, 'unixTime') || '', 10) || registration.node.block.timestamp;
+          parseInt(findTag(registration, 'unixTime') || '', 10) ||
+          registration.node.block.timestamp;
         setFirstregistrationDate(new Date(timestamp * secondInMS).toLocaleDateString());
         setTxid(registration.node.id);
       }
