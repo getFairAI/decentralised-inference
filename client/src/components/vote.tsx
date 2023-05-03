@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   APP_NAME,
   APP_VERSION,
@@ -10,9 +28,9 @@ import {
   VOTE_FOR_MODEL,
   VOTE_FOR_OPERATOR,
   VOTE_FOR_SCRIPT,
+  secondInMS,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
-import { IEdge } from '@/interfaces/arweave';
 import {
   QUERY_FEE_PAYMENT,
   QUERY_REGISTERED_OPERATORS,
@@ -24,14 +42,193 @@ import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
 import { Box, CircularProgress, IconButton, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
-import { useContext, useEffect, useState } from 'react';
-import { isVouched } from 'vouchdao';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
-import { client } from '@/utils/apollo';
 import { commonUpdateQuery } from '@/utils/common';
+import { voteForOptions } from '@/interfaces/common';
+import { IEdge } from '@/interfaces/arweave';
+import { isVouched } from 'vouchdao';
+import { client } from '@/utils/apollo';
 
-type voteForOptions = 'model' | 'script' | 'operator';
+const countVouchedVotes = async (txid: string, fee: number, owner: string, voteTxs: IEdge[], voteFor: voteForOptions) => {
+  const filtered: IEdge[] = [];
+  await Promise.all(
+    voteTxs.map(async (el: IEdge) => {
+      const vouched = await isVouched(el.node.owner.address);
+      let paidFee = false;
+      switch (voteFor) {
+        case 'model':
+          paidFee = await checkCuratorPaidFee(txid, fee, owner, el.node.owner.address);
+          break;
+        case 'script':
+          paidFee = await checkOperatorPaidFee(txid, fee, owner, el.node.owner.address);
+          break;
+        case 'operator':
+          paidFee = await checkUserPaidFee(txid, fee, owner, el.node.owner.address);
+          break;
+        default:  // do nothing
+      };
+      if (vouched && paidFee) {
+        filtered.push(el);
+      }
+    }),
+  );
+
+  return filtered.length;
+};
+
+const checkCuratorPaidFee = async (txid: string, fee: number, owner: string, addr: string) => {
+  const tags = [
+    ...DEFAULT_TAGS,
+    {
+      name: TAG_NAMES.modelTransaction,
+      values: [txid],
+    },
+  ];
+  const queryResult = await client.query({
+    query: QUERY_REGISTERED_SCRIPTS,
+    variables: { tags, first: 1, addresses: [ addr ], recipients: [owner] },
+  });
+  if (queryResult.data.transactions.edges.length > 0) {
+    const paymentTx = queryResult.data.transactions.edges[0];
+    const correctFee = fee === parseInt(paymentTx.node.quantity.ar, 10);
+    const correctTarget = paymentTx.node.recipient === owner;
+
+    return correctFee && correctTarget;
+  }
+  return false;
+};
+
+const checkUserPaidFee = async (txid: string, fee: number, owner: string, addr: string) => {
+  const tags = [
+    ...DEFAULT_TAGS,
+    { name: TAG_NAMES.scriptTransaction, values: txid },
+    { name: TAG_NAMES.operationName, values: SCRIPT_FEE_PAYMENT },
+  ];
+  const queryResult = await client.query({
+    query: QUERY_FEE_PAYMENT,
+    variables: { tags, first: 1, addresses: [ addr ], recipients: [owner] },
+  });
+  if (queryResult.data.transactions.edges.length > 0) {
+    const paymentTx = queryResult.data.transactions.edges[0];
+    const correctFee = fee === parseInt(paymentTx.node.quantity.ar, 10);
+    const correctTarget = paymentTx.node.recipient === owner;
+
+    return correctFee && correctTarget;
+  }
+  return false;
+};
+
+const checkOperatorPaidFee = async (txid: string, fee: number, owner: string, addr: string) => {
+  const tags = [
+    ...DEFAULT_TAGS,
+    {
+      name: TAG_NAMES.operationName,
+      values: [REGISTER_OPERATION],
+    },
+    {
+      name: TAG_NAMES.scriptTransaction,
+      values: [txid],
+    },
+  ];
+  const queryResult = await client.query({
+    query: QUERY_REGISTERED_OPERATORS,
+    variables: { tags, first: 1, addresses: [ addr ], recipients: [owner] },
+  });
+  if (queryResult.data.transactions.edges.length > 0) {
+    const paymentTx = queryResult.data.transactions.edges[0];
+    const correctFee = fee === parseInt(paymentTx.node.quantity.ar, 10);
+    const correctTarget = paymentTx.node.recipient === owner;
+
+    return correctFee && correctTarget;
+  }
+  return false;
+};
+
+const vote = async (txid: string, voteForTag: string, up: boolean) => {
+  try {
+    const tx = await arweave.createTransaction({ data: up ? UP_VOTE : DOWN_VOTE });
+    tx.addTag(TAG_NAMES.appName, APP_NAME);
+    tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+    tx.addTag(TAG_NAMES.operationName, up ? UP_VOTE : DOWN_VOTE);
+    tx.addTag(TAG_NAMES.voteFor, voteForTag);
+    tx.addTag(TAG_NAMES.votedTransaction, txid);
+    tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
+    const result = await window.arweaveWallet.dispatch(tx);
+    enqueueSnackbar(
+      <>
+        Updated Model Fee
+        <br></br>
+        <a
+          href={`https://viewblock.io/arweave/tx/${result.id}`}
+          target={'_blank'}
+          rel='noreferrer'
+        >
+          <u>View Transaction in Explorer</u>
+        </a>
+      </>,
+      {
+        variant: 'success',
+      },
+    );
+  } catch (e) {
+    enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
+  }
+};
+
+const UpVote = ({
+  upVotesCount,
+  disabled,
+  clickHandler
+}: {
+  upVotesCount: number;
+  disabled: boolean;
+  clickHandler: () => Promise<void>;
+}) => {
+  
+  return <>
+    <Typography>{upVotesCount}</Typography>
+    <IconButton
+      disabled={disabled}
+      color='primary'
+      onClick={clickHandler}
+    >
+      <ThumbUpOffAltIcon />
+    </IconButton>
+  </>;
+};
+
+const DownVote =({
+  downVotesCount,
+  disabled,
+  clickHandler
+}: {
+  downVotesCount: number;
+  disabled: boolean;
+  clickHandler: () => Promise<void>;
+}) => {
+
+
+  return <>
+    <Typography>{downVotesCount}</Typography>
+    <IconButton
+      disabled={disabled}
+      color='primary'
+      onClick={clickHandler}
+    >
+      <ThumbDownOffAltIcon />
+    </IconButton>
+  </>;
+};
+
+const Loading = () => <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
+  <CircularProgress />
+</Box>;
+
+const ShowError = () => <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
+  <Typography>Could Not Fetch Voting Data</Typography>
+</Box>;
 
 const Vote = ({
   txid,
@@ -44,17 +241,23 @@ const Vote = ({
   owner: string;
   voteFor: voteForOptions;
 }) => {
+  const [ hasVoted, setHasVoted ] = useState(false);
+  const [ canVote, setCanVote ] = useState(false);
+  const { currentAddress, isWalletVouched } = useContext(WalletContext);
   const [upVotesCount, setUpVotesCount] = useState(0);
   const [downVotesCount, setDownVotesCount] = useState(0);
-  const [hasVoted, setHasVoted] = useState(false);
-  const [canVote, setCanVote] = useState(false);
-  const { currentAddress, isWalletVouched } = useContext(WalletContext);
-  const voteForTag =
-    voteFor === 'model'
-      ? VOTE_FOR_MODEL
-      : voteFor === 'script'
-      ? VOTE_FOR_SCRIPT
-      : VOTE_FOR_OPERATOR;
+ 
+  const voteForTag = useMemo(() => {
+    switch (voteFor) {
+      case 'script':
+        return VOTE_FOR_SCRIPT;
+      case 'operator':
+        return VOTE_FOR_OPERATOR;
+      case 'model':
+      default:
+        return VOTE_FOR_MODEL;
+    };
+  }, [voteFor]);
 
   const { data, loading, error } = useQuery(QUERY_USER_HAS_VOTED, {
     variables: {
@@ -106,24 +309,9 @@ const Vote = ({
     skip: !txid,
   });
 
-  useEffect(() => {
-    if (data && data.transactions.edges.length > 0) {
-      setHasVoted(true);
-    } else {
-      const asyncWrapper = async () => {
-        if (voteFor === 'model') {
-          setCanVote(await checkCuratorPaidFee());
-        } else if (voteFor === 'script') {
-          setCanVote(await checkOperatorPaidFee());
-        } else if (voteFor === 'operator') {
-          setCanVote(await checkUserPaidFee());
-        } else {
-          setCanVote(false);
-        }
-      };
-      asyncWrapper();
-    }
-  }, [data]);
+  const isLoading = useMemo(() => [loading, upVotesLoading, downVotesLoading].some(Boolean), [loading, upVotesLoading, downVotesLoading]);
+  const hasError = useMemo(() => [error, upVotesError, downVotesError].some(Boolean), [error, upVotesError, downVotesError]);
+  const disabled = useMemo(() => !currentAddress || !isWalletVouched || hasVoted || !canVote, [currentAddress, isWalletVouched, hasVoted, canVote]);
 
   useEffect(() => {
     if (upVotesData && upVotesData.transactions.pageInfo.hasNextPage) {
@@ -135,7 +323,10 @@ const Vote = ({
         updateQuery: commonUpdateQuery,
       });
     } else if (upVotesData) {
-      countVouchedVotes(true);
+      const upVotes: IEdge[] = upVotesData.transactions.edges;
+      ( async () => setUpVotesCount(await countVouchedVotes(txid, fee, owner, upVotes, voteFor)))();
+    } else {
+      // do nothing
     }
   }, [upVotesData]);
 
@@ -149,149 +340,51 @@ const Vote = ({
         updateQuery: commonUpdateQuery,
       });
     } else if (downVotesData) {
-      countVouchedVotes(false);
+      const downVotes: IEdge[] = downVotesData.transactions.edges;
+      ( async () => setDownVotesCount(await countVouchedVotes(txid, fee, owner, downVotes, voteFor)))();
+    } else {
+      // do nothing
     }
   }, [downVotesData]);
 
-  const checkCuratorPaidFee = async (addr?: string) => {
-    const tags = [
-      ...DEFAULT_TAGS,
-      {
-        name: TAG_NAMES.modelTransaction,
-        values: [txid],
-      },
-    ];
-    const queryResult = await client.query({
-      query: QUERY_REGISTERED_SCRIPTS,
-      variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
-    });
-    if (queryResult.data.transactions.edges.length > 0) {
-      const paymentTx = queryResult.data.transactions.edges[0];
-      const correctFee = fee === parseInt(paymentTx.node.quantity.ar);
-      const correctTarget = paymentTx.node.recipient === owner;
-
-      return correctFee && correctTarget;
+  useEffect(() => {
+    if (data && data.transactions.edges.length > 0) {
+      setHasVoted(true);
+    } else {
+      (async () => {
+        setCanVote(await checkPaidFee());
+      })();
     }
-    return false;
-  };
+  }, [data]);
 
-  const checkUserPaidFee = async (addr?: string) => {
-    const tags = [
-      ...DEFAULT_TAGS,
-      { name: TAG_NAMES.scriptTransaction, values: txid },
-      { name: TAG_NAMES.operationName, values: SCRIPT_FEE_PAYMENT },
-    ];
-    const queryResult = await client.query({
-      query: QUERY_FEE_PAYMENT,
-      variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
-    });
-    if (queryResult.data.transactions.edges.length > 0) {
-      const paymentTx = queryResult.data.transactions.edges[0];
-      const correctFee = fee === parseInt(paymentTx.node.quantity.ar);
-      const correctTarget = paymentTx.node.recipient === owner;
+  const checkPaidFee = useCallback(async () => {
+    let paidFee = false;
+    switch (voteFor) {
+      case 'model':
+        paidFee = await checkCuratorPaidFee(txid, fee, owner, currentAddress);
+        break;
+      case 'script':
+        paidFee = await checkOperatorPaidFee(txid, fee, owner, currentAddress);
+        break;
+      case 'operator':
+        paidFee = await checkUserPaidFee(txid, fee, owner, currentAddress);
+        break;
+      default: // do nothing;
+    };
 
-      return correctFee && correctTarget;
-    }
-    return false;
-  };
+    return paidFee;
+  }, []);
 
-  const checkOperatorPaidFee = async (addr?: string) => {
-    const tags = [
-      ...DEFAULT_TAGS,
-      {
-        name: TAG_NAMES.operationName,
-        values: [REGISTER_OPERATION],
-      },
-      {
-        name: TAG_NAMES.scriptTransaction,
-        values: [txid],
-      },
-    ];
-    const queryResult = await client.query({
-      query: QUERY_REGISTERED_OPERATORS,
-      variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
-    });
-    if (queryResult.data.transactions.edges.length > 0) {
-      const paymentTx = queryResult.data.transactions.edges[0];
-      const correctFee = fee === parseInt(paymentTx.node.quantity.ar);
-      const correctTarget = paymentTx.node.recipient === owner;
+  const upVote = useCallback(() => vote(txid, voteForTag, true), [ vote ]);
+  const downVote = useCallback(() => vote(txid, voteForTag, false), [ vote ]);
 
-      return correctFee && correctTarget;
-    }
-    return false;
-  };
+  if (isLoading) {
+    return <Loading />;
+  }
 
-  const countVouchedVotes = async (up?: boolean) => {
-    const filtered: IEdge[] = [];
-    const votes = up ? upVotesData.transactions.edges : downVotesData.transactions.edges;
-    await Promise.all(
-      votes.map(async (el: IEdge) => {
-        const vouched = await isVouched(el.node.owner.address);
-        if (voteFor === 'model') {
-          const paidFee = await checkCuratorPaidFee(el.node.owner.address);
-          if (vouched && paidFee) {
-            filtered.push(el);
-          }
-        } else if (voteFor === 'script') {
-          const paidFee = await checkOperatorPaidFee(el.node.owner.address);
-          if (vouched && paidFee) {
-            filtered.push(el);
-          }
-        } else if (voteFor === 'operator') {
-          const paidFee = await checkUserPaidFee(el.node.owner.address);
-          if (vouched && paidFee) {
-            filtered.push(el);
-          }
-        }
-      }),
-    );
-    up ? setUpVotesCount(filtered.length) : setDownVotesCount(filtered.length);
-  };
-
-  const vote = async (up: boolean) => {
-    try {
-      const tx = await arweave.createTransaction({ data: up ? UP_VOTE : DOWN_VOTE });
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.operationName, up ? UP_VOTE : DOWN_VOTE);
-      tx.addTag(TAG_NAMES.voteFor, voteForTag);
-      tx.addTag(TAG_NAMES.votedTransaction, txid);
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      const result = await window.arweaveWallet.dispatch(tx);
-      enqueueSnackbar(
-        <>
-          Updated Model Fee
-          <br></br>
-          <a
-            href={`https://viewblock.io/arweave/tx/${result.id}`}
-            target={'_blank'}
-            rel='noreferrer'
-          >
-            <u>View Transaction in Explorer</u>
-          </a>
-        </>,
-        {
-          variant: 'success',
-        },
-      );
-    } catch (error) {
-      enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
-    }
-  };
-
-  if (loading || upVotesLoading || downVotesLoading)
-    return (
-      <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
-        <CircularProgress />
-      </Box>
-    );
-
-  if (error || upVotesError || downVotesError)
-    return (
-      <Box display={'flex'} alignItems={'center'} justifyContent={'flex-end'} paddingRight={'16px'}>
-        <Typography>Could Not Fetch Voting Data</Typography>
-      </Box>
-    );
+  if (hasError) {
+    return <ShowError />;
+  }
 
   return (
     <Box
@@ -300,22 +393,8 @@ const Vote = ({
       justifyContent={voteFor === 'operator' ? 'flex-start' : 'flex-end'}
       paddingRight={'16px'}
     >
-      <Typography>{upVotesCount}</Typography>
-      <IconButton
-        disabled={!isWalletVouched || hasVoted || !canVote}
-        color='primary'
-        onClick={() => vote(true)}
-      >
-        <ThumbUpOffAltIcon />
-      </IconButton>
-      <Typography>{downVotesCount}</Typography>
-      <IconButton
-        disabled={!isWalletVouched || hasVoted || !canVote}
-        color='primary'
-        onClick={() => vote(false)}
-      >
-        <ThumbDownOffAltIcon />
-      </IconButton>
+      <UpVote upVotesCount={upVotesCount} disabled={disabled} clickHandler={upVote}/>
+      <DownVote downVotesCount={downVotesCount} disabled={disabled} clickHandler={downVote}/>
     </Box>
   );
 };

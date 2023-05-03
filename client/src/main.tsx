@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
@@ -10,21 +28,21 @@ import '@/styles/main.css';
 import Operators from '@/pages/operators';
 import Register from '@/pages/script/register';
 import Detail from '@/pages/model/detail';
-import OperatorDetails from '@/pages/operator/detail';
+import OperatorDetails from '@/pages/operator/operator-details';
 import Chat from '@/pages/model/chat';
 import History from '@/pages/history';
 import BlockOperatorGuard from '@/guards/block-operator';
-import Error from '@/pages/error';
+import ErrorDisplay from '@/pages/error-display';
 import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
 import ScriptFeeGuard from '@/guards/script-fee';
-import ScriptDetails from './pages/script/detail';
+import ScriptDetails from './pages/script/script-details';
 
 const router = createHashRouter([
   {
     path: '/',
     element: <Root />,
-    errorElement: <Error />,
+    errorElement: <ErrorDisplay />,
     children: [
       {
         path: '',

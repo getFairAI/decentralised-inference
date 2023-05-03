@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   DEFAULT_TAGS,
   TAG_NAMES,
@@ -18,10 +36,99 @@ import {
   InputBase,
   Typography,
 } from '@mui/material';
-import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState } from 'react';
 import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+const OperatorSelected = ({
+  operatorsData,
+  scriptTx,
+  selectedIdx
+}: {
+  operatorsData: IEdge[];
+  scriptTx?: IEdge;
+  selectedIdx: number;
+}) => {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { currentAddress } = useContext(WalletContext);
+
+  const handleHistoryClick = useCallback(() =>
+    navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
+      state: {
+        operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
+        scriptFee: findTag(scriptTx as IEdge, 'scriptFee'),
+      },
+    }
+  ), [ navigate ]);
+
+  const handleUseOperatorClick = useCallback(() => {
+    const state = {
+      scriptName: findTag(scriptTx as IEdge, 'scriptName'),
+      scriptCurator: (scriptTx as IEdge).node.owner.address,
+      fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
+      scriptTransaction: (scriptTx as IEdge).node.id,
+      fullState: scriptTx,
+    };
+    if (pathname.includes('chat')) {
+      return navigate(pathname.replace(pathname.split('/chat/')[1], operatorsData[selectedIdx].node.owner.address), { state });
+    } else {
+      return navigate(`/chat/${operatorsData[selectedIdx].node.owner.address}`, { state });
+    }
+  }, [ navigate ]);
+
+  return <Box
+    sx={{
+      background: 'transparent',
+      borderRadius: '7px',
+      justifyContent: 'center',
+      display: 'flex',
+      gap: '32px',
+      padding: '24px',
+    }}
+  >
+    <Button
+      sx={{ borderRadius: '7px' }}
+      variant='outlined'
+      onClick={handleHistoryClick}
+    >
+      <Typography
+        sx={{
+          fontStyle: 'normal',
+          fontWeight: 500,
+          fontSize: '15px',
+          lineHeight: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          textAlign: 'center',
+        }}
+      >
+        View History
+      </Typography>
+    </Button>
+    <Button
+      sx={{ borderRadius: '7px' }}
+      variant='contained'
+      onClick={handleUseOperatorClick}
+      disabled={!currentAddress}
+    >
+      <Typography
+        sx={{
+          fontStyle: 'normal',
+          fontWeight: 500,
+          fontSize: '15px',
+          lineHeight: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          textAlign: 'center',
+        }}
+      >
+        Use Operator
+      </Typography>
+    </Button>
+  </Box>;
+};
 
 const ChooseOperator = ({
   setShowOperators,
@@ -34,9 +141,6 @@ const ChooseOperator = ({
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const { currentAddress } = useContext(WalletContext);
   const elementsPerPage = 5;
 
   const tags = [
@@ -67,19 +171,43 @@ const ChooseOperator = ({
     skip: !scriptTx,
   });
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     refetch({ tags });
-  };
+  }, [ refetch ]);
 
-  const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFilterChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     setFilterValue(event.target.value);
-  };
+  }, [ setFilterValue ]);
 
-  const handleSelected = (index: number) => {
+  const handleSelected = useCallback((index: number) => {
     if (selectedIdx === index) {
       setSelectedIdx(-1); // unselect if clicked on same
     } else {
       setSelectedIdx(index);
+    }
+  }, [ setSelectedIdx ]);
+
+  const verify = async (el: IEdge, filtered: IEdge[]) => {
+    const confirmed = await isTxConfirmed(el.node.id);
+    const existingIdx = filtered.findIndex(
+      existing => el.node.owner.address === existing.node.owner.address,
+    );
+    const correctFee =
+      parseInt(el.node.quantity.ar, 10) === parseInt(OPERATOR_REGISTRATION_AR_FEE, 10);
+    if (confirmed && correctFee && existingIdx < 0) {
+      filtered.push(el);
+    } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
+      // found a new tx for an existing op, check dates
+      const existingTimestamp =
+        findTag(filtered[existingIdx], 'unixTime') ||
+        filtered[existingIdx].node.block.timestamp;
+      const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
+      if (newTimestamp > existingTimestamp) {
+        // if new tx has more recent timestamp replace old one
+        filtered[existingIdx] = el;
+      }
+    } else {
+      // if tx is not confirmed or fee is not correct, skip adding it to list
     }
   };
 
@@ -89,37 +217,18 @@ const ChooseOperator = ({
    * filtering correct payments and repeated operators
    */
   useEffect(() => {
-    const asyncWrapper = async () => {
-      const filtered: IEdge[] = [];
-      await Promise.all(
-        queryData.transactions.edges.map(async (el: IEdge) => {
-          const confirmed = await isTxConfirmed(el.node.id);
-          const existingIdx = filtered.findIndex(
-            (existing) => el.node.owner.address === existing.node.owner.address,
-          );
-          const correctFee =
-            parseInt(el.node.quantity.ar) === parseInt(OPERATOR_REGISTRATION_AR_FEE);
-          if (confirmed && correctFee && existingIdx < 0) {
-            filtered.push(el);
-          } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
-            // found a new tx for an existing op, check dates
-            const existingTimestamp =
-              findTag(filtered[existingIdx], 'unixTime') ||
-              filtered[existingIdx].node.block.timestamp;
-            const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
-            if (newTimestamp > existingTimestamp) {
-              // if new tx has more recent timestamp replace old one
-              filtered[existingIdx] = el;
-            }
-          }
-        }),
-      );
-      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
-      setOperatorsData(filtered);
-    };
     // check has paid correct registration fee
     if (queryData && networkStatus === NetworkStatus.ready) {
-      asyncWrapper();
+      // use immediately invoked function to be able to call async operations in useEffect
+      (async () => {
+        const filtered: IEdge[] = [];
+
+        await Promise.all(
+          queryData.transactions.edges.map(async (el: IEdge) => verify(el, filtered)),
+        );
+        setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
+        setOperatorsData(filtered);
+      })();
     }
   }, [queryData]);
 
@@ -132,8 +241,14 @@ const ChooseOperator = ({
       );
     } else if (queryData) {
       setOperatorsData(queryData.transactions.edges);
+    } else {
+      // do nothing
     }
   }, [filterValue]);
+
+  const handleBackClick = useCallback(() => {
+    setShowOperators(false);
+  }, []);
 
   return (
     <>
@@ -155,7 +270,7 @@ const ChooseOperator = ({
             borderRadius: '30px',
           }}
           variant='contained'
-          onClick={() => setShowOperators(false)}
+          onClick={handleBackClick}
         >
           <Box display='flex'>
             <Icon sx={{ rotate: '90deg' }}>
@@ -209,83 +324,7 @@ const ChooseOperator = ({
           handleSelected={handleSelected}
         ></BasicTable>
       </DialogContent>
-      {selectedIdx >= 0 && (
-        <Box
-          sx={{
-            background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
-            borderRadius: '7px',
-            justifyContent: 'center',
-            display: 'flex',
-            gap: '32px',
-            padding: '24px',
-          }}
-        >
-          <Button
-            sx={{ borderRadius: '7px' }}
-            variant='outlined'
-            onClick={() =>
-              navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
-                state: {
-                  operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
-                  scriptFee: findTag(scriptTx as IEdge, 'scriptFee'),
-                },
-              })
-            }
-          >
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 500,
-                fontSize: '15px',
-                lineHeight: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              View History
-            </Typography>
-          </Button>
-          <Button
-            sx={{ borderRadius: '7px' }}
-            variant='contained'
-            onClick={() =>
-              navigate(
-                pathname.includes('chat')
-                  ? pathname.replace(
-                      pathname.split('/chat/')[1],
-                      operatorsData[selectedIdx].node.owner.address,
-                    )
-                  : `../chat/${operatorsData[selectedIdx].node.owner.address}`,
-                {
-                  state: {
-                    scriptName: findTag(scriptTx as IEdge, 'scriptName'),
-                    scriptCurator: (scriptTx as IEdge).node.owner.address,
-                    fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
-                    scriptTransaction: (scriptTx as IEdge).node.id,
-                    fullState: scriptTx,
-                  },
-                },
-              )
-            }
-            disabled={!currentAddress}
-          >
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 500,
-                fontSize: '15px',
-                lineHeight: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Use Operator
-            </Typography>
-          </Button>
-        </Box>
-      )}
+      {selectedIdx >= 0 && <OperatorSelected operatorsData={operatorsData} scriptTx={scriptTx} selectedIdx={selectedIdx}/>}
     </>
   );
 };
