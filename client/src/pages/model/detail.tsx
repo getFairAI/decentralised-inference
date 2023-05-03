@@ -373,7 +373,12 @@ const Detail = () => {
               Update
             </Button>
           ) : (
-            <Vote txid={txid as string} fee={feeValue} owner={state.modelCreator} voteFor={'model'}/>
+            <Vote
+              txid={txid as string}
+              fee={feeValue}
+              owner={state.modelCreator}
+              voteFor={'model'}
+            />
           )}
         </Box>
       </DialogContent>

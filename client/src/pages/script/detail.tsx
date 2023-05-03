@@ -282,7 +282,12 @@ const ScriptDetails = () => {
               {findTag(state.fullState, 'description') || 'No Description Available.'}
             </Typography>
           </Box>
-          <Vote txid={txid as string} fee={parseFloat(state.fee)} owner={findTag(state.fullState, 'modelCreator') as string} voteFor={'script'} />
+          <Vote
+            txid={txid as string}
+            fee={parseFloat(state.fee)}
+            owner={findTag(state.fullState, 'modelCreator') as string}
+            voteFor={'script'}
+          />
         </Box>
       </DialogContent>
       {showAttachments ? (

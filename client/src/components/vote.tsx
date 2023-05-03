@@ -13,7 +13,13 @@ import {
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_FEE_PAYMENT, QUERY_REGISTERED_OPERATORS, QUERY_REGISTERED_SCRIPTS, QUERY_USER_HAS_VOTED, QUERY_VOTES } from '@/queries/graphql';
+import {
+  QUERY_FEE_PAYMENT,
+  QUERY_REGISTERED_OPERATORS,
+  QUERY_REGISTERED_SCRIPTS,
+  QUERY_USER_HAS_VOTED,
+  QUERY_VOTES,
+} from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
 import { Box, CircularProgress, IconButton, Typography } from '@mui/material';
@@ -25,15 +31,30 @@ import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import { client } from '@/utils/apollo';
 import { commonUpdateQuery } from '@/utils/common';
 
-type  voteForOptions = 'model' | 'script' | 'operator';
+type voteForOptions = 'model' | 'script' | 'operator';
 
-const Vote = ({ txid, fee, owner, voteFor }: { txid: string; fee: number; owner: string; voteFor: voteForOptions }) => {
+const Vote = ({
+  txid,
+  fee,
+  owner,
+  voteFor,
+}: {
+  txid: string;
+  fee: number;
+  owner: string;
+  voteFor: voteForOptions;
+}) => {
   const [upVotesCount, setUpVotesCount] = useState(0);
   const [downVotesCount, setDownVotesCount] = useState(0);
   const [hasVoted, setHasVoted] = useState(false);
   const [canVote, setCanVote] = useState(false);
   const { currentAddress, isWalletVouched } = useContext(WalletContext);
-  const voteForTag = voteFor === 'model' ? VOTE_FOR_MODEL : voteFor === 'script' ? VOTE_FOR_SCRIPT : VOTE_FOR_OPERATOR;
+  const voteForTag =
+    voteFor === 'model'
+      ? VOTE_FOR_MODEL
+      : voteFor === 'script'
+      ? VOTE_FOR_SCRIPT
+      : VOTE_FOR_OPERATOR;
 
   const { data, loading, error } = useQuery(QUERY_USER_HAS_VOTED, {
     variables: {
@@ -41,9 +62,9 @@ const Vote = ({ txid, fee, owner, voteFor }: { txid: string; fee: number; owner:
       address: currentAddress,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [ UP_VOTE, DOWN_VOTE ] },
+        { name: TAG_NAMES.operationName, values: [UP_VOTE, DOWN_VOTE] },
         { name: TAG_NAMES.votedTransaction, values: [txid] },
-        { name: TAG_NAMES.voteFor, values: [ voteForTag ] },
+        { name: TAG_NAMES.voteFor, values: [voteForTag] },
       ],
     },
     skip: !currentAddress || !txid,
@@ -59,9 +80,9 @@ const Vote = ({ txid, fee, owner, voteFor }: { txid: string; fee: number; owner:
       first: 10,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [ UP_VOTE ] },
+        { name: TAG_NAMES.operationName, values: [UP_VOTE] },
         { name: TAG_NAMES.votedTransaction, values: [txid] },
-        { name: TAG_NAMES.voteFor, values: [ voteForTag ] },
+        { name: TAG_NAMES.voteFor, values: [voteForTag] },
       ],
     },
     skip: !txid,
@@ -77,9 +98,9 @@ const Vote = ({ txid, fee, owner, voteFor }: { txid: string; fee: number; owner:
       first: 10,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [ DOWN_VOTE ] },
+        { name: TAG_NAMES.operationName, values: [DOWN_VOTE] },
         { name: TAG_NAMES.votedTransaction, values: [txid] },
-        { name: TAG_NAMES.voteFor, values: [ voteForTag ] },
+        { name: TAG_NAMES.voteFor, values: [voteForTag] },
       ],
     },
     skip: !txid,
