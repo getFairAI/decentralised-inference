@@ -23,6 +23,7 @@ import MarkdownControl from '@/components/md-control';
 import rehypeSanitize from 'rehype-sanitize';
 import { NET_ARWEAVE_URL } from '@/constants';
 import DownloadIcon from '@mui/icons-material/Download';
+import Vote from '@/components/vote';
 
 const ScriptDetails = () => {
   const { avatarTxId, notesTxId } = useLoaderData() as RouteLoaderResult;
@@ -281,15 +282,7 @@ const ScriptDetails = () => {
               {findTag(state.fullState, 'description') || 'No Description Available.'}
             </Typography>
           </Box>
-          <Button
-            sx={{
-              border: `1px solid ${theme.palette.primary.main}`,
-              borderRadius: '10px',
-              boxSizing: 'border-box',
-            }}
-          >
-            <Typography>Stamp</Typography>
-          </Button>
+          <Vote txid={txid as string} fee={parseFloat(state.fee)} owner={findTag(state.fullState, 'modelCreator') as string} voteFor={'script'} />
         </Box>
       </DialogContent>
       {showAttachments ? (
