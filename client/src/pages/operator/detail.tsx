@@ -29,7 +29,7 @@ import Vote from '@/components/vote';
 
 const OperatorDetails = () => {
   const { address } = useParams();
-  const { state }: { state: { operatorName: string } } = useLocation();
+  const { state }: { state: { operatorName: string, scriptFee: string } } = useLocation();
   const navigate = useNavigate();
   const [firstRegistrationDate, setFirstregistrationDate] = useState('');
   const [ txid, setTxid ] = useState('');
@@ -109,7 +109,7 @@ const OperatorDetails = () => {
             <Box>
               <Typography>{state.operatorName}</Typography>
               <Typography>{address}</Typography>
-              { address && txid &&  <Vote voteFor='operator' owner={address} fee={parseFloat(OPERATOR_REGISTRATION_AR_FEE)} txid={txid} /> }
+              { address && txid &&  <Vote voteFor='operator' owner={address} fee={parseFloat(state.scriptFee)} txid={txid} /> }
             </Box>
           </Box>
           <Box display={'flex'} flexDirection='column'>

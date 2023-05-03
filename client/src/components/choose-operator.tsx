@@ -225,7 +225,7 @@ const ChooseOperator = ({
             variant='outlined'
             onClick={() =>
               navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
-                state: { operatorName: findTag(operatorsData[selectedIdx], 'operatorName') },
+                state: { operatorName: findTag(operatorsData[selectedIdx], 'operatorName'), scriptFee: findTag(scriptTx as IEdge, 'scriptFee') },
               })
             }
           >

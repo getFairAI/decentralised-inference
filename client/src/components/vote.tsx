@@ -166,9 +166,9 @@ const Vote = ({
       variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
     });
     if (queryResult.data.transactions.edges.length > 0) {
-      const scriptTx = queryResult.data.transactions.edges[0];
-      const correctFee = fee === parseInt(scriptTx.node.quantity.ar);
-      const correctTarget = scriptTx.node.recipient === owner;
+      const paymentTx = queryResult.data.transactions.edges[0];
+      const correctFee = fee === parseInt(paymentTx.node.quantity.ar);
+      const correctTarget = paymentTx.node.recipient === owner;
 
       return correctFee && correctTarget;
     }
@@ -186,9 +186,9 @@ const Vote = ({
       variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
     });
     if (queryResult.data.transactions.edges.length > 0) {
-      const scriptTx = queryResult.data.transactions.edges[0];
-      const correctFee = fee === parseInt(scriptTx.node.quantity.ar);
-      const correctTarget = scriptTx.node.recipient === owner;
+      const paymentTx = queryResult.data.transactions.edges[0];
+      const correctFee = fee === parseInt(paymentTx.node.quantity.ar);
+      const correctTarget = paymentTx.node.recipient === owner;
 
       return correctFee && correctTarget;
     }
@@ -212,9 +212,9 @@ const Vote = ({
       variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
     });
     if (queryResult.data.transactions.edges.length > 0) {
-      const scriptTx = queryResult.data.transactions.edges[0];
-      const correctFee = fee === parseInt(scriptTx.node.quantity.ar);
-      const correctTarget = scriptTx.node.recipient === owner;
+      const paymentTx = queryResult.data.transactions.edges[0];
+      const correctFee = fee === parseInt(paymentTx.node.quantity.ar);
+      const correctTarget = paymentTx.node.recipient === owner;
 
       return correctFee && correctTarget;
     }

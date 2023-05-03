@@ -21,7 +21,7 @@ import { findTag } from '@/utils/common';
 import { RouteLoaderResult, ScriptNavigationState } from '@/interfaces/router';
 import MarkdownControl from '@/components/md-control';
 import rehypeSanitize from 'rehype-sanitize';
-import { NET_ARWEAVE_URL } from '@/constants';
+import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
 import DownloadIcon from '@mui/icons-material/Download';
 import Vote from '@/components/vote';
 
@@ -284,7 +284,7 @@ const ScriptDetails = () => {
           </Box>
           <Vote
             txid={txid as string}
-            fee={parseFloat(state.fee)}
+            fee={parseFloat(OPERATOR_REGISTRATION_AR_FEE)}
             owner={findTag(state.fullState, 'modelCreator') as string}
             voteFor={'script'}
           />
