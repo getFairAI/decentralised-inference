@@ -40,6 +40,8 @@ export const TAG_NAMES = {
   scriptOperator: 'Script-Operator',
   scriptUser: 'Script-User',
   scriptFee: 'Script-Fee',
+  voteFor: 'Vote-For',
+  votedTransaction: 'Voted-Transaction',
 };
 
 // Operation Names
@@ -79,9 +81,15 @@ export const SCRIPT_FEE_PAYMENT = 'Script Fee Payment';
 
 export const SCRIPT_FEE_PAYMENT_SAVE = 'Script Fee Payment Save';
 
-export const UP_VOTE_MODEL = 'Up Vote Model';
+export const UP_VOTE = 'Up Vote';
 
-export const DOWN_VOTE_MODEL = 'Down Vote Model';
+export const DOWN_VOTE = 'Down Vote';
+
+export const VOTE_FOR_MODEL = 'Vote For Model';
+
+export const VOTE_FOR_SCRIPT = 'Vote For Script';
+
+export const VOTE_FOR_OPERATOR = 'Vote For Operator';
 
 // Attachment Roles
 export const AVATAR_ATTACHMENT = 'avatar';

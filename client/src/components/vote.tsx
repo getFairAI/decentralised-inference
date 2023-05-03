@@ -2,13 +2,18 @@ import {
   APP_NAME,
   APP_VERSION,
   DEFAULT_TAGS,
-  DOWN_VOTE_MODEL,
+  DOWN_VOTE,
+  REGISTER_OPERATION,
+  SCRIPT_FEE_PAYMENT,
   TAG_NAMES,
-  UP_VOTE_MODEL,
+  UP_VOTE,
+  VOTE_FOR_MODEL,
+  VOTE_FOR_OPERATOR,
+  VOTE_FOR_SCRIPT,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_REGISTERED_SCRIPTS, QUERY_USER_HAS_VOTED, QUERY_VOTES } from '@/queries/graphql';
+import { QUERY_FEE_PAYMENT, QUERY_REGISTERED_OPERATORS, QUERY_REGISTERED_SCRIPTS, QUERY_USER_HAS_VOTED, QUERY_VOTES } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { useQuery } from '@apollo/client';
 import { Box, CircularProgress, IconButton, Typography } from '@mui/material';
@@ -20,12 +25,15 @@ import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import { client } from '@/utils/apollo';
 import { commonUpdateQuery } from '@/utils/common';
 
-const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }) => {
+type  voteForOptions = 'model' | 'script' | 'operator';
+
+const Vote = ({ txid, fee, owner, voteFor }: { txid: string; fee: number; owner: string; voteFor: voteForOptions }) => {
   const [upVotesCount, setUpVotesCount] = useState(0);
   const [downVotesCount, setDownVotesCount] = useState(0);
   const [hasVoted, setHasVoted] = useState(false);
   const [canVote, setCanVote] = useState(false);
   const { currentAddress, isWalletVouched } = useContext(WalletContext);
+  const voteForTag = voteFor === 'model' ? VOTE_FOR_MODEL : voteFor === 'script' ? VOTE_FOR_SCRIPT : VOTE_FOR_OPERATOR;
 
   const { data, loading, error } = useQuery(QUERY_USER_HAS_VOTED, {
     variables: {
@@ -33,8 +41,9 @@ const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }
       address: currentAddress,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [UP_VOTE_MODEL, DOWN_VOTE_MODEL] },
-        { name: TAG_NAMES.modelTransaction, values: [txid] },
+        { name: TAG_NAMES.operationName, values: [ UP_VOTE, DOWN_VOTE ] },
+        { name: TAG_NAMES.votedTransaction, values: [txid] },
+        { name: TAG_NAMES.voteFor, values: [ voteForTag ] },
       ],
     },
     skip: !currentAddress || !txid,
@@ -50,8 +59,9 @@ const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }
       first: 10,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [UP_VOTE_MODEL] },
-        { name: TAG_NAMES.modelTransaction, values: [txid] },
+        { name: TAG_NAMES.operationName, values: [ UP_VOTE ] },
+        { name: TAG_NAMES.votedTransaction, values: [txid] },
+        { name: TAG_NAMES.voteFor, values: [ voteForTag ] },
       ],
     },
     skip: !txid,
@@ -67,8 +77,9 @@ const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }
       first: 10,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [DOWN_VOTE_MODEL] },
-        { name: TAG_NAMES.modelTransaction, values: [txid] },
+        { name: TAG_NAMES.operationName, values: [ DOWN_VOTE ] },
+        { name: TAG_NAMES.votedTransaction, values: [txid] },
+        { name: TAG_NAMES.voteFor, values: [ voteForTag ] },
       ],
     },
     skip: !txid,
@@ -79,7 +90,15 @@ const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }
       setHasVoted(true);
     } else {
       const asyncWrapper = async () => {
-        setCanVote(await checkPaidFee());
+        if (voteFor === 'model') {
+          setCanVote(await checkCuratorPaidFee());
+        } else if (voteFor === 'script') {
+          setCanVote(await checkOperatorPaidFee());
+        } else if (voteFor === 'operator') {
+          setCanVote(await checkUserPaidFee());
+        } else {
+          setCanVote(false);
+        }
       };
       asyncWrapper();
     }
@@ -113,7 +132,7 @@ const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }
     }
   }, [downVotesData]);
 
-  const checkPaidFee = async (addr?: string) => {
+  const checkCuratorPaidFee = async (addr?: string) => {
     const tags = [
       ...DEFAULT_TAGS,
       {
@@ -135,15 +154,73 @@ const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }
     return false;
   };
 
+  const checkUserPaidFee = async (addr?: string) => {
+    const tags = [
+      ...DEFAULT_TAGS,
+      { name: TAG_NAMES.scriptTransaction, values: txid },
+      { name: TAG_NAMES.operationName, values: SCRIPT_FEE_PAYMENT },
+    ];
+    const queryResult = await client.query({
+      query: QUERY_FEE_PAYMENT,
+      variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
+    });
+    if (queryResult.data.transactions.edges.length > 0) {
+      const scriptTx = queryResult.data.transactions.edges[0];
+      const correctFee = fee === parseInt(scriptTx.node.quantity.ar);
+      const correctTarget = scriptTx.node.recipient === owner;
+
+      return correctFee && correctTarget;
+    }
+    return false;
+  };
+
+  const checkOperatorPaidFee = async (addr?: string) => {
+    const tags = [
+      ...DEFAULT_TAGS,
+      {
+        name: TAG_NAMES.operationName,
+        values: [REGISTER_OPERATION],
+      },
+      {
+        name: TAG_NAMES.scriptTransaction,
+        values: [txid],
+      },
+    ];
+    const queryResult = await client.query({
+      query: QUERY_REGISTERED_OPERATORS,
+      variables: { tags, first: 1, addresses: [addr ? addr : currentAddress], recipients: [owner] },
+    });
+    if (queryResult.data.transactions.edges.length > 0) {
+      const scriptTx = queryResult.data.transactions.edges[0];
+      const correctFee = fee === parseInt(scriptTx.node.quantity.ar);
+      const correctTarget = scriptTx.node.recipient === owner;
+
+      return correctFee && correctTarget;
+    }
+    return false;
+  };
+
   const countVouchedVotes = async (up?: boolean) => {
     const filtered: IEdge[] = [];
     const votes = up ? upVotesData.transactions.edges : downVotesData.transactions.edges;
     await Promise.all(
       votes.map(async (el: IEdge) => {
         const vouched = await isVouched(el.node.owner.address);
-        const paidFee = await checkPaidFee(el.node.owner.address);
-        if (vouched && paidFee) {
-          filtered.push(el);
+        if (voteFor === 'model') {
+          const paidFee = await checkCuratorPaidFee(el.node.owner.address);
+          if (vouched && paidFee) {
+            filtered.push(el);
+          }
+        } else if (voteFor === 'script') {
+          const paidFee = await checkOperatorPaidFee(el.node.owner.address);
+          if (vouched && paidFee) {
+            filtered.push(el);
+          }
+        } else if (voteFor === 'operator') {
+          const paidFee = await checkUserPaidFee(el.node.owner.address);
+          if (vouched && paidFee) {
+            filtered.push(el);
+          }
         }
       }),
     );
@@ -152,11 +229,12 @@ const Vote = ({ txid, fee, owner }: { txid: string; fee: number; owner: string }
 
   const vote = async (up: boolean) => {
     try {
-      const tx = await arweave.createTransaction({ data: up ? UP_VOTE_MODEL : DOWN_VOTE_MODEL });
+      const tx = await arweave.createTransaction({ data: up ? UP_VOTE : DOWN_VOTE });
       tx.addTag(TAG_NAMES.appName, APP_NAME);
       tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.operationName, up ? UP_VOTE_MODEL : DOWN_VOTE_MODEL);
-      tx.addTag(TAG_NAMES.modelTransaction, txid);
+      tx.addTag(TAG_NAMES.operationName, up ? UP_VOTE : DOWN_VOTE);
+      tx.addTag(TAG_NAMES.voteFor, voteForTag);
+      tx.addTag(TAG_NAMES.votedTransaction, txid);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
       const result = await window.arweaveWallet.dispatch(tx);
       enqueueSnackbar(
