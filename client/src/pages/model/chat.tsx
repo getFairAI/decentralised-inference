@@ -613,13 +613,12 @@ const Chat = () => {
   };
 
   const hasNoErrorsFragment = () => {
-    const reverseArray = messages.slice().reverse();
     return messages.length > 0 && !messagesLoading ? (
       <>
         <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
           {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
         </Divider>
-        {reverseArray.map((el: IMessage, index: number) => (
+        {messages.map((el: IMessage, index: number) => (
           <Container
             key={el.id}
             maxWidth={false}

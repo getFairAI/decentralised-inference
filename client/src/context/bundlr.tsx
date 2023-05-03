@@ -25,11 +25,13 @@ export type bundlrNodeUrl =
 type BundlrChangeNodeAction = { type: 'node_changed'; bundlr: WebBundlr };
 
 type BundlrUpdateBalanceAction = { type: 'update_balance'; balance: number };
-type BundlrAction = BundlrChangeNodeAction | BundlrUpdateBalanceAction;
+type BundlrUpdateLoadingAction = { type: 'update_loading'; isLoading: boolean };
+type BundlrAction = BundlrChangeNodeAction | BundlrUpdateBalanceAction | BundlrUpdateLoadingAction;
 
 interface BundlrContext {
   bundlr?: WebBundlr;
   nodeBalance: number;
+  isLoading: boolean;
   changeNode: (value: bundlrNodeUrl) => Promise<void>;
   updateBalance: () => Promise<void>;
   fundNode: (value: string) => Promise<FundResponse>;
@@ -52,6 +54,7 @@ const createActions = (dispatch: Dispatch<BundlrAction>, bundlr?: WebBundlr) => 
   return {
     changeNode: async (value: bundlrNodeUrl) => asyncChangeNode(dispatch, value),
     updateBalance: async () => asyncUpdateBalance(dispatch, bundlr),
+    updateLoading: (isLoading: boolean) => dispatch({ type: 'update_loading', isLoading }),
   };
 };
 
@@ -70,6 +73,7 @@ const asyncChangeNode = async (dispatch: Dispatch<BundlrAction>, node: bundlrNod
 const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr?: WebBundlr) => {
   if (!bundlr) {
     dispatch({ type: 'update_balance', balance: 0 });
+    dispatch({ type: 'update_loading', isLoading: false });
     return;
   }
 
@@ -80,10 +84,11 @@ const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr?: Web
   } catch (error) {
     dispatch({ type: 'update_balance', balance: 0 });
   }
+  dispatch({ type: 'update_loading', isLoading: false });
 };
 
 const bundlrReducer = (
-  state: { bundlr?: WebBundlr; nodeBalance: number },
+  state: { bundlr?: WebBundlr; nodeBalance: number; isLoading: boolean },
   action?: BundlrAction,
 ) => {
   if (!action) return state;
@@ -99,6 +104,11 @@ const bundlrReducer = (
         ...state,
         nodeBalance: action.balance,
       };
+    case 'update_loading':
+      return {
+        ...state,
+        isLoading: action.isLoading,
+      };
     default:
       return state;
   }
@@ -107,6 +117,7 @@ const bundlrReducer = (
 export const BundlrContext = createContext<BundlrContext>({
   bundlr: undefined,
   nodeBalance: 0,
+  isLoading: false,
   retryConnection: async () => new Promise(() => null),
   getPrice: async () => new Promise(() => null),
   upload: async () => new Promise(() => null),
@@ -117,13 +128,18 @@ export const BundlrContext = createContext<BundlrContext>({
 });
 
 export const BundlrProvider = ({ children }: { children: ReactNode }) => {
-  const [state, dispatch] = useReducer(bundlrReducer, { bundlr: undefined, nodeBalance: 0 });
+  const [state, dispatch] = useReducer(bundlrReducer, {
+    bundlr: undefined,
+    nodeBalance: 0,
+    isLoading: false,
+  });
   const actions = useMemo(() => createActions(dispatch, state.bundlr), [state.bundlr]);
 
   const walletState = useContext(WalletContext);
 
   useEffect(() => {
     const addressChanged = async () => {
+      actions.updateLoading(true);
       await actions.changeNode(NODE1_BUNDLR_URL);
     };
     if (walletState.currentAddress) addressChanged();
@@ -182,7 +198,10 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
     return state.bundlr.fund(value);
   };
 
-  const value = { ...state, ...actions, retryConnection, getPrice, upload, chunkUpload, fundNode };
+  const value = useMemo(
+    () => ({ ...state, ...actions, retryConnection, getPrice, upload, chunkUpload, fundNode }),
+    [state, actions],
+  );
 
   return <BundlrContext.Provider value={value}>{children}</BundlrContext.Provider>;
 };
