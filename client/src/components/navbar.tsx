@@ -9,6 +9,7 @@ import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 import Pending from './pending';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -21,7 +22,7 @@ const Banner = styled(Toolbar)(({ theme }) => ({
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, currentBalance, connectWallet, isWalletLoaded } =
+  const { currentAddress, currentBalance, connectWallet, isWalletLoaded, isWalletVouched } =
     useContext(WalletContext);
 
   if (!isWalletLoaded) {
@@ -102,11 +103,16 @@ const WalletState = () => {
             borderRadius: '43px',
             padding: '7px 20px 7px 20px',
           }}
+          display={'flex'}
+          gap={'8px'}
         >
           <Tooltip title={currentAddress} placement={'left-start'}>
             <Typography sx={{ color: theme.palette.text.primary }}>
               {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
             </Typography>
+          </Tooltip>
+          <Tooltip title={'Wallet is Vouched'}>
+            <CheckCircleOutlineIcon color='success'/>
           </Tooltip>
         </Box>
         <Pending />
