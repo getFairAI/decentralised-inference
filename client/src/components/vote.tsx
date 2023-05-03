@@ -294,7 +294,12 @@ const Vote = ({
     );
 
   return (
-    <Box display={'flex'} alignItems={'center'} justifyContent={voteFor === 'operator' ? 'flex-start' : 'flex-end'} paddingRight={'16px'}>
+    <Box
+      display={'flex'}
+      alignItems={'center'}
+      justifyContent={voteFor === 'operator' ? 'flex-start' : 'flex-end'}
+      paddingRight={'16px'}
+    >
       <Typography>{upVotesCount}</Typography>
       <IconButton
         disabled={!isWalletVouched || hasVoted || !canVote}
