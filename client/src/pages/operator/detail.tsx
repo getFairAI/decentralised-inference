@@ -25,12 +25,14 @@ import { createAvatar } from '@dicebear/core';
 import { bottts } from '@dicebear/collection';
 import HistoryTable from '@/components/history-table';
 import { findTag } from '@/utils/common';
+import Vote from '@/components/vote';
 
 const OperatorDetails = () => {
   const { address } = useParams();
   const { state }: { state: { operatorName: string } } = useLocation();
   const navigate = useNavigate();
   const [firstRegistrationDate, setFirstregistrationDate] = useState('');
+  const [ txid, setTxid ] = useState('');
   const theme = useTheme();
 
   const { data: firstRegistrationData } = useQuery(QUERY_FIRST_REGISTRATION, {
@@ -63,6 +65,7 @@ const OperatorDetails = () => {
         const timestamp =
           parseInt(findTag(registration, 'unixTime') || '') || registration.node.block.timestamp;
         setFirstregistrationDate(new Date(timestamp * 1000).toLocaleDateString());
+        setTxid(registration.node.id);
       }
     }
   }, firstRegistrationData);
@@ -102,10 +105,11 @@ const OperatorDetails = () => {
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Box display={'flex'}>
-            <CardMedia image={imgUrl} sx={{ borderRadius: 8, width: 62, height: 62 }} />
+            <CardMedia image={imgUrl} sx={{ borderRadius: 8, width: 84, height: 84 }} />
             <Box>
               <Typography>{state.operatorName}</Typography>
               <Typography>{address}</Typography>
+              { address && txid &&  <Vote voteFor='operator' owner={address} fee={parseFloat(OPERATOR_REGISTRATION_AR_FEE)} txid={txid} /> }
             </Box>
           </Box>
           <Box display={'flex'} flexDirection='column'>
