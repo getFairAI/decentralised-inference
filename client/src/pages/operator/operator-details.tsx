@@ -86,7 +86,7 @@ const OperatorDetails = () => {
         // incorrect, fetch next
       } else {
         const timestamp =
-          parseInt(findTag(registration, 'unixTime') || '', 10) ||
+          parseInt(findTag(registration, 'unixTime') ?? '', 10) ??
           registration.node.block.timestamp;
         setFirstregistrationDate(new Date(timestamp * secondInMS).toLocaleDateString());
         setTxid(registration.node.id);

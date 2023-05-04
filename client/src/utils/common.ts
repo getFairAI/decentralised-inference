@@ -47,12 +47,12 @@ export const commonUpdateQuery = (
   const newData: IEdge[] = fetchMoreResult.transactions.edges;
   newData.sort((a: IEdge, b: IEdge) => {
     const aTimestamp =
-      parseInt(findTag(a, 'unixTime') || '', 10) ||
-      a.node.block?.timestamp ||
+      parseInt(findTag(a, 'unixTime') ?? '', 10) ??
+      a.node.block?.timestamp ??
       Date.now() / secondInMS;
     const bTimestamp =
-      parseInt(findTag(b, 'unixTime') || '', 10) ||
-      b.node.block?.timestamp ||
+      parseInt(findTag(b, 'unixTime') ?? '', 10) ??
+      b.node.block?.timestamp ??
       Date.now() / secondInMS;
 
     return aTimestamp - bTimestamp;

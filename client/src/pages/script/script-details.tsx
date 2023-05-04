@@ -76,13 +76,12 @@ const ScriptAttachments = ({
   }, [notesTxId]);
 
   useEffect(() => {
-    const getFileSize = async () => {
+    (async () => {
       const response = await fetch(`${NET_ARWEAVE_URL}/${state.scriptTransaction}`, {
         method: 'HEAD',
       });
-      setFileSize(parseInt(response.headers.get('Content-Length') || '', 10));
-    };
-    getFileSize();
+      setFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
+    })();
   }, []);
 
   if (showAttachments) {
@@ -205,6 +204,26 @@ const DetailsContent = () => {
     }
   }, [avatarTxId, txid]);
 
+  const typographyHeaderProps = {
+    fontStyle: 'normal',
+    fontWeight: 700,
+    fontSize: '23px',
+    lineHeight: '31px',
+    display: 'flex',
+    alignItems: 'center',
+    textAlign: 'center',
+  };
+
+  const typographyTextProps = {
+    fontStyle: 'normal',
+    fontWeight: 400,
+    fontSize: '23px',
+    lineHeight: '31px',
+    display: 'flex',
+    alignItems: 'center',
+    textAlign: 'center',
+  };
+
   return (
     <>
       <Box
@@ -228,75 +247,15 @@ const DetailsContent = () => {
       </Box>
       <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'30%'}>
         <Box>
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            Name
-          </Typography>
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 400,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            {state.scriptName}
-          </Typography>
+          <Typography sx={typographyHeaderProps}>Name</Typography>
+          <Typography sx={typographyTextProps}>{state.scriptName}</Typography>
         </Box>
         <Box>
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            Category
-          </Typography>
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 400,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            {findTag(state.fullState, 'category')}
-          </Typography>
+          <Typography sx={typographyHeaderProps}>Category</Typography>
+          <Typography sx={typographyTextProps}>{findTag(state.fullState, 'category')}</Typography>
         </Box>
         <Box>
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            Cost
-          </Typography>
+          <Typography sx={typographyHeaderProps}>Cost</Typography>
           <Box
             display={'flex'}
             alignItems={'center'}
@@ -335,21 +294,9 @@ const DetailsContent = () => {
       </Box>
       <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'45%'}>
         <Box>
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            Description
-          </Typography>
+          <Typography sx={typographyHeaderProps}>Description</Typography>
           <Typography>
-            {findTag(state.fullState, 'description') || 'No Description Available.'}
+            {findTag(state.fullState, 'description') ?? 'No Description Available.'}
           </Typography>
         </Box>
         <Vote
