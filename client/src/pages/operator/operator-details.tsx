@@ -1,8 +1,27 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   DEFAULT_TAGS,
   OPERATOR_REGISTRATION_AR_FEE,
   REGISTER_OPERATION,
   TAG_NAMES,
+  secondInMS,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_FIRST_REGISTRATION } from '@/queries/graphql';
@@ -19,18 +38,20 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { createAvatar } from '@dicebear/core';
 import { bottts } from '@dicebear/collection';
 import HistoryTable from '@/components/history-table';
 import { findTag } from '@/utils/common';
+import Vote from '@/components/vote';
 
 const OperatorDetails = () => {
   const { address } = useParams();
-  const { state }: { state: { operatorName: string } } = useLocation();
+  const { state }: { state: { operatorName: string; scriptFee: string } } = useLocation();
   const navigate = useNavigate();
   const [firstRegistrationDate, setFirstregistrationDate] = useState('');
+  const [txid, setTxid] = useState('');
   const theme = useTheme();
 
   const { data: firstRegistrationData } = useQuery(QUERY_FIRST_REGISTRATION, {
@@ -40,7 +61,9 @@ const OperatorDetails = () => {
     },
   });
 
-  const handleClose = () => navigate('/');
+  const handleClose = useCallback(() => navigate('/'), [navigate]);
+
+  const handleBack = useCallback(() => navigate(-1), [navigate]);
 
   const imgUrl = useMemo(() => {
     const avatar = createAvatar(bottts, {
@@ -57,12 +80,16 @@ const OperatorDetails = () => {
     const registration = firstRegistrationData?.transactions?.edges[0] as IEdge;
     if (registration) {
       // check fee
-      if (parseInt(registration.node.quantity.ar) !== parseInt(OPERATOR_REGISTRATION_AR_FEE)) {
+      if (
+        parseInt(registration.node.quantity.ar, 10) !== parseInt(OPERATOR_REGISTRATION_AR_FEE, 10)
+      ) {
         // incorrect, fetch next
       } else {
         const timestamp =
-          parseInt(findTag(registration, 'unixTime') || '') || registration.node.block.timestamp;
-        setFirstregistrationDate(new Date(timestamp * 1000).toLocaleDateString());
+          parseInt(findTag(registration, 'unixTime') ?? '', 10) ??
+          registration.node.block.timestamp;
+        setFirstregistrationDate(new Date(timestamp * secondInMS).toLocaleDateString());
+        setTxid(registration.node.id);
       }
     }
   }, firstRegistrationData);
@@ -102,10 +129,18 @@ const OperatorDetails = () => {
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Box display={'flex'}>
-            <CardMedia image={imgUrl} sx={{ borderRadius: 8, width: 62, height: 62 }} />
+            <CardMedia image={imgUrl} sx={{ borderRadius: 8, width: 84, height: 84 }} />
             <Box>
               <Typography>{state.operatorName}</Typography>
               <Typography>{address}</Typography>
+              {address && txid && (
+                <Vote
+                  voteFor='operator'
+                  owner={address}
+                  fee={parseFloat(state.scriptFee)}
+                  txid={txid}
+                />
+              )}
             </Box>
           </Box>
           <Box display={'flex'} flexDirection='column'>
@@ -121,7 +156,7 @@ const OperatorDetails = () => {
             justifyContent: 'center',
           }}
         >
-          <Button variant='outlined' onClick={() => navigate(-1)}>
+          <Button variant='outlined' onClick={handleBack}>
             <Typography
               sx={{
                 fontStyle: 'normal',
