@@ -223,11 +223,11 @@ describe('components/basic-table.tsx', () => {
     expect(allRows.length).toEqual(3); // 2 data rows + 1 header row
   });
 
-  it.skip('should display loading', () => {
+  it('should display loading', () => {
     render(
       <BasicTable
         type='operators'
-        data={mocks}
+        data={[]}
         loading={true}
         retry={fakeRetry}
         fetchMore={fakeFetchMore}
@@ -241,12 +241,12 @@ describe('components/basic-table.tsx', () => {
       },
     );
 
-    const allRows = screen.getAllByRole('row');
-    expect(allRows.length).toEqual(1);
+    const allRows = screen.getAllByTestId('loading-skeleton');
+    expect(allRows.length).toEqual(5);
     // expect loading message in row
   });
 
-  it.skip('should display error', () => {
+  it('should display operators error', () => {
     render(
       <BasicTable
         type='operators'
@@ -265,8 +265,75 @@ describe('components/basic-table.tsx', () => {
       },
     );
 
-    const allRows = screen.getAllByRole('row');
-    expect(allRows.length).toEqual(1);
-    // expect error message in row
+    const errorElement = screen.getByTestId('table-error');
+    expect(errorElement.textContent).toEqual('Could not Fetch Registered Operators for this Model.Retry');
+  });
+
+  it('should display scripts error', () => {
+    render(
+      <BasicTable
+        type='scripts'
+        data={mocks}
+        loading={false}
+        retry={fakeRetry}
+        fetchMore={fakeFetchMore}
+        state={mockState}
+        hasNextPage={false}
+        error={mockError}
+        selectedIdx={0}
+        handleSelected={mockHandleSelected}
+      />,
+      {
+        wrapper: BrowserRouter,
+      },
+    );
+
+    const errorElement = screen.getByTestId('table-error');
+    expect(errorElement.textContent).toEqual('Could not Fetch Scripts for this Model.Retry');
+  });
+
+
+  it('should display message with no operators data', () => {
+    render(
+      <BasicTable
+        type='operators'
+        data={[]}
+        loading={false}
+        retry={fakeRetry}
+        fetchMore={fakeFetchMore}
+        state={mockState}
+        hasNextPage={false}
+        selectedIdx={0}
+        handleSelected={mockHandleSelected}
+      />,
+      {
+        wrapper: BrowserRouter,
+      },
+    );
+
+    const errorElement = screen.getByTestId('table-empty');
+    expect(errorElement.textContent).toEqual('Could not find available Operators.');
+  });
+
+  it('should display message with no scripts data', () => {
+    render(
+      <BasicTable
+        type='scripts'
+        data={[]}
+        loading={false}
+        retry={fakeRetry}
+        fetchMore={fakeFetchMore}
+        state={mockState}
+        hasNextPage={false}
+        selectedIdx={0}
+        handleSelected={mockHandleSelected}
+      />,
+      {
+        wrapper: BrowserRouter,
+      },
+    );
+
+    const errorElement = screen.getByTestId('table-empty');
+    expect(errorElement.textContent).toEqual('Could not find available Scripts');
   });
 });
