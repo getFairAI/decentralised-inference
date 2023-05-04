@@ -33,7 +33,7 @@ import { IEdge } from '@/interfaces/arweave';
 import Vote from '@/components/vote';
 
 const Detail = () => {
-  const { updatedFee, avatarTxId } = useLoaderData() as RouteLoaderResult;
+  const loaderData = useLoaderData() as RouteLoaderResult;
   const { state, pathname }: { state: ModelNavigationState; pathname: string } = useLocation();
   const { txid } = useParams();
   const navigate = useNavigate();
@@ -45,6 +45,8 @@ const Detail = () => {
   const { currentAddress } = useContext(WalletContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const [ avatarTxId, setAvatarTxId ] = useState<string | undefined>(undefined);
+  const [ updatedFee, setUpdatedFee ] = useState<string | undefined>(undefined);
 
   const imgUrl = useMemo(() => {
     if (avatarTxId) {
@@ -53,7 +55,7 @@ const Detail = () => {
     const img = toSvg(txid, 100);
     const svg = new Blob([img], { type: 'image/svg+xml' });
     return URL.createObjectURL(svg);
-  }, [state]);
+  }, [ avatarTxId ]);
 
   const handleClose = () => {
     if (pathname.includes('change-operator')) {
@@ -109,16 +111,21 @@ const Detail = () => {
   };
 
   useEffect(() => {
-    if (state) {
-      if (updatedFee) {
-        const arValue = arweave.ar.winstonToAr(updatedFee);
-        setFeeValue(parseFloat(arValue));
-      } else {
-        const arValue = arweave.ar.winstonToAr(state.fee);
-        setFeeValue(parseFloat(arValue));
-      }
+    if (updatedFee) {
+      const arValue = arweave.ar.winstonToAr(updatedFee);
+      setFeeValue(parseFloat(arValue));
+    } else {
+      const arValue = arweave.ar.winstonToAr(state.fee);
+      setFeeValue(parseFloat(arValue));
     }
-  }, [state]);
+  }, [ updatedFee]);
+
+  useEffect(() => {
+    if (loaderData) {
+      setAvatarTxId(loaderData.avatarTxId);
+      setUpdatedFee(loaderData.updatedFee);
+    }
+  }, [ loaderData ]);
 
   const handleScriptChosen = (scriptTx: IEdge) => {
     setShowOperators(true);
@@ -151,6 +158,7 @@ const Detail = () => {
           }}
           variant='contained'
           onClick={() => setShowScripts(true)}
+          data-testid='choose-script-button'
         >
           <Box display='flex'>
             <Typography>{'Choose a Script '}</Typography>
@@ -233,6 +241,7 @@ const Detail = () => {
                 alignItems: 'center',
                 textAlign: 'center',
               }}
+              data-testid='model-name'
             >
               Name
             </Typography>
@@ -246,6 +255,7 @@ const Detail = () => {
                 alignItems: 'center',
                 textAlign: 'center',
               }}
+              data-testid='model-name-value'
             >
               {state.modelName}
             </Typography>
