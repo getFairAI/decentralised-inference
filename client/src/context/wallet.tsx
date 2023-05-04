@@ -2,7 +2,7 @@ import { createContext, Dispatch, ReactNode, useEffect, useMemo, useReducer, use
 import { PermissionType } from 'arconnect';
 import arweave from '@/utils/arweave';
 import _ from 'lodash';
-import { isVouched } from 'vouchdao';
+import { isVouched } from '@/utils/vouch';
 
 const DEFAULT_PERMISSSIONS: PermissionType[] = [
   'ACCESS_PUBLIC_KEY',
@@ -128,6 +128,7 @@ const walletReducer = (state: WalletContext, action?: WalletAction) => {
         currentAddress: '',
         currentPermissions: [],
         currentBalance: 0,
+        isWalletVouched: false,
       };
     }
     case 'wallet_vouched': {

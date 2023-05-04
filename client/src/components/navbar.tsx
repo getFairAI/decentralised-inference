@@ -111,9 +111,10 @@ const WalletState = () => {
               {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
             </Typography>
           </Tooltip>
-          <Tooltip title={'Wallet is Vouched'}>
-            <CheckCircleOutlineIcon color='success'/>
-          </Tooltip>
+          { isWalletVouched && <Tooltip title={'Wallet is Vouched'}>
+              <CheckCircleOutlineIcon color='success'/>
+            </Tooltip>
+          }
         </Box>
         <Pending />
       </Box>
