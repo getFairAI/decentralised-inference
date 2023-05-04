@@ -48,7 +48,7 @@ import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import { commonUpdateQuery } from '@/utils/common';
 import { voteForOptions } from '@/interfaces/common';
 import { IEdge } from '@/interfaces/arweave';
-import { isVouched } from 'vouchdao';
+import { isVouched } from '@/utils/vouch';
 import { client } from '@/utils/apollo';
 
 const countVouchedVotes = async (

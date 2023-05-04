@@ -108,7 +108,7 @@ const queryRegisteredOperatorsMock = [
   }, */
 ];
 
-const mockState = {
+const mockFullState = {
   node: {
     owner: {
       address: 'creator 1',
@@ -134,7 +134,15 @@ const mockState = {
   },
 };
 
-const fakeLoader = () => 'fakeData';
+const mockState = {
+  fullState: mockFullState,
+  modelCreator: 'model Creator',
+  modelName: 'model name',
+  fee: 'fee',
+  modelTransaction: 'model transaction',
+};
+
+const fakeLoader = () => ({ updatedFee: '0', avatarTxId: 'avatarTxId' });
 
 const mockIntersectionObserver = class {
   constructor() {
@@ -151,18 +159,19 @@ const mockIntersectionObserver = class {
   }
 };
 
-describe.skip('pages/model/detail.tsx', () => {
+describe('pages/model/detail.tsx', () => {
   beforeEach(async () => {
     (window.IntersectionObserver as unknown) = mockIntersectionObserver;
   });
 
   it('should populate model data from queries', async () => {
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'avatarLink');
     const mockRouter = createMemoryRouter(
       [
         {
           path: '/model/:txid',
           children: [{ path: 'detail', element: <Detail /> }],
-          loader: fakeLoader,
+          loader: () => fakeLoader,
         },
       ],
       {
@@ -177,11 +186,12 @@ describe.skip('pages/model/detail.tsx', () => {
       </MockedProvider>,
     );
 
-    const nameField = (await screen.findByLabelText('Name')) as HTMLInputElement;
-    expect(nameField.value).toEqual('model 1');
-    const descriptionField = (await screen.findByLabelText('Description')) as HTMLInputElement;
-    expect(descriptionField.value).toEqual('description');
+    const nameField = (await screen.findByTestId('model-name-value')) as HTMLElement;
+    expect(nameField.textContent).toEqual(mockState.modelName);
 
-    expect(screen.getByRole('table')).toBeDefined();
+    const chooseScriptButton = (await screen.findByTestId(
+      'choose-script-button',
+    )) as HTMLButtonElement;
+    expect(chooseScriptButton.textContent).toEqual('Choose a Script ');
   });
 });
