@@ -220,7 +220,7 @@ describe('components/basic-table.tsx', () => {
     );
 
     const allRows = screen.getAllByRole('row');
-    expect(allRows.length).toEqual(3); // 2 data rows + 1 header row
+    expect(allRows.length).toEqual(mocks.length + 1); // 2 data rows + 1 header row
   });
 
   it('should display loading', () => {
@@ -241,8 +241,10 @@ describe('components/basic-table.tsx', () => {
       },
     );
 
+    const loadingRows = 5;
+
     const allRows = screen.getAllByTestId('loading-skeleton');
-    expect(allRows.length).toEqual(5);
+    expect(allRows.length).toEqual(loadingRows);
     // expect loading message in row
   });
 

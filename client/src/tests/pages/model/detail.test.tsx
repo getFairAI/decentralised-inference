@@ -159,7 +159,7 @@ const mockIntersectionObserver = class {
   }
 };
 
-describe.only('pages/model/detail.tsx', () => {
+describe('pages/model/detail.tsx', () => {
   beforeEach(async () => {
     (window.IntersectionObserver as unknown) = mockIntersectionObserver;
   });
