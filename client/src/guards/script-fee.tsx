@@ -49,17 +49,23 @@ import { useSnackbar } from 'notistack';
 import { ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const ScriptFeeActions = ({ hasPaid, handleAccept}: { hasPaid: boolean, handleAccept: () => void }) => {
+const ScriptFeeActions = ({
+  hasPaid,
+  handleAccept,
+}: {
+  hasPaid: boolean;
+  handleAccept: () => void;
+}) => {
   const navigate = useNavigate();
   const theme = useTheme();
 
   const handleCancel = useCallback(() => {
     navigate(-1);
-  }, [ navigate ]);
+  }, [navigate]);
 
   const handleHome = useCallback(() => {
     navigate('/');
-  }, [ navigate ]);
+  }, [navigate]);
 
   return !hasPaid ? (
     <DialogActions
@@ -221,11 +227,14 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
 
   const handleAccept = useCallback(() => {
     payScriptFee();
-  }, [ payScriptFee]);
+  }, [payScriptFee]);
 
   return (
     <>
-      <Backdrop sx={{ color: '#fff', zIndex: (currentTheme) => currentTheme.zIndex.drawer + 1 }} open={loading}>
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (currentTheme) => currentTheme.zIndex.drawer + 1 }}
+        open={loading}
+      >
         <CircularProgress color='inherit' />
       </Backdrop>
       <Dialog
