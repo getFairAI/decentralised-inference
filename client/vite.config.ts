@@ -19,9 +19,5 @@ export default defineConfig({
       provider: 'c8',
       reporter: ['text', 'json', 'html'],
     },
-    exclude:[
-      ...configDefaults.exclude, 
-      '**/detail.test.tsx'
-    ]
  }
 });
