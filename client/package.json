@@ -42,7 +42,7 @@
     "react-number-format": "5.1.4",
     "react-router-dom": "6.8.1",
     "rehype-sanitize": "5.0.1",
-    "vouchdao": "0.2.6"
+    "warp-contracts": "1.4.5"
   },
   "devDependencies": {
     "@testing-library/react": "14.0.0",
