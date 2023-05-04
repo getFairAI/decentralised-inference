@@ -71,28 +71,19 @@ const router = createHashRouter([
         ],
       },
       {
-        path: 'model/:txid',
-        element: <Model />,
-        /* loader: txLoader, */
-        id: 'model-alt',
-        loader: getModelFeeAndAttachments,
+        path: 'chat/:address',
+        element: (
+          <BlockOperatorGuard>
+            <ScriptFeeGuard>
+              <Chat />
+            </ScriptFeeGuard>
+          </BlockOperatorGuard>
+        ),
         children: [
           {
-            path: 'chat/:address',
-            element: (
-              <BlockOperatorGuard>
-                <ScriptFeeGuard>
-                  <Chat />
-                </ScriptFeeGuard>
-              </BlockOperatorGuard>
-            ),
-            children: [
-              {
-                path: 'change-operator',
-                loader: getModelFeeAndAttachments,
-                element: <Detail />,
-              },
-            ],
+            path: 'change-operator',
+            loader: getModelFeeAndAttachments,
+            element: <Detail />,
           },
         ],
       },

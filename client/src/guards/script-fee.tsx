@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   APP_NAME,
   APP_VERSION,
@@ -5,6 +23,8 @@ import {
   SCRIPT_FEE_PAYMENT,
   SCRIPT_FEE_PAYMENT_SAVE,
   TAG_NAMES,
+  secondInMS,
+  successStatusCode,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
@@ -26,13 +46,63 @@ import {
   useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { ReactNode, useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+const ScriptFeeActions = ({ hasPaid, handleAccept}: { hasPaid: boolean, handleAccept: () => void }) => {
+  const navigate = useNavigate();
+  const theme = useTheme();
+
+  const handleCancel = useCallback(() => {
+    navigate(-1);
+  }, [ navigate ]);
+
+  const handleHome = useCallback(() => {
+    navigate('/');
+  }, [ navigate ]);
+
+  return !hasPaid ? (
+    <DialogActions
+      sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
+    >
+      <Button
+        color='error'
+        onClick={handleCancel}
+        sx={{
+          border: '1px solid #DC5141',
+          borderRadius: '7px',
+        }}
+      >
+        Decline
+      </Button>
+      <Button
+        onClick={handleAccept}
+        sx={{
+          background: theme.palette.success.light,
+          borderRadius: '7px',
+          color: theme.palette.success.contrastText,
+          '&:hover': {
+            background: theme.palette.success.light,
+            boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
+          },
+        }}
+      >
+        Accept
+      </Button>
+    </DialogActions>
+  ) : (
+    <DialogActions
+      sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
+    >
+      <Button onClick={handleHome} variant='contained'>
+        Back to Home
+      </Button>
+    </DialogActions>
+  );
+};
 
 const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
-  const { txid } = useParams();
   const { state }: { state: ScriptNavigationState } = useLocation();
-  const navigate = useNavigate();
   const [isAllowed, setIsAllowed] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,33 +114,25 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
   const [getLazyFeePayment, queryResult] = useLazyQuery(QUERY_FEE_PAYMENT);
 
   useEffect(() => {
-    const getAddress = async () => {
+    if (currentAddress) {
       setLoading(true);
-      try {
-        const addr = await window.arweaveWallet.getActiveAddress();
-        const tags = [
-          ...DEFAULT_TAGS,
-          { name: TAG_NAMES.scriptTransaction, values: txid },
-          { name: TAG_NAMES.operationName, values: SCRIPT_FEE_PAYMENT },
-        ];
-        getLazyFeePayment({
-          variables: {
-            owner: addr,
-            recipient: state.scriptCurator,
-            tags,
-          },
-        });
-      } catch (err) {
-        enqueueSnackbar('Wallet is not Connected', { variant: 'error' });
-        navigate('/');
-      }
-    };
-
-    if (window && window.arweaveWallet) getAddress();
-  }, []);
+      const tags = [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.scriptTransaction, values: state.scriptTransaction },
+        { name: TAG_NAMES.operationName, values: SCRIPT_FEE_PAYMENT },
+      ];
+      getLazyFeePayment({
+        variables: {
+          owner: currentAddress,
+          recipient: state.scriptCurator,
+          tags,
+        },
+      });
+    }
+  }, [currentAddress]);
 
   useEffect(() => {
-    const asyncTxConfirmed = async () => {
+    (async () => {
       if (
         queryResult.data &&
         queryResult.data.transactions &&
@@ -87,20 +149,17 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
             !(await isTxConfirmed(queryResult.data.transactions.edges[0].node.id)),
         );
         setLoading(false);
-      } else if (queryResult.data && queryResult.data && queryResult.data.transactions) {
-        // means there is no
+      } else if (queryResult.data) {
+        // means there is no payment transactions
         setIsAllowed(false);
         setLoading(false);
+      } else {
+        // do nothing
       }
-    };
-    asyncTxConfirmed();
+    })();
   }, [queryResult.data]);
 
-  const handleCancel = () => {
-    navigate(-1);
-  };
-
-  const handleAccept = async () => {
+  const payScriptFee = async () => {
     try {
       const scriptFee = findTag(state.fullState, 'scriptFee') as string;
 
@@ -111,8 +170,8 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
       saveTx.addTag(TAG_NAMES.scriptName, state.scriptName);
       saveTx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
       saveTx.addTag(TAG_NAMES.scriptFee, scriptFee);
-      saveTx.addTag(TAG_NAMES.scriptTransaction, txid || state.scriptTransaction);
-      saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
+      saveTx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
+      saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
       saveTx.addTag(TAG_NAMES.paymentQuantity, scriptFee);
       saveTx.addTag(TAG_NAMES.paymentTarget, state.scriptCurator);
       const saveResult = await window.arweaveWallet.dispatch(saveTx);
@@ -127,13 +186,13 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
       tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
       tx.addTag(TAG_NAMES.scriptFee, scriptFee);
       tx.addTag(TAG_NAMES.operationName, SCRIPT_FEE_PAYMENT);
-      tx.addTag(TAG_NAMES.scriptTransaction, txid || state.scriptTransaction);
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
+      tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
+      tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
       tx.addTag(TAG_NAMES.saveTransaction, saveResult.id);
 
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);
-      if (res.status === 200) {
+      if (res.status === successStatusCode) {
         enqueueSnackbar(
           <>
             Script Fee Paid: {arweave.ar.winstonToAr(scriptFee)} AR.
@@ -160,9 +219,13 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const handleAccept = useCallback(() => {
+    payScriptFee();
+  }, [ payScriptFee]);
+
   return (
     <>
-      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
+      <Backdrop sx={{ color: '#fff', zIndex: (currentTheme) => currentTheme.zIndex.drawer + 1 }} open={loading}>
         <CircularProgress color='inherit' />
       </Backdrop>
       <Dialog
@@ -238,44 +301,7 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
             )}
           </Alert>
         </DialogContent>
-        {!hasPaid ? (
-          <DialogActions
-            sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
-          >
-            <Button
-              color='error'
-              onClick={handleCancel}
-              sx={{
-                border: '1px solid #DC5141',
-                borderRadius: '7px',
-              }}
-            >
-              Decline
-            </Button>
-            <Button
-              onClick={handleAccept}
-              sx={{
-                background: theme.palette.success.light,
-                borderRadius: '7px',
-                color: theme.palette.success.contrastText,
-                '&:hover': {
-                  background: theme.palette.success.light,
-                  boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
-                },
-              }}
-            >
-              Accept
-            </Button>
-          </DialogActions>
-        ) : (
-          <DialogActions
-            sx={{ display: 'flex', justifyContent: 'center', gap: '30px', paddingBottom: '20px' }}
-          >
-            <Button onClick={() => navigate('/')} variant='contained'>
-              Back to Home
-            </Button>
-          </DialogActions>
-        )}
+        <ScriptFeeActions hasPaid={hasPaid} handleAccept={handleAccept} />
       </Dialog>
       {isAllowed && children}
     </>
