@@ -266,7 +266,9 @@ describe('components/basic-table.tsx', () => {
     );
 
     const errorElement = screen.getByTestId('table-error');
-    expect(errorElement.textContent).toEqual('Could not Fetch Registered Operators for this Model.Retry');
+    expect(errorElement.textContent).toEqual(
+      'Could not Fetch Registered Operators for this Model.Retry',
+    );
   });
 
   it('should display scripts error', () => {
@@ -291,7 +293,6 @@ describe('components/basic-table.tsx', () => {
     const errorElement = screen.getByTestId('table-error');
     expect(errorElement.textContent).toEqual('Could not Fetch Scripts for this Model.Retry');
   });
-
 
   it('should display message with no operators data', () => {
     render(

@@ -139,10 +139,10 @@ const mockState = {
   modelCreator: 'model Creator',
   modelName: 'model name',
   fee: 'fee',
-  modelTransaction: 'model transaction'
+  modelTransaction: 'model transaction',
 };
 
-const fakeLoader = () => ({ updatedFee: '0', avatarTxId: 'avatarTxId'});
+const fakeLoader = () => ({ updatedFee: '0', avatarTxId: 'avatarTxId' });
 
 const mockIntersectionObserver = class {
   constructor() {
@@ -188,8 +188,10 @@ describe.only('pages/model/detail.tsx', () => {
 
     const nameField = (await screen.findByTestId('model-name-value')) as HTMLElement;
     expect(nameField.textContent).toEqual(mockState.modelName);
-    
-    const chooseScriptButton = (await screen.findByTestId('choose-script-button')) as HTMLButtonElement;
+
+    const chooseScriptButton = (await screen.findByTestId(
+      'choose-script-button',
+    )) as HTMLButtonElement;
     expect(chooseScriptButton.textContent).toEqual('Choose a Script ');
   });
 });

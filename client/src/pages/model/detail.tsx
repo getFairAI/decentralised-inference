@@ -45,8 +45,8 @@ const Detail = () => {
   const { currentAddress } = useContext(WalletContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const [ avatarTxId, setAvatarTxId ] = useState<string | undefined>(undefined);
-  const [ updatedFee, setUpdatedFee ] = useState<string | undefined>(undefined);
+  const [avatarTxId, setAvatarTxId] = useState<string | undefined>(undefined);
+  const [updatedFee, setUpdatedFee] = useState<string | undefined>(undefined);
 
   const imgUrl = useMemo(() => {
     if (avatarTxId) {
@@ -55,7 +55,7 @@ const Detail = () => {
     const img = toSvg(txid, 100);
     const svg = new Blob([img], { type: 'image/svg+xml' });
     return URL.createObjectURL(svg);
-  }, [ avatarTxId ]);
+  }, [avatarTxId]);
 
   const handleClose = () => {
     if (pathname.includes('change-operator')) {
@@ -118,14 +118,14 @@ const Detail = () => {
       const arValue = arweave.ar.winstonToAr(state.fee);
       setFeeValue(parseFloat(arValue));
     }
-  }, [ updatedFee]);
+  }, [updatedFee]);
 
   useEffect(() => {
     if (loaderData) {
       setAvatarTxId(loaderData.avatarTxId);
       setUpdatedFee(loaderData.updatedFee);
     }
-  }, [ loaderData ]);
+  }, [loaderData]);
 
   const handleScriptChosen = (scriptTx: IEdge) => {
     setShowOperators(true);

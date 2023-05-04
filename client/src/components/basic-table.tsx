@@ -136,7 +136,12 @@ export default function BasicTable(props: {
             {props.error ? (
               <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell colSpan={6}>
-                  <Typography alignItems='center' display='flex' flexDirection='column' data-testid='table-error'>
+                  <Typography
+                    alignItems='center'
+                    display='flex'
+                    flexDirection='column'
+                    data-testid='table-error'
+                  >
                     {props.type === 'operators'
                       ? 'Could not Fetch Registered Operators for this Model.'
                       : 'Could not Fetch Scripts for this Model.'}
@@ -156,7 +161,11 @@ export default function BasicTable(props: {
                   <TableRow key={val} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell align='right' colSpan={6} scope='row'>
                       <Typography>
-                        <Skeleton variant='rounded' animation={'wave'} data-testid={'loading-skeleton'}></Skeleton>
+                        <Skeleton
+                          variant='rounded'
+                          animation={'wave'}
+                          data-testid={'loading-skeleton'}
+                        ></Skeleton>
                       </Typography>
                     </TableCell>
                   </TableRow>

@@ -12,10 +12,10 @@ const contract = warp
 interface VouchState {
   state: {
     vouched: {
-      [address: string]: unknown,
-    }
-  }
-};
+      [address: string]: unknown;
+    };
+  };
+}
 
 export const isVouched = async (address: string) => {
   const { cachedValue } = await contract.readState();
