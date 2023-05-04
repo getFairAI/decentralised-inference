@@ -92,7 +92,7 @@ const OperatorDetails = () => {
         setTxid(registration.node.id);
       }
     }
-  }, [ firstRegistrationData ]);
+  }, [firstRegistrationData]);
 
   return (
     <>
