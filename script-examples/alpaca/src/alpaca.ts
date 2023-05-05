@@ -23,9 +23,9 @@ import Arweave from 'arweave';
 import { ApolloClient, InMemoryCache } from '@apollo/client/core';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import { default as Pino } from 'pino';
-import { APP_VERSION_TAG, CONVERSATION_IDENTIFIER_TAG, NET_ARWEAVE_URL, secondInMS, successStatusCode } from './constants';
-import { buildQueryCheckUserCuratorPayment, buildQueryCheckUserPayment, buildQueryCheckUserScriptRequests, buildQueryOperatorFee, buildQueryScriptFee, buildQueryTransactionAnswered, buildQueryTransactionsReceived } from './queries';
-import { IEdge } from './interfaces';
+import { APP_NAME_TAG, APP_VERSION_TAG, CONTENT_TYPE_TAG, CONVERSATION_IDENTIFIER_TAG, MAX_ALPACA_TOKENS, NET_ARWEAVE_URL, OPERATION_NAME_TAG, PAYMENT_QUANTITY_TAG, PAYMENT_TARGET_TAG, REQUEST_TOKENS_TAG, REQUEST_TRANSACTION_TAG, RESPONSE_TOKENS_TAG, RESPONSE_TRANSACTION_TAG, SCRIPT_CURATOR_TAG, SCRIPT_NAME_TAG, SCRIPT_USER_TAG, UNIX_TIME_TAG, secondInMS, successStatusCode } from './constants';
+import { buildQueryCheckUserCuratorPayment, buildQueryCheckUserPayment, buildQueryCheckUserScriptRequests, buildQueryOperatorFee, buildQueryScriptFee, buildQueryTransactionAnswered, buildQueryTransactionsReceived, queryRequestsForConversation, queryResponsesForRequests } from './queries';
+import { AlpacaHttpResponse, IEdge } from './interfaces';
 
 const logger = Pino({
   name: 'alpaca',
@@ -47,7 +47,7 @@ const JWK: JWKInterface = JSON.parse(fs.readFileSync('wallet.json').toString());
 
 
 const sendToBundlr = async (
-  fullText: string,
+  response: AlpacaHttpResponse,
   appVersion: string,
   userAddress: string,
   requestTransaction: string,
@@ -82,23 +82,27 @@ const sendToBundlr = async (
   const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
   logger.info(`node balance (converted) = ${convertedBalance}`);
 
+  const promptTokens = response.usage.prompt_tokens;
+  const responseTokens = response.usage.completion_tokens;
   const tags = [
-    { name: 'App-Name', value: 'Fair Protocol' },
+    { name: APP_NAME_TAG, value: 'Fair Protocol' },
     { name: APP_VERSION_TAG, value: appVersion },
-    { name: 'Script-Curator', value: CONFIG.scriptCurator },
-    { name: 'Script-Name', value: CONFIG.scriptName },
-    { name: 'Script-User', value: userAddress },
-    { name: 'Request-Transaction', value: requestTransaction },
-    { name: 'Operation-Name', value: 'Script Inference Response' },
+    { name: SCRIPT_CURATOR_TAG, value: CONFIG.scriptCurator },
+    { name: SCRIPT_NAME_TAG, value: CONFIG.scriptName },
+    { name: SCRIPT_USER_TAG, value: userAddress },
+    { name: REQUEST_TRANSACTION_TAG, value: requestTransaction },
+    { name: OPERATION_NAME_TAG, value: 'Script Inference Response' },
     { name: CONVERSATION_IDENTIFIER_TAG, value: conversationIdentifier },
-    { name: 'Content-Type', value: 'application/json' },
-    { name: 'Payment-Quantity', value: paymentQuantity },
-    { name: 'Payment-Target', value: CONFIG.marketplaceWallet },
-    { name: 'Unix-Time', value: (Date.now() / secondInMS).toString() },
+    { name: CONTENT_TYPE_TAG, value: 'application/json' },
+    { name: PAYMENT_QUANTITY_TAG, value: paymentQuantity },
+    { name: PAYMENT_TARGET_TAG, value: CONFIG.marketplaceWallet },
+    { name: UNIX_TIME_TAG, value: (Date.now() / secondInMS).toString() },
+    { name: REQUEST_TOKENS_TAG, value: `${promptTokens}` },
+    { name: RESPONSE_TOKENS_TAG, value: `${responseTokens}` },
   ];
 
   try {
-    const transaction = await bundlr.upload(fullText, { tags });
+    const transaction = await bundlr.upload(response.output, { tags });
 
     logger.info(`Data uploaded ==> https://arweave.net/${transaction.id}`);
     return transaction.id;
@@ -108,13 +112,79 @@ const sendToBundlr = async (
   }
 };
 
-const inference = async function (message: string) {
-  const res = await fetch(CONFIG.url, {
-    method: 'POST',
-    body: message,
-  });
-  const tempJSON = await res.json();
-  return tempJSON.output as string;
+const inference = async function (requestTx: IEdge, conversationIdentifier: string, useContext: boolean) {
+  const requestData = await fetch(`${NET_ARWEAVE_URL}/${requestTx.node.id}`);
+  const text = await (await requestData.blob()).text();
+  logger.info(`User Prompt: ${text}`);
+
+  if (useContext) {
+    // fetch old messages from same conversation
+    const { data: requestsData } = await queryRequestsForConversation(requestTx.node.owner.address, conversationIdentifier);
+    // filter out current tx and tx newer than current;
+    const pastTxs: IEdge[] = requestsData.transactions.edges.filter(
+      (tx: IEdge) => tx.node.id !== requestTx.node.id &&
+        parseFloat(tx.node.tags.find(tag => tag.name === UNIX_TIME_TAG)?.value ?? '') > parseFloat(requestTx.node.tags.find(tag => tag.name === UNIX_TIME_TAG)?.value ?? '')
+    );
+    if (pastTxs.length === 0) {
+      // if no previous requests
+      const res = await fetch(CONFIG.url, {
+        method: 'POST',
+        body: text,
+      });
+      const response: AlpacaHttpResponse = await res.json();
+      return response;
+    } else {
+      const requestIds = pastTxs.map(tx => tx.node.id);
+      // find responses for past requests found
+      const { data: responsesData } = await queryResponsesForRequests(requestTx.node.owner.address, conversationIdentifier, requestIds);
+      const responseTxs: IEdge[] = responsesData.transactions.edges;
+
+      const responsesToConsider: IEdge[] = [];
+
+      responseTxs.reduce((prev, curr) => {
+        const promptTokens = curr.node.tags.find(tag => tag.name === REQUEST_TOKENS_TAG)?.value;
+        const responseTokens = curr.node.tags.find(tag => tag.name === RESPONSE_TOKENS_TAG)?.value;
+        const totalPairCount = parseInt(promptTokens ?? '0') + parseInt(responseTokens ?? '0');
+        const count = prev + totalPairCount;
+        if (count < MAX_ALPACA_TOKENS) {
+          responsesToConsider.push(curr);
+        }
+
+        return count;
+      }, 0);
+
+      // find requests pairs
+      const requestsToConsider = pastTxs.filter(
+        el => responseTxs.findIndex(
+          (res => res.node.tags.find(
+            tag => tag.name === REQUEST_TRANSACTION_TAG
+          )?.value === el.node.id)
+        ) >= 0
+      );
+
+      const pastMessagesData: string[] = [];
+
+      for (const tx of [ ...requestsToConsider, ...responsesToConsider ]) {
+        const txData = await fetch(`${NET_ARWEAVE_URL}/${tx.node.id}`);
+        const decodedTxData = await (await txData.blob()).text();
+        pastMessagesData.push(decodedTxData);
+      }
+      const contextPrompt = pastMessagesData.join(';').concat(` With the previous context answer: ${text}`);
+      const res = await fetch(CONFIG.url, {
+        method: 'POST',
+        body: contextPrompt,
+      });
+      const response: AlpacaHttpResponse = await res.json();
+      return response;
+    }
+  } else {
+    const res = await fetch(CONFIG.url, {
+      method: 'POST',
+      body: text,
+    });
+    const response: AlpacaHttpResponse = await res.json();
+    return response;
+  }
 };
 
 const sendFee = async (
@@ -134,17 +204,17 @@ const sendFee = async (
     JWK,
   );
 
-  tx.addTag('App-Name', 'Fair Protocol');
-  tx.addTag('App-Version', appVersion);
-  tx.addTag('Script-Curator', CONFIG.scriptCurator);
-  tx.addTag('Script-Name', CONFIG.scriptName);
-  tx.addTag('Script-User', userAddress);
-  tx.addTag('Request-Transaction', requestTransaction);
-  tx.addTag('Operation-Name', 'Fee Redistribution');
-  tx.addTag('Conversation-Identifier', conversationIdentifier);
-  tx.addTag('Content-Type', 'application/json');
-  tx.addTag('Response-Transaction', responseTransaction);
-  tx.addTag('Unix-Time', (Date.now() / secondInMS).toString());
+  tx.addTag(APP_NAME_TAG, 'Fair Protocol');
+  tx.addTag(APP_VERSION_TAG, appVersion);
+  tx.addTag(SCRIPT_CURATOR_TAG, CONFIG.scriptCurator);
+  tx.addTag(SCRIPT_NAME_TAG, CONFIG.scriptName);
+  tx.addTag(SCRIPT_USER_TAG, userAddress);
+  tx.addTag(REQUEST_TRANSACTION_TAG, requestTransaction);
+  tx.addTag(OPERATION_NAME_TAG, 'Fee Redistribution');
+  tx.addTag(CONVERSATION_IDENTIFIER_TAG, conversationIdentifier);
+  tx.addTag(CONTENT_TYPE_TAG, 'application/json');
+  tx.addTag(RESPONSE_TRANSACTION_TAG, responseTransaction);
+  tx.addTag(UNIX_TIME_TAG, (Date.now() / secondInMS).toString());
 
   // you must sign the transaction with your key before posting
   await arweave.transactions.sign(tx, JWK);
@@ -266,7 +336,7 @@ const checkUserPaidPastInferences = async (userAddress: string, operatorFee: num
   return true;
 };
 
-const start = async () => {
+const start = async (useContext = false) => {
   try {
     const address = await arweave.wallets.jwkToAddress(JWK);
 
@@ -301,11 +371,7 @@ const start = async () => {
         throw new Error('Invalid App Version or Conversation Identifier');
       }
 
-      const requestData = await fetch(`${NET_ARWEAVE_URL}/${edge.node.id}`);
-      const text = await (await requestData.blob()).text();
-      logger.info(`User Prompt: ${text}`);
-
-      const inferenceResult = await inference(text);
+      const inferenceResult = await inference(edge, conversationIdentifier, useContext);
       logger.info(`Inference Result: ${inferenceResult}`);
         
       const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
@@ -339,9 +405,10 @@ function sleep(ms: number) {
 }
 
 (async () => {
+  const useContext = process.argv[2] === 'with-context';
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    await start();
+    await start(useContext);
     await sleep(CONFIG.sleepTimeSeconds * secondInMS);
     logger.info(`Slept for ${CONFIG.sleepTimeSeconds} second(s). Restarting cycle now...`);
   }

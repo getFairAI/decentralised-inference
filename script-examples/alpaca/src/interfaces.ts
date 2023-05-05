@@ -54,3 +54,14 @@ export interface ITransactions {
     hasNextPage: boolean;
   };
 }
+
+export interface AlpacaHttpResponse {
+  created: number;
+  model: string;
+  output: string;
+  usage: {
+    completion_tokens: number;
+    prompt_tokens: number;
+    total_tokens: number;
+  }
+}

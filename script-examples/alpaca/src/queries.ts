@@ -16,8 +16,16 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { gql } from '@apollo/client';
+import apollo from '@apollo/client';
 import CONFIG from '../config.json' assert { type: 'json' };
+import { CONVERSATION_IDENTIFIER_TAG, OPERATION_NAME_TAG, REQUEST_TRANSACTION_TAG, SCRIPT_CURATOR_TAG, SCRIPT_NAME_TAG, SCRIPT_USER_TAG } from './constants';
+
+const { gql, ApolloClient, InMemoryCache } = apollo;
+
+const clientGateway = new ApolloClient({
+  uri: 'https://arweave.net:443/graphql',
+  cache: new InMemoryCache(),
+});
 
 export const buildQueryTransactionsReceived = (address: string) => {
   return {
@@ -326,4 +334,111 @@ export const buildQueryOperatorFee = (address: string) => {
   }
 `,
   };
+};
+
+export const queryRequestsForConversation = (userAddr: string, cid: string) => {
+  const tags = [
+    {
+      name: OPERATION_NAME_TAG,
+      values: [ 'Script Inference Request' ]
+    },
+    {
+      name: SCRIPT_CURATOR_TAG,
+      values: [ CONFIG.scriptCurator ]
+    },
+    {
+      name: SCRIPT_NAME_TAG,
+      values: [ CONFIG.scriptName ]
+    },
+    {
+      name: CONVERSATION_IDENTIFIER_TAG,
+      values: [ cid ]
+    }
+  ];
+
+  return clientGateway.query({
+    query: gql`
+      query queryRequestsForConversation ($tags: [TagFilter!], $owner: String) {
+        transactions(
+          tags: $tags,
+          owners: [ $owner ]
+          sort: HEIGHT_DESC
+        ) {
+          edges {
+            node {
+          id
+          owner {
+            address
+            key
+          }
+          quantity {
+            winston
+            ar
+          }
+          tags {
+            name
+            value
+          }
+        }
+      }
+    `,
+    variables: { tags, owner: userAddr }
+  });
+};
+
+export const queryResponsesForRequests = (userAddr: string, cid: string, requestIds: string[]) => {
+  const tags = [
+    {
+      name: OPERATION_NAME_TAG,
+      values: [ 'Script Inference Response' ]
+    },
+    {
+      name: SCRIPT_CURATOR_TAG,
+      values: [ CONFIG.scriptCurator ]
+    },
+    {
+      name: SCRIPT_NAME_TAG,
+      values: [ CONFIG.scriptName ]
+    },
+    {
+      name: SCRIPT_USER_TAG,
+      values: [ userAddr ]
+    },
+    {
+      name: CONVERSATION_IDENTIFIER_TAG,
+      values: [ cid ]
+    },
+    {
+      name: REQUEST_TRANSACTION_TAG,
+      values: requestIds
+    }
+  ];
+
+  return clientGateway.query({
+    query: gql`
+      query RequestsForConveration($tags: [TagFilter!]) {
+        transactions(
+          tags: $tags,
+          sort: HEIGHT_DESC
+        ) {
+          edges {
+            node {
+          id
+          owner {
+            address
+            key
+          }
+          quantity {
+            winston
+            ar
+          }
+          tags {
+            name
+            value
+          }
+        }
+      }
+    `,
+    variables: { tags, owner: userAddr }
+  });
 };
