@@ -162,17 +162,28 @@ const inference = async function (requestTx: IEdge, conversationIdentifier: stri
         ) >= 0
       );
 
-      const pastMessagesData: string[] = [];
+      const allMessages = [ ...requestsToConsider, ...responsesToConsider ].sort((a, b) => {
+        const aTime = parseFloat(a.node.tags.find(tag => tag.name === UNIX_TIME_TAG)?.value ?? '');
+        const bTime = parseFloat(b.node.tags.find(tag => tag.name === UNIX_TIME_TAG)?.value ?? '');
+        return aTime - bTime;
+      });
 
-      for (const tx of [ ...requestsToConsider, ...responsesToConsider ]) {
+      const promptPieces = ['Take into consideration the previous messages: {'];
+      for (const tx of allMessages) {
         const txData = await fetch(`${NET_ARWEAVE_URL}/${tx.node.id}`);
         const decodedTxData = await (await txData.blob()).text();
-        pastMessagesData.push(decodedTxData);
+        if (tx.node.owner.address === requestTx.node.owner.address) {
+          promptPieces.push(`Me: ${decodedTxData}`);
+        } else {
+          promptPieces.push(`Response: ${decodedTxData}`);
+        }
       }
-      const contextPrompt = pastMessagesData.join(';').concat(` With the previous context answer: ${text}`);
+      promptPieces.push('}');
+
+      promptPieces.push(` Answer the following: ${text}`);
       const res = await fetch(CONFIG.url, {
         method: 'POST',
-        body: contextPrompt,
+        body: promptPieces.join(' '),
       });
       const response: AlpacaHttpResponse = await res.json();
       return response;
