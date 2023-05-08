@@ -69,7 +69,7 @@ const UploadCreator = () => {
   const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress, currentBalance } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
 
@@ -138,7 +138,7 @@ const UploadCreator = () => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Uploaded Avatat Image
+            Uploaded Avatar Image{' '}
             <br></br>
             <a
               href={`https://viewblock.io/arweave/tx/${res.data.id}`}
@@ -208,7 +208,7 @@ const UploadCreator = () => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Uploaded Usage Notes File
+            Uploaded Usage Notes File{' '}
             <br></br>
             <a
               href={`https://viewblock.io/arweave/tx/${res.data.id}`}
@@ -269,6 +269,11 @@ const UploadCreator = () => {
     const tags = [];
     const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
 
+    if (currentBalance < parseFloat(MARKETPLACE_FEE)) {
+      enqueueSnackbar('Not Enough Balance in your Wallet to pay MarketPlace Fee', { variant: 'error' });
+      return;
+    }
+
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
@@ -285,7 +290,7 @@ const UploadCreator = () => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Uploaded Usage Notes File
+            Uploaded Usage Notes File{' '}
             <br></br>
             <a
               href={`https://viewblock.io/arweave/tx/${res.data.id}`}

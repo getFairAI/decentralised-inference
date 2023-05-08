@@ -107,7 +107,7 @@ const ChooseScript = ({
           });
           const modelTx = queryResult.data.transactions.edges[0];
           const correctFee =
-            parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
+            parseInt(el.node.quantity.winston, 10) === parseInt(findTag(modelTx, 'modelFee') as string, 10);
           if (correctFee && existingIdx < 0) {
             filtered.push(el);
           } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
@@ -120,6 +120,8 @@ const ChooseScript = ({
               // if new tx has more recent timestamp replace old one
               filtered[existingIdx] = el;
             }
+          } else {
+            // do nothing
           }
         }),
       );
