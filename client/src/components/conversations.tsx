@@ -47,7 +47,6 @@ const Conversations = ({
     data: conversationsData,
     loading: conversationsLoading,
     fetchMore: conversationsFetchMore,
-    refetch: conversationsRefetch,
   } = useQuery(QUERY_CONVERSATIONS, {
     variables: {
       address: userAddr,
@@ -81,8 +80,8 @@ const Conversations = ({
       tx.addTag(TAG_NAMES.conversationIdentifier, `${id}`);
       const result = await window.arweaveWallet.dispatch(tx);
       console.log('conversation start' + result.id);
-      setConversationIds([...conversationIds, id]);
-      setFilteredConversationIds([...conversationIds, id]);
+      setConversationIds([id, ...conversationIds ]);
+      setFilteredConversationIds([id, ...conversationIds ]);
       setCurrentConversationId(id);
     } catch (error) {
       enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
@@ -95,9 +94,11 @@ const Conversations = ({
       const cids: number[] = conversationsData.transactions.edges.map((el: IEdge) =>
         parseFloat(findTag(el, 'conversationIdentifier') as string),
       );
-      setConversationIds(Array.from(new Set(cids)));
-      setFilteredConversationIds(Array.from(new Set(cids)));
-      setCurrentConversationId(Array.from(new Set(cids))[0]);
+
+      const sorted = cids.sort((a, b) => b - a);
+      setConversationIds(Array.from(new Set(sorted)));
+      setFilteredConversationIds(Array.from(new Set(sorted)));
+      setCurrentConversationId(Array.from(new Set(sorted))[0]);
     } else if (conversationsData && conversationsData.transactions.edges.length === 0) {
       setHasConversationNextPage(false);
       // no conversations yet, create new
@@ -135,7 +136,7 @@ const Conversations = ({
         },
       });
     }
-  }, [isConversationOnScreen, hasConversationNextPage]);
+  }, [isConversationOnScreen, hasConversationNextPage, conversationsData]);
 
   useEffect(() => {
     if (conversationIds && conversationIds.length > 0) {
