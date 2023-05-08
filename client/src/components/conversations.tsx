@@ -81,7 +81,9 @@ const Conversations = ({
       tx.addTag(TAG_NAMES.conversationIdentifier, `${id}`);
       const result = await window.arweaveWallet.dispatch(tx);
       console.log('conversation start' + result.id);
-      conversationsRefetch();
+      setConversationIds([...conversationIds, id]);
+      setFilteredConversationIds([...conversationIds, id]);
+      setCurrentConversationId(id);
     } catch (error) {
       enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
     }
@@ -154,12 +156,10 @@ const Conversations = ({
   };
 
   const handleAddConversation = async () => {
-    const last: IEdge =
-      conversationsData.transactions.edges[conversationsData.transactions.edges.length - 1];
-    const cid = findTag(last, 'conversationIdentifier') as string;
-    await createNewConversation(parseFloat(cid) + 1);
+    const last = Math.max(...conversationIds);
+    await createNewConversation(last + 1);
     setFilterConversations('');
-    setCurrentConversationId(parseFloat(cid) + 1);
+    setCurrentConversationId(last + 1);
   };
 
   return (
