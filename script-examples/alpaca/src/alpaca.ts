@@ -35,6 +35,14 @@ const logger = Pino({
 const clientGateway = new ApolloClient({
   uri: 'https://arweave.net:443/graphql',
   cache: new InMemoryCache(),
+  defaultOptions: {
+    query: {
+      fetchPolicy: 'no-cache',
+    },
+    watchQuery: {
+      fetchPolicy: 'no-cache',
+    },
+  }
 });
 
 const arweave = Arweave.init({
@@ -120,8 +128,7 @@ const inference = async function (requestTx: IEdge, conversationIdentifier: stri
     const { data: requestsData } = await queryRequestsForConversation(requestTx.node.owner.address, conversationIdentifier);
     // filter out current tx and tx newer than current;
     const pastTxs: IEdge[] = requestsData.transactions.edges.filter(
-      (tx: IEdge) => tx.node.id !== requestTx.node.id &&
-        parseFloat(tx.node.tags.find(tag => tag.name === UNIX_TIME_TAG)?.value ?? '') > parseFloat(requestTx.node.tags.find(tag => tag.name === UNIX_TIME_TAG)?.value ?? '')
+      (tx: IEdge) => tx.node.id !== requestTx.node.id
     );
     if (pastTxs.length === 0) {
       // if no previous requests
@@ -284,7 +291,7 @@ const getScriptFee = async () => {
   }
 
   const scriptTags = latestScriptTx.node.tags;
-  const scriptFeeIndex = scriptTags.findIndex((tag) => tag.name === 'Operator-Fee');
+  const scriptFeeIndex = scriptTags.findIndex((tag) => tag.name === 'Script-Fee');
 
   if (scriptFeeIndex < 0) {
     throw new Error("Program didn't found a valid Script-Fee tag.");
@@ -364,44 +371,43 @@ const start = async (useContext = false) => {
       
       if (responseTxs.length > 0) {
         // Request already answered; skip
-        return;
-      }
+      } else {
+        // Check if user has paid the curator:
+        const scriptFee = await getScriptFee();
+        // checkUserPaidScriptFee will throw an error if the user has not paid the curator
+        await checkuserPaidScriptFee(edge.node.owner.address, scriptFee);
 
-      // Check if user has paid the curator:
-      const scriptFee = await getScriptFee();
-      // checkUserPaidScriptFee will throw an error if the user has not paid the curator
-      await checkuserPaidScriptFee(edge.node.owner.address, scriptFee);
+        await checkUserPaidPastInferences(edge.node.owner.address, operatorFee);
 
-      await checkUserPaidPastInferences(edge.node.owner.address, operatorFee);
+        const appVersion = edge.node.tags.find((tag) => tag.name === 'App-Version')?.value;
+        const conversationIdentifier = edge.node.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value;
+        if (!appVersion || !conversationIdentifier) {
+          throw new Error('Invalid App Version or Conversation Identifier');
+        }
 
-      const appVersion = edge.node.tags.find((tag) => tag.name === 'App-Version')?.value;
-      const conversationIdentifier = edge.node.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value;
-      if (!appVersion || !conversationIdentifier) {
-        throw new Error('Invalid App Version or Conversation Identifier');
-      }
-
-      const inferenceResult = await inference(edge, conversationIdentifier, useContext);
-      logger.info(`Inference Result: ${inferenceResult}`);
-        
-      const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
-      const updloadResultId = await sendToBundlr(
-        inferenceResult,
-        appVersion,
-        edge.node.owner.address,
-        edge.node.id,
-        conversationIdentifier,
-        quantity,
-      );
-      
-      if (updloadResultId) {
-        await sendFee( 
-          quantity,
+        const inferenceResult = await inference(edge, conversationIdentifier, useContext);
+        logger.info(`Inference Result: ${inferenceResult}`);
+          
+        const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
+        const updloadResultId = await sendToBundlr(
+          inferenceResult,
           appVersion,
           edge.node.owner.address,
           edge.node.id,
           conversationIdentifier,
-          updloadResultId,
+          quantity,
         );
+        
+        if (updloadResultId) {
+          await sendFee( 
+            quantity,
+            appVersion,
+            edge.node.owner.address,
+            edge.node.id,
+            conversationIdentifier,
+            updloadResultId,
+          );
+        }
       }
     }
   } catch (e) {
@@ -415,6 +421,7 @@ function sleep(ms: number) {
 
 (async () => {
   const useContext = process.argv[2] === 'with-context';
+  logger.info('Starting with Context: '+ useContext);
   // eslint-disable-next-line no-constant-condition
   while (true) {
     await start(useContext);

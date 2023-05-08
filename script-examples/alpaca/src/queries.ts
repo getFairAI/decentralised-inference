@@ -16,15 +16,21 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import apollo from '@apollo/client';
+import  { gql, ApolloClient, InMemoryCache } from '@apollo/client/core';
 import CONFIG from '../config.json' assert { type: 'json' };
 import { CONVERSATION_IDENTIFIER_TAG, OPERATION_NAME_TAG, REQUEST_TRANSACTION_TAG, SCRIPT_CURATOR_TAG, SCRIPT_NAME_TAG, SCRIPT_USER_TAG } from './constants';
-
-const { gql, ApolloClient, InMemoryCache } = apollo;
 
 const clientGateway = new ApolloClient({
   uri: 'https://arweave.net:443/graphql',
   cache: new InMemoryCache(),
+  defaultOptions: {
+    query: {
+      fetchPolicy: 'no-cache',
+    },
+    watchQuery: {
+      fetchPolicy: 'no-cache',
+    },
+  }
 });
 
 export const buildQueryTransactionsReceived = (address: string) => {
@@ -358,7 +364,7 @@ export const queryRequestsForConversation = (userAddr: string, cid: string) => {
 
   return clientGateway.query({
     query: gql`
-      query queryRequestsForConversation ($tags: [TagFilter!], $owner: String) {
+      query queryRequestsForConversation ($tags: [TagFilter!], $owner: String!) {
         transactions(
           tags: $tags,
           owners: [ $owner ]
@@ -366,18 +372,20 @@ export const queryRequestsForConversation = (userAddr: string, cid: string) => {
         ) {
           edges {
             node {
-          id
-          owner {
-            address
-            key
-          }
-          quantity {
-            winston
-            ar
-          }
-          tags {
-            name
-            value
+              id
+              owner {
+                address
+                key
+              }
+              quantity {
+                winston
+                ar
+              }
+              tags {
+                name
+                value
+              }
+            }
           }
         }
       }
@@ -423,18 +431,20 @@ export const queryResponsesForRequests = (userAddr: string, cid: string, request
         ) {
           edges {
             node {
-          id
-          owner {
-            address
-            key
-          }
-          quantity {
-            winston
-            ar
-          }
-          tags {
-            name
-            value
+              id
+              owner {
+                address
+                key
+              }
+              quantity {
+                winston
+                ar
+              }
+              tags {
+                name
+                value
+              }
+            }
           }
         }
       }
