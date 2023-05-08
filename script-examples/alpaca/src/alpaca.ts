@@ -44,7 +44,9 @@ const arweave = Arweave.init({
 });
 
 const JWK: JWKInterface = JSON.parse(fs.readFileSync('wallet.json').toString());
-
+// initailze the bundlr SDK
+// const bundlr: Bundlr = new (Bundlr as any).default(
+const bundlr = new Bundlr('https://node1.bundlr.network', 'arweave', JWK);
 
 const sendToBundlr = async (
   response: AlpacaHttpResponse,
@@ -54,10 +56,6 @@ const sendToBundlr = async (
   conversationIdentifier: string,
   paymentQuantity: string,
 ) => {
-  // initailze the bundlr SDK
-  // const bundlr: Bundlr = new (Bundlr as any).default(
-  const bundlr: Bundlr = new Bundlr('https://node1.bundlr.network', 'arweave', JWK);
-
   // Print your wallet address
   logger.info(`Wallet address: ${bundlr.address}`);
 
