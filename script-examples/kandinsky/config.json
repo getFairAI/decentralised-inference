@@ -1,0 +1,10 @@
+{
+  "url": "http://127.0.0.1:500",
+  "sleepTimeSeconds": 7,
+  "scriptCurator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8",
+  "scriptName": "kandinsky 2",
+  "marketplaceWallet": "RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo",
+  "inferencePercentageFee": 0.05,
+  "nPreviousBlocks": 1,
+  "minBlockConfirmations": 20
+}

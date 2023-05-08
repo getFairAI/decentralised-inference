@@ -19,6 +19,7 @@
 export interface IMessage {
   id: string;
   msg: string;
+  contentType?: string;
   type: 'response' | 'request';
   timestamp: number;
   height: number;

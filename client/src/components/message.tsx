@@ -3,6 +3,7 @@ import { IMessage } from '@/interfaces/common';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import MessageFooter from './message-footer';
+import { NET_ARWEAVE_URL } from '@/constants';
 
 const Message = ({
   message,
@@ -60,7 +61,7 @@ const Message = ({
                 alignItems: message.type === 'response' ? 'flex-start' : 'flex-end',
               }}
             >
-              <Typography
+             {message.contentType?.includes('image')? <img src={`${NET_ARWEAVE_URL}/${message.id}`}></img>: <Typography
                 sx={{
                   fontStyle: 'normal',
                   fontWeight: 400,
@@ -78,7 +79,7 @@ const Message = ({
                 component={'pre'}
               >
                 {message.msg}
-              </Typography>
+              </Typography>}
               <MessageFooter message={message} index={index} />
             </CardContent>
           </Card>

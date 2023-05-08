@@ -365,7 +365,9 @@ const Chat = () => {
 
   const mapTransactionsToMessages = async (el: IEdge) => {
     const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
-    const data = msgIdx < 0 ? await getData(el.node.id) : polledMessages[msgIdx].msg;
+
+    const contentType = findTag(el,'contentType')  
+    const data = msgIdx < 0 ? await getData(el.node.id): polledMessages[msgIdx].msg;
     const timestamp =
       parseInt(findTag(el, 'unixTime') || '') || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
@@ -375,6 +377,7 @@ const Chat = () => {
     const msg: IMessage = {
       id: el.node.id,
       msg: data,
+      contentType,
       type: isRequest ? 'request' : 'response',
       timestamp: timestamp,
       cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
