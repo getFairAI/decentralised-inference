@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   Alert,
   Backdrop,
@@ -13,7 +31,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { useContext, useRef, useState } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
 import { FieldValues, useForm } from 'react-hook-form';
 import TextControl from '@/components/text-control';
 import MarkdownControl from '@/components/md-control';
@@ -23,7 +41,6 @@ import CustomProgress from '@/components/progress';
 import {
   APP_VERSION,
   MARKETPLACE_FEE,
-  NODE1_BUNDLR_URL,
   MARKETPLACE_ADDRESS,
   TAG_NAMES,
   APP_NAME,
@@ -32,6 +49,8 @@ import {
   MODEL_ATTACHMENT,
   AVATAR_ATTACHMENT,
   NOTES_ATTACHMENT,
+  secondInMS,
+  successStatusCode,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
@@ -41,6 +60,7 @@ import { WalletContext } from '@/context/wallet';
 import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
+import { ITag } from '@/interfaces/arweave';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -51,7 +71,7 @@ export interface CreateForm extends FieldValues {
   avatar?: File;
 }
 const UploadCreator = () => {
-  const { handleSubmit, reset, control } = useForm<FieldValues>({
+  const { handleSubmit, reset, control } = useForm({
     defaultValues: {
       name: '',
       fee: 0,
@@ -60,7 +80,7 @@ const UploadCreator = () => {
       avatar: '',
       file: '',
     },
-  });
+  } as FieldValues);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [, setMessage] = useState('');
@@ -80,40 +100,80 @@ const UploadCreator = () => {
     if (nodeBalance <= 0) {
       setFundOpen(true);
     } else {
-      handleFundFinished(NODE1_BUNDLR_URL, data as CreateForm); // use default node
+      handleFundFinished(data as CreateForm); // use default node
     }
   };
 
-  const uploadAvatarImage = async (modelTx: string, modelName: string, image: File) => {
-    if ((await getPrice(image.size)).toNumber() > nodeBalance)
+  const bundlrUpload = async (fileToUpload: File, tags: ITag[], successMessage: string) => {
+    const filePrice = await getPrice(fileToUpload.size);
+    if (filePrice.toNumber() > nodeBalance) {
       enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
+    }
+    const finishedPercentage = 100;
 
     /** Register Event Callbacks */
     // event callback: called for every chunk uploaded
     const handleUpload = (chunkInfo: ChunkInfo) => {
-      console.log(chunkInfo);
-      console.log(
-        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
-      );
       const chunkNumber = chunkInfo.id + 1;
       // update the progress bar based on how much has been uploaded
-      if (chunkNumber >= totalChunks.current) setProgress(100);
-      else setProgress((chunkNumber / totalChunks.current) * 100);
+      if (chunkNumber >= totalChunks.current) {
+        setProgress(finishedPercentage);
+      } else {
+        setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
+      }
     };
+
     // event callback: called if an error happens
     const handleError = (e: ChunkError) => {
       setSnackbarOpen(false);
-      console.error(
+      enqueueSnackbar(
         `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+        { variant: 'error' },
       );
     };
+
     // event callback: called when file is fully uploaded
-    const handleDone = (finishRes: unknown) => {
-      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const handleDone = (_finishRes: unknown) => {
       // set the progress bar to 100
-      setProgress(100);
+      setProgress(finishedPercentage);
       setSnackbarOpen(false);
     };
+
+    const res = await chunkUpload(
+      fileToUpload,
+      tags,
+      totalChunks,
+      handleUpload,
+      handleError,
+      handleDone,
+    );
+    if (res.status === successStatusCode) {
+      enqueueSnackbar(
+        <>
+          {successMessage} <br></br>
+          <a
+            href={`https://viewblock.io/arweave/tx/${res.data.id}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        { variant: 'success' },
+      );
+    } else {
+      throw new Error(res.statusText);
+    }
+
+    return res;
+  };
+
+  const uploadAvatarImage = async (modelTx: string, image?: File) => {
+    if (!image || !(image instanceof File)) {
+      return;
+    }
+
     // upload the file
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
@@ -123,38 +183,10 @@ const UploadCreator = () => {
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
     tags.push({ name: TAG_NAMES.attachmentName, value: image.name });
     tags.push({ name: TAG_NAMES.attachmentRole, value: AVATAR_ATTACHMENT });
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
     setSnackbarOpen(true);
-    try {
-      // const res = await uploader.uploadData(readableStream, { tags });
-      const res = await chunkUpload(
-        image,
-        tags,
-        totalChunks,
-        handleUpload,
-        handleError,
-        handleDone,
-      );
-      if (res.status === 200) {
-        enqueueSnackbar(
-          <>
-            Uploaded Avatar Image <br></br>
-            <a
-              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
-              target={'_blank'}
-              rel='noreferrer'
-            >
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-      } else {
-        enqueueSnackbar(res.statusText, { variant: 'error' });
-      }
-    } catch (error) {
-      enqueueSnackbar('An Error Occured.', { variant: 'error' });
-    }
+
+    await bundlrUpload(image, tags, 'Avatar Uploaded Successfully');
   };
 
   const uploadUsageNotes = async (modelTx: string, modelName: string, usageNotes: string) => {
@@ -162,35 +194,6 @@ const UploadCreator = () => {
       type: 'text/markdown',
     });
 
-    if ((await getPrice(file.size)).toNumber() > nodeBalance)
-      enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
-
-    /** Register Event Callbacks */
-    // event callback: called for every chunk uploaded
-    const handleUpload = (chunkInfo: ChunkInfo) => {
-      console.log(chunkInfo);
-      console.log(
-        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
-      );
-      const chunkNumber = chunkInfo.id + 1;
-      // update the progress bar based on how much has been uploaded
-      if (chunkNumber >= totalChunks.current) setProgress(100);
-      else setProgress((chunkNumber / totalChunks.current) * 100);
-    };
-    // event callback: called if an error happens
-    const handleError = (e: ChunkError) => {
-      setSnackbarOpen(false);
-      console.error(
-        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
-      );
-    };
-    // event callback: called when file is fully uploaded
-    const handleDone = (finishRes: unknown) => {
-      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
-      // set the progress bar to 100
-      setProgress(100);
-      setSnackbarOpen(false);
-    };
     // upload the file
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
@@ -200,69 +203,25 @@ const UploadCreator = () => {
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
     tags.push({ name: TAG_NAMES.attachmentName, value: file.name });
     tags.push({ name: TAG_NAMES.attachmentRole, value: NOTES_ATTACHMENT });
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
     setSnackbarOpen(true);
-    try {
-      const res = await chunkUpload(file, tags, totalChunks, handleUpload, handleError, handleDone);
-      if (res.status === 200) {
-        enqueueSnackbar(
-          <>
-            Uploaded Usage Notes File <br></br>
-            <a
-              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
-              target={'_blank'}
-              rel='noreferrer'
-            >
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-      } else {
-        enqueueSnackbar(res.statusText, { variant: 'error' });
-      }
-    } catch (error) {
-      enqueueSnackbar('An Error Occured.', { variant: 'error' });
-    }
+
+    await bundlrUpload(file, tags, 'Usage Notes Uploaded Successfully');
   };
 
-  const handleFundFinished = async (node: string, data?: CreateForm) => {
+  const handleFundFinished = async (data?: CreateForm) => {
     setFundOpen(false);
     if (!data) {
       data = formData;
     }
-    if (!data || !data.file) return;
+
+    if (!data || !data.file) {
+      enqueueSnackbar('No File Selected', { variant: 'error' });
+      return;
+    }
+
     const file = data.file;
 
-    if ((await getPrice(file.size)).toNumber() > nodeBalance)
-      enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
-
-    /** Register Event Callbacks */
-    // event callback: called for every chunk uploaded
-    const handleUpload = (chunkInfo: ChunkInfo) => {
-      console.log(chunkInfo);
-      console.log(
-        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
-      );
-      const chunkNumber = chunkInfo.id + 1;
-      // update the progress bar based on how much has been uploaded
-      if (chunkNumber >= totalChunks.current) setProgress(100);
-      else setProgress((chunkNumber / totalChunks.current) * 100);
-    };
-    // event callback: called if an error happens
-    const handleError = (e: ChunkError) => {
-      setSnackbarOpen(false);
-      console.error(
-        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
-      );
-    };
-    // event callback: called when file is fully uploaded
-    const handleDone = (finishRes: unknown) => {
-      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
-      // set the progress bar to 100
-      setProgress(100);
-      setSnackbarOpen(false);
-    };
     // upload the file
     const tags = [];
     const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
@@ -282,77 +241,60 @@ const UploadCreator = () => {
     tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: MARKETPLACE_ADDRESS });
-    if (data.description) tags.push({ name: TAG_NAMES.description, value: data.description });
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
+    if (data.description) {
+      tags.push({ name: TAG_NAMES.description, value: data.description });
+    }
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
     setSnackbarOpen(true);
     try {
-      const res = await chunkUpload(file, tags, totalChunks, handleUpload, handleError, handleDone);
-      if (res.status === 200) {
+      const res = await bundlrUpload(file, tags, 'Model Uploaded Successfully');
+      const tx = await arweave.createTransaction({
+        quantity: fee,
+        target: MARKETPLACE_ADDRESS,
+      });
+      tx.addTag(TAG_NAMES.appName, APP_NAME);
+      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+      tx.addTag(TAG_NAMES.contentType, file.type);
+      tx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
+      tx.addTag(TAG_NAMES.modelName, data.name);
+      tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${data.fee}`));
+      if (data.description) {
+        tx.addTag(TAG_NAMES.description, data.description);
+      }
+      tx.addTag(TAG_NAMES.modelTransaction, res.data.id);
+      tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
+
+      await arweave.transactions.sign(tx);
+      const payRes = await arweave.transactions.post(tx);
+      if (payRes.status === successStatusCode) {
         enqueueSnackbar(
           <>
-            Uploaded Usage Notes File <br></br>
-            <a
-              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
-              target={'_blank'}
-              rel='noreferrer'
-            >
+            Paid Marketplace Fee {MARKETPLACE_FEE} AR.
+            <br></br>
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
               <u>View Transaction in Explorer</u>
             </a>
           </>,
           { variant: 'success' },
         );
-      } else {
-        enqueueSnackbar(res.statusText, { variant: 'error' });
-        return;
-      }
-      try {
-        const tx = await arweave.createTransaction({
-          quantity: fee,
-          target: MARKETPLACE_ADDRESS,
+        startJob({
+          address: currentAddress,
+          operationName: MODEL_CREATION,
+          tags,
+          txid: res.data.id,
+          encodedTags: false,
         });
-        tx.addTag(TAG_NAMES.appName, APP_NAME);
-        tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-        tx.addTag(TAG_NAMES.contentType, file.type);
-        tx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
-        tx.addTag(TAG_NAMES.modelName, data.name);
-        tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${data.fee}`));
-        if (data.description) tx.addTag(TAG_NAMES.description, data.description);
-        tx.addTag(TAG_NAMES.modelTransaction, res.data.id);
-        tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-        await arweave.transactions.sign(tx);
-        const payRes = await arweave.transactions.post(tx);
-        if (payRes.status === 200) {
-          enqueueSnackbar(
-            <>
-              Paid Marketplace Fee {MARKETPLACE_FEE} AR.
-              <br></br>
-              <a
-                href={`https://viewblock.io/arweave/tx/${tx.id}`}
-                target={'_blank'}
-                rel='noreferrer'
-              >
-                <u>View Transaction in Explorer</u>
-              </a>
-            </>,
-            { variant: 'success' },
-          );
-          startJob({
-            address: currentAddress,
-            operationName: MODEL_CREATION,
-            tags,
-            txid: res.data.id,
-            encodedTags: false,
-          });
+
+        try {
           await uploadUsageNotes(res.data.id, data.name, data.notes);
-          if (data.avatar && data.avatar instanceof File) {
-            await uploadAvatarImage(res.data.id, data.name, data.avatar);
-          }
-          reset(); // reset form
-        } else {
-          enqueueSnackbar(payRes.statusText, { variant: 'error' });
+          await uploadAvatarImage(res.data.id, data.avatar);
+        } catch (error) {
+          enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
+          // error uploading attachments
         }
-      } catch (error) {
-        enqueueSnackbar('An Error Occured.', { variant: 'error' });
+        reset(); // reset form
+      } else {
+        enqueueSnackbar(payRes.statusText, { variant: 'error' });
       }
     } catch (error) {
       setSnackbarOpen(false);
@@ -361,6 +303,10 @@ const UploadCreator = () => {
       enqueueSnackbar('An Error Occured.', { variant: 'error' });
     }
   };
+
+  const handleReset = useCallback(() => reset(), [reset]);
+
+  const handleCloseSnackbar = useCallback(() => setSnackbarOpen(false), [setSnackbarOpen]);
 
   return (
     <Container
@@ -376,7 +322,7 @@ const UploadCreator = () => {
     >
       <Backdrop
         sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          zIndex: theme.zIndex.drawer + 1,
           position: 'relative',
           height: '100%',
           width: '100%',
@@ -394,9 +340,7 @@ const UploadCreator = () => {
                 borderRadius: '30px',
               }}
             >
-              <CardHeader title='Upload model' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
-                {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
-              </CardHeader>
+              <CardHeader title='Upload model' sx={{ paddingLeft: '48px', paddingTop: '32px' }} />
               <CardContent
                 sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}
               >
@@ -508,7 +452,7 @@ const UploadCreator = () => {
               </CardContent>
               <CardActions sx={{ paddingBottom: '32px', justifyContent: 'center' }}>
                 <Button
-                  onClick={() => reset()}
+                  onClick={handleReset}
                   sx={{
                     // border: `1px solid ${theme.palette.text.primary}`,
                     borderRadius: '7px',
@@ -557,7 +501,7 @@ const UploadCreator = () => {
           <Snackbar
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             open={snackbarOpen}
-            onClose={() => setSnackbarOpen(false)}
+            onClose={handleCloseSnackbar}
             ClickAwayListenerProps={{ onClickAway: () => null }}
           >
             <Alert severity='info' sx={{ width: '100%', minWidth: '300px' }}>
