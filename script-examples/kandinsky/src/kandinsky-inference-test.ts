@@ -16,16 +16,17 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-export interface IMessage {
-  id: string;
-  msg: string;
-  contentType?: string;
-  type: 'response' | 'request';
-  timestamp: number;
-  height: number;
-  cid?: number;
-  from: string;
-  to: string;
-}
+import CONFIG from '../config.json' assert { type: 'json' };
 
-export type voteForOptions = 'model' | 'script' | 'operator';
+const inference = async function (message: string) {
+  const res = await fetch(CONFIG.url, {
+    method: 'POST',
+    body: message,
+  });
+  const tempJSON = await res.json();
+  return tempJSON.output;
+};
+
+(async () => {
+  await inference('Inferece test. Just answer something, please.');
+})();

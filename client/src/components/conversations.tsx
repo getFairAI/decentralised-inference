@@ -1,10 +1,35 @@
-import { APP_NAME, APP_VERSION, CONVERSATION_START, DEFAULT_TAGS, TAG_NAMES } from '@/constants';
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
+import {
+  APP_NAME,
+  APP_VERSION,
+  CONVERSATION_START,
+  DEFAULT_TAGS,
+  TAG_NAMES,
+  secondInMS,
+} from '@/constants';
 import useOnScreen from '@/hooks/useOnScreen';
 import { IEdge } from '@/interfaces/arweave';
 import { ScriptNavigationState } from '@/interfaces/router';
 import { QUERY_CONVERSATIONS } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
-import { findTag } from '@/utils/common';
+import { commonUpdateQuery, findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';
 import {
   Paper,
@@ -19,9 +44,64 @@ import {
   useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import { LoadingContainer } from '@/styles/components';
+
+const ConversationElement = ({
+  cid,
+  currentConversationId,
+  setCurrentConversationId,
+}: {
+  cid: number;
+  currentConversationId: number;
+  setCurrentConversationId: Dispatch<SetStateAction<number>>;
+}) => {
+  const theme = useTheme();
+  const handleListItemClick = useCallback(
+    () => setCurrentConversationId(cid),
+    [setCurrentConversationId],
+  );
+
+  return (
+    <ListItemButton
+      alignItems='center'
+      selected={cid === currentConversationId}
+      onClick={handleListItemClick}
+      sx={{
+        background: theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
+        borderRadius: '21px',
+        width: '100%',
+        justifyContent: 'center',
+        height: '91px',
+        color: theme.palette.secondary.contrastText,
+        '&.Mui-selected, &.Mui-selected:hover': {
+          opacity: 1,
+          backdropFilter: 'brightness(0.5)',
+          color: theme.palette.primary.contrastText,
+        },
+        '&:hover': {
+          backdropFilter: 'brightness(0.5)',
+        },
+      }}
+    >
+      <Typography
+        sx={{
+          fontStyle: 'normal',
+          fontWeight: 700,
+          fontSize: '15px',
+          lineHeight: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          textAlign: 'center',
+          color: 'inherit',
+        }}
+      >
+        Conversation {cid}
+      </Typography>
+    </ListItemButton>
+  );
+};
 
 const Conversations = ({
   currentConversationId,
@@ -47,7 +127,6 @@ const Conversations = ({
     data: conversationsData,
     loading: conversationsLoading,
     fetchMore: conversationsFetchMore,
-    refetch: conversationsRefetch,
   } = useQuery(QUERY_CONVERSATIONS, {
     variables: {
       address: userAddr,
@@ -76,12 +155,14 @@ const Conversations = ({
       tx.addTag(TAG_NAMES.operationName, CONVERSATION_START);
       tx.addTag(TAG_NAMES.scriptName, state.scriptName);
       tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
-      tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction as string);
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
+      tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
+      tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
       tx.addTag(TAG_NAMES.conversationIdentifier, `${id}`);
-      const result = await window.arweaveWallet.dispatch(tx);
-      console.log('conversation start' + result.id);
-      conversationsRefetch();
+      await window.arweaveWallet.dispatch(tx);
+
+      setConversationIds([id, ...conversationIds]);
+      setFilteredConversationIds([id, ...conversationIds]);
+      setCurrentConversationId(id);
     } catch (error) {
       enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
     }
@@ -93,14 +174,18 @@ const Conversations = ({
       const cids: number[] = conversationsData.transactions.edges.map((el: IEdge) =>
         parseFloat(findTag(el, 'conversationIdentifier') as string),
       );
-      setConversationIds(Array.from(new Set(cids)));
-      setFilteredConversationIds(Array.from(new Set(cids)));
-      setCurrentConversationId(Array.from(new Set(cids))[0]);
+
+      const sorted = [...cids].sort((a, b) => b - a);
+      setConversationIds(Array.from(new Set(sorted)));
+      setFilteredConversationIds(Array.from(new Set(sorted)));
+      setCurrentConversationId(Array.from(new Set(sorted))[0]);
     } else if (conversationsData && conversationsData.transactions.edges.length === 0) {
       setHasConversationNextPage(false);
       // no conversations yet, create new
       createNewConversation(1);
       setCurrentConversationId(1);
+    } else {
+      // do nothing
     }
   }, [conversationsData]);
 
@@ -112,28 +197,10 @@ const Conversations = ({
           after:
             conversations.length > 0 ? conversations[conversations.length - 1].cursor : undefined,
         },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          const newData = fetchMoreResult.transactions.edges;
-
-          const merged: IEdge[] =
-            prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-          for (let i = 0; i < newData.length; ++i) {
-            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-              merged.push(newData[i]);
-            }
-          }
-          const newResult = Object.assign({}, prev, {
-            transactions: {
-              edges: merged,
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-          return newResult;
-        },
+        updateQuery: commonUpdateQuery,
       });
     }
-  }, [isConversationOnScreen, hasConversationNextPage]);
+  }, [isConversationOnScreen, hasConversationNextPage, conversationsData]);
 
   useEffect(() => {
     if (conversationIds && conversationIds.length > 0) {
@@ -149,18 +216,17 @@ const Conversations = ({
     }
   }, [currentConversationId]);
 
-  const handleListItemClick = (cid: number) => {
-    setCurrentConversationId(cid);
-  };
-
-  const handleAddConversation = async () => {
-    const last: IEdge =
-      conversationsData.transactions.edges[conversationsData.transactions.edges.length - 1];
-    const cid = findTag(last, 'conversationIdentifier') as string;
-    await createNewConversation(parseFloat(cid) + 1);
+  const handleAddConversation = useCallback(async () => {
+    const last = Math.max(...conversationIds);
+    await createNewConversation(last + 1);
     setFilterConversations('');
-    setCurrentConversationId(parseFloat(cid) + 1);
-  };
+    setCurrentConversationId(last + 1);
+  }, [setFilterConversations, setCurrentConversationId, createNewConversation]);
+
+  const handleFilterConversations = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => setFilterConversations(e.target.value),
+    [setFilterConversations],
+  );
 
   return (
     <Paper
@@ -199,7 +265,7 @@ const Conversations = ({
             }}
             placeholder='Search Conversations...'
             value={filterConversations}
-            onChange={(event) => setFilterConversations(event.target.value)}
+            onChange={handleFilterConversations}
           />
           <Icon
             sx={{
@@ -233,46 +299,13 @@ const Conversations = ({
         }}
       >
         {conversationsLoading && <LoadingContainer theme={theme} className='dot-pulse' />}
-        {filteredConversationIds.map((cid, idx) => (
-          <ListItemButton
-            key={idx}
-            alignItems='center'
-            selected={cid === currentConversationId}
-            onClick={() => handleListItemClick(cid)}
-            sx={{
-              background: theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
-              borderRadius: '21px',
-              width: '100%',
-              justifyContent: 'center',
-              height: '91px',
-              color: theme.palette.secondary.contrastText,
-              '&.Mui-selected, &.Mui-selected:hover': {
-                opacity: 1,
-                backdropFilter: 'brightness(0.5)',
-                color: theme.palette.primary.contrastText,
-                // border: '4px solid transparent',
-                // background: 'linear-gradient(#434343, #434343) padding-box, linear-gradient(170.66deg, rgba(14, 255, 168, 0.29) -38.15%, rgba(151, 71, 255, 0.5) 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box',
-              },
-              '&:hover': {
-                backdropFilter: 'brightness(0.5)',
-              },
-            }}
-          >
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '15px',
-                lineHeight: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-                color: 'inherit',
-              }}
-            >
-              Conversation {cid}
-            </Typography>
-          </ListItemButton>
+        {filteredConversationIds.map((cid) => (
+          <ConversationElement
+            cid={cid}
+            key={cid}
+            currentConversationId={currentConversationId}
+            setCurrentConversationId={setCurrentConversationId}
+          />
         ))}
         <Box sx={{ paddingBottom: '8px' }} ref={conversationsTarget}></Box>
       </List>
