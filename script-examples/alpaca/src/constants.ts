@@ -32,6 +32,9 @@ export const PAYMENT_QUANTITY_TAG = 'Payment-Quantity';
 export const PAYMENT_TARGET_TAG = 'Payment-Target';
 export const REQUEST_TOKENS_TAG = 'Request-Tokens';
 export const RESPONSE_TOKENS_TAG = 'Response-Tokens';
+export const INFERENCE_TRANSACTION_TAG = 'Inference-Transaction';
+
+export const SCRIPT_INFERENCE_REQUEST = 'Script Inference Request';
 
 export const NET_ARWEAVE_URL = 'https://arweave.net';
 export const secondInMS = 1000;
