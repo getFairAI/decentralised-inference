@@ -61,7 +61,7 @@ const Operators = () => {
         variables: {
           after: allTxs && allTxs.length > 0 ? allTxs[allTxs.length - 1].cursor : null,
         },
-        updateQuery: commonUpdateQuery
+        updateQuery: commonUpdateQuery,
       });
     }
   }, [isOnScreen, hasNextPage]);
@@ -85,7 +85,8 @@ const Operators = () => {
           });
           const modelTx = queryResult.data.transactions.edges[0];
           const correctFee =
-            parseInt(el.node.quantity.winston, 10) === parseInt(findTag(modelTx, 'modelFee') as string, 10);
+            parseInt(el.node.quantity.winston, 10) ===
+            parseInt(findTag(modelTx, 'modelFee') as string, 10);
           if (confirmed && correctFee) {
             filtered.push(el);
           }

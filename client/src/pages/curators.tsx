@@ -337,7 +337,10 @@ const Curators = () => {
     const winstonFee = arweave.ar.arToWinston(selectedModelFee.toString());
 
     if (currentBalance < selectedModelFee) {
-      enqueueSnackbar(`Not Enought Balance in your Wallet to pay Model Fee (${selectedModelFee} AR)`, { variant: 'error' });
+      enqueueSnackbar(
+        `Not Enought Balance in your Wallet to pay Model Fee (${selectedModelFee} AR)`,
+        { variant: 'error' },
+      );
       return;
     }
 

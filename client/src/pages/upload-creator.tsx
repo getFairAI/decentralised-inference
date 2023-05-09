@@ -138,8 +138,7 @@ const UploadCreator = () => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Uploaded Avatar Image{' '}
-            <br></br>
+            Uploaded Avatar Image <br></br>
             <a
               href={`https://viewblock.io/arweave/tx/${res.data.id}`}
               target={'_blank'}
@@ -208,8 +207,7 @@ const UploadCreator = () => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Uploaded Usage Notes File{' '}
-            <br></br>
+            Uploaded Usage Notes File <br></br>
             <a
               href={`https://viewblock.io/arweave/tx/${res.data.id}`}
               target={'_blank'}
@@ -270,7 +268,9 @@ const UploadCreator = () => {
     const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
 
     if (currentBalance < parseFloat(MARKETPLACE_FEE)) {
-      enqueueSnackbar('Not Enough Balance in your Wallet to pay MarketPlace Fee', { variant: 'error' });
+      enqueueSnackbar('Not Enough Balance in your Wallet to pay MarketPlace Fee', {
+        variant: 'error',
+      });
       return;
     }
 
@@ -290,8 +290,7 @@ const UploadCreator = () => {
       if (res.status === 200) {
         enqueueSnackbar(
           <>
-            Uploaded Usage Notes File{' '}
-            <br></br>
+            Uploaded Usage Notes File <br></br>
             <a
               href={`https://viewblock.io/arweave/tx/${res.data.id}`}
               target={'_blank'}
