@@ -61,25 +61,29 @@ const Message = ({
                 alignItems: message.type === 'response' ? 'flex-start' : 'flex-end',
               }}
             >
-             {message.contentType?.includes('image')? <img src={`${NET_ARWEAVE_URL}/${message.id}`}></img>: <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 400,
-                  fontSize: '25px',
-                  lineHeight: '34px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  color:
-                    message.type === 'response'
-                      ? theme.palette.secondary.contrastText
-                      : theme.palette.terciary.contrastText,
-                  whiteSpace: 'pre-wrap',
-                }}
-                gutterBottom
-                component={'pre'}
-              >
-                {message.msg}
-              </Typography>}
+              {message.contentType?.includes('image') ? (
+                <img src={`${NET_ARWEAVE_URL}/${message.id}`}></img>
+              ) : (
+                <Typography
+                  sx={{
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: '25px',
+                    lineHeight: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color:
+                      message.type === 'response'
+                        ? theme.palette.secondary.contrastText
+                        : theme.palette.terciary.contrastText,
+                    whiteSpace: 'pre-wrap',
+                  }}
+                  gutterBottom
+                  component={'pre'}
+                >
+                  {message.msg}
+                </Typography>
+              )}
               <MessageFooter message={message} index={index} />
             </CardContent>
           </Card>

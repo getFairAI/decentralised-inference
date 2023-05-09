@@ -22,13 +22,38 @@ import Bundlr from '@bundlr-network/client';
 import Arweave from 'arweave';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import { default as Pino } from 'pino';
-import { APP_NAME_TAG, APP_VERSION_TAG, CONTENT_TYPE_TAG, CONVERSATION_IDENTIFIER_TAG, NET_ARWEAVE_URL, OPERATION_NAME_TAG, PAYMENT_QUANTITY_TAG, PAYMENT_TARGET_TAG, REQUEST_TRANSACTION_TAG, RESPONSE_TRANSACTION_TAG, SCRIPT_CURATOR_TAG, SCRIPT_NAME_TAG, SCRIPT_USER_TAG, UNIX_TIME_TAG, secondInMS, successStatusCode } from './constants';
+import {
+  APP_NAME_TAG,
+  APP_VERSION_TAG,
+  CONTENT_TYPE_TAG,
+  CONVERSATION_IDENTIFIER_TAG,
+  NET_ARWEAVE_URL,
+  OPERATION_NAME_TAG,
+  PAYMENT_QUANTITY_TAG,
+  PAYMENT_TARGET_TAG,
+  REQUEST_TRANSACTION_TAG,
+  RESPONSE_TRANSACTION_TAG,
+  SCRIPT_CURATOR_TAG,
+  SCRIPT_NAME_TAG,
+  SCRIPT_USER_TAG,
+  UNIX_TIME_TAG,
+  secondInMS,
+  successStatusCode,
+} from './constants';
 import { IEdge } from './interfaces';
-import { queryCheckUserCuratorPayment, queryCheckUserPayment, queryCheckUserScriptRequests, queryOperatorFee, queryScriptFee, queryTransactionAnswered, queryTransactionsReceived } from './queries';
+import {
+  queryCheckUserCuratorPayment,
+  queryCheckUserPayment,
+  queryCheckUserScriptRequests,
+  queryOperatorFee,
+  queryScriptFee,
+  queryTransactionAnswered,
+  queryTransactionsReceived,
+} from './queries';
 
 const logger = Pino({
   name: 'kandinsky',
-  level: 'debug'
+  level: 'debug',
 });
 
 const arweave = Arweave.init({
@@ -74,7 +99,6 @@ const sendToBundlr = async (
   const convertedBalance = bundlr.utils.fromAtomic(atomicBalance);
   logger.info(`node balance (converted) = ${convertedBalance}`);
 
-
   const tags = [
     { name: APP_NAME_TAG, value: 'Fair Protocol' },
     { name: APP_VERSION_TAG, value: appVersion },
@@ -91,7 +115,7 @@ const sendToBundlr = async (
   ];
 
   try {
-    const transaction = await bundlr.uploadFile( response, { tags });
+    const transaction = await bundlr.uploadFile(response, { tags });
 
     logger.info(`Data uploaded ==> https://arweave.net/${transaction.id}`);
     return transaction.id;
@@ -107,7 +131,7 @@ const inference = async function (requestTx: IEdge) {
   logger.info(`User Prompt: ${text}`);
 
   const res = await fetch(`${CONFIG.url}/textToImage/${text}`, {
-    method: 'GET'
+    method: 'GET',
   });
   const tempData: { imgPath: string } = await res.json();
 
@@ -176,7 +200,7 @@ const getOperatorFee = async (address: string) => {
 
   const tags = firstValidRegistration.node.tags;
   const feeIndex = tags.findIndex((tag) => tag.name === 'Operator-Fee');
-  
+
   if (feeIndex < 0) {
     throw new Error("Program didn't found a valid Operator-Fee tag.");
   }
@@ -191,7 +215,7 @@ const getOperatorFee = async (address: string) => {
 
 const getScriptFee = async () => {
   const scriptFeeTxs = await queryScriptFee();
-  const latestScriptTx: IEdge | null= scriptFeeTxs.length > 0 ? scriptFeeTxs[0] : null;
+  const latestScriptTx: IEdge | null = scriptFeeTxs.length > 0 ? scriptFeeTxs[0] : null;
 
   if (!latestScriptTx) {
     throw new Error("Program didn't found any confirmed Script Creation.");
@@ -212,8 +236,9 @@ const getScriptFee = async () => {
 };
 
 const checkuserPaidScriptFee = async (curatorAddress: string, scriptFee: number) => {
-  const userCuratorPaymentEdges: IEdge[] =await queryCheckUserCuratorPayment(curatorAddress);
-  const userCuratorPaymentEdge: IEdge | null = userCuratorPaymentEdges.length > 0 ? userCuratorPaymentEdges[0] : null;
+  const userCuratorPaymentEdges: IEdge[] = await queryCheckUserCuratorPayment(curatorAddress);
+  const userCuratorPaymentEdge: IEdge | null =
+    userCuratorPaymentEdges.length > 0 ? userCuratorPaymentEdges[0] : null;
 
   if (!userCuratorPaymentEdge) {
     throw new Error("Program didn't found any confirmed Curator Payment From the user.");
@@ -222,10 +247,15 @@ const checkuserPaidScriptFee = async (curatorAddress: string, scriptFee: number)
   const { confirmed: userPaymentConfirmed } = await arweave.transactions.getStatus(
     userCuratorPaymentEdge.node.id,
   );
-  const isTransactionConfirmed = userPaymentConfirmed && userPaymentConfirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
+  const isTransactionConfirmed =
+    userPaymentConfirmed &&
+    userPaymentConfirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
 
   if (isTransactionConfirmed) {
-    const totalAmountPaid = userCuratorPaymentEdges.reduce((a, b) => a + parseFloat(b.node.quantity.winston), 0);
+    const totalAmountPaid = userCuratorPaymentEdges.reduce(
+      (a, b) => a + parseFloat(b.node.quantity.winston),
+      0,
+    );
     if (totalAmountPaid < scriptFee) {
       throw new Error('User has not paid curator the necessary amount');
     }
@@ -240,13 +270,21 @@ const checkUserPaidPastInferences = async (userAddress: string, operatorFee: num
   const checkUserScriptRequestsEdges: IEdge[] = await queryCheckUserScriptRequests(userAddress);
 
   for (const scriptRequest of checkUserScriptRequestsEdges) {
-    const checkUserPaymentEdges: IEdge[] = await queryCheckUserPayment(userAddress, scriptRequest.node.id);
+    const checkUserPaymentEdges: IEdge[] = await queryCheckUserPayment(
+      userAddress,
+      scriptRequest.node.id,
+    );
 
-    if (checkUserPaymentEdges.length === 0 || operatorFee > parseFloat(checkUserPaymentEdges[0].node.quantity.winston)) {
-      throw new Error('User has not paid the necessary amount to the operators for the previous requests');
+    if (
+      checkUserPaymentEdges.length === 0 ||
+      operatorFee > parseFloat(checkUserPaymentEdges[0].node.quantity.winston)
+    ) {
+      throw new Error(
+        'User has not paid the necessary amount to the operators for the previous requests',
+      );
     }
   }
-  
+
   return true;
 };
 
@@ -259,14 +297,16 @@ const processRequest = async (requestTx: IEdge, operatorFee: number) => {
   await checkUserPaidPastInferences(requestTx.node.owner.address, operatorFee);
 
   const appVersion = requestTx.node.tags.find((tag) => tag.name === 'App-Version')?.value;
-  const conversationIdentifier = requestTx.node.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value;
+  const conversationIdentifier = requestTx.node.tags.find(
+    (tag) => tag.name === 'Conversation-Identifier',
+  )?.value;
   if (!appVersion || !conversationIdentifier) {
     throw new Error('Invalid App Version or Conversation Identifier');
   }
 
   const inferenceResult = await inference(requestTx);
   logger.info(`Inference Result: ${inferenceResult}`);
-    
+
   const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
   const updloadResultId = await sendToBundlr(
     inferenceResult,
@@ -276,9 +316,9 @@ const processRequest = async (requestTx: IEdge, operatorFee: number) => {
     conversationIdentifier,
     quantity,
   );
-  
+
   if (updloadResultId) {
-    await sendFee( 
+    await sendFee(
       quantity,
       appVersion,
       requestTx.node.owner.address,
@@ -288,7 +328,6 @@ const processRequest = async (requestTx: IEdge, operatorFee: number) => {
     );
   }
 };
-
 
 const start = async () => {
   try {
@@ -301,7 +340,7 @@ const start = async () => {
     for (const edge of requestTxs) {
       // Check if request already answered:
       const responseTxs: IEdge[] = await queryTransactionAnswered(edge.node.id, address);
-      
+
       if (responseTxs.length === 0) {
         await processRequest(edge, operatorFee);
       } else {

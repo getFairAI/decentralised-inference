@@ -80,8 +80,8 @@ const Conversations = ({
       tx.addTag(TAG_NAMES.conversationIdentifier, `${id}`);
       const result = await window.arweaveWallet.dispatch(tx);
       console.log('conversation start' + result.id);
-      setConversationIds([id, ...conversationIds ]);
-      setFilteredConversationIds([id, ...conversationIds ]);
+      setConversationIds([id, ...conversationIds]);
+      setFilteredConversationIds([id, ...conversationIds]);
       setCurrentConversationId(id);
     } catch (error) {
       enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
