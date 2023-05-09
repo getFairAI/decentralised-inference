@@ -436,7 +436,7 @@ const start = async (useContext = false) => {
       const responseTxs: IEdge[] = await queryTransactionAnswered(edge.node.id, address);
 
       if (responseTxs.length === 0) {
-        processRequest(edge, operatorFee, useContext);
+        await processRequest(edge, operatorFee, useContext);
       } else {
         // Request already answered; skip
       }
