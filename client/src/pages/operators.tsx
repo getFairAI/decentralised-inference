@@ -1,7 +1,7 @@
 import { DEFAULT_TAGS, SCRIPT_CREATION_PAYMENT, TAG_NAMES } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { GET_TX, QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
-import { findTag, genLoadingArray } from '@/utils/common';
+import { commonUpdateQuery, findTag, genLoadingArray } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Container,
@@ -56,32 +56,15 @@ const Operators = () => {
 
   useEffect(() => {
     if (isOnScreen && hasNextPage) {
+      const allTxs = data.transactions.edges;
       fetchMore({
         variables: {
-          after: txs[txs.length - 1].cursor,
+          after: allTxs && allTxs.length > 0 ? allTxs[allTxs.length - 1].cursor : null,
         },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          const newData = fetchMoreResult.transactions.edges;
-
-          const merged: IEdge[] =
-            prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-          for (let i = 0; i < newData.length; ++i) {
-            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-              merged.push(newData[i]);
-            }
-          }
-          const newResult = Object.assign({}, prev, {
-            transactions: {
-              edges: merged,
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-          return newResult;
-        },
+        updateQuery: commonUpdateQuery,
       });
     }
-  }, [isOnScreen, txs]);
+  }, [isOnScreen, hasNextPage]);
 
   /**
    * @description Effect that runs on data changes;
@@ -102,7 +85,8 @@ const Operators = () => {
           });
           const modelTx = queryResult.data.transactions.edges[0];
           const correctFee =
-            parseInt(el.node.quantity.ar) === parseInt(findTag(modelTx, 'modelFee') as string);
+            parseInt(el.node.quantity.winston, 10) ===
+            parseInt(findTag(modelTx, 'modelFee') as string, 10);
           if (confirmed && correctFee) {
             filtered.push(el);
           }

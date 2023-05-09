@@ -83,7 +83,7 @@ const Curators = () => {
   const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress, currentBalance } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
   const { field: modelField } = useController({ name: 'model', control });
@@ -334,6 +334,15 @@ const Curators = () => {
     // upload the file
     const tags = [];
     const modelData = JSON.parse(data.model) as IEdge;
+    const winstonFee = arweave.ar.arToWinston(selectedModelFee.toString());
+
+    if (currentBalance < selectedModelFee) {
+      enqueueSnackbar(
+        `Not Enought Balance in your Wallet to pay Model Fee (${selectedModelFee} AR)`,
+        { variant: 'error' },
+      );
+      return;
+    }
 
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
@@ -348,7 +357,7 @@ const Curators = () => {
     });
     tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_CREATION });
     tags.push({ name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) });
-    tags.push({ name: TAG_NAMES.paymentQuantity, value: selectedModelFee.toString() });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: winstonFee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: modelData.node.owner.address });
     if (data.description) tags.push({ name: TAG_NAMES.description, value: data.description });
     tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
@@ -376,7 +385,7 @@ const Curators = () => {
       }
       try {
         const tx = await arweave.createTransaction({
-          quantity: selectedModelFee.toString(),
+          quantity: winstonFee,
           target: modelData.node.owner.address,
         });
         tx.addTag(TAG_NAMES.appName, APP_NAME);

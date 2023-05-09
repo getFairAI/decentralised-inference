@@ -1,25 +1,87 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import CONFIG from '../config.json' assert { type: 'json' };
 import fs from 'fs';
 import Bundlr from '@bundlr-network/client';
 import Arweave from 'arweave';
-import { ApolloClient, gql, InMemoryCache } from '@apollo/client/core';
 import { JWKInterface } from 'arweave/node/lib/wallet';
+import { default as Pino } from 'pino';
+import {
+  APP_NAME_TAG,
+  APP_VERSION_TAG,
+  CONTENT_TYPE_TAG,
+  CONVERSATION_IDENTIFIER_TAG,
+  MAX_ALPACA_TOKENS,
+  NET_ARWEAVE_URL,
+  OPERATION_NAME_TAG,
+  PAYMENT_QUANTITY_TAG,
+  PAYMENT_TARGET_TAG,
+  REQUEST_TOKENS_TAG,
+  REQUEST_TRANSACTION_TAG,
+  RESPONSE_TOKENS_TAG,
+  RESPONSE_TRANSACTION_TAG,
+  SCRIPT_CURATOR_TAG,
+  SCRIPT_NAME_TAG,
+  SCRIPT_USER_TAG,
+  UNIX_TIME_TAG,
+  secondInMS,
+  successStatusCode,
+} from './constants';
+import { AlpacaHttpResponse, IEdge } from './interfaces';
+import {
+  queryCheckUserCuratorPayment,
+  queryCheckUserPayment,
+  queryCheckUserScriptRequests,
+  queryOperatorFee,
+  queryRequestsForConversation,
+  queryResponsesForRequests,
+  queryScriptFee,
+  queryTransactionAnswered,
+  queryTransactionsReceived,
+} from './queries';
 
-const sendToBundlr = async function (
-  fullText: string,
+const logger = Pino({
+  name: 'alpaca',
+  level: 'debug',
+});
+
+const arweave = Arweave.init({
+  host: 'arweave.net',
+  port: 443,
+  protocol: 'https',
+});
+
+const JWK: JWKInterface = JSON.parse(fs.readFileSync('wallet.json').toString());
+// initailze the bundlr SDK
+// const bundlr: Bundlr = new (Bundlr as any).default(
+const bundlr = new Bundlr('https://node1.bundlr.network', 'arweave', JWK);
+
+const sendToBundlr = async (
+  response: AlpacaHttpResponse,
   appVersion: string,
   userAddress: string,
   requestTransaction: string,
   conversationIdentifier: string,
-  JWK: JWKInterface,
   paymentQuantity: string,
-) {
-  // initailze the bundlr SDK
-  // const bundlr: Bundlr = new (Bundlr as any).default(
-  const bundlr: Bundlr = new Bundlr('http://node1.bundlr.network', 'arweave', JWK);
-
+) => {
   // Print your wallet address
-  console.log(`wallet address = ${bundlr.address}`);
+  logger.info(`Wallet address: ${bundlr.address}`);
 
   // Check the price to upload 1MB of data
   // The function accepts a number of bytes, so to check the price of
@@ -31,612 +93,356 @@ const sendToBundlr = async function (
   // on fractional numbers in JavaScript, it is common to use atomic units.
   // This is a way to represent a floating point (decimal) number using non-decimal notation.
   // Once we have the value in atomic units, we can convert it into something easier to read.
-  const price1MBConverted = bundlr.utils.unitConverter(price1MBAtomic);
-  console.log(`Uploading 1MB to Bundlr costs $${price1MBConverted}`);
-
-  /*
-	const { size } = await fs.promises.stat(fileName);
-	const price = await bundlr.getPrice(size);
-	console.log(price);
-  */
+  const price1MBConverted = bundlr.utils.fromAtomic(price1MBAtomic);
+  logger.info(`Uploading 1MB to Bundlr costs $${price1MBConverted}`);
 
   // Get loaded balance in atomic units
   const atomicBalance = await bundlr.getLoadedBalance();
-  console.log(`node balance (atomic units) = ${atomicBalance}`);
+  logger.info(`node balance (atomic units) = ${atomicBalance}`);
 
   // Convert balance to an easier to read format
-  const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
-  console.log(`node balance (converted) = ${convertedBalance}`);
+  const convertedBalance = bundlr.utils.fromAtomic(atomicBalance);
+  logger.info(`node balance (converted) = ${convertedBalance}`);
 
+  const promptTokens = response.usage.prompt_tokens;
+  const responseTokens = response.usage.completion_tokens;
   const tags = [
-    { name: 'App-Name', value: 'Fair Protocol' },
-    { name: 'App-Version', value: appVersion },
-    { name: 'Script-Curator', value: CONFIG.scriptCurator },
-    { name: 'Script-Name', value: CONFIG.scriptName },
-    { name: 'Script-User', value: userAddress },
-    { name: 'Request-Transaction', value: requestTransaction },
-    { name: 'Operation-Name', value: 'Script Inference Response' },
-    { name: 'Conversation-Identifier', value: conversationIdentifier },
-    { name: 'Content-Type', value: 'application/json' },
-    { name: 'Payment-Quantity', value: paymentQuantity },
-    { name: 'Payment-Target', value: CONFIG.marketplaceWallet },
-    { name: 'Unix-Time', value: (Date.now() / 1000).toString() },
+    { name: APP_NAME_TAG, value: 'Fair Protocol' },
+    { name: APP_VERSION_TAG, value: appVersion },
+    { name: SCRIPT_CURATOR_TAG, value: CONFIG.scriptCurator },
+    { name: SCRIPT_NAME_TAG, value: CONFIG.scriptName },
+    { name: SCRIPT_USER_TAG, value: userAddress },
+    { name: REQUEST_TRANSACTION_TAG, value: requestTransaction },
+    { name: OPERATION_NAME_TAG, value: 'Script Inference Response' },
+    { name: CONVERSATION_IDENTIFIER_TAG, value: conversationIdentifier },
+    { name: CONTENT_TYPE_TAG, value: 'application/json' },
+    { name: PAYMENT_QUANTITY_TAG, value: paymentQuantity },
+    { name: PAYMENT_TARGET_TAG, value: CONFIG.marketplaceWallet },
+    { name: UNIX_TIME_TAG, value: (Date.now() / secondInMS).toString() },
+    { name: REQUEST_TOKENS_TAG, value: `${promptTokens}` },
+    { name: RESPONSE_TOKENS_TAG, value: `${responseTokens}` },
   ];
 
   try {
-    const transaction = await bundlr.upload(fullText, { tags });
+    const transaction = await bundlr.upload(response.output, { tags });
 
-    console.log(`Data uploaded ==> https://arweave.net/${transaction.id}`);
+    logger.info(`Data uploaded ==> https://arweave.net/${transaction.id}`);
     return transaction.id;
   } catch (e) {
-    console.log('Error uploading file ', e);
+    // throw error to be handled by caller
+    throw new Error(`Could not upload to bundlr: ${e}`);
   }
 };
 
-const inference = async function (message: string) {
-  const data = Buffer.from(message, 'utf-8').toString();
-  console.log(data);
-  const res = await fetch(CONFIG.url, {
-    method: 'POST',
-    body: message,
-  });
-  const tempJSON = await res.json();
-  const fullText = tempJSON.output;
-  console.log(fullText);
+const inferenceWithContext = async (
+  requestTx: IEdge,
+  text: string,
+  conversationIdentifier: string,
+) => {
+  // fetch old messages from same conversation
+  const requestTxs = await queryRequestsForConversation(
+    requestTx.node.owner.address,
+    conversationIdentifier,
+  );
+  // filter out current tx and tx newer than current;
+  const pastTxs: IEdge[] = requestTxs.filter((tx: IEdge) => tx.node.id !== requestTx.node.id);
+  if (pastTxs.length === 0) {
+    // if no previous requests
+    const res = await fetch(CONFIG.url, {
+      method: 'POST',
+      body: text,
+    });
+    const response: AlpacaHttpResponse = await res.json();
+    return response;
+  } else {
+    const requestIds = pastTxs.map((tx) => tx.node.id);
+    // find responses for past requests found
+    const responseTxs = await queryResponsesForRequests(
+      requestTx.node.owner.address,
+      conversationIdentifier,
+      requestIds,
+    );
 
-  return fullText;
+    const responsesToConsider: IEdge[] = [];
+
+    let count = 0;
+    responseTxs.forEach((curr) => {
+      const promptTokens = curr.node.tags.find((tag) => tag.name === REQUEST_TOKENS_TAG)?.value;
+      const responseTokens = curr.node.tags.find((tag) => tag.name === RESPONSE_TOKENS_TAG)?.value;
+      const totalPairCount =
+        parseInt(promptTokens ?? '0', 10) + parseInt(responseTokens ?? '0', 10);
+      count = count + totalPairCount;
+      if (count < MAX_ALPACA_TOKENS) {
+        responsesToConsider.push(curr);
+      }
+    });
+
+    // find requests pairs
+    const requestsToConsider = pastTxs.filter(
+      (pastTx) =>
+        responseTxs.findIndex(
+          (responseTx) =>
+            responseTx.node.tags.find((tag) => tag.name === REQUEST_TRANSACTION_TAG)?.value ===
+            pastTx.node.id,
+        ) >= 0,
+    );
+
+    const allMessages = [...requestsToConsider, ...responsesToConsider].sort((a, b) => {
+      const aTime = parseFloat(a.node.tags.find((tag) => tag.name === UNIX_TIME_TAG)?.value ?? '');
+      const bTime = parseFloat(b.node.tags.find((tag) => tag.name === UNIX_TIME_TAG)?.value ?? '');
+      return aTime - bTime;
+    });
+
+    const promptPieces = ['Take into consideration the previous messages: {'];
+    for (const tx of allMessages) {
+      const txData = await fetch(`${NET_ARWEAVE_URL}/${tx.node.id}`);
+      const decodedTxData = await (await txData.blob()).text();
+      if (tx.node.owner.address === requestTx.node.owner.address) {
+        promptPieces.push(`Me: ${decodedTxData}`);
+      } else {
+        promptPieces.push(`Response: ${decodedTxData}`);
+      }
+    }
+    promptPieces.push('}');
+
+    promptPieces.push(` Answer the following: ${text}`);
+    const res = await fetch(CONFIG.url, {
+      method: 'POST',
+      body: promptPieces.join(' '),
+    });
+    const response: AlpacaHttpResponse = await res.json();
+    return response;
+  }
 };
 
-const sendFee = async function (
-  arweave: Arweave,
+const inference = async (requestTx: IEdge, conversationIdentifier: string, useContext: boolean) => {
+  const requestData = await fetch(`${NET_ARWEAVE_URL}/${requestTx.node.id}`);
+  const text = await (await requestData.blob()).text();
+  logger.info(`User Prompt: ${text}`);
+
+  if (useContext) {
+    return inferenceWithContext(requestTx, text, conversationIdentifier);
+  } else {
+    const res = await fetch(CONFIG.url, {
+      method: 'POST',
+      body: text,
+    });
+    const response: AlpacaHttpResponse = await res.json();
+    return response;
+  }
+};
+
+const sendFee = async (
   quantity: string,
-  fullText: string,
   appVersion: string,
   userAddress: string,
   requestTransaction: string,
   conversationIdentifier: string,
   responseTransaction: string,
-  key: JWKInterface,
-) {
+) => {
   //  create a wallet-to-wallet transaction sending the marketplace fee to the target address
   const tx = await arweave.createTransaction(
     {
       target: CONFIG.marketplaceWallet,
       quantity,
     },
-    key,
+    JWK,
   );
 
-  tx.addTag('App-Name', 'Fair Protocol');
-  tx.addTag('App-Version', appVersion);
-  tx.addTag('Script-Curator', CONFIG.scriptCurator);
-  tx.addTag('Script-Name', CONFIG.scriptName);
-  tx.addTag('Script-User', userAddress);
-  tx.addTag('Request-Transaction', requestTransaction);
-  tx.addTag('Operation-Name', 'Fee Redistribution');
-  tx.addTag('Conversation-Identifier', conversationIdentifier);
-  tx.addTag('Content-Type', 'application/json');
-  tx.addTag('Response-Transaction', responseTransaction);
-  tx.addTag('Unix-Time', (Date.now() / 1000).toString());
+  tx.addTag(APP_NAME_TAG, 'Fair Protocol');
+  tx.addTag(APP_VERSION_TAG, appVersion);
+  tx.addTag(SCRIPT_CURATOR_TAG, CONFIG.scriptCurator);
+  tx.addTag(SCRIPT_NAME_TAG, CONFIG.scriptName);
+  tx.addTag(SCRIPT_USER_TAG, userAddress);
+  tx.addTag(REQUEST_TRANSACTION_TAG, requestTransaction);
+  tx.addTag(OPERATION_NAME_TAG, 'Fee Redistribution');
+  tx.addTag(CONVERSATION_IDENTIFIER_TAG, conversationIdentifier);
+  tx.addTag(CONTENT_TYPE_TAG, 'application/json');
+  tx.addTag(RESPONSE_TRANSACTION_TAG, responseTransaction);
+  tx.addTag(UNIX_TIME_TAG, (Date.now() / secondInMS).toString());
 
   // you must sign the transaction with your key before posting
-  await arweave.transactions.sign(tx, key);
-
-  console.log(tx);
+  await arweave.transactions.sign(tx, JWK);
 
   // post the transaction
   const res = await arweave.transactions.post(tx);
-  if (res.status === 200) {
-    console.log('Fee paid successfully to the Marketplace.');
+  if (res.status === successStatusCode) {
+    logger.info('Fee paid successfully to the Marketplace.');
   } else {
-    console.log(res);
+    throw new Error(res.statusText);
   }
 };
 
-const start = async function () {
-  // load the JWK wallet key file from disk
-  const JWK = JSON.parse(fs.readFileSync('wallet.json').toString());
+const getOperatorFee = async (address: string) => {
+  const operatorRegistrationTxs: IEdge[] = await queryOperatorFee(address);
 
-  const clientGateway = new ApolloClient({
-    uri: 'https://arweave.net:443/graphql',
-    cache: new InMemoryCache(),
-  });
-
-  const arweave = Arweave.init({
-    host: 'arweave.net',
-    port: 443,
-    protocol: 'https',
-  });
-
-  const address = await arweave.wallets.jwkToAddress(JWK);
-
-  const buildQueryOperatorFee = () => {
-    const queryObjectOperatorFee = {
-      query: gql`
-		query {
-		    transactions(
-		    	first: 1,
-		    	owners:["${address}"],
-		    	tags: [
-			    	{
-					name: "Operation-Name",
-					values: ["Operator Registration"]
-				},
-				{
-					name: "Script-Curator",
-					values: ["${CONFIG.scriptCurator}"]
-				},
-				{
-					name: "Script-Name",
-					values: ["${CONFIG.scriptName}"]
-				}
-			],
-			sort: HEIGHT_DESC
-		    ) {
-			edges {
-			    node {
-				id
-				tags {
-				    name
-				    value
-				}
-				block {
-				    id
-				    timestamp
-				    height
-				    previous
-				}
-			    }
-			}
-		    }
-		}
-	`,
-    };
-    return queryObjectOperatorFee;
-  };
-
-  let query = buildQueryOperatorFee();
-  let operatorFee = -1;
-  try {
-    const resultOperatorFee = await clientGateway.query(query);
-    const edges = resultOperatorFee.data.transactions.edges;
-
-    let firstValidTransaction = -1;
-    for (let i = 0; i < edges.length; i++) {
-      const getTransactionStatus = await arweave.transactions.getStatus(edges[i].node.id);
-      const isTransactionConfirmed =
-        !!getTransactionStatus.confirmed &&
-        getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
-      if (isTransactionConfirmed) {
-        firstValidTransaction = i;
-        break;
-      }
+  let firstValidRegistration: IEdge | null = null;
+  for (const tx of operatorRegistrationTxs) {
+    const getTransactionStatus = await arweave.transactions.getStatus(tx.node.id);
+    const isTransactionConfirmed =
+      !!getTransactionStatus.confirmed &&
+      getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
+    if (isTransactionConfirmed) {
+      firstValidRegistration = tx;
+      break;
     }
-    if (firstValidTransaction == -1) {
-      throw new Error("Program didn't found any conformed Operator-Fee.");
-    }
-
-    // console.log(edges);
-    const tags = edges[firstValidTransaction].node.tags;
-    for (let i = 0; i < tags.length; i++) {
-      if (tags[i].name == 'Operator-Fee') {
-        operatorFee = tags[i].value;
-        console.log(tags[i].value);
-      }
-    }
-    if (operatorFee == -1) {
-      throw new Error("Program didn't found a valid Operator-Fee tag.");
-    }
-  } catch (e) {
-    console.log('GraphQL query for Operator-Fee failed: ', e);
   }
 
-  const buildQueryTransactionsReceived = () => {
-    const queryObjectTransactionsReceived = {
-      query: gql`
-		query {
-		    transactions(
-		    	tags: [
-			    	{
-					name: "Operation-Name",
-					values: ["Script Inference Request"]
-				},
-				{
-					name: "Script-Curator",
-					values: ["${CONFIG.scriptCurator}"]
-				},
-				{
-					name: "Script-Name",
-					values: ["${CONFIG.scriptName}"]
-				},
-				{
-					name: "Script-Operator",
-					values: ["${address}"]
-				}
-			],
-			sort: HEIGHT_DESC
-		    ) {
-			edges {
-			    node {
-				id
-				owner {
-				    address
-				    key
-				}
-				quantity {
-				    winston
-				    ar
-				}
-				tags {
-				    name
-				    value
-				}
-			    }
-			}
-		    }
-		}
-	`,
-    };
-    return queryObjectTransactionsReceived;
-  };
+  if (!firstValidRegistration) {
+    throw new Error("Program didn't found any confirmed Operator Registration.");
+  }
 
-  const buildQueryTransactionAnswered = (transactionId: string) => {
-    const queryObjectTransactionAnswered = {
-      query: gql`
-		query {
-		    transactions(
-		    	first: 1,
-		    	owners:["${address}"],
-		    	tags: [
-			    	{
-					name: "Operation-Name",
-					values: ["Script Inference Response"]
-				},
-				{
-					name: "Script-Curator",
-					values: ["${CONFIG.scriptCurator}"]
-				},
-				{
-					name: "Script-Name",
-					values: ["${CONFIG.scriptName}"]
-				},
-				{
-					name: "Request-Transaction",
-					values: ["${transactionId}"]
-				}
-			],
-			sort: HEIGHT_DESC
-		    ) {
-			edges {
-			    node {
-				id
-				owner {
-				    address
-				    key
-				}
-				quantity {
-				    winston
-				    ar
-				}
-				tags {
-				    name
-				    value
-				}
-			    }
-			}
-		    }
-		}
-	`,
-    };
-    return queryObjectTransactionAnswered;
-  };
+  const tags = firstValidRegistration.node.tags;
+  const feeIndex = tags.findIndex((tag) => tag.name === 'Operator-Fee');
 
-  const buildQueryCheckUserScriptRequests = (userAddress: string) => {
-    const queryObjectCheckUserScriptRequests = {
-      query: gql`
-		query {
-		    transactions(
-		    	owners:["${userAddress}"],
-		    	tags: [
-			    	{
-					name: "Operation-Name",
-					values: ["Script Inference Request"]
-				},
-				{
-					name: "Script-Curator",
-					values: ["${CONFIG.scriptCurator}"]
-				},
-				{
-					name: "Script-Name",
-					values: ["${CONFIG.scriptName}"]
-				}
-			],
-			sort: HEIGHT_DESC
-		    ) {
-			edges {
-			    node {
-				id
-				quantity {
-				    winston
-				    ar
-				}
-				tags {
-				    name
-				    value
-				}
-			    }
-			}
-		    }
-		}
-	`,
-    };
-    return queryObjectCheckUserScriptRequests;
-  };
+  if (feeIndex < 0) {
+    throw new Error("Program didn't found a valid Operator-Fee tag.");
+  }
 
-  const buildQueryCheckUserPayment = (userAddress: string, inferenceTransaction: string) => {
-    const queryObjectCheckUserPayment = {
-      query: gql`
-		query {
-		    transactions(
-		    	first: 1,
-		    	owners:["${userAddress}"],
-		    	tags: [
-			    	{
-					name: "Operation-Name",
-					values: ["Inference Payment"]
-				},
-				{
-					name: "Script-Curator",
-					values: ["${CONFIG.scriptCurator}"]
-				},
-				{
-					name: "Script-Name",
-					values: ["${CONFIG.scriptName}"]
-				},
-				{
-					name: "Inference-Transaction",
-					values: ["${inferenceTransaction}"]
-				}
-			],
-			sort: HEIGHT_DESC
-		    ) {
-			edges {
-			    node {
-				id
-				quantity {
-				    winston
-				    ar
-				}
-				tags {
-				    name
-				    value
-				}
-			    }
-			}
-		    }
-		}
-	`,
-    };
-    return queryObjectCheckUserPayment;
-  };
+  const operatorFee = parseFloat(tags[feeIndex].value);
+  if (Number.isNaN(operatorFee) || operatorFee <= 0) {
+    throw new Error('Invalid Operator Fee Found for registration.');
+  }
 
-  const buildQueryScriptFee = () => {
-    const queryObjectScriptFee = {
-      query: gql`
-		query {
-		    transactions(
-		    	first: 1,
-		    	owners:["${CONFIG.scriptCurator}"],
-		    	tags: [
-			    	{
-					name: "Operation-Name",
-					values: ["Script Creation"]
-				},
-				{
-					name: "Script-Name",
-					values: ["${CONFIG.scriptName}"]
-				}
-			],
-			sort: HEIGHT_DESC
-		    ) {
-			edges {
-			    node {
-				id
-				quantity {
-				    winston
-				    ar
-				}
-				tags {
-				    name
-				    value
-				}
-			    }
-			}
-		    }
-		}
-	`,
-    };
-    return queryObjectScriptFee;
-  };
+  return operatorFee;
+};
 
-  const buildQueryCheckUserCuratorPayment = (userAddress: string) => {
-    const queryObjectCheckUserCuratorPayment = {
-      query: gql`
-		query {
-		    transactions(
-		    	owners:["${userAddress}"],
-		    	recipients:["${CONFIG.scriptCurator}"],
-		    	tags: [
-			    	{
-					name: "Operation-Name",
-					values: ["Script Fee Payment"]
-				},
-				{
-					name: "Script-Curator",
-					values: ["${CONFIG.scriptCurator}"]
-				},
-				{
-					name: "Script-Name",
-					values: ["${CONFIG.scriptName}"]
-				}
-			],
-			sort: HEIGHT_DESC
-		    ) {
-			edges {
-			    node {
-				id
-				quantity {
-				    winston
-				    ar
-				}
-				tags {
-				    name
-				    value
-				}
-			    }
-			}
-		    }
-		}
-	`,
-    };
-    return queryObjectCheckUserCuratorPayment;
-  };
+const getScriptFee = async () => {
+  const ScriptFeeTxs = await queryScriptFee();
+  const latestScriptTx: IEdge | null = ScriptFeeTxs.length > 0 ? ScriptFeeTxs[0] : null;
 
+  if (!latestScriptTx) {
+    throw new Error("Program didn't found any confirmed Script Creation.");
+  }
+
+  const scriptTags = latestScriptTx.node.tags;
+  const scriptFeeIndex = scriptTags.findIndex((tag) => tag.name === 'Script-Fee');
+
+  if (scriptFeeIndex < 0) {
+    throw new Error("Program didn't found a valid Script-Fee tag.");
+  }
+
+  const scriptFee = parseFloat(scriptTags[scriptFeeIndex].value);
+  if (Number.isNaN(scriptFee) || scriptFee <= 0) {
+    throw new Error('Invalid Script Fee Found for Script Creation');
+  }
+  return scriptFee;
+};
+
+const checkuserPaidScriptFee = async (curatorAddress: string, scriptFee: number) => {
+  const userCuratorPaymentEdges: IEdge[] = await queryCheckUserCuratorPayment(curatorAddress);
+  const userCuratorPaymentEdge: IEdge | null =
+    userCuratorPaymentEdges.length > 0 ? userCuratorPaymentEdges[0] : null;
+
+  if (!userCuratorPaymentEdge) {
+    throw new Error("Program didn't found any confirmed Curator Payment From the user.");
+  }
+
+  const { confirmed: userPaymentConfirmed } = await arweave.transactions.getStatus(
+    userCuratorPaymentEdge.node.id,
+  );
+  const isTransactionConfirmed =
+    userPaymentConfirmed &&
+    userPaymentConfirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
+
+  if (isTransactionConfirmed) {
+    const totalAmountPaid = userCuratorPaymentEdges.reduce(
+      (a, b) => a + parseFloat(b.node.quantity.winston),
+      0,
+    );
+    if (totalAmountPaid < scriptFee) {
+      throw new Error('User has not paid curator the necessary amount');
+    }
+  } else {
+    throw new Error('User Payments to the creator not yet confirmed.');
+  }
+
+  return true;
+};
+
+const checkUserPaidPastInferences = async (userAddress: string, operatorFee: number) => {
+  const checkUserScriptRequestsEdges: IEdge[] = await queryCheckUserScriptRequests(userAddress);
+
+  for (const scriptRequest of checkUserScriptRequestsEdges) {
+    const checkUserPaymentEdges: IEdge[] = await queryCheckUserPayment(
+      userAddress,
+      scriptRequest.node.id,
+    );
+
+    if (
+      checkUserPaymentEdges.length === 0 ||
+      operatorFee > parseFloat(checkUserPaymentEdges[0].node.quantity.winston)
+    ) {
+      throw new Error(
+        'User has not paid the necessary amount to the operators for the previous requests',
+      );
+    }
+  }
+
+  return true;
+};
+
+const processRequest = async (requestTx: IEdge, operatorFee: number, useContext: boolean) => {
+  // Check if user has paid the curator:
+  const scriptFee = await getScriptFee();
+  // checkUserPaidScriptFee will throw an error if the user has not paid the curator
+  await checkuserPaidScriptFee(requestTx.node.owner.address, scriptFee);
+
+  await checkUserPaidPastInferences(requestTx.node.owner.address, operatorFee);
+
+  const appVersion = requestTx.node.tags.find((tag) => tag.name === 'App-Version')?.value;
+  const conversationIdentifier = requestTx.node.tags.find(
+    (tag) => tag.name === 'Conversation-Identifier',
+  )?.value;
+  if (!appVersion || !conversationIdentifier) {
+    throw new Error('Invalid App Version or Conversation Identifier');
+  }
+
+  const inferenceResult = await inference(requestTx, conversationIdentifier, useContext);
+  logger.info(`Inference Result: ${inferenceResult.output}`);
+
+  const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
+  const updloadResultId = await sendToBundlr(
+    inferenceResult,
+    appVersion,
+    requestTx.node.owner.address,
+    requestTx.node.id,
+    conversationIdentifier,
+    quantity,
+  );
+
+  if (updloadResultId) {
+    await sendFee(
+      quantity,
+      appVersion,
+      requestTx.node.owner.address,
+      requestTx.node.id,
+      conversationIdentifier,
+      updloadResultId,
+    );
+  }
+};
+
+const start = async (useContext = false) => {
   try {
-    // load the JWK wallet key file from disk
-    const JWK = JSON.parse(fs.readFileSync('wallet.json').toString());
+    const address = await arweave.wallets.jwkToAddress(JWK);
 
-    query = buildQueryTransactionsReceived();
-    const resultTransactionsReceived = await clientGateway.query(query);
-    const edges = resultTransactionsReceived.data.transactions.edges;
-    // console.log(resultTransactionsReceived.data.transactions.edges);
+    const operatorFee = await getOperatorFee(address);
 
-    for (let i = 0; i < edges.length; i++) {
-      // Initialization of variables:
+    const requestTxs: IEdge[] = await queryTransactionsReceived(address);
 
-      let userHasPaidCurator = true;
-      let userHasPaidOperators = true;
-
+    for (const edge of requestTxs) {
       // Check if request already answered:
+      const responseTxs: IEdge[] = await queryTransactionAnswered(edge.node.id, address);
 
-      query = buildQueryTransactionAnswered(edges[i].node.id);
-      const resultTransactionAnswered = await clientGateway.query(query);
-      if (JSON.stringify(resultTransactionAnswered.data.transactions.edges) === '[]') {
-        // Curator Validations:
-
-        query = buildQueryScriptFee();
-        const scriptFeeQuery = await clientGateway.query(query);
-        const scriptFeeEdges = scriptFeeQuery.data.transactions.edges;
-
-        let scriptFee = -1;
-        for (let j = 0; j < scriptFeeEdges[0].node.tags.length; j++) {
-          if (scriptFeeEdges[0].node.tags[j].name == 'Script-Fee') {
-            scriptFee = parseFloat(scriptFeeEdges[0].node.tags[j].value);
-          }
-        }
-
-        query = buildQueryCheckUserCuratorPayment(edges[i].node.owner.address);
-        const userCuratorPayment = await clientGateway.query(query);
-        const userCuratorPaymentEdges = userCuratorPayment.data.transactions.edges;
-        const getTransactionStatus = await arweave.transactions.getStatus(
-          userCuratorPaymentEdges[0].node.id,
-        );
-        const isTransactionConfirmed =
-          !!getTransactionStatus.confirmed &&
-          getTransactionStatus.confirmed.number_of_confirmations > CONFIG.minBlockConfirmations;
-
-        if (isTransactionConfirmed) {
-          let curatorPaymentAmount = 0;
-          for (let i = 0; i < userCuratorPaymentEdges.length; i++) {
-            curatorPaymentAmount =
-              curatorPaymentAmount + userCuratorPaymentEdges[i].node.quantity.winston;
-          }
-          console.log(curatorPaymentAmount);
-          if (curatorPaymentAmount < scriptFee) {
-            userHasPaidCurator = false;
-          }
-          console.log(userHasPaidCurator);
-        }
-
-        // Operator Validations:
-
-        if (userHasPaidCurator) {
-          query = buildQueryCheckUserScriptRequests(edges[i].node.owner.address);
-          const checkUserScriptRequests = await clientGateway.query(query);
-          const checkUserScriptRequestsEdges = checkUserScriptRequests.data.transactions.edges;
-          console.log(checkUserScriptRequestsEdges[0]);
-
-          for (let i = 0; i < checkUserScriptRequestsEdges.length; i++) {
-            query = buildQueryCheckUserPayment(
-              edges[i].node.owner.address,
-              checkUserScriptRequestsEdges[i].node.id,
-            );
-            const checkUserPayment = await clientGateway.query(query);
-            const checkUserPaymentEdges = checkUserPayment.data.transactions.edges;
-            console.log(checkUserPaymentEdges[0]);
-
-            if (operatorFee > checkUserPaymentEdges[0].node.quantity.winston) {
-              userHasPaidOperators = false;
-            }
-          }
-        }
-
-        // Do Inference and send it to Bundlr:
-
-        if (userHasPaidCurator && userHasPaidOperators) {
-          let appVersion = 'null';
-          let conversationIdentifier = 'null';
-          for (let j = 0; j < edges[i].node.tags.length; j++) {
-            if (edges[i].node.tags[j].name == 'App-Version') {
-              appVersion = edges[i].node.tags[j].value;
-            } else if (edges[i].node.tags[j].name == 'Conversation-Identifier') {
-              conversationIdentifier = edges[i].node.tags[j].value;
-            }
-          }
-
-          await fetch('https://arweave.net/' + edges[i].node.id).then(async (data) => {
-            await data.blob().then(async (blob) => {
-              await blob.text().then(async (inferenceText) => {
-                console.log(inferenceText);
-                await inference(inferenceText).then(async (fullText) => {
-                  console.log(fullText);
-                  const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
-                  await sendToBundlr(
-                    fullText,
-                    appVersion,
-                    edges[i].node.owner.address,
-                    edges[i].node.id,
-                    conversationIdentifier,
-                    JWK,
-                    quantity,
-                  ).then(async (transactionId) => {
-                    console.log(transactionId?.toString());
-                    if (transactionId) {
-                      await sendFee(
-                        arweave,
-                        quantity,
-                        fullText,
-                        appVersion,
-                        edges[i].node.owner.address,
-                        edges[i].node.id,
-                        conversationIdentifier,
-                        transactionId,
-                        JWK,
-                      );
-                    }
-                  });
-                });
-              });
-            });
-          });
-        } else {
-          console.log(typeof resultTransactionAnswered.data.transactions.edges);
-          console.log("Transaction with ID '" + edges[i].node.id + "' didn't paid enough amount.");
-        }
+      if (responseTxs.length === 0) {
+        await processRequest(edge, operatorFee, useContext);
+      } else {
+        // Request already answered; skip
       }
     }
   } catch (e) {
-    console.log('GraphQL query for script transactions failed: ', e);
+    logger.error(`Errored with: ${e}`);
   }
 };
 
@@ -644,13 +450,14 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function cycle() {
+(async () => {
+  const firstArgIdx = 2;
+  const useContext = process.argv[firstArgIdx] === 'with-context';
+  logger.info('Starting with Context: ' + useContext);
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    await start();
-    await sleep(CONFIG.sleepTimeSeconds * 1000);
-    console.log(`Slept for ${CONFIG.sleepTimeSeconds} second(s). Restarting cycle now...`);
+    await start(useContext);
+    await sleep(CONFIG.sleepTimeSeconds * secondInMS);
+    logger.info(`Slept for ${CONFIG.sleepTimeSeconds} second(s). Restarting cycle now...`);
   }
-}
-
-cycle();
+})();
