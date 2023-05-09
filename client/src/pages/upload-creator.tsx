@@ -440,7 +440,7 @@ const UploadCreator = () => {
                         },
                       },
                     }}
-                    style={{ width: '40%', marginTop: 0 }}
+                    style={{ width: '40%', marginTop: 0, height: '219px' }}
                   />
                 </Box>
                 <Box padding='0px 32px'>
