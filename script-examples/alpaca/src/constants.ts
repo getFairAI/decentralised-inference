@@ -18,7 +18,7 @@
 
 export const APP_VERSION_TAG = 'App-Version';
 export const CONVERSATION_IDENTIFIER_TAG = 'Conversation-Identifier';
-export const APP_NAME_TAG =  'App-Name';
+export const APP_NAME_TAG = 'App-Name';
 export const CONTENT_TYPE_TAG = 'Content-Type';
 export const UNIX_TIME_TAG = 'Unix-Time';
 export const SCRIPT_CURATOR_TAG = 'Script-Curator';

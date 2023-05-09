@@ -16,9 +16,19 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import  { gql, ApolloClient, InMemoryCache } from '@apollo/client/core';
+import { gql, ApolloClient, InMemoryCache } from '@apollo/client/core';
 import { scriptCurator, scriptName } from '../config.json' assert { type: 'json' };
-import { CONVERSATION_IDENTIFIER_TAG, INFERENCE_TRANSACTION_TAG, OPERATION_NAME_TAG, REQUEST_TRANSACTION_TAG, SCRIPT_CURATOR_TAG, SCRIPT_INFERENCE_REQUEST, SCRIPT_NAME_TAG, SCRIPT_OPERATOR_TAG, SCRIPT_USER_TAG } from './constants';
+import {
+  CONVERSATION_IDENTIFIER_TAG,
+  INFERENCE_TRANSACTION_TAG,
+  OPERATION_NAME_TAG,
+  REQUEST_TRANSACTION_TAG,
+  SCRIPT_CURATOR_TAG,
+  SCRIPT_INFERENCE_REQUEST,
+  SCRIPT_NAME_TAG,
+  SCRIPT_OPERATOR_TAG,
+  SCRIPT_USER_TAG,
+} from './constants';
 import { ITransactions } from './interfaces';
 
 const clientGateway = new ApolloClient({
@@ -31,51 +41,49 @@ const clientGateway = new ApolloClient({
     watchQuery: {
       fetchPolicy: 'no-cache',
     },
-  }
+  },
 });
 
-const parseQueryResult = (result: { data: { transactions: ITransactions } }) => result.data.transactions.edges;
+const parseQueryResult = (result: { data: { transactions: ITransactions } }) =>
+  result.data.transactions.edges;
 
 export const queryTransactionsReceived = async (address: string) => {
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: [ SCRIPT_INFERENCE_REQUEST ]
+      values: [SCRIPT_INFERENCE_REQUEST],
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [ scriptCurator ]
+      values: [scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName ]
+      values: [scriptName],
     },
     {
       name: SCRIPT_OPERATOR_TAG,
-      values: [ address ]
-    }
+      values: [address],
+    },
   ];
   const result = await clientGateway.query({
     query: gql`
-      query TransactionsReceived ($tags: [TagFilter!]) {
-        transactions(
-          tags: $tags,
-          sort: HEIGHT_DESC
-        ) {
+      query TransactionsReceived($tags: [TagFilter!]) {
+        transactions(tags: $tags, sort: HEIGHT_DESC) {
           edges {
             node {
               id
               owner {
-                  address
-                  key
+                address
+                key
               }
               quantity {
-                  winston
-                  ar
+                winston
+                ar
               }
               tags {
-                  name
-                  value
+                name
+                value
               }
             }
           }
@@ -92,44 +100,39 @@ export const queryTransactionAnswered = async (transactionId: string, address: s
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: ['Script Inference Response']
+      values: ['Script Inference Response'],
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [ scriptCurator ]
+      values: [scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName]
+      values: [scriptName],
     },
     {
       name: REQUEST_TRANSACTION_TAG,
-      values: [ transactionId ]
-    }
+      values: [transactionId],
+    },
   ];
   const result = await clientGateway.query({
     query: gql`
-      query TransactionAnswered ($tags: [TagFilter!], $owner: String!) {
-        transactions(
-          first: 1,
-          tags: $tags,
-          owners: [ $owner ],
-          sort: HEIGHT_DESC
-        ) {
+      query TransactionAnswered($tags: [TagFilter!], $owner: String!) {
+        transactions(first: 1, tags: $tags, owners: [$owner], sort: HEIGHT_DESC) {
           edges {
             node {
               id
               owner {
-                  address
-                  key
+                address
+                key
               }
               quantity {
-                  winston
-                  ar
+                winston
+                ar
               }
               tags {
-                  name
-                  value
+                name
+                value
               }
             }
           }
@@ -146,25 +149,21 @@ export const queryCheckUserScriptRequests = async (userAddress: string) => {
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: [SCRIPT_INFERENCE_REQUEST]
+      values: [SCRIPT_INFERENCE_REQUEST],
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [ scriptCurator ]
+      values: [scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName ]
+      values: [scriptName],
     },
   ];
   const result = await clientGateway.query({
     query: gql`
-      query CheckUserScriptRequests ($tags: [TagFilter!], $owner: String!) {
-        transactions(
-          owners: [ $owner ],
-          tags: $tags,
-          sort: HEIGHT_DESC
-        ) {
+      query CheckUserScriptRequests($tags: [TagFilter!], $owner: String!) {
+        transactions(owners: [$owner], tags: $tags, sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -191,20 +190,20 @@ export const queryCheckUserPayment = async (userAddress: string, inferenceTransa
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: ['Inference Payment']
+      values: ['Inference Payment'],
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [ scriptCurator ]
+      values: [scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName]
+      values: [scriptName],
     },
     {
       name: INFERENCE_TRANSACTION_TAG,
-      values: [ inferenceTransaction ]
-    }
+      values: [inferenceTransaction],
+    },
   ];
   const result = await clientGateway.query({
     query: gql`
@@ -241,22 +240,17 @@ export const queryScriptFee = async () => {
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: ['Script Creation']
+      values: ['Script Creation'],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName]
+      values: [scriptName],
     },
   ];
   const result = await clientGateway.query({
     query: gql`
-      query ScriptFee ($tags: [TagFilter!], $owner: String!) {
-        transactions(
-          first: 1,
-          owners:[ $owner ],
-          tags: $tags
-          sort: HEIGHT_DESC
-        ) {
+      query ScriptFee($tags: [TagFilter!], $owner: String!) {
+        transactions(first: 1, owners: [$owner], tags: $tags, sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -283,27 +277,21 @@ export const queryCheckUserCuratorPayment = async (userAddress: string) => {
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: ['Script Fee Payment']
+      values: ['Script Fee Payment'],
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [ scriptCurator ]
+      values: [scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName]
+      values: [scriptName],
     },
-
   ];
   const result = await clientGateway.query({
     query: gql`
-      query CheckUserCuratorPayment ($tags: [TagFilter!], $owner: String!, $recipient: String!) {
-        transactions(
-          owners: [ $owner ],
-          recipients: [ $recipient ],
-          tags: $tags
-          sort: HEIGHT_DESC
-        ) {
+      query CheckUserCuratorPayment($tags: [TagFilter!], $owner: String!, $recipient: String!) {
+        transactions(owners: [$owner], recipients: [$recipient], tags: $tags, sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -330,26 +318,21 @@ export const queryOperatorFee = async (address: string) => {
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: [ 'Operator Registration' ]
+      values: ['Operator Registration'],
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [ scriptCurator ]
+      values: [scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName ]
+      values: [scriptName],
     },
   ];
   const result = await clientGateway.query({
     query: gql`
-      query OperatorFee ($tags: [TagFilter!], $owner: String!) {
-        transactions(
-          first: 1,
-          owners:[ $owner ],
-          tags: $tags
-          sort: HEIGHT_DESC
-        ) {
+      query OperatorFee($tags: [TagFilter!], $owner: String!) {
+        transactions(first: 1, owners: [$owner], tags: $tags, sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -378,30 +361,26 @@ export const queryRequestsForConversation = async (userAddr: string, cid: string
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: [ SCRIPT_INFERENCE_REQUEST ]
+      values: [SCRIPT_INFERENCE_REQUEST],
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [ scriptCurator ]
+      values: [scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName ]
+      values: [scriptName],
     },
     {
       name: CONVERSATION_IDENTIFIER_TAG,
-      values: [ cid ]
-    }
+      values: [cid],
+    },
   ];
 
   const result = await clientGateway.query({
     query: gql`
-      query RequestsForConversation ($tags: [TagFilter!], $owner: String!) {
-        transactions(
-          tags: $tags,
-          owners: [ $owner ]
-          sort: HEIGHT_DESC
-        ) {
+      query RequestsForConversation($tags: [TagFilter!], $owner: String!) {
+        transactions(tags: $tags, owners: [$owner], sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -422,47 +401,48 @@ export const queryRequestsForConversation = async (userAddr: string, cid: string
         }
       }
     `,
-    variables: { tags, owner: userAddr }
+    variables: { tags, owner: userAddr },
   });
 
   return parseQueryResult(result);
 };
 
-export const queryResponsesForRequests = async (userAddr: string, cid: string, requestIds: string[]) => {
+export const queryResponsesForRequests = async (
+  userAddr: string,
+  cid: string,
+  requestIds: string[],
+) => {
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: [ 'Script Inference Response' ]
+      values: ['Script Inference Response'],
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [ scriptCurator ]
+      values: [scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [ scriptName ]
+      values: [scriptName],
     },
     {
       name: SCRIPT_USER_TAG,
-      values: [ userAddr ]
+      values: [userAddr],
     },
     {
       name: CONVERSATION_IDENTIFIER_TAG,
-      values: [ cid ]
+      values: [cid],
     },
     {
       name: REQUEST_TRANSACTION_TAG,
-      values: requestIds
-    }
+      values: requestIds,
+    },
   ];
 
   const result = await clientGateway.query({
     query: gql`
-      query ResponsesForRequests ($tags: [TagFilter!]) {
-        transactions(
-          tags: $tags,
-          sort: HEIGHT_DESC
-        ) {
+      query ResponsesForRequests($tags: [TagFilter!]) {
+        transactions(tags: $tags, sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -483,7 +463,7 @@ export const queryResponsesForRequests = async (userAddr: string, cid: string, r
         }
       }
     `,
-    variables: { tags, owner: userAddr }
+    variables: { tags, owner: userAddr },
   });
 
   return parseQueryResult(result);
