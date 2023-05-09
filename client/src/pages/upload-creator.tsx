@@ -100,7 +100,7 @@ const UploadCreator = () => {
     if (nodeBalance <= 0) {
       setFundOpen(true);
     } else {
-      handleFundFinished(data as CreateForm); // use default node
+      await handleFundFinished(data as CreateForm);
     }
   };
 
@@ -215,7 +215,7 @@ const UploadCreator = () => {
       data = formData;
     }
 
-    if (!data || !data.file) {
+    if (!data?.file) {
       enqueueSnackbar('No File Selected', { variant: 'error' });
       return;
     }
