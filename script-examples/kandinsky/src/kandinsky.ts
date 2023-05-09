@@ -20,29 +20,15 @@ import CONFIG from '../config.json' assert { type: 'json' };
 import fs from 'fs';
 import Bundlr from '@bundlr-network/client';
 import Arweave from 'arweave';
-import { ApolloClient, InMemoryCache } from '@apollo/client/core';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import { default as Pino } from 'pino';
-import { APP_NAME_TAG, APP_VERSION_TAG, CONTENT_TYPE_TAG, CONVERSATION_IDENTIFIER_TAG, MAX_ALPACA_TOKENS, NET_ARWEAVE_URL, OPERATION_NAME_TAG, PAYMENT_QUANTITY_TAG, PAYMENT_TARGET_TAG, REQUEST_TOKENS_TAG, REQUEST_TRANSACTION_TAG, RESPONSE_TOKENS_TAG, RESPONSE_TRANSACTION_TAG, SCRIPT_CURATOR_TAG, SCRIPT_NAME_TAG, SCRIPT_USER_TAG, UNIX_TIME_TAG, secondInMS, successStatusCode } from './constants';
-import { buildQueryCheckUserCuratorPayment, buildQueryCheckUserPayment, buildQueryCheckUserScriptRequests, buildQueryOperatorFee, buildQueryScriptFee, buildQueryTransactionAnswered, buildQueryTransactionsReceived, queryRequestsForConversation, queryResponsesForRequests } from './queries';
+import { APP_NAME_TAG, APP_VERSION_TAG, CONTENT_TYPE_TAG, CONVERSATION_IDENTIFIER_TAG, NET_ARWEAVE_URL, OPERATION_NAME_TAG, PAYMENT_QUANTITY_TAG, PAYMENT_TARGET_TAG, REQUEST_TRANSACTION_TAG, RESPONSE_TRANSACTION_TAG, SCRIPT_CURATOR_TAG, SCRIPT_NAME_TAG, SCRIPT_USER_TAG, UNIX_TIME_TAG, secondInMS, successStatusCode } from './constants';
 import { IEdge } from './interfaces';
+import { queryCheckUserCuratorPayment, queryCheckUserPayment, queryCheckUserScriptRequests, queryOperatorFee, queryScriptFee, queryTransactionAnswered, queryTransactionsReceived } from './queries';
 
 const logger = Pino({
   name: 'kandinsky',
   level: 'debug'
-});
-
-const clientGateway = new ApolloClient({
-  uri: 'https://arweave.net:443/graphql',
-  cache: new InMemoryCache(),
-  defaultOptions: {
-    query: {
-      fetchPolicy: 'no-cache',
-    },
-    watchQuery: {
-      fetchPolicy: 'no-cache',
-    },
-  }
 });
 
 const arweave = Arweave.init({
@@ -57,7 +43,7 @@ const JWK: JWKInterface = JSON.parse(fs.readFileSync('wallet.json').toString());
 const bundlr = new Bundlr('https://node1.bundlr.network', 'arweave', JWK);
 
 const sendToBundlr = async (
-  response: any,
+  response: string,
   appVersion: string,
   userAddress: string,
   requestTransaction: string,
@@ -77,7 +63,7 @@ const sendToBundlr = async (
   // on fractional numbers in JavaScript, it is common to use atomic units.
   // This is a way to represent a floating point (decimal) number using non-decimal notation.
   // Once we have the value in atomic units, we can convert it into something easier to read.
-  const price1MBConverted = bundlr.utils.unitConverter(price1MBAtomic);
+  const price1MBConverted = bundlr.utils.fromAtomic(price1MBAtomic);
   logger.info(`Uploading 1MB to Bundlr costs $${price1MBConverted}`);
 
   // Get loaded balance in atomic units
@@ -85,7 +71,7 @@ const sendToBundlr = async (
   logger.info(`node balance (atomic units) = ${atomicBalance}`);
 
   // Convert balance to an easier to read format
-  const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
+  const convertedBalance = bundlr.utils.fromAtomic(atomicBalance);
   logger.info(`node balance (converted) = ${convertedBalance}`);
 
 
@@ -115,21 +101,17 @@ const sendToBundlr = async (
   }
 };
 
-const inference = async function (requestTx: IEdge, conversationIdentifier: string) {
+const inference = async function (requestTx: IEdge) {
   const requestData = await fetch(`${NET_ARWEAVE_URL}/${requestTx.node.id}`);
   const text = await (await requestData.blob()).text();
   logger.info(`User Prompt: ${text}`);
 
-  const data = Buffer.from(text, 'utf-8').toString();
-  console.log(data);
-  const res = await fetch(CONFIG.url+'/textToImage/'+text, {
+  const res = await fetch(`${CONFIG.url}/textToImage/${text}`, {
     method: 'GET'
   });
-  const tempData = await res.json();
-  const fullData = tempData.imgPath;
-  console.log(fullData);
+  const tempData: { imgPath: string } = await res.json();
 
-  return fullData;
+  return tempData.imgPath;
 };
 
 const sendFee = async (
@@ -174,10 +156,7 @@ const sendFee = async (
 };
 
 const getOperatorFee = async (address: string) => {
-  const operatorQuery = buildQueryOperatorFee(address);
-  
-  const resultOperatorFee = await clientGateway.query(operatorQuery);
-  const operatorRegistrationTxs: IEdge[] = resultOperatorFee.data.transactions.edges;
+  const operatorRegistrationTxs: IEdge[] = await queryOperatorFee(address);
 
   let firstValidRegistration: IEdge | null = null;
   for (const tx of operatorRegistrationTxs) {
@@ -211,9 +190,8 @@ const getOperatorFee = async (address: string) => {
 };
 
 const getScriptFee = async () => {
-  const scriptFeeQuery = buildQueryScriptFee();
-  const scriptFeeResult = await clientGateway.query(scriptFeeQuery);
-  const latestScriptTx: IEdge | null= scriptFeeResult.data.transactions.edges.length > 0 ? scriptFeeResult.data.transactions.edges[0] : null;
+  const scriptFeeTxs = await queryScriptFee();
+  const latestScriptTx: IEdge | null= scriptFeeTxs.length > 0 ? scriptFeeTxs[0] : null;
 
   if (!latestScriptTx) {
     throw new Error("Program didn't found any confirmed Script Creation.");
@@ -234,9 +212,7 @@ const getScriptFee = async () => {
 };
 
 const checkuserPaidScriptFee = async (curatorAddress: string, scriptFee: number) => {
-  const userCuratorPaymentQuery = buildQueryCheckUserCuratorPayment(curatorAddress);
-  const userCuratorPayment = await clientGateway.query(userCuratorPaymentQuery);
-  const userCuratorPaymentEdges: IEdge[] = userCuratorPayment.data.transactions.edges;
+  const userCuratorPaymentEdges: IEdge[] =await queryCheckUserCuratorPayment(curatorAddress);
   const userCuratorPaymentEdge: IEdge | null = userCuratorPaymentEdges.length > 0 ? userCuratorPaymentEdges[0] : null;
 
   if (!userCuratorPaymentEdge) {
@@ -261,17 +237,10 @@ const checkuserPaidScriptFee = async (curatorAddress: string, scriptFee: number)
 };
 
 const checkUserPaidPastInferences = async (userAddress: string, operatorFee: number) => {
-  const useScriptRequestsQuery = buildQueryCheckUserScriptRequests(userAddress);
-  const checkUserScriptRequests = await clientGateway.query(useScriptRequestsQuery);
-  const checkUserScriptRequestsEdges: IEdge[] = checkUserScriptRequests.data.transactions.edges;
+  const checkUserScriptRequestsEdges: IEdge[] = await queryCheckUserScriptRequests(userAddress);
 
   for (const scriptRequest of checkUserScriptRequestsEdges) {
-    const requestPaymentQuery = buildQueryCheckUserPayment(
-      userAddress,
-      scriptRequest.node.id,
-    );
-    const checkUserPayment = await clientGateway.query(requestPaymentQuery);
-    const checkUserPaymentEdges: IEdge[] = checkUserPayment.data.transactions.edges;
+    const checkUserPaymentEdges: IEdge[] = await queryCheckUserPayment(userAddress, scriptRequest.node.id);
 
     if (checkUserPaymentEdges.length === 0 || operatorFee > parseFloat(checkUserPaymentEdges[0].node.quantity.winston)) {
       throw new Error('User has not paid the necessary amount to the operators for the previous requests');
@@ -281,62 +250,62 @@ const checkUserPaidPastInferences = async (userAddress: string, operatorFee: num
   return true;
 };
 
+const processRequest = async (requestTx: IEdge, operatorFee: number) => {
+  // Check if user has paid the curator:
+  const scriptFee = await getScriptFee();
+  // checkUserPaidScriptFee will throw an error if the user has not paid the curator
+  await checkuserPaidScriptFee(requestTx.node.owner.address, scriptFee);
+
+  await checkUserPaidPastInferences(requestTx.node.owner.address, operatorFee);
+
+  const appVersion = requestTx.node.tags.find((tag) => tag.name === 'App-Version')?.value;
+  const conversationIdentifier = requestTx.node.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value;
+  if (!appVersion || !conversationIdentifier) {
+    throw new Error('Invalid App Version or Conversation Identifier');
+  }
+
+  const inferenceResult = await inference(requestTx);
+  logger.info(`Inference Result: ${inferenceResult}`);
+    
+  const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
+  const updloadResultId = await sendToBundlr(
+    inferenceResult,
+    appVersion,
+    requestTx.node.owner.address,
+    requestTx.node.id,
+    conversationIdentifier,
+    quantity,
+  );
+  
+  if (updloadResultId) {
+    await sendFee( 
+      quantity,
+      appVersion,
+      requestTx.node.owner.address,
+      requestTx.node.id,
+      conversationIdentifier,
+      updloadResultId,
+    );
+  }
+};
+
+
 const start = async () => {
   try {
     const address = await arweave.wallets.jwkToAddress(JWK);
 
     const operatorFee = await getOperatorFee(address);
 
-    const userRequestsQuery = buildQueryTransactionsReceived(address);
-    const requestsReceived = await clientGateway.query(userRequestsQuery);
-    const requestTxs: IEdge[] = requestsReceived.data.transactions.edges;
+    const requestTxs: IEdge[] = await queryTransactionsReceived(address);
 
     for (const edge of requestTxs) {
       // Check if request already answered:
-
-      const answersQuery = buildQueryTransactionAnswered(edge.node.id, address);
-      const resultTransactionAnswered = await clientGateway.query(answersQuery);
-      const responseTxs: IEdge[] = resultTransactionAnswered.data.transactions.edges;
+      const responseTxs: IEdge[] = await queryTransactionAnswered(edge.node.id, address);
       
-      if (responseTxs.length > 0) {
-        // Request already answered; skip
+      if (responseTxs.length === 0) {
+        await processRequest(edge, operatorFee);
       } else {
-        // Check if user has paid the curator:
-        const scriptFee = await getScriptFee();
-        // checkUserPaidScriptFee will throw an error if the user has not paid the curator
-        await checkuserPaidScriptFee(edge.node.owner.address, scriptFee);
-
-        await checkUserPaidPastInferences(edge.node.owner.address, operatorFee);
-
-        const appVersion = edge.node.tags.find((tag) => tag.name === 'App-Version')?.value;
-        const conversationIdentifier = edge.node.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value;
-        if (!appVersion || !conversationIdentifier) {
-          throw new Error('Invalid App Version or Conversation Identifier');
-        }
-
-        const inferenceResult = await inference(edge, conversationIdentifier);
-        logger.info(`Inference Result: ${inferenceResult}`);
-          
-        const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
-        const updloadResultId = await sendToBundlr(
-          inferenceResult,
-          appVersion,
-          edge.node.owner.address,
-          edge.node.id,
-          conversationIdentifier,
-          quantity,
-        );
-        
-        if (updloadResultId) {
-          await sendFee( 
-            quantity,
-            appVersion,
-            edge.node.owner.address,
-            edge.node.id,
-            conversationIdentifier,
-            updloadResultId,
-          );
-        }
+        // Request already answered; skip
       }
     }
   } catch (e) {
