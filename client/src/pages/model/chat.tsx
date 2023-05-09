@@ -377,13 +377,13 @@ const Chat = () => {
     const msg: IMessage = {
       id: el.node.id,
       msg: data,
-      contentType,
       type: isRequest ? 'request' : 'response',
-      timestamp: timestamp,
       cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
       height: el.node.block ? el.node.block.height : currentHeight,
       to: isRequest ? (findTag(el, 'scriptOperator') as string) : userAddr,
       from: isRequest ? userAddr : el.node.owner.address,
+      contentType,
+      timestamp,
     };
 
     return msg;
