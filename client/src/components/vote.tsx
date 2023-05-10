@@ -196,7 +196,7 @@ const vote = async (txid: string, voteForTag: string, refetchFn: RefetchFn, up: 
       },
     );
     // refetch with same arguments as last tiem to get new vote count
-    refetchFn();
+    await refetchFn();
   } catch (e) {
     enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
   }

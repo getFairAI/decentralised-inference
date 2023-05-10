@@ -37,7 +37,7 @@ import {
   MODEL_FEE_UPDATE,
   TAG_NAMES,
 } from '@/constants';
-import { ChangeEvent, useContext, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import arweave from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
@@ -86,7 +86,7 @@ const Detail = () => {
     navigate('/', { state });
   };
 
-  const updateFee = async () => {
+  const updateFee = useCallback(async () => {
     try {
       const tx = await arweave.createTransaction({
         quantity: arweave.ar.arToWinston('0'),
@@ -123,7 +123,7 @@ const Detail = () => {
     } catch (err) {
       enqueueSnackbar('Something Went Wrong', { variant: 'error' });
     }
-  };
+  }, [ arweave, enqueueSnackbar, setFeeDirty, state ]);
 
   const handleFeeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const val = event.target.value !== '' ? parseFloat(event.target.value) : 0;
