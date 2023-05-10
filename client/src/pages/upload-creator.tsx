@@ -317,7 +317,7 @@ const UploadCreator = () => {
         '@media all': {
           maxWidth: '100%',
           padding: 0,
-          blockSize: 'auto'
+          blockSize: 'auto',
         },
       }}
     >
