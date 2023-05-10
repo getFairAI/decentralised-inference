@@ -18,7 +18,7 @@
 
 export interface IMessage {
   id: string;
-  msg: string;
+  msg: string | File;
   contentType?: string;
   type: 'response' | 'request';
   timestamp: number;

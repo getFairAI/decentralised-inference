@@ -60,6 +60,7 @@ export const TAG_NAMES = {
   scriptFee: 'Script-Fee',
   voteFor: 'Vote-For',
   votedTransaction: 'Voted-Transaction',
+  fileName: 'File-Name',
 };
 
 // Operation Names
