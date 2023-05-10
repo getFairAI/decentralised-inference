@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import { MARKETPLACE_ADDRESS } from '../constants';
 import { gql } from '@apollo/client';
 
@@ -488,7 +506,7 @@ export const QUERY_CANCELLED_OPERATORS = gql`
 `;
 
 export const QUERY_FEE_PAYMENT = gql`
-  query QUERY_MODEL_FEE_PAYMENT($owner: String!, $tags: [TagFilter!], $recipient: String!) {
+  query QUERY_SCRIPT_FEE_PAYMENT($owner: String!, $tags: [TagFilter!], $recipient: String!) {
     transactions(first: 1, owners: [$owner], recipients: [$recipient], tags: $tags) {
       edges {
         node {
@@ -497,6 +515,32 @@ export const QUERY_FEE_PAYMENT = gql`
             name
             value
           }
+          recipient
+          quantity {
+            winston
+            ar
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_OPERATOR_REGISTRATION_PAYMENT = gql`
+  query QUERY_OPERATOR_REGISTRATION_PAYMENT(
+    $owner: String!
+    $tags: [TagFilter!]
+    $recipient: String!
+  ) {
+    transactions(first: 1, owners: [$owner], recipients: [$recipient], tags: $tags) {
+      edges {
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          recipient
           quantity {
             winston
             ar
@@ -835,8 +879,8 @@ export const QUERY_RESPONSES_BY_OPERATOR = gql`
 `;
 
 export const QUERY_FIRST_REGISTRATION = gql`
-  query QUERY_RESPONSES_BY_OPERATOR($owner: String!, $tags: [TagFilter!]) {
-    transactions(tags: $tags, owners: [$owner], first: 1, sort: HEIGHT_ASC) {
+  query QUERY_RESPONSES_BY_OPERATOR($owner: String!, $tags: [TagFilter!], $after: String) {
+    transactions(tags: $tags, owners: [$owner], first: 1, sort: HEIGHT_ASC, after: $after) {
       edges {
         node {
           id

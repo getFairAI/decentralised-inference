@@ -68,6 +68,7 @@ const OperatorSelected = ({
         state: {
           operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
           scriptFee: findTag(scriptTx as IEdge, 'scriptFee'),
+          fullState: operatorsData[selectedIdx],
         },
       }),
     [navigate],
@@ -78,7 +79,7 @@ const OperatorSelected = ({
       scriptName: findTag(scriptTx as IEdge, 'scriptName'),
       scriptCurator: (scriptTx as IEdge).node.owner.address,
       fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
-      scriptTransaction: (scriptTx as IEdge).node.id,
+      scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
       fullState: scriptTx,
     };
     if (pathname.includes('chat')) {

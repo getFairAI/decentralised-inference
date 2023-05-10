@@ -48,13 +48,13 @@ import Vote from '@/components/vote';
 
 const OperatorDetails = () => {
   const { address } = useParams();
-  const { state }: { state: { operatorName: string; scriptFee: string } } = useLocation();
+  const { state }: { state: { operatorName: string; scriptFee: string; fullState: IEdge } } =
+    useLocation();
   const navigate = useNavigate();
   const [firstRegistrationDate, setFirstregistrationDate] = useState('');
-  const [txid, setTxid] = useState('');
   const theme = useTheme();
 
-  const { data: firstRegistrationData } = useQuery(QUERY_FIRST_REGISTRATION, {
+  const { data: firstRegistrationData, fetchMore } = useQuery(QUERY_FIRST_REGISTRATION, {
     variables: {
       owner: address,
       tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: REGISTER_OPERATION }],
@@ -84,12 +84,19 @@ const OperatorDetails = () => {
         parseInt(registration.node.quantity.ar, 10) !== parseInt(OPERATOR_REGISTRATION_AR_FEE, 10)
       ) {
         // incorrect, fetch next
+        fetchMore({
+          variables: {
+            after: registration.cursor,
+          },
+          updateQuery(_, { fetchMoreResult }) {
+            // update results with next registration found
+            return fetchMoreResult;
+          },
+        });
       } else {
-        const timestamp =
-          parseInt(findTag(registration, 'unixTime') ?? '', 10) ??
-          registration.node.block.timestamp;
-        setFirstregistrationDate(new Date(timestamp * secondInMS).toLocaleDateString());
-        setTxid(registration.node.id);
+        const unixTime = findTag(registration, 'unixTime');
+        const timestamp = unixTime ? parseInt(unixTime, 10) : registration.node.block.timestamp;
+        setFirstregistrationDate(new Date(timestamp * secondInMS).toLocaleString());
       }
     }
   }, [firstRegistrationData]);
@@ -133,12 +140,12 @@ const OperatorDetails = () => {
             <Box>
               <Typography>{state.operatorName}</Typography>
               <Typography>{address}</Typography>
-              {address && txid && (
+              {address && state.fullState && (
                 <Vote
                   voteFor='operator'
                   owner={address}
                   fee={parseFloat(state.scriptFee)}
-                  txid={txid}
+                  tx={state.fullState}
                 />
               )}
             </Box>

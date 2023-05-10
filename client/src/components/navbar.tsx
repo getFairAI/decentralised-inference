@@ -9,7 +9,6 @@ import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 import Pending from './pending';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -113,7 +112,7 @@ const WalletState = () => {
           </Tooltip>
           {isWalletVouched && (
             <Tooltip title={'Wallet is Vouched'}>
-              <CheckCircleOutlineIcon color='success' />
+              <img src='./vouch.svg' />
             </Tooltip>
           )}
         </Box>

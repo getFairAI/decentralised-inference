@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   Button,
   Dialog,
@@ -19,7 +37,7 @@ import {
   MODEL_FEE_UPDATE,
   TAG_NAMES,
 } from '@/constants';
-import { ChangeEvent, useContext, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import arweave from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
@@ -57,6 +75,9 @@ const Detail = () => {
     return URL.createObjectURL(svg);
   }, [avatarTxId]);
 
+  // disable update fees on model for now
+  const updateDisabled = useMemo(() => true, [feeDirty, feeValue]);
+
   const handleClose = () => {
     if (pathname.includes('change-operator')) {
       navigate(pathname.split('/change-operator')[0], { state });
@@ -65,7 +86,7 @@ const Detail = () => {
     navigate('/', { state });
   };
 
-  const updateFee = async () => {
+  const updateFee = useCallback(async () => {
     try {
       const tx = await arweave.createTransaction({
         quantity: arweave.ar.arToWinston('0'),
@@ -102,7 +123,7 @@ const Detail = () => {
     } catch (err) {
       enqueueSnackbar('Something Went Wrong', { variant: 'error' });
     }
-  };
+  }, [arweave, enqueueSnackbar, setFeeDirty, state]);
 
   const handleFeeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const val = event.target.value !== '' ? parseFloat(event.target.value) : 0;
@@ -379,12 +400,12 @@ const Detail = () => {
             </Typography>
           </Box>
           {currentAddress === state.modelCreator ? (
-            <Button variant='outlined' disabled={!feeDirty && feeValue >= 0} onClick={updateFee}>
+            <Button variant='outlined' disabled={updateDisabled} onClick={updateFee}>
               Update
             </Button>
           ) : (
             <Vote
-              txid={txid as string}
+              tx={state.fullState}
               fee={feeValue}
               owner={state.modelCreator}
               voteFor={'model'}
