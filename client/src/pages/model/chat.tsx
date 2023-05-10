@@ -53,6 +53,7 @@ import {
   SCRIPT_INFERENCE_REQUEST,
   secondInMS,
   successStatusCode,
+  textContentType,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -122,12 +123,12 @@ const Chat = () => {
   const [progress, setProgress] = useState(0);
 
   const sendDisabled = useMemo(() => {
-    if (!currentConversationId) {
+    if (!currentConversationId || loading) {
       return true;
     } else {
       return newMessage.length === 0 && !file;
     }
-  }, [ newMessage, file, currentConversationId]);
+  }, [ newMessage, file, currentConversationId, loading ]);
 
   const [
     getChatRequests,
@@ -508,9 +509,8 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
     const tempDate = Date.now() / secondInMS;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
-    tags.push({ name: TAG_NAMES.contentType, value: isFile ? file.type : 'text/plain' });
+    tags.push({ name: TAG_NAMES.contentType, value: isFile ? file.type : textContentType });
     try {
-
       let bundlrId;
       if (isFile) {
         setSnackbarOpen(true);
@@ -567,9 +567,11 @@ const Chat = () => {
         height: (await arweave.blocks.getCurrent()).height,
         to: address as string,
         from: userAddr,
+        contentType: isFile ? file.type : textContentType,
       });
       setMessages(temp);
       setNewMessage('');
+      setFile(undefined);
       setIsWaitingResponse(true);
       setResponseTimeout(false);
       enqueueSnackbar(
@@ -604,7 +606,7 @@ const Chat = () => {
       tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
       tx.addTag(TAG_NAMES.inferenceTransaction, bundlrId);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      tx.addTag(TAG_NAMES.contentType, isFile ? file.type : 'text/plain');
+      tx.addTag(TAG_NAMES.contentType, isFile ? file.type : textContentType);
 
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);
@@ -830,7 +832,7 @@ const Chat = () => {
 
   const onFileLoad = (fr: FileReader, newFile: File) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return (event: ProgressEvent) => {
+    return () => {
       setLoading(false);
       fr.removeEventListener('error', onFileError(fr, newFile));
       fr.removeEventListener('load', onFileLoad(fr, newFile));

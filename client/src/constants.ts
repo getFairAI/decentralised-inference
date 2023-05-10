@@ -150,3 +150,4 @@ export const scriptHeaders = ['Creator', 'Name', 'Registration', 'Fee (AR)', 'St
 export const secondInMS = 1000;
 export const defaultDecimalPlaces = 4;
 export const successStatusCode = 200;
+export const textContentType = 'text/plain';

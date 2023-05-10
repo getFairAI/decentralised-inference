@@ -37,6 +37,8 @@ const MessageDisplay = ({ message }: { message: IMessage}) => {
 
   if (message.contentType?.includes('image')) {
     return <img src={`${NET_ARWEAVE_URL}/${message.id}`}></img>;
+  } else if (message.contentType?.includes('audio')) {
+    return <audio controls src={`${NET_ARWEAVE_URL}/${message.id}`}></audio>;
   } else if (message.contentType?.includes('text') || message.contentType?.includes('json')) {
     return <Typography
       sx={{
