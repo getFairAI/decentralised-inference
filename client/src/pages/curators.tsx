@@ -489,6 +489,7 @@ const Curators = () => {
         '@media all': {
           maxWidth: '100%',
           padding: 0,
+          blockSize: 'auto'
         },
       }}
     >
