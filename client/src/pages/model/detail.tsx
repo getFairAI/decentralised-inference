@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   Button,
   Dialog,
@@ -56,6 +74,9 @@ const Detail = () => {
     const svg = new Blob([img], { type: 'image/svg+xml' });
     return URL.createObjectURL(svg);
   }, [avatarTxId]);
+
+  // disable update fees on model for now
+  const updateDisabled = useMemo(() => true, [ feeDirty, feeValue ]);
 
   const handleClose = () => {
     if (pathname.includes('change-operator')) {
@@ -379,12 +400,12 @@ const Detail = () => {
             </Typography>
           </Box>
           {currentAddress === state.modelCreator ? (
-            <Button variant='outlined' disabled={!feeDirty && feeValue >= 0} onClick={updateFee}>
+            <Button variant='outlined' disabled={updateDisabled} onClick={updateFee}>
               Update
             </Button>
           ) : (
             <Vote
-              txid={txid as string}
+              tx={state.fullState}
               fee={feeValue}
               owner={state.modelCreator}
               voteFor={'model'}

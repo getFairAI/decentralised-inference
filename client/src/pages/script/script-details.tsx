@@ -300,7 +300,7 @@ const DetailsContent = () => {
           </Typography>
         </Box>
         <Vote
-          txid={txid as string}
+          tx={state.fullState}
           fee={parseFloat(OPERATOR_REGISTRATION_AR_FEE)}
           owner={findTag(state.fullState, 'modelCreator') as string}
           voteFor={'script'}
