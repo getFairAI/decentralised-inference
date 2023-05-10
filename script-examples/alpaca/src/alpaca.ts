@@ -230,7 +230,7 @@ const inference = async (requestTx: IEdge, conversationIdentifier: string, useCo
       const firstFile = zip.getEntries()[0];
       text = firstFile.getData().toString('utf8');
     } else {
-      throw new Error('File Type not supported yet');
+      return { output: 'Request Error: File type not supported' } as AlpacaHttpResponse;
     }
   } else {
     text = await (await requestData.blob()).text();
