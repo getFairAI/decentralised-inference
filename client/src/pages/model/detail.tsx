@@ -76,7 +76,7 @@ const Detail = () => {
   }, [avatarTxId]);
 
   // disable update fees on model for now
-  const updateDisabled = useMemo(() => true, [ feeDirty, feeValue ]);
+  const updateDisabled = useMemo(() => true, [feeDirty, feeValue]);
 
   const handleClose = () => {
     if (pathname.includes('change-operator')) {
@@ -123,7 +123,7 @@ const Detail = () => {
     } catch (err) {
       enqueueSnackbar('Something Went Wrong', { variant: 'error' });
     }
-  }, [ arweave, enqueueSnackbar, setFeeDirty, state ]);
+  }, [arweave, enqueueSnackbar, setFeeDirty, state]);
 
   const handleFeeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const val = event.target.value !== '' ? parseFloat(event.target.value) : 0;

@@ -48,7 +48,8 @@ import Vote from '@/components/vote';
 
 const OperatorDetails = () => {
   const { address } = useParams();
-  const { state }: { state: { operatorName: string; scriptFee: string, fullState: IEdge } } = useLocation();
+  const { state }: { state: { operatorName: string; scriptFee: string; fullState: IEdge } } =
+    useLocation();
   const navigate = useNavigate();
   const [firstRegistrationDate, setFirstregistrationDate] = useState('');
   const theme = useTheme();
@@ -85,7 +86,7 @@ const OperatorDetails = () => {
         // incorrect, fetch next
         fetchMore({
           variables: {
-            after: registration.cursor
+            after: registration.cursor,
           },
           updateQuery(_, { fetchMoreResult }) {
             // update results with next registration found

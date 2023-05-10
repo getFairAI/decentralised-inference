@@ -16,7 +16,6 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-
 import { MARKETPLACE_ADDRESS } from '../constants';
 import { gql } from '@apollo/client';
 
@@ -507,7 +506,7 @@ export const QUERY_CANCELLED_OPERATORS = gql`
 `;
 
 export const QUERY_FEE_PAYMENT = gql`
-  query QUERY_SCRIPT_FEE_PAYMENT ($owner: String!, $tags: [TagFilter!], $recipient: String!) {
+  query QUERY_SCRIPT_FEE_PAYMENT($owner: String!, $tags: [TagFilter!], $recipient: String!) {
     transactions(first: 1, owners: [$owner], recipients: [$recipient], tags: $tags) {
       edges {
         node {
@@ -528,7 +527,11 @@ export const QUERY_FEE_PAYMENT = gql`
 `;
 
 export const QUERY_OPERATOR_REGISTRATION_PAYMENT = gql`
-  query QUERY_OPERATOR_REGISTRATION_PAYMENT ($owner: String!, $tags: [TagFilter!], $recipient: String!) {
+  query QUERY_OPERATOR_REGISTRATION_PAYMENT(
+    $owner: String!
+    $tags: [TagFilter!]
+    $recipient: String!
+  ) {
     transactions(first: 1, owners: [$owner], recipients: [$recipient], tags: $tags) {
       edges {
         node {

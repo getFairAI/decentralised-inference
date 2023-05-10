@@ -53,13 +53,17 @@ import { IEdge, ITransactions } from '@/interfaces/arweave';
 import { isVouched } from '@/utils/vouch';
 import { client } from '@/utils/apollo';
 
-type RefetchFn = (variables?: Partial<{
-  first: number;
-  tags: {
-      name: string;
-      values: string[];
-  }[];
-}> | undefined) => Promise<ApolloQueryResult<{ transactions: ITransactions}>>;
+type RefetchFn = (
+  variables?:
+    | Partial<{
+        first: number;
+        tags: {
+          name: string;
+          values: string[];
+        }[];
+      }>
+    | undefined,
+) => Promise<ApolloQueryResult<{ transactions: ITransactions }>>;
 
 const countVouchedVotes = async (
   tx: IEdge,
@@ -453,12 +457,14 @@ const Vote = ({
   return (
     <Box display={'flex'}>
       <Tooltip title={tooltipMessage}>
-        <span style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: voteFor === 'operator' ? 'flex-start' : 'flex-end',
-          paddingRight: '16px'
-        }}> 
+        <span
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: voteFor === 'operator' ? 'flex-start' : 'flex-end',
+            paddingRight: '16px',
+          }}
+        >
           <UpVote upVotesCount={upVotesCount} disabled={disabled} clickHandler={upVote} />
           <DownVote downVotesCount={downVotesCount} disabled={disabled} clickHandler={downVote} />
         </span>
