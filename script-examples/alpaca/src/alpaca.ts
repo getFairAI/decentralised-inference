@@ -55,6 +55,7 @@ import {
   queryTransactionAnswered,
   queryTransactionsReceived,
 } from './queries';
+import AdmZip from 'adm-zip';
 
 const logger = Pino({
   name: 'alpaca',
@@ -215,9 +216,26 @@ const inferenceWithContext = async (
   }
 };
 
-const inference = async (requestTx: IEdge, conversationIdentifier: string, useContext: boolean) => {
+const inference = async (requestTx: IEdge, conversationIdentifier: string, useContext: boolean, allowFiles: boolean) => {
   const requestData = await fetch(`${NET_ARWEAVE_URL}/${requestTx.node.id}`);
-  const text = await (await requestData.blob()).text();
+  let text: string;
+  if (allowFiles) {
+    if (requestData.headers.get('content-type')?.includes('text')) {
+      text = await (await requestData.blob()).text();
+    } else if (requestData.headers.get('content-type')?.includes('zip')) {
+      const buffer = Buffer.from( new Uint8Array(await requestData.arrayBuffer()) );
+      const zip = new AdmZip(buffer);
+
+      // currently only supports one file in zip
+      const firstFile = zip.getEntries()[0];
+      text = firstFile.getData().toString('utf8');
+    } else {
+      throw new Error('File Type not supported yet');
+    }
+  } else {
+    text = await (await requestData.blob()).text();
+  }
+
   logger.info(`User Prompt: ${text}`);
 
   if (useContext) {
@@ -382,7 +400,7 @@ const checkUserPaidPastInferences = async (userAddress: string, operatorFee: num
   return true;
 };
 
-const processRequest = async (requestTx: IEdge, operatorFee: number, useContext: boolean) => {
+const processRequest = async (requestTx: IEdge, operatorFee: number, useContext: boolean, allowFiles: boolean) => {
   // Check if user has paid the curator:
   const scriptFee = await getScriptFee();
   // checkUserPaidScriptFee will throw an error if the user has not paid the curator
@@ -398,7 +416,7 @@ const processRequest = async (requestTx: IEdge, operatorFee: number, useContext:
     throw new Error('Invalid App Version or Conversation Identifier');
   }
 
-  const inferenceResult = await inference(requestTx, conversationIdentifier, useContext);
+  const inferenceResult = await inference(requestTx, conversationIdentifier, useContext, allowFiles);
   logger.info(`Inference Result: ${inferenceResult.output}`);
 
   const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
@@ -423,7 +441,7 @@ const processRequest = async (requestTx: IEdge, operatorFee: number, useContext:
   }
 };
 
-const start = async (useContext = false) => {
+const start = async (useContext = false, allowFiles = false) => {
   try {
     const address = await arweave.wallets.jwkToAddress(JWK);
 
@@ -436,7 +454,7 @@ const start = async (useContext = false) => {
       const responseTxs: IEdge[] = await queryTransactionAnswered(edge.node.id, address);
 
       if (responseTxs.length === 0) {
-        await processRequest(edge, operatorFee, useContext);
+        await processRequest(edge, operatorFee, useContext, allowFiles);
       } else {
         // Request already answered; skip
       }
@@ -451,12 +469,12 @@ function sleep(ms: number) {
 }
 
 (async () => {
-  const firstArgIdx = 2;
-  const useContext = process.argv[firstArgIdx] === 'with-context';
+  const useContext = !!process.argv.find(el => el === 'with-context');
+  const allowFiles = !!process.argv.find(el => el === 'allow-files');
   logger.info('Starting with Context: ' + useContext);
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    await start(useContext);
+    await start(useContext, allowFiles);
     await sleep(CONFIG.sleepTimeSeconds * secondInMS);
     logger.info(`Slept for ${CONFIG.sleepTimeSeconds} second(s). Restarting cycle now...`);
   }

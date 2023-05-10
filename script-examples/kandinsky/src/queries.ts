@@ -207,7 +207,7 @@ export const queryCheckUserPayment = async (userAddress: string, inferenceTransa
   ];
   const result = await clientGateway.query({
     query: gql`
-      query CheckUserPayment (tags: [TagFilter!], owner: String!){
+      query CheckUserPayment ($tags: [TagFilter!], $owner: String!){
         transactions(
           first: 1,
           owners:[ $owner ],

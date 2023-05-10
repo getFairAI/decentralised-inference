@@ -478,7 +478,7 @@ const Chat = () => {
     let dataSize;
     if (isFile && file) {
       dataSize = file.size;
-    } else if (!file) {
+    } else if (isFile && !file) {
       return;
     } else {
       dataSize = new TextEncoder().encode(newMessage).length;
@@ -513,10 +513,10 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
     const tempDate = Date.now() / secondInMS;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
-    tags.push({ name: TAG_NAMES.contentType, value: isFile ? file.type : textContentType });
+    tags.push({ name: TAG_NAMES.contentType, value: isFile && file ? file.type : textContentType });
     try {
       let bundlrId;
-      if (isFile) {
+      if (isFile && file) {
         setSnackbarOpen(true);
         const finishedPercentage = 100;
         /** Register Event Callbacks */
@@ -563,7 +563,7 @@ const Chat = () => {
 
       const temp = [...messages];
       temp.push({
-        msg: isFile ? file : newMessage,
+        msg: isFile && file ? file : newMessage,
         type: 'request',
         timestamp: tempDate,
         id: bundlrId,
@@ -571,7 +571,7 @@ const Chat = () => {
         height: (await arweave.blocks.getCurrent()).height,
         to: address as string,
         from: userAddr,
-        contentType: isFile ? file.type : textContentType,
+        contentType: isFile && file ? file.type : textContentType,
       });
       setMessages(temp);
       setNewMessage('');
@@ -610,7 +610,7 @@ const Chat = () => {
       tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
       tx.addTag(TAG_NAMES.inferenceTransaction, bundlrId);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      tx.addTag(TAG_NAMES.contentType, isFile ? file.type : textContentType);
+      tx.addTag(TAG_NAMES.contentType, isFile && file ? file.type : textContentType);
 
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);
