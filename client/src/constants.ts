@@ -61,6 +61,8 @@ export const TAG_NAMES = {
   voteFor: 'Vote-For',
   votedTransaction: 'Voted-Transaction',
   fileName: 'File-Name',
+  allowFiles: 'Allow-Files',
+  allowText: 'Allow-Text',
 };
 
 // Operation Names

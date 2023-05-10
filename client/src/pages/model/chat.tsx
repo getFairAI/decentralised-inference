@@ -34,6 +34,7 @@ import {
   Snackbar,
   Stack,
   TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -129,6 +130,9 @@ const Chat = () => {
       return newMessage.length === 0 && !file;
     }
   }, [ newMessage, file, currentConversationId, loading ]);
+
+  const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [ state]);
+  const allowText = useMemo(() => !findTag(state.fullState, 'allowText') ? true : findTag(state.fullState, 'allowText') === 'true', [ state]);
 
   const [
     getChatRequests,
@@ -1030,14 +1034,19 @@ const Chat = () => {
                   onChange={handleMessageChange}
                   onKeyDown={keyDownHandler}
                   fullWidth
+                  disabled={!allowText}
                   placeholder='Start Chatting...'
                 />
             }
+            <Tooltip title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}>
+              <span>
+                <IconButton component='label' disabled={file instanceof File || loading || !allowFiles} onClick={handleUploadClick}>
+                  <AttachFileIcon />
+                  <input type='file' hidden multiple={false} onInput={handleFileUpload}/>
+                </IconButton>
+              </span>
+            </Tooltip>
             
-            <IconButton component='label' disabled={file instanceof File || loading} onClick={handleUploadClick}>
-              <AttachFileIcon />
-              <input type='file' hidden multiple={false} onInput={handleFileUpload}/>
-            </IconButton>
             <IconButton
               onClick={handleSendClick}
               sx={{ height: '60px', width: '60px', color: theme.palette.neutral.contrastText }}

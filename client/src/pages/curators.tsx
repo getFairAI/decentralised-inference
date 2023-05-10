@@ -7,16 +7,22 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  Checkbox,
   CircularProgress,
   Container,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormHelperText,
+  FormLabel,
   Icon,
   MenuItem,
   Snackbar,
   Typography,
   useTheme,
 } from '@mui/material';
-import { UIEvent, useContext, useEffect, useRef, useState } from 'react';
-import { FieldValues, useController, useForm } from 'react-hook-form';
+import { ChangeEvent, UIEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { FieldValues, UseControllerProps, useController, useForm } from 'react-hook-form';
 import TextControl from '@/components/text-control';
 import SelectControl from '@/components/select-control';
 import MarkdownControl from '@/components/md-control';
@@ -25,8 +31,6 @@ import AvatarControl from '@/components/avatar-control';
 import CustomProgress from '@/components/progress';
 import {
   APP_VERSION,
-  MARKETPLACE_FEE,
-  NODE1_BUNDLR_URL,
   TAG_NAMES,
   APP_NAME,
   MODEL_ATTACHMENT,
@@ -36,6 +40,8 @@ import {
   SCRIPT_CREATION_PAYMENT,
   DEFAULT_TAGS,
   MODEL_FEE_UPDATE,
+  successStatusCode,
+  secondInMS,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
@@ -47,8 +53,8 @@ import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import { GET_LATEST_FEE_UPDATE, LIST_MODELS_QUERY } from '@/queries/graphql';
-import { IEdge } from '@/interfaces/arweave';
-import { findTag } from '@/utils/common';
+import { IEdge, ITag } from '@/interfaces/arweave';
+import { commonUpdateQuery, findTag } from '@/utils/common';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -59,7 +65,63 @@ export interface CreateForm extends FieldValues {
   model: string;
   description?: string;
   avatar?: File;
+  allow: { allowFiles: boolean, allowText: boolean };
 }
+const AllowGroupControl = (props: UseControllerProps) => {
+  const { field } = useController(props);
+
+  const error = useMemo(() => {
+    const values = field.value as { allowFiles: boolean, allowText: boolean };
+    if (!values.allowFiles && !values.allowText) {
+      return true;
+    } else {
+      return false;
+    }
+  }, [ field ]);
+
+  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const values = field.value as { allowFiles: boolean, allowText: boolean };
+    if (event.target.name === 'allowFiles') {
+      field.onChange({
+        ...values,
+        allowFiles: !values.allowFiles
+      });
+    } else if (event.target.name === 'allowText') {
+      field.onChange({
+        ...values,
+        allowText: !values.allowText
+      });
+    } else {
+      // do nothing
+    }
+  }, [ field ]);
+
+  return (
+    <FormControl
+      required
+      error={error}
+      variant="outlined"
+    >
+      <FormLabel>Choose the available Input/Output of promts in Application chat</FormLabel>
+      <FormGroup>
+        <FormControlLabel
+          control={
+            <Checkbox checked={field.value.allowFiles} onChange={handleChange} name="allowFiles" onBlur={field.onBlur} />
+          }
+          label="Allow Files"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox checked={field.value.allowText} onChange={handleChange} name="allowText" onBlur={field.onBlur}/>
+          }
+          label="Allow Text"
+        />
+      </FormGroup>
+      { error && <FormHelperText>Please Choose at least one of the options</FormHelperText>}
+    </FormControl>
+  );
+};
+
 const Curators = () => {
   const elementsPerPage = 5;
   const { handleSubmit, reset, control } = useForm<FieldValues>({
@@ -72,6 +134,10 @@ const Curators = () => {
       avatar: '',
       file: '',
       model: '',
+      allow: {
+        allowFiles: false,
+        allowText: true,
+      }
     },
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -136,6 +202,8 @@ const Curators = () => {
     } else if (modelField.value) {
       const modelFee = findTag(JSON.parse(modelField.value), 'modelFee');
       setSelectedModelFee(parseFloat(parseWinston(modelFee)));
+    } else {
+      // do nothing
     }
   }, [updatedFeeData]);
 
@@ -146,40 +214,80 @@ const Curators = () => {
     if (nodeBalance <= 0) {
       setFundOpen(true);
     } else {
-      await handleFundFinished(NODE1_BUNDLR_URL, data as CreateForm); // use default node
+      await handleFundFinished(data as CreateForm); // use default node
     }
   };
 
-  const uploadAvatarImage = async (scriptTx: string, image: File) => {
-    if ((await getPrice(image.size)).toNumber() > nodeBalance)
+  const bundlrUpload = async (fileToUpload: File, tags: ITag[], successMessage: string) => {
+    const filePrice = await getPrice(fileToUpload.size);
+    if (filePrice.toNumber() > nodeBalance) {
       enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
+    }
+    const finishedPercentage = 100;
 
     /** Register Event Callbacks */
     // event callback: called for every chunk uploaded
     const handleUpload = (chunkInfo: ChunkInfo) => {
-      console.log(chunkInfo);
-      console.log(
-        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
-      );
       const chunkNumber = chunkInfo.id + 1;
       // update the progress bar based on how much has been uploaded
-      if (chunkNumber >= totalChunks.current) setProgress(100);
-      else setProgress((chunkNumber / totalChunks.current) * 100);
+      if (chunkNumber >= totalChunks.current) {
+        setProgress(finishedPercentage);
+      } else {
+        setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
+      }
     };
+
     // event callback: called if an error happens
     const handleError = (e: ChunkError) => {
       setSnackbarOpen(false);
-      console.error(
+      enqueueSnackbar(
         `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+        { variant: 'error' },
       );
     };
+
     // event callback: called when file is fully uploaded
-    const handleDone = (finishRes: unknown) => {
-      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const handleDone = (_finishRes: unknown) => {
       // set the progress bar to 100
-      setProgress(100);
+      setProgress(finishedPercentage);
       setSnackbarOpen(false);
     };
+
+    const res = await chunkUpload(
+      fileToUpload,
+      tags,
+      totalChunks,
+      handleUpload,
+      handleError,
+      handleDone,
+    );
+    if (res.status === successStatusCode) {
+      enqueueSnackbar(
+        <>
+          {successMessage} <br></br>
+          <a
+            href={`https://viewblock.io/arweave/tx/${res.data.id}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        { variant: 'success' },
+      );
+    } else {
+      throw new Error(res.statusText);
+    }
+
+    return res;
+  };
+
+  const uploadAvatarImage = async (scriptTx: string, image?: File) => {
+    if (!image || !(image instanceof File)) {
+      return;
+    }
+
     // upload the file
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
@@ -189,39 +297,10 @@ const Curators = () => {
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
     tags.push({ name: TAG_NAMES.attachmentName, value: image.name });
     tags.push({ name: TAG_NAMES.attachmentRole, value: AVATAR_ATTACHMENT });
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
     setSnackbarOpen(true);
-    try {
-      // const res = await uploader.uploadData(readableStream, { tags });
-      const res = await chunkUpload(
-        image,
-        tags,
-        totalChunks,
-        handleUpload,
-        handleError,
-        handleDone,
-      );
-      if (res.status === 200) {
-        enqueueSnackbar(
-          <>
-            Uploaded Avatar Image
-            <br></br>
-            <a
-              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
-              target={'_blank'}
-              rel='noreferrer'
-            >
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-      } else {
-        enqueueSnackbar(res.statusText, { variant: 'error' });
-      }
-    } catch (error) {
-      enqueueSnackbar('An Error Occured.', { variant: 'error' });
-    }
+
+    await bundlrUpload(image, tags, 'Avatar Uploaded Successfully');
   };
 
   const uploadUsageNotes = async (scriptTx: string, scriptName: string, usageNotes: string) => {
@@ -229,35 +308,6 @@ const Curators = () => {
       type: 'text/markdown',
     });
 
-    if ((await getPrice(file.size)).toNumber() > nodeBalance)
-      enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
-
-    /** Register Event Callbacks */
-    // event callback: called for every chunk uploaded
-    const handleUpload = (chunkInfo: ChunkInfo) => {
-      console.log(chunkInfo);
-      console.log(
-        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
-      );
-      const chunkNumber = chunkInfo.id + 1;
-      // update the progress bar based on how much has been uploaded
-      if (chunkNumber >= totalChunks.current) setProgress(100);
-      else setProgress((chunkNumber / totalChunks.current) * 100);
-    };
-    // event callback: called if an error happens
-    const handleError = (e: ChunkError) => {
-      setSnackbarOpen(false);
-      console.error(
-        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
-      );
-    };
-    // event callback: called when file is fully uploaded
-    const handleDone = (finishRes: unknown) => {
-      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
-      // set the progress bar to 100
-      setProgress(100);
-      setSnackbarOpen(false);
-    };
     // upload the file
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
@@ -267,70 +317,25 @@ const Curators = () => {
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
     tags.push({ name: TAG_NAMES.attachmentName, value: file.name });
     tags.push({ name: TAG_NAMES.attachmentRole, value: NOTES_ATTACHMENT });
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
     setSnackbarOpen(true);
-    try {
-      const res = await chunkUpload(file, tags, totalChunks, handleUpload, handleError, handleDone);
-      if (res.status === 200) {
-        enqueueSnackbar(
-          <>
-            Uploaded Usage Notes File
-            <br></br>
-            <a
-              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
-              target={'_blank'}
-              rel='noreferrer'
-            >
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-      } else {
-        enqueueSnackbar(res.statusText, { variant: 'error' });
-      }
-    } catch (error) {
-      enqueueSnackbar('An Error Occured.', { variant: 'error' });
-    }
+
+    await bundlrUpload(file, tags, 'Usage Notes Uploaded Successfully');
   };
 
-  const handleFundFinished = async (node: string, data?: CreateForm) => {
+  const handleFundFinished = async (data?: CreateForm) => {
     setFundOpen(false);
     if (!data) {
       data = formData;
     }
-    if (!data || !data.file) return;
+
+    if (!data?.file) {
+      enqueueSnackbar('No File Selected', { variant: 'error' });
+      return;
+    }
+
     const file = data.file;
 
-    if ((await getPrice(file.size)).toNumber() > nodeBalance)
-      enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
-
-    /** Register Event Callbacks */
-    // event callback: called for every chunk uploaded
-    const handleUpload = (chunkInfo: ChunkInfo) => {
-      console.log(chunkInfo);
-      console.log(
-        `Uploaded Chunk number ${chunkInfo.id}, offset of ${chunkInfo.offset}, size ${chunkInfo.size} Bytes, with a total of ${chunkInfo.totalUploaded} bytes uploaded.`,
-      );
-      const chunkNumber = chunkInfo.id + 1;
-      // update the progress bar based on how much has been uploaded
-      if (chunkNumber >= totalChunks.current) setProgress(100);
-      else setProgress((chunkNumber / totalChunks.current) * 100);
-    };
-    // event callback: called if an error happens
-    const handleError = (e: ChunkError) => {
-      setSnackbarOpen(false);
-      console.error(
-        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
-      );
-    };
-    // event callback: called when file is fully uploaded
-    const handleDone = (finishRes: unknown) => {
-      console.log(`Upload completed with ID ${(finishRes as { id: string }).id}`);
-      // set the progress bar to 100
-      setProgress(100);
-      setSnackbarOpen(false);
-    };
     // upload the file
     const tags = [];
     const modelData = JSON.parse(data.model) as IEdge;
@@ -359,18 +364,45 @@ const Curators = () => {
     tags.push({ name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: winstonFee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: modelData.node.owner.address });
-    if (data.description) tags.push({ name: TAG_NAMES.description, value: data.description });
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() });
+    if (data.description) {
+      tags.push({ name: TAG_NAMES.description, value: data.description });
+    }
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
+    tags.push({ name: TAG_NAMES.allowFiles, value: `${data.allow.allowFiles}` });
+    tags.push({ name: TAG_NAMES.allowText, value: `${data.allow.allowText}` });
     setSnackbarOpen(true);
     try {
-      const res = await chunkUpload(file, tags, totalChunks, handleUpload, handleError, handleDone);
-      if (res.status === 200) {
+      const res = await bundlrUpload(file, tags, 'Script Uploaded Successfully');
+      const tx = await arweave.createTransaction({
+        quantity: winstonFee,
+        target: modelData.node.owner.address,
+      });
+      tx.addTag(TAG_NAMES.appName, APP_NAME);
+      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+      tx.addTag(TAG_NAMES.contentType, file.type);
+      tx.addTag(TAG_NAMES.operationName, SCRIPT_CREATION_PAYMENT);
+      tx.addTag(TAG_NAMES.scriptName, `${data.name}`);
+      tx.addTag(TAG_NAMES.category, data.category);
+      tx.addTag(TAG_NAMES.modelName, findTag(modelData, 'modelName') as string);
+      tx.addTag(TAG_NAMES.modelCreator, modelData.node.owner.address);
+      tx.addTag(TAG_NAMES.modelTransaction, findTag(modelData, 'modelTransaction') as string);
+      tx.addTag(TAG_NAMES.scriptFee, arweave.ar.arToWinston(`${data.fee}`));
+      tx.addTag(TAG_NAMES.scriptTransaction, res.data.id);
+      if (data.description) {
+        tx.addTag(TAG_NAMES.description, data.description);
+      }
+      tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
+      tx.addTag(TAG_NAMES.allowFiles, `${data.allow.allowFiles}`);
+      tx.addTag(TAG_NAMES.allowText, `${data.allow.allowText}`);
+      await arweave.transactions.sign(tx);
+      const payRes = await arweave.transactions.post(tx);
+      if (payRes.status === successStatusCode) {
         enqueueSnackbar(
           <>
-            Uploaded Usage Notes File
+            Paid Model Fee {selectedModelFee} AR.
             <br></br>
             <a
-              href={`https://viewblock.io/arweave/tx/${res.data.id}`}
+              href={`https://viewblock.io/arweave/tx/${tx.id}`}
               target={'_blank'}
               rel='noreferrer'
             >
@@ -379,62 +411,24 @@ const Curators = () => {
           </>,
           { variant: 'success' },
         );
-      } else {
-        enqueueSnackbar(res.statusText, { variant: 'error' });
-        return;
-      }
-      try {
-        const tx = await arweave.createTransaction({
-          quantity: winstonFee,
-          target: modelData.node.owner.address,
+        startJob({
+          address: currentAddress,
+          operationName: SCRIPT_CREATION,
+          tags,
+          txid: res.data.id,
+          encodedTags: false,
         });
-        tx.addTag(TAG_NAMES.appName, APP_NAME);
-        tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-        tx.addTag(TAG_NAMES.contentType, file.type);
-        tx.addTag(TAG_NAMES.operationName, SCRIPT_CREATION_PAYMENT);
-        tx.addTag(TAG_NAMES.scriptName, `${data.name}`);
-        tx.addTag(TAG_NAMES.category, data.category);
-        tx.addTag(TAG_NAMES.modelName, findTag(modelData, 'modelName') as string);
-        tx.addTag(TAG_NAMES.modelCreator, modelData.node.owner.address);
-        tx.addTag(TAG_NAMES.modelTransaction, findTag(modelData, 'modelTransaction') as string);
-        tx.addTag(TAG_NAMES.scriptFee, arweave.ar.arToWinston(`${data.fee}`));
-        tx.addTag(TAG_NAMES.scriptTransaction, res.data.id);
-        if (data.description) tx.addTag(TAG_NAMES.description, data.description);
-        tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-        await arweave.transactions.sign(tx);
-        const payRes = await arweave.transactions.post(tx);
-        if (payRes.status === 200) {
-          enqueueSnackbar(
-            <>
-              Paid Marketplace Fee {MARKETPLACE_FEE} AR.
-              <br></br>
-              <a
-                href={`https://viewblock.io/arweave/tx/${tx.id}`}
-                target={'_blank'}
-                rel='noreferrer'
-              >
-                <u>View Transaction in Explorer</u>
-              </a>
-            </>,
-            { variant: 'success' },
-          );
-          startJob({
-            address: currentAddress,
-            operationName: SCRIPT_CREATION,
-            tags,
-            txid: res.data.id,
-            encodedTags: false,
-          });
+
+        try {
           await uploadUsageNotes(res.data.id, data.name, data.notes);
-          if (data.avatar && data.avatar instanceof File) {
-            await uploadAvatarImage(res.data.id, data.avatar);
-          }
-          reset(); // reset form
-        } else {
-          enqueueSnackbar(payRes.statusText, { variant: 'error' });
+          await uploadAvatarImage(res.data.id, data.avatar);
+        } catch (error) {
+          enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
+          // error uploading attachments
         }
-      } catch (error) {
-        enqueueSnackbar('An Error Occured.', { variant: 'error' });
+        reset(); // reset form
+      } else {
+        enqueueSnackbar(payRes.statusText, { variant: 'error' });
       }
     } catch (error) {
       setSnackbarOpen(false);
@@ -457,25 +451,7 @@ const Curators = () => {
               ? modelsData.transactions.edges[modelsData.transactions.edges.length - 1].cursor
               : undefined,
         },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          const newData = fetchMoreResult.transactions.edges;
-
-          const merged: IEdge[] =
-            prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-          for (let i = 0; i < newData.length; ++i) {
-            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-              merged.push(newData[i]);
-            }
-          }
-          const newResult = Object.assign({}, prev, {
-            transactions: {
-              edges: merged,
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-          return newResult;
-        },
+        updateQuery: commonUpdateQuery,
       });
     }
   };
@@ -727,6 +703,9 @@ const Curators = () => {
                       </Box>
                     )}
                   </SelectControl>
+                </Box>
+                <Box padding='0px 32px'>
+                  <AllowGroupControl name={'allow'} control={control} />
                 </Box>
                 <Box padding='0px 32px'>
                   <MarkdownControl props={{ name: 'notes', control, rules: { required: true } }} />
