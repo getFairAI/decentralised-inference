@@ -19,7 +19,7 @@
 export const MARKETPLACE_ADDRESS = 'RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo';
 
 export const APP_NAME = 'Fair Protocol';
-export const APP_VERSION = 'test';
+export const APP_VERSION = '0.1';
 
 export const MARKETPLACE_FEE = '0.1';
 export const OPERATOR_REGISTRATION_AR_FEE = '0.05';

@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MARKETPLACE_ADDRESS } from '../constants';
+import { APP_NAME, APP_VERSION, MARKETPLACE_ADDRESS } from '../constants';
 import { gql } from '@apollo/client';
 
 export const GET_LATEST_MODEL_ATTACHMENTS = gql`
@@ -109,7 +109,8 @@ export const LIST_LATEST_MODELS_QUERY = gql`
   query LIST_MODELS_QUERY($first: Int!) {
     transactions(
       tags: [
-        { name: "App-Name", values: ["Fair Protocol"] }
+        { name: "App-Name", values: ["${APP_NAME}"] }
+        { name: "App-Version", values: ["${APP_VERSION}"] }
         { name: "Operation-Name", values: "Model Creation Payment" }
       ]
       recipients:["${MARKETPLACE_ADDRESS}"],
@@ -161,7 +162,8 @@ export const LIST_MODELS_QUERY = gql`
   query LIST_MODELS_QUERY($first: Int!, $after: String) {
     transactions(
       tags: [
-        { name: "App-Name", values: ["Fair Protocol"] }
+        { name: "App-Name", values: ["${APP_NAME}"] }
+        { name: "App-Version", values: ["${APP_VERSION}"] }
         { name: "Operation-Name", values: "Model Creation Payment" }
       ]
       recipients:["${MARKETPLACE_ADDRESS}"],
@@ -233,7 +235,8 @@ export const LIST_OWN_MODELS_QUERY = gql`
   query LIST_MODELS_QUERY($owner: String!) {
     transactions(
       tags: [
-        { name: "App-Name", values: ["Fair Protocol"] }
+        { name: "App-Name", values: ["${APP_NAME}"] }
+        { name: "App-Version", values: ["${APP_VERSION}"] }
         { name: "Operation-Name", values: "Model Creation Payment" }
       ]
       recipients:["${MARKETPLACE_ADDRESS}"],
@@ -305,14 +308,8 @@ export const QUERY_REGISTERED_MODELS = gql`
       first: 25,
       recipients:["${MARKETPLACE_ADDRESS}"],
       tags: [
-        {
-              name: "App-Name",
-              values: ["Fair Protocol"]
-        },
-        {
-              name: "App-Version",
-              values: ["v0.01"]
-        },
+        { name: "App-Name", values: ["${APP_NAME}"] }
+        { name: "App-Version", values: ["${APP_VERSION}"] }
         {
           name: "Opearation-Name",
           values: ["Model Creation"]
