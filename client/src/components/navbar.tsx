@@ -9,6 +9,7 @@ import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 import Pending from './pending';
+import NavigationMenu from './navigation-menu';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -135,10 +136,17 @@ const Navbar = ({
   const { pathname, state } = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
+  const zIndex = theme.zIndex.drawer + 2; // add 2 to make sure it's above the drawer
+  const navbarLinkStyles = {
+    fontWeight: 400,
+    fontSize: '18px',
+    lineHeight: '24px',
+    display: { sm: 'none', md: 'flex' },
+  };
 
   return (
     <>
-      <AppBar className='navbar'>
+      <AppBar className='navbar' sx={{ zIndex }}>
         {showBanner && (
           <Banner>
             <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
@@ -166,7 +174,9 @@ const Navbar = ({
               />
             </Link>
           </Box>
-          <Box sx={{ flexGrow: 1 }}>
+          <Box sx={{ flexGrow: 1 }} display={{ sm: 'none', lg: 'flex' }}>
+            {' '}
+            {/* hide searchbar on small screens */}
             {pathname && (pathname === '/' || pathname === '/explore') && (
               <Box
                 sx={{
@@ -202,7 +212,14 @@ const Navbar = ({
               </Box>
             )}
           </Box>
-          <Box className={'navbar-right-content'}>
+          <Box
+            className={'navbar-right-content'}
+            sx={{
+              justifyContent: { sm: 'flex-end', md: 'center' },
+              gap: { sm: '16px', md: '34px' },
+              flexGrow: { sm: 1, md: 0 },
+            }}
+          >
             {pathname.includes('chat') ? (
               <>
                 <Button
@@ -234,18 +251,39 @@ const Navbar = ({
               </>
             ) : (
               <>
-                <NavLink to='/' className='navbar-links'>
+                <Typography
+                  component={NavLink}
+                  to='/'
+                  className='navbar-links'
+                  sx={navbarLinkStyles}
+                >
                   Explore
-                </NavLink>
-                <NavLink to='/upload-creator' className='navbar-links'>
+                </Typography>
+                <Typography
+                  component={NavLink}
+                  to='/upload-creator'
+                  className='navbar-links'
+                  sx={navbarLinkStyles}
+                >
                   Creators
-                </NavLink>
-                <NavLink to='/upload' className='navbar-links'>
+                </Typography>
+                <Typography
+                  component={NavLink}
+                  to='/upload'
+                  className='navbar-links'
+                  sx={navbarLinkStyles}
+                >
                   Curators
-                </NavLink>
-                <NavLink to='/operators' className='navbar-links'>
+                </Typography>
+                <Typography
+                  component={NavLink}
+                  to='/operators'
+                  className='navbar-links'
+                  sx={navbarLinkStyles}
+                >
                   Operators
-                </NavLink>
+                </Typography>
+                <NavigationMenu navStyles={navbarLinkStyles} />
                 <WalletState />
               </>
             )}
