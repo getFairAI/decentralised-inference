@@ -229,7 +229,7 @@ const inferenceWithContext = async (
 
     const promptPieces = ['Take into consideration the previous messages: {'];
     for (const tx of allMessages) {
-      parseMessage(tx, requestTx.node.owner.address, promptPieces);
+      await parseMessage(tx, requestTx.node.owner.address, promptPieces);
     }
     promptPieces.push('}');
 

@@ -19,23 +19,16 @@
 import {
   Alert,
   Box,
-  Card,
-  CardContent,
   CircularProgress,
-  Container,
-  Divider,
   FormControl,
   Grid,
   IconButton,
   InputAdornment,
   InputBase,
   Paper,
-  Skeleton,
   Snackbar,
-  Stack,
   TextField,
   Tooltip,
-  Typography,
   useTheme,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
@@ -68,7 +61,7 @@ import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { commonUpdateQuery, findTag, genLoadingArray, printSize } from '@/utils/common';
+import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
@@ -76,14 +69,13 @@ import { WorkerContext } from '@/context/worker';
 import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
-import { LoadingContainer } from '@/styles/components';
 import useScroll from '@/hooks/useScroll';
-import Message from '@/components/message';
 import { IMessage } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import CustomProgress from '@/components/progress';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
+import ChatBubble from '@/components/chat-bubble';
 
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
@@ -100,7 +92,6 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
-  const mockArray = genLoadingArray(5);
   const { enqueueSnackbar } = useSnackbar();
   const elementsPerPage = 5;
   const scrollableRef = useRef<HTMLDivElement>(null);
@@ -181,7 +172,7 @@ const Chat = () => {
     [messagesLoading, requestsLoading, responsesLoading],
   );
 
-  const showError = useMemo(() => requestError || responseError, [requestError, responseError]);
+  const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
@@ -656,7 +647,7 @@ const Chat = () => {
         height: (await arweave.blocks.getCurrent()).height,
         to: address as string,
         from: userAddr,
-        contentType: contentType,
+        contentType,
       });
       setMessages(temp);
       setNewMessage('');
@@ -768,118 +759,6 @@ const Chat = () => {
     lastEl?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const hasNoErrorsFragment = () => {
-    return messages.length > 0 && !messagesLoading ? (
-      <>
-        <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
-          {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
-        </Divider>
-        {messages.map((el: IMessage, index: number) => (
-          <Container
-            key={el.id}
-            maxWidth={false}
-            sx={{ paddingTop: '16px' }}
-            className='message-container'
-          >
-            <Message message={el} index={index} pendingTxs={pendingTxs} />
-            {index < messages.length - 1 &&
-              new Date(el.timestamp * 1000).getDay() !==
-                new Date(messages[index + 1].timestamp * 1000).getDay() && (
-                <Divider textAlign='center'>
-                  <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 300,
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
-                  </Typography>
-                </Divider>
-              )}
-          </Container>
-        ))}
-        {isWaitingResponse && !responseTimeout && (
-          <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
-            <Stack spacing={4} flexDirection='row'>
-              <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                <Box display={'flex'} alignItems='center' justifyContent={'flex-start'}>
-                  <Card
-                    elevation={8}
-                    raised={true}
-                    sx={{
-                      width: 'fit-content',
-                      maxWidth: '75%',
-                      // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
-                      border: '4px solid transparent',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(52, 52, 52, 0.7)'
-                          : theme.palette.secondary.main,
-                      // opacity: '0.4',
-                      borderRadius: '40px',
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        padding: '24px 32px',
-                        gap: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                      }}
-                    >
-                      <LoadingContainer className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
-                    </CardContent>
-                  </Card>
-                </Box>
-              </Box>
-            </Stack>
-          </Container>
-        )}
-        {responseTimeout && !isWaitingResponse && (
-          <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
-            <Stack spacing={4} flexDirection='row'>
-              <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                <Box display={'flex'} alignItems='center' justifyContent={'center'}>
-                  <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 600,
-                      fontSize: '30px',
-                      lineHeight: '41px',
-                      display: 'block',
-                      textAlign: 'center',
-                      color: '#F4BA61',
-                    }}
-                  >
-                    The last request has not received a response in the defined amount of time,
-                    please consider retrying with a new operator
-                  </Typography>
-                </Box>
-              </Box>
-            </Stack>
-          </Container>
-        )}
-      </>
-    ) : (
-      hasNoMessagesFragment()
-    );
-  };
-
-  const hasNoMessagesFragment = () => {
-    return !(messagesLoading || requestsLoading || responsesLoading) ? (
-      <Typography alignItems='center' display='flex' flexDirection='column'>
-        Starting a new conversation.
-      </Typography>
-    ) : (
-      <></>
-    );
-  };
-
   const onFileLoad = (fr: FileReader, newFile: File) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return () => {
@@ -989,46 +868,15 @@ const Chat = () => {
                 ref={scrollableRef}
               >
                 <Box ref={target} sx={{ padding: '8px' }}></Box>
-                {showLoading &&
-                  mockArray.map((el: number) => {
-                    return (
-                      <Container key={el} maxWidth={false}>
-                        <Stack
-                          spacing={4}
-                          flexDirection='row'
-                          justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                        >
-                          <Skeleton animation={'wave'} width={'40%'}>
-                            <Box
-                              display={'flex'}
-                              justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                              flexDirection='column'
-                              margin='8px'
-                            >
-                              <Box display={'flex'} alignItems='center'>
-                                <Card
-                                  elevation={8}
-                                  raised={true}
-                                  sx={{ width: 'fit-content', paddingBottom: 0 }}
-                                >
-                                  <CardContent>
-                                    <Typography></Typography>
-                                  </CardContent>
-                                </Card>
-                              </Box>
-                            </Box>
-                          </Skeleton>
-                        </Stack>
-                      </Container>
-                    );
-                  })}
-                {showError ? (
-                  <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
-                    Could not Fetch Conversation History.
-                  </Typography>
-                ) : (
-                  hasNoErrorsFragment()
-                )}
+                <ChatBubble
+                  messages={messages}
+                  showError={showError}
+                  showLoading={showLoading}
+                  isWaitingResponse={isWaitingResponse}
+                  responseTimeout={responseTimeout}
+                  pendingTxs={pendingTxs}
+                  messagesLoading={messagesLoading}
+                />
                 <Box ref={messagesEndRef} sx={{ padding: '8px' }}></Box>
               </Box>
             </Paper>
