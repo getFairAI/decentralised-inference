@@ -89,7 +89,7 @@ const OperatorRow = ({
   useEffect(() => {
     const address = operatorTx.node.owner.address;
     const quantityAR = operatorTx.node.quantity.ar;
-    const stamps = parseInt((Math.random() * 100).toFixed(0), 10);
+    const stamps = 0;
     const fee = findTag(operatorTx, 'operatorFee');
     const registrationTimestamp = operatorTx.node.block
       ? new Date(operatorTx.node.block.timestamp * 1000).toLocaleString()
