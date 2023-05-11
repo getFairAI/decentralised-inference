@@ -105,8 +105,6 @@ const sendToBundlr = async (
   const convertedBalance = bundlr.utils.fromAtomic(atomicBalance);
   logger.info(`node balance (converted) = ${convertedBalance}`);
 
-  const promptTokens = response.usage.prompt_tokens;
-  const responseTokens = response.usage.completion_tokens;
   const tags = [
     { name: APP_NAME_TAG, value: 'Fair Protocol' },
     { name: APP_VERSION_TAG, value: appVersion },
@@ -120,9 +118,14 @@ const sendToBundlr = async (
     { name: PAYMENT_QUANTITY_TAG, value: paymentQuantity },
     { name: PAYMENT_TARGET_TAG, value: CONFIG.marketplaceWallet },
     { name: UNIX_TIME_TAG, value: (Date.now() / secondInMS).toString() },
-    { name: REQUEST_TOKENS_TAG, value: `${promptTokens}` },
-    { name: RESPONSE_TOKENS_TAG, value: `${responseTokens}` },
   ];
+
+  if (response.usage) {
+    const promptTokens = response.usage.prompt_tokens;
+    const responseTokens = response.usage.completion_tokens;
+    tags.push({ name: REQUEST_TOKENS_TAG, value: `${promptTokens}` });
+    tags.push({ name: RESPONSE_TOKENS_TAG, value: `${responseTokens}` });
+  }
 
   try {
     const transaction = await bundlr.upload(response.output, { tags });
@@ -197,11 +200,26 @@ const inferenceWithContext = async (
     const promptPieces = ['Take into consideration the previous messages: {'];
     for (const tx of allMessages) {
       const txData = await fetch(`${NET_ARWEAVE_URL}/${tx.node.id}`);
-      const decodedTxData = await (await txData.blob()).text();
-      if (tx.node.owner.address === requestTx.node.owner.address) {
-        promptPieces.push(`Me: ${decodedTxData}`);
+      let decodedTxData;
+      if (txData.headers.get('content-type')?.includes('text')) {
+        decodedTxData = await (await txData.blob()).text();
+      } else if (txData.headers.get('content-type')?.includes('zip')) {
+        const buffer = Buffer.from( new Uint8Array(await txData.arrayBuffer()) );
+        const zip = new AdmZip(buffer);
+  
+        // currently only supports one file in zip
+        const firstFile = zip.getEntries()[0];
+        decodedTxData = firstFile.getData().toString('utf8');
       } else {
+        decodedTxData = null;
+      }
+
+      if (decodedTxData && tx.node.owner.address === requestTx.node.owner.address) {
+        promptPieces.push(`Me: ${decodedTxData}`);
+      } else if (decodedTxData) {
         promptPieces.push(`Response: ${decodedTxData}`);
+      } else {
+        // skip
       }
     }
     promptPieces.push('}');
