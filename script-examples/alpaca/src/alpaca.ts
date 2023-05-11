@@ -138,6 +138,35 @@ const sendToBundlr = async (
   }
 };
 
+const parseMessage = async (tx: IEdge, requestTxOwner: string, promptPieces: string[]) => {
+  const txData = await fetch(`${NET_ARWEAVE_URL}/${tx.node.id}`);
+  let decodedTxData;
+  if (txData.headers.get(CONTENT_TYPE_TAG)?.includes('text')) {
+    decodedTxData = await (await txData.blob()).text();
+  } else if (txData.headers.get(CONTENT_TYPE_TAG)?.includes('zip')) {
+    const buffer = Buffer.from( new Uint8Array(await txData.arrayBuffer()) );
+    const zip = new AdmZip(buffer);
+
+    // currently only supports one file in zip
+    const firstFile = zip.getEntries()[0];
+    if (firstFile.entryName.includes('.txt')) {
+      decodedTxData = firstFile.getData().toString('utf8');
+    } else {
+      decodedTxData = null;
+    }
+  } else {
+    decodedTxData = null;
+  }
+
+  if (decodedTxData && tx.node.owner.address === requestTxOwner) {
+    promptPieces.push(`Me: ${decodedTxData}`);
+  } else if (decodedTxData) {
+    promptPieces.push(`Response: ${decodedTxData}`);
+  } else {
+    // skip
+  }
+};
+
 const inferenceWithContext = async (
   requestTx: IEdge,
   text: string,
@@ -171,10 +200,9 @@ const inferenceWithContext = async (
 
     let count = 0;
     responseTxs.forEach((curr) => {
-      const promptTokens = curr.node.tags.find((tag) => tag.name === REQUEST_TOKENS_TAG)?.value;
-      const responseTokens = curr.node.tags.find((tag) => tag.name === RESPONSE_TOKENS_TAG)?.value;
-      const totalPairCount =
-        parseInt(promptTokens ?? '0', 10) + parseInt(responseTokens ?? '0', 10);
+      const promptTokens = curr.node.tags.find((tag) => tag.name === REQUEST_TOKENS_TAG)?.value ?? '0';
+      const responseTokens = curr.node.tags.find((tag) => tag.name === RESPONSE_TOKENS_TAG)?.value?? '0';
+      const totalPairCount = parseInt(promptTokens, 10) + parseInt(responseTokens , 10);
       count = count + totalPairCount;
       if (count < MAX_ALPACA_TOKENS) {
         responsesToConsider.push(curr);
@@ -199,28 +227,7 @@ const inferenceWithContext = async (
 
     const promptPieces = ['Take into consideration the previous messages: {'];
     for (const tx of allMessages) {
-      const txData = await fetch(`${NET_ARWEAVE_URL}/${tx.node.id}`);
-      let decodedTxData;
-      if (txData.headers.get('content-type')?.includes('text')) {
-        decodedTxData = await (await txData.blob()).text();
-      } else if (txData.headers.get('content-type')?.includes('zip')) {
-        const buffer = Buffer.from( new Uint8Array(await txData.arrayBuffer()) );
-        const zip = new AdmZip(buffer);
-  
-        // currently only supports one file in zip
-        const firstFile = zip.getEntries()[0];
-        decodedTxData = firstFile.getData().toString('utf8');
-      } else {
-        decodedTxData = null;
-      }
-
-      if (decodedTxData && tx.node.owner.address === requestTx.node.owner.address) {
-        promptPieces.push(`Me: ${decodedTxData}`);
-      } else if (decodedTxData) {
-        promptPieces.push(`Response: ${decodedTxData}`);
-      } else {
-        // skip
-      }
+      parseMessage(tx, requestTx.node.owner.address, promptPieces);
     }
     promptPieces.push('}');
 
@@ -238,15 +245,19 @@ const inference = async (requestTx: IEdge, conversationIdentifier: string, useCo
   const requestData = await fetch(`${NET_ARWEAVE_URL}/${requestTx.node.id}`);
   let text: string;
   if (allowFiles) {
-    if (requestData.headers.get('content-type')?.includes('text')) {
+    if (requestData.headers.get(CONTENT_TYPE_TAG)?.includes('text')) {
       text = await (await requestData.blob()).text();
-    } else if (requestData.headers.get('content-type')?.includes('zip')) {
+    } else if (requestData.headers.get(CONTENT_TYPE_TAG)?.includes('zip')) {
       const buffer = Buffer.from( new Uint8Array(await requestData.arrayBuffer()) );
       const zip = new AdmZip(buffer);
 
       // currently only supports one file in zip
       const firstFile = zip.getEntries()[0];
-      text = firstFile.getData().toString('utf8');
+      if (!firstFile.entryName.includes('.txt')) {
+        text = firstFile.getData().toString('utf8');
+      } else {
+        return { output: 'Request Error: Files need to have .txt extension when inside zip folder' } as AlpacaHttpResponse;
+      }
     } else {
       return { output: 'Request Error: File type not supported' } as AlpacaHttpResponse;
     }
@@ -487,9 +498,10 @@ function sleep(ms: number) {
 }
 
 (async () => {
-  const useContext = !!process.argv.find(el => el === 'with-context');
-  const allowFiles = !!process.argv.find(el => el === 'allow-files');
+  const useContext = !!process.argv.find((el) => el === 'with-context');
+  const allowFiles = !!process.argv.find((el) => el === 'allow-files');
   logger.info('Starting with Context: ' + useContext);
+  logger.info('Starting with Allow Files: ' + allowFiles);
   // eslint-disable-next-line no-constant-condition
   while (true) {
     await start(useContext, allowFiles);

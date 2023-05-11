@@ -62,7 +62,7 @@ import {
   QUERY_CHAT_RESPONSES,
   QUERY_CHAT_RESPONSES_POLLING,
 } from '@/queries/graphql';
-import { IEdge } from '@/interfaces/arweave';
+import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
@@ -133,6 +133,7 @@ const Chat = () => {
 
   const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [ state]);
   const allowText = useMemo(() => !findTag(state.fullState, 'allowText') ? true : findTag(state.fullState, 'allowText') === 'true', [ state]);
+  const uploadDisabled = useMemo(() => file instanceof File || loading || !allowFiles, [ file, loading, allowFiles ]);
 
   const [
     getChatRequests,
@@ -165,6 +166,15 @@ const Chat = () => {
       fetchPolicy: 'no-cache',
       nextFetchPolicy: 'no-cache',
     });
+
+  const showLoading = useMemo(
+    () => messagesLoading || requestsLoading || responsesLoading,
+    [ messagesLoading, requestsLoading, responsesLoading ]
+  );
+
+  const showError = useMemo(
+    () => requestError || responseError, [ requestError, responseError ]
+  );
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
@@ -471,15 +481,15 @@ const Chat = () => {
     setNewMessage(event.target.value);
   };
 
-  const handleSend = async (isFile = false) => {
+  const checkCanSend = async (isFile = false) => {
     if (!currentConversationId) {
-      return;
+      return false;
     }
     let dataSize;
     if (isFile && file) {
       dataSize = file.size;
     } else if (isFile && !file) {
-      return;
+      return false;
     } else {
       dataSize = new TextEncoder().encode(newMessage).length;
     }
@@ -488,13 +498,66 @@ const Chat = () => {
       const messagePrice = await getPrice(dataSize);
       if (!nodeBalance || messagePrice.toNumber() > nodeBalance) {
         enqueueSnackbar('Not Enough Bundlr Funds to send message', { variant: 'error' });
-        return;
+        return false;
       }
+      return true;
     } catch (error) {
       enqueueSnackbar('Bundlr Error', { variant: 'error' });
+      return false;
+    }
+  };
+
+  const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string, tags: ITag[]) => {
+    const tx = await arweave.createTransaction({
+      target: address,
+      quantity: inferenceFee,
+    });
+
+    tx.addTag(TAG_NAMES.appName, APP_NAME);
+    tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+    tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
+    tx.addTag(TAG_NAMES.scriptName, state.scriptName);
+    tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
+    tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
+    tx.addTag(TAG_NAMES.scriptOperator, address || '');
+    tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
+    tx.addTag(TAG_NAMES.inferenceTransaction, bundlrId);
+    tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
+    tx.addTag(TAG_NAMES.contentType, contentType);
+
+    await arweave.transactions.sign(tx);
+    const res = await arweave.transactions.post(tx);
+    if (res.status === successStatusCode) {
+      enqueueSnackbar(
+        <>
+          Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
+          <br></br>
+          <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        { variant: 'success' },
+      );
+      startJob({
+        address: userAddr,
+        operationName: SCRIPT_INFERENCE_REQUEST,
+        tags,
+        txid: bundlrId,
+        encodedTags: false,
+      });
+    } else {
+      enqueueSnackbar(res.statusText, { variant: 'error' });
+    }
+  };
+
+  const handleSend = async (isFile = false) => {
+    if (!(await checkCanSend(isFile))) {
       return;
     }
 
+    const contentType = isFile && file ? file?.type : textContentType;
+    const content = isFile && file ? file : newMessage;
+  
     const inferenceFee = (
       parseFloat(state.fee) +
       parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
@@ -513,10 +576,10 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
     const tempDate = Date.now() / secondInMS;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
-    tags.push({ name: TAG_NAMES.contentType, value: isFile && file ? file.type : textContentType });
+    tags.push({ name: TAG_NAMES.contentType, value: contentType});
     try {
       let bundlrId;
-      if (isFile && file) {
+      if (content instanceof File) {
         setSnackbarOpen(true);
         const finishedPercentage = 100;
         /** Register Event Callbacks */
@@ -549,8 +612,8 @@ const Chat = () => {
         };
 
         // add file name tag
-        tags.push({ name: TAG_NAMES.fileName, value: file.name });
-        const bundlrRes = await chunkUpload(file, tags, totalChunks, handleUpload, handleError, handleDone);
+        tags.push({ name: TAG_NAMES.fileName, value: content.name });
+        const bundlrRes = await chunkUpload(content, tags, totalChunks, handleUpload, handleError, handleDone);
         if (bundlrRes.status === successStatusCode) {
           bundlrId = bundlrRes.data.id;
         } else {
@@ -563,7 +626,7 @@ const Chat = () => {
 
       const temp = [...messages];
       temp.push({
-        msg: isFile && file ? file : newMessage,
+        msg: content,
         type: 'request',
         timestamp: tempDate,
         id: bundlrId,
@@ -571,7 +634,7 @@ const Chat = () => {
         height: (await arweave.blocks.getCurrent()).height,
         to: address as string,
         from: userAddr,
-        contentType: isFile && file ? file.type : textContentType,
+        contentType: contentType,
       });
       setMessages(temp);
       setNewMessage('');
@@ -595,46 +658,7 @@ const Chat = () => {
         },
       );
 
-      const tx = await arweave.createTransaction({
-        target: address,
-        quantity: inferenceFee,
-      });
-
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
-      tx.addTag(TAG_NAMES.scriptName, state.scriptName);
-      tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
-      tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
-      tx.addTag(TAG_NAMES.scriptOperator, address || '');
-      tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
-      tx.addTag(TAG_NAMES.inferenceTransaction, bundlrId);
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      tx.addTag(TAG_NAMES.contentType, isFile && file ? file.type : textContentType);
-
-      await arweave.transactions.sign(tx);
-      const res = await arweave.transactions.post(tx);
-      if (res.status === 200) {
-        enqueueSnackbar(
-          <>
-            Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
-            <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-        startJob({
-          address: userAddr,
-          operationName: SCRIPT_INFERENCE_REQUEST,
-          tags,
-          txid: bundlrId,
-          encodedTags: false,
-        });
-      } else {
-        enqueueSnackbar(res.statusText, { variant: 'error' });
-      }
+      await handlePayment(bundlrId, inferenceFee, contentType, tags);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
     }
@@ -869,9 +893,9 @@ const Chat = () => {
 
   const handleUploadClick = useCallback(() => setLoading(true), [ setLoading ]);
 
-  const handleRemoveFile = () => {
+  const handleRemoveFile = useCallback(() => {
     setFile(undefined);
-  };
+  }, [ setFile ]);
 
   const handleSendClick = useCallback(async () => {
     if (file) {
@@ -940,7 +964,7 @@ const Chat = () => {
                 ref={scrollableRef}
               >
                 <Box ref={target} sx={{ padding: '8px' }}></Box>
-                {(messagesLoading || requestsLoading || responsesLoading) &&
+                {showLoading &&
                   mockArray.map((el: number) => {
                     return (
                       <Container key={el} maxWidth={false}>
@@ -973,7 +997,7 @@ const Chat = () => {
                       </Container>
                     );
                   })}
-                {requestError || responseError ? (
+                {showError ? (
                   <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
                     Could not Fetch Conversation History.
                   </Typography>
@@ -1040,7 +1064,7 @@ const Chat = () => {
             }
             <Tooltip title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}>
               <span>
-                <IconButton component='label' disabled={file instanceof File || loading || !allowFiles} onClick={handleUploadClick}>
+                <IconButton component='label' disabled={uploadDisabled} onClick={handleUploadClick}>
                   <AttachFileIcon />
                   <input type='file' hidden multiple={false} onInput={handleFileUpload}/>
                 </IconButton>
