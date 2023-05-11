@@ -108,9 +108,9 @@ jobs:
       env:
         NODE_OPTIONS: "--max_old_space_size=4096"
       run: cd client && npm run build
-    - name: Upload Build artifacts For Pages
-      uses: actions/upload-pages-artifact@v1
+    - uses: actions/upload-artifact@v3
       with:
+        name: dist-artifact
         path: ./client/dist/
       
   test:
