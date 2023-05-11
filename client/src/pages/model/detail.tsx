@@ -30,13 +30,7 @@ import {
 } from '@mui/material';
 import { Box } from '@mui/system';
 import { useLoaderData, useLocation, useNavigate, useParams } from 'react-router-dom';
-import {
-  APP_NAME,
-  APP_VERSION,
-  MARKETPLACE_ADDRESS,
-  MODEL_FEE_UPDATE,
-  TAG_NAMES,
-} from '@/constants';
+import { APP_NAME, APP_VERSION, VAULT_ADDRESS, MODEL_FEE_UPDATE, TAG_NAMES } from '@/constants';
 import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import arweave from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
@@ -90,7 +84,7 @@ const Detail = () => {
     try {
       const tx = await arweave.createTransaction({
         quantity: arweave.ar.arToWinston('0'),
-        target: MARKETPLACE_ADDRESS,
+        target: VAULT_ADDRESS,
       });
       tx.addTag(TAG_NAMES.appName, APP_NAME);
       tx.addTag(TAG_NAMES.appVersion, APP_VERSION);

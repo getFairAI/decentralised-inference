@@ -52,3 +52,8 @@ Operators can decide to terminate the activity whenever they want. They should s
 The Fair Protocol marketplace will ensure that all participants follow all the specified rules, charging users another 5% fee for that service when they request inferences. Those 5% will be paid to Operators, which will pay them back to the Marketplace. **If the Operator does not send the fees to the Marketplace within 7 Arweave blocks, the Marketplace won't list to Users the Operator anymore.**
 
 By becoming an Operator, you accept all these rules, terms, and conditions.
+
+## Protocol Owned Wallets
+Vault Address: `tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ`
+
+Deploy Address: `RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo`

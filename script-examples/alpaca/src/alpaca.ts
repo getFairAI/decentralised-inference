@@ -116,7 +116,7 @@ const sendToBundlr = async (
     { name: CONVERSATION_IDENTIFIER_TAG, value: conversationIdentifier },
     { name: CONTENT_TYPE_TAG, value: 'application/json' },
     { name: PAYMENT_QUANTITY_TAG, value: paymentQuantity },
-    { name: PAYMENT_TARGET_TAG, value: CONFIG.marketplaceWallet },
+    { name: PAYMENT_TARGET_TAG, value: CONFIG.vaultAddress },
     { name: UNIX_TIME_TAG, value: (Date.now() / secondInMS).toString() },
   ];
 
@@ -299,7 +299,7 @@ const sendFee = async (
   //  create a wallet-to-wallet transaction sending the marketplace fee to the target address
   const tx = await arweave.createTransaction(
     {
-      target: CONFIG.marketplaceWallet,
+      target: CONFIG.vaultAddress,
       quantity,
     },
     JWK,
