@@ -42,7 +42,7 @@ export const getData = async (txid: string, fileName?: string) => {
     return (await result.blob()).text();
   } else {
     const blob = await result.blob();
-    return new File([ blob ], fileName ?? blob.name, { type: blob.type });
+    return new File([blob], fileName ?? blob.name, { type: blob.type });
   }
 };
 

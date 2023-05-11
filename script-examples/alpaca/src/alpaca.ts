@@ -144,7 +144,7 @@ const parseMessage = async (tx: IEdge, requestTxOwner: string, promptPieces: str
   if (txData.headers.get(CONTENT_TYPE_TAG)?.includes('text')) {
     decodedTxData = await (await txData.blob()).text();
   } else if (txData.headers.get(CONTENT_TYPE_TAG)?.includes('zip')) {
-    const buffer = Buffer.from( new Uint8Array(await txData.arrayBuffer()) );
+    const buffer = Buffer.from(new Uint8Array(await txData.arrayBuffer()));
     const zip = new AdmZip(buffer);
 
     // currently only supports one file in zip
@@ -200,9 +200,11 @@ const inferenceWithContext = async (
 
     let count = 0;
     responseTxs.forEach((curr) => {
-      const promptTokens = curr.node.tags.find((tag) => tag.name === REQUEST_TOKENS_TAG)?.value ?? '0';
-      const responseTokens = curr.node.tags.find((tag) => tag.name === RESPONSE_TOKENS_TAG)?.value?? '0';
-      const totalPairCount = parseInt(promptTokens, 10) + parseInt(responseTokens , 10);
+      const promptTokens =
+        curr.node.tags.find((tag) => tag.name === REQUEST_TOKENS_TAG)?.value ?? '0';
+      const responseTokens =
+        curr.node.tags.find((tag) => tag.name === RESPONSE_TOKENS_TAG)?.value ?? '0';
+      const totalPairCount = parseInt(promptTokens, 10) + parseInt(responseTokens, 10);
       count = count + totalPairCount;
       if (count < MAX_ALPACA_TOKENS) {
         responsesToConsider.push(curr);
@@ -241,14 +243,19 @@ const inferenceWithContext = async (
   }
 };
 
-const inference = async (requestTx: IEdge, conversationIdentifier: string, useContext: boolean, allowFiles: boolean) => {
+const inference = async (
+  requestTx: IEdge,
+  conversationIdentifier: string,
+  useContext: boolean,
+  allowFiles: boolean,
+) => {
   const requestData = await fetch(`${NET_ARWEAVE_URL}/${requestTx.node.id}`);
   let text: string;
   if (allowFiles) {
     if (requestData.headers.get(CONTENT_TYPE_TAG)?.includes('text')) {
       text = await (await requestData.blob()).text();
     } else if (requestData.headers.get(CONTENT_TYPE_TAG)?.includes('zip')) {
-      const buffer = Buffer.from( new Uint8Array(await requestData.arrayBuffer()) );
+      const buffer = Buffer.from(new Uint8Array(await requestData.arrayBuffer()));
       const zip = new AdmZip(buffer);
 
       // currently only supports one file in zip
@@ -256,7 +263,9 @@ const inference = async (requestTx: IEdge, conversationIdentifier: string, useCo
       if (!firstFile.entryName.includes('.txt')) {
         text = firstFile.getData().toString('utf8');
       } else {
-        return { output: 'Request Error: Files need to have .txt extension when inside zip folder' } as AlpacaHttpResponse;
+        return {
+          output: 'Request Error: Files need to have .txt extension when inside zip folder',
+        } as AlpacaHttpResponse;
       }
     } else {
       return { output: 'Request Error: File type not supported' } as AlpacaHttpResponse;
@@ -429,7 +438,12 @@ const checkUserPaidPastInferences = async (userAddress: string, operatorFee: num
   return true;
 };
 
-const processRequest = async (requestTx: IEdge, operatorFee: number, useContext: boolean, allowFiles: boolean) => {
+const processRequest = async (
+  requestTx: IEdge,
+  operatorFee: number,
+  useContext: boolean,
+  allowFiles: boolean,
+) => {
   // Check if user has paid the curator:
   const scriptFee = await getScriptFee();
   // checkUserPaidScriptFee will throw an error if the user has not paid the curator
@@ -445,7 +459,12 @@ const processRequest = async (requestTx: IEdge, operatorFee: number, useContext:
     throw new Error('Invalid App Version or Conversation Identifier');
   }
 
-  const inferenceResult = await inference(requestTx, conversationIdentifier, useContext, allowFiles);
+  const inferenceResult = await inference(
+    requestTx,
+    conversationIdentifier,
+    useContext,
+    allowFiles,
+  );
   logger.info(`Inference Result: ${inferenceResult.output}`);
 
   const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();

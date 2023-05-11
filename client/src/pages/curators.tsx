@@ -21,7 +21,16 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { ChangeEvent, UIEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  UIEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { FieldValues, UseControllerProps, useController, useForm } from 'react-hook-form';
 import TextControl from '@/components/text-control';
 import SelectControl from '@/components/select-control';
@@ -65,59 +74,68 @@ export interface CreateForm extends FieldValues {
   model: string;
   description?: string;
   avatar?: File;
-  allow: { allowFiles: boolean, allowText: boolean };
+  allow: { allowFiles: boolean; allowText: boolean };
 }
 const AllowGroupControl = (props: UseControllerProps) => {
   const { field } = useController(props);
 
   const error = useMemo(() => {
-    const values = field.value as { allowFiles: boolean, allowText: boolean };
+    const values = field.value as { allowFiles: boolean; allowText: boolean };
     if (!values.allowFiles && !values.allowText) {
       return true;
     } else {
       return false;
     }
-  }, [ field ]);
+  }, [field]);
 
-  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    const values = field.value as { allowFiles: boolean, allowText: boolean };
-    if (event.target.name === 'allowFiles') {
-      field.onChange({
-        ...values,
-        allowFiles: !values.allowFiles
-      });
-    } else if (event.target.name === 'allowText') {
-      field.onChange({
-        ...values,
-        allowText: !values.allowText
-      });
-    } else {
-      // do nothing
-    }
-  }, [ field ]);
+  const handleChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const values = field.value as { allowFiles: boolean; allowText: boolean };
+      if (event.target.name === 'allowFiles') {
+        field.onChange({
+          ...values,
+          allowFiles: !values.allowFiles,
+        });
+      } else if (event.target.name === 'allowText') {
+        field.onChange({
+          ...values,
+          allowText: !values.allowText,
+        });
+      } else {
+        // do nothing
+      }
+    },
+    [field],
+  );
 
   return (
-    <FormControl
-      required
-      error={error}
-      variant="outlined"
-    >
+    <FormControl required error={error} variant='outlined'>
       <FormLabel>Choose the available Input/Output of promts in Application chat</FormLabel>
       <FormGroup>
         <FormControlLabel
           control={
-            <Checkbox checked={field.value.allowFiles} onChange={handleChange} name="allowFiles" onBlur={field.onBlur} />
+            <Checkbox
+              checked={field.value.allowFiles}
+              onChange={handleChange}
+              name='allowFiles'
+              onBlur={field.onBlur}
+            />
           }
-          label="Allow Files"
+          label='Allow Files'
         />
         <FormControlLabel
           control={
-            <Checkbox checked={field.value.allowText} onChange={handleChange} name="allowText" onBlur={field.onBlur}/>
+            <Checkbox
+              checked={field.value.allowText}
+              onChange={handleChange}
+              name='allowText'
+              onBlur={field.onBlur}
+            />
           }
-          label="Allow Text"
+          label='Allow Text'
         />
       </FormGroup>
-      { error && <FormHelperText>Please Choose at least one of the options</FormHelperText>}
+      {error && <FormHelperText>Please Choose at least one of the options</FormHelperText>}
     </FormControl>
   );
 };
@@ -137,7 +155,7 @@ const Curators = () => {
       allow: {
         allowFiles: false,
         allowText: true,
-      }
+      },
     },
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -401,11 +419,7 @@ const Curators = () => {
           <>
             Paid Model Fee {selectedModelFee} AR.
             <br></br>
-            <a
-              href={`https://viewblock.io/arweave/tx/${tx.id}`}
-              target={'_blank'}
-              rel='noreferrer'
-            >
+            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
               <u>View Transaction in Explorer</u>
             </a>
           </>,

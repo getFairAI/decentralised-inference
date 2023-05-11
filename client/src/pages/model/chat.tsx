@@ -117,8 +117,8 @@ const Chat = () => {
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
   const [lastEl, setLastEl] = useState<Element | undefined>(undefined);
   const { isTopHalf } = useScroll(scrollableRef);
-  const [ file, setFile ] = useState<File | undefined>(undefined);
-  const [ loading, setLoading ] = useState(false);
+  const [file, setFile] = useState<File | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
   const totalChunks = useRef(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -129,11 +129,20 @@ const Chat = () => {
     } else {
       return newMessage.length === 0 && !file;
     }
-  }, [ newMessage, file, currentConversationId, loading ]);
+  }, [newMessage, file, currentConversationId, loading]);
 
-  const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [ state]);
-  const allowText = useMemo(() => !findTag(state.fullState, 'allowText') ? true : findTag(state.fullState, 'allowText') === 'true', [ state]);
-  const uploadDisabled = useMemo(() => file instanceof File || loading || !allowFiles, [ file, loading, allowFiles ]);
+  const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
+  const allowText = useMemo(
+    () =>
+      !findTag(state.fullState, 'allowText')
+        ? true
+        : findTag(state.fullState, 'allowText') === 'true',
+    [state],
+  );
+  const uploadDisabled = useMemo(
+    () => file instanceof File || loading || !allowFiles,
+    [file, loading, allowFiles],
+  );
 
   const [
     getChatRequests,
@@ -169,12 +178,10 @@ const Chat = () => {
 
   const showLoading = useMemo(
     () => messagesLoading || requestsLoading || responsesLoading,
-    [ messagesLoading, requestsLoading, responsesLoading ]
+    [messagesLoading, requestsLoading, responsesLoading],
   );
 
-  const showError = useMemo(
-    () => requestError || responseError, [ requestError, responseError ]
-  );
+  const showError = useMemo(() => requestError || responseError, [requestError, responseError]);
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
@@ -430,7 +437,8 @@ const Chat = () => {
     const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
 
     const contentType = findTag(el, 'contentType');
-    const data = msgIdx < 0 ? await getData(el.node.id, findTag(el, 'fileName')) : polledMessages[msgIdx].msg;
+    const data =
+      msgIdx < 0 ? await getData(el.node.id, findTag(el, 'fileName')) : polledMessages[msgIdx].msg;
     const timestamp =
       parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
@@ -507,7 +515,12 @@ const Chat = () => {
     }
   };
 
-  const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string, tags: ITag[]) => {
+  const handlePayment = async (
+    bundlrId: string,
+    inferenceFee: string,
+    contentType: string,
+    tags: ITag[],
+  ) => {
     const tx = await arweave.createTransaction({
       target: address,
       quantity: inferenceFee,
@@ -557,7 +570,7 @@ const Chat = () => {
 
     const contentType = isFile && file ? file?.type : textContentType;
     const content = isFile && file ? file : newMessage;
-  
+
     const inferenceFee = (
       parseFloat(state.fee) +
       parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
@@ -576,7 +589,7 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
     const tempDate = Date.now() / secondInMS;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
-    tags.push({ name: TAG_NAMES.contentType, value: contentType});
+    tags.push({ name: TAG_NAMES.contentType, value: contentType });
     try {
       let bundlrId;
       if (content instanceof File) {
@@ -598,7 +611,9 @@ const Chat = () => {
         const handleError = (e: ChunkError) => {
           setSnackbarOpen(false);
           enqueueSnackbar(
-            `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+            `Error uploading chunk number ${e.id} - ${
+              (e.res as { statusText: string }).statusText
+            }`,
             { variant: 'error' },
           );
         };
@@ -613,7 +628,14 @@ const Chat = () => {
 
         // add file name tag
         tags.push({ name: TAG_NAMES.fileName, value: content.name });
-        const bundlrRes = await chunkUpload(content, tags, totalChunks, handleUpload, handleError, handleDone);
+        const bundlrRes = await chunkUpload(
+          content,
+          tags,
+          totalChunks,
+          handleUpload,
+          handleError,
+          handleDone,
+        );
         if (bundlrRes.status === successStatusCode) {
           bundlrId = bundlrRes.data.id;
         } else {
@@ -877,25 +899,28 @@ const Chat = () => {
     };
   };
 
-  const handleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const newFile = event.target.files[0];
-      const fr = new FileReader();
-      setFile(newFile);
-      fr.addEventListener('load', onFileLoad(fr, newFile));
-      fr.addEventListener('error', onFileError(fr, newFile));
-      fr.readAsArrayBuffer(newFile);
-    } else {
-      setFile(undefined);
-      setLoading(false);
-    }
-  }, [ file, setFile, setLoading, onFileError, onFileLoad ]);
+  const handleFileUpload = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files.length > 0) {
+        const newFile = event.target.files[0];
+        const fr = new FileReader();
+        setFile(newFile);
+        fr.addEventListener('load', onFileLoad(fr, newFile));
+        fr.addEventListener('error', onFileError(fr, newFile));
+        fr.readAsArrayBuffer(newFile);
+      } else {
+        setFile(undefined);
+        setLoading(false);
+      }
+    },
+    [file, setFile, setLoading, onFileError, onFileLoad],
+  );
 
-  const handleUploadClick = useCallback(() => setLoading(true), [ setLoading ]);
+  const handleUploadClick = useCallback(() => setLoading(true), [setLoading]);
 
   const handleRemoveFile = useCallback(() => {
     setFile(undefined);
-  }, [ setFile ]);
+  }, [setFile]);
 
   const handleSendClick = useCallback(async () => {
     if (file) {
@@ -904,7 +929,7 @@ const Chat = () => {
     } else {
       await handleSend();
     }
-  }, [ handleSend, file]);
+  }, [handleSend, file]);
 
   const handleCloseSnackbar = useCallback(() => setSnackbarOpen(false), [setSnackbarOpen]);
 
@@ -1019,11 +1044,11 @@ const Chat = () => {
               padding: '3px 20px 0px 50px',
               alignItems: 'center',
             }}
-          > 
-            {
-              loading || file ?
-                <FormControl variant='outlined' fullWidth>
-                  { file && <TextField
+          >
+            {loading || file ? (
+              <FormControl variant='outlined' fullWidth>
+                {file && (
+                  <TextField
                     value={file?.name}
                     InputProps={{
                       startAdornment: (
@@ -1033,7 +1058,9 @@ const Chat = () => {
                           </IconButton>
                         </InputAdornment>
                       ),
-                      endAdornment: <InputAdornment position='start'>{printSize(file)}</InputAdornment>,
+                      endAdornment: (
+                        <InputAdornment position='start'>{printSize(file)}</InputAdornment>
+                      ),
                       sx: {
                         borderWidth: '1px',
                         borderColor: theme.palette.text.primary,
@@ -1041,36 +1068,40 @@ const Chat = () => {
                       },
                       readOnly: true,
                     }}
-                  />}
-                  { loading && <CircularProgress variant='indeterminate' /> }
-                </FormControl> :
-                <InputBase
-                  sx={{
-                    color:
-                      theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '20px',
-                    lineHeight: '16px',
-                    width: '100%',
-                  }}
-                  value={newMessage}
-                  onChange={handleMessageChange}
-                  onKeyDown={keyDownHandler}
-                  fullWidth
-                  disabled={!allowText}
-                  placeholder='Start Chatting...'
-                />
-            }
-            <Tooltip title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}>
+                  />
+                )}
+                {loading && <CircularProgress variant='indeterminate' />}
+              </FormControl>
+            ) : (
+              <InputBase
+                sx={{
+                  color:
+                    theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  fontSize: '20px',
+                  lineHeight: '16px',
+                  width: '100%',
+                }}
+                value={newMessage}
+                onChange={handleMessageChange}
+                onKeyDown={keyDownHandler}
+                fullWidth
+                disabled={!allowText}
+                placeholder='Start Chatting...'
+              />
+            )}
+            <Tooltip
+              title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}
+            >
               <span>
                 <IconButton component='label' disabled={uploadDisabled} onClick={handleUploadClick}>
                   <AttachFileIcon />
-                  <input type='file' hidden multiple={false} onInput={handleFileUpload}/>
+                  <input type='file' hidden multiple={false} onInput={handleFileUpload} />
                 </IconButton>
               </span>
             </Tooltip>
-            
+
             <IconButton
               onClick={handleSendClick}
               sx={{ height: '60px', width: '60px', color: theme.palette.neutral.contrastText }}

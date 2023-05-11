@@ -19,11 +19,18 @@
 import { NET_ARWEAVE_URL } from '@/constants';
 import { IMessage } from '@/interfaces/common';
 import { printSize } from '@/utils/common';
-import { Typography, FormControl, TextField, InputAdornment, IconButton, useTheme } from '@mui/material';
+import {
+  Typography,
+  FormControl,
+  TextField,
+  InputAdornment,
+  IconButton,
+  useTheme,
+} from '@mui/material';
 import { useCallback } from 'react';
 import DownloadIcon from '@mui/icons-material/Download';
 
-const MessageDisplay = ({ message }: { message: IMessage}) => {
+const MessageDisplay = ({ message }: { message: IMessage }) => {
   const theme = useTheme();
 
   const handleDownload = useCallback(() => {
@@ -33,54 +40,60 @@ const MessageDisplay = ({ message }: { message: IMessage}) => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, [ message ]);
+  }, [message]);
 
   if (message.contentType?.includes('image')) {
     return <img src={`${NET_ARWEAVE_URL}/${message.id}`}></img>;
   } else if (message.contentType?.includes('audio')) {
     return <audio controls src={`${NET_ARWEAVE_URL}/${message.id}`}></audio>;
   } else if (message.contentType?.includes('text') || message.contentType?.includes('json')) {
-    return <Typography
-      sx={{
-        fontStyle: 'normal',
-        fontWeight: 400,
-        fontSize: '25px',
-        lineHeight: '34px',
-        display: 'flex',
-        alignItems: 'center',
-        color:
-          message.type === 'response'
-            ? theme.palette.secondary.contrastText
-            : theme.palette.terciary.contrastText,
-        whiteSpace: 'pre-wrap',
-      }}
-      gutterBottom
-      component={'pre'}
-    >
-      {message.msg as string}
-    </Typography>;
-  } else {
-    return <FormControl variant='outlined' fullWidth>
-      <TextField
-        value={(message.msg as File).name || 'Not Available'}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position='start'>
-              <IconButton aria-label='download' onClick={handleDownload}>
-                <DownloadIcon />
-              </IconButton>
-            </InputAdornment>
-          ),
-          endAdornment: <InputAdornment position='start'>{printSize(message.msg as File)}</InputAdornment>,
-          sx: {
-            borderWidth: '1px',
-            borderColor: theme.palette.text.primary,
-            borderRadius: '23px',
-          },
-          readOnly: true,
+    return (
+      <Typography
+        sx={{
+          fontStyle: 'normal',
+          fontWeight: 400,
+          fontSize: '25px',
+          lineHeight: '34px',
+          display: 'flex',
+          alignItems: 'center',
+          color:
+            message.type === 'response'
+              ? theme.palette.secondary.contrastText
+              : theme.palette.terciary.contrastText,
+          whiteSpace: 'pre-wrap',
         }}
-      />
-    </FormControl>;
+        gutterBottom
+        component={'pre'}
+      >
+        {message.msg as string}
+      </Typography>
+    );
+  } else {
+    return (
+      <FormControl variant='outlined' fullWidth>
+        <TextField
+          value={(message.msg as File).name || 'Not Available'}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position='start'>
+                <IconButton aria-label='download' onClick={handleDownload}>
+                  <DownloadIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position='start'>{printSize(message.msg as File)}</InputAdornment>
+            ),
+            sx: {
+              borderWidth: '1px',
+              borderColor: theme.palette.text.primary,
+              borderRadius: '23px',
+            },
+            readOnly: true,
+          }}
+        />
+      </FormControl>
+    );
   }
 };
 

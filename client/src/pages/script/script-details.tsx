@@ -70,7 +70,7 @@ const ScriptAttachments = ({
   useEffect(() => {
     if (notesTxId) {
       (async () => {
-        setNotes(await getData(notesTxId) as string);
+        setNotes((await getData(notesTxId)) as string);
       })();
     }
   }, [notesTxId]);
