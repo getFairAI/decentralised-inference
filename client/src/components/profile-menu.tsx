@@ -13,13 +13,7 @@ import GetIcon from './get-icon';
 import Box from '@mui/material/Box';
 
 const bundlrSettings = 'Bundlr Settings';
-const options = [
-  bundlrSettings,
-  'Whitepaper',
-  'Github',
-  'Twitter',
-  'Disconnect',
-];
+const options = [bundlrSettings, 'Whitepaper', 'Github', 'Twitter', 'Disconnect'];
 const disableableOptions = [bundlrSettings, 'My Models', 'Disconnect'];
 
 const ITEM_HEIGHT = 56;
@@ -113,7 +107,7 @@ export default function ProfileMenu() {
             <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
               <GetIcon input={option}></GetIcon>
               <Box sx={{ marginLeft: '10px' }}>
-              <Typography>{option}</Typography>
+                <Typography>{option}</Typography>
               </Box>
             </MenuItem>
           ),
