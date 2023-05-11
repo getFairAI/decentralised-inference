@@ -143,8 +143,8 @@ const Navbar = ({
           <Banner>
             <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
               <Typography variant='h4'>
-                This Application is in <b>PRE-ALPHA</b>. Please Make sure you understand before
-                using any of the functionalities.
+                This App is in <b>ALPHA</b> version and the code has not been audited yet. Please
+                make sure you understand before using any of the functionalities.
               </Typography>
             </Box>
             <Box sx={{ flexGrow: 0 }}>

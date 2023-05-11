@@ -5,23 +5,18 @@ import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
 import { AppThemeContext } from '@/context/theme';
 import { Tooltip, Typography } from '@mui/material';
-import { GITHUB_LINK, WHITEPAPER_LINK } from '@/constants';
+import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 import { WalletContext } from '@/context/wallet';
 import { FundContext } from '@/context/fund';
+import GetIcon from './get-icon';
+import Box from '@mui/material/Box';
 
-const options = [
-  'Bundlr Settings',
-  'My Models',
-  'Toggle Theme',
-  'Github',
-  'Whitepaper',
-  'Disconnect',
-];
+const bundlrSettings = 'Bundlr Settings';
+const options = [bundlrSettings, 'Whitepaper', 'Github', 'Twitter', 'Disconnect'];
+const disableableOptions = [bundlrSettings, 'My Models', 'Disconnect'];
 
-const disableableOptions = ['Bundlr Settings', 'My Models', 'Disconnect'];
-
-const ITEM_HEIGHT = 48;
+const ITEM_HEIGHT = 56;
 
 export default function ProfileMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -42,7 +37,7 @@ export default function ProfileMenu() {
 
   const HandleOptionClick = async (option: string) => {
     switch (option) {
-      case 'Bundlr Settings':
+      case bundlrSettings:
         setFundOpen(true);
         setAnchorEl(null);
         break;
@@ -55,6 +50,9 @@ export default function ProfileMenu() {
         break;
       case 'Github':
         window.open(GITHUB_LINK, '_blank');
+        break;
+      case 'Twitter':
+        window.open(TWITTER_LINK, '_blank');
         break;
       case 'Whitepaper':
         window.open(WHITEPAPER_LINK, '_blank');
@@ -97,15 +95,7 @@ export default function ProfileMenu() {
         }}
       >
         {options.map((option) =>
-          option === 'Toggle Theme' ? (
-            <Tooltip title='This Feature is not Available at the moment' key={option}>
-              <span>
-                <MenuItem onClick={() => HandleOptionClick(option)} disabled>
-                  <Typography>{option}</Typography>
-                </MenuItem>
-              </span>
-            </Tooltip>
-          ) : disableableOptions.includes(option) && !currentAddress ? (
+          disableableOptions.includes(option) && !currentAddress ? (
             <Tooltip title='This Feature requires a wallet to be connected' key={option}>
               <span>
                 <MenuItem onClick={() => HandleOptionClick(option)} disabled>
@@ -115,7 +105,10 @@ export default function ProfileMenu() {
             </Tooltip>
           ) : (
             <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
-              <Typography>{option}</Typography>
+              <GetIcon input={option}></GetIcon>
+              <Box sx={{ marginLeft: '10px' }}>
+                <Typography>{option}</Typography>
+              </Box>
             </MenuItem>
           ),
         )}
