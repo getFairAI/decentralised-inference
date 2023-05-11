@@ -55,21 +55,23 @@ export default function BasicTable(props: {
 
   useEffect(() => {
     if (isOnScreen && props.hasNextPage) {
-      props.fetchMore({
+      (async () => props.fetchMore({
         variables: {
           after: props.data[props.data.length - 1].cursor,
         },
         updateQuery: (prev: { transactions: ITransactions }, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          const newResult = Object.assign({}, prev, {
+          if (!fetchMoreResult) {
+            return prev;
+          }
+
+          return Object.assign({}, prev, {
             transactions: {
               edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
               pageInfo: fetchMoreResult.transactions.pageInfo,
             },
           });
-          return newResult;
         },
-      });
+      }))();
     }
   }, [isOnScreen, props.data]);
 

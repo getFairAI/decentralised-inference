@@ -89,7 +89,7 @@ const OperatorRow = ({
   useEffect(() => {
     const address = operatorTx.node.owner.address;
     const quantityAR = operatorTx.node.quantity.ar;
-    const stamps = parseInt((Math.random() * 100).toFixed(0));
+    const stamps = parseInt((Math.random() * 100).toFixed(0), 10);
     const fee = findTag(operatorTx, 'operatorFee');
     const registrationTimestamp = operatorTx.node.block
       ? new Date(operatorTx.node.block.timestamp * 1000).toLocaleString()
@@ -207,22 +207,22 @@ const OperatorRow = ({
         },
       ];
 
-      const asyncPaidFee = async () => {
-        const blockHeights = opResponses.data.transactions.edges.map(
-          (el: IEdge) => el.node.block.height,
-        );
-        // const currentBlockHeight = await arweave.blocks.getCurrent();
-        getPaidFee({
-          variables: {
-            tags: tags,
-            owner: operatorTx.node.owner.address,
-            minBlockHeight: Math.min(...blockHeights),
-            first: 10,
-            // maxBlockHeight: currentBlockHeight.height - N_PREVIOUS_BLOCKS,
-          },
-        });
-      };
-      if (opResponses.data.transactions.edges.length > 0) asyncPaidFee();
+      if (opResponses.data.transactions.edges.length > 0) {
+        (async () => {
+          const blockHeights = opResponses.data.transactions.edges.map(
+            (el: IEdge) => el.node.block.height,
+          );
+
+          getPaidFee({
+            variables: {
+              tags,
+              owner: operatorTx.node.owner.address,
+              minBlockHeight: Math.min(...blockHeights),
+              first: 10,
+            },
+          });
+        })();
+      }
       const reqs = data.transactions.edges;
       const responses = opResponses.data.transactions.edges;
       const availability = (reqs.length / responses.length) * 100;

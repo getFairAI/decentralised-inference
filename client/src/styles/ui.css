@@ -23,7 +23,7 @@
 }
 
 .navbar-links {
-  font-family: 'Satoshi';
+  font-family: Satoshi, sans-serif;
   font-style: normal;
   font-weight: 400;
   font-size: 18px;
@@ -31,7 +31,7 @@
 }
 
 .navbar-links.active {
-  font-family: 'Satoshi';
+  font-family: Satoshi, sans-serif;
   font-style: normal;
   font-weight: 700;
   font-size: 18px;
@@ -71,7 +71,7 @@
 }
 
 .text {
-  font-family: 'Satoshi';
+  font-family: Satoshi, sans-serif;
   font-style: normal;
   font-weight: 300;
   font-size: 30px;

@@ -3,6 +3,7 @@ import { Checkbox, IconButton, TableCell, TableRow, Tooltip, Typography } from '
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { parseWinston } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
+import { useCallback } from 'react';
 
 /**
  * @description React Function component to handle displaying a row for an operator
@@ -20,6 +21,15 @@ const ScriptRow = ({
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
+
+  const handleCopyClick = useCallback(async () => {
+    if (scriptTx.node.owner.address) {
+      await navigator.clipboard.writeText(scriptTx.node.owner.address);
+    } else {
+      // do nothing
+    }
+  }, [ scriptTx, navigator ]);
+
   return (
     <>
       <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
@@ -30,10 +40,7 @@ const ScriptRow = ({
               {scriptTx.node.owner.address.slice(-2)}
               <IconButton
                 size='small'
-                onClick={() => {
-                  scriptTx.node.owner.address &&
-                    navigator.clipboard.writeText(scriptTx.node.owner.address);
-                }}
+                onClick={handleCopyClick}
               >
                 <CopyIcon fontSize='inherit' />
               </IconButton>

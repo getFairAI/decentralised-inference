@@ -182,8 +182,10 @@ const Conversations = ({
     } else if (conversationsData && conversationsData.transactions.edges.length === 0) {
       setHasConversationNextPage(false);
       // no conversations yet, create new
-      createNewConversation(1);
-      setCurrentConversationId(1);
+      (async () => {
+        await createNewConversation(1);
+        setCurrentConversationId(1);
+      })();
     } else {
       // do nothing
     }

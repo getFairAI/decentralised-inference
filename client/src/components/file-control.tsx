@@ -164,8 +164,7 @@ const FileControl = (props: FileControlProps) => {
       setFile(undefined);
       return;
     }
-    const getPrice = async () => await simulateFilePrice((file && file.size) || 0);
-    getPrice();
+    (async () => simulateFilePrice((file && file.size) || 0))();
   }, [field.value]);
 
   const showError = () => {

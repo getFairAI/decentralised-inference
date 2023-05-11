@@ -21,6 +21,7 @@ import {
   ChangeEvent,
   Fragment,
   ReactElement,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -137,14 +138,14 @@ export const CustomStepper = (props: {
     setCompleted(completed.add(activeStep));
   };
 
-  const handleFinish = () => {
-    props.handleSubmit(rate.toString(), operatorName, handleNext);
-    // handleNext();
-  };
+  const handleFinish = useCallback(async () => {
+    await props.handleSubmit(rate.toString(), operatorName, handleNext);
+  }, [ rate, operatorName, handleNext, props.handleSubmit ]);
 
   const handleBack = () => {
-    completed.delete(activeStep);
-    setCompleted(completed);
+    const newCompleted = new Set(completed.values());
+    newCompleted.delete(activeStep);
+    setCompleted(newCompleted);
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
@@ -190,22 +191,21 @@ export const CustomStepper = (props: {
   };
 
   useEffect(() => {
-    const getFileSize = async () => {
+    (async () => {
       const response = await fetch(
         `${NET_ARWEAVE_URL}/${findTag(props.data, 'scriptTransaction')}`,
         { method: 'HEAD' },
       );
-      setFileSize(parseInt(response.headers.get('Content-Length') || ''));
-    };
-    getFileSize();
+      setFileSize(parseInt(response.headers.get('Content-Length') || '', 10));
+    })();
   }, [props.data]);
 
   useEffect(() => {
-    const fetchNotesData = async () => {
-      setNotes(await getData(notesTxId as string));
-    };
-
-    if (notesTxId) fetchNotesData();
+    if (notesTxId) {
+      (async () => {
+        setNotes(await getData(notesTxId));
+      })();
+    }
   }, [notesTxId]);
 
   useEffect(() => {

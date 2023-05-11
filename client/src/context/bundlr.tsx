@@ -138,11 +138,12 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
   const walletState = useContext(WalletContext);
 
   useEffect(() => {
-    const addressChanged = async () => {
-      actions.updateLoading(true);
-      await actions.changeNode(NODE1_BUNDLR_URL);
-    };
-    if (walletState.currentAddress) addressChanged();
+    if (walletState.currentAddress) {
+      (async () => {
+        actions.updateLoading(true);
+        await actions.changeNode(NODE1_BUNDLR_URL);
+      })();
+    }
   }, [walletState.currentAddress]);
 
   const retryConnection = async () => await state.bundlr?.ready();
@@ -150,8 +151,8 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
   const getPrice = async (bytes: number, currency?: string) => {
     if (state.bundlr) {
       return currency
-        ? await state.bundlr.utils.getPrice(currency, bytes)
-        : await state.bundlr.getPrice(bytes);
+        ? state.bundlr.utils.getPrice(currency, bytes)
+        : state.bundlr.getPrice(bytes);
     } else {
       return new BigNumber(0);
     }

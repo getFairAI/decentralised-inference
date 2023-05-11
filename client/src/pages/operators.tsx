@@ -72,32 +72,30 @@ const Operators = () => {
    * filtering correct payments
    */
   useEffect(() => {
-    const asyncWrapper = async () => {
-      const filtered: IEdge[] = [];
-      await Promise.all(
-        data.transactions.edges.map(async (el: IEdge) => {
-          const confirmed = await isTxConfirmed(el.node.id);
-          const queryResult = await client.query({
-            query: GET_TX,
-            variables: {
-              id: findTag(el, 'modelTransaction'),
-            },
-          });
-          const modelTx = queryResult.data.transactions.edges[0];
-          const correctFee =
-            parseInt(el.node.quantity.winston, 10) ===
-            parseInt(findTag(modelTx, 'modelFee') as string, 10);
-          if (confirmed && correctFee) {
-            filtered.push(el);
-          }
-        }),
-      );
-      setHasNextPage(data.transactions.pageInfo.hasNextPage);
-      setTxs(filtered);
-    };
-
     if (data && networkStatus === NetworkStatus.ready) {
-      asyncWrapper();
+      (async () => {
+        const filtered: IEdge[] = [];
+        await Promise.all(
+          data.transactions.edges.map(async (el: IEdge) => {
+            const confirmed = await isTxConfirmed(el.node.id);
+            const queryResult = await client.query({
+              query: GET_TX,
+              variables: {
+                id: findTag(el, 'modelTransaction'),
+              },
+            });
+            const modelTx = queryResult.data.transactions.edges[0];
+            const correctFee =
+              parseInt(el.node.quantity.winston, 10) ===
+              parseInt(findTag(modelTx, 'modelFee') as string, 10);
+            if (confirmed && correctFee) {
+              filtered.push(el);
+            }
+          }),
+        );
+        setHasNextPage(data.transactions.pageInfo.hasNextPage);
+        setTxs(filtered);
+      })();
     }
   }, [data]);
 

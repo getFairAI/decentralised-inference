@@ -189,24 +189,32 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       // only subscribe walletLoaded if arweave wallet does not exist
       // only subscribe if not subscribed already
       if (!connectWalletSubscriptionRef.current) {
-        window.addEventListener('arweaveWalletLoaded', walletLoaded);
+        window.addEventListener('arweaveWalletLoaded', () => {
+          (async () => walletLoaded())();
+        });
         connectWalletSubscriptionRef.current = true;
       }
     } else {
-      walletLoaded();
+      (async () => walletLoaded())();
     }
     if (!switchWalletSubscriptionRef.current) {
-      window.addEventListener('walletSwitch', walletSwitched);
+      window.addEventListener('walletSwitch', (event: { detail: { address: string } }) => {
+        (async () => walletSwitched(event))();
+      });
       switchWalletSubscriptionRef.current = true;
     }
 
     return () => {
       if (connectWalletSubscriptionRef.current) {
-        window.removeEventListener('arweaveWalletLoaded', walletLoaded);
+        window.removeEventListener('arweaveWalletLoaded', () => {
+          (async () => walletLoaded())();
+        });
         connectWalletSubscriptionRef.current = false;
       }
       if (switchWalletSubscriptionRef.current) {
-        window.removeEventListener('walletSwitch', walletSwitched);
+        window.removeEventListener('walletSwitch', (event: { detail: { address: string } }) => {
+          (async () => walletSwitched(event))();
+        });
         switchWalletSubscriptionRef.current = false;
       }
     };
