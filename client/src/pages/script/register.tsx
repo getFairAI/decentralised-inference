@@ -1,6 +1,6 @@
 import { CustomStepper } from '@/components/stepper';
 import {
-  MARKETPLACE_ADDRESS,
+  VAULT_ADDRESS,
   APP_VERSION,
   TAG_NAMES,
   APP_NAME,
@@ -68,11 +68,11 @@ const Register = () => {
         TAG_NAMES.paymentQuantity,
         arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE),
       );
-      saveTx.addTag(TAG_NAMES.paymentTarget, MARKETPLACE_ADDRESS);
+      saveTx.addTag(TAG_NAMES.paymentTarget, VAULT_ADDRESS);
       const saveResult = await window.arweaveWallet.dispatch(saveTx);
 
       const tx = await arweave.createTransaction({
-        target: MARKETPLACE_ADDRESS,
+        target: VAULT_ADDRESS,
         quantity: arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE),
       });
       const tags = [];

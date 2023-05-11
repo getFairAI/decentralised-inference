@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { APP_NAME, APP_VERSION, MARKETPLACE_ADDRESS } from '../constants';
+import { APP_NAME, APP_VERSION, VAULT_ADDRESS } from '../constants';
 import { gql } from '@apollo/client';
 
 export const GET_LATEST_MODEL_ATTACHMENTS = gql`
@@ -113,7 +113,7 @@ export const LIST_LATEST_MODELS_QUERY = gql`
         { name: "App-Version", values: ["${APP_VERSION}"] }
         { name: "Operation-Name", values: "Model Creation Payment" }
       ]
-      recipients:["${MARKETPLACE_ADDRESS}"],
+      recipients:["${VAULT_ADDRESS}"],
       first: $first
       sort: HEIGHT_DESC
     ) {
@@ -166,7 +166,7 @@ export const LIST_MODELS_QUERY = gql`
         { name: "App-Version", values: ["${APP_VERSION}"] }
         { name: "Operation-Name", values: "Model Creation Payment" }
       ]
-      recipients:["${MARKETPLACE_ADDRESS}"],
+      recipients:["${VAULT_ADDRESS}"],
       first: $first
       after: $after,
       sort: HEIGHT_DESC
@@ -239,7 +239,7 @@ export const LIST_OWN_MODELS_QUERY = gql`
         { name: "App-Version", values: ["${APP_VERSION}"] }
         { name: "Operation-Name", values: "Model Creation Payment" }
       ]
-      recipients:["${MARKETPLACE_ADDRESS}"],
+      recipients:["${VAULT_ADDRESS}"],
       owners: [$owner]
     ) {
       edges {
@@ -306,7 +306,7 @@ export const QUERY_REGISTERED_MODELS = gql`
   query QUERY_REGISTERED_MODELS {
     transactions(
       first: 25,
-      recipients:["${MARKETPLACE_ADDRESS}"],
+      recipients:["${VAULT_ADDRESS}"],
       tags: [
         { name: "App-Name", values: ["${APP_NAME}"] }
         { name: "App-Version", values: ["${APP_VERSION}"] }
@@ -401,7 +401,7 @@ export const QUERY_REGISTERED_MODELS = gql`
 export const QUERY_REGISTERED_OPERATORS = gql`
   query QUERY_REGISTERED_OPERATORS($tags: [TagFilter!], $first: Int, $after: String) {
     transactions(
-      recipients:["${MARKETPLACE_ADDRESS}"],
+      recipients:["${VAULT_ADDRESS}"],
       tags: $tags
       sort: HEIGHT_DESC,
       first: $first,
@@ -456,7 +456,7 @@ export const QUERY_CANCELLED_OPERATORS = gql`
   query QUERY_CANCELLED_OPERATORS($tags: [TagFilter!]) {
     transactions(
       first: 1,
-      recipients:["${MARKETPLACE_ADDRESS}"],
+      recipients:["${VAULT_ADDRESS}"],
       tags: $tags
       sort: HEIGHT_DESC
     )
@@ -587,7 +587,7 @@ export const QUERY_PAID_FEE_OPERATORS = gql`
     $after: String
   ) {
     transactions(
-      recipients:["${MARKETPLACE_ADDRESS}"],
+      recipients:["${VAULT_ADDRESS}"],
       tags: $tags,
       owners: [$owner],
       block: {min: $minBlockHeight},

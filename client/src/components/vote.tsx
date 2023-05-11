@@ -21,7 +21,7 @@ import {
   APP_VERSION,
   DEFAULT_TAGS,
   DOWN_VOTE,
-  MARKETPLACE_ADDRESS,
+  VAULT_ADDRESS,
   REGISTER_OPERATION,
   SCRIPT_CREATION_PAYMENT,
   SCRIPT_FEE_PAYMENT,
@@ -165,12 +165,12 @@ const checkOperatorPaidFee = async (txid: string, fee: number, addr: string) => 
   ];
   const queryResult = await client.query({
     query: QUERY_OPERATOR_REGISTRATION_PAYMENT,
-    variables: { tags, first: 1, owner: addr, recipient: MARKETPLACE_ADDRESS },
+    variables: { tags, first: 1, owner: addr, recipient: VAULT_ADDRESS },
   });
   if (queryResult.data.transactions.edges.length > 0) {
     const paymentTx = queryResult.data.transactions.edges[0];
     const correctFee = fee === parseFloat(paymentTx.node.quantity.ar);
-    const correctTarget = paymentTx.node.recipient === MARKETPLACE_ADDRESS;
+    const correctTarget = paymentTx.node.recipient === VAULT_ADDRESS;
 
     return correctFee && correctTarget;
   }

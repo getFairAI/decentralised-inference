@@ -41,7 +41,7 @@ import CustomProgress from '@/components/progress';
 import {
   APP_VERSION,
   MARKETPLACE_FEE,
-  MARKETPLACE_ADDRESS,
+  VAULT_ADDRESS,
   TAG_NAMES,
   APP_NAME,
   MODEL_CREATION,
@@ -240,7 +240,7 @@ const UploadCreator = () => {
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_CREATION });
     tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
-    tags.push({ name: TAG_NAMES.paymentTarget, value: MARKETPLACE_ADDRESS });
+    tags.push({ name: TAG_NAMES.paymentTarget, value: VAULT_ADDRESS });
     if (data.description) {
       tags.push({ name: TAG_NAMES.description, value: data.description });
     }
@@ -250,7 +250,7 @@ const UploadCreator = () => {
       const res = await bundlrUpload(file, tags, 'Model Uploaded Successfully');
       const tx = await arweave.createTransaction({
         quantity: fee,
-        target: MARKETPLACE_ADDRESS,
+        target: VAULT_ADDRESS,
       });
       tx.addTag(TAG_NAMES.appName, APP_NAME);
       tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
