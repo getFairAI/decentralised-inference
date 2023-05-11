@@ -108,10 +108,9 @@ jobs:
       env:
         NODE_OPTIONS: "--max_old_space_size=4096"
       run: cd client && npm run build
-    - name: Upload Build artifacts
-      uses: actions/upload-artifact@v3.1.2
+    - name: Upload Build artifacts For Pages
+      uses: actions/upload-pages-artifact@v1
       with:
-        name: Build artifacts
         path: ./client/dist/
       
   test:
@@ -134,5 +133,5 @@ jobs:
       with:
         path: ./client/node_modules
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
-    - name: Build
+    - name: Test With Coverage
       run: cd client && npm run test:cov
