@@ -21,14 +21,13 @@ const ScriptRow = ({
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
-
   const handleCopyClick = useCallback(async () => {
     if (scriptTx.node.owner.address) {
       await navigator.clipboard.writeText(scriptTx.node.owner.address);
     } else {
       // do nothing
     }
-  }, [ scriptTx, navigator ]);
+  }, [scriptTx, navigator]);
 
   return (
     <>
@@ -38,10 +37,7 @@ const ScriptRow = ({
             <Typography>
               {scriptTx.node.owner.address.slice(0, 10)}...
               {scriptTx.node.owner.address.slice(-2)}
-              <IconButton
-                size='small'
-                onClick={handleCopyClick}
-              >
+              <IconButton size='small' onClick={handleCopyClick}>
                 <CopyIcon fontSize='inherit' />
               </IconButton>
             </Typography>

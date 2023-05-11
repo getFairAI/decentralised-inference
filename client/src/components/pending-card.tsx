@@ -191,7 +191,8 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
             timestamp,
             status: 'Failed',
           });
-          const canRetry = target && quantity && !Number.isNaN(quantity) && target !== currentAddress;
+          const canRetry =
+            target && quantity && !Number.isNaN(quantity) && target !== currentAddress;
           if (autoRetry && canRetry) {
             startJob({
               address: currentAddress,

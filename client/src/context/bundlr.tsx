@@ -150,9 +150,7 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
 
   const getPrice = async (bytes: number, currency?: string) => {
     if (state.bundlr) {
-      return currency
-        ? state.bundlr.utils.getPrice(currency, bytes)
-        : state.bundlr.getPrice(bytes);
+      return currency ? state.bundlr.utils.getPrice(currency, bytes) : state.bundlr.getPrice(bytes);
     } else {
       return new BigNumber(0);
     }

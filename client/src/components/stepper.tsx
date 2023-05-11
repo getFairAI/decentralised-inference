@@ -140,7 +140,7 @@ export const CustomStepper = (props: {
 
   const handleFinish = useCallback(async () => {
     await props.handleSubmit(rate.toString(), operatorName, handleNext);
-  }, [ rate, operatorName, handleNext, props.handleSubmit ]);
+  }, [rate, operatorName, handleNext, props.handleSubmit]);
 
   const handleBack = () => {
     const newCompleted = new Set(completed.values());
