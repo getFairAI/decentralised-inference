@@ -55,6 +55,7 @@ import {
   queryTransactionAnswered,
   queryTransactionsReceived,
 } from './queries';
+import AdmZip from 'adm-zip';
 
 const logger = Pino({
   name: 'alpaca',
@@ -104,8 +105,6 @@ const sendToBundlr = async (
   const convertedBalance = bundlr.utils.fromAtomic(atomicBalance);
   logger.info(`node balance (converted) = ${convertedBalance}`);
 
-  const promptTokens = response.usage.prompt_tokens;
-  const responseTokens = response.usage.completion_tokens;
   const tags = [
     { name: APP_NAME_TAG, value: 'Fair Protocol' },
     { name: APP_VERSION_TAG, value: appVersion },
@@ -119,9 +118,14 @@ const sendToBundlr = async (
     { name: PAYMENT_QUANTITY_TAG, value: paymentQuantity },
     { name: PAYMENT_TARGET_TAG, value: CONFIG.marketplaceWallet },
     { name: UNIX_TIME_TAG, value: (Date.now() / secondInMS).toString() },
-    { name: REQUEST_TOKENS_TAG, value: `${promptTokens}` },
-    { name: RESPONSE_TOKENS_TAG, value: `${responseTokens}` },
   ];
+
+  if (response.usage) {
+    const promptTokens = response.usage.prompt_tokens;
+    const responseTokens = response.usage.completion_tokens;
+    tags.push({ name: REQUEST_TOKENS_TAG, value: `${promptTokens}` });
+    tags.push({ name: RESPONSE_TOKENS_TAG, value: `${responseTokens}` });
+  }
 
   try {
     const transaction = await bundlr.upload(response.output, { tags });
@@ -131,6 +135,35 @@ const sendToBundlr = async (
   } catch (e) {
     // throw error to be handled by caller
     throw new Error(`Could not upload to bundlr: ${e}`);
+  }
+};
+
+const parseMessage = async (tx: IEdge, requestTxOwner: string, promptPieces: string[]) => {
+  const txData = await fetch(`${NET_ARWEAVE_URL}/${tx.node.id}`);
+  let decodedTxData;
+  if (txData.headers.get(CONTENT_TYPE_TAG)?.includes('text')) {
+    decodedTxData = await (await txData.blob()).text();
+  } else if (txData.headers.get(CONTENT_TYPE_TAG)?.includes('zip')) {
+    const buffer = Buffer.from(new Uint8Array(await txData.arrayBuffer()));
+    const zip = new AdmZip(buffer);
+
+    // currently only supports one file in zip
+    const firstFile = zip.getEntries()[0];
+    if (firstFile.entryName.includes('.txt')) {
+      decodedTxData = firstFile.getData().toString('utf8');
+    } else {
+      decodedTxData = null;
+    }
+  } else {
+    decodedTxData = null;
+  }
+
+  if (decodedTxData && tx.node.owner.address === requestTxOwner) {
+    promptPieces.push(`Me: ${decodedTxData}`);
+  } else if (decodedTxData) {
+    promptPieces.push(`Response: ${decodedTxData}`);
+  } else {
+    // skip
   }
 };
 
@@ -167,10 +200,11 @@ const inferenceWithContext = async (
 
     let count = 0;
     responseTxs.forEach((curr) => {
-      const promptTokens = curr.node.tags.find((tag) => tag.name === REQUEST_TOKENS_TAG)?.value;
-      const responseTokens = curr.node.tags.find((tag) => tag.name === RESPONSE_TOKENS_TAG)?.value;
-      const totalPairCount =
-        parseInt(promptTokens ?? '0', 10) + parseInt(responseTokens ?? '0', 10);
+      const promptTokens =
+        curr.node.tags.find((tag) => tag.name === REQUEST_TOKENS_TAG)?.value ?? '0';
+      const responseTokens =
+        curr.node.tags.find((tag) => tag.name === RESPONSE_TOKENS_TAG)?.value ?? '0';
+      const totalPairCount = parseInt(promptTokens, 10) + parseInt(responseTokens, 10);
       count = count + totalPairCount;
       if (count < MAX_ALPACA_TOKENS) {
         responsesToConsider.push(curr);
@@ -195,13 +229,7 @@ const inferenceWithContext = async (
 
     const promptPieces = ['Take into consideration the previous messages: {'];
     for (const tx of allMessages) {
-      const txData = await fetch(`${NET_ARWEAVE_URL}/${tx.node.id}`);
-      const decodedTxData = await (await txData.blob()).text();
-      if (tx.node.owner.address === requestTx.node.owner.address) {
-        promptPieces.push(`Me: ${decodedTxData}`);
-      } else {
-        promptPieces.push(`Response: ${decodedTxData}`);
-      }
+      await parseMessage(tx, requestTx.node.owner.address, promptPieces);
     }
     promptPieces.push('}');
 
@@ -215,9 +243,37 @@ const inferenceWithContext = async (
   }
 };
 
-const inference = async (requestTx: IEdge, conversationIdentifier: string, useContext: boolean) => {
+const inference = async (
+  requestTx: IEdge,
+  conversationIdentifier: string,
+  useContext: boolean,
+  allowFiles: boolean,
+) => {
   const requestData = await fetch(`${NET_ARWEAVE_URL}/${requestTx.node.id}`);
-  const text = await (await requestData.blob()).text();
+  let text: string;
+  if (allowFiles) {
+    if (requestData.headers.get(CONTENT_TYPE_TAG)?.includes('text')) {
+      text = await (await requestData.blob()).text();
+    } else if (requestData.headers.get(CONTENT_TYPE_TAG)?.includes('zip')) {
+      const buffer = Buffer.from(new Uint8Array(await requestData.arrayBuffer()));
+      const zip = new AdmZip(buffer);
+
+      // currently only supports one file in zip
+      const firstFile = zip.getEntries()[0];
+      if (!firstFile.entryName.includes('.txt')) {
+        text = firstFile.getData().toString('utf8');
+      } else {
+        return {
+          output: 'Request Error: Files need to have .txt extension when inside zip folder',
+        } as AlpacaHttpResponse;
+      }
+    } else {
+      return { output: 'Request Error: File type not supported' } as AlpacaHttpResponse;
+    }
+  } else {
+    text = await (await requestData.blob()).text();
+  }
+
   logger.info(`User Prompt: ${text}`);
 
   if (useContext) {
@@ -382,7 +438,12 @@ const checkUserPaidPastInferences = async (userAddress: string, operatorFee: num
   return true;
 };
 
-const processRequest = async (requestTx: IEdge, operatorFee: number, useContext: boolean) => {
+const processRequest = async (
+  requestTx: IEdge,
+  operatorFee: number,
+  useContext: boolean,
+  allowFiles: boolean,
+) => {
   // Check if user has paid the curator:
   const scriptFee = await getScriptFee();
   // checkUserPaidScriptFee will throw an error if the user has not paid the curator
@@ -398,7 +459,12 @@ const processRequest = async (requestTx: IEdge, operatorFee: number, useContext:
     throw new Error('Invalid App Version or Conversation Identifier');
   }
 
-  const inferenceResult = await inference(requestTx, conversationIdentifier, useContext);
+  const inferenceResult = await inference(
+    requestTx,
+    conversationIdentifier,
+    useContext,
+    allowFiles,
+  );
   logger.info(`Inference Result: ${inferenceResult.output}`);
 
   const quantity = (operatorFee * CONFIG.inferencePercentageFee).toString();
@@ -423,7 +489,7 @@ const processRequest = async (requestTx: IEdge, operatorFee: number, useContext:
   }
 };
 
-const start = async (useContext = false) => {
+const start = async (useContext = false, allowFiles = false) => {
   try {
     const address = await arweave.wallets.jwkToAddress(JWK);
 
@@ -436,7 +502,7 @@ const start = async (useContext = false) => {
       const responseTxs: IEdge[] = await queryTransactionAnswered(edge.node.id, address);
 
       if (responseTxs.length === 0) {
-        await processRequest(edge, operatorFee, useContext);
+        await processRequest(edge, operatorFee, useContext, allowFiles);
       } else {
         // Request already answered; skip
       }
@@ -451,12 +517,13 @@ function sleep(ms: number) {
 }
 
 (async () => {
-  const firstArgIdx = 2;
-  const useContext = process.argv[firstArgIdx] === 'with-context';
+  const useContext = !!process.argv.find((el) => el === 'with-context');
+  const allowFiles = !!process.argv.find((el) => el === 'allow-files');
   logger.info('Starting with Context: ' + useContext);
+  logger.info('Starting with Allow Files: ' + allowFiles);
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    await start(useContext);
+    await start(useContext, allowFiles);
     await sleep(CONFIG.sleepTimeSeconds * secondInMS);
     logger.info(`Slept for ${CONFIG.sleepTimeSeconds} second(s). Restarting cycle now...`);
   }

@@ -1,9 +1,27 @@
-import { Stack, Box, Tooltip, Card, CardContent, Typography, useTheme } from '@mui/material';
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
+import { Stack, Box, Tooltip, Card, CardContent, useTheme } from '@mui/material';
 import { IMessage } from '@/interfaces/common';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import MessageFooter from './message-footer';
-import { NET_ARWEAVE_URL } from '@/constants';
+import MessageDisplay from './message-display';
 
 const Message = ({
   message,
@@ -61,29 +79,7 @@ const Message = ({
                 alignItems: message.type === 'response' ? 'flex-start' : 'flex-end',
               }}
             >
-              {message.contentType?.includes('image') ? (
-                <img src={`${NET_ARWEAVE_URL}/${message.id}`}></img>
-              ) : (
-                <Typography
-                  sx={{
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '25px',
-                    lineHeight: '34px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    color:
-                      message.type === 'response'
-                        ? theme.palette.secondary.contrastText
-                        : theme.palette.terciary.contrastText,
-                    whiteSpace: 'pre-wrap',
-                  }}
-                  gutterBottom
-                  component={'pre'}
-                >
-                  {message.msg}
-                </Typography>
-              )}
+              <MessageDisplay message={message} />
               <MessageFooter message={message} index={index} />
             </CardContent>
           </Card>

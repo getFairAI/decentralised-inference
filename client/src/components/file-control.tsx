@@ -16,6 +16,7 @@ import { useController, UseControllerProps } from 'react-hook-form';
 import ClearIcon from '@mui/icons-material/Clear';
 import { BundlrContext } from '@/context/bundlr';
 import arweave from '@/utils/arweave';
+import { printSize } from '@/utils/common';
 
 type FileControlProps = UseControllerProps & { mat?: InputProps; style?: CSSProperties };
 
@@ -126,22 +127,6 @@ const FileControl = (props: FileControlProps) => {
   const handleRemoveFile = () => {
     setFile(undefined);
     field.onChange('');
-  };
-
-  const printSize = (file: File) => {
-    const size = file.size;
-    if (size < 1024) {
-      return `${size} bytes`;
-    } else if (size < Math.pow(1024, 2)) {
-      const kb = size / 1024;
-      return `${Math.round((kb + Number.EPSILON) * 100) / 100} KB`;
-    } else if (size < Math.pow(1024, 3)) {
-      const mb = size / Math.pow(1024, 2);
-      return `${Math.round((mb + Number.EPSILON) * 100) / 100} MB`;
-    } else {
-      const gb = size / Math.pow(1024, 3);
-      return `${Math.round((gb + Number.EPSILON) * 100) / 100} GB`;
-    }
   };
 
   const simulateFilePrice = async (fileSize: number) => {

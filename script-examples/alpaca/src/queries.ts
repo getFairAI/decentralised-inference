@@ -17,7 +17,7 @@
  */
 
 import { gql, ApolloClient, InMemoryCache } from '@apollo/client/core';
-import { scriptCurator, scriptName } from '../config.json' assert { type: 'json' };
+import CONFIG from '../config.json' assert { type: 'json' };
 import {
   CONVERSATION_IDENTIFIER_TAG,
   INFERENCE_TRANSACTION_TAG,
@@ -55,11 +55,11 @@ export const queryTransactionsReceived = async (address: string) => {
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [scriptCurator],
+      values: [CONFIG.scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
     {
       name: SCRIPT_OPERATOR_TAG,
@@ -104,11 +104,11 @@ export const queryTransactionAnswered = async (transactionId: string, address: s
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [scriptCurator],
+      values: [CONFIG.scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
     {
       name: REQUEST_TRANSACTION_TAG,
@@ -153,11 +153,11 @@ export const queryCheckUserScriptRequests = async (userAddress: string) => {
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [scriptCurator],
+      values: [CONFIG.scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
   ];
   const result = await clientGateway.query({
@@ -194,11 +194,11 @@ export const queryCheckUserPayment = async (userAddress: string, inferenceTransa
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [scriptCurator],
+      values: [CONFIG.scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
     {
       name: INFERENCE_TRANSACTION_TAG,
@@ -207,13 +207,8 @@ export const queryCheckUserPayment = async (userAddress: string, inferenceTransa
   ];
   const result = await clientGateway.query({
     query: gql`
-      query CheckUserPayment (tags: [TagFilter!], owner: String!){
-        transactions(
-          first: 1,
-          owners:[ $owner ],
-          tags: $tags
-          sort: HEIGHT_DESC
-        ) {
+      query CheckUserPayment($tags: [TagFilter!], $owner: String!) {
+        transactions(first: 1, owners: [$owner], tags: $tags, sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -244,7 +239,7 @@ export const queryScriptFee = async () => {
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
   ];
   const result = await clientGateway.query({
@@ -267,7 +262,7 @@ export const queryScriptFee = async () => {
         }
       }
     `,
-    variables: { tags, owner: scriptCurator },
+    variables: { tags, owner: CONFIG.scriptCurator },
   });
 
   return parseQueryResult(result);
@@ -281,11 +276,11 @@ export const queryCheckUserCuratorPayment = async (userAddress: string) => {
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [scriptCurator],
+      values: [CONFIG.scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
   ];
   const result = await clientGateway.query({
@@ -308,7 +303,7 @@ export const queryCheckUserCuratorPayment = async (userAddress: string) => {
         }
       }
     `,
-    variables: { tags, owner: userAddress, recipient: scriptCurator },
+    variables: { tags, owner: userAddress, recipient: CONFIG.scriptCurator },
   });
 
   return parseQueryResult(result);
@@ -322,11 +317,11 @@ export const queryOperatorFee = async (address: string) => {
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [scriptCurator],
+      values: [CONFIG.scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
   ];
   const result = await clientGateway.query({
@@ -365,11 +360,11 @@ export const queryRequestsForConversation = async (userAddr: string, cid: string
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [scriptCurator],
+      values: [CONFIG.scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
     {
       name: CONVERSATION_IDENTIFIER_TAG,
@@ -419,11 +414,11 @@ export const queryResponsesForRequests = async (
     },
     {
       name: SCRIPT_CURATOR_TAG,
-      values: [scriptCurator],
+      values: [CONFIG.scriptCurator],
     },
     {
       name: SCRIPT_NAME_TAG,
-      values: [scriptName],
+      values: [CONFIG.scriptName],
     },
     {
       name: SCRIPT_USER_TAG,

@@ -60,6 +60,9 @@ export const TAG_NAMES = {
   scriptFee: 'Script-Fee',
   voteFor: 'Vote-For',
   votedTransaction: 'Voted-Transaction',
+  fileName: 'File-Name',
+  allowFiles: 'Allow-Files',
+  allowText: 'Allow-Text',
 };
 
 // Operation Names
@@ -149,3 +152,4 @@ export const scriptHeaders = ['Creator', 'Name', 'Registration', 'Fee (AR)', 'St
 export const secondInMS = 1000;
 export const defaultDecimalPlaces = 4;
 export const successStatusCode = 200;
+export const textContentType = 'text/plain';

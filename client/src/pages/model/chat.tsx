@@ -1,22 +1,40 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
+  Alert,
   Box,
-  Card,
-  CardContent,
-  Container,
-  Divider,
+  CircularProgress,
+  FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputBase,
   Paper,
-  Skeleton,
-  Stack,
-  Typography,
+  Snackbar,
+  TextField,
+  Tooltip,
   useTheme,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
-import { ChangeEvent, useContext, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   APP_VERSION,
   DEFAULT_TAGS,
@@ -27,6 +45,9 @@ import {
   N_PREVIOUS_BLOCKS,
   SCRIPT_INFERENCE_RESPONSE,
   SCRIPT_INFERENCE_REQUEST,
+  secondInMS,
+  successStatusCode,
+  textContentType,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -34,13 +55,13 @@ import {
   QUERY_CHAT_RESPONSES,
   QUERY_CHAT_RESPONSES_POLLING,
 } from '@/queries/graphql';
-import { IEdge } from '@/interfaces/arweave';
+import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { commonUpdateQuery, findTag, genLoadingArray } from '@/utils/common';
+import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
@@ -48,10 +69,13 @@ import { WorkerContext } from '@/context/worker';
 import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
-import { LoadingContainer } from '@/styles/components';
 import useScroll from '@/hooks/useScroll';
-import Message from '@/components/message';
 import { IMessage } from '@/interfaces/common';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import ClearIcon from '@mui/icons-material/Clear';
+import CustomProgress from '@/components/progress';
+import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
+import ChatBubble from '@/components/chat-bubble';
 
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
@@ -68,7 +92,6 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { height } = useWindowDimensions();
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
-  const mockArray = genLoadingArray(5);
   const { enqueueSnackbar } = useSnackbar();
   const elementsPerPage = 5;
   const scrollableRef = useRef<HTMLDivElement>(null);
@@ -76,7 +99,7 @@ const Chat = () => {
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
   const { startJob } = useContext(WorkerContext);
-  const { nodeBalance, upload, getPrice } = useContext(BundlrContext);
+  const { nodeBalance, upload, chunkUpload, getPrice } = useContext(BundlrContext);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
@@ -85,6 +108,32 @@ const Chat = () => {
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
   const [lastEl, setLastEl] = useState<Element | undefined>(undefined);
   const { isTopHalf } = useScroll(scrollableRef);
+  const [file, setFile] = useState<File | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+  const totalChunks = useRef(0);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const sendDisabled = useMemo(() => {
+    if (!currentConversationId || loading) {
+      return true;
+    } else {
+      return newMessage.length === 0 && !file;
+    }
+  }, [newMessage, file, currentConversationId, loading]);
+
+  const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
+  const allowText = useMemo(
+    () =>
+      !findTag(state.fullState, 'allowText')
+        ? true
+        : findTag(state.fullState, 'allowText') === 'true',
+    [state],
+  );
+  const uploadDisabled = useMemo(
+    () => file instanceof File || loading || !allowFiles,
+    [file, loading, allowFiles],
+  );
 
   const [
     getChatRequests,
@@ -117,6 +166,13 @@ const Chat = () => {
       fetchPolicy: 'no-cache',
       nextFetchPolicy: 'no-cache',
     });
+
+  const showLoading = useMemo(
+    () => messagesLoading || requestsLoading || responsesLoading,
+    [messagesLoading, requestsLoading, responsesLoading],
+  );
+
+  const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
 
   useEffect(() => {
     setChatMaxHeight(`${height - 94}px`);
@@ -372,7 +428,8 @@ const Chat = () => {
     const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
 
     const contentType = findTag(el, 'contentType');
-    const data = msgIdx < 0 ? await getData(el.node.id) : polledMessages[msgIdx].msg;
+    const data =
+      msgIdx < 0 ? await getData(el.node.id, findTag(el, 'fileName')) : polledMessages[msgIdx].msg;
     const timestamp =
       parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
@@ -423,20 +480,87 @@ const Chat = () => {
     setNewMessage(event.target.value);
   };
 
-  const handleSend = async () => {
-    if (!currentConversationId) return;
-    const dataSize = new TextEncoder().encode(newMessage).length;
+  const checkCanSend = async (isFile = false) => {
+    if (!currentConversationId) {
+      return false;
+    }
+    let dataSize;
+    if (isFile && file) {
+      dataSize = file.size;
+    } else if (isFile && !file) {
+      return false;
+    } else {
+      dataSize = new TextEncoder().encode(newMessage).length;
+    }
 
     try {
       const messagePrice = await getPrice(dataSize);
       if (!nodeBalance || messagePrice.toNumber() > nodeBalance) {
         enqueueSnackbar('Not Enough Bundlr Funds to send message', { variant: 'error' });
-        return;
+        return false;
       }
+      return true;
     } catch (error) {
       enqueueSnackbar('Bundlr Error', { variant: 'error' });
+      return false;
+    }
+  };
+
+  const handlePayment = async (
+    bundlrId: string,
+    inferenceFee: string,
+    contentType: string,
+    tags: ITag[],
+  ) => {
+    const tx = await arweave.createTransaction({
+      target: address,
+      quantity: inferenceFee,
+    });
+
+    tx.addTag(TAG_NAMES.appName, APP_NAME);
+    tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+    tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
+    tx.addTag(TAG_NAMES.scriptName, state.scriptName);
+    tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
+    tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
+    tx.addTag(TAG_NAMES.scriptOperator, address || '');
+    tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
+    tx.addTag(TAG_NAMES.inferenceTransaction, bundlrId);
+    tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
+    tx.addTag(TAG_NAMES.contentType, contentType);
+
+    await arweave.transactions.sign(tx);
+    const res = await arweave.transactions.post(tx);
+    if (res.status === successStatusCode) {
+      enqueueSnackbar(
+        <>
+          Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
+          <br></br>
+          <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        { variant: 'success' },
+      );
+      startJob({
+        address: userAddr,
+        operationName: SCRIPT_INFERENCE_REQUEST,
+        tags,
+        txid: bundlrId,
+        encodedTags: false,
+      });
+    } else {
+      enqueueSnackbar(res.statusText, { variant: 'error' });
+    }
+  };
+
+  const handleSend = async (isFile = false) => {
+    if (!(await checkCanSend(isFile))) {
       return;
     }
+
+    const contentType = isFile && file ? file?.type : textContentType;
+    const content = isFile && file ? file : newMessage;
 
     const inferenceFee = (
       parseFloat(state.fee) +
@@ -454,25 +578,80 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
     tags.push({ name: TAG_NAMES.paymentQuantity, value: inferenceFee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
-    const tempDate = Date.now() / 1000;
+    const tempDate = Date.now() / secondInMS;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
-    tags.push({ name: TAG_NAMES.contentType, value: 'text/plain' });
+    tags.push({ name: TAG_NAMES.contentType, value: contentType });
     try {
-      const bundlrRes = await upload(newMessage, tags);
+      let bundlrId;
+      if (content instanceof File) {
+        setSnackbarOpen(true);
+        const finishedPercentage = 100;
+        /** Register Event Callbacks */
+        // event callback: called for every chunk uploaded
+        const handleUpload = (chunkInfo: ChunkInfo) => {
+          const chunkNumber = chunkInfo.id + 1;
+          // update the progress bar based on how much has been uploaded
+          if (chunkNumber >= totalChunks.current) {
+            setProgress(finishedPercentage);
+          } else {
+            setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
+          }
+        };
+
+        // event callback: called if an error happens
+        const handleError = (e: ChunkError) => {
+          setSnackbarOpen(false);
+          enqueueSnackbar(
+            `Error uploading chunk number ${e.id} - ${
+              (e.res as { statusText: string }).statusText
+            }`,
+            { variant: 'error' },
+          );
+        };
+
+        // event callback: called when file is fully uploaded
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const handleDone = (_finishRes: unknown) => {
+          // set the progress bar to 100
+          setProgress(finishedPercentage);
+          setSnackbarOpen(false);
+        };
+
+        // add file name tag
+        tags.push({ name: TAG_NAMES.fileName, value: content.name });
+        const bundlrRes = await chunkUpload(
+          content,
+          tags,
+          totalChunks,
+          handleUpload,
+          handleError,
+          handleDone,
+        );
+        if (bundlrRes.status === successStatusCode) {
+          bundlrId = bundlrRes.data.id;
+        } else {
+          throw new Error(`Could Not Upload File: ${bundlrRes.statusText}`);
+        }
+      } else {
+        const bundlrRes = await upload(newMessage, tags);
+        bundlrId = bundlrRes.id;
+      }
 
       const temp = [...messages];
       temp.push({
-        msg: newMessage,
+        msg: content,
         type: 'request',
         timestamp: tempDate,
-        id: bundlrRes.id,
+        id: bundlrId,
         cid: currentConversationId,
         height: (await arweave.blocks.getCurrent()).height,
         to: address as string,
         from: userAddr,
+        contentType,
       });
       setMessages(temp);
       setNewMessage('');
+      setFile(undefined);
       setIsWaitingResponse(true);
       setResponseTimeout(false);
       enqueueSnackbar(
@@ -480,7 +659,7 @@ const Chat = () => {
           Inference Request
           <br></br>
           <a
-            href={`https://viewblock.io/arweave/tx/${bundlrRes.id}`}
+            href={`https://viewblock.io/arweave/tx/${bundlrId}`}
             target={'_blank'}
             rel='noreferrer'
           >
@@ -492,46 +671,7 @@ const Chat = () => {
         },
       );
 
-      const tx = await arweave.createTransaction({
-        target: address,
-        quantity: inferenceFee,
-      });
-
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
-      tx.addTag(TAG_NAMES.scriptName, state.scriptName);
-      tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
-      tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
-      tx.addTag(TAG_NAMES.scriptOperator, address || '');
-      tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
-      tx.addTag(TAG_NAMES.inferenceTransaction, bundlrRes.id);
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      tx.addTag(TAG_NAMES.contentType, 'text/plain');
-
-      await arweave.transactions.sign(tx);
-      const res = await arweave.transactions.post(tx);
-      if (res.status === 200) {
-        enqueueSnackbar(
-          <>
-            Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
-            <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-        startJob({
-          address: userAddr,
-          operationName: SCRIPT_INFERENCE_REQUEST,
-          tags,
-          txid: bundlrRes.id,
-          encodedTags: false,
-        });
-      } else {
-        enqueueSnackbar(res.statusText, { variant: 'error' });
-      }
+      await handlePayment(bundlrId, inferenceFee, contentType, tags);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
     }
@@ -540,8 +680,7 @@ const Chat = () => {
   const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.code === 'Enter') {
       event.preventDefault();
-      const dataSize = new TextEncoder().encode(newMessage).length;
-      if (dataSize > 0) {
+      if (!sendDisabled) {
         await handleSend();
       }
     }
@@ -620,117 +759,58 @@ const Chat = () => {
     lastEl?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const hasNoErrorsFragment = () => {
-    return messages.length > 0 && !messagesLoading ? (
-      <>
-        <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
-          {new Date(messages[0].timestamp * 1000).toLocaleDateString()}
-        </Divider>
-        {messages.map((el: IMessage, index: number) => (
-          <Container
-            key={el.id}
-            maxWidth={false}
-            sx={{ paddingTop: '16px' }}
-            className='message-container'
-          >
-            <Message message={el} index={index} pendingTxs={pendingTxs} />
-            {index < messages.length - 1 &&
-              new Date(el.timestamp * 1000).getDay() !==
-                new Date(messages[index + 1].timestamp * 1000).getDay() && (
-                <Divider textAlign='center'>
-                  <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 300,
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {new Date(messages[index + 1].timestamp * 1000).toLocaleDateString()}
-                  </Typography>
-                </Divider>
-              )}
-          </Container>
-        ))}
-        {isWaitingResponse && !responseTimeout && (
-          <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
-            <Stack spacing={4} flexDirection='row'>
-              <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                <Box display={'flex'} alignItems='center' justifyContent={'flex-start'}>
-                  <Card
-                    elevation={8}
-                    raised={true}
-                    sx={{
-                      width: 'fit-content',
-                      maxWidth: '75%',
-                      // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
-                      border: '4px solid transparent',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(52, 52, 52, 0.7)'
-                          : theme.palette.secondary.main,
-                      // opacity: '0.4',
-                      borderRadius: '40px',
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        padding: '24px 32px',
-                        gap: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                      }}
-                    >
-                      <LoadingContainer className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
-                    </CardContent>
-                  </Card>
-                </Box>
-              </Box>
-            </Stack>
-          </Container>
-        )}
-        {responseTimeout && !isWaitingResponse && (
-          <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
-            <Stack spacing={4} flexDirection='row'>
-              <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                <Box display={'flex'} alignItems='center' justifyContent={'center'}>
-                  <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 600,
-                      fontSize: '30px',
-                      lineHeight: '41px',
-                      display: 'block',
-                      textAlign: 'center',
-                      color: '#F4BA61',
-                    }}
-                  >
-                    The last request has not received a response in the defined amount of time,
-                    please consider retrying with a new operator
-                  </Typography>
-                </Box>
-              </Box>
-            </Stack>
-          </Container>
-        )}
-      </>
-    ) : (
-      hasNoMessagesFragment()
-    );
+  const onFileLoad = (fr: FileReader, newFile: File) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return () => {
+      setLoading(false);
+      fr.removeEventListener('error', onFileError(fr, newFile));
+      fr.removeEventListener('load', onFileLoad(fr, newFile));
+    };
   };
 
-  const hasNoMessagesFragment = () => {
-    return !(messagesLoading || requestsLoading || responsesLoading) ? (
-      <Typography alignItems='center' display='flex' flexDirection='column'>
-        Starting a new conversation.
-      </Typography>
-    ) : (
-      <></>
-    );
+  const onFileError = (fr: FileReader, newFile: File) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return (_event: ProgressEvent) => {
+      setFile(undefined);
+      setLoading(false);
+      fr.removeEventListener('error', onFileError(fr, newFile));
+      fr.removeEventListener('load', onFileLoad(fr, newFile));
+    };
   };
+
+  const handleFileUpload = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files.length > 0) {
+        const newFile = event.target.files[0];
+        const fr = new FileReader();
+        setFile(newFile);
+        fr.addEventListener('load', onFileLoad(fr, newFile));
+        fr.addEventListener('error', onFileError(fr, newFile));
+        fr.readAsArrayBuffer(newFile);
+      } else {
+        setFile(undefined);
+        setLoading(false);
+      }
+    },
+    [file, setFile, setLoading, onFileError, onFileLoad],
+  );
+
+  const handleUploadClick = useCallback(() => setLoading(true), [setLoading]);
+
+  const handleRemoveFile = useCallback(() => {
+    setFile(undefined);
+  }, [setFile]);
+
+  const handleSendClick = useCallback(async () => {
+    if (file) {
+      // handle send file
+      await handleSend(true);
+    } else {
+      await handleSend();
+    }
+  }, [handleSend, file]);
+
+  const handleCloseSnackbar = useCallback(() => setSnackbarOpen(false), [setSnackbarOpen]);
 
   return (
     <>
@@ -788,46 +868,15 @@ const Chat = () => {
                 ref={scrollableRef}
               >
                 <Box ref={target} sx={{ padding: '8px' }}></Box>
-                {(messagesLoading || requestsLoading || responsesLoading) &&
-                  mockArray.map((el: number) => {
-                    return (
-                      <Container key={el} maxWidth={false}>
-                        <Stack
-                          spacing={4}
-                          flexDirection='row'
-                          justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                        >
-                          <Skeleton animation={'wave'} width={'40%'}>
-                            <Box
-                              display={'flex'}
-                              justifyContent={el % 2 === 0 ? 'flex-end' : 'flex-start'}
-                              flexDirection='column'
-                              margin='8px'
-                            >
-                              <Box display={'flex'} alignItems='center'>
-                                <Card
-                                  elevation={8}
-                                  raised={true}
-                                  sx={{ width: 'fit-content', paddingBottom: 0 }}
-                                >
-                                  <CardContent>
-                                    <Typography></Typography>
-                                  </CardContent>
-                                </Card>
-                              </Box>
-                            </Box>
-                          </Skeleton>
-                        </Stack>
-                      </Container>
-                    );
-                  })}
-                {requestError || responseError ? (
-                  <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
-                    Could not Fetch Conversation History.
-                  </Typography>
-                ) : (
-                  hasNoErrorsFragment()
-                )}
+                <ChatBubble
+                  messages={messages}
+                  showError={showError}
+                  showLoading={showLoading}
+                  isWaitingResponse={isWaitingResponse}
+                  responseTimeout={responseTimeout}
+                  pendingTxs={pendingTxs}
+                  messagesLoading={messagesLoading}
+                />
                 <Box ref={messagesEndRef} sx={{ padding: '8px' }}></Box>
               </Box>
             </Paper>
@@ -844,30 +893,82 @@ const Chat = () => {
               alignItems: 'center',
             }}
           >
-            <InputBase
-              sx={{
-                color:
-                  theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '20px',
-                lineHeight: '16px',
-                width: '100%',
-              }}
-              value={newMessage}
-              onChange={handleMessageChange}
-              onKeyDown={keyDownHandler}
-              fullWidth
-              placeholder='Start Chatting...'
-            />
+            {loading || file ? (
+              <FormControl variant='outlined' fullWidth>
+                {file && (
+                  <TextField
+                    value={file?.name}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position='start'>
+                          <IconButton aria-label='Remove' onClick={handleRemoveFile}>
+                            <ClearIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position='start'>{printSize(file)}</InputAdornment>
+                      ),
+                      sx: {
+                        borderWidth: '1px',
+                        borderColor: theme.palette.text.primary,
+                        borderRadius: '23px',
+                      },
+                      readOnly: true,
+                    }}
+                  />
+                )}
+                {loading && <CircularProgress variant='indeterminate' />}
+              </FormControl>
+            ) : (
+              <InputBase
+                sx={{
+                  color:
+                    theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  fontSize: '20px',
+                  lineHeight: '16px',
+                  width: '100%',
+                }}
+                value={newMessage}
+                onChange={handleMessageChange}
+                onKeyDown={keyDownHandler}
+                fullWidth
+                disabled={!allowText}
+                placeholder='Start Chatting...'
+              />
+            )}
+            <Tooltip
+              title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}
+            >
+              <span>
+                <IconButton component='label' disabled={uploadDisabled} onClick={handleUploadClick}>
+                  <AttachFileIcon />
+                  <input type='file' hidden multiple={false} onInput={handleFileUpload} />
+                </IconButton>
+              </span>
+            </Tooltip>
+
             <IconButton
-              onClick={handleSend}
+              onClick={handleSendClick}
               sx={{ height: '60px', width: '60px', color: theme.palette.neutral.contrastText }}
-              disabled={!newMessage || newMessage === '' || !currentConversationId}
+              disabled={sendDisabled}
             >
               <SendIcon />
             </IconButton>
           </Box>
+          <Snackbar
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            open={snackbarOpen}
+            onClose={handleCloseSnackbar}
+            ClickAwayListenerProps={{ onClickAway: () => null }}
+          >
+            <Alert severity='info' sx={{ width: '100%', minWidth: '300px' }}>
+              Uploading...
+              <CustomProgress value={progress}></CustomProgress>
+            </Alert>
+          </Snackbar>
         </Grid>
       </Grid>
       <Outlet />

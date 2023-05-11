@@ -35,7 +35,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import { IEdge } from '@/interfaces/arweave';
 import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
 import { NumericFormat } from 'react-number-format';
-import { findTag } from '@/utils/common';
+import { findTag, printSize } from '@/utils/common';
 import { useRouteLoaderData } from 'react-router-dom';
 import { RouteLoaderResult } from '@/interfaces/router';
 import { getData } from '@/utils/arweave';
@@ -149,28 +149,6 @@ export const CustomStepper = (props: {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const printSize = (args: File | number) => {
-    let size;
-    if (typeof args === 'number') {
-      size = args;
-    } else {
-      size = args.size;
-    }
-
-    if (size < 1024) {
-      return `${size} bytes`;
-    } else if (size < Math.pow(1024, 2)) {
-      const kb = size / 1024;
-      return `${Math.round((kb + Number.EPSILON) * 100) / 100} KB`;
-    } else if (size < Math.pow(1024, 3)) {
-      const mb = size / Math.pow(1024, 2);
-      return `${Math.round((mb + Number.EPSILON) * 100) / 100} MB`;
-    } else {
-      const gb = size / Math.pow(1024, 3);
-      return `${Math.round((gb + Number.EPSILON) * 100) / 100} GB`;
-    }
-  };
-
   const handleRateChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newNumber = parseFloat(event.target.value);
 
@@ -203,7 +181,7 @@ export const CustomStepper = (props: {
   useEffect(() => {
     if (notesTxId) {
       (async () => {
-        setNotes(await getData(notesTxId));
+        setNotes((await getData(notesTxId)) as string);
       })();
     }
   }, [notesTxId]);
