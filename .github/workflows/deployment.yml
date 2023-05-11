@@ -35,13 +35,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Load Cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-deps
-        with:
-          path: ./client/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+      - name: Install Dependencies
+        run: cd client && npm install
       - name: Build
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
