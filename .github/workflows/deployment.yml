@@ -25,13 +25,27 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
         with:
-          name: dist-artifact
-          path: './client/dist/'
+          node-version: ${{ matrix.node-version }}
+      - name: Load Cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-deps
+        with:
+          path: ./client/node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+      - name: Build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: cd client && npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:

@@ -108,11 +108,7 @@ jobs:
       env:
         NODE_OPTIONS: "--max_old_space_size=4096"
       run: cd client && npm run build
-    - uses: actions/upload-artifact@v3
-      with:
-        name: dist-artifact
-        path: ./client/dist/
-      
+
   test:
     needs: [build-and-install-deps]
     runs-on: ubuntu-latest
