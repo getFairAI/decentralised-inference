@@ -146,7 +146,7 @@ const Curators = () => {
     if (nodeBalance <= 0) {
       setFundOpen(true);
     } else {
-      handleFundFinished(NODE1_BUNDLR_URL, data as CreateForm); // use default node
+      await handleFundFinished(NODE1_BUNDLR_URL, data as CreateForm); // use default node
     }
   };
 

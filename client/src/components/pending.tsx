@@ -87,12 +87,11 @@ const Content = ({
   });
 
   useEffect(() => {
-    const asyncWrapper = async () => {
+    (async () => {
       const currentHeight = (await arweave.blocks.getCurrent()).height;
       setMinHeight(currentHeight - N_PREVIOUS_BLOCKS);
-    };
-    asyncWrapper();
-  });
+    })();
+  }, []);
 
   const refreshClick = () => {
     refetch();

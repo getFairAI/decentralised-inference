@@ -39,11 +39,11 @@ const History = () => {
   });
 
   useEffect(() => {
-    const getAddress = async () => {
-      setOwner(await window.arweaveWallet.getActiveAddress());
-    };
-
-    if (window && window.arweaveWallet) getAddress();
+    if (window && window.arweaveWallet) {
+      (async () => {
+        setOwner(await window.arweaveWallet.getActiveAddress());
+      })();
+    }
   }, [window.arweaveWallet]);
 
   if (loading) {

@@ -59,16 +59,13 @@ const FundDialog = ({
 
   useEffect(() => {
     if (open) {
-      asyncGetNodeBalance();
+      (async () => asyncGetNodeBalance())();
     }
   }, [node, open]); // run when node changes
 
   useEffect(() => {
-    const asyncgetWalletBalance = async () => {
-      await updateWalletBalance();
-    };
     if (open) {
-      asyncgetWalletBalance();
+      (async () => updateWalletBalance())();
     }
   }, [open]);
 

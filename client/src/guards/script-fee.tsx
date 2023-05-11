@@ -226,7 +226,7 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
   };
 
   const handleAccept = useCallback(() => {
-    payScriptFee();
+    (async () => payScriptFee())();
   }, [payScriptFee]);
 
   return (

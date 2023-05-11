@@ -179,7 +179,7 @@ const Chat = () => {
       );
       setPreviousResponses([...previousResponses, ...newResponses]);
       setHasResponseNextPage(responsesData?.transactions?.pageInfo?.hasNextPage || false);
-      reqData([...previousResponses, ...newResponses]);
+      (async () => reqData([...previousResponses, ...newResponses]))();
     }
   }, [responsesData]);
 
@@ -346,10 +346,13 @@ const Chat = () => {
     const newValidResponses = responses.filter(
       (res: IEdge) => !currentRespones.find((el: IEdge) => el.node.id === res.node.id),
     );
-    if (newValidResponses.length > 0) asyncMap(newValidResponses);
-    else {
-      emptyPolling();
-    }
+    (async () => {
+      if (newValidResponses.length > 0) {
+        await asyncMap(newValidResponses);
+      } else {
+        await emptyPolling();
+      }
+    })();
   }, [responsesPollingData]);
 
   useEffect(() => {
@@ -360,7 +363,9 @@ const Chat = () => {
     const newValidRequests = requests.filter(
       (res: IEdge) => !currentRequests.find((el: IEdge) => el.node.id === res.node.id),
     );
-    if (newValidRequests.length > 0) asyncMap(newValidRequests);
+    if (newValidRequests.length > 0) {
+      (async () => asyncMap(newValidRequests))();
+    }
   }, [requestsPollingData]);
 
   const mapTransactionsToMessages = async (el: IEdge) => {
@@ -369,7 +374,7 @@ const Chat = () => {
     const contentType = findTag(el, 'contentType');
     const data = msgIdx < 0 ? await getData(el.node.id) : polledMessages[msgIdx].msg;
     const timestamp =
-      parseInt(findTag(el, 'unixTime') || '') || el.node.block?.timestamp || Date.now() / 1000;
+      parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
     const currentHeight = (await arweave.blocks.getCurrent()).height;
     const isRequest = el.node.owner.address === userAddr;
@@ -378,7 +383,7 @@ const Chat = () => {
       id: el.node.id,
       msg: data,
       type: isRequest ? 'request' : 'response',
-      cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid),
+      cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid, 10),
       height: el.node.block ? el.node.block.height : currentHeight,
       to: isRequest ? (findTag(el, 'scriptOperator') as string) : userAddr,
       from: isRequest ? userAddr : el.node.owner.address,
@@ -561,9 +566,9 @@ const Chat = () => {
     const filteredData = allData.filter((el: IEdge) => {
       const cid = findTag(el, 'conversationIdentifier');
       if (cid && cid.split('-').length > 1) {
-        return parseInt(cid.split('-')[1]) === currentConversationId;
+        return parseInt(cid.split('-')[1], 10) === currentConversationId;
       } else if (cid) {
-        return parseInt(cid) === currentConversationId;
+        return parseInt(cid, 10) === currentConversationId;
       } else {
         return false;
       }

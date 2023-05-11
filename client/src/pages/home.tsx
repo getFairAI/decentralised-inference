@@ -90,53 +90,50 @@ export default function Home() {
   }, [isOnScreen, txs]);
 
   useEffect(() => {
-    const asyncWrapper = async () => {
-      const filtered: IEdge[] = [];
-      await Promise.all(
-        listData.transactions.edges.map(async (el: IEdge) => {
-          const confirmed = await isTxConfirmed(el.node.id);
-          const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
-          if (confirmed && correctFee) {
-            filtered.push(el);
-          }
-        }),
-      );
-      setHasNextPage(listData.transactions.pageInfo.hasNextPage);
-      setTxs(filtered);
-    };
-
     if (listData && networkStatus === NetworkStatus.ready) {
-      asyncWrapper();
+      (async () => {
+        const filtered: IEdge[] = [];
+        await Promise.all(
+          listData.transactions.edges.map(async (el: IEdge) => {
+            const confirmed = await isTxConfirmed(el.node.id);
+            const correctFee = parseInt(el.node.quantity.ar, 10) === parseInt(MARKETPLACE_FEE, 10);
+            if (confirmed && correctFee) {
+              filtered.push(el);
+            }
+          }),
+        );
+        setHasNextPage(listData.transactions.pageInfo.hasNextPage);
+        setTxs(filtered);
+      })();
     }
   }, [listData]);
 
   useEffect(() => {
-    const asyncWrapper = async () => {
-      if (data && featuredNetworkStatus === NetworkStatus.ready) {
+    if (data && featuredNetworkStatus === NetworkStatus.ready) {
+      (async () => {
         const filtered: IEdge[] = [];
         await Promise.all(
           data.transactions.edges.map(async (el: IEdge) => {
             const confirmed = await isTxConfirmed(el.node.id);
-            const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+            const correctFee = parseInt(el.node.quantity.ar, 10) === parseInt(MARKETPLACE_FEE, 10);
             if (confirmed && correctFee) {
               filtered.push(el);
             }
           }),
         );
         setFeaturedTxs(filtered);
-      }
-    };
-    asyncWrapper();
+      })();
+    }
   }, [data]);
 
   useEffect(() => {
-    const asyncWrapper = async () => {
-      if (listData && filterValue) {
+    if (listData && filterValue) {
+      (async () => {
         const filtered: IEdge[] = [];
         await Promise.all(
           listData.transactions.edges.map(async (el: IEdge) => {
             const confirmed = await isTxConfirmed(el.node.id);
-            const correctFee = parseInt(el.node.quantity.ar) === parseInt(MARKETPLACE_FEE);
+            const correctFee = parseInt(el.node.quantity.ar, 10) === parseInt(MARKETPLACE_FEE, 10);
             if (
               confirmed &&
               correctFee &&
@@ -147,9 +144,8 @@ export default function Home() {
           }),
         );
         setTxs(filtered);
-      }
-    };
-    asyncWrapper();
+      })();
+    }
   }, [filterValue]);
 
   return (

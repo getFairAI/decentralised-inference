@@ -80,7 +80,7 @@ const AiListCard = ({
 
     const dateA = Number.isInteger(timestamp)
       ? (timestamp as number) * 1000
-      : parseInt(timestamp as string) * 1000;
+      : parseInt(timestamp as string, 10) * 1000;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;

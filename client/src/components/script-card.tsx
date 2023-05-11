@@ -118,7 +118,7 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
       const registrations: IEdge[] = data.transactions.edges;
 
       // filter registratiosn for same model (only keep latest one per operator)
-      registrations.map((op: IEdge) =>
+      registrations.forEach((op: IEdge) =>
         uniqueOperators.filter((unique) => op.node.owner.address === unique.node.owner.address)
           .length > 0
           ? undefined
@@ -158,7 +158,7 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
 
     const dateA = Number.isInteger(timestamp)
       ? (timestamp as number) * 1000
-      : parseInt(timestamp as string) * 1000;
+      : parseInt(timestamp as string, 10) * 1000;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;

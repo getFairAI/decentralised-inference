@@ -134,7 +134,7 @@ const HistoryTable = ({ address }: { address?: string }) => {
         .filter((el) => findTag(el, 'operationName') === REGISTER_OPERATION)
         .map((el) => {
           const node = el.node;
-          const timestamp = parseInt(findTag(el, 'unixTime') || '') || node.block.timestamp;
+          const timestamp = parseInt(findTag(el, 'unixTime') || '', 10) || node.block.timestamp;
           return {
             txid: node.id,
             type: 'Registration',
@@ -153,7 +153,7 @@ const HistoryTable = ({ address }: { address?: string }) => {
         .filter((el) => !registrations.find((reg) => reg.txid === el.node.id))
         .map((el) => {
           const node = el.node;
-          const timestamp = parseInt(findTag(el, 'unixTime') || '') || node.block.timestamp;
+          const timestamp = parseInt(findTag(el, 'unixTime') || '', 10) || node.block.timestamp;
           return {
             txid: node.id,
             type: 'Response',
@@ -177,7 +177,7 @@ const HistoryTable = ({ address }: { address?: string }) => {
       setHasReceivedNextPage(receivedData.transactions.pageInfo.hasNextPage);
       const requests = (txs as IEdge[]).map((el) => {
         const node = el.node;
-        const timestamp = parseInt(findTag(el, 'unixTime') || '') || node.block.timestamp;
+        const timestamp = parseInt(findTag(el, 'unixTime') || '', 10) || node.block.timestamp;
         return {
           txid: node.id,
           type: 'Request',

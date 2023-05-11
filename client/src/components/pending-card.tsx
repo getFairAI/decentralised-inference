@@ -178,51 +178,51 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
   }, [tx]);
 
   useEffect(() => {
-    const asyncWrapper = async () => {
-      if (paymentData && paymentData.transactions.edges.length === 0) {
-        // paymentTx not found show retry option
-        const quantity = findTag(tx, 'paymentQuantity') as string;
-        const target = findTag(tx, 'paymentTarget');
-        const timestamp = 'Not Available';
-        setPayment({
-          quantity: arweave.ar.winstonToAr(quantity),
-          target,
-          timestamp,
-          status: 'Failed',
-        });
-        const canRetry = target && quantity && !Number.isNaN(quantity) && target !== currentAddress;
-        if (autoRetry && canRetry) {
-          startJob({
-            address: currentAddress,
-            operationName: findTag(tx, 'operationName') as string,
-            tags: tx.node.tags,
-            txid: tx.node.id,
-            encodedTags: false,
+    if (!_.isEqual(paymentData, previousPaymentData)) {
+      (async () => {
+        if (paymentData && paymentData.transactions.edges.length === 0) {
+          // paymentTx not found show retry option
+          const quantity = findTag(tx, 'paymentQuantity') as string;
+          const target = findTag(tx, 'paymentTarget');
+          const timestamp = 'Not Available';
+          setPayment({
+            quantity: arweave.ar.winstonToAr(quantity),
+            target,
+            timestamp,
+            status: 'Failed',
+          });
+          const canRetry =
+            target && quantity && !Number.isNaN(quantity) && target !== currentAddress;
+          if (autoRetry && canRetry) {
+            startJob({
+              address: currentAddress,
+              operationName: findTag(tx, 'operationName') as string,
+              tags: tx.node.tags,
+              txid: tx.node.id,
+              encodedTags: false,
+            });
+          }
+        } else if (paymentData && paymentData.transactions.edges.length > 0) {
+          // found payment tx show status
+          const payment: IEdge = paymentData.transactions.edges[0];
+          const timestamp =
+            parseFloat(findTag(payment, 'unixTime') as string) || payment.node.block.timestamp;
+          const date = new Date(timestamp * 1000)
+            .toLocaleDateString()
+            .concat(' ')
+            .concat(new Date(timestamp * 1000).toLocaleTimeString());
+          const result = await arweave.transactions.getStatus(payment.node.id);
+
+          setPayment({
+            id: payment.node.id,
+            target: payment.node.recipient,
+            quantity: payment.node.quantity.ar,
+            timestamp: date,
+            status: result.confirmed ? 'Confirmed' : 'Pending',
+            nConfirmations: result.confirmed?.number_of_confirmations,
           });
         }
-      } else if (paymentData && paymentData.transactions.edges.length > 0) {
-        // found payment tx show status
-        const payment: IEdge = paymentData.transactions.edges[0];
-        const timestamp =
-          parseFloat(findTag(payment, 'unixTime') as string) || payment.node.block.timestamp;
-        const date = new Date(timestamp * 1000)
-          .toLocaleDateString()
-          .concat(' ')
-          .concat(new Date(timestamp * 1000).toLocaleTimeString());
-        const result = await arweave.transactions.getStatus(payment.node.id);
-
-        setPayment({
-          id: payment.node.id,
-          target: payment.node.recipient,
-          quantity: payment.node.quantity.ar,
-          timestamp: date,
-          status: result.confirmed ? 'Confirmed' : 'Pending',
-          nConfirmations: result.confirmed?.number_of_confirmations,
-        });
-      }
-    };
-    if (!_.isEqual(paymentData, previousPaymentData)) {
-      asyncWrapper();
+      })();
     }
   }, [paymentData]);
 

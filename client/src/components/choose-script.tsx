@@ -91,48 +91,46 @@ const ChooseScript = ({
    * filtering correct payments and repeated operators
    */
   useEffect(() => {
-    const asyncWrapper = async () => {
-      const filtered: IEdge[] = [];
-      await Promise.all(
-        queryData.transactions.edges.map(async (el: IEdge) => {
-          const confirmed = await isTxConfirmed(el.node.id);
-          const existingIdx = filtered.findIndex(
-            (existing) => el.node.owner.address === existing.node.owner.address,
-          );
-          const queryResult = await client.query({
-            query: GET_TX,
-            variables: {
-              id: findTag(el, 'modelTransaction'),
-            },
-          });
-          const modelTx = queryResult.data.transactions.edges[0];
-          const correctFee =
-            parseInt(el.node.quantity.winston, 10) ===
-            parseInt(findTag(modelTx, 'modelFee') as string, 10);
-          if (correctFee && existingIdx < 0) {
-            filtered.push(el);
-          } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
-            // found a new tx for an existing op, check dates
-            const existingTimestamp =
-              findTag(filtered[existingIdx], 'unixTime') ||
-              filtered[existingIdx].node.block.timestamp;
-            const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
-            if (newTimestamp > existingTimestamp) {
-              // if new tx has more recent timestamp replace old one
-              filtered[existingIdx] = el;
-            }
-          } else {
-            // do nothing
-          }
-        }),
-      );
-      setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
-      setScriptsData(filtered);
-      setSelectedIdx(filtered.findIndex((el) => el.node.id === defaultScriptTx?.node?.id));
-    };
-    // check has paid correct registration fee
     if (queryData && networkStatus === NetworkStatus.ready) {
-      asyncWrapper();
+      (async () => {
+        const filtered: IEdge[] = [];
+        await Promise.all(
+          queryData.transactions.edges.map(async (el: IEdge) => {
+            const confirmed = await isTxConfirmed(el.node.id);
+            const existingIdx = filtered.findIndex(
+              (existing) => el.node.owner.address === existing.node.owner.address,
+            );
+            const queryResult = await client.query({
+              query: GET_TX,
+              variables: {
+                id: findTag(el, 'modelTransaction'),
+              },
+            });
+            const modelTx = queryResult.data.transactions.edges[0];
+            const correctFee =
+              parseInt(el.node.quantity.winston, 10) ===
+              parseInt(findTag(modelTx, 'modelFee') as string, 10);
+            if (correctFee && existingIdx < 0) {
+              filtered.push(el);
+            } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
+              // found a new tx for an existing op, check dates
+              const existingTimestamp =
+                findTag(filtered[existingIdx], 'unixTime') ||
+                filtered[existingIdx].node.block.timestamp;
+              const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
+              if (newTimestamp > existingTimestamp) {
+                // if new tx has more recent timestamp replace old one
+                filtered[existingIdx] = el;
+              }
+            } else {
+              // do nothing
+            }
+          }),
+        );
+        setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
+        setScriptsData(filtered);
+        setSelectedIdx(filtered.findIndex((el) => el.node.id === defaultScriptTx?.node?.id));
+      })();
     }
   }, [queryData]);
 
@@ -145,6 +143,8 @@ const ChooseScript = ({
       );
     } else if (queryData) {
       setScriptsData(queryData.transactions.edges);
+    } else {
+      // do nothing
     }
   }, [filterValue]);
 
