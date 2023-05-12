@@ -44,7 +44,7 @@ The rest of the whitepaper is structured as follows. In Section II, we introduce
 ## II. Participants
 
 <p align="justify">
-Marketplace participants can be divided into 5 groups: Application Users, Model Operators, Model Curators, Model Curators, and Marketplace Owners. To make it easier to understand this document, we have mentioned these groups sometimes as Users, Operators, Curators, Curators, and Marketplace, respectively. Below is an explanation of what each one of these groups represents.
+Marketplace participants can be divided into 5 groups: Application Users, Model Operators, Model Curators, Model Creators, and Marketplace Owners. To make it easier to understand this document, we have mentioned these groups sometimes as Users, Operators, Curators, Creators, and Marketplace, respectively. Below is an explanation of what each one of these groups represents.
 </p>
 
 
