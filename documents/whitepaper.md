@@ -1,7 +1,7 @@
 # Fair Protocol
 #### **A Decentralised Inference Marketplace for Artificial Intelligence**
 #### **Authors: Tiago Ferreira, Luís Silvestre**
-#### **7 April 2023 (Version 0.1)**
+#### **12 May 2023 (Version 0.11)**
 
 ## Abstract
 
