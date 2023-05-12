@@ -194,14 +194,14 @@ export const CustomStepper = (props: {
         `${NET_ARWEAVE_URL}/${findTag(props.data, 'scriptTransaction')}`,
         { method: 'HEAD' },
       );
-      setFileSize(parseInt(response.headers.get('Content-Length') || '', 10));
+      setFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
     })();
   }, [props.data]);
 
   useEffect(() => {
     (async () => {
       const response = await fetch(`${NET_ARWEAVE_URL}/${modelTxId}`, { method: 'HEAD' });
-      setModelFileSize(parseInt(response.headers.get('Content-Length') || '', 10));
+      setModelFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
     })();
   }, [modelTxId]);
 
