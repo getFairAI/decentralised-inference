@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import { styled } from '@mui/material/styles';
 import Stack from '@mui/material/Stack';
 import Stepper from '@mui/material/Stepper';
@@ -109,11 +127,13 @@ export const CustomStepper = (props: {
   handleSubmit: (rate: string, name: string, handleNext: () => void) => Promise<void>;
   isRegistered: boolean;
 }) => {
-  const { notesTxId } = (useRouteLoaderData('register') as RouteLoaderResult) || {};
+  const { notesTxId, modelTxId, modelName } =
+    (useRouteLoaderData('register') as RouteLoaderResult) || {};
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const [completed, setCompleted] = useState(new Set<number>());
   const [fileSize, setFileSize] = useState(0);
+  const [modelFileSize, setModelFileSize] = useState(0);
   const [operatorName, setOperatorName] = useState('');
   const [notes, setNotes] = useState('');
   const [rate, setRate] = useState(0);
@@ -159,10 +179,10 @@ export const CustomStepper = (props: {
     setOperatorName(event.target.value);
   };
 
-  const download = () => {
+  const download = (id: string, name?: string) => {
     const a = document.createElement('a');
-    a.href = `${NET_ARWEAVE_URL}/${findTag(props.data, 'scriptTransaction')}`;
-    a.download = findTag(props.data, 'scriptName') || props.data.node.id;
+    a.href = `${NET_ARWEAVE_URL}/${id}`;
+    a.download = name || id;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -174,9 +194,16 @@ export const CustomStepper = (props: {
         `${NET_ARWEAVE_URL}/${findTag(props.data, 'scriptTransaction')}`,
         { method: 'HEAD' },
       );
-      setFileSize(parseInt(response.headers.get('Content-Length') || '', 10));
+      setFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
     })();
   }, [props.data]);
+
+  useEffect(() => {
+    (async () => {
+      const response = await fetch(`${NET_ARWEAVE_URL}/${modelTxId}`, { method: 'HEAD' });
+      setModelFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
+    })();
+  }, [modelTxId]);
 
   useEffect(() => {
     if (notesTxId) {
@@ -191,6 +218,20 @@ export const CustomStepper = (props: {
       setHasScrollDown(true);
     }
   }, [isOnScreen]);
+
+  const handleModelDownload = useCallback(() => {
+    if (modelTxId) {
+      download(modelTxId, modelName);
+    }
+  }, [download, modelTxId, modelName]);
+
+  const handleSriptDownload = useCallback(() => {
+    const id = findTag(props.data, 'scriptTransaction');
+    const name = findTag(props.data, 'scriptName');
+    if (id) {
+      download(id, name);
+    }
+  }, [download, props.data]);
 
   return (
     <Stack sx={{ width: '100%', marginTop: '16px' }} spacing={2}>
@@ -342,13 +383,41 @@ export const CustomStepper = (props: {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
-                      <IconButton aria-label='download' onClick={() => download()}>
+                      <IconButton aria-label='download' onClick={handleSriptDownload}>
                         <DownloadIcon />
                       </IconButton>
                     </InputAdornment>
                   ),
                   endAdornment: (
                     <InputAdornment position='start'>{printSize(fileSize)}</InputAdornment>
+                  ),
+                  readOnly: true,
+                  sx: {
+                    borderWidth: '1px',
+                    borderColor: '#FFF',
+                    borderRadius: '23px',
+                  },
+                }}
+              />
+            </FormControl>
+          </Box>
+          <Box>
+            <FormControl variant='outlined' fullWidth>
+              <TextField
+                multiline
+                disabled
+                minRows={1}
+                value={modelName}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <IconButton aria-label='download' onClick={handleModelDownload}>
+                        <DownloadIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position='start'>{printSize(modelFileSize)}</InputAdornment>
                   ),
                   readOnly: true,
                   sx: {
