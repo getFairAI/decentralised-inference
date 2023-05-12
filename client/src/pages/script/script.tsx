@@ -41,7 +41,7 @@ export const getScriptAttachments = async ({
   const tx = txOwnerResult.data.transactions.edges[0];
   const txOwner = tx.node.owner.address;
   const modelTxId = findTag(tx, 'modelTransaction');
-  const modelName = findTag(tx, 'scriptName');
+  const modelName = findTag(tx, 'modelName');
 
   // get attachments teransactions
   const attachmentAvatarTags = [
