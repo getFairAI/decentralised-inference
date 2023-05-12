@@ -40,6 +40,7 @@ jobs:
       - name: Build
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
+          CI: true
         run: cd client && npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
