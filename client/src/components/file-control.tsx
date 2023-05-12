@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   Button,
   FormControl,
@@ -5,7 +23,6 @@ import {
   IconButton,
   InputAdornment,
   InputProps,
-  LinearProgress,
   TextField,
   Typography,
   useTheme,
@@ -23,8 +40,6 @@ type FileControlProps = UseControllerProps & { mat?: InputProps; style?: CSSProp
 const FileControl = (props: FileControlProps) => {
   const { field, fieldState } = useController(props);
   const [file, setFile] = useState<File | undefined>(undefined);
-  const [progress, setProgress] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [filePrice, setFilePrice] = useState(0);
   const [hasFileDrag, setHasFileDrag] = useState(false);
   const theme = useTheme();
@@ -55,70 +70,18 @@ const FileControl = (props: FileControlProps) => {
     // field.onChange(event.dataTransfer.files[0]);
     if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
       const file = event.dataTransfer.files[0];
-      // field.onChange(JSON.stringify(file));
-      const fr = new FileReader();
-      fr.addEventListener('load', onFileLoad(fr, file));
-      fr.addEventListener('error', onFileError(fr, file));
-      fr.addEventListener('progress', onFileProgress());
-      fr.addEventListener('loadstart', onFileLoadStart(fr, file));
-      fr.readAsArrayBuffer(file);
+      field.onChange(file);
+      setFile(file);
     } else {
       setFile(undefined);
     }
   };
 
-  const onFileLoad = (fr: FileReader, file: File) => {
-    return (event: ProgressEvent) => {
-      console.log(event.type, fr.result);
-      // field.onChange(fr.result);
-      setProgress(100);
-      setLoading(false);
-      fr.removeEventListener('error', onFileError(fr, file));
-      fr.removeEventListener('load', onFileLoad(fr, file));
-      fr.removeEventListener('progress', onFileProgress());
-    };
-  };
-  const onFileError = (fr: FileReader, file: File) => {
-    return (event: ProgressEvent) => {
-      console.log(event.type, fr.error);
-      field.onChange('');
-      setLoading(false);
-      setFile(undefined);
-      setProgress(0);
-      fr.removeEventListener('error', onFileError(fr, file));
-      fr.removeEventListener('load', onFileLoad(fr, file));
-      fr.removeEventListener('progress', onFileProgress());
-    };
-  };
-  const onFileProgress = () => {
-    return (event: ProgressEvent) => {
-      console.log(event.type);
-      console.log(event.loaded);
-      console.log(event.total);
-      setProgress(event.loaded);
-    };
-  };
-  const onFileLoadStart = (fr: FileReader, file: File) => {
-    return (event: ProgressEvent) => {
-      console.log(event.type);
-      field.onChange(file);
-      setProgress(event.loaded);
-      setFile(file);
-      setLoading(true);
-      fr.removeEventListener('loadstart', onFileError(fr, file));
-    };
-  };
-
   const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
-      // field.onChange(JSON.stringify(file));
-      const fr = new FileReader();
-      fr.addEventListener('load', onFileLoad(fr, file));
-      fr.addEventListener('error', onFileError(fr, file));
-      fr.addEventListener('progress', onFileProgress());
-      fr.addEventListener('loadstart', onFileLoadStart(fr, file));
-      fr.readAsArrayBuffer(file);
+      field.onChange(file);
+      setFile(file);
     } else {
       setFile(undefined);
     }
@@ -184,7 +147,6 @@ const FileControl = (props: FileControlProps) => {
                 readOnly: true,
               }}
             />
-            {loading && <LinearProgress variant='determinate' value={progress} />}
           </FormControl>
           <Typography variant='caption'>Estimated price {filePrice} AR</Typography>
         </Box>
