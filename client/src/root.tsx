@@ -133,7 +133,7 @@ const App = () => {
                   textAlign: 'justify',
                 }}
               >
-                By using this app, you accept all these rules, terms, and conditions.
+                By using this app, you acknowledge and accept these terms and conditions.
               </Typography>
             </Alert>
           </DialogContent>
@@ -151,7 +151,7 @@ const App = () => {
               color='primary'
               sx={{ width: 'fit-content' }}
             >
-              <Typography color={theme.palette.primary.contrastText}>Accept</Typography>
+              <Typography color={theme.palette.primary.contrastText}>I Accept</Typography>
             </Button>
           </DialogActions>
         </Dialog>

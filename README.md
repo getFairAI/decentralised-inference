@@ -35,13 +35,13 @@ npm run dev
 
 All the communication between participants in this network is done through Arweave. When anything is written on Arweave, it's publicly stored forever due to the particularities of that blockchain. As such, kindly exercise caution when inserting any information on this website.
 
-By using this app, you accept all these rules, terms, and conditions.
+By using this app, you acknowledge and accept these terms and conditions.
 
 ## Rules, Terms, and Conditions of the App to Operators
 
 For more detailed and updated information, we recommend reading Fair Protocol's whitepaper (https://fairwhitepaper.arweave.dev/) with attention before becoming an Operator.
 
-To become an Operator, you must install a template inserted in Arweave by a Creator, following the rules defined by that Creator. These rules should result in a script waiting for some inference request from Users in an infinite loop. **The Operator is responsible for verifying that a Creator's code and rules make sense and are legit. The instructions may be a scam, and the code may contain malware. We highly advise using a PC other than your own to perform the inferences.**
+To become an Operator, you must install a template inserted in Arweave by a CUrator, following the rules defined by that Curator. These rules should result in a script waiting for some inference request from Users in an infinite loop. **The Operator is responsible for verifying that a Curator's code and rules make sense and are legitimate. The instructions may be a scam, and the code may contain malware. We highly advise using a PC other than your own to perform the inferences.**
 
 **If an Operator starts an activity but doesn't return any inference required by a User within 7 blocks, it will be removed from the Marketplace as a viable option to perform inference. The wallet from the Operator can only perform inferences again if it realises a new transaction to open activity.**
 
