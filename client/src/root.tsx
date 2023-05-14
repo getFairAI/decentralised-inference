@@ -47,8 +47,7 @@ const App = () => {
   const theme = useTheme();
 
   useEffect(() => {
-    const hasAgreed = localStorage.getItem('hasAgreed');
-    setHasAgreed(hasAgreed === 'true');
+    setHasAgreed(localStorage.getItem('hasAgreed') === 'true');
   }, []);
 
   const handleAgree = useCallback(() => {
@@ -58,7 +57,7 @@ const App = () => {
 
   if (!hasAgreed) {
     return (
-      <Backdrop open={true} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <Backdrop open={true} sx={{ zIndex: theme.zIndex.drawer + 1 }}>
         <Dialog
           open={true}
           maxWidth={'md'}
