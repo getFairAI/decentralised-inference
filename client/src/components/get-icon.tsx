@@ -23,7 +23,7 @@ type Props = {
   input: string;
 };
 
-import { ReactComponent as DiscordIcon } from '../../public/discord-mark-blue.svg';
+import { ReactComponent as DiscordIcon } from '../assets/discord-mark-blue.svg';
 
 const GetIcon = ({ input }: Props): JSX.Element => {
   const theme = useTheme();
