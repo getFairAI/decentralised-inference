@@ -134,6 +134,7 @@ export const DEFAULT_TAGS = [
 ];
 
 export const GITHUB_LINK = 'https://github.com/FAIR-Protocol/decentralized-inference';
+export const DISCORD_LINK = 'https://discord.gg/GRf7CukfXf';
 export const WHITEPAPER_LINK =
   'https://lqcpjipmt2d2daazjknargowboxuhn3wgealzbqdsjmwxbgli52q.arweave.net/XAT0oeyeh6GAGUqaCJnWC69Dt3YxALyGA5JZa4TLR3U';
 export const TWITTER_LINK = 'https://twitter.com/fairAIprotocol';

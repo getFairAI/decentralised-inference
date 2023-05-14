@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import * as React from 'react';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
@@ -5,7 +23,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
 import { AppThemeContext } from '@/context/theme';
 import { Tooltip, Typography } from '@mui/material';
-import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK } from '@/constants';
+import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK, DISCORD_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 import { WalletContext } from '@/context/wallet';
 import { FundContext } from '@/context/fund';
@@ -13,7 +31,7 @@ import GetIcon from './get-icon';
 import Box from '@mui/material/Box';
 
 const bundlrSettings = 'Bundlr Settings';
-const options = [bundlrSettings, 'Whitepaper', 'Github', 'Twitter', 'Disconnect'];
+const options = [bundlrSettings, 'Whitepaper', 'Github', 'Discord', 'Twitter', 'Disconnect'];
 const disableableOptions = [bundlrSettings, 'My Models', 'Disconnect'];
 
 const ITEM_HEIGHT = 56;
@@ -50,6 +68,9 @@ export default function ProfileMenu() {
         break;
       case 'Github':
         window.open(GITHUB_LINK, '_blank');
+        break;
+      case 'Discord':
+        window.open(DISCORD_LINK, '_blank');
         break;
       case 'Twitter':
         window.open(TWITTER_LINK, '_blank');
