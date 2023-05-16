@@ -1,0 +1,22 @@
+{
+  "name": "upload-attachments",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "fair-protocol",
+  "license": "AGPL-3.0 license",
+  "dependencies": {
+    "@bundlr-network/client": "^0.11.2",
+    "arweave": "^1.13.7",
+    "pino": "^8.14.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.1.5",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.4"
+  }
+}
