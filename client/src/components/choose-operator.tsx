@@ -58,6 +58,109 @@ import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { client } from '@/utils/apollo';
 
+const getOperatorRequests = async (address: string) => {
+  const { data } = await client.query({
+    query: QUERY_REQUESTS_FOR_OPERATOR,
+    variables: {
+      recipient: address,
+      first: N_PREVIOUS_BLOCKS,
+      tags: [...DEFAULT_TAGS],
+    },
+  });
+
+  return data.transactions.edges as IEdge[];
+};
+
+const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
+  const responseTags = [
+    ...DEFAULT_TAGS,
+    { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
+    { name: TAG_NAMES.operationName, values: ['Script Inference Response'] },
+  ];
+
+  const { data } = await client.query({
+    query: QUERY_TX_WITH,
+    variables: { tags: responseTags, address: opAddress },
+  });
+
+  if (data.transactions.edges.length === 0) {
+    return false;
+  } else {
+    return true;
+  }
+};
+
+const hasOperatorDistributedFees = async (
+  request: IEdge,
+  operatorFee: string,
+  opAddress: string,
+) => {
+  const distributionAmount = parseFloat(operatorFee) * INFERENCE_PERCENTAGE_FEE;
+  const feeDistributionTags = [
+    ...DEFAULT_TAGS,
+    { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
+    { name: TAG_NAMES.operationName, values: ['Fee Redistribution'] },
+  ];
+
+  const { data } = await client.query({
+    query: QUERY_PAYMENT_TO_VAULT_WITH,
+    variables: { tags: feeDistributionTags, owner: opAddress, recipient: VAULT_ADDRESS },
+  });
+
+  if (data.transactions.edges.length === 0) {
+    return false;
+  } else {
+    const paymentTx = data.transactions.edges[0];
+    return distributionAmount === parseFloat(paymentTx.node.quantity.winston);
+  }
+};
+
+const isValidRegistration = async (operatorFee: string, opAddress: string) => {
+  const lastRequests = await getOperatorRequests(opAddress);
+  let isValid = true;
+  // check if operator answere last 7 requests
+  for (const request of lastRequests) {
+    // check if operator has answered last 7 requests
+    if (
+      !(await hasOperatorAnswered(request, opAddress)) ||
+      !(await hasOperatorDistributedFees(request, operatorFee, opAddress))
+    ) {
+      // if any of the last 7 requests has not been answered, the operator is not valid
+      isValid = false;
+      return isValid;
+    }
+  }
+
+  return isValid;
+};
+
+const verify = async (el: IEdge, filtered: IEdge[]) => {
+  const confirmed = await isTxConfirmed(el.node.id);
+
+  const existingIdx = filtered.findIndex(
+    (existing) => el.node.owner.address === existing.node.owner.address,
+  );
+  const correctFee =
+    parseInt(el.node.quantity.ar, 10) === parseInt(OPERATOR_REGISTRATION_AR_FEE, 10);
+  if (confirmed && correctFee && existingIdx < 0) {
+    filtered.push(el);
+    return true;
+  } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
+    // found a new tx for an existing op, check dates
+    const existingTimestamp =
+      findTag(filtered[existingIdx], 'unixTime') ?? filtered[existingIdx].node.block.timestamp;
+    const newTimestamp = findTag(el, 'unixTime') ?? el.node.block.timestamp;
+    if (newTimestamp > existingTimestamp) {
+      // if new tx has more recent timestamp replace old one
+      filtered[existingIdx] = el;
+      return true;
+    }
+  } else {
+    // if tx is not confirmed or fee is not correct, skip adding it to list
+  }
+  return false;
+};
+
 const OperatorSelected = ({
   operatorsData,
   scriptTx,
@@ -217,111 +320,6 @@ const ChooseOperator = ({
     [setSelectedIdx],
   );
 
-  const getOperatorRequests = async (address: string) => {
-    const { data } = await client.query({
-      query: QUERY_REQUESTS_FOR_OPERATOR,
-      variables: {
-        recipient: address,
-        first: N_PREVIOUS_BLOCKS,
-        tags: [...DEFAULT_TAGS],
-      },
-    });
-
-    return data.transactions.edges as IEdge[];
-  };
-
-  const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
-    const tags = [
-      ...DEFAULT_TAGS,
-      { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
-      { name: TAG_NAMES.operationName, values: ['Script Inference Response'] },
-    ];
-
-    const { data } = await client.query({
-      query: QUERY_TX_WITH,
-      variables: { tags, address: opAddress },
-    });
-
-    if (data.transactions.edges.length === 0) {
-      return false;
-    } else {
-      return true;
-    }
-  };
-
-  const hasOperatorDistributedFees = async (
-    request: IEdge,
-    operatorFee: string,
-    opAddress: string,
-  ) => {
-    const distributionAmount = parseFloat(operatorFee) * INFERENCE_PERCENTAGE_FEE;
-    const tags = [
-      ...DEFAULT_TAGS,
-      { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
-      { name: TAG_NAMES.operationName, values: ['Fee Redistribution'] },
-    ];
-
-    const { data } = await client.query({
-      query: QUERY_PAYMENT_TO_VAULT_WITH,
-      variables: { tags, owner: opAddress, recipient: VAULT_ADDRESS },
-    });
-
-    if (data.transactions.edges.length === 0) {
-      return false;
-    } else {
-      const paymentTx = data.transactions.edges[0];
-      return distributionAmount === parseFloat(paymentTx.node.quantity.winston);
-    }
-  };
-
-  const isValidRegistration = async (operatorFee: string, opAddress: string) => {
-    const lastRequests = await getOperatorRequests(opAddress);
-    let isValid = true;
-    // check if operator answere last 7 requests
-    for (const request of lastRequests) {
-      // check if operator has answered last 7 requests
-      if (!(await hasOperatorAnswered(request, opAddress))) {
-        isValid = false;
-        break;
-      }
-      // check if operator has distributed fees for last 7 requests
-      if (!(await hasOperatorDistributedFees(request, operatorFee, opAddress))) {
-        isValid = false;
-        break;
-      }
-    }
-
-    return isValid;
-  };
-
-  const verify = async (el: IEdge, filtered: IEdge[]) => {
-    const confirmed = await isTxConfirmed(el.node.id);
-    const opFee = findTag(el, 'operatorFee') as string;
-    const existingIdx = filtered.findIndex(
-      (existing) => el.node.owner.address === existing.node.owner.address,
-    );
-    const correctFee =
-      parseInt(el.node.quantity.ar, 10) === parseInt(OPERATOR_REGISTRATION_AR_FEE, 10);
-    if (confirmed && correctFee && existingIdx < 0) {
-      if (await isValidRegistration(opFee, el.node.owner.address)) {
-        filtered.push(el);
-      }
-    } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
-      // found a new tx for an existing op, check dates
-      const existingTimestamp =
-        findTag(filtered[existingIdx], 'unixTime') ?? filtered[existingIdx].node.block.timestamp;
-      const newTimestamp = findTag(el, 'unixTime') ?? el.node.block.timestamp;
-      if (newTimestamp > existingTimestamp) {
-        // if new tx has more recent timestamp replace old one
-        if (await isValidRegistration(opFee, el.node.owner.address)) {
-          filtered[existingIdx] = el;
-        }
-      }
-    } else {
-      // if tx is not confirmed or fee is not correct, skip adding it to list
-    }
-  };
-
   /**
    * @description Effect that runs on query data changes;
    * it is responsible to set the nextPage status and to update current loaded transactionsm
@@ -334,9 +332,20 @@ const ChooseOperator = ({
       (async () => {
         const filtered: IEdge[] = [];
 
-        await Promise.all(
-          queryData.transactions.edges.map(async (el: IEdge) => verify(el, filtered)),
-        );
+        for (const el of queryData.transactions.edges) {
+          const isVerified = await verify(el, filtered);
+          if (isVerified) {
+            const opFee = findTag(el, 'operatorFee') as string;
+            if (!(await isValidRegistration(opFee, el.node.owner.address))) {
+              filtered.splice(
+                filtered.findIndex(
+                  (existing) => el.node.owner.address === existing.node.owner.address,
+                ),
+                1,
+              );
+            }
+          }
+        }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setOperatorsData(filtered);
       })();
