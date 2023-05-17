@@ -21,9 +21,14 @@ import {
   TAG_NAMES,
   REGISTER_OPERATION,
   OPERATOR_REGISTRATION_AR_FEE,
+  N_PREVIOUS_BLOCKS,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import {
+  QUERY_REGISTERED_OPERATORS,
+  QUERY_REQUESTS_FOR_OPERATOR,
+  QUERY_TX_WITH,
+} from '@/queries/graphql';
 import { isTxConfirmed } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
@@ -48,6 +53,7 @@ import {
 import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { client } from '@/utils/apollo';
 
 const OperatorSelected = ({
   operatorsData,
@@ -208,6 +214,41 @@ const ChooseOperator = ({
     [setSelectedIdx],
   );
 
+  const getOperatorRequests = async (address: string) => {
+    const { data } = await client.query({
+      query: QUERY_REQUESTS_FOR_OPERATOR,
+      variables: {
+        recipient: address,
+        first: N_PREVIOUS_BLOCKS,
+        tags: [...DEFAULT_TAGS],
+      },
+    });
+
+    return data.transactions.edges as IEdge[];
+  };
+
+  const hasOperatorAnswered = async (lastRequests: IEdge[]) => {
+    for (const request of lastRequests) {
+      const tags = [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.requestTransaction, values: [request.node.id] },
+        { name: TAG_NAMES.operationName, values: ['Script Inference Response'] },
+      ];
+
+      const { data } = await client.query({
+        query: QUERY_TX_WITH,
+        variables: { tags, address: request.node.owner.address },
+      });
+
+      if (data.transactions.edges.length === 0) {
+        return false;
+      } else {
+        // check if operator paid the fee
+        return false;
+      }
+    }
+  };
+
   const verify = async (el: IEdge, filtered: IEdge[]) => {
     const confirmed = await isTxConfirmed(el.node.id);
     const existingIdx = filtered.findIndex(
@@ -228,6 +269,21 @@ const ChooseOperator = ({
       }
     } else {
       // if tx is not confirmed or fee is not correct, skip adding it to list
+    }
+
+    // check if operator answere last 7 requests
+    const lastRequests = await getOperatorRequests(el.node.owner.address);
+    if (!(await hasOperatorAnswered(lastRequests))) {
+      // if operator has not answered last 7 requests, remove it from list
+      const indexToRemove = filtered.findIndex(
+        (existing) => el.node.owner.address === existing.node.owner.address,
+      );
+      if (indexToRemove >= 0) {
+        filtered.splice(
+          filtered.findIndex((existing) => el.node.owner.address === existing.node.owner.address),
+          1,
+        );
+      }
     }
   };
 
