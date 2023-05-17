@@ -22,9 +22,12 @@ import {
   REGISTER_OPERATION,
   OPERATOR_REGISTRATION_AR_FEE,
   N_PREVIOUS_BLOCKS,
+  INFERENCE_PERCENTAGE_FEE,
+  VAULT_ADDRESS,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import {
+  QUERY_PAYMENT_TO_VAULT_WITH,
   QUERY_REGISTERED_OPERATORS,
   QUERY_REQUESTS_FOR_OPERATOR,
   QUERY_TX_WITH,
@@ -227,37 +230,82 @@ const ChooseOperator = ({
     return data.transactions.edges as IEdge[];
   };
 
-  const hasOperatorAnswered = async (lastRequests: IEdge[]) => {
+  const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
+    const tags = [
+      ...DEFAULT_TAGS,
+      { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
+      { name: TAG_NAMES.operationName, values: ['Script Inference Response'] },
+    ];
+
+    const { data } = await client.query({
+      query: QUERY_TX_WITH,
+      variables: { tags, address: opAddress },
+    });
+
+    if (data.transactions.edges.length === 0) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  const hasOperatorDistributedFees = async (
+    request: IEdge,
+    operatorFee: string,
+    opAddress: string,
+  ) => {
+    const distributionAmount = parseFloat(operatorFee) * INFERENCE_PERCENTAGE_FEE;
+    const tags = [
+      ...DEFAULT_TAGS,
+      { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
+      { name: TAG_NAMES.operationName, values: ['Fee Redistribution'] },
+    ];
+
+    const { data } = await client.query({
+      query: QUERY_PAYMENT_TO_VAULT_WITH,
+      variables: { tags, owner: opAddress, recipient: VAULT_ADDRESS },
+    });
+
+    if (data.transactions.edges.length === 0) {
+      return false;
+    } else {
+      const paymentTx = data.transactions.edges[0];
+      return distributionAmount === parseFloat(paymentTx.node.quantity.winston);
+    }
+  };
+
+  const isValidRegistration = async (operatorFee: string, opAddress: string) => {
+    const lastRequests = await getOperatorRequests(opAddress);
+    let isValid = true;
+    // check if operator answere last 7 requests
     for (const request of lastRequests) {
-      const tags = [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.requestTransaction, values: [request.node.id] },
-        { name: TAG_NAMES.operationName, values: ['Script Inference Response'] },
-      ];
-
-      const { data } = await client.query({
-        query: QUERY_TX_WITH,
-        variables: { tags, address: request.node.owner.address },
-      });
-
-      if (data.transactions.edges.length === 0) {
-        return false;
-      } else {
-        // check if operator paid the fee
-        return false;
+      // check if operator has answered last 7 requests
+      if (!(await hasOperatorAnswered(request, opAddress))) {
+        isValid = false;
+        break;
+      }
+      // check if operator has distributed fees for last 7 requests
+      if (!(await hasOperatorDistributedFees(request, operatorFee, opAddress))) {
+        isValid = false;
+        break;
       }
     }
+
+    return isValid;
   };
 
   const verify = async (el: IEdge, filtered: IEdge[]) => {
     const confirmed = await isTxConfirmed(el.node.id);
+    const opFee = findTag(el, 'operatorFee') as string;
     const existingIdx = filtered.findIndex(
       (existing) => el.node.owner.address === existing.node.owner.address,
     );
     const correctFee =
       parseInt(el.node.quantity.ar, 10) === parseInt(OPERATOR_REGISTRATION_AR_FEE, 10);
     if (confirmed && correctFee && existingIdx < 0) {
-      filtered.push(el);
+      if (await isValidRegistration(opFee, el.node.owner.address)) {
+        filtered.push(el);
+      }
     } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
       // found a new tx for an existing op, check dates
       const existingTimestamp =
@@ -265,25 +313,12 @@ const ChooseOperator = ({
       const newTimestamp = findTag(el, 'unixTime') ?? el.node.block.timestamp;
       if (newTimestamp > existingTimestamp) {
         // if new tx has more recent timestamp replace old one
-        filtered[existingIdx] = el;
+        if (await isValidRegistration(opFee, el.node.owner.address)) {
+          filtered[existingIdx] = el;
+        }
       }
     } else {
       // if tx is not confirmed or fee is not correct, skip adding it to list
-    }
-
-    // check if operator answere last 7 requests
-    const lastRequests = await getOperatorRequests(el.node.owner.address);
-    if (!(await hasOperatorAnswered(lastRequests))) {
-      // if operator has not answered last 7 requests, remove it from list
-      const indexToRemove = filtered.findIndex(
-        (existing) => el.node.owner.address === existing.node.owner.address,
-      );
-      if (indexToRemove >= 0) {
-        filtered.splice(
-          filtered.findIndex((existing) => el.node.owner.address === existing.node.owner.address),
-          1,
-        );
-      }
     }
   };
 

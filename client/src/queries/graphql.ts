@@ -819,6 +819,7 @@ export const QUERY_REQUESTS_FOR_OPERATOR = gql`
       edges {
         cursor
         node {
+          id
           recipient
           tags {
             name
@@ -830,6 +831,10 @@ export const QUERY_REQUESTS_FOR_OPERATOR = gql`
           }
           quantity {
             ar
+            winston
+          }
+          owner {
+            address
           }
         }
       }
@@ -1045,6 +1050,44 @@ export const QUERY_TX_WITH = gql`
           }
           quantity {
             ar
+            winston
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            timestamp
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_PAYMENT_TO_VAULT_WITH = gql`
+  query QUERY_PAYMENT_TO_VAULT_WITH($owner: String!, $tags: [TagFilter!], $recipient: String!) {
+    transactions(
+      tags: $tags
+      owners: [$owner]
+      sort: HEIGHT_DESC
+      first: 1
+      recipients: [$recipient]
+    ) {
+      edges {
+        cursor
+        node {
+          id
+          recipient
+          owner {
+            address
+          }
+          fee {
+            ar
+          }
+          quantity {
+            ar
+            winston
           }
           tags {
             name
