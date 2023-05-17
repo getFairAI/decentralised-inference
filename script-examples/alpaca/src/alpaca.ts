@@ -425,9 +425,16 @@ const checkUserPaidPastInferences = async (userAddress: string, operatorFee: num
       scriptRequest.node.id,
     );
 
+    const scriptOperator = scriptRequest.node.tags.find((tag) => tag.name === 'Script-Operator')
+      ?.value as string;
+    if (!scriptOperator) {
+      throw new Error('Script Operator not found');
+    }
+    const requestedOpFee = await getOperatorFee(scriptOperator);
+
     if (
       checkUserPaymentEdges.length === 0 ||
-      operatorFee > parseFloat(checkUserPaymentEdges[0].node.quantity.winston)
+      requestedOpFee > parseFloat(checkUserPaymentEdges[0].node.quantity.winston)
     ) {
       throw new Error(
         'User has not paid the necessary amount to the operators for the previous requests',
