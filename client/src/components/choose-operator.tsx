@@ -71,7 +71,7 @@ const OperatorSelected = ({
           fullState: operatorsData[selectedIdx],
         },
       }),
-    [navigate],
+    [navigate, scriptTx, operatorsData, selectedIdx],
   );
 
   const handleUseOperatorClick = useCallback(() => {
@@ -93,7 +93,7 @@ const OperatorSelected = ({
     } else {
       return navigate(`/chat/${operatorsData[selectedIdx].node.owner.address}`, { state });
     }
-  }, [navigate]);
+  }, [navigate, scriptTx, operatorsData, selectedIdx, pathname]);
 
   return (
     <Box
