@@ -6,5 +6,5 @@
   "vaultAddress": "tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ",
   "inferencePercentageFee": 0.05,
   "nPreviousBlocks": 1,
-  "minBlockConfirmations": 20
+  "minBlockConfirmations": 7
 }
