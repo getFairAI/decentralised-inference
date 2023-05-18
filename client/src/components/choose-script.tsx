@@ -110,7 +110,7 @@ const ChooseScript = ({
             const correctFee =
               parseInt(el.node.quantity.winston, 10) ===
               parseInt(findTag(modelTx, 'modelFee') as string, 10);
-            if (correctFee && existingIdx < 0) {
+            if (correctFee && existingIdx <= 0) {
               filtered.push(el);
             } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
               // found a new tx for an existing op, check dates
