@@ -58,13 +58,17 @@ import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { client } from '@/utils/apollo';
 
-const getOperatorRequests = async (address: string) => {
+const getOperatorRequests = async (address: string, scriptName: string, scriptCurator: string) => {
   const { data } = await client.query({
     query: QUERY_REQUESTS_FOR_OPERATOR,
     variables: {
       recipient: address,
       first: N_PREVIOUS_BLOCKS,
-      tags: [...DEFAULT_TAGS],
+      tags: [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.scriptName, values: [scriptName] },
+        { name: TAG_NAMES.scriptCurator, values: [scriptCurator] },
+      ],
     },
   });
 
@@ -115,8 +119,13 @@ const hasOperatorDistributedFees = async (
   }
 };
 
-const isValidRegistration = async (operatorFee: string, opAddress: string) => {
-  const lastRequests = await getOperatorRequests(opAddress);
+const isValidRegistration = async (
+  operatorFee: string,
+  opAddress: string,
+  scriptName: string,
+  scriptCurator: string,
+) => {
+  const lastRequests = await getOperatorRequests(opAddress, scriptName, scriptCurator);
   let isValid = true;
   // check if operator answere last 7 requests
   for (const request of lastRequests) {
@@ -159,6 +168,19 @@ const verify = async (el: IEdge, filtered: IEdge[]) => {
     // if tx is not confirmed or fee is not correct, skip adding it to list
   }
   return false;
+};
+
+const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
+  const opFee = findTag(el, 'operatorFee') as string;
+  const scriptName = findTag(el, 'scriptName') as string;
+  const scriptCurator = findTag(el, 'scriptCurator') as string;
+
+  if (!(await isValidRegistration(opFee, el.node.owner.address, scriptName, scriptCurator))) {
+    filtered.splice(
+      filtered.findIndex((existing) => el.node.owner.address === existing.node.owner.address),
+      1,
+    );
+  }
 };
 
 const OperatorSelected = ({
@@ -335,15 +357,7 @@ const ChooseOperator = ({
         for (const el of queryData.transactions.edges) {
           const isVerified = await verify(el, filtered);
           if (isVerified) {
-            const opFee = findTag(el, 'operatorFee') as string;
-            if (!(await isValidRegistration(opFee, el.node.owner.address))) {
-              filtered.splice(
-                filtered.findIndex(
-                  (existing) => el.node.owner.address === existing.node.owner.address,
-                ),
-                1,
-              );
-            }
+            await checkOpResponses(el, filtered);
           }
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
