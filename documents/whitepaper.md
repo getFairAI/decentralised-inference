@@ -1,27 +1,27 @@
 # Fair Protocol
 #### **A Decentralised Inference Marketplace for Artificial Intelligence**
 #### **Authors: Tiago Ferreira, Luís Silvestre**
-#### **13 May 2023 (Version 1.0)**
+#### **18 May 2023 (Version 1.1)**
 
 ## Abstract
 
 <p align="justify">
-Big tech companies' centralization of Artificial Intelligence (AI) computation and models has raised concerns about the concentration of power and control over AI technology. This centralization creates challenges such as limited access to AI technology for smaller organizations and potential biases in AI models that reflect the values and interests of the dominant tech companies.
+Big tech companies' centralisation of Artificial Intelligence (AI) computation and models has raised concerns about the concentration of power and control over AI technology. This centralisation creates challenges such as limited access to AI technology for smaller organisations and potential biases in AI models that reflect the values and interests of the dominant tech companies.
 </p>
 
 <p align="justify">
-This paper proposes Fair Protocol, a marketplace that pretends to address the abovementioned problems by leveraging the Arweave blockchain and its main layer 2, Bundlr, to decentralize AI inference computation. It presents a promising solution to the problem of centralization of AI computation, offering a decentralised approach that can promote more significant equity, access, and transparency in the development and deployment of AI technology. The technical details of this proposed solution are explored, as well as some risks and warnings about using it.
+This paper proposes Fair Protocol, a marketplace that intends to address the abovementioned problems by leveraging the Arweave blockchain and its main layer 2, Bundlr, to decentralise AI inference computation. It presents a promising solution to the problem of centralisation of AI computation, offering a decentralised approach that can promote more significant equity, access, and transparency in the development and deployment of AI technology. The technical details of this proposed solution are explored, as well as some risks and warnings about using it.
 </p>
 
 
 ## I. Introduction
 
 <p align="justify">
-The rapid development of Artificial Intelligence (AI) has brought about a paradigm shift in how we interact with technology. From virtual assistants to self-driving cars, AI-powered systems are becoming increasingly pervasive in our daily lives. However, the benefits of AI are not evenly distributed, and the concentration of computing power and data in the hands of a few large companies has raised concerns about the centralization of AI capabilities.
+The rapid development of Artificial Intelligence (AI) has brought about a paradigm shift in how we interact with technology. From virtual assistants to self-driving cars, AI-powered systems are becoming increasingly pervasive in our daily lives. However, the benefits of AI are not evenly distributed, and the concentration of computing power and data in the hands of a few large companies has raised concerns about the centralisation of AI capabilities.
 </p>
 
 <p align="justify">
-In particular, the problem of centralization arises when companies that possess large amounts of computing resources and data also control the development and deployment of AI algorithms. This circumstance creates a power imbalance that can limit competition, innovation, and access to AI tools for smaller companies and individuals. Additionally, it can lead to privacy violations, biased algorithms, and other negative societal impacts.
+In particular, the problem of centralisation arises when companies that possess large amounts of computing resources and data also control the development and deployment of AI algorithms. This circumstance creates a power imbalance that can limit competition, innovation, and access to AI tools for smaller companies and individuals. Additionally, it can lead to privacy violations, biased algorithms, and other negative societal impacts.
 </p>
 
 <p align="justify">
@@ -33,7 +33,7 @@ Since these closed models can achieve impressive results on question answering a
 </p>
 
 <p align="justify">
-To respond to the above demand, we present in this paper Fair Protocol, the Marketplace that aims to decentralize an AI model inference using Arweave and Bundlr. Arweave is a blockchain-based decentralised platform that seeks to provide permanent and low-cost data storage solutions. Bundlr, on the other hand, is a layer 2 solution built on top of the Arweave blockchain that aims to provide a faster, more efficient, and cost-effective way to store and share content on the Arweave network.
+To respond to the above demand, we present in this paper Fair Protocol, the Marketplace that aims to decentralise an AI model inference using Arweave and Bundlr. Arweave is a blockchain-based decentralised platform that seeks to provide permanent and low-cost data storage solutions. Bundlr, on the other hand, is a layer 2 solution built on top of the Arweave blockchain that aims to provide a faster, more efficient, and cost-effective way to store and share content on the Arweave network.
 </p>
 
 <p align="justify">
@@ -69,7 +69,7 @@ Operators are responsible for performing all the inferences a User requests and 
 ### Model Curators
 
 <p align="justify">
-Curators are all the participants who put model scripts on the Marketplace. To do so, they must upload those scripts to Arweave and link them to at least one model listed in the Marketplace. The Operators will then run the software with the input from the Users to realize the inference on these models.
+Curators are all the participants who put model scripts on the Marketplace. To do so, they must upload those scripts to Arweave and link them to at least one model listed in the Marketplace. The Operators will then run the software with the input from the Users to realise the inference on these models.
 </p>
 
 <p align="justify">
@@ -124,7 +124,7 @@ All supported scenarios are presented in a chat format. On the right are the fil
 </p>
 
 <p align="justify">
-A User may have several chats separators for the same model script, and their organization is up to the User. For example, in software that makes inferences about images, a User can create a separator for each different image or can use the same chat for all of them.
+A User may have several chats separators for the same model script, and their organisation is up to the User. For example, in software that makes inferences about images, a User can create a separator for each different image or can use the same chat for all of them.
 </p>
 
 <p align="justify">
@@ -295,7 +295,7 @@ Marketplace Owners can eventually ruin Marketplace incentives if they are multip
 </p>
 
 <p align="justify">
-All the information displayed on the Marketplace is on Arweave. We used the "arweave.net" gateway for this application version to show all information. This decision presents a risk of a single point of failure since if this gateway goes down, all queries executed by the application will stop working. This solution also carries some challenges since the gateway only allows a certain number of queries to be executed in a certain amount of time. We pretend to change to a more decentralised gateway in the future, as presented in Section XII.
+All the information displayed on the Marketplace is on Arweave. We used the "arweave.net" gateway for this application version to show all information. This decision presents a risk of a single point of failure since if this gateway goes down, all queries executed by the application will stop working. This solution also carries some challenges since the gateway only allows a certain number of queries to be executed in a certain amount of time. We intend to change to a more decentralised gateway in the future, as presented in Section XII.
 </p>
 
 
@@ -307,7 +307,7 @@ Our team has some ideas that may be implemented in the future, which we intend t
 
 <ul>
     <li align="justify"><b>Review rules explained in this document:</b> As Fair Protocol is a novel implementation, we need to confirm how the conventions described above behave in a real scenario and review them if necessary for a future version of the application;</li>
-    <li align="justify"><b>Decentralised Autonomous Organization (DAO):</b> At this moment, the application is 100% managed by the Owners. We plan to create a DAO to manage the decisions and developments of the application if the application becomes successful enough and there is a large enough community;</li>
+    <li align="justify"><b>Decentralised Autonomous Organisation (DAO):</b> At this moment, the application is 100% managed by the Owners. We plan to create a DAO to manage the decisions and developments of the application if the application becomes successful enough and there is a large enough community;</li>
     <li align="justify"><b>Decentralised Gateway:</b> We intend to mitigate the risk of using a centralised gateway, presented in Section XI, by using a more decentralised gateway or by targeting multiple gateways;</li>
     <li align="justify"><b>Multiple prices per Operator and model script:</b> An Operator can only choose one price per script, but inference may have different transaction costs depending on the size of the files or the number of prompts sent. It might be interesting to develop a greater diversification of prices per scenario;</li>
     <li align="justify"><b>Limit chat size:</b> Although there are models that support multiple prompts or files as inputs, they always have a limit on the number of prompts or files they can receive. As such, it might be interesting to give Curators the ability to choose the maximum word or file size that model scripts support when uploading them to Arweave;</li>
@@ -322,7 +322,7 @@ Our team has some ideas that may be implemented in the future, which we intend t
 ## XIII. Conclusion
 
 <p align="justify">
-In conclusion, big tech companies' centralization of AI computation has raised concerns about the potential for a concentration of power and control over AI technology. Decentralising AI inference computation can help to address this problem by creating a more equitable, transparent, and accessible network for AI technology.
+In conclusion, big tech companies' centralisation of AI computation has raised concerns about the potential for a concentration of power and control over AI technology. Decentralising AI inference computation can help to address this problem by creating a more equitable, transparent, and accessible network for AI technology.
 </p>
 
 <p align="justify">
@@ -330,6 +330,6 @@ In this whitepaper, we demonstrate that with the help of the Arweave blockchain'
 </p>
 
 <p align="justify">
-While the suggested approach has challenges and risks, such as malware attacks, unpaid services, and the centralization of the gateway, those should be addressed with the proposed incentives to protocol participants and future developments. We also incorporated Bundlr technology, an Arweave layer 2, for more efficient and cost-effective content bundling.
+While the suggested approach has challenges and risks, such as malware attacks, unpaid services, and the centralisation of the gateway, those should be addressed with the proposed incentives to protocol participants and future developments. We also incorporated Bundlr technology, an Arweave layer 2, for more efficient and cost-effective content bundling.
 </p>
  
