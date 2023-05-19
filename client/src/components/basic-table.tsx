@@ -37,6 +37,118 @@ type fetchMoreFn = <
 
 type tableType = 'operators' | 'scripts';
 
+const BasicTableContent = ({
+  data,
+  type,
+  state,
+  loading,
+  error,
+  selectedIdx,
+  handleSelected,
+  retry,
+}: {
+  type: tableType;
+  data: IEdge[];
+  loading: boolean;
+  error?: ApolloError;
+  state: IEdge;
+  retry: () => void;
+  selectedIdx: number;
+  handleSelected: (index: number) => void;
+}) => {
+  const mockArray = genLoadingArray(5);
+
+  if (loading) {
+    return (
+      <>
+        {mockArray.map((val) => (
+          <TableRow key={val} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+            <TableCell align='right' colSpan={6} scope='row'>
+              <Typography>
+                <Skeleton
+                  variant='rounded'
+                  animation={'wave'}
+                  data-testid={'loading-skeleton'}
+                ></Skeleton>
+              </Typography>
+            </TableCell>
+          </TableRow>
+        ))}
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+          <TableCell colSpan={6}>
+            <Typography
+              alignItems='center'
+              display='flex'
+              flexDirection='column'
+              data-testid='table-error'
+            >
+              {type === 'operators'
+                ? 'Could not Fetch Registered Operators for this Model.'
+                : 'Could not Fetch Scripts for this Model.'}
+              <Button sx={{ width: 'fit-content' }} endIcon={<ReplayIcon />} onClick={retry}>
+                Retry
+              </Button>
+            </Typography>
+          </TableCell>
+        </TableRow>
+      </>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <>
+        <TableRow>
+          <TableCell
+            colSpan={type === 'operators' ? operatorHeaders.length : scriptHeaders.length}
+            align='center'
+          >
+            <Typography data-testid={'table-empty'}>
+              {type === 'operators'
+                ? 'Could not find available Operators.'
+                : 'Could not find available Scripts'}
+            </Typography>
+          </TableCell>
+        </TableRow>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {data.map((row, idx) =>
+        type === 'operators' ? (
+          <OperatorRow
+            key={row.node.id}
+            operatorTx={row}
+            scriptCurator={state.node.owner.address}
+            scriptName={findTag(state, 'scriptName') as string}
+            state={state}
+            index={idx}
+            isSelected={selectedIdx === idx}
+            setSelected={handleSelected}
+          />
+        ) : (
+          <ScriptRow
+            key={row.node.id}
+            scriptTx={row}
+            index={idx}
+            isSelected={selectedIdx === idx}
+            setSelected={handleSelected}
+          />
+        ),
+      )}
+    </>
+  );
+};
+
 export default function BasicTable(props: {
   type: tableType;
   data: IEdge[];
@@ -51,7 +163,6 @@ export default function BasicTable(props: {
 }) {
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
-  const mockArray = genLoadingArray(5);
 
   useEffect(() => {
     if (isOnScreen && props.hasNextPage) {
@@ -136,83 +247,7 @@ export default function BasicTable(props: {
             </TableRow>
           </TableHead>
           <TableBody sx={{ display: 'block', overflowY: 'auto', overflowX: 'hidden' }}>
-            {props.error ? (
-              <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                <TableCell colSpan={6}>
-                  <Typography
-                    alignItems='center'
-                    display='flex'
-                    flexDirection='column'
-                    data-testid='table-error'
-                  >
-                    {props.type === 'operators'
-                      ? 'Could not Fetch Registered Operators for this Model.'
-                      : 'Could not Fetch Scripts for this Model.'}
-                    <Button
-                      sx={{ width: 'fit-content' }}
-                      endIcon={<ReplayIcon />}
-                      onClick={props.retry}
-                    >
-                      Retry
-                    </Button>
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : props.loading ? (
-              mockArray.map((val) => {
-                return (
-                  <TableRow key={val} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    <TableCell align='right' colSpan={6} scope='row'>
-                      <Typography>
-                        <Skeleton
-                          variant='rounded'
-                          animation={'wave'}
-                          data-testid={'loading-skeleton'}
-                        ></Skeleton>
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            ) : props.data.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={
-                    props.type === 'operators' ? operatorHeaders.length : scriptHeaders.length
-                  }
-                  align='center'
-                >
-                  <Typography data-testid={'table-empty'}>
-                    {props.type === 'operators'
-                      ? 'Could not find available Operators.'
-                      : 'Could not find available Scripts'}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              props.data.map((row, idx) =>
-                props.type === 'operators' ? (
-                  <OperatorRow
-                    key={row.node.id}
-                    operatorTx={row}
-                    scriptCurator={props.state.node.owner.address}
-                    scriptName={findTag(props.state, 'scriptName') as string}
-                    state={props.state}
-                    index={idx}
-                    isSelected={props.selectedIdx === idx}
-                    setSelected={props.handleSelected}
-                  />
-                ) : (
-                  <ScriptRow
-                    key={row.node.id}
-                    scriptTx={row}
-                    index={idx}
-                    isSelected={props.selectedIdx === idx}
-                    setSelected={props.handleSelected}
-                  />
-                ),
-              )
-            )}
+            <BasicTableContent {...props} />
           </TableBody>
         </Table>
         <Box ref={target} sx={{ paddingBottom: '8px' }}></Box>
