@@ -21,17 +21,9 @@ import {
   TAG_NAMES,
   REGISTER_OPERATION,
   OPERATOR_REGISTRATION_AR_FEE,
-  N_PREVIOUS_BLOCKS,
-  INFERENCE_PERCENTAGE_FEE,
-  VAULT_ADDRESS,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import {
-  QUERY_PAYMENT_TO_VAULT_WITH,
-  QUERY_REGISTERED_OPERATORS,
-  QUERY_REQUESTS_FOR_OPERATOR,
-  QUERY_TX_WITH,
-} from '@/queries/graphql';
+import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { isTxConfirmed } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
@@ -51,96 +43,25 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { client } from '@/utils/apollo';
+import { isValidRegistration } from '@/utils/operator';
 
-const getOperatorRequests = async (address: string, scriptName: string, scriptCurator: string) => {
-  const { data } = await client.query({
-    query: QUERY_REQUESTS_FOR_OPERATOR,
-    variables: {
-      recipient: address,
-      first: N_PREVIOUS_BLOCKS,
-      tags: [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.scriptName, values: [scriptName] },
-        { name: TAG_NAMES.scriptCurator, values: [scriptCurator] },
-      ],
-    },
-  });
+const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
+  const opFee = findTag(el, 'operatorFee') as string;
+  const scriptName = findTag(el, 'scriptName') as string;
+  const scriptCurator = findTag(el, 'scriptCurator') as string;
 
-  return data.transactions.edges as IEdge[];
-};
-
-const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
-  const responseTags = [
-    ...DEFAULT_TAGS,
-    { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
-    { name: TAG_NAMES.operationName, values: ['Script Inference Response'] },
-  ];
-
-  const { data } = await client.query({
-    query: QUERY_TX_WITH,
-    variables: { tags: responseTags, address: opAddress },
-  });
-
-  if (data.transactions.edges.length === 0) {
-    return false;
-  } else {
-    return true;
+  if (!(await isValidRegistration(opFee, el.node.owner.address, scriptName, scriptCurator))) {
+    filtered.splice(
+      filtered.findIndex((existing) => el.node.owner.address === existing.node.owner.address),
+      1,
+    );
   }
-};
-
-const hasOperatorDistributedFees = async (
-  request: IEdge,
-  operatorFee: string,
-  opAddress: string,
-) => {
-  const distributionAmount = parseFloat(operatorFee) * INFERENCE_PERCENTAGE_FEE;
-  const feeDistributionTags = [
-    ...DEFAULT_TAGS,
-    { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
-    { name: TAG_NAMES.operationName, values: ['Fee Redistribution'] },
-  ];
-
-  const { data } = await client.query({
-    query: QUERY_PAYMENT_TO_VAULT_WITH,
-    variables: { tags: feeDistributionTags, owner: opAddress, recipient: VAULT_ADDRESS },
-  });
-
-  if (data.transactions.edges.length === 0) {
-    return false;
-  } else {
-    const paymentTx = data.transactions.edges[0];
-    return distributionAmount === parseFloat(paymentTx.node.quantity.winston);
-  }
-};
-
-const isValidRegistration = async (
-  operatorFee: string,
-  opAddress: string,
-  scriptName: string,
-  scriptCurator: string,
-) => {
-  const lastRequests = await getOperatorRequests(opAddress, scriptName, scriptCurator);
-  let isValid = true;
-  // check if operator answere last 7 requests
-  for (const request of lastRequests) {
-    // check if operator has answered last 7 requests
-    if (
-      !(await hasOperatorAnswered(request, opAddress)) ||
-      !(await hasOperatorDistributedFees(request, operatorFee, opAddress))
-    ) {
-      // if any of the last 7 requests has not been answered, the operator is not valid
-      isValid = false;
-      return isValid;
-    }
-  }
-
-  return isValid;
 };
 
 const verify = async (el: IEdge, filtered: IEdge[]) => {
@@ -168,19 +89,6 @@ const verify = async (el: IEdge, filtered: IEdge[]) => {
     // if tx is not confirmed or fee is not correct, skip adding it to list
   }
   return false;
-};
-
-const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
-  const opFee = findTag(el, 'operatorFee') as string;
-  const scriptName = findTag(el, 'scriptName') as string;
-  const scriptCurator = findTag(el, 'scriptCurator') as string;
-
-  if (!(await isValidRegistration(opFee, el.node.owner.address, scriptName, scriptCurator))) {
-    filtered.splice(
-      filtered.findIndex((existing) => el.node.owner.address === existing.node.owner.address),
-      1,
-    );
-  }
 };
 
 const OperatorSelected = ({
@@ -290,6 +198,7 @@ const ChooseOperator = ({
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
+  const [filtering, setFiltering] = useState(false);
   const elementsPerPage = 5;
 
   const tags = [
@@ -320,6 +229,8 @@ const ChooseOperator = ({
     skip: !scriptTx,
   });
 
+  const showLoading = useMemo(() => loading || filtering, [loading, filtering]);
+
   const handleRetry = useCallback(() => {
     refetch({ tags });
   }, [refetch]);
@@ -348,12 +259,14 @@ const ChooseOperator = ({
    * filtering correct payments and repeated operators
    */
   useEffect(() => {
+    if (networkStatus === NetworkStatus.loading) {
+      setFiltering(true);
+    }
     // check has paid correct registration fee
     if (queryData && networkStatus === NetworkStatus.ready) {
       // use immediately invoked function to be able to call async operations in useEffect
       (async () => {
         const filtered: IEdge[] = [];
-
         for (const el of queryData.transactions.edges) {
           const isVerified = await verify(el, filtered);
           if (isVerified) {
@@ -362,17 +275,20 @@ const ChooseOperator = ({
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setOperatorsData(filtered);
+        setFiltering(false);
       })();
     }
   }, [queryData]);
 
   useEffect(() => {
     if (queryData && filterValue) {
+      setFiltering(true);
       setOperatorsData(
         queryData.transactions.edges.filter((el: IEdge) =>
           findTag(el, 'operatorName')?.includes(filterValue),
         ),
       );
+      setFiltering(false);
     } else if (queryData) {
       setOperatorsData(queryData.transactions.edges);
     } else {
@@ -448,7 +364,7 @@ const ChooseOperator = ({
         <BasicTable
           type='operators'
           data={operatorsData}
-          loading={loading}
+          loading={showLoading}
           error={error}
           state={scriptTx as IEdge}
           retry={handleRetry}
