@@ -199,10 +199,6 @@ export default function BasicTable(props: {
     }
   }, [props.data]);
 
-  useEffect(() => {
-    console.log('props.loading', props.loading);
-  }, [props.loading]);
-
   return (
     <Box>
       <TableContainer>

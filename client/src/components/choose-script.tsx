@@ -188,8 +188,8 @@ const ChooseScript = ({
     } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
       // found a new tx for an existing op, check dates
       const existingTimestamp =
-        findTag(filtered[existingIdx], 'unixTime') || filtered[existingIdx].node.block.timestamp;
-      const newTimestamp = findTag(el, 'unixTime') || el.node.block.timestamp;
+        findTag(filtered[existingIdx], 'unixTime') ?? filtered[existingIdx].node.block.timestamp;
+      const newTimestamp = findTag(el, 'unixTime') ?? el.node.block.timestamp;
       if (newTimestamp > existingTimestamp) {
         // if new tx has more recent timestamp replace old one
         filtered[existingIdx] = el;
