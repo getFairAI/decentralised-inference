@@ -42,7 +42,7 @@ import {
 } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { ApolloQueryResult, useQuery } from '@apollo/client';
-import { Box, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, CircularProgress, Tooltip, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
@@ -52,6 +52,7 @@ import { voteForOptions } from '@/interfaces/common';
 import { IEdge, ITransactions } from '@/interfaces/arweave';
 import { isVouched } from '@/utils/vouch';
 import { client } from '@/utils/apollo';
+import DebounceIconButton from './debounce-icon-button';
 
 type RefetchFn = (
   variables?:
@@ -218,9 +219,9 @@ const UpVote = ({
   return (
     <>
       <Typography>{upVotesCount}</Typography>
-      <IconButton disabled={disabled} color='primary' onClick={clickHandler}>
+      <DebounceIconButton disabled={disabled} color='primary' onClick={clickHandler}>
         <ThumbUpOffAltIcon />
-      </IconButton>
+      </DebounceIconButton>
     </>
   );
 };
@@ -237,9 +238,9 @@ const DownVote = ({
   return (
     <>
       <Typography>{downVotesCount}</Typography>
-      <IconButton disabled={disabled} color='primary' onClick={clickHandler}>
+      <DebounceIconButton disabled={disabled} color='primary' onClick={clickHandler}>
         <ThumbDownOffAltIcon />
-      </IconButton>
+      </DebounceIconButton>
     </>
   );
 };

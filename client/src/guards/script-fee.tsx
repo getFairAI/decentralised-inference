@@ -16,6 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
+import DebounceButton from '@/components/debounce-button';
 import {
   APP_NAME,
   APP_VERSION,
@@ -81,7 +82,7 @@ const ScriptFeeActions = ({
       >
         Decline
       </Button>
-      <Button
+      <DebounceButton
         onClick={handleAccept}
         sx={{
           background: theme.palette.success.light,
@@ -94,7 +95,7 @@ const ScriptFeeActions = ({
         }}
       >
         Accept
-      </Button>
+      </DebounceButton>
     </DialogActions>
   ) : (
     <DialogActions
