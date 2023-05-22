@@ -37,7 +37,6 @@ import {
   InputBase,
   Icon,
   Tooltip,
-  IconButton,
   List,
   ListItemButton,
   Typography,
@@ -47,6 +46,7 @@ import { useSnackbar } from 'notistack';
 import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import { LoadingContainer } from '@/styles/components';
+import DebounceIconButton from './debounce-icon-button';
 
 const ConversationElement = ({
   cid,
@@ -279,7 +279,7 @@ const Conversations = ({
         </Box>
       </Box>
       <Tooltip title='Start a new Conversation'>
-        <IconButton
+        <DebounceIconButton
           onClick={handleAddConversation}
           sx={{
             margin: '0 20px',
@@ -288,7 +288,7 @@ const Conversations = ({
           }}
         >
           <AddIcon />
-        </IconButton>
+        </DebounceIconButton>
       </Tooltip>
       <List
         sx={{

@@ -76,6 +76,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import CustomProgress from '@/components/progress';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import ChatBubble from '@/components/chat-bubble';
+import DebounceIconButton from '@/components/debounce-icon-button';
 
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
@@ -950,13 +951,13 @@ const Chat = () => {
               </span>
             </Tooltip>
 
-            <IconButton
+            <DebounceIconButton
               onClick={handleSendClick}
               sx={{ height: '60px', width: '60px', color: theme.palette.neutral.contrastText }}
               disabled={sendDisabled}
             >
               <SendIcon />
-            </IconButton>
+            </DebounceIconButton>
           </Box>
           <Snackbar
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}

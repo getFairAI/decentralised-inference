@@ -58,6 +58,7 @@ import { getData } from '@/utils/arweave';
 import useOnScreen from '@/hooks/useOnScreen';
 import MarkdownControl from './md-control';
 import { WalletContext } from '@/context/wallet';
+import DebounceButton from './debounce-button';
 
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -335,7 +336,7 @@ export const CustomStepper = (props: {
                 Back
               </Typography>
             </Button>
-            <Button
+            <DebounceButton
               onClick={handleFinish}
               sx={{
                 borderRadius: '7px',
@@ -355,7 +356,7 @@ export const CustomStepper = (props: {
               >
                 Finish
               </Typography>
-            </Button>
+            </DebounceButton>
           </Box>
         </Fragment>
       ) : activeStep === 1 ? (

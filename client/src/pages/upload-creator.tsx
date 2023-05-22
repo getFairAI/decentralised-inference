@@ -61,6 +61,7 @@ import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
 import { ITag } from '@/interfaces/arweave';
+import DebounceButton from '@/components/debounce-button';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -476,7 +477,7 @@ const UploadCreator = () => {
                     Reset to Default
                   </Typography>
                 </Button>
-                <Button
+                <DebounceButton
                   onClick={handleSubmit(onSubmit)}
                   disabled={
                     (!control._formState.isValid && control._formState.isDirty) || !currentAddress
@@ -498,7 +499,7 @@ const UploadCreator = () => {
                   >
                     Submit
                   </Typography>
-                </Button>
+                </DebounceButton>
               </CardActions>
             </Card>
           </Box>

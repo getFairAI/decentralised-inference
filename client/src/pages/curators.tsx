@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   Alert,
   Backdrop,
@@ -64,6 +82,7 @@ import { useLazyQuery, useQuery } from '@apollo/client';
 import { GET_LATEST_FEE_UPDATE, LIST_MODELS_QUERY } from '@/queries/graphql';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { commonUpdateQuery, findTag } from '@/utils/common';
+import DebounceButton from '@/components/debounce-button';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -753,7 +772,7 @@ const Curators = () => {
                     Reset to Default
                   </Typography>
                 </Button>
-                <Button
+                <DebounceButton
                   onClick={handleSubmit(onSubmit)}
                   disabled={
                     (!control._formState.isValid && control._formState.isDirty) ||
@@ -777,7 +796,7 @@ const Curators = () => {
                   >
                     Submit
                   </Typography>
-                </Button>
+                </DebounceButton>
               </CardActions>
             </Card>
           </Box>
