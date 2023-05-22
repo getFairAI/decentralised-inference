@@ -16,6 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
+import { secondInMS } from '@/constants';
 import { IconButton, IconButtonProps } from '@mui/material';
 import { debounce } from 'lodash';
 import { MouseEventHandler } from 'react';
@@ -27,7 +28,7 @@ interface DebounceIconButtonProps extends IconButtonProps {
 const DebounceIconButton = (props: DebounceIconButtonProps) => {
   const { onClick, children, ...matProps } = props;
 
-  const handleClick = debounce(onClick, 1000);
+  const handleClick = debounce(onClick, secondInMS);
 
   return (
     <IconButton {...matProps} onClick={handleClick}>

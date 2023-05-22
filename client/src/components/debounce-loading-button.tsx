@@ -16,6 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
+import { secondInMS } from '@/constants';
 import { LoadingButton, LoadingButtonProps } from '@mui/lab';
 import { debounce } from 'lodash';
 import { MouseEventHandler } from 'react';
@@ -27,7 +28,7 @@ interface DebounceLoadingButtonProps extends LoadingButtonProps {
 const DebounceLoadingButton = (props: DebounceLoadingButtonProps) => {
   const { onClick, children, ...matProps } = props;
 
-  const handleClick = debounce(onClick, 1000);
+  const handleClick = debounce(onClick, secondInMS);
 
   return (
     <LoadingButton {...matProps} onClick={handleClick}>
