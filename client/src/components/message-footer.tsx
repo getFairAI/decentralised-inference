@@ -89,10 +89,20 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
 
   const handleCopy = async () => {
     setAnchorEl(null);
-    if (typeof message.msg === 'string') {
-      await navigator.clipboard.writeText(message.msg);
-      enqueueSnackbar('Copied to clipboard', { variant: 'info' });
-    } else {
+    try {
+      if (typeof message.msg === 'string') {
+        await navigator.clipboard.writeText(message.msg);
+        enqueueSnackbar('Copied to clipboard', { variant: 'info' });
+      } else {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [message.contentType as string]: message.msg,
+          }),
+        ]);
+        enqueueSnackbar('Copied to clipboard', { variant: 'info' });
+        // copy file
+      }
+    } catch (error) {
       enqueueSnackbar('Cannot copy this message', { variant: 'error' });
     }
   };

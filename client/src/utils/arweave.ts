@@ -36,9 +36,7 @@ export const getWalletBalance = async () => {
 export const getData = async (txid: string, fileName?: string) => {
   const result = await fetch(`${NET_ARWEAVE_URL}/${txid}`);
   const contentType = result.headers.get('Content-Type');
-  if (contentType?.includes('image')) {
-    return '';
-  } else if (contentType?.includes('text') || contentType?.includes('json')) {
+  if (contentType?.includes('text') || contentType?.includes('json')) {
     return (await result.blob()).text();
   } else {
     const blob = await result.blob();
