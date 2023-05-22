@@ -19,22 +19,25 @@
 import { secondInMS } from '@/constants';
 import { IconButton, IconButtonProps } from '@mui/material';
 import { debounce } from 'lodash';
-import { MouseEventHandler } from 'react';
+import { MouseEventHandler, forwardRef } from 'react';
 
 interface DebounceIconButtonProps extends IconButtonProps {
   onClick: MouseEventHandler<HTMLButtonElement>;
 }
 
-const DebounceIconButton = (props: DebounceIconButtonProps) => {
-  const { onClick, children, ...matProps } = props;
+const DebounceIconButton = forwardRef<HTMLButtonElement, DebounceIconButtonProps>(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function DebounceIconButtonComponent(props: DebounceIconButtonProps, _ref) {
+    const { onClick, children, ...matProps } = props;
 
-  const handleClick = debounce(onClick, secondInMS);
+    const handleClick = debounce(onClick, secondInMS);
 
-  return (
-    <IconButton {...matProps} onClick={handleClick}>
-      {children}
-    </IconButton>
-  );
-};
+    return (
+      <IconButton {...matProps} onClick={handleClick}>
+        {children}
+      </IconButton>
+    );
+  },
+);
 
 export default DebounceIconButton;
