@@ -16,7 +16,6 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import * as React from 'react';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -29,23 +28,35 @@ import { WalletContext } from '@/context/wallet';
 import { FundContext } from '@/context/fund';
 import GetIcon from './get-icon';
 import Box from '@mui/material/Box';
+import { ChooseWalletContext } from '@/context/choose-wallet';
+import { useState, useContext, MouseEvent } from 'react';
 
 const bundlrSettings = 'Bundlr Settings';
-const options = [bundlrSettings, 'Whitepaper', 'Github', 'Discord', 'Twitter', 'Disconnect'];
-const disableableOptions = [bundlrSettings, 'My Models', 'Disconnect'];
+const changeWallet = 'Change Wallet';
+const options = [
+  bundlrSettings,
+  'Whitepaper',
+  'Github',
+  'Discord',
+  'Twitter',
+  changeWallet,
+  'Disconnect',
+];
+const disableableOptions = [bundlrSettings, 'My Models', changeWallet, 'Disconnect'];
 
-const ITEM_HEIGHT = 56;
+const ITEM_HEIGHT = 64;
 
 export default function ProfileMenu() {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
-  const { toggleTheme } = React.useContext(AppThemeContext);
-  const { disconnectWallet, currentAddress } = React.useContext(WalletContext);
-  const { setOpen: setFundOpen } = React.useContext(FundContext);
+  const { toggleTheme } = useContext(AppThemeContext);
+  const { disconnectWallet, currentAddress } = useContext(WalletContext);
+  const { setOpen: setFundOpen } = useContext(FundContext);
+  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
 
   const open = Boolean(anchorEl);
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -78,6 +89,10 @@ export default function ProfileMenu() {
       case 'Whitepaper':
         window.open(WHITEPAPER_LINK, '_blank');
         break;
+      case changeWallet:
+        setAnchorEl(null);
+        setChooseWalletOpen(true);
+        return;
       case 'Disconnect':
         await disconnectWallet();
         setAnchorEl(null);
@@ -119,7 +134,7 @@ export default function ProfileMenu() {
           disableableOptions.includes(option) && !currentAddress ? (
             <Tooltip title='This Feature requires a wallet to be connected' key={option}>
               <span>
-                <MenuItem onClick={() => HandleOptionClick(option)} disabled>
+                <MenuItem disabled>
                   <Typography>{option}</Typography>
                 </MenuItem>
               </span>
