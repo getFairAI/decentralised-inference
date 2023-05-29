@@ -28,6 +28,7 @@ import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 import Pending from './pending';
 import NavigationMenu from './navigation-menu';
+import { ChooseWalletContext } from '@/context/choose-wallet';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -40,10 +41,11 @@ const Banner = styled(Toolbar)(({ theme }) => ({
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, currentBalance, connectWallet, isWalletLoaded, isWalletVouched } =
-    useContext(WalletContext);
+  const { currentAddress, currentBalance, isWalletVouched } = useContext(WalletContext);
 
-  if (!isWalletLoaded) {
+  const { setOpen: connectWallet } = useContext(ChooseWalletContext);
+
+  /*   if (!isWalletLoaded) {
     return (
       <>
         <Box
@@ -68,7 +70,7 @@ const WalletState = () => {
         <ProfileMenu />
       </>
     );
-  }
+  } */
 
   if (!currentAddress || currentAddress === '') {
     return (
@@ -86,7 +88,7 @@ const WalletState = () => {
           }}
         >
           <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>Connect Wallet</Typography>
-          <IconButton onClick={connectWallet} sx={{ paddingRight: '16px' }}>
+          <IconButton onClick={() => connectWallet(true)} sx={{ paddingRight: '16px' }}>
             <img src='./icon-empty-wallet.svg' />
           </IconButton>
         </Box>

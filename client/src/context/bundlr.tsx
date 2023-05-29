@@ -29,7 +29,7 @@ type BundlrUpdateLoadingAction = { type: 'update_loading'; isLoading: boolean };
 type BundlrAction = BundlrChangeNodeAction | BundlrUpdateBalanceAction | BundlrUpdateLoadingAction;
 
 interface BundlrContext {
-  bundlr?: WebBundlr;
+  bundlr: WebBundlr | null;
   nodeBalance: number;
   isLoading: boolean;
   changeNode: (value: bundlrNodeUrl) => Promise<void>;
@@ -50,7 +50,7 @@ interface BundlrContext {
   ) => Promise<AxiosResponse<UploadResponse, any>>;
 }
 
-const createActions = (dispatch: Dispatch<BundlrAction>, bundlr?: WebBundlr) => {
+const createActions = (dispatch: Dispatch<BundlrAction>, bundlr: WebBundlr | null) => {
   return {
     changeNode: async (value: bundlrNodeUrl) => asyncChangeNode(dispatch, value),
     updateBalance: async () => asyncUpdateBalance(dispatch, bundlr),
@@ -70,7 +70,7 @@ const asyncChangeNode = async (dispatch: Dispatch<BundlrAction>, node: bundlrNod
   }
 };
 
-const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr?: WebBundlr) => {
+const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr: WebBundlr | null) => {
   if (!bundlr) {
     dispatch({ type: 'update_balance', balance: 0 });
     dispatch({ type: 'update_loading', isLoading: false });
@@ -88,10 +88,13 @@ const asyncUpdateBalance = async (dispatch: Dispatch<BundlrAction>, bundlr?: Web
 };
 
 const bundlrReducer = (
-  state: { bundlr?: WebBundlr; nodeBalance: number; isLoading: boolean },
+  state: { bundlr: WebBundlr | null; nodeBalance: number; isLoading: boolean },
   action?: BundlrAction,
 ) => {
-  if (!action) return state;
+  if (!action) {
+    return state;
+  }
+
   switch (action.type) {
     case 'node_changed':
       // eslint-disable-next-line no-case-declarations
@@ -115,7 +118,7 @@ const bundlrReducer = (
 };
 
 export const BundlrContext = createContext<BundlrContext>({
-  bundlr: undefined,
+  bundlr: null,
   nodeBalance: 0,
   isLoading: false,
   retryConnection: async () => new Promise(() => null),
@@ -129,13 +132,12 @@ export const BundlrContext = createContext<BundlrContext>({
 
 export const BundlrProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(bundlrReducer, {
-    bundlr: undefined,
+    bundlr: null,
     nodeBalance: 0,
     isLoading: false,
   });
-  const actions = useMemo(() => createActions(dispatch, state.bundlr), [state.bundlr]);
-
   const walletState = useContext(WalletContext);
+  const actions = useMemo(() => createActions(dispatch, state.bundlr), [state.bundlr, walletState]);
 
   useEffect(() => {
     if (walletState.currentAddress) {

@@ -18,6 +18,7 @@
 
 import { GitHub, Article, Settings, Twitter, Logout } from '@mui/icons-material';
 import { SvgIcon, useTheme } from '@mui/material';
+import SyncAltIcon from '@mui/icons-material/SyncAlt';
 
 type Props = {
   input: string;
@@ -49,6 +50,8 @@ const GetIcon = ({ input }: Props): JSX.Element => {
           }}
         />
       );
+    case 'Change Wallet':
+      return <SyncAltIcon></SyncAltIcon>;
     default:
       return <Logout></Logout>;
   }

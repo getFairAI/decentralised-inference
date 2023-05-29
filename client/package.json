@@ -28,6 +28,7 @@
     "@mui/x-date-pickers": "6.2.1",
     "@uiw/react-md-editor": "3.20.2",
     "arweave": "1.12.7",
+    "arweave-wallet-connector": "^1.0.2",
     "axios": "0.25.0",
     "bundlr-custom": "file:../bundlr-network-client-0.10.5.tgz",
     "dayjs": "1.11.7",

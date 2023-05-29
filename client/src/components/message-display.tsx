@@ -29,6 +29,7 @@ import {
 } from '@mui/material';
 import { useCallback } from 'react';
 import DownloadIcon from '@mui/icons-material/Download';
+import '@/styles/main.css';
 
 const MessageDisplay = ({ message }: { message: IMessage }) => {
   const theme = useTheme();
@@ -61,6 +62,12 @@ const MessageDisplay = ({ message }: { message: IMessage }) => {
               ? theme.palette.secondary.contrastText
               : theme.palette.terciary.contrastText,
           whiteSpace: 'pre-wrap',
+          overflow: 'hidden' /* Ensures the content is not revealed until the animation */,
+          borderRight: '.15em solid orange',
+          animation: {
+            typing: '3.5s steps(40, end)',
+            blinkCaret: '.75s step-end infinite',
+          },
         }}
         gutterBottom
         component={'pre'}
