@@ -12,7 +12,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { ReactElement, useContext, useEffect, useState } from 'react';
+import { ReactElement, useContext, useEffect, useMemo, useState } from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
 import { BundlrContext } from '@/context/bundlr';
@@ -28,6 +28,15 @@ export default function Layout({ children }: { children: ReactElement }) {
   const theme = useTheme();
   const { setOpen: setFundOpen } = useContext(FundContext);
   const { open: chooseWalletOpen, setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+
+  const showBundlrFunds = useMemo(
+    () => (!isLoading && nodeBalance === 0 && !!currentAddress) || !currentAddress,
+    [isLoading, nodeBalance, currentAddress],
+  );
+  const isOpen = useMemo(
+    () => !chooseWalletOpen && !ignore && showBundlrFunds,
+    [chooseWalletOpen, ignore, isLoading, nodeBalance, currentAddress],
+  );
 
   const handleFundNow = () => {
     setIgnore(true);
@@ -67,11 +76,7 @@ export default function Layout({ children }: { children: ReactElement }) {
           <FilterContext.Provider value={filterValue}>
             <main style={{ height: '100%' }}>{children}</main>
             <Dialog
-              open={
-                !chooseWalletOpen &&
-                !ignore &&
-                ((!isLoading && nodeBalance === 0 && !!currentAddress) || !currentAddress)
-              }
+              open={isOpen}
               maxWidth={'md'}
               fullWidth
               sx={{

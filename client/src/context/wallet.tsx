@@ -5,13 +5,16 @@ import _ from 'lodash';
 import { isVouched } from '@/utils/vouch';
 import { ArweaveWebWallet } from 'arweave-wallet-connector';
 
+const arweaveApp = 'arweave.app';
+const arConnect = 'arconnect';
+
 const wallet = new ArweaveWebWallet({
   // optionally provide information about your app that will be displayed in the wallet provider interface
   name: 'Fair Protocol',
   logo: 'https://7kekrsiqzdrmjh222sx5xohduoemsoosicy33nqic4q5rbdcqybq.arweave.net/-oioyRDI4sSfWtSv27jjo4jJOdJAsb22CBch2IRihgM',
 });
 
-wallet.setUrl('arweave.app');
+wallet.setUrl(arweaveApp);
 
 const DEFAULT_PERMISSSIONS: PermissionType[] = [
   'ACCESS_PUBLIC_KEY',
@@ -50,7 +53,7 @@ interface WalletContext {
   currentPermissions: PermissionType[];
   currentBalance: number;
   isWalletVouched: boolean;
-  connectWallet: (wallet: 'arweave.app' | 'arconnect') => Promise<void>;
+  connectWallet: (walletInstance: 'arweave.app' | 'arconnect') => Promise<void>;
   updateBalance: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
 }
@@ -76,7 +79,7 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
       await window.arweaveWallet.connect(DEFAULT_PERMISSSIONS);
       dispatch({ type: 'wallet_connected', wallet: window.arweaveWallet });
     }
-    localStorage.setItem('wallet', 'arconnect');
+    localStorage.setItem('wallet', arConnect);
     const addr = await window.arweaveWallet.getActiveAddress();
     dispatch({ type: 'wallet_address_updated', address: addr });
     const winstonBalance = await arweave.wallets.getBalance(addr);
@@ -98,7 +101,7 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
 const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
   try {
     await wallet.connect();
-    localStorage.setItem('wallet', 'arweave.app');
+    localStorage.setItem('wallet', arweaveApp);
     const walletInstance = wallet.namespaces.arweaveWallet;
     dispatch({ type: 'wallet_connected', wallet: walletInstance });
     const addr = (await walletInstance.getActiveAddress()) as string;
@@ -111,12 +114,8 @@ const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
     const isAddrVouched = await isVouched(addr);
     dispatch({ type: 'wallet_vouched', isWalletVouched: isAddrVouched });
   } catch (error) {
-    /* // manually remove arconnect overlay
-    const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll(
-      '.arconnect_connect_overlay_extension_temporary',
-    );
-    overlays.forEach((el) => el.remove()); */
-    console.log(error);
+    dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
   }
 };
 
@@ -129,7 +128,8 @@ const asyncDisconnectWallet = async (
     dispatch({ type: 'wallet_disconnect' });
     localStorage.removeItem('wallet');
   } catch (err) {
-    console.log(err);
+    dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
   }
 };
 
@@ -144,7 +144,8 @@ const asyncWalletSwitch = async (dispatch: Dispatch<WalletAction>, newAddress: s
     const isAddrVouched = await isVouched(newAddress);
     dispatch({ type: 'wallet_vouched', isWalletVouched: isAddrVouched });
   } catch (error) {
-    console.log(error);
+    dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
   }
 };
 
@@ -156,7 +157,8 @@ const asyncUpdateBalance = async (dispatch: Dispatch<WalletAction>, addr: string
       balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
     });
   } catch (error) {
-    console.log(error);
+    dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
   }
 };
 
@@ -221,8 +223,8 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const value: WalletContext = useMemo(
     () => ({
       ...state,
-      connectWallet: (wallet: 'arweave.app' | 'arconnect') =>
-        wallet === 'arconnect' ? actions.arConnect() : actions.arweaveAppConnect(),
+      connectWallet: (walletInstance: 'arweave.app' | 'arconnect') =>
+        walletInstance === arConnect ? actions.arConnect() : actions.arweaveAppConnect(),
       updateBalance: actions.updateBalance,
       disconnectWallet: actions.walletDisconnect,
     }),
@@ -230,7 +232,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const walletSwitched = async (event: { detail: { address: string } }) => {
-    if (localStorage.getItem('wallet') === 'arconnect') {
+    if (localStorage.getItem('wallet') === arConnect) {
       await actions.switchWallet(event.detail.address);
     }
   };
@@ -238,21 +240,19 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const arConnectLoaded = async () => {
     await actions.arConnectAvailable();
     // if default wallet is arconnect, connect to it automatically
-    if (localStorage.getItem('wallet') === 'arconnect') {
+    if (localStorage.getItem('wallet') === arConnect) {
       await actions.arConnect();
     }
   };
 
   useEffect(() => {
-    if (!window.arweaveWallet) {
-      // only subscribe walletLoaded if arweave wallet does not exist
-      // only subscribe if not subscribed already
-      if (!connectWalletSubscriptionRef.current) {
-        window.addEventListener('arweaveWalletLoaded', () => {
-          arConnectLoaded();
-        });
-        connectWalletSubscriptionRef.current = true;
-      }
+    // only subscribe walletLoaded if arweave wallet does not exist
+    // only subscribe if not subscribed already
+    if (!window.arweaveWallet && !connectWalletSubscriptionRef.current) {
+      window.addEventListener('arweaveWalletLoaded', () => {
+        (async () => arConnectLoaded())();
+      });
+      connectWalletSubscriptionRef.current = true;
     }
 
     if (!switchWalletSubscriptionRef.current) {
@@ -285,7 +285,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem('wallet') === 'arweave.app') {
+    if (localStorage.getItem('wallet') === arweaveApp) {
       (async () => {
         await actions.arweaveAppConnect();
       })();

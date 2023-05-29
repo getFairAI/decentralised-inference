@@ -32,16 +32,17 @@ import { ChooseWalletContext } from '@/context/choose-wallet';
 import { useState, useContext, MouseEvent } from 'react';
 
 const bundlrSettings = 'Bundlr Settings';
+const changeWallet = 'Change Wallet';
 const options = [
   bundlrSettings,
   'Whitepaper',
   'Github',
   'Discord',
   'Twitter',
-  'Change Wallet',
+  changeWallet,
   'Disconnect',
 ];
-const disableableOptions = [bundlrSettings, 'My Models', 'Change Wallet', 'Disconnect'];
+const disableableOptions = [bundlrSettings, 'My Models', changeWallet, 'Disconnect'];
 
 const ITEM_HEIGHT = 64;
 
@@ -88,7 +89,7 @@ export default function ProfileMenu() {
       case 'Whitepaper':
         window.open(WHITEPAPER_LINK, '_blank');
         break;
-      case 'Change Wallet':
+      case changeWallet:
         setAnchorEl(null);
         setChooseWalletOpen(true);
         return;

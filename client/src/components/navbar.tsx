@@ -22,7 +22,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { ChangeEvent, Dispatch, SetStateAction, useContext } from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext } from 'react';
 import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
@@ -45,32 +45,7 @@ const WalletState = () => {
 
   const { setOpen: connectWallet } = useContext(ChooseWalletContext);
 
-  /*   if (!isWalletLoaded) {
-    return (
-      <>
-        <Box
-          sx={{
-            borderRadius: '23px',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 0,
-            gap: '17px',
-            background: theme.palette.secondary.main,
-          }}
-        >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>
-            Wallet Not Available
-          </Typography>
-          <IconButton sx={{ paddingRight: '16px' }} disabled>
-            <img src='./icon-empty-wallet.svg' />
-          </IconButton>
-        </Box>
-        <ProfileMenu />
-      </>
-    );
-  } */
+  const handleConnect = useCallback(() => connectWallet(true), [connectWallet]);
 
   if (!currentAddress || currentAddress === '') {
     return (
@@ -88,7 +63,7 @@ const WalletState = () => {
           }}
         >
           <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>Connect Wallet</Typography>
-          <IconButton onClick={() => connectWallet(true)} sx={{ paddingRight: '16px' }}>
+          <IconButton onClick={handleConnect} sx={{ paddingRight: '16px' }}>
             <img src='./icon-empty-wallet.svg' />
           </IconButton>
         </Box>
