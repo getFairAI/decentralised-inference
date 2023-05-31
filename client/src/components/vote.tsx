@@ -199,7 +199,7 @@ const vote = async (
     const result = await dispatchTx(tx);
     enqueueSnackbar(
       <>
-        Updated Model Fee
+        Vote Transaction Sent
         <br></br>
         <a href={`https://viewblock.io/arweave/tx/${result.id}`} target={'_blank'} rel='noreferrer'>
           <u>View Transaction in Explorer</u>
