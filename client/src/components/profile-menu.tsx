@@ -34,16 +34,24 @@ import { useState, useContext, MouseEvent } from 'react';
 
 const bundlrSettings = 'Bundlr Settings';
 const changeWallet = 'Change Wallet';
+const operatorRegistrations = 'Operator Registrations';
 const options = [
   bundlrSettings,
   'Whitepaper',
   'Github',
   'Discord',
   'Twitter',
+  operatorRegistrations,
   changeWallet,
   'Disconnect',
 ];
-const disableableOptions = [bundlrSettings, 'My Models', changeWallet, 'Disconnect'];
+const disableableOptions = [
+  bundlrSettings,
+  'My Models',
+  operatorRegistrations,
+  changeWallet,
+  'Disconnect',
+];
 
 const ITEM_HEIGHT = 64;
 
@@ -89,6 +97,10 @@ export default function ProfileMenu() {
         break;
       case 'Whitepaper':
         window.open(WHITEPAPER_LINK, '_blank');
+        break;
+      case operatorRegistrations:
+        setAnchorEl(null);
+        navigate('/registrations');
         break;
       case changeWallet:
         setAnchorEl(null);

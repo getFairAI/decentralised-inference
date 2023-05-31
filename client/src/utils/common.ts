@@ -110,3 +110,11 @@ export const download = (name: string, txid: string) => {
   a.click();
   document.body.removeChild(a);
 };
+
+export const parseUnixTimestamp = (timestamp: number | string) => {
+  if (typeof timestamp === 'string') {
+    return new Date(parseFloat(timestamp) * secondInMS).toLocaleString();
+  } else {
+    return new Date(timestamp * secondInMS).toLocaleString();
+  }
+};
