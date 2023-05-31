@@ -24,6 +24,7 @@ import { AppThemeContext } from '@/context/theme';
 import { Tooltip, Typography } from '@mui/material';
 import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK, DISCORD_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import { WalletContext } from '@/context/wallet';
 import { FundContext } from '@/context/fund';
 import GetIcon from './get-icon';
@@ -113,7 +114,7 @@ export default function ProfileMenu() {
         aria-haspopup='true'
         onClick={handleClick}
       >
-        <MenuIcon color='action' />
+        {open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}
       </IconButton>
       <Menu
         id='long-menu'
