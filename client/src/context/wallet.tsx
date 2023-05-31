@@ -1,9 +1,11 @@
 import { createContext, Dispatch, ReactNode, useEffect, useMemo, useReducer, useRef } from 'react';
-import { PermissionType } from 'arconnect';
+import { PermissionType, DispatchResult as ArConnectDispatchResult } from 'arconnect';
 import arweave from '@/utils/arweave';
 import _ from 'lodash';
 import { isVouched } from '@/utils/vouch';
 import { ArweaveWebWallet } from 'arweave-wallet-connector';
+import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
+import Transaction from 'arweave/web/lib/transaction';
 
 const arweaveApp = 'arweave.app';
 const arConnect = 'arconnect';
@@ -56,6 +58,7 @@ interface WalletContext {
   connectWallet: (walletInstance: 'arweave.app' | 'arconnect') => Promise<void>;
   updateBalance: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
+  dispatchTx: (tx: Transaction) => Promise<DispatchResult | ArConnectDispatchResult>;
 }
 
 const createActions = (dispatch: Dispatch<WalletAction>, state: WalletContext) => {
@@ -196,6 +199,16 @@ const walletReducer = (state: WalletContext, action?: WalletAction) => {
   }
 };
 
+const dispatchTx = async (tx: Transaction) => {
+  if (localStorage.getItem('wallet') === arConnect && window.arweaveWallet) {
+    return window.arweaveWallet.dispatch(tx);
+  } else if (localStorage.getItem('wallet') === arweaveApp && wallet) {
+    return wallet.dispatch(tx);
+  } else {
+    throw new Error('No wallet connected');
+  }
+};
+
 const initialState: WalletContext = {
   isArConnectAvailable: false,
   currentAddress: '',
@@ -209,6 +222,7 @@ const initialState: WalletContext = {
   updateBalance: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   disconnectWallet: async () => {},
+  dispatchTx,
 };
 
 export const WalletContext = createContext<WalletContext>(initialState);

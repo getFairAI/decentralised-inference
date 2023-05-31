@@ -43,10 +43,19 @@ import {
   useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import { LoadingContainer } from '@/styles/components';
 import DebounceIconButton from './debounce-icon-button';
+import { WalletContext } from '@/context/wallet';
 
 const ConversationElement = ({
   cid,
@@ -122,6 +131,7 @@ const Conversations = ({
   const isConversationOnScreen = useOnScreen(conversationsTarget);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const { dispatchTx } = useContext(WalletContext);
 
   const {
     data: conversationsData,
@@ -158,7 +168,7 @@ const Conversations = ({
       tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
       tx.addTag(TAG_NAMES.conversationIdentifier, `${id}`);
-      await window.arweaveWallet.dispatch(tx);
+      await dispatchTx(tx);
 
       setConversationIds([id, ...conversationIds]);
       setFilteredConversationIds([id, ...conversationIds]);
