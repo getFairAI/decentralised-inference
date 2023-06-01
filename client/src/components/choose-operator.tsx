@@ -56,7 +56,15 @@ const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
   const scriptName = findTag(el, 'scriptName') as string;
   const scriptCurator = findTag(el, 'scriptCurator') as string;
 
-  if (!(await isValidRegistration(opFee, el.node.owner.address, scriptName, scriptCurator))) {
+  if (
+    !(await isValidRegistration(
+      el.node.id,
+      opFee,
+      el.node.owner.address,
+      scriptName,
+      scriptCurator,
+    ))
+  ) {
     filtered.splice(
       filtered.findIndex((existing) => el.node.owner.address === existing.node.owner.address),
       1,

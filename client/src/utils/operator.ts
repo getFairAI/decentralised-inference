@@ -22,6 +22,7 @@ import {
   TAG_NAMES,
   INFERENCE_PERCENTAGE_FEE,
   VAULT_ADDRESS,
+  CANCEL_OPERATION,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import {
@@ -93,12 +94,32 @@ const hasOperatorDistributedFees = async (
   }
 };
 
+const isCancelled = async (txid: string, opAdress: string) => {
+  const cancelTags = [
+    ...DEFAULT_TAGS,
+    { name: TAG_NAMES.operationName, values: [CANCEL_OPERATION] },
+    { name: TAG_NAMES.registrationTransaction, values: [txid] },
+  ];
+  const { data } = await client.query({
+    query: QUERY_TX_WITH,
+    variables: { tags: cancelTags, address: opAdress },
+  });
+
+  return data.transactions.edges.length > 0;
+};
+
 export const isValidRegistration = async (
+  txid: string,
   operatorFee: string,
   opAddress: string,
   scriptName: string,
   scriptCurator: string,
 ) => {
+  const isCancelledTx = await isCancelled(txid, opAddress);
+  if (isCancelledTx) {
+    return false;
+  }
+
   const lastRequests = await getOperatorRequests(opAddress, scriptName, scriptCurator);
   let isValid = true;
   // check if operator answere last 7 requests
