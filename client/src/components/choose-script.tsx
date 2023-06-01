@@ -150,6 +150,7 @@ const ChooseScript = ({
 
         if (
           await isValidRegistration(
+            registration.node.id,
             opFee,
             registration.node.owner.address,
             scriptName,

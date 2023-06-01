@@ -12,22 +12,25 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { ReactElement, useContext, useEffect, useMemo, useState } from 'react';
+import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
 import { BundlrContext } from '@/context/bundlr';
 import { FundContext } from '@/context/fund';
 import { ChooseWalletContext } from '@/context/choose-wallet';
+import useWindowDimensions from '@/hooks/useWindowDimensions';
 
 export default function Layout({ children }: { children: ReactElement }) {
   const [showBanner, setShowBanner] = useState(true);
   const [filterValue, setFilterValue] = useState('');
+  const [headerHeight, setHeaderHeight] = useState('64px');
   const { currentAddress } = useContext(WalletContext);
   const { nodeBalance, isLoading } = useContext(BundlrContext);
   const [ignore, setIgnore] = useState(false);
   const theme = useTheme();
   const { setOpen: setFundOpen } = useContext(FundContext);
   const { open: chooseWalletOpen, setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+  const { width, height } = useWindowDimensions();
 
   const showBundlrFunds = useMemo(
     () => (!isLoading && nodeBalance === 0 && !!currentAddress) || !currentAddress,
@@ -60,6 +63,13 @@ export default function Layout({ children }: { children: ReactElement }) {
     }
   }, []);
 
+  useLayoutEffect(() => {
+    const currHeaderHeight = document.querySelector('header')?.clientHeight;
+    if (currHeaderHeight) {
+      setHeaderHeight(`${currHeaderHeight}px`);
+    }
+  }, [width, height]);
+
   return (
     <>
       <Navbar
@@ -69,7 +79,12 @@ export default function Layout({ children }: { children: ReactElement }) {
       />
       <Container
         disableGutters
-        sx={{ width: '100%', height: showBanner ? 'calc(100% - 88px)' : 'calc(100% - 64px)' }}
+        sx={{
+          width: '100%',
+          height: `calc(100% - ${headerHeight})`,
+          top: headerHeight,
+          position: 'fixed',
+        }}
         maxWidth={false}
       >
         <Box height='100%'>

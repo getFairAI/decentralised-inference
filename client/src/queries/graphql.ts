@@ -1065,6 +1065,40 @@ export const QUERY_TX_WITH = gql`
   }
 `;
 
+export const QUERY_TXS_WITH = gql`
+  query QUERY_TX_WITH($address: String!, $tags: [TagFilter!], $first: Int, $after: String) {
+    transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          id
+          recipient
+          owner {
+            address
+          }
+          fee {
+            ar
+          }
+          quantity {
+            ar
+            winston
+          }
+          tags {
+            name
+            value
+          }
+          block {
+            timestamp
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+`;
+
 export const QUERY_PAYMENT_TO_VAULT_WITH = gql`
   query QUERY_PAYMENT_TO_VAULT_WITH($owner: String!, $tags: [TagFilter!], $recipient: String!) {
     transactions(

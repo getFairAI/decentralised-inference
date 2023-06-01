@@ -208,13 +208,17 @@ export default function Home() {
           <Box display='flex' gap={'50px'}>
             <Select
               sx={{
-                padding: '0px 8px',
                 border: '2px solid transparent',
-                borderRadius: '10px',
                 textTransform: 'none',
                 background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderWidth: 0,
+                  borderWidth: '0 !important', // force borderWidth 0 on focus
+                },
+                '& .MuiSelect-select': {
+                  padding: '0px 15px',
+                },
+                '& .MuiSelect-icon': {
+                  color: theme.palette.primary.main,
                 },
               }}
               value={'24h'}
@@ -239,16 +243,14 @@ export default function Home() {
             </Select>
             <Button
               sx={{
-                borderRadius: '10px',
                 border: '2px solid transparent',
-                padding: '8px',
+                padding: '5px 15px',
                 textTransform: 'none',
                 background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
               }}
             >
               <Typography
                 sx={{
-                  padding: '0px 8px',
                   fontStyle: 'normal',
                   fontWeight: 600,
                   fontSize: '20px',
