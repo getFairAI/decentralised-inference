@@ -27,6 +27,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   FormControl,
   IconButton,
   InputAdornment,
@@ -40,6 +41,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -49,7 +51,14 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import DownloadIcon from '@mui/icons-material/Download';
 import rehypeSanitize from 'rehype-sanitize';
 import { IEdge } from '@/interfaces/arweave';
-import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
+import {
+  CANCEL_OPERATION,
+  DEFAULT_TAGS,
+  NET_ARWEAVE_URL,
+  OPERATOR_REGISTRATION_AR_FEE,
+  SAVE_REGISTER_OPERATION,
+  TAG_NAMES,
+} from '@/constants';
 import { NumericFormat } from 'react-number-format';
 import { findTag, printSize } from '@/utils/common';
 import { useRouteLoaderData } from 'react-router-dom';
@@ -59,6 +68,8 @@ import useOnScreen from '@/hooks/useOnScreen';
 import MarkdownControl from './md-control';
 import { WalletContext } from '@/context/wallet';
 import DebounceButton from './debounce-button';
+import { useQuery } from '@apollo/client';
+import { QUERY_TX_WITH } from '@/queries/graphql';
 
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -105,7 +116,7 @@ const ColorlibStepIconRoot = styled('div')<{
   }),
 }));
 
-function ColorlibStepIcon(props: StepIconProps) {
+const ColorlibStepIcon = (props: StepIconProps) => {
   const { active, completed, className } = props;
 
   const icons: { [index: string]: ReactElement } = {
@@ -119,7 +130,181 @@ function ColorlibStepIcon(props: StepIconProps) {
       {icons[String(props.icon)]}
     </ColorlibStepIconRoot>
   );
-}
+};
+
+const RegisterStep = ({
+  tx,
+  handleSubmit,
+  handleNext,
+  handleBack,
+}: {
+  tx: IEdge;
+  handleSubmit: (rate: string, name: string, handleNext: () => void) => Promise<void>;
+  handleNext: () => void;
+  handleBack: () => void;
+}) => {
+  const [operatorName, setOperatorName] = useState('');
+  const [rate, setRate] = useState(0);
+  const { currentAddress } = useContext(WalletContext);
+
+  const scriptTxid = useMemo(() => findTag(tx, 'scriptTransaction'), [tx]);
+
+  const { data, loading } = useQuery(QUERY_TX_WITH, {
+    variables: {
+      address: currentAddress,
+      tags: [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.operationName, values: [SAVE_REGISTER_OPERATION] },
+        { name: TAG_NAMES.scriptTransaction, values: [scriptTxid] },
+      ],
+      first: 1,
+    },
+    skip: !currentAddress && !scriptTxid,
+  });
+
+  const registrationId = useMemo(
+    () => data?.transactions.edges.length > 0 && data.transactions.edges[0].node.id,
+    [data],
+  );
+
+  const { data: cancelData, loading: cancelLoading } = useQuery(QUERY_TX_WITH, {
+    variables: {
+      address: currentAddress,
+      tags: [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.operationName, values: [CANCEL_OPERATION] },
+        { name: TAG_NAMES.registrationTransaction, values: [registrationId] },
+      ],
+    },
+    skip: !registrationId,
+  });
+  const isLoading = useMemo(() => loading || cancelLoading, [loading, cancelLoading]);
+
+  const handleRateChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const newNumber = parseFloat(event.target.value);
+
+    if (newNumber) {
+      setRate(parseFloat(newNumber.toFixed(3)));
+    }
+  };
+
+  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setOperatorName(event.target.value);
+  };
+
+  const handleFinish = useCallback(async () => {
+    await handleSubmit(rate.toString(), operatorName, handleNext);
+  }, [rate, operatorName, handleNext, handleSubmit]);
+
+  if (isLoading) {
+    return (
+      <Fragment>
+        <Box justifyContent={'space-between'} display={'flex'}>
+          <CircularProgress />
+        </Box>
+      </Fragment>
+    );
+  } else if (registrationId && cancelData?.transactions.edges.length === 0) {
+    return (
+      <Fragment>
+        <Box justifyContent={'space-between'} display={'flex'}>
+          <Typography sx={{ mt: 2, mb: 1 }} alignContent={'center'} textAlign={'center'}>
+            You have already registered an operator. If you want to change the name or fee, you need
+            to cancel the registration first.
+          </Typography>
+        </Box>
+      </Fragment>
+    );
+  } else {
+    return (
+      <Fragment>
+        <Box justifyContent={'space-between'} display={'flex'}>
+          <TextField
+            value={operatorName}
+            label={'Name'}
+            onChange={handleNameChange}
+            InputProps={{
+              sx: {
+                borderWidth: '1px',
+                borderColor: '#FFF',
+                borderRadius: '23px',
+              },
+            }}
+            sx={{
+              width: '72%',
+            }}
+          />
+          <NumericFormat
+            value={rate}
+            onChange={handleRateChange}
+            customInput={TextField}
+            decimalScale={4}
+            label='Fee'
+            variant='outlined'
+            decimalSeparator={'.'}
+            InputProps={{
+              sx: {
+                borderWidth: '1px',
+                borderColor: '#FFF',
+                borderRadius: '23px',
+              },
+            }}
+            sx={{ width: '25%' }}
+          />
+        </Box>
+        <Alert severity='warning' variant='outlined' sx={{ borderRadius: '23px' }}>
+          <Typography>
+            Registration Requires {OPERATOR_REGISTRATION_AR_FEE} AR to prevent malicious actors.
+          </Typography>
+        </Alert>
+        <Box display={'flex'} justifyContent={'space-between'}>
+          <Button
+            onClick={handleBack}
+            sx={{
+              border: '1px solid #F4F4F4',
+              borderRadius: '7px',
+              height: '39px',
+              width: '204px',
+            }}
+            variant='outlined'
+          >
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: 500,
+                fontSize: '15px',
+                lineHeight: '20px',
+              }}
+            >
+              Back
+            </Typography>
+          </Button>
+          <DebounceButton
+            onClick={handleFinish}
+            sx={{
+              borderRadius: '7px',
+              height: '39px',
+              width: '204px',
+            }}
+            variant='contained'
+            disabled={!operatorName || !rate || !currentAddress}
+          >
+            <Typography
+              sx={{
+                fontStyle: 'normal',
+                fontWeight: 500,
+                fontSize: '15px',
+                lineHeight: '20px',
+              }}
+            >
+              Finish
+            </Typography>
+          </DebounceButton>
+        </Box>
+      </Fragment>
+    );
+  }
+};
 
 export const CustomStepper = (props: {
   data: IEdge;
@@ -133,17 +318,12 @@ export const CustomStepper = (props: {
   const [completed, setCompleted] = useState(new Set<number>());
   const [fileSize, setFileSize] = useState(0);
   const [modelFileSize, setModelFileSize] = useState(0);
-  const [operatorName, setOperatorName] = useState('');
   const [notes, setNotes] = useState('');
-  const [rate, setRate] = useState(0);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const [hasScrolledDown, setHasScrollDown] = useState(false);
-  const { currentAddress } = useContext(WalletContext);
 
-  const isStepSkipped = (step: number) => {
-    return skipped.has(step);
-  };
+  const isStepSkipped = (step: number) => skipped.has(step);
 
   const handleNext = () => {
     let newSkipped = skipped;
@@ -157,25 +337,11 @@ export const CustomStepper = (props: {
     setCompleted(completed.add(activeStep));
   };
 
-  const handleFinish = useCallback(async () => {
-    await props.handleSubmit(rate.toString(), operatorName, handleNext);
-  }, [rate, operatorName, handleNext, props.handleSubmit]);
-
   const handleBack = () => {
     const newCompleted = new Set(completed.values());
     newCompleted.delete(activeStep);
     setCompleted(newCompleted);
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
-  const handleRateChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const newNumber = parseFloat(event.target.value);
-
-    if (newNumber) setRate(parseFloat(newNumber.toFixed(3)));
-  };
-
-  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setOperatorName(event.target.value);
   };
 
   const download = (id: string, name?: string) => {
@@ -189,18 +355,26 @@ export const CustomStepper = (props: {
 
   useEffect(() => {
     (async () => {
-      const response = await fetch(
-        `${NET_ARWEAVE_URL}/${findTag(props.data, 'scriptTransaction')}`,
-        { method: 'HEAD' },
-      );
-      setFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
+      try {
+        const response = await fetch(
+          `${NET_ARWEAVE_URL}/${findTag(props.data, 'scriptTransaction')}`,
+          { method: 'HEAD' },
+        );
+        setFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
+      } catch (e) {
+        // do nothing
+      }
     })();
   }, [props.data]);
 
   useEffect(() => {
     (async () => {
-      const response = await fetch(`${NET_ARWEAVE_URL}/${modelTxId}`, { method: 'HEAD' });
-      setModelFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
+      try {
+        const response = await fetch(`${NET_ARWEAVE_URL}/${modelTxId}`, { method: 'HEAD' });
+        setModelFileSize(parseInt(response.headers.get('Content-Length') ?? '', 10));
+      } catch (e) {
+        // do nothing
+      }
     })();
   }, [modelTxId]);
 
@@ -274,91 +448,12 @@ export const CustomStepper = (props: {
           </Box>
         </Fragment>
       ) : activeStep === 2 ? (
-        <Fragment>
-          <Box justifyContent={'space-between'} display={'flex'}>
-            <TextField
-              value={operatorName}
-              label={'Name'}
-              onChange={handleNameChange}
-              InputProps={{
-                sx: {
-                  borderWidth: '1px',
-                  borderColor: '#FFF',
-                  borderRadius: '23px',
-                },
-              }}
-              sx={{
-                width: '72%',
-              }}
-            />
-            <NumericFormat
-              value={rate}
-              onChange={handleRateChange}
-              customInput={TextField}
-              decimalScale={4}
-              label='Fee'
-              variant='outlined'
-              decimalSeparator={'.'}
-              InputProps={{
-                sx: {
-                  borderWidth: '1px',
-                  borderColor: '#FFF',
-                  borderRadius: '23px',
-                },
-              }}
-              sx={{ width: '25%' }}
-            />
-          </Box>
-          <Alert severity='warning' variant='outlined' sx={{ borderRadius: '23px' }}>
-            <Typography>
-              Registration Requires {OPERATOR_REGISTRATION_AR_FEE} AR to prevent malicious actors.
-            </Typography>
-          </Alert>
-          <Box display={'flex'} justifyContent={'space-between'}>
-            <Button
-              onClick={handleBack}
-              sx={{
-                border: '1px solid #F4F4F4',
-                borderRadius: '7px',
-                height: '39px',
-                width: '204px',
-              }}
-              variant='outlined'
-            >
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  fontSize: '15px',
-                  lineHeight: '20px',
-                }}
-              >
-                Back
-              </Typography>
-            </Button>
-            <DebounceButton
-              onClick={handleFinish}
-              sx={{
-                borderRadius: '7px',
-                height: '39px',
-                width: '204px',
-              }}
-              variant='contained'
-              disabled={!operatorName || !rate || !currentAddress}
-            >
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  fontSize: '15px',
-                  lineHeight: '20px',
-                }}
-              >
-                Finish
-              </Typography>
-            </DebounceButton>
-          </Box>
-        </Fragment>
+        <RegisterStep
+          tx={props.data}
+          handleBack={handleBack}
+          handleNext={handleNext}
+          handleSubmit={props.handleSubmit}
+        />
       ) : activeStep === 1 ? (
         <Fragment>
           <MarkdownControl
