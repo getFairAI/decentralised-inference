@@ -51,7 +51,7 @@ const GetIcon = ({ input }: Props): JSX.Element => {
           }}
         />
       );
-    case 'Registrations':
+    case 'Operator Registrations':
       return <AssignmentIcon></AssignmentIcon>;
     case 'Change Wallet':
       return <SyncAltIcon></SyncAltIcon>;
