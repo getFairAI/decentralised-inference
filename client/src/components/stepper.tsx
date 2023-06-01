@@ -58,6 +58,7 @@ import {
   OPERATOR_REGISTRATION_AR_FEE,
   SAVE_REGISTER_OPERATION,
   TAG_NAMES,
+  defaultDecimalPlaces,
 } from '@/constants';
 import { NumericFormat } from 'react-number-format';
 import { findTag, printSize } from '@/utils/common';
@@ -184,7 +185,7 @@ const RegisterStep = ({
     const newNumber = parseFloat(event.target.value);
 
     if (newNumber) {
-      setRate(parseFloat(newNumber.toFixed(3)));
+      setRate(parseFloat(newNumber.toFixed(defaultDecimalPlaces)));
     }
   };
 
@@ -325,7 +326,7 @@ export const CustomStepper = (props: {
 
   const isStepSkipped = (step: number) => skipped.has(step);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     let newSkipped = skipped;
     if (isStepSkipped(activeStep)) {
       newSkipped = new Set(newSkipped.values());
@@ -335,14 +336,14 @@ export const CustomStepper = (props: {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
     setSkipped(newSkipped);
     setCompleted(completed.add(activeStep));
-  };
+  }, [skipped, activeStep, setSkipped, setActiveStep, setCompleted, completed]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     const newCompleted = new Set(completed.values());
     newCompleted.delete(activeStep);
     setCompleted(newCompleted);
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
+  }, [completed, setCompleted, setActiveStep]);
 
   const download = (id: string, name?: string) => {
     const a = document.createElement('a');

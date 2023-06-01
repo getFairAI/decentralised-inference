@@ -61,12 +61,138 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import _ from 'lodash';
 import useOnScreen from '@/hooks/useOnScreen';
-import { commonUpdateQuery, findTag, parseUnixTimestamp } from '@/utils/common';
+import {
+  commonUpdateQuery,
+  displayShortTxOrAddr,
+  findTag,
+  parseUnixTimestamp,
+} from '@/utils/common';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import arweave, { isTxConfirmed, parseWinston } from '@/utils/arweave';
 import { useSnackbar } from 'notistack';
 import DebounceButton from '@/components/debounce-button';
+
+interface Registration {
+  scriptName: string;
+  scriptTransaction: string;
+  scriptCurator: string;
+  operatorFee: string;
+  operatorName: string;
+  timestamp: string;
+  registrationFee: string;
+}
+
+const RegistrationContent = ({
+  registration,
+  text,
+  color,
+}: {
+  registration: Registration;
+  text: string;
+  color: string;
+}) => {
+  const theme = useTheme();
+
+  const handleCopy = useCallback(() => {
+    if (registration.scriptTransaction) {
+      (async () => {
+        await navigator.clipboard.writeText(registration.scriptTransaction);
+      })();
+    }
+  }, [registration]);
+
+  const handleViewExplorer = useCallback(
+    () =>
+      window.open(`https://viewblock.io/arweave/tx/${registration.scriptTransaction}`, '_blank'),
+    [registration],
+  );
+
+  return (
+    <CardContent
+      sx={{ display: 'flex', gap: '16px', justifyContent: 'space-between', padding: '8px 16px' }}
+    >
+      <Box>
+        <Box display={'flex'} gap={'8px'}>
+          <Typography fontWeight={'600'}>Script Transaction:</Typography>
+          <Tooltip title={registration.scriptTransaction}>
+            <Typography>
+              {displayShortTxOrAddr(registration.scriptTransaction)}
+              <IconButton size='small' onClick={handleCopy}>
+                <CopyIcon fontSize='inherit' />
+              </IconButton>
+              <IconButton size='small' onClick={handleViewExplorer}>
+                <OpenInNewIcon fontSize='inherit' />
+              </IconButton>
+            </Typography>
+          </Tooltip>
+        </Box>
+        <Box display={'flex'} gap={'8px'}>
+          <Typography fontWeight={'600'}>Script Curator:</Typography>
+          <Tooltip title={registration.scriptCurator}>
+            <Typography>
+              {displayShortTxOrAddr(registration.scriptCurator)}
+              <IconButton size='small'>
+                <CopyIcon fontSize='inherit' />
+              </IconButton>
+            </Typography>
+          </Tooltip>
+        </Box>
+        <Box display={'flex'} gap={'8px'}>
+          <Typography fontWeight={'600'}>Timestamp:</Typography>
+          <Typography noWrap>{`${registration.timestamp} (${parseUnixTimestamp(
+            registration.timestamp,
+          )})`}</Typography>
+        </Box>
+      </Box>
+      <Box>
+        <Box display={'flex'} gap={'8px'} alignItems={'center'}>
+          <Typography fontWeight={'600'}>Operator Name:</Typography>
+          <Typography>{registration.operatorName}</Typography>
+        </Box>
+        <Box display={'flex'} gap={'8px'} alignItems={'center'}>
+          <Typography fontWeight={'600'}>Operator Fee:</Typography>
+          <Typography>{parseWinston(registration.operatorFee)}</Typography>
+          <img
+            src={
+              theme.palette.mode === 'dark' ? './arweave-logo.svg' : './arweave-logo-for-light.png'
+            }
+            width={'18px'}
+            height={'18px'}
+          />
+        </Box>
+        <Box display={'flex'} gap={'8px'} alignItems={'center'}>
+          <Typography fontWeight={'600'}>Registration Fee:</Typography>
+          <Typography>{parseWinston(registration.registrationFee)}</Typography>
+          <img
+            src={
+              theme.palette.mode === 'dark' ? './arweave-logo.svg' : './arweave-logo-for-light.png'
+            }
+            width={'18px'}
+            height={'18px'}
+          />
+        </Box>
+      </Box>
+      <Box display={'flex'} flexDirection={'column'} justifyContent={'center'}>
+        <Box display={'flex'} gap={'8px'}>
+          <Button
+            variant='outlined'
+            disabled
+            sx={{
+              color,
+              '&.MuiButtonBase-root:disabled': {
+                color,
+                borderColor: color,
+              },
+            }}
+          >
+            <Typography>{text}</Typography>
+          </Button>
+        </Box>
+      </Box>
+    </CardContent>
+  );
+};
 
 const RegistrationCard = ({ tx }: { tx: IEdge }) => {
   const [isCancelled, setIsCancelled] = useState(false);
@@ -155,57 +281,46 @@ const RegistrationCard = ({ tx }: { tx: IEdge }) => {
     }
   }, [id]);
 
-  const handleCancel = useCallback(async () => {
-    // cancel tx
-    try {
-      const cancelTx = await arweave.createTransaction({
-        data: 'Cancel Transaction',
-      });
-      cancelTx.addTag(TAG_NAMES.appName, APP_NAME);
-      cancelTx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      cancelTx.addTag(TAG_NAMES.operationName, CANCEL_OPERATION);
-      cancelTx.addTag(TAG_NAMES.registrationTransaction, id);
-      cancelTx.addTag(TAG_NAMES.scriptName, registration.scriptName);
-      cancelTx.addTag(TAG_NAMES.scriptCurator, registration.scriptCurator);
-      cancelTx.addTag(TAG_NAMES.scriptTransaction, registration.scriptTransaction);
-      cancelTx.addTag(TAG_NAMES.registrationFee, registration.registrationFee);
-      cancelTx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
+  const handleCancel = useCallback(() => {
+    (async () => {
+      // cancel tx
+      try {
+        const cancelTx = await arweave.createTransaction({
+          data: 'Cancel Transaction',
+        });
+        cancelTx.addTag(TAG_NAMES.appName, APP_NAME);
+        cancelTx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+        cancelTx.addTag(TAG_NAMES.operationName, CANCEL_OPERATION);
+        cancelTx.addTag(TAG_NAMES.registrationTransaction, id);
+        cancelTx.addTag(TAG_NAMES.scriptName, registration.scriptName);
+        cancelTx.addTag(TAG_NAMES.scriptCurator, registration.scriptCurator);
+        cancelTx.addTag(TAG_NAMES.scriptTransaction, registration.scriptTransaction);
+        cancelTx.addTag(TAG_NAMES.registrationFee, registration.registrationFee);
+        cancelTx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
 
-      const cancelResult = await dispatchTx(cancelTx);
-      setIsCancelled(true);
-      enqueueSnackbar(
-        <>
-          Cancel Transaction Sent
-          <br></br>
-          <a
-            href={`https://viewblock.io/arweave/tx/${cancelResult.id}`}
-            target={'_blank'}
-            rel='noreferrer'
-          >
-            <u>View Transaction in Explorer</u>
-          </a>
-        </>,
-        {
-          variant: 'success',
-        },
-      );
-    } catch (error) {
-      enqueueSnackbar('Cancel Transaction Failed', { variant: 'error' });
-    }
+        const cancelResult = await dispatchTx(cancelTx);
+        setIsCancelled(true);
+        enqueueSnackbar(
+          <>
+            Cancel Transaction Sent
+            <br></br>
+            <a
+              href={`https://viewblock.io/arweave/tx/${cancelResult.id}`}
+              target={'_blank'}
+              rel='noreferrer'
+            >
+              <u>View Transaction in Explorer</u>
+            </a>
+          </>,
+          {
+            variant: 'success',
+          },
+        );
+      } catch (error) {
+        enqueueSnackbar('Cancel Transaction Failed', { variant: 'error' });
+      }
+    })();
   }, [id, registration]);
-
-  const handleCopy = useCallback(
-    () =>
-      registration.scriptTransaction &&
-      navigator.clipboard.writeText(registration.scriptTransaction),
-    [registration],
-  );
-
-  const handleViewExplorer = useCallback(
-    () =>
-      window.open(`https://viewblock.io/arweave/tx/${registration.scriptTransaction}`, '_blank'),
-    [registration],
-  );
 
   return (
     <Card sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -226,95 +341,7 @@ const RegistrationCard = ({ tx }: { tx: IEdge }) => {
           </Tooltip>
         }
       />
-
-      <CardContent
-        sx={{ display: 'flex', gap: '16px', justifyContent: 'space-between', padding: '8px 16px' }}
-      >
-        <Box>
-          <Box display={'flex'} gap={'8px'}>
-            <Typography fontWeight={'600'}>Script Transaction:</Typography>
-            <Tooltip title={registration.scriptTransaction}>
-              <Typography>
-                {registration.scriptTransaction.slice(0, 6)}...
-                {registration.scriptTransaction.slice(-2)}
-                <IconButton size='small' onClick={handleCopy}>
-                  <CopyIcon fontSize='inherit' />
-                </IconButton>
-                <IconButton size='small' onClick={handleViewExplorer}>
-                  <OpenInNewIcon fontSize='inherit' />
-                </IconButton>
-              </Typography>
-            </Tooltip>
-          </Box>
-          <Box display={'flex'} gap={'8px'}>
-            <Typography fontWeight={'600'}>Script Curator:</Typography>
-            <Tooltip title={registration.scriptCurator}>
-              <Typography>
-                {registration.scriptCurator.slice(0, 6)}...
-                {registration.scriptCurator.slice(-2)}
-                <IconButton size='small'>
-                  <CopyIcon fontSize='inherit' />
-                </IconButton>
-              </Typography>
-            </Tooltip>
-          </Box>
-          <Box display={'flex'} gap={'8px'}>
-            <Typography fontWeight={'600'}>Timestamp:</Typography>
-            <Typography noWrap>{`${registration.timestamp} (${parseUnixTimestamp(
-              registration.timestamp,
-            )})`}</Typography>
-          </Box>
-        </Box>
-        <Box>
-          <Box display={'flex'} gap={'8px'} alignItems={'center'}>
-            <Typography fontWeight={'600'}>Operator Name:</Typography>
-            <Typography>{registration.operatorName}</Typography>
-          </Box>
-          <Box display={'flex'} gap={'8px'} alignItems={'center'}>
-            <Typography fontWeight={'600'}>Operator Fee:</Typography>
-            <Typography>{parseWinston(registration.operatorFee)}</Typography>
-            <img
-              src={
-                theme.palette.mode === 'dark'
-                  ? './arweave-logo.svg'
-                  : './arweave-logo-for-light.png'
-              }
-              width={'18px'}
-              height={'18px'}
-            />
-          </Box>
-          <Box display={'flex'} gap={'8px'} alignItems={'center'}>
-            <Typography fontWeight={'600'}>Registration Fee:</Typography>
-            <Typography>{parseWinston(registration.registrationFee)}</Typography>
-            <img
-              src={
-                theme.palette.mode === 'dark'
-                  ? './arweave-logo.svg'
-                  : './arweave-logo-for-light.png'
-              }
-              width={'18px'}
-              height={'18px'}
-            />
-          </Box>
-        </Box>
-        <Box display={'flex'} flexDirection={'column'} justifyContent={'center'}>
-          <Box display={'flex'} gap={'8px'}>
-            <Button
-              variant='outlined'
-              disabled
-              sx={{
-                color,
-                '&.MuiButtonBase-root:disabled': {
-                  color,
-                  borderColor: color,
-                },
-              }}
-            >
-              <Typography>{text}</Typography>
-            </Button>
-          </Box>
-        </Box>
-      </CardContent>
+      <RegistrationContent registration={registration} color={color} text={text} />
       {!isCancelled && (
         <CardActions
           sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', gap: '8px' }}
@@ -373,6 +400,7 @@ const Registrations = () => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
+  const justifyContent = 'space-between';
 
   const theme = useTheme();
   const { currentAddress } = useContext(WalletContext);
@@ -382,7 +410,7 @@ const Registrations = () => {
     { name: TAG_NAMES.operationName, values: [SAVE_REGISTER_OPERATION] },
   ];
   const { data, previousData, loading, error, fetchMore, refetch } = useQuery(QUERY_TXS_WITH, {
-    variables: { address: currentAddress, tags, first: elementsPerPage },
+    variables: { tags, address: currentAddress, first: elementsPerPage },
     skip: !currentAddress,
   });
 
@@ -422,8 +450,10 @@ const Registrations = () => {
     }
   }, [filterValue, data]);
 
-  const refreshClick = useCallback(async () => {
-    await refetch();
+  const refreshClick = useCallback(() => {
+    (async () => {
+      await refetch();
+    })();
   }, [refetch]);
 
   const handleFilterChange = useCallback(
@@ -436,7 +466,7 @@ const Registrations = () => {
       <RegistrationError error={error}>
         <RegistrationsEmpty data={data}>
           <>
-            <Box display={'flex'} justifyContent={'space-between'} padding={'16px 8px'}>
+            <Box display={'flex'} justifyContent={justifyContent} padding={'16px 8px'}>
               <Button onClick={refreshClick} endIcon={<RefreshIcon />} variant='outlined'>
                 <Typography>Refresh</Typography>
               </Button>
@@ -445,7 +475,7 @@ const Registrations = () => {
                 sx={{
                   borderRadius: '30px',
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  justifyContent,
                   padding: '3px 20px 3px 0px',
                   alignItems: 'center',
                   background: theme.palette.background.default,
