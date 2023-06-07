@@ -1156,6 +1156,26 @@ export const QUERY_CONVERSATIONS = gql`
   }
 `;
 
+export const QUERY_CONVERSATIONS_TX_ID = gql`
+  query QUERY_CONVERSATIONS($address: String!, $tags: [TagFilter!], $first: Int, $after: String) {
+    transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          id
+          tags {
+            name
+            value
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+`;
+
 export const QUERY_REGISTERED_SCRIPTS = gql`
   query QUERY_REGISTERED_SCRIPTS(
     $tags: [TagFilter!]

@@ -21,7 +21,7 @@ import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { GET_TX, QUERY_REGISTERED_OPERATORS, QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
 import { isTxConfirmed } from '@/utils/arweave';
-import { findTag } from '@/utils/common';
+import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   DialogActions,
@@ -46,6 +46,7 @@ import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
 import { client } from '@/utils/apollo';
 import { isValidRegistration } from '@/utils/operator';
+import { Timeout } from 'react-number-format/types/types';
 
 const ChooseScript = ({
   setShowScripts,
@@ -103,8 +104,12 @@ const ChooseScript = ({
     refetch({ tags });
   };
 
+  let keyTimeout: Timeout;
   const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
+    clearTimeout(keyTimeout);
+    keyTimeout = setTimeout(() => {
     setFilterValue(event.target.value);
+  }, 500);
   };
 
   const handleSelected = (index: number) => {
@@ -229,7 +234,7 @@ const ChooseScript = ({
       setFiltering(true);
       setScriptsData(
         queryData.transactions.edges.filter((el: IEdge) =>
-          findTag(el, 'operatorName')?.includes(filterValue),
+        findTagsWithKeyword(el,[TAG_NAMES.scriptName],filterValue) || el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
         ),
       );
       setFiltering(false);
@@ -287,8 +292,9 @@ const ChooseScript = ({
               fontWeight: 400,
               fontSize: '12px',
               lineHeight: '16px',
+              minWidth: '200px',
             }}
-            placeholder='Search Script...'
+            placeholder='Search by Script Name or Creator...'
             onChange={handleFilterChange}
           />
           <Icon

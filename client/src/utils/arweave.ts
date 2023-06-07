@@ -36,6 +36,11 @@ export const getData = async (txid: string, fileName?: string) => {
   }
 };
 
+export const getTextData = async (txid: string): Promise<string> => {
+  const result = await fetch(`${NET_ARWEAVE_URL}/${txid}`);
+  return result.text();
+};
+
 /**
  * Checks if a specific transaction has at least 20 confirmations in the network
  * @param txid id of the transaction to check
