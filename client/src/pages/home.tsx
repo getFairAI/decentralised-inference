@@ -137,7 +137,12 @@ export default function Home() {
             if (
               confirmed &&
               correctFee &&
-              (filterValue.trim() === '' || findTagsWithKeyword(el, [TAG_NAMES.modelName,TAG_NAMES.description,TAG_NAMES.category],filterValue))
+              (filterValue.trim() === '' ||
+                findTagsWithKeyword(
+                  el,
+                  [TAG_NAMES.modelName, TAG_NAMES.description, TAG_NAMES.category],
+                  filterValue,
+                ))
             ) {
               filtered.push(el);
             }

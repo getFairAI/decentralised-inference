@@ -145,8 +145,8 @@ const Navbar = ({
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
-    setFilterValue(event.target.value);
-  }, 500);
+      setFilterValue(event.target.value);
+    }, 500);
   };
 
   return (

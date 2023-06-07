@@ -33,9 +33,17 @@ type tagName = keyof typeof TAG_NAMES;
 export const findTag = (tx: IEdge, tagName: tagName) =>
   tx.node.tags.find((tag) => tag.name === TAG_NAMES[tagName])?.value;
 
-export const findTagsWithKeyword = (tx: IEdge, tagNames: string[], searchKeyword: string): boolean =>
-  tx.node.tags.some((tag) => tagNames.includes(tag.name) && tag.value.toLowerCase()?.includes(searchKeyword.toLowerCase().trim()));
-  
+export const findTagsWithKeyword = (
+  tx: IEdge,
+  tagNames: string[],
+  searchKeyword: string,
+): boolean =>
+  tx.node.tags.some(
+    (tag) =>
+      tagNames.includes(tag.name) &&
+      tag.value.toLowerCase()?.includes(searchKeyword.toLowerCase().trim()),
+  );
+
 interface QueryContent {
   transactions: ITransactions;
 }

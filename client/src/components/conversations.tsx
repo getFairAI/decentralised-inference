@@ -223,11 +223,12 @@ const Conversations = ({
     (async () => {
       if (conversationIds && conversationIds.length > 0) {
         const filteredIds = [];
-        let hasMatch = false;    
+        let hasMatch = false;
         for (const el of conversationIds) {
           hasMatch = false;
-          const includesFilter = filterConversations.trim() === '' || filterConversations.includes(`${el}`);
-          if(!includesFilter) {
+          const includesFilter =
+            filterConversations.trim() === '' || filterConversations.includes(`${el}`);
+          if (!includesFilter) {
             const checkTransactions = await getConversationHistory({
               variables: {
                 address: userAddr,
@@ -262,9 +263,8 @@ const Conversations = ({
                 break;
               }
             }
-            
           }
-        
+
           if (includesFilter || hasMatch) {
             filteredIds.push(el);
           }
@@ -273,7 +273,6 @@ const Conversations = ({
       }
     })();
   }, [filterConversations]);
-  
 
   useEffect(() => {
     if (currentConversationId) {
@@ -288,13 +287,12 @@ const Conversations = ({
     setCurrentConversationId(last + 1);
   }, [setFilterConversations, setCurrentConversationId, createNewConversation]);
 
-
   let keyTimeout: Timeout;
   const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
       setFilterConversations(event.target.value);
-  }, 500);
+    }, 500);
   };
 
   return (

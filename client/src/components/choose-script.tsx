@@ -108,8 +108,8 @@ const ChooseScript = ({
   const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
-    setFilterValue(event.target.value);
-  }, 500);
+      setFilterValue(event.target.value);
+    }, 500);
   };
 
   const handleSelected = (index: number) => {
@@ -233,8 +233,10 @@ const ChooseScript = ({
     if (queryData && filterValue) {
       setFiltering(true);
       setScriptsData(
-        queryData.transactions.edges.filter((el: IEdge) =>
-        findTagsWithKeyword(el,[TAG_NAMES.scriptName],filterValue) || el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
+        queryData.transactions.edges.filter(
+          (el: IEdge) =>
+            findTagsWithKeyword(el, [TAG_NAMES.scriptName], filterValue) ||
+            el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
         ),
       );
       setFiltering(false);

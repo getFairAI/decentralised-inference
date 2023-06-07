@@ -244,13 +244,12 @@ const ChooseOperator = ({
     refetch({ tags });
   }, [refetch]);
 
-
   let keyTimeout: Timeout;
   const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
-    setFilterValue(event.target.value);
-  }, 500);
+      setFilterValue(event.target.value);
+    }, 500);
   };
 
   const handleSelected = useCallback(
@@ -295,8 +294,10 @@ const ChooseOperator = ({
     if (queryData && filterValue) {
       setFiltering(true);
       setOperatorsData(
-        queryData.transactions.edges.filter((el: IEdge) =>
-        findTagsWithKeyword(el, [TAG_NAMES.operatorName],filterValue) || el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
+        queryData.transactions.edges.filter(
+          (el: IEdge) =>
+            findTagsWithKeyword(el, [TAG_NAMES.operatorName], filterValue) ||
+            el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
         ),
       );
       setFiltering(false);
