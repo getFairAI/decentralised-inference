@@ -29,6 +29,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Pending from './pending';
 import NavigationMenu from './navigation-menu';
 import { ChooseWalletContext } from '@/context/choose-wallet';
+import { Timeout } from 'react-number-format/types/types';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -140,6 +141,14 @@ const Navbar = ({
     display: { sm: 'none', md: 'flex' },
   };
 
+  let keyTimeout: Timeout;
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    clearTimeout(keyTimeout);
+    keyTimeout = setTimeout(() => {
+      setFilterValue(event.target.value);
+    }, 500);
+  };
+
   return (
     <>
       <AppBar className='navbar' sx={{ zIndex }}>
@@ -193,9 +202,7 @@ const Navbar = ({
                     lineHeight: '16px',
                     width: '100%',
                   }}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    setFilterValue(event.target.value)
-                  }
+                  onChange={handleChange}
                   placeholder='Search...'
                 />
                 <Icon

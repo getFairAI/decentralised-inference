@@ -15,13 +15,13 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { IEdge } from '@/interfaces/arweave';
 import { LIST_LATEST_MODELS_QUERY, LIST_MODELS_QUERY } from '@/queries/graphql';
 import useOnScreen from '@/hooks/useOnScreen';
-import { MARKETPLACE_FEE } from '@/constants';
+import { MARKETPLACE_FEE, TAG_NAMES } from '@/constants';
 import Featured from '@/components/featured';
 import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import FilterContext from '@/context/filter';
-import { findTag } from '@/utils/common';
+import { findTagsWithKeyword } from '@/utils/common';
 import { isTxConfirmed } from '@/utils/arweave';
 
 export default function Home() {
@@ -127,7 +127,7 @@ export default function Home() {
   }, [data]);
 
   useEffect(() => {
-    if (listData && filterValue) {
+    if (listData) {
       (async () => {
         const filtered: IEdge[] = [];
         await Promise.all(
@@ -137,7 +137,12 @@ export default function Home() {
             if (
               confirmed &&
               correctFee &&
-              (findTag(el, 'modelName')?.includes(filterValue) || filterValue === '')
+              (filterValue.trim() === '' ||
+                findTagsWithKeyword(
+                  el,
+                  [TAG_NAMES.modelName, TAG_NAMES.description, TAG_NAMES.category],
+                  filterValue,
+                ))
             ) {
               filtered.push(el);
             }

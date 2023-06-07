@@ -20,17 +20,19 @@ import {
   APP_NAME,
   APP_VERSION,
   CONVERSATION_START,
+  textContentType,
   DEFAULT_TAGS,
   TAG_NAMES,
   secondInMS,
+  SCRIPT_INFERENCE_REQUEST,
 } from '@/constants';
 import useOnScreen from '@/hooks/useOnScreen';
 import { IEdge } from '@/interfaces/arweave';
 import { ScriptNavigationState } from '@/interfaces/router';
-import { QUERY_CONVERSATIONS } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
+import { QUERY_CONVERSATIONS, QUERY_CONVERSATIONS_TX_ID } from '@/queries/graphql';
+import arweave, { getTextData } from '@/utils/arweave';
 import { commonUpdateQuery, findTag } from '@/utils/common';
-import { useQuery } from '@apollo/client';
+import { useQuery, useLazyQuery } from '@apollo/client';
 import {
   Paper,
   Box,
@@ -44,6 +46,7 @@ import {
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
+  ChangeEvent,
   Dispatch,
   SetStateAction,
   useCallback,
@@ -53,9 +56,10 @@ import {
   useState,
 } from 'react';
 import AddIcon from '@mui/icons-material/Add';
+import { WalletContext } from '@/context/wallet';
 import { LoadingContainer } from '@/styles/components';
 import DebounceIconButton from './debounce-icon-button';
-import { WalletContext } from '@/context/wallet';
+import { Timeout } from 'react-number-format/types/types';
 
 const ConversationElement = ({
   cid,
@@ -132,6 +136,7 @@ const Conversations = ({
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const { dispatchTx } = useContext(WalletContext);
+  const [getConversationHistory] = useLazyQuery(QUERY_CONVERSATIONS_TX_ID);
 
   const {
     data: conversationsData,
@@ -215,11 +220,58 @@ const Conversations = ({
   }, [isConversationOnScreen, hasConversationNextPage, conversationsData]);
 
   useEffect(() => {
-    if (conversationIds && conversationIds.length > 0) {
-      setFilteredConversationIds(
-        conversationIds.filter((el) => `${el}`.includes(filterConversations)),
-      );
-    }
+    (async () => {
+      if (conversationIds && conversationIds.length > 0) {
+        const filteredIds = [];
+        let hasMatch = false;
+        for (const el of conversationIds) {
+          hasMatch = false;
+          const includesFilter =
+            filterConversations.trim() === '' || filterConversations.includes(`${el}`);
+          if (!includesFilter) {
+            const checkTransactions = await getConversationHistory({
+              variables: {
+                address: userAddr,
+                first: 100,
+                tags: [
+                  ...DEFAULT_TAGS,
+                  {
+                    name: TAG_NAMES.operationName,
+                    values: [SCRIPT_INFERENCE_REQUEST],
+                  },
+                  {
+                    name: TAG_NAMES.contentType,
+                    values: [textContentType],
+                  },
+                  {
+                    name: TAG_NAMES.conversationIdentifier,
+                    values: [el.toString()],
+                  },
+                  {
+                    name: TAG_NAMES.scriptTransaction,
+                    values: [state.scriptTransaction],
+                  },
+                  { name: TAG_NAMES.scriptName, values: [state.scriptName] },
+                  { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
+                ],
+              },
+            });
+            for (const item of checkTransactions.data.transactions.edges) {
+              const txData = await getTextData(item.node.id);
+              if (txData.toLowerCase().includes(filterConversations.toLowerCase())) {
+                hasMatch = true;
+                break;
+              }
+            }
+          }
+
+          if (includesFilter || hasMatch) {
+            filteredIds.push(el);
+          }
+        }
+        setFilteredConversationIds(filteredIds);
+      }
+    })();
   }, [filterConversations]);
 
   useEffect(() => {
@@ -235,10 +287,13 @@ const Conversations = ({
     setCurrentConversationId(last + 1);
   }, [setFilterConversations, setCurrentConversationId, createNewConversation]);
 
-  const handleFilterConversations = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => setFilterConversations(e.target.value),
-    [setFilterConversations],
-  );
+  let keyTimeout: Timeout;
+  const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
+    clearTimeout(keyTimeout);
+    keyTimeout = setTimeout(() => {
+      setFilterConversations(event.target.value);
+    }, 500);
+  };
 
   return (
     <Paper
@@ -276,8 +331,7 @@ const Conversations = ({
               lineHeight: '16px',
             }}
             placeholder='Search Conversations...'
-            value={filterConversations}
-            onChange={handleFilterConversations}
+            onChange={handleFilterChange}
           />
           <Icon
             sx={{
