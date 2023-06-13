@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   AVATAR_ATTACHMENT,
   DEFAULT_TAGS,
@@ -19,7 +37,7 @@ import { Outlet, Params } from 'react-router-dom';
 export const getModelFeeAndAttachments = async ({
   params,
 }: {
-  params: Params<string>;
+  params: Params;
 }): Promise<RouteLoaderResult> => {
   const txOwnerResult = await client.query({
     query: GET_TX_OWNER,
@@ -37,10 +55,9 @@ export const getModelFeeAndAttachments = async ({
     query: GET_LATEST_FEE_UPDATE,
     variables: { tags: updateFeeTags, owner: txOwner },
   });
-  const updatedFee =
-    queryResult.data.transactions.edges && queryResult.data.transactions.edges[0]
-      ? findTag(queryResult.data.transactions.edges[0], 'modelFee')
-      : '';
+  const updatedFee = queryResult?.data?.transactions?.edges[0]
+    ? findTag(queryResult.data.transactions.edges[0], 'modelFee')
+    : '';
 
   // get attachments teransactions
   const attachmentAvatarTags = [
@@ -57,11 +74,9 @@ export const getModelFeeAndAttachments = async ({
     },
   });
 
-  const avatarTxId =
-    avatarAttachmentsResult.data.transactions.edges &&
-    avatarAttachmentsResult.data.transactions.edges[0]
-      ? avatarAttachmentsResult.data.transactions.edges[0].node.id
-      : '';
+  const avatarTxId = avatarAttachmentsResult?.data?.transactions?.edges[0]
+    ? avatarAttachmentsResult.data.transactions.edges[0].node.id
+    : '';
 
   const attachmentNotestTags = [
     ...DEFAULT_TAGS,
@@ -77,11 +92,9 @@ export const getModelFeeAndAttachments = async ({
     },
   });
 
-  const notesTxId =
-    notesAttachmentsResult.data.transactions.edges &&
-    notesAttachmentsResult.data.transactions.edges[0]
-      ? notesAttachmentsResult.data.transactions.edges[0].node.id
-      : '';
+  const notesTxId = notesAttachmentsResult?.data?.transactions?.edges[0]
+    ? notesAttachmentsResult.data.transactions.edges[0].node.id
+    : '';
 
   return {
     updatedFee,
@@ -90,8 +103,6 @@ export const getModelFeeAndAttachments = async ({
   };
 };
 
-const Model = () => {
-  return <Outlet />;
-};
+const Model = () => <Outlet />;
 
 export default Model;
