@@ -63,6 +63,8 @@ export const TAG_NAMES = {
   fileName: 'File-Name',
   allowFiles: 'Allow-Files',
   allowText: 'Allow-Text',
+  registrationTransaction: 'Registration-Transaction',
+  registrationFee: 'Registration-Fee',
 };
 
 // Operation Names

@@ -115,7 +115,7 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress, dispatchTx } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
 
   const [getLazyFeePayment, queryResult] = useLazyQuery(QUERY_FEE_PAYMENT);
@@ -181,7 +181,7 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
       saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
       saveTx.addTag(TAG_NAMES.paymentQuantity, scriptFee);
       saveTx.addTag(TAG_NAMES.paymentTarget, state.scriptCurator);
-      const saveResult = await window.arweaveWallet.dispatch(saveTx);
+      const saveResult = await dispatchTx(saveTx);
 
       const tx = await arweave.createTransaction({
         target: state.scriptCurator,
@@ -195,7 +195,7 @@ const ScriptFeeGuard = ({ children }: { children: ReactNode }) => {
       tx.addTag(TAG_NAMES.operationName, SCRIPT_FEE_PAYMENT);
       tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
       tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
-      tx.addTag(TAG_NAMES.saveTransaction, saveResult.id);
+      tx.addTag(TAG_NAMES.saveTransaction, saveResult.id as string);
 
       await arweave.transactions.sign(tx);
       const res = await arweave.transactions.post(tx);

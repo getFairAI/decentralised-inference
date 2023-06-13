@@ -33,6 +33,17 @@ type tagName = keyof typeof TAG_NAMES;
 export const findTag = (tx: IEdge, tagName: tagName) =>
   tx.node.tags.find((tag) => tag.name === TAG_NAMES[tagName])?.value;
 
+export const findTagsWithKeyword = (
+  tx: IEdge,
+  tagNames: string[],
+  searchKeyword: string,
+): boolean =>
+  tx.node.tags.some(
+    (tag) =>
+      tagNames.includes(tag.name) &&
+      tag.value.toLowerCase()?.includes(searchKeyword.toLowerCase().trim()),
+  );
+
 interface QueryContent {
   transactions: ITransactions;
 }
@@ -58,7 +69,7 @@ export const commonUpdateQuery = (
     return aTimestamp - bTimestamp;
   });
 
-  const merged: IEdge[] = prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
+  const merged: IEdge[] = prev?.transactions?.edges ? prev.transactions.edges.slice(0) : [];
   for (const i of newData) {
     if (!merged.find((el: IEdge) => el.node.id === i.node.id)) {
       merged.push(i);
@@ -110,3 +121,18 @@ export const download = (name: string, txid: string) => {
   a.click();
   document.body.removeChild(a);
 };
+
+export const parseUnixTimestamp = (timestamp: number | string) => {
+  if (typeof timestamp === 'string') {
+    return new Date(parseFloat(timestamp) * secondInMS).toLocaleString();
+  } else {
+    return new Date(timestamp * secondInMS).toLocaleString();
+  }
+};
+
+const start = 0;
+const firstSliceEnd = 6;
+const secondSliceStart = -2;
+
+export const displayShortTxOrAddr = (addrOrTx: string) =>
+  `${addrOrTx.slice(start, firstSliceEnd)}...${addrOrTx.slice(secondSliceStart)}`;

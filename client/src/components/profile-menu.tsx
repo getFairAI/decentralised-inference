@@ -16,77 +16,111 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import * as React from 'react';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
-import { AppThemeContext } from '@/context/theme';
 import { Tooltip, Typography } from '@mui/material';
 import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK, DISCORD_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import { WalletContext } from '@/context/wallet';
 import { FundContext } from '@/context/fund';
 import GetIcon from './get-icon';
 import Box from '@mui/material/Box';
+import { ChooseWalletContext } from '@/context/choose-wallet';
+import { useState, useContext, MouseEvent, useCallback, Dispatch } from 'react';
 
 const bundlrSettings = 'Bundlr Settings';
-const options = [bundlrSettings, 'Whitepaper', 'Github', 'Discord', 'Twitter', 'Disconnect'];
-const disableableOptions = [bundlrSettings, 'My Models', 'Disconnect'];
+const changeWallet = 'Change Wallet';
+const operatorRegistrations = 'Operator Registrations';
+const options = [
+  bundlrSettings,
+  'Whitepaper',
+  'Github',
+  'Discord',
+  'Twitter',
+  operatorRegistrations,
+  changeWallet,
+  'Disconnect',
+];
+const disableableOptions = [bundlrSettings, operatorRegistrations, changeWallet, 'Disconnect'];
 
-const ITEM_HEIGHT = 56;
+const ITEM_HEIGHT = 64;
+
+const Option = ({
+  option,
+  setAnchorEl,
+}: {
+  option: string;
+  setAnchorEl: Dispatch<React.SetStateAction<HTMLElement | null>>;
+}) => {
+  const navigate = useNavigate();
+  const { disconnectWallet } = useContext(WalletContext);
+  const { setOpen: setFundOpen } = useContext(FundContext);
+  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+
+  const handleOptionClick = useCallback(() => {
+    (async () => {
+      switch (option) {
+        case bundlrSettings:
+          setFundOpen(true);
+          setAnchorEl(null);
+          break;
+        case 'Github':
+          window.open(GITHUB_LINK, '_blank');
+          break;
+        case 'Discord':
+          window.open(DISCORD_LINK, '_blank');
+          break;
+        case 'Twitter':
+          window.open(TWITTER_LINK, '_blank');
+          break;
+        case 'Whitepaper':
+          window.open(WHITEPAPER_LINK, '_blank');
+          break;
+        case operatorRegistrations:
+          setAnchorEl(null);
+          navigate('/registrations');
+          break;
+        case changeWallet:
+          setAnchorEl(null);
+          setChooseWalletOpen(true);
+          return;
+        case 'Disconnect':
+          await disconnectWallet();
+          setAnchorEl(null);
+          return;
+        default:
+          setAnchorEl(null);
+          return;
+      }
+    })();
+  }, [option]);
+
+  return (
+    <MenuItem onClick={handleOptionClick}>
+      <GetIcon input={option}></GetIcon>
+      <Box sx={{ marginLeft: '10px' }}>
+        <Typography>{option}</Typography>
+      </Box>
+    </MenuItem>
+  );
+};
 
 export default function ProfileMenu() {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const navigate = useNavigate();
-  const { toggleTheme } = React.useContext(AppThemeContext);
-  const { disconnectWallet, currentAddress } = React.useContext(WalletContext);
-  const { setOpen: setFundOpen } = React.useContext(FundContext);
-
+  const itemHeight = 4.5;
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const { currentAddress } = useContext(WalletContext);
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleClick = useCallback((event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
-  };
+  }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setAnchorEl(null);
-  };
-
-  const HandleOptionClick = async (option: string) => {
-    switch (option) {
-      case bundlrSettings:
-        setFundOpen(true);
-        setAnchorEl(null);
-        break;
-      case 'My Models':
-        setAnchorEl(null);
-        navigate('/history');
-        break;
-      case 'Toggle Theme':
-        toggleTheme();
-        break;
-      case 'Github':
-        window.open(GITHUB_LINK, '_blank');
-        break;
-      case 'Discord':
-        window.open(DISCORD_LINK, '_blank');
-        break;
-      case 'Twitter':
-        window.open(TWITTER_LINK, '_blank');
-        break;
-      case 'Whitepaper':
-        window.open(WHITEPAPER_LINK, '_blank');
-        break;
-      case 'Disconnect':
-        await disconnectWallet();
-        setAnchorEl(null);
-        return;
-      default:
-        setAnchorEl(null);
-        return;
-    }
-  };
+  }, []);
 
   return (
     <div>
@@ -98,7 +132,7 @@ export default function ProfileMenu() {
         aria-haspopup='true'
         onClick={handleClick}
       >
-        <MenuIcon color='action' />
+        {open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}
       </IconButton>
       <Menu
         id='long-menu'
@@ -110,7 +144,7 @@ export default function ProfileMenu() {
         onClose={handleClose}
         PaperProps={{
           style: {
-            maxHeight: ITEM_HEIGHT * 4.5,
+            maxHeight: ITEM_HEIGHT * itemHeight,
             width: '20ch',
           },
         }}
@@ -119,18 +153,13 @@ export default function ProfileMenu() {
           disableableOptions.includes(option) && !currentAddress ? (
             <Tooltip title='This Feature requires a wallet to be connected' key={option}>
               <span>
-                <MenuItem onClick={() => HandleOptionClick(option)} disabled>
+                <MenuItem disabled>
                   <Typography>{option}</Typography>
                 </MenuItem>
               </span>
             </Tooltip>
           ) : (
-            <MenuItem key={option} onClick={() => HandleOptionClick(option)}>
-              <GetIcon input={option}></GetIcon>
-              <Box sx={{ marginLeft: '10px' }}>
-                <Typography>{option}</Typography>
-              </Box>
-            </MenuItem>
+            <Option option={option} key={option} setAnchorEl={setAnchorEl} />
           ),
         )}
       </Menu>

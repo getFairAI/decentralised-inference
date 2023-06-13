@@ -12,20 +12,34 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { ReactElement, useContext, useState } from 'react';
+import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
 import { BundlrContext } from '@/context/bundlr';
 import { FundContext } from '@/context/fund';
+import { ChooseWalletContext } from '@/context/choose-wallet';
+import useWindowDimensions from '@/hooks/useWindowDimensions';
 
 export default function Layout({ children }: { children: ReactElement }) {
   const [showBanner, setShowBanner] = useState(true);
   const [filterValue, setFilterValue] = useState('');
-  const { isWalletLoaded, currentAddress } = useContext(WalletContext);
+  const [headerHeight, setHeaderHeight] = useState('64px');
+  const { currentAddress } = useContext(WalletContext);
   const { nodeBalance, isLoading } = useContext(BundlrContext);
   const [ignore, setIgnore] = useState(false);
   const theme = useTheme();
   const { setOpen: setFundOpen } = useContext(FundContext);
+  const { open: chooseWalletOpen, setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+  const { width, height } = useWindowDimensions();
+
+  const showBundlrFunds = useMemo(
+    () => (!isLoading && nodeBalance === 0 && !!currentAddress) || !currentAddress,
+    [isLoading, nodeBalance, currentAddress],
+  );
+  const isOpen = useMemo(
+    () => !chooseWalletOpen && !ignore && showBundlrFunds,
+    [chooseWalletOpen, ignore, isLoading, nodeBalance, currentAddress],
+  );
 
   const handleFundNow = () => {
     setIgnore(true);
@@ -33,18 +47,28 @@ export default function Layout({ children }: { children: ReactElement }) {
   };
 
   const getDialogTitle = () => {
-    if (!isWalletLoaded) return 'Browser Wallet Not Detected';
     if (!currentAddress) return 'Wallet Not Connected';
     return 'Missing Bundlr Funds';
   };
 
   const getDialogContent = () => {
-    if (!isWalletLoaded)
-      return 'Browser Wallet Not Detected! App Functionalities will be limited, please consider installing a browser wallet.';
     if (!currentAddress)
       return 'Wallet Not Connected! App Functionalities will be limited, please consider connecting your wallet.';
     return 'You do not have enough Bundlr Funds to use this app. Please fund your Bundlr Node to continue.';
   };
+
+  useEffect(() => {
+    if (!localStorage.getItem('wallet')) {
+      setChooseWalletOpen(true);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    const currHeaderHeight = document.querySelector('header')?.clientHeight;
+    if (currHeaderHeight) {
+      setHeaderHeight(`${currHeaderHeight}px`);
+    }
+  }, [width, height]);
 
   return (
     <>
@@ -55,19 +79,19 @@ export default function Layout({ children }: { children: ReactElement }) {
       />
       <Container
         disableGutters
-        sx={{ width: '100%', height: showBanner ? 'calc(100% - 88px)' : 'calc(100% - 64px)' }}
+        sx={{
+          width: '100%',
+          height: `calc(100% - ${headerHeight})`,
+          top: headerHeight,
+          position: 'fixed',
+        }}
         maxWidth={false}
       >
         <Box height='100%'>
           <FilterContext.Provider value={filterValue}>
             <main style={{ height: '100%' }}>{children}</main>
             <Dialog
-              open={
-                !ignore &&
-                ((!isLoading && nodeBalance === 0 && currentAddress && isWalletLoaded) ||
-                  !isWalletLoaded ||
-                  !currentAddress)
-              }
+              open={isOpen}
               maxWidth={'md'}
               fullWidth
               sx={{
@@ -138,7 +162,7 @@ export default function Layout({ children }: { children: ReactElement }) {
                   paddingBottom: '20px',
                 }}
               >
-                {!isWalletLoaded || !currentAddress ? (
+                {!currentAddress ? (
                   <Button
                     onClick={() => setIgnore(true)}
                     variant='contained'

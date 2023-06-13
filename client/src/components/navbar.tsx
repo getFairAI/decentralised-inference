@@ -22,12 +22,14 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { ChangeEvent, Dispatch, SetStateAction, useContext } from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext } from 'react';
 import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 import Pending from './pending';
 import NavigationMenu from './navigation-menu';
+import { ChooseWalletContext } from '@/context/choose-wallet';
+import { Timeout } from 'react-number-format/types/types';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -40,35 +42,11 @@ const Banner = styled(Toolbar)(({ theme }) => ({
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, currentBalance, connectWallet, isWalletLoaded, isWalletVouched } =
-    useContext(WalletContext);
+  const { currentAddress, currentBalance, isWalletVouched } = useContext(WalletContext);
 
-  if (!isWalletLoaded) {
-    return (
-      <>
-        <Box
-          sx={{
-            borderRadius: '23px',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 0,
-            gap: '17px',
-            background: theme.palette.secondary.main,
-          }}
-        >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>
-            Wallet Not Available
-          </Typography>
-          <IconButton sx={{ paddingRight: '16px' }} disabled>
-            <img src='./icon-empty-wallet.svg' />
-          </IconButton>
-        </Box>
-        <ProfileMenu />
-      </>
-    );
-  }
+  const { setOpen: connectWallet } = useContext(ChooseWalletContext);
+
+  const handleConnect = useCallback(() => connectWallet(true), [connectWallet]);
 
   if (!currentAddress || currentAddress === '') {
     return (
@@ -86,7 +64,7 @@ const WalletState = () => {
           }}
         >
           <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>Connect Wallet</Typography>
-          <IconButton onClick={connectWallet} sx={{ paddingRight: '16px' }}>
+          <IconButton onClick={handleConnect} sx={{ paddingRight: '16px' }}>
             <img src='./icon-empty-wallet.svg' />
           </IconButton>
         </Box>
@@ -163,6 +141,14 @@ const Navbar = ({
     display: { sm: 'none', md: 'flex' },
   };
 
+  let keyTimeout: Timeout;
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    clearTimeout(keyTimeout);
+    keyTimeout = setTimeout(() => {
+      setFilterValue(event.target.value);
+    }, 500);
+  };
+
   return (
     <>
       <AppBar className='navbar' sx={{ zIndex }}>
@@ -216,9 +202,7 @@ const Navbar = ({
                     lineHeight: '16px',
                     width: '100%',
                   }}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    setFilterValue(event.target.value)
-                  }
+                  onChange={handleChange}
                   placeholder='Search...'
                 />
                 <Icon

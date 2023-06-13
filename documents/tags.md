@@ -20,6 +20,7 @@ This document provides detailed information about the Fair Platform marketplace 
   * [Registration](#operator-registration)
   * [Script Inference response](#script-inference-response)
   * [Fee Redistribution](#inference-redistribution)
+  * [Cancel Registration](#cancel-registration)
 * Curator Flow
   * [Script upload](#scripts-upload)
   * [Script upload payment](#scripts-upload-payment)
@@ -404,8 +405,6 @@ Dispatch Transaction to register the start of a conversation in chat
 | Operation-Name     | False       | Conversation Start   | Name of the Operation executed in the application.                                   |
 | Conversation-Identifier | False       | < 1 >                          | Identifier to group messages for inference, by default inference will be run using context of all messages that belong to one identifier, generating a new identifier will reset the context. |
 
-**NOTE:** Registration-Fee  not implemented yet
-
 Example:
 ```json
 {
@@ -414,5 +413,30 @@ Example:
   "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
   "Operation-Name": "Conversation Start",
   "Conversation-Identifier": "1"
+}
+```
+
+## Cancel Registration
+
+Dispatch Transaction to cancel an operator registration
+
+| Tag-Name           | Optional    | Tag Value           | Description                                                 
+| ------------------ | ----------- | ------------------- | -----------------------------------------------------------------------------------|
+| Script-Name         | False       | < ExampleName >     | Name of the model uploaded.                                                       |
+| Script-Curator      | False       | < Example Address > | Address of the wallet that uploaded model.                                        |
+| Script-Transaction | False       | < Transaction Id >  | Transaction Identifier of the script uploaded through Bundlr.                      |
+| Registration-Transaction  | False       | < Transaction Id >  | Transaction Identifier of operator registration payment                |
+| Registration-Fee   | False       | < 1000000000000 >   | Fee paid to marketplace in operator registration payment                     |
+| Operation-Name     | False       | Operator Cancellation   | Name of the Operation executed in the application.                             |
+
+Example:
+```json
+{
+  "Script-Name": "Example Name",
+  "Script-Curator": "z5fyErzDaCCyVk3_RwbO9IbL88SLaeJuN7nivehwGfQ", 
+  "Script-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34",
+  "Registration-Fee": "1000000000000", // winston value
+  "Operation-Name": "Operator Cancellation",
+  "Registration-Transaction": "3uxkbyLgcrw2lMocy5MI3SmYvvijNzYyPxErHgRgb34"
 }
 ```

@@ -53,6 +53,9 @@ import { IEdge, ITransactions } from '@/interfaces/arweave';
 import { isVouched } from '@/utils/vouch';
 import { client } from '@/utils/apollo';
 import DebounceIconButton from './debounce-icon-button';
+import Transaction from 'arweave/web/lib/transaction';
+import { DispatchResult as ArConnectDispatchResult } from 'arconnect';
+import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
 
 type RefetchFn = (
   variables?:
@@ -178,7 +181,13 @@ const checkOperatorPaidFee = async (txid: string, fee: number, addr: string) => 
   return false;
 };
 
-const vote = async (txid: string, voteForTag: string, refetchFn: RefetchFn, up: boolean) => {
+const vote = async (
+  txid: string,
+  voteForTag: string,
+  refetchFn: RefetchFn,
+  up: boolean,
+  dispatchTx: (tx: Transaction) => Promise<DispatchResult | ArConnectDispatchResult>,
+) => {
   try {
     const tx = await arweave.createTransaction({ data: up ? UP_VOTE : DOWN_VOTE });
     tx.addTag(TAG_NAMES.appName, APP_NAME);
@@ -187,10 +196,10 @@ const vote = async (txid: string, voteForTag: string, refetchFn: RefetchFn, up: 
     tx.addTag(TAG_NAMES.voteFor, voteForTag);
     tx.addTag(TAG_NAMES.votedTransaction, txid);
     tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
-    const result = await window.arweaveWallet.dispatch(tx);
+    const result = await dispatchTx(tx);
     enqueueSnackbar(
       <>
-        Updated Model Fee
+        Vote Transaction Sent
         <br></br>
         <a href={`https://viewblock.io/arweave/tx/${result.id}`} target={'_blank'} rel='noreferrer'>
           <u>View Transaction in Explorer</u>
@@ -270,7 +279,7 @@ const Vote = ({
 }) => {
   const [hasVoted, setHasVoted] = useState(false);
   const [canVote, setCanVote] = useState(false);
-  const { currentAddress, isWalletVouched } = useContext(WalletContext);
+  const { currentAddress, isWalletVouched, dispatchTx } = useContext(WalletContext);
   const [upVotesCount, setUpVotesCount] = useState(0);
   const [downVotesCount, setDownVotesCount] = useState(0);
 
@@ -439,11 +448,11 @@ const Vote = ({
   };
 
   const upVote = useCallback(async () => {
-    await vote(txid, voteForTag, upVotesRefetch, true);
+    await vote(txid, voteForTag, upVotesRefetch, true, dispatchTx);
     setHasVoted(true);
   }, [vote, txid, voteForTag, upVotesRefetch, setHasVoted]);
   const downVote = useCallback(async () => {
-    await vote(txid, voteForTag, downVotesRefetch, false);
+    await vote(txid, voteForTag, downVotesRefetch, false, dispatchTx);
     setHasVoted(true);
   }, [vote, txid, voteForTag, downVotesRefetch, setHasVoted]);
 

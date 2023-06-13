@@ -1,8 +1,40 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import { createContext, Dispatch, ReactNode, useEffect, useMemo, useReducer, useRef } from 'react';
-import { PermissionType } from 'arconnect';
+import { PermissionType, DispatchResult as ArConnectDispatchResult } from 'arconnect';
 import arweave from '@/utils/arweave';
 import _ from 'lodash';
 import { isVouched } from '@/utils/vouch';
+import { ArweaveWebWallet } from 'arweave-wallet-connector';
+import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
+import Transaction from 'arweave/web/lib/transaction';
+
+const arweaveApp = 'arweave.app';
+const arConnect = 'arconnect';
+
+const wallet = new ArweaveWebWallet({
+  // optionally provide information about your app that will be displayed in the wallet provider interface
+  name: 'Fair Protocol',
+  logo: 'https://7kekrsiqzdrmjh222sx5xohduoemsoosicy33nqic4q5rbdcqybq.arweave.net/-oioyRDI4sSfWtSv27jjo4jJOdJAsb22CBch2IRihgM',
+});
+
+wallet.setUrl(arweaveApp);
 
 const DEFAULT_PERMISSSIONS: PermissionType[] = [
   'ACCESS_PUBLIC_KEY',
@@ -12,9 +44,13 @@ const DEFAULT_PERMISSSIONS: PermissionType[] = [
   'SIGN_TRANSACTION',
   'DISPATCH',
 ];
-type WalletLoadedAction = { type: 'wallet_loaded' };
+type ArConnectAvailableAction = { type: 'arconnect_available' };
 type WalletDisconnectAction = { type: 'wallet_disconnect' };
-type WalletConnectedAction = { type: 'wallet_connected'; address: string };
+type WalletConnectedAction = {
+  type: 'wallet_connected';
+  wallet: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet;
+};
+type WalletAddressUpdatedAction = { type: 'wallet_address_updated'; address: string };
 type WalletBalanceUpdatedAction = { type: 'wallet_balance_updated'; balance: number };
 type WalletPermissionsChangedAction = {
   type: 'wallet_permissions_changed';
@@ -22,42 +58,51 @@ type WalletPermissionsChangedAction = {
 };
 type WalletVouchedAction = { type: 'wallet_vouched'; isWalletVouched: boolean };
 type WalletAction =
-  | WalletLoadedAction
+  | ArConnectAvailableAction
   | WalletConnectedAction
   | WalletDisconnectAction
+  | WalletAddressUpdatedAction
   | WalletBalanceUpdatedAction
   | WalletPermissionsChangedAction
   | WalletVouchedAction;
 
 interface WalletContext {
-  isWalletLoaded: boolean;
+  isArConnectAvailable: boolean;
+  walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet;
   currentAddress: string;
   currentPermissions: PermissionType[];
   currentBalance: number;
   isWalletVouched: boolean;
-  connectWallet: () => Promise<void>;
+  connectWallet: (walletInstance: 'arweave.app' | 'arconnect') => Promise<void>;
   updateBalance: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
+  dispatchTx: (tx: Transaction) => Promise<DispatchResult | ArConnectDispatchResult>;
 }
 
 const createActions = (dispatch: Dispatch<WalletAction>, state: WalletContext) => {
   return {
-    walletLoaded: async () => dispatch({ type: 'wallet_loaded' }),
-    walletDisconnect: async () => asyncDisconnectWallet(dispatch),
-    connectWallet: async () => asyncConnectWallet(dispatch),
+    arConnectAvailable: async () => dispatch({ type: 'arconnect_available' }),
+    walletDisconnect: async () => asyncDisconnectWallet(dispatch, state.walletInstance),
+    arConnect: async () => asyncArConnectWallet(dispatch),
+    arweaveAppConnect: async () => asyncArweaveAppConnect(dispatch),
     switchWallet: async (newAddress: string) => asyncWalletSwitch(dispatch, newAddress),
     updateBalance: async () => asyncUpdateBalance(dispatch, state.currentAddress),
   };
 };
 
-const asyncConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
+const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
   try {
+    if (wallet.connected) {
+      await wallet.disconnect();
+    }
     const currentPermissions = await window.arweaveWallet.getPermissions();
     if (!_.isEqual(currentPermissions, DEFAULT_PERMISSSIONS)) {
       await window.arweaveWallet.connect(DEFAULT_PERMISSSIONS);
+      dispatch({ type: 'wallet_connected', wallet: window.arweaveWallet });
     }
+    localStorage.setItem('wallet', arConnect);
     const addr = await window.arweaveWallet.getActiveAddress();
-    dispatch({ type: 'wallet_connected', address: addr });
+    dispatch({ type: 'wallet_address_updated', address: addr });
     const winstonBalance = await arweave.wallets.getBalance(addr);
     dispatch({
       type: 'wallet_balance_updated',
@@ -74,18 +119,44 @@ const asyncConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
   }
 };
 
-const asyncDisconnectWallet = async (dispatch: Dispatch<WalletAction>) => {
+const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
   try {
-    await window.arweaveWallet.disconnect();
+    await wallet.connect();
+    localStorage.setItem('wallet', arweaveApp);
+    const walletInstance = wallet.namespaces.arweaveWallet;
+    dispatch({ type: 'wallet_connected', wallet: walletInstance });
+    const addr = (await walletInstance.getActiveAddress()) as string;
+    dispatch({ type: 'wallet_address_updated', address: addr });
+    const winstonBalance = await arweave.wallets.getBalance(addr);
+    dispatch({
+      type: 'wallet_balance_updated',
+      balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
+    });
+    const isAddrVouched = await isVouched(addr);
+    dispatch({ type: 'wallet_vouched', isWalletVouched: isAddrVouched });
+  } catch (error) {
     dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
+  }
+};
+
+const asyncDisconnectWallet = async (
+  dispatch: Dispatch<WalletAction>,
+  walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet,
+) => {
+  try {
+    await walletInstance.disconnect();
+    dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
   } catch (err) {
-    console.log(err);
+    dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
   }
 };
 
 const asyncWalletSwitch = async (dispatch: Dispatch<WalletAction>, newAddress: string) => {
   try {
-    dispatch({ type: 'wallet_connected', address: newAddress });
+    dispatch({ type: 'wallet_address_updated', address: newAddress });
     const winstonBalance = await arweave.wallets.getBalance(newAddress);
     dispatch({
       type: 'wallet_balance_updated',
@@ -94,7 +165,8 @@ const asyncWalletSwitch = async (dispatch: Dispatch<WalletAction>, newAddress: s
     const isAddrVouched = await isVouched(newAddress);
     dispatch({ type: 'wallet_vouched', isWalletVouched: isAddrVouched });
   } catch (error) {
-    console.log(error);
+    dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
   }
 };
 
@@ -106,16 +178,22 @@ const asyncUpdateBalance = async (dispatch: Dispatch<WalletAction>, addr: string
       balance: parseFloat(arweave.ar.winstonToAr(winstonBalance)),
     });
   } catch (error) {
-    console.log(error);
+    dispatch({ type: 'wallet_disconnect' });
+    localStorage.removeItem('wallet');
   }
 };
 
 const walletReducer = (state: WalletContext, action?: WalletAction) => {
-  if (!action) return state;
+  if (!action) {
+    return state;
+  }
+
   switch (action.type) {
-    case 'wallet_loaded':
-      return { ...state, isWalletLoaded: true };
     case 'wallet_connected':
+      return { ...state, walletInstance: action.wallet };
+    case 'arconnect_available':
+      return { ...state, isArConnectAvailable: true };
+    case 'wallet_address_updated':
       // eslint-disable-next-line no-case-declarations
       return { ...state, currentAddress: action.address };
     case 'wallet_balance_updated':
@@ -142,18 +220,30 @@ const walletReducer = (state: WalletContext, action?: WalletAction) => {
   }
 };
 
+const dispatchTx = async (tx: Transaction) => {
+  if (localStorage.getItem('wallet') === arConnect && window.arweaveWallet) {
+    return window.arweaveWallet.dispatch(tx);
+  } else if (localStorage.getItem('wallet') === arweaveApp && wallet) {
+    return wallet.dispatch(tx);
+  } else {
+    throw new Error('No wallet connected');
+  }
+};
+
 const initialState: WalletContext = {
-  isWalletLoaded: false,
+  isArConnectAvailable: false,
   currentAddress: '',
   currentPermissions: [],
   currentBalance: 0,
   isWalletVouched: false,
+  walletInstance: wallet.namespaces.arweaveWallet,
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   connectWallet: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   updateBalance: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   disconnectWallet: async () => {},
+  dispatchTx,
 };
 
 export const WalletContext = createContext<WalletContext>(initialState);
@@ -168,35 +258,42 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const value: WalletContext = useMemo(
     () => ({
       ...state,
-      connectWallet: actions.connectWallet,
+      connectWallet: (walletInstance: 'arweave.app' | 'arconnect') =>
+        walletInstance === arConnect ? actions.arConnect() : actions.arweaveAppConnect(),
       updateBalance: actions.updateBalance,
       disconnectWallet: actions.walletDisconnect,
     }),
     [state, actions],
   );
 
-  const walletLoaded = async () => {
-    await actions.walletLoaded();
-    await actions.connectWallet();
+  const walletSwitched = async (event: { detail: { address: string } }) => {
+    if (localStorage.getItem('wallet') === arConnect) {
+      await actions.switchWallet(event.detail.address);
+    }
   };
 
-  const walletSwitched = async (event: { detail: { address: string } }) => {
-    await actions.switchWallet(event.detail.address);
+  const arConnectLoaded = async () => {
+    await actions.arConnectAvailable();
+    // if default wallet is arconnect, connect to it automatically
+    if (localStorage.getItem('wallet') === arConnect) {
+      await actions.arConnect();
+    }
   };
 
   useEffect(() => {
-    if (!window.arweaveWallet) {
-      // only subscribe walletLoaded if arweave wallet does not exist
-      // only subscribe if not subscribed already
-      if (!connectWalletSubscriptionRef.current) {
-        window.addEventListener('arweaveWalletLoaded', () => {
-          (async () => walletLoaded())();
-        });
-        connectWalletSubscriptionRef.current = true;
-      }
+    // only subscribe walletLoaded if arweave wallet does not exist
+    // only subscribe if not subscribed already
+    if (!window.arweaveWallet && !connectWalletSubscriptionRef.current) {
+      window.addEventListener('arweaveWalletLoaded', () => {
+        (async () => arConnectLoaded())();
+      });
+      connectWalletSubscriptionRef.current = true;
+    } else if (window.arweaveWallet && localStorage.getItem('wallet') === arConnect) {
+      (async () => arConnectLoaded())();
     } else {
-      (async () => walletLoaded())();
+      // ignore
     }
+
     if (!switchWalletSubscriptionRef.current) {
       window.addEventListener('walletSwitch', (event: { detail: { address: string } }) => {
         (async () => walletSwitched(event))();
@@ -207,7 +304,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       if (connectWalletSubscriptionRef.current) {
         window.removeEventListener('arweaveWalletLoaded', () => {
-          (async () => walletLoaded())();
+          (async () => arConnectLoaded())();
         });
         connectWalletSubscriptionRef.current = false;
       }
@@ -219,6 +316,26 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       }
     };
   }, [window.arweaveWallet]);
+
+  const arweaveAppWalletSwitched = (event: string | undefined) => {
+    (async () => {
+      if (event) {
+        await actions.switchWallet(event);
+      }
+    })();
+  };
+
+  useEffect(() => {
+    if (localStorage.getItem('wallet') === arweaveApp) {
+      (async () => {
+        await actions.arweaveAppConnect();
+      })();
+      wallet.on('change', arweaveAppWalletSwitched);
+    }
+    return () => {
+      wallet.off('change', arweaveAppWalletSwitched);
+    };
+  }, []);
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };

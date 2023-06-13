@@ -37,6 +37,7 @@ import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
 import ScriptFeeGuard from '@/guards/script-fee';
 import ScriptDetails from './pages/script/script-details';
+import Registrations from './pages/registrations';
 
 const router = createHashRouter([
   {
@@ -119,6 +120,10 @@ const router = createHashRouter([
       {
         path: 'payments',
         element: <Payments />,
+      },
+      {
+        path: 'registrations',
+        element: <Registrations />,
       },
     ],
   },

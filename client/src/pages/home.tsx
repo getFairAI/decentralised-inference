@@ -15,13 +15,13 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { IEdge } from '@/interfaces/arweave';
 import { LIST_LATEST_MODELS_QUERY, LIST_MODELS_QUERY } from '@/queries/graphql';
 import useOnScreen from '@/hooks/useOnScreen';
-import { MARKETPLACE_FEE } from '@/constants';
+import { MARKETPLACE_FEE, TAG_NAMES } from '@/constants';
 import Featured from '@/components/featured';
 import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import FilterContext from '@/context/filter';
-import { findTag } from '@/utils/common';
+import { findTagsWithKeyword } from '@/utils/common';
 import { isTxConfirmed } from '@/utils/arweave';
 
 export default function Home() {
@@ -127,7 +127,7 @@ export default function Home() {
   }, [data]);
 
   useEffect(() => {
-    if (listData && filterValue) {
+    if (listData) {
       (async () => {
         const filtered: IEdge[] = [];
         await Promise.all(
@@ -137,7 +137,12 @@ export default function Home() {
             if (
               confirmed &&
               correctFee &&
-              (findTag(el, 'modelName')?.includes(filterValue) || filterValue === '')
+              (filterValue.trim() === '' ||
+                findTagsWithKeyword(
+                  el,
+                  [TAG_NAMES.modelName, TAG_NAMES.description, TAG_NAMES.category],
+                  filterValue,
+                ))
             ) {
               filtered.push(el);
             }
@@ -208,13 +213,17 @@ export default function Home() {
           <Box display='flex' gap={'50px'}>
             <Select
               sx={{
-                padding: '0px 8px',
                 border: '2px solid transparent',
-                borderRadius: '10px',
                 textTransform: 'none',
                 background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderWidth: 0,
+                  borderWidth: '0 !important', // force borderWidth 0 on focus
+                },
+                '& .MuiSelect-select': {
+                  padding: '0px 15px',
+                },
+                '& .MuiSelect-icon': {
+                  color: theme.palette.primary.main,
                 },
               }}
               value={'24h'}
@@ -239,16 +248,14 @@ export default function Home() {
             </Select>
             <Button
               sx={{
-                borderRadius: '10px',
                 border: '2px solid transparent',
-                padding: '8px',
+                padding: '5px 15px',
                 textTransform: 'none',
                 background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
               }}
             >
               <Typography
                 sx={{
-                  padding: '0px 8px',
                   fontStyle: 'normal',
                   fontWeight: 600,
                   fontSize: '20px',

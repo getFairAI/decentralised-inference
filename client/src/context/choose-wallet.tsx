@@ -16,28 +16,27 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { secondInMS } from '@/constants';
-import { IconButton, IconButtonProps } from '@mui/material';
-import { debounce } from 'lodash';
-import { MouseEventHandler, forwardRef } from 'react';
+import ChooseWallet from '@/components/choose-wallet';
+import { Dispatch, ReactNode, SetStateAction, createContext, useMemo, useState } from 'react';
 
-interface DebounceIconButtonProps extends IconButtonProps {
-  onClick: MouseEventHandler<HTMLButtonElement>;
+export interface ChooseWalletContext {
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-const DebounceIconButton = forwardRef<HTMLButtonElement, DebounceIconButtonProps>(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function DebounceIconButtonComponent(props: DebounceIconButtonProps, _ref) {
-    const { onClick, children, ...matProps } = props;
+export const ChooseWalletContext = createContext<ChooseWalletContext>({
+  open: false,
+  setOpen: () => undefined,
+});
 
-    const handleClick = debounce(onClick, secondInMS);
+export const ChooseWalletProvider = ({ children }: { children: ReactNode }) => {
+  const [open, setOpen] = useState(false);
+  const value = useMemo(() => ({ open, setOpen }), [open, setOpen]);
 
-    return (
-      <IconButton {...matProps} onClick={handleClick}>
-        {children}
-      </IconButton>
-    );
-  },
-);
-
-export default DebounceIconButton;
+  return (
+    <ChooseWalletContext.Provider value={value}>
+      {children}
+      <ChooseWallet open={open} setOpen={setOpen} />
+    </ChooseWalletContext.Provider>
+  );
+};

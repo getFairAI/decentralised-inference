@@ -40,7 +40,7 @@ const Register = () => {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress, dispatchTx } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
 
   const imgUrl = useMemo(() => {
@@ -69,7 +69,7 @@ const Register = () => {
         arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE),
       );
       saveTx.addTag(TAG_NAMES.paymentTarget, VAULT_ADDRESS);
-      const saveResult = await window.arweaveWallet.dispatch(saveTx);
+      const saveResult = await dispatchTx(saveTx);
 
       const tx = await arweave.createTransaction({
         target: VAULT_ADDRESS,
@@ -91,7 +91,7 @@ const Register = () => {
       tags.push({ name: TAG_NAMES.operationName, values: REGISTER_OPERATION });
       tags.push({ name: TAG_NAMES.operatorName, values: operatorName });
       tags.push({ name: TAG_NAMES.unixTime, values: (Date.now() / 1000).toString() });
-      tags.push({ name: TAG_NAMES.saveTransaction, values: saveResult.id });
+      tags.push({ name: TAG_NAMES.saveTransaction, values: saveResult.id as string });
 
       tags.forEach((tag) => tx.addTag(tag.name, tag.values));
 

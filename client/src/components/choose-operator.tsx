@@ -25,7 +25,7 @@ import {
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { isTxConfirmed } from '@/utils/arweave';
-import { findTag } from '@/utils/common';
+import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
 import {
   Box,
@@ -50,13 +50,22 @@ import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isValidRegistration } from '@/utils/operator';
+import { Timeout } from 'react-number-format/types/types';
 
 const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
   const opFee = findTag(el, 'operatorFee') as string;
   const scriptName = findTag(el, 'scriptName') as string;
   const scriptCurator = findTag(el, 'scriptCurator') as string;
 
-  if (!(await isValidRegistration(opFee, el.node.owner.address, scriptName, scriptCurator))) {
+  if (
+    !(await isValidRegistration(
+      el.node.id,
+      opFee,
+      el.node.owner.address,
+      scriptName,
+      scriptCurator,
+    ))
+  ) {
     filtered.splice(
       filtered.findIndex((existing) => el.node.owner.address === existing.node.owner.address),
       1,
@@ -235,12 +244,13 @@ const ChooseOperator = ({
     refetch({ tags });
   }, [refetch]);
 
-  const handleFilterChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
+  let keyTimeout: Timeout;
+  const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
+    clearTimeout(keyTimeout);
+    keyTimeout = setTimeout(() => {
       setFilterValue(event.target.value);
-    },
-    [setFilterValue],
-  );
+    }, 500);
+  };
 
   const handleSelected = useCallback(
     (index: number) => {
@@ -284,8 +294,10 @@ const ChooseOperator = ({
     if (queryData && filterValue) {
       setFiltering(true);
       setOperatorsData(
-        queryData.transactions.edges.filter((el: IEdge) =>
-          findTag(el, 'operatorName')?.includes(filterValue),
+        queryData.transactions.edges.filter(
+          (el: IEdge) =>
+            findTagsWithKeyword(el, [TAG_NAMES.operatorName], filterValue) ||
+            el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
         ),
       );
       setFiltering(false);
@@ -347,8 +359,9 @@ const ChooseOperator = ({
               fontWeight: 400,
               fontSize: '12px',
               lineHeight: '16px',
+              minWidth: '210px',
             }}
-            placeholder='Search operator...'
+            placeholder='Search by Operator Name or Address...'
             onChange={handleFilterChange}
           />
           <Icon
