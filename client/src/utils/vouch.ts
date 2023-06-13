@@ -16,16 +16,14 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
+import { VOUCH_CONTRACT_ID } from '@/constants';
 import { WarpFactory } from 'warp-contracts';
 
 const warp = WarpFactory.forMainnet();
 
-const contract = warp
-  .contract('_z0ch80z_daDUFqC9jHjfOL8nekJcok4ZRkE_UesYsk')
-  .connect('use_wallet')
-  .setEvaluationOptions({
-    allowBigInt: true,
-  });
+const contract = warp.contract(VOUCH_CONTRACT_ID).connect('use_wallet').setEvaluationOptions({
+  allowBigInt: true,
+});
 
 interface VouchState {
   state: {

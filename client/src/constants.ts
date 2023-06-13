@@ -18,6 +18,10 @@
 
 export const VAULT_ADDRESS = 'tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ';
 
+export const U_CONTRACT_ID = 'rO8f4nTVarU6OtU2284C8-BIH6HscNd-srhWznUllTk';
+export const U_DIVIDER = 1e6;
+export const VOUCH_CONTRACT_ID = '_z0ch80z_daDUFqC9jHjfOL8nekJcok4ZRkE_UesYsk';
+
 export const APP_NAME = 'Fair Protocol';
 export const APP_VERSION = '0.1';
 
