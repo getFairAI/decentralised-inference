@@ -1,0 +1,10 @@
+{
+  "url": "http://127.0.0.1:8080",
+  "sleepTimeSeconds": 7,
+  "scriptCurator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8",
+  "scriptName": "MusicGen Text-conditional Generation",
+  "vaultAddress": "tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ",
+  "inferencePercentageFee": 0.05,
+  "nPreviousBlocks": 1,
+  "minBlockConfirmations": 7
+}
