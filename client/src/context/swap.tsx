@@ -16,27 +16,28 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import FundDialog from '@/components/fund-dialog';
+import SwapU from '@/components/swap-u';
 import { Dispatch, ReactNode, SetStateAction, createContext, useMemo, useState } from 'react';
 
-export interface FundContext {
+export interface SwapContext {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-export const FundContext = createContext<FundContext>({
+export const SwapContext = createContext<SwapContext>({
   open: false,
   setOpen: () => undefined,
 });
 
-export const FundProvider = ({ children }: { children: ReactNode }) => {
+export const SwapProvider = ({ children }: { children: ReactNode }) => {
   const [open, setOpen] = useState(false);
+
   const value = useMemo(() => ({ open, setOpen }), [open, setOpen]);
 
   return (
-    <FundContext.Provider value={value}>
+    <SwapContext.Provider value={value}>
       {children}
-      <FundDialog open={open} setOpen={setOpen} />
-    </FundContext.Provider>
+      <SwapU open={open} setOpen={setOpen} />
+    </SwapContext.Provider>
   );
 };

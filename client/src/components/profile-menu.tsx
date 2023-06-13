@@ -30,12 +30,14 @@ import GetIcon from './get-icon';
 import Box from '@mui/material/Box';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { useState, useContext, MouseEvent, useCallback, Dispatch } from 'react';
+import { SwapContext } from '@/context/swap';
 
 const bundlrSettings = 'Bundlr Settings';
 const changeWallet = 'Change Wallet';
 const operatorRegistrations = 'Operator Registrations';
 const options = [
   bundlrSettings,
+  'U Swap',
   'Whitepaper',
   'Github',
   'Discord',
@@ -59,6 +61,7 @@ const Option = ({
   const { disconnectWallet } = useContext(WalletContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+  const { setOpen: setSwapOpen } = useContext(SwapContext);
 
   const handleOptionClick = useCallback(() => {
     (async () => {
@@ -90,6 +93,10 @@ const Option = ({
         case 'Disconnect':
           await disconnectWallet();
           setAnchorEl(null);
+          return;
+        case 'U Swap':
+          setAnchorEl(null);
+          setSwapOpen(true);
           return;
         default:
           setAnchorEl(null);

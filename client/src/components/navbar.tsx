@@ -22,8 +22,26 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext } from 'react';
-import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '@mui/material';
+import {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useState,
+  MouseEvent,
+} from 'react';
+import {
+  Button,
+  Icon,
+  IconButton,
+  InputBase,
+  Menu,
+  MenuItem,
+  styled,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 import Pending from './pending';
@@ -40,9 +58,85 @@ const Banner = styled(Toolbar)(({ theme }) => ({
   },
 }));
 
+const CurrencyMenu = () => {
+  const itemNumber = 4.5;
+  const ITEM_HEIGHT = 64;
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const [selected, setSelected] = useState<'AR' | 'U'>('AR');
+  const { currentBalance, currentUBalance } = useContext(WalletContext);
+
+  const handleClick = useCallback((event: MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setAnchorEl(null);
+  }, []);
+
+  const handleArClick = useCallback(() => {
+    setSelected('AR');
+    handleClose();
+  }, [setSelected, handleClose]);
+
+  const handleUClick = useCallback(() => {
+    setSelected('U');
+    handleClose();
+  }, [setSelected, handleClose]);
+
+  return (
+    <>
+      <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>
+        {selected === 'AR' ? `${currentBalance}` : `${currentUBalance}`}
+      </Typography>
+      {selected === 'AR' ? (
+        <img width='20px' height='29px' src='./arweave-small.svg' />
+      ) : (
+        <img
+          width='20px'
+          height='29px'
+          src='https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjrd5se740ftE'
+        />
+      )}
+      <IconButton
+        aria-label='more'
+        id='long-button'
+        aria-controls={open ? 'long-menu' : undefined}
+        aria-expanded={open ? 'true' : undefined}
+        aria-haspopup='true'
+        onClick={handleClick}
+      >
+        <img src='./chevron-bottom.svg' />
+      </IconButton>
+      <Menu
+        id='long-menu'
+        MenuListProps={{
+          'aria-labelledby': 'long-button',
+        }}
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          style: {
+            maxHeight: ITEM_HEIGHT * itemNumber,
+            width: '20ch',
+          },
+        }}
+      >
+        <MenuItem onClick={handleArClick}>
+          <Typography>{'AR'}</Typography>
+        </MenuItem>
+        <MenuItem onClick={handleUClick}>
+          <Typography>{'U'}</Typography>
+        </MenuItem>
+      </Menu>
+    </>
+  );
+};
+
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, currentBalance, isWalletVouched } = useContext(WalletContext);
+  const { currentAddress, isWalletVouched } = useContext(WalletContext);
 
   const { setOpen: connectWallet } = useContext(ChooseWalletContext);
 
@@ -88,10 +182,7 @@ const WalletState = () => {
         }}
       >
         <Box display={'flex'}>
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>
-            {currentBalance.toFixed(4)}
-          </Typography>
-          <img src='./arweave-small.svg' />
+          <CurrencyMenu />
         </Box>
         <Box
           sx={{
