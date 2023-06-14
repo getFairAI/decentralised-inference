@@ -46,7 +46,8 @@ const MessageDisplay = ({ message }: { message: IMessage }) => {
   if (message.contentType?.includes('image')) {
     return <img src={`${NET_ARWEAVE_URL}/${message.id}`}></img>;
   } else if (message.contentType?.includes('audio')) {
-    return <audio controls src={`${NET_ARWEAVE_URL}/${message.id}`}></audio>;
+    const fileUrl = URL.createObjectURL(message.msg as File);
+    return <audio controls src={fileUrl}></audio>;
   } else if (message.contentType?.includes('text') || message.contentType?.includes('json')) {
     return (
       <Typography
