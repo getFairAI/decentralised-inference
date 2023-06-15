@@ -80,6 +80,7 @@ interface WalletContext {
   isWalletVouched: boolean;
   connectWallet: (walletInstance: 'arweave.app' | 'arconnect') => Promise<void>;
   updateBalance: () => Promise<void>;
+  updateUBalance: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
   dispatchTx: (tx: Transaction) => Promise<DispatchResult | ArConnectDispatchResult>;
 }
@@ -286,6 +287,8 @@ const initialState: WalletContext = {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   updateBalance: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
+  updateUBalance: async () => {},
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   disconnectWallet: async () => {},
   dispatchTx,
 };
@@ -305,6 +308,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       connectWallet: (walletInstance: 'arweave.app' | 'arconnect') =>
         walletInstance === arConnect ? actions.arConnect() : actions.arweaveAppConnect(),
       updateBalance: actions.updateBalance,
+      updateUBalance: actions.updateUBalance,
       disconnectWallet: actions.walletDisconnect,
     }),
     [state, actions],

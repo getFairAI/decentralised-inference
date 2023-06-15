@@ -75,9 +75,7 @@ const router = createHashRouter([
         path: 'chat/:address',
         element: (
           <BlockOperatorGuard>
-            <ScriptFeeGuard>
-              <Chat />
-            </ScriptFeeGuard>
+            <Chat />
           </BlockOperatorGuard>
         ),
         children: [
