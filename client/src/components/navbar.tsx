@@ -22,22 +22,14 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import {
-  ChangeEvent,
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useContext,
-  useState,
-  MouseEvent,
-} from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext, useState } from 'react';
 import {
   Button,
   Icon,
   IconButton,
   InputBase,
-  Menu,
   MenuItem,
+  Select,
   styled,
   Tooltip,
   useTheme,
@@ -48,6 +40,7 @@ import Pending from './pending';
 import NavigationMenu from './navigation-menu';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
+import { defaultDecimalPlaces } from '@/constants';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -58,78 +51,78 @@ const Banner = styled(Toolbar)(({ theme }) => ({
   },
 }));
 
+const CustomDropDownIcon = () => (
+  <Icon
+    sx={{
+      pointerEvents: 'none',
+      position: 'absolute',
+      right: '7px',
+    }}
+  >
+    <img src='./chevron-bottom.svg' />
+  </Icon>
+);
+
 const CurrencyMenu = () => {
-  const itemNumber = 4.5;
-  const ITEM_HEIGHT = 64;
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
   const [selected, setSelected] = useState<'AR' | 'U'>('AR');
   const { currentBalance, currentUBalance } = useContext(WalletContext);
-
-  const handleClick = useCallback((event: MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setAnchorEl(null);
-  }, []);
-
+  const theme = useTheme();
   const handleArClick = useCallback(() => {
     setSelected('AR');
-    handleClose();
-  }, [setSelected, handleClose]);
+  }, [setSelected]);
 
   const handleUClick = useCallback(() => {
     setSelected('U');
-    handleClose();
-  }, [setSelected, handleClose]);
+  }, [setSelected]);
 
   return (
     <>
-      <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>
-        {selected === 'AR' ? `${currentBalance}` : `${currentUBalance}`}
-      </Typography>
-      {selected === 'AR' ? (
-        <img width='20px' height='29px' src='./arweave-small.svg' />
-      ) : (
-        <img
-          width='20px'
-          height='29px'
-          src='https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjrd5se740ftE'
-        />
-      )}
-      <IconButton
-        aria-label='more'
-        id='long-button'
-        aria-controls={open ? 'long-menu' : undefined}
-        aria-expanded={open ? 'true' : undefined}
-        aria-haspopup='true'
-        onClick={handleClick}
-      >
-        <img src='./chevron-bottom.svg' />
-      </IconButton>
-      <Menu
-        id='long-menu'
-        MenuListProps={{
-          'aria-labelledby': 'long-button',
-        }}
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        PaperProps={{
-          style: {
-            maxHeight: ITEM_HEIGHT * itemNumber,
-            width: '20ch',
+      <Select
+        sx={{
+          '& .MuiInputBase-input': {
+            display: 'flex',
+            backgroundColor: theme.palette.secondary.main,
+            border: 'none',
+            textTransform: 'none',
+            padding: 0,
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            border: 'none',
           },
         }}
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              background: theme.palette.secondary.main,
+            },
+          },
+        }}
+        IconComponent={CustomDropDownIcon}
+        value={selected}
       >
-        <MenuItem onClick={handleArClick}>
-          <Typography>{'AR'}</Typography>
+        <MenuItem value={'AR'} onClick={handleArClick}>
+          <Typography
+            sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
+            color={theme.palette.primary.contrastText}
+          >
+            {currentBalance.toFixed(defaultDecimalPlaces)}
+          </Typography>
+          <img width='20px' height='29px' src='./arweave-small.svg' />
         </MenuItem>
-        <MenuItem onClick={handleUClick}>
-          <Typography>{'U'}</Typography>
+        <MenuItem value={'U'} onClick={handleUClick}>
+          <Typography
+            sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
+            color={theme.palette.primary.contrastText}
+          >
+            {currentUBalance.toFixed(defaultDecimalPlaces)}
+          </Typography>
+          <img
+            width='20px'
+            height='29px'
+            src='https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjrd5se740ftE'
+          />
         </MenuItem>
-      </Menu>
+      </Select>
     </>
   );
 };
