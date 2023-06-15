@@ -77,13 +77,14 @@ import CustomProgress from '@/components/progress';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import ChatBubble from '@/components/chat-bubble';
 import DebounceIconButton from '@/components/debounce-icon-button';
+import { parseUBalance, sendU } from '@/utils/u';
 
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const { address } = useParams();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { currentAddress: userAddr } = useContext(WalletContext);
+  const { currentAddress: userAddr, updateUBalance, currentUBalance } = useContext(WalletContext);
   const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [polledMessages, setPolledMessages] = useState<IMessage[]>([]);
@@ -503,51 +504,41 @@ const Chat = () => {
     }
   };
 
-  const handlePayment = async (
-    bundlrId: string,
-    inferenceFee: string,
-    contentType: string,
-    tags: ITag[],
-  ) => {
-    const tx = await arweave.createTransaction({
-      target: address,
-      quantity: inferenceFee,
-    });
+  const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string) => {
+    const parsedUFee = parseUBalance(inferenceFee);
+    try {
+      const paymentTags = [
+        { name: TAG_NAMES.appName, value: APP_NAME },
+        { name: TAG_NAMES.appVersion, value: APP_VERSION },
+        { name: TAG_NAMES.operationName, value: INFERENCE_PAYMENT },
+        { name: TAG_NAMES.scriptName, value: state.scriptName },
+        { name: TAG_NAMES.scriptCurator, value: state.scriptCurator },
+        { name: TAG_NAMES.scriptTransaction, value: state.scriptTransaction },
+        { name: TAG_NAMES.scriptOperator, value: address || '' },
+        { name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` },
+        { name: TAG_NAMES.inferenceTransaction, value: bundlrId },
+        { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
+        { name: TAG_NAMES.contentType, value: contentType },
+      ];
 
-    tx.addTag(TAG_NAMES.appName, APP_NAME);
-    tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-    tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
-    tx.addTag(TAG_NAMES.scriptName, state.scriptName);
-    tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
-    tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
-    tx.addTag(TAG_NAMES.scriptOperator, address || '');
-    tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
-    tx.addTag(TAG_NAMES.inferenceTransaction, bundlrId);
-    tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
-    tx.addTag(TAG_NAMES.contentType, contentType);
-
-    await arweave.transactions.sign(tx);
-    const res = await arweave.transactions.post(tx);
-    if (res.status === successStatusCode) {
+      const paymentId = await sendU(address as string, parsedUFee.toString(), paymentTags);
+      await updateUBalance();
       enqueueSnackbar(
         <>
           Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
           <br></br>
-          <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
+          <a
+            href={`https://viewblock.io/arweave/tx/${paymentId}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
             <u>View Transaction in Explorer</u>
           </a>
         </>,
         { variant: 'success' },
       );
-      startJob({
-        address: userAddr,
-        operationName: SCRIPT_INFERENCE_REQUEST,
-        tags,
-        txid: bundlrId,
-        encodedTags: false,
-      });
-    } else {
-      enqueueSnackbar(res.statusText, { variant: 'error' });
+    } catch (error) {
+      enqueueSnackbar('An Error Occurred', { variant: 'error' });
     }
   };
 
@@ -563,6 +554,11 @@ const Chat = () => {
       parseFloat(state.fee) +
       parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
     ).toString();
+
+    if (currentUBalance < parseUBalance(inferenceFee)) {
+      enqueueSnackbar('Not Enough U tokens to pay Operator', { variant: 'error' });
+      return;
+    }
 
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
@@ -668,7 +664,7 @@ const Chat = () => {
         },
       );
 
-      await handlePayment(bundlrId, inferenceFee, contentType, tags);
+      await handlePayment(bundlrId, inferenceFee, contentType);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
     }

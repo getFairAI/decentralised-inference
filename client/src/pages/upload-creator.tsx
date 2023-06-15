@@ -51,6 +51,7 @@ import {
   NOTES_ATTACHMENT,
   secondInMS,
   successStatusCode,
+  U_DIVIDER,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
@@ -62,6 +63,7 @@ import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
 import { ITag } from '@/interfaces/arweave';
 import DebounceButton from '@/components/debounce-button';
+import { parseUBalance, sendU } from '@/utils/u';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -90,7 +92,7 @@ const UploadCreator = () => {
   const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const { currentAddress, currentBalance } = useContext(WalletContext);
+  const { currentAddress, currentUBalance, updateUBalance } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
 
@@ -226,8 +228,9 @@ const UploadCreator = () => {
     // upload the file
     const tags = [];
     const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
+    const parsedUFee = parseUBalance(fee);
 
-    if (currentBalance < parseFloat(MARKETPLACE_FEE)) {
+    if (currentUBalance < parseInt(MARKETPLACE_FEE, 10)) {
       enqueueSnackbar('Not Enough Balance in your Wallet to pay MarketPlace Fee', {
         variant: 'error',
       });
@@ -249,54 +252,47 @@ const UploadCreator = () => {
     setSnackbarOpen(true);
     try {
       const res = await bundlrUpload(file, tags, 'Model Uploaded Successfully');
-      const tx = await arweave.createTransaction({
-        quantity: fee,
-        target: VAULT_ADDRESS,
-      });
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.contentType, file.type);
-      tx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
-      tx.addTag(TAG_NAMES.modelName, data.name);
-      tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${data.fee}`));
+
+      const paymentTags = [
+        { name: TAG_NAMES.appName, value: APP_NAME },
+        { name: TAG_NAMES.appVersion, value: APP_VERSION },
+        { name: TAG_NAMES.contentType, value: file.type },
+        { name: TAG_NAMES.operationName, value: MODEL_CREATION_PAYMENT },
+        { name: TAG_NAMES.modelName, value: data.name },
+        { name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) },
+        { name: TAG_NAMES.modelTransaction, value: res.data.id },
+        { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
+      ];
+
       if (data.description) {
-        tx.addTag(TAG_NAMES.description, data.description);
+        paymentTags.push({ name: TAG_NAMES.description, value: data.description });
       }
-      tx.addTag(TAG_NAMES.modelTransaction, res.data.id);
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
 
-      await arweave.transactions.sign(tx);
-      const payRes = await arweave.transactions.post(tx);
-      if (payRes.status === successStatusCode) {
-        enqueueSnackbar(
-          <>
-            Paid Marketplace Fee {MARKETPLACE_FEE} AR.
-            <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-        startJob({
-          address: currentAddress,
-          operationName: MODEL_CREATION,
-          tags,
-          txid: res.data.id,
-          encodedTags: false,
-        });
+      const paymentId = await sendU(VAULT_ADDRESS, parsedUFee.toString(), paymentTags);
+      await updateUBalance();
+      enqueueSnackbar(
+        <>
+          Paid Marketplace Fee: {MARKETPLACE_FEE} U Tokens.
+          <br></br>
+          <a
+            href={`https://viewblock.io/arweave/tx/${paymentId}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        { variant: 'success' },
+      );
 
-        try {
-          await uploadUsageNotes(res.data.id, data.name, data.notes);
-          await uploadAvatarImage(res.data.id, data.avatar);
-        } catch (error) {
-          enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
-          // error uploading attachments
-        }
-        reset(); // reset form
-      } else {
-        enqueueSnackbar(payRes.statusText, { variant: 'error' });
+      try {
+        await uploadUsageNotes(res.data.id, data.name, data.notes);
+        await uploadAvatarImage(res.data.id, data.avatar);
+      } catch (error) {
+        enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
+        // error uploading attachments
       }
+      reset(); // reset form
     } catch (error) {
       setSnackbarOpen(false);
       setProgress(0);

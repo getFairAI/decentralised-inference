@@ -69,6 +69,8 @@ import {
   MODEL_FEE_UPDATE,
   successStatusCode,
   secondInMS,
+  U_DIVIDER,
+  defaultDecimalPlaces,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
@@ -83,6 +85,7 @@ import { GET_LATEST_FEE_UPDATE, LIST_MODELS_QUERY } from '@/queries/graphql';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { commonUpdateQuery, findTag } from '@/utils/common';
 import DebounceButton from '@/components/debounce-button';
+import { parseUBalance, sendU } from '@/utils/u';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -186,7 +189,7 @@ const Curators = () => {
   const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const { currentAddress, currentBalance } = useContext(WalletContext);
+  const { currentAddress, currentBalance, updateUBalance } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
   const { field: modelField } = useController({ name: 'model', control });
@@ -377,10 +380,11 @@ const Curators = () => {
     const tags = [];
     const modelData = JSON.parse(data.model) as IEdge;
     const winstonFee = arweave.ar.arToWinston(selectedModelFee.toString());
+    const parsedUFee = parseUBalance(winstonFee);
 
-    if (currentBalance < selectedModelFee) {
+    if (currentBalance * U_DIVIDER < parsedUFee) {
       enqueueSnackbar(
-        `Not Enought Balance in your Wallet to pay Model Fee (${selectedModelFee} AR)`,
+        `Not Enought Balance in your Wallet to pay Model Fee (${selectedModelFee} U)`,
         { variant: 'error' },
       );
       return;
@@ -410,59 +414,61 @@ const Curators = () => {
     setSnackbarOpen(true);
     try {
       const res = await bundlrUpload(file, tags, 'Script Uploaded Successfully');
-      const tx = await arweave.createTransaction({
-        quantity: winstonFee,
-        target: modelData.node.owner.address,
-      });
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.contentType, file.type);
-      tx.addTag(TAG_NAMES.operationName, SCRIPT_CREATION_PAYMENT);
-      tx.addTag(TAG_NAMES.scriptName, `${data.name}`);
-      tx.addTag(TAG_NAMES.category, data.category);
-      tx.addTag(TAG_NAMES.modelName, findTag(modelData, 'modelName') as string);
-      tx.addTag(TAG_NAMES.modelCreator, modelData.node.owner.address);
-      tx.addTag(TAG_NAMES.modelTransaction, findTag(modelData, 'modelTransaction') as string);
-      tx.addTag(TAG_NAMES.scriptFee, arweave.ar.arToWinston(`${data.fee}`));
-      tx.addTag(TAG_NAMES.scriptTransaction, res.data.id);
-      if (data.description) {
-        tx.addTag(TAG_NAMES.description, data.description);
-      }
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
-      tx.addTag(TAG_NAMES.allowFiles, `${data.allow.allowFiles}`);
-      tx.addTag(TAG_NAMES.allowText, `${data.allow.allowText}`);
-      await arweave.transactions.sign(tx);
-      const payRes = await arweave.transactions.post(tx);
-      if (payRes.status === successStatusCode) {
-        enqueueSnackbar(
-          <>
-            Paid Model Fee {selectedModelFee} AR.
-            <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-        startJob({
-          address: currentAddress,
-          operationName: SCRIPT_CREATION,
-          tags,
-          txid: res.data.id,
-          encodedTags: false,
-        });
 
-        try {
-          await uploadUsageNotes(res.data.id, data.name, data.notes);
-          await uploadAvatarImage(res.data.id, data.avatar);
-        } catch (error) {
-          enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
-          // error uploading attachments
-        }
-        reset(); // reset form
-      } else {
-        enqueueSnackbar(payRes.statusText, { variant: 'error' });
+      const paymentTags = [
+        { name: TAG_NAMES.appName, value: APP_NAME },
+        { name: TAG_NAMES.appVersion, value: APP_VERSION },
+        { name: TAG_NAMES.contentType, value: file.type },
+        { name: TAG_NAMES.operationName, value: SCRIPT_CREATION_PAYMENT },
+        { name: TAG_NAMES.scriptName, value: `${data.name}` },
+        { name: TAG_NAMES.category, value: data.category },
+        { name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string },
+        { name: TAG_NAMES.modelCreator, value: modelData.node.owner.address },
+        {
+          name: TAG_NAMES.modelTransaction,
+          value: findTag(modelData, 'modelTransaction') as string,
+        },
+        { name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) },
+        { name: TAG_NAMES.scriptTransaction, value: res.data.id },
+        { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
+        { name: TAG_NAMES.allowFiles, value: `${data.allow.allowFiles}` },
+        { name: TAG_NAMES.allowText, value: `${data.allow.allowText}` },
+      ];
+
+      if (data.description) {
+        paymentTags.push({ name: TAG_NAMES.description, value: data.description });
       }
+
+      const paymentId = await sendU(
+        modelData.node.owner.address,
+        parsedUFee.toString(),
+        paymentTags,
+      );
+      await updateUBalance();
+
+      enqueueSnackbar(
+        <>
+          Paid Model Fee {selectedModelFee.toFixed(defaultDecimalPlaces)} U.
+          <br></br>
+          <a
+            href={`https://viewblock.io/arweave/tx/${paymentId}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        { variant: 'success' },
+      );
+
+      try {
+        await uploadUsageNotes(res.data.id, data.name, data.notes);
+        await uploadAvatarImage(res.data.id, data.avatar);
+      } catch (error) {
+        enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
+        // error uploading attachments
+      }
+      reset(); // reset form
     } catch (error) {
       setSnackbarOpen(false);
       setProgress(0);
