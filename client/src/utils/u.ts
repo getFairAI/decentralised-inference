@@ -17,6 +17,7 @@
  */
 
 import { U_CONTRACT_ID, U_DIVIDER } from '@/constants';
+import { ITag } from '@/interfaces/arweave';
 import { WarpFactory } from 'warp-contracts';
 
 const warp = WarpFactory.forMainnet();
@@ -80,12 +81,15 @@ export const swapArToU = async (amount: string) => {
   return result?.originalTxId;
 };
 
-export const sendU = async (to: string, amount: string) => {
-  const result = await contract.writeInteraction({
-    function: 'transfer',
-    target: to,
-    qty: amount,
-  });
+export const sendU = async (to: string, amount: string, tags: ITag[]) => {
+  const result = await contract.writeInteraction(
+    {
+      function: 'transfer',
+      target: to,
+      qty: amount,
+    },
+    { tags, strict: true },
+  );
 
   return result?.originalTxId;
 };
