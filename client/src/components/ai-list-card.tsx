@@ -4,6 +4,7 @@ import {
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
   TAG_NAMES,
+  secondInMS,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
@@ -49,7 +50,7 @@ const AiListCard = ({
     getAvatar({
       variables: {
         tags: attachmentAvatarTags,
-        owner: model.node.owner.address,
+        owner,
       },
       fetchPolicy: 'no-cache',
     });
@@ -73,14 +74,14 @@ const AiListCard = ({
     }
   }, [data]);
 
+  const owner = useMemo(() => findTag(model, 'sequencerOwner'), [model]);
+
   const getTimePassed = () => {
-    const timestamp = findTag(model, 'unixTime') || model.node.block?.timestamp;
+    const timestamp = findTag(model, 'unixTime') as string;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
-    const dateA = Number.isInteger(timestamp)
-      ? (timestamp as number) * 1000
-      : parseInt(timestamp as string, 10) * 1000;
+    const dateA = parseInt(timestamp, 10) * secondInMS;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;
@@ -109,7 +110,7 @@ const AiListCard = ({
     navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
       state: {
         modelName: findTag(model, 'modelName'),
-        modelCreator: model.node.owner.address,
+        modelCreator: owner,
         fee: findTag(model, 'modelFee'),
         modelTransaction: modelId,
         fullState: model,

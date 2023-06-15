@@ -71,6 +71,9 @@ import {
   secondInMS,
   U_DIVIDER,
   defaultDecimalPlaces,
+  modelPaymentInput,
+  U_CONTRACT_ID,
+  MODEL_CREATION_PAYMENT,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
@@ -81,7 +84,7 @@ import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
 import { useLazyQuery, useQuery } from '@apollo/client';
-import { GET_LATEST_FEE_UPDATE, LIST_MODELS_QUERY } from '@/queries/graphql';
+import { FIND_BY_TAGS, GET_LATEST_FEE_UPDATE } from '@/queries/graphql';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { commonUpdateQuery, findTag } from '@/utils/common';
 import DebounceButton from '@/components/debounce-button';
@@ -200,8 +203,13 @@ const Curators = () => {
     loading: modelsLoading,
     error: modelsError,
     fetchMore: modelsFetchMore,
-  } = useQuery(LIST_MODELS_QUERY, {
+  } = useQuery(FIND_BY_TAGS, {
     variables: {
+      tags: [
+        { name: TAG_NAMES.input, values: [modelPaymentInput] },
+        { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
+        { name: TAG_NAMES.operationName, values: [MODEL_CREATION_PAYMENT] },
+      ],
       first: elementsPerPage,
     },
     notifyOnNetworkStatusChange: true,

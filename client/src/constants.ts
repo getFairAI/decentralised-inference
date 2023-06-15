@@ -69,6 +69,9 @@ export const TAG_NAMES = {
   allowText: 'Allow-Text',
   registrationTransaction: 'Registration-Transaction',
   registrationFee: 'Registration-Fee',
+  input: 'Input',
+  contract: 'Contract',
+  sequencerOwner: 'Sequencer-Owner',
 };
 
 // Operation Names
@@ -161,3 +164,9 @@ export const secondInMS = 1000;
 export const defaultDecimalPlaces = 4;
 export const successStatusCode = 200;
 export const textContentType = 'text/plain';
+
+export const modelPaymentInput = JSON.stringify({
+  function: 'transfer',
+  target: VAULT_ADDRESS,
+  qty: parseFloat(MARKETPLACE_FEE) * U_DIVIDER,
+});

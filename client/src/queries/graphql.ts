@@ -105,72 +105,9 @@ export const GET_TX = gql`
   }
 `;
 
-export const LIST_LATEST_MODELS_QUERY = gql`
-  query LIST_MODELS_QUERY($first: Int!) {
-    transactions(
-      tags: [
-        { name: "App-Name", values: ["${APP_NAME}"] }
-        { name: "App-Version", values: ["${APP_VERSION}"] }
-        { name: "Operation-Name", values: "Model Creation Payment" }
-      ]
-      recipients:["${VAULT_ADDRESS}"],
-      first: $first
-      sort: HEIGHT_DESC
-    ) {
-      edges {
-        cursor
-        node {
-          id
-          signature
-          recipient
-          owner {
-            address
-            key
-          }
-          fee {
-            winston
-            ar
-          }
-          quantity {
-            winston
-            ar
-          }
-          data {
-            size
-            type
-          }
-          tags {
-            name
-            value
-          }
-          block {
-            id
-            timestamp
-            height
-            previous
-          }
-          bundledIn {
-            id
-          }
-        }
-      }
-    }
-  }
-`;
-
-export const LIST_MODELS_QUERY = gql`
-  query LIST_MODELS_QUERY($first: Int!, $after: String) {
-    transactions(
-      tags: [
-        { name: "App-Name", values: ["${APP_NAME}"] }
-        { name: "App-Version", values: ["${APP_VERSION}"] }
-        { name: "Operation-Name", values: "Model Creation Payment" }
-      ]
-      recipients:["${VAULT_ADDRESS}"],
-      first: $first
-      after: $after,
-      sort: HEIGHT_DESC
-    ) {
+export const FIND_BY_TAGS = gql`
+  query FIND_BY_TAGS($tags: [TagFilter!], $first: Int!, $after: String) {
+    transactions(tags: $tags, first: $first, after: $after, sort: HEIGHT_DESC) {
       pageInfo {
         hasNextPage
       }
@@ -178,36 +115,9 @@ export const LIST_MODELS_QUERY = gql`
         cursor
         node {
           id
-          signature
-          recipient
-          owner {
-            address
-            key
-          }
-          fee {
-            winston
-            ar
-          }
-          quantity {
-            winston
-            ar
-          }
-          data {
-            size
-            type
-          }
           tags {
             name
             value
-          }
-          block {
-            id
-            timestamp
-            height
-            previous
-          }
-          bundledIn {
-            id
           }
         }
       }

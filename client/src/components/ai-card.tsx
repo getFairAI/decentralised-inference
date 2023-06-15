@@ -4,7 +4,7 @@ import { IEdge } from '@/interfaces/arweave';
 import { toSvg } from 'jdenticon';
 import { useNavigate } from 'react-router-dom';
 import { MouseEvent, useEffect, useMemo } from 'react';
-import { findTag } from '@/utils/common';
+import { displayShortTxOrAddr, findTag } from '@/utils/common';
 import { useLazyQuery } from '@apollo/client';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import {
@@ -21,23 +21,6 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
   const navigate = useNavigate();
 
   const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
-
-  useEffect(() => {
-    const modelId = findTag(model, 'modelTransaction');
-    const attachmentAvatarTags = [
-      ...DEFAULT_TAGS,
-      { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
-      { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-      { name: TAG_NAMES.modelTransaction, values: [modelId] },
-    ];
-
-    getAvatar({
-      variables: {
-        tags: attachmentAvatarTags,
-        owner: model.node.owner.address,
-      },
-    });
-  }, []);
 
   const imgUrl = useMemo(() => {
     if (data) {
@@ -56,6 +39,25 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
       return '';
     }
   }, [data]);
+
+  const owner = useMemo(() => findTag(model, 'sequencerOwner'), [model]);
+
+  useEffect(() => {
+    const modelId = findTag(model, 'modelTransaction');
+    const attachmentAvatarTags = [
+      ...DEFAULT_TAGS,
+      { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
+      { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
+      { name: TAG_NAMES.modelTransaction, values: [modelId] },
+    ];
+
+    getAvatar({
+      variables: {
+        tags: attachmentAvatarTags,
+        owner,
+      },
+    });
+  }, []);
 
   const getTimePassed = () => {
     const timestamp = findTag(model, 'unixTime') || model.node.block?.timestamp;
@@ -93,7 +95,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
     navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
       state: {
         modelName: findTag(model, 'modelName'),
-        modelCreator: model.node.owner.address,
+        modelCreator: owner,
         fee: findTag(model, 'modelFee'),
         modelTransaction: modelId,
         fullState: model,
@@ -144,15 +146,13 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
         )}
 
         <FiCardContent>
-          <Tooltip title={findTag(model, 'modelName') || 'Untitled'} placement={'top-start'}>
+          <Tooltip title={findTag(model, 'modelName') ?? 'Untitled'} placement={'top-start'}>
             <Typography variant='h2' noWrap>
-              {findTag(model, 'modelName') || 'Untitled'}
+              {findTag(model, 'modelName') ?? 'Untitled'}
             </Typography>
           </Tooltip>
-          <Tooltip title={model.node.owner.address} placement={'bottom-start'}>
-            <Typography variant='h6'>
-              {model.node.owner.address.slice(0, 5)}...{model.node.owner.address.slice(-8)}
-            </Typography>
+          <Tooltip title={owner} placement={'bottom-start'}>
+            <Typography variant='h6'>{displayShortTxOrAddr(owner ?? 'Unknown')}</Typography>
           </Tooltip>
 
           <Typography variant='h6'>{getTimePassed()}</Typography>

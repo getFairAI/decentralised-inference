@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Box,
@@ -13,16 +31,15 @@ import {
 import { useContext, useEffect, useRef, useState } from 'react';
 
 import { IEdge } from '@/interfaces/arweave';
-import { LIST_LATEST_MODELS_QUERY, LIST_MODELS_QUERY } from '@/queries/graphql';
+import { FIND_BY_TAGS } from '@/queries/graphql';
 import useOnScreen from '@/hooks/useOnScreen';
-import { MARKETPLACE_FEE, TAG_NAMES } from '@/constants';
+import { MODEL_CREATION_PAYMENT, TAG_NAMES, U_CONTRACT_ID, modelPaymentInput } from '@/constants';
 import Featured from '@/components/featured';
 import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import FilterContext from '@/context/filter';
-import { findTagsWithKeyword } from '@/utils/common';
-import { isTxConfirmed } from '@/utils/arweave';
+import { commonUpdateQuery, findTagsWithKeyword } from '@/utils/common';
 
 export default function Home() {
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -35,25 +52,13 @@ export default function Home() {
   const theme = useTheme();
   const elementsPerPage = 5;
 
-  const {
-    data,
-    loading,
-    error,
-    networkStatus: featuredNetworkStatus,
-  } = useQuery(LIST_LATEST_MODELS_QUERY, {
+  const { data, loading, error, fetchMore, networkStatus } = useQuery(FIND_BY_TAGS, {
     variables: {
-      first: 4,
-    },
-  });
-
-  const {
-    data: listData,
-    loading: listLoading,
-    error: listError,
-    fetchMore,
-    networkStatus,
-  } = useQuery(LIST_MODELS_QUERY, {
-    variables: {
+      tags: [
+        { name: TAG_NAMES.input, values: [modelPaymentInput] },
+        { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
+        { name: TAG_NAMES.operationName, values: [MODEL_CREATION_PAYMENT] },
+      ],
       first: elementsPerPage,
     },
   });
@@ -62,94 +67,41 @@ export default function Home() {
 
   useEffect(() => {
     if (isOnScreen && hasNextPage) {
-      fetchMore({
-        variables: {
-          after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
-        },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          const newData = fetchMoreResult.transactions.edges;
-
-          const merged: IEdge[] =
-            prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-          for (let i = 0; i < newData.length; ++i) {
-            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-              merged.push(newData[i]);
-            }
-          }
-          const newResult = Object.assign({}, prev, {
-            transactions: {
-              edges: merged,
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-          return newResult;
-        },
-      });
+      (async () => {
+        await fetchMore({
+          variables: {
+            after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
+          },
+          updateQuery: commonUpdateQuery,
+        });
+      })();
     }
   }, [isOnScreen, txs]);
 
   useEffect(() => {
-    if (listData && networkStatus === NetworkStatus.ready) {
+    if (data && networkStatus === NetworkStatus.ready) {
       (async () => {
-        const filtered: IEdge[] = [];
-        await Promise.all(
-          listData.transactions.edges.map(async (el: IEdge) => {
-            const confirmed = await isTxConfirmed(el.node.id);
-            const correctFee = parseInt(el.node.quantity.ar, 10) === parseInt(MARKETPLACE_FEE, 10);
-            if (confirmed && correctFee) {
-              filtered.push(el);
-            }
-          }),
-        );
-        setHasNextPage(listData.transactions.pageInfo.hasNextPage);
-        setTxs(filtered);
-      })();
-    }
-  }, [listData]);
-
-  useEffect(() => {
-    if (data && featuredNetworkStatus === NetworkStatus.ready) {
-      (async () => {
-        const filtered: IEdge[] = [];
-        await Promise.all(
-          data.transactions.edges.map(async (el: IEdge) => {
-            const confirmed = await isTxConfirmed(el.node.id);
-            const correctFee = parseInt(el.node.quantity.ar, 10) === parseInt(MARKETPLACE_FEE, 10);
-            if (confirmed && correctFee) {
-              filtered.push(el);
-            }
-          }),
-        );
-        setFeaturedTxs(filtered);
+        setHasNextPage(data.transactions.pageInfo.hasNextPage);
+        setTxs(data.transactions.edges);
+        if (featuredTxs.length === 0) {
+          setFeaturedTxs(data.transactions.edges.slice(0, 3));
+        }
       })();
     }
   }, [data]);
 
   useEffect(() => {
-    if (listData) {
-      (async () => {
-        const filtered: IEdge[] = [];
-        await Promise.all(
-          listData.transactions.edges.map(async (el: IEdge) => {
-            const confirmed = await isTxConfirmed(el.node.id);
-            const correctFee = parseInt(el.node.quantity.ar, 10) === parseInt(MARKETPLACE_FEE, 10);
-            if (
-              confirmed &&
-              correctFee &&
-              (filterValue.trim() === '' ||
-                findTagsWithKeyword(
-                  el,
-                  [TAG_NAMES.modelName, TAG_NAMES.description, TAG_NAMES.category],
-                  filterValue,
-                ))
-            ) {
-              filtered.push(el);
-            }
-          }),
-        );
-        setTxs(filtered);
-      })();
+    if (data) {
+      const filtered: IEdge[] = data.transactions.edges.filter(
+        (el: IEdge) =>
+          filterValue.trim() === '' ||
+          findTagsWithKeyword(
+            el,
+            [TAG_NAMES.modelName, TAG_NAMES.description, TAG_NAMES.category],
+            filterValue,
+          ),
+      );
+      setTxs(filtered);
     }
   }, [filterValue]);
 
@@ -270,13 +222,7 @@ export default function Home() {
         </Box>
         <Stack spacing={4}>
           {txs.map((el, idx) => (
-            <AiListCard
-              model={el}
-              key={el.node.id}
-              index={idx}
-              loading={listLoading}
-              error={listError}
-            />
+            <AiListCard model={el} key={el.node.id} index={idx} loading={loading} error={error} />
           ))}
           <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
         </Stack>
