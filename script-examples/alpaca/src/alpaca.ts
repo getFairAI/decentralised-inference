@@ -425,38 +425,36 @@ const processRequest = async (
   );
 };
 
-let lastProcessedTx: IEdge | null = null;
+const lastProcessedTxs: IEdge[] = [];
 
 const start = async (useContext = false, allowFiles = false) => {
   try {
     // request only new txs
-    const { requestTxs, hasNextPage } = await queryTransactionsReceived(
-      address,
-      operatorFee,
-      lastProcessedTx?.cursor,
+    const { requestTxs, hasNextPage } = await queryTransactionsReceived(address, operatorFee);
+
+    const newRequestTxs = requestTxs.filter(
+      (tx) => !lastProcessedTxs.find((el) => el.node.id === tx.node.id),
     );
-
-    if (requestTxs.length === 0 || requestTxs[0].node.id === lastProcessedTx?.node.id) {
-      // No new requests
-
-      return;
-    }
 
     let fetchMore = hasNextPage;
 
-    while (fetchMore) {
-      const { requestTxs: newRequestTxs, hasNextPage: newHasNextPage } =
-        await queryTransactionsReceived(
-          address,
-          operatorFee,
-          requestTxs[requestTxs.length - 1].cursor,
-        );
+    const pageSize = 10;
+    // if lastProcessed request length is bigger than one page then script already processed all previous requests
+    if (lastProcessedTxs.length <= pageSize) {
+      while (fetchMore && newRequestTxs.length > 0) {
+        const { requestTxs: nextPageTxs, hasNextPage: newHasNextPage } =
+          await queryTransactionsReceived(
+            address,
+            operatorFee,
+            newRequestTxs[newRequestTxs.length - 1].cursor,
+          );
 
-      requestTxs.push(...newRequestTxs);
-      fetchMore = newHasNextPage;
+        newRequestTxs.push(...nextPageTxs);
+        fetchMore = newHasNextPage;
+      }
     }
 
-    for (const edge of requestTxs) {
+    for (const edge of newRequestTxs) {
       // Check if request already answered:
       const reqTxId = edge.node.tags.find((tag) => tag.name === INFERENCE_TRANSACTION_TAG)?.value;
       const reqUserAddr = edge.node.tags.find((tag) => tag.name === SEQUENCE_OWNER_TAG)?.value;
@@ -469,7 +467,7 @@ const start = async (useContext = false, allowFiles = false) => {
     }
 
     // save latest tx id
-    lastProcessedTx = requestTxs.length > 0 ? requestTxs[0] : null;
+    lastProcessedTxs.push(...newRequestTxs);
   } catch (e) {
     logger.error(`Errored with: ${e}`);
   }
