@@ -35,7 +35,7 @@ export const RESPONSE_TOKENS_TAG = 'Response-Tokens';
 export const INFERENCE_TRANSACTION_TAG = 'Inference-Transaction';
 export const CONTRACT_TAG = 'Contract';
 export const INPUT_TAG = 'Input';
-export const SEQUENCE_OWNER_TAG = 'Sequence-Owner';
+export const SEQUENCE_OWNER_TAG = 'Sequencer-Owner';
 
 export const SCRIPT_INFERENCE_REQUEST = 'Script Inference Request';
 

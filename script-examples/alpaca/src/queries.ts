@@ -251,6 +251,11 @@ export const queryOperatorFee = async (address: string) => {
     qty: (parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER).toString(),
   });
 
+  const operatorPaymentInputNumber = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER,
+  });
   const tags = [
     {
       name: OPERATION_NAME_TAG,
@@ -266,7 +271,7 @@ export const queryOperatorFee = async (address: string) => {
     },
     {
       name: INPUT_TAG,
-      values: [operatorPaymentInputStr],
+      values: [operatorPaymentInputStr, operatorPaymentInputNumber],
     },
     {
       name: CONTRACT_TAG,
@@ -300,8 +305,8 @@ export const getModelOwner = async () => {
 
   const result = await clientGateway.query({
     query: gql`
-      query tx($tags: [TagFilter!], $first: Int, owner: String!) {
-        transactions(first: 1, tags: $tags, owner: $owner sort: HEIGHT_DESC) {
+      query tx($tags: [TagFilter!], $first: Int, $owners: [String!]) {
+        transactions(first: $first, tags: $tags, owners: $owners, sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -314,7 +319,7 @@ export const getModelOwner = async () => {
         }
       }
     `,
-    variables: { tags, first: 1, owner: CONFIG.scriptCurator },
+    variables: { tags, first: 1, owner: [CONFIG.scriptCurator] },
   });
 
   const tx = parseQueryResult(result)[0];

@@ -435,7 +435,7 @@ const start = async (useContext = false, allowFiles = false) => {
     const operatorFee = await getOperatorFee();
     const { requestTxs, hasNextPage } = await queryTransactionsReceived(address, operatorFee);
 
-    if (requestTxs[0].node.id === lastProcessedTx) {
+    if (requestTxs.length === 0 || requestTxs[0].node.id === lastProcessedTx) {
       // No new requests
 
       return;
