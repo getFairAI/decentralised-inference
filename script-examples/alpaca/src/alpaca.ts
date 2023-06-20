@@ -59,6 +59,10 @@ import {
 } from './queries';
 import AdmZip from 'adm-zip';
 
+let address: string;
+let modelOwner: string;
+let operatorFee: number;
+
 const logger = Pino({
   name: 'alpaca',
   level: 'debug',
@@ -71,10 +75,6 @@ const arweave = Arweave.init({
 });
 
 const JWK: JWKInterface = JSON.parse(fs.readFileSync('wallet.json').toString());
-const address = await arweave.wallets.jwkToAddress(JWK);
-
-logger.info(`Wallet address: ${address}`);
-let modelOwner: string;
 
 // initailze the bundlr SDK
 // const bundlr: Bundlr = new (Bundlr as any).default(
@@ -290,8 +290,8 @@ const getOperatorFee = async (operatorAddress = address) => {
     throw new Error('Could not find Operator Fee Tag for registration.');
   }
 
-  const operatorFee = parseFloat(tags[feeIndex].value);
-  if (Number.isNaN(operatorFee) || operatorFee <= 0) {
+  const opFee = parseFloat(tags[feeIndex].value);
+  if (Number.isNaN(opFee) || opFee <= 0) {
     throw new Error('Invalid Operator Fee Found for registration.');
   }
 
@@ -303,7 +303,6 @@ const checkUserPaidInferenceFees = async (
   userAddress: string,
   creatorAddress: string,
   curatorAddress: string,
-  operatorFee: number,
 ) => {
   const marketplaceShare = operatorFee * MARKETPLACE_PERCENTAGE_FEE;
   const curatorShare = operatorFee * CURATOR_PERCENTAGE_FEE;
@@ -371,7 +370,6 @@ const checkUserPaidInferenceFees = async (
 const processRequest = async (
   requestId: string,
   reqUserAddr: string,
-  operatorFee: number,
   useContext: boolean,
   allowFiles: boolean,
 ) => {
@@ -394,7 +392,6 @@ const processRequest = async (
       reqUserAddr,
       modelOwner,
       CONFIG.scriptCurator,
-      operatorFee,
     ))
   ) {
     return;
@@ -428,14 +425,18 @@ const processRequest = async (
   );
 };
 
-let lastProcessedTx: string | null = null;
+let lastProcessedTx: IEdge | null = null;
 
 const start = async (useContext = false, allowFiles = false) => {
   try {
-    const operatorFee = await getOperatorFee();
-    const { requestTxs, hasNextPage } = await queryTransactionsReceived(address, operatorFee);
+    // request only new txs
+    const { requestTxs, hasNextPage } = await queryTransactionsReceived(
+      address,
+      operatorFee,
+      lastProcessedTx?.cursor,
+    );
 
-    if (requestTxs.length === 0 || requestTxs[0].node.id === lastProcessedTx) {
+    if (requestTxs.length === 0 || requestTxs[0].node.id === lastProcessedTx?.node.id) {
       // No new requests
 
       return;
@@ -461,14 +462,14 @@ const start = async (useContext = false, allowFiles = false) => {
       const reqUserAddr = edge.node.tags.find((tag) => tag.name === SEQUENCE_OWNER_TAG)?.value;
 
       if (reqTxId && reqUserAddr) {
-        await processRequest(reqTxId, reqUserAddr, operatorFee, useContext, allowFiles);
+        await processRequest(reqTxId, reqUserAddr, useContext, allowFiles);
       } else {
         // skip requests without inference transaction tag
       }
     }
 
     // save latest tx id
-    lastProcessedTx = requestTxs.length > 0 ? requestTxs[0].node.id : null;
+    lastProcessedTx = requestTxs.length > 0 ? requestTxs[0] : null;
   } catch (e) {
     logger.error(`Errored with: ${e}`);
   }
@@ -479,8 +480,13 @@ function sleep(ms: number) {
 }
 
 (async () => {
+  address = await arweave.wallets.jwkToAddress(JWK);
+
+  logger.info(`Wallet address: ${address}`);
+
   try {
     modelOwner = await getModelOwner();
+    operatorFee = await getOperatorFee();
   } catch (err) {
     logger.error('Error getting model owner');
     logger.info('Shutting down');
