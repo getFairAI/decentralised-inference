@@ -49,8 +49,6 @@ const Detail = () => {
   const { state, pathname }: { state: ModelNavigationState; pathname: string } = useLocation();
   const { txid } = useParams();
   const navigate = useNavigate();
-  const [feeValue, setFeeValue] = useState(0);
-  const [feeDirty, setFeeDirty] = useState(false);
   const [showOperators, setShowOperators] = useState(false);
   const [showScripts, setShowScripts] = useState(false);
   const [scriptTx, setScriptTx] = useState<IEdge | undefined>(undefined);
@@ -70,7 +68,6 @@ const Detail = () => {
   }, [avatarTxId]);
 
   // disable update fees on model for now
-  const updateDisabled = useMemo(() => true, [feeDirty, feeValue]);
 
   const handleClose = () => {
     if (pathname.includes('change-operator')) {
@@ -79,61 +76,6 @@ const Detail = () => {
     }
     navigate('/', { state });
   };
-
-  const updateFee = useCallback(async () => {
-    try {
-      const tx = await arweave.createTransaction({
-        quantity: arweave.ar.arToWinston('0'),
-        target: VAULT_ADDRESS,
-      });
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.operationName, MODEL_FEE_UPDATE);
-      tx.addTag(TAG_NAMES.modelName, state.modelName);
-      tx.addTag(TAG_NAMES.modelTransaction, state.modelTransaction);
-      tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${feeValue}`));
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      await arweave.transactions.sign(tx);
-      const payRes = await arweave.transactions.post(tx);
-      if (payRes.status === 200) {
-        enqueueSnackbar(
-          <>
-            Updated Model Fee
-            <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          {
-            variant: 'success',
-          },
-        );
-        setFeeDirty(false);
-      } else {
-        enqueueSnackbar(`Failed with error ${payRes.status}: ${payRes.statusText}`, {
-          variant: 'error',
-        });
-      }
-    } catch (err) {
-      enqueueSnackbar('Something Went Wrong', { variant: 'error' });
-    }
-  }, [arweave, enqueueSnackbar, setFeeDirty, state]);
-
-  const handleFeeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const val = event.target.value !== '' ? parseFloat(event.target.value) : 0;
-    setFeeValue(val);
-    setFeeDirty(true);
-  };
-
-  useEffect(() => {
-    if (updatedFee) {
-      const arValue = arweave.ar.winstonToAr(updatedFee);
-      setFeeValue(parseFloat(arValue));
-    } else {
-      const arValue = arweave.ar.winstonToAr(state.fee);
-      setFeeValue(parseFloat(arValue));
-    }
-  }, [updatedFee]);
 
   useEffect(() => {
     if (loaderData) {
@@ -317,61 +259,6 @@ const Detail = () => {
             >
               Cost
             </Typography>
-            <Box
-              display={'flex'}
-              alignItems={'center'}
-              justifyContent='flex-start'
-              width={'100%'}
-              height='60px'
-            >
-              {currentAddress === state.modelCreator ? (
-                <NumericFormat
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    fontStyle: 'normal',
-                    fontWeight: 700,
-                    fontSize: '60px',
-                    lineHeight: '106px',
-                    textAlign: 'center',
-
-                    paddingRight: '8px',
-                  }}
-                  value={feeValue}
-                  onChange={handleFeeChange}
-                  customInput={InputBase}
-                  decimalScale={3}
-                  decimalSeparator={'.'}
-                />
-              ) : (
-                <Typography
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    fontStyle: 'normal',
-                    fontWeight: 700,
-                    fontSize: '60px',
-                    lineHeight: '106px',
-                    textAlign: 'center',
-
-                    paddingRight: '8px',
-                  }}
-                >
-                  {feeValue}
-                </Typography>
-              )}
-              <Icon sx={{ height: '50px', width: '50px' }}>
-                <img
-                  src={
-                    theme.palette.mode === 'dark'
-                      ? './arweave-logo.svg'
-                      : './arweave-logo-for-light.png'
-                  }
-                  width={'50px'}
-                  height={'50px'}
-                />
-              </Icon>
-            </Box>
           </Box>
         </Box>
         <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'45%'}>
@@ -393,18 +280,7 @@ const Detail = () => {
               {findTag(state.fullState, 'description') || 'No Description Available.'}
             </Typography>
           </Box>
-          {currentAddress === state.modelCreator ? (
-            <Button variant='outlined' disabled={updateDisabled} onClick={updateFee}>
-              Update
-            </Button>
-          ) : (
-            <Vote
-              tx={state.fullState}
-              fee={feeValue}
-              owner={state.modelCreator}
-              voteFor={'model'}
-            />
-          )}
+          <Vote tx={state.fullState} voteFor={'model'} />
         </Box>
       </DialogContent>
       {showOperators ? (

@@ -31,12 +31,19 @@ import {
   VOTE_FOR_OPERATOR,
   VOTE_FOR_SCRIPT,
   secondInMS,
+  U_CONTRACT_ID,
+  SCRIPT_CREATION_PAYMENT_TAGS,
+  INFERENCE_PAYMENT,
+  OPERATOR_REGISTRATION_PAYMENT_TAGS,
+  SCRIPT_INFERENCE_REQUEST,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import {
+  FIND_BY_TAGS,
   QUERY_FEE_PAYMENT,
   QUERY_OPERATOR_REGISTRATION_PAYMENT,
   QUERY_REGISTERED_SCRIPTS,
+  QUERY_TX_WITH,
   QUERY_USER_HAS_VOTED,
   QUERY_VOTES,
 } from '@/queries/graphql';
@@ -69,13 +76,7 @@ type RefetchFn = (
     | undefined,
 ) => Promise<ApolloQueryResult<{ transactions: ITransactions }>>;
 
-const countVouchedVotes = async (
-  tx: IEdge,
-  fee: number,
-  owner: string,
-  voteTxs: IEdge[],
-  voteFor: voteForOptions,
-) => {
+const countVouchedVotes = async (tx: IEdge, voteTxs: IEdge[], voteFor: voteForOptions) => {
   const filtered: IEdge[] = [];
   await Promise.all(
     voteTxs.map(async (el: IEdge) => {
@@ -84,18 +85,17 @@ const countVouchedVotes = async (
       switch (voteFor) {
         case 'model': {
           const txid = findTag(tx, 'modelTransaction') as string;
-          paidFee = await checkCuratorPaidFee(txid, fee, owner, el.node.owner.address);
+          paidFee = await checkCuratorPaidFee(txid, el.node.owner.address);
           break;
         }
         case 'script': {
           const txid = findTag(tx, 'scriptTransaction') as string;
-          paidFee = await checkOperatorPaidFee(txid, fee, el.node.owner.address);
+          paidFee = await checkOperatorPaidFee(txid, el.node.owner.address);
           break;
         }
         case 'operator': {
-          const curatorAddress = findTag(tx, 'scriptCurator') as string;
           const scriptTxId = findTag(tx, 'scriptTransaction') as string;
-          paidFee = await checkUserPaidFee(scriptTxId, fee, curatorAddress, el.node.owner.address);
+          paidFee = await checkUserHasRequests(scriptTxId, el.node.owner.address);
           break;
         }
         default: // do nothing
@@ -109,76 +109,61 @@ const countVouchedVotes = async (
   return filtered.length;
 };
 
-const checkCuratorPaidFee = async (txid: string, fee: number, owner: string, addr: string) => {
+const checkCuratorPaidFee = async (txid: string, addr: string) => {
   const tags = [
-    ...DEFAULT_TAGS,
-    {
-      name: TAG_NAMES.operationName,
-      values: [SCRIPT_CREATION_PAYMENT],
-    },
+    /* ...DEFAULT_TAGS, */
     {
       name: TAG_NAMES.modelTransaction,
       values: [txid],
     },
-  ];
-  const queryResult = await client.query({
-    query: QUERY_REGISTERED_SCRIPTS,
-    variables: { tags, first: 1, addresses: [addr], recipients: [owner] },
-  });
-  if (queryResult.data.transactions.edges.length > 0) {
-    const paymentTx = queryResult.data.transactions.edges[0];
-    const correctFee = fee === parseFloat(paymentTx.node.quantity.ar);
-    const correctTarget = paymentTx.node.recipient === owner;
-
-    return correctFee && correctTarget;
-  }
-  return false;
-};
-
-const checkUserPaidFee = async (txid: string, fee: number, owner: string, addr: string) => {
-  const tags = [
-    ...DEFAULT_TAGS,
-    { name: TAG_NAMES.scriptTransaction, values: txid },
-    { name: TAG_NAMES.operationName, values: SCRIPT_FEE_PAYMENT },
-  ];
-  const queryResult = await client.query({
-    query: QUERY_FEE_PAYMENT,
-    variables: { tags, first: 1, owner: addr, recipient: owner },
-  });
-  if (queryResult.data.transactions.edges.length > 0) {
-    const paymentTx = queryResult.data.transactions.edges[0];
-    const correctFee = fee === parseInt(paymentTx.node.quantity.winston, 10);
-    const correctTarget = paymentTx.node.recipient === owner;
-
-    return correctFee && correctTarget;
-  }
-  return false;
-};
-
-const checkOperatorPaidFee = async (txid: string, fee: number, addr: string) => {
-  const tags = [
-    ...DEFAULT_TAGS,
     {
-      name: TAG_NAMES.operationName,
-      values: [REGISTER_OPERATION],
+      name: TAG_NAMES.sequencerOwner,
+      values: [addr],
     },
+    ...SCRIPT_CREATION_PAYMENT_TAGS,
+  ];
+  const queryResult = await client.query({
+    query: FIND_BY_TAGS,
+    variables: { tags, first: 1 },
+  });
+
+  return queryResult.data.transactions.edges.length > 0;
+};
+
+const checkUserHasRequests = async (txid: string, addr: string) => {
+  const tags = [
+    /*  ...DEFAULT_TAGS, */
+    { name: TAG_NAMES.scriptTransaction, values: txid },
+    { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
+  ];
+  const queryResult = await client.query({
+    query: QUERY_TX_WITH,
+    variables: { tags, first: 1, owner: addr },
+  });
+
+  return queryResult.data.transactions.edges.length > 0;
+};
+
+const checkOperatorPaidFee = async (txid: string, addr: string) => {
+  const tags = [
+    /* ...DEFAULT_TAGS, */
     {
       name: TAG_NAMES.scriptTransaction,
       values: [txid],
     },
+    {
+      name: TAG_NAMES.sequencerOwner,
+      values: [addr],
+    },
+    ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
   ];
-  const queryResult = await client.query({
-    query: QUERY_OPERATOR_REGISTRATION_PAYMENT,
-    variables: { tags, first: 1, owner: addr, recipient: VAULT_ADDRESS },
-  });
-  if (queryResult.data.transactions.edges.length > 0) {
-    const paymentTx = queryResult.data.transactions.edges[0];
-    const correctFee = fee === parseFloat(paymentTx.node.quantity.ar);
-    const correctTarget = paymentTx.node.recipient === VAULT_ADDRESS;
 
-    return correctFee && correctTarget;
-  }
-  return false;
+  const queryResult = await client.query({
+    query: FIND_BY_TAGS,
+    variables: { tags, first: 1 },
+  });
+
+  return queryResult.data.transactions.edges.length > 0;
 };
 
 const vote = async (
@@ -266,17 +251,7 @@ const ShowError = () => (
   </Box>
 );
 
-const Vote = ({
-  tx,
-  fee,
-  owner,
-  voteFor,
-}: {
-  tx: IEdge;
-  fee: number;
-  owner: string;
-  voteFor: voteForOptions;
-}) => {
+const Vote = ({ tx, voteFor }: { tx: IEdge; voteFor: voteForOptions }) => {
   const [hasVoted, setHasVoted] = useState(false);
   const [canVote, setCanVote] = useState(false);
   const { currentAddress, isWalletVouched, dispatchTx } = useContext(WalletContext);
@@ -389,7 +364,7 @@ const Vote = ({
       });
     } else if (upVotesData) {
       const upVotes: IEdge[] = upVotesData.transactions.edges;
-      (async () => setUpVotesCount(await countVouchedVotes(tx, fee, owner, upVotes, voteFor)))();
+      (async () => setUpVotesCount(await countVouchedVotes(tx, upVotes, voteFor)))();
     } else {
       // do nothing
     }
@@ -406,8 +381,7 @@ const Vote = ({
       });
     } else if (downVotesData) {
       const downVotes: IEdge[] = downVotesData.transactions.edges;
-      (async () =>
-        setDownVotesCount(await countVouchedVotes(tx, fee, owner, downVotes, voteFor)))();
+      (async () => setDownVotesCount(await countVouchedVotes(tx, downVotes, voteFor)))();
     } else {
       // do nothing
     }
@@ -431,14 +405,13 @@ const Vote = ({
     let paidFee = false;
     switch (voteFor) {
       case 'model':
-        paidFee = await checkCuratorPaidFee(txid, fee, owner, currentAddress);
+        paidFee = await checkCuratorPaidFee(txid, currentAddress);
         break;
       case 'script':
-        paidFee = await checkOperatorPaidFee(txid, fee, currentAddress);
+        paidFee = await checkOperatorPaidFee(txid, currentAddress);
         break;
       case 'operator': {
-        const curatorAddress = findTag(tx, 'scriptCurator') as string;
-        paidFee = await checkUserPaidFee(txid, fee, curatorAddress, currentAddress);
+        paidFee = await checkUserHasRequests(txid, currentAddress);
         break;
       }
       default: // do nothing;

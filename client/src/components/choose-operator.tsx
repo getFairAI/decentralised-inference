@@ -21,9 +21,13 @@ import {
   TAG_NAMES,
   REGISTER_OPERATION,
   OPERATOR_REGISTRATION_AR_FEE,
+  U_CONTRACT_ID,
+  VAULT_ADDRESS,
+  U_DIVIDER,
+  OPERATOR_REGISTRATION_PAYMENT_TAGS,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import { FIND_BY_TAGS, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
 import { isTxConfirmed } from '@/utils/arweave';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
@@ -56,48 +60,16 @@ const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
   const opFee = findTag(el, 'operatorFee') as string;
   const scriptName = findTag(el, 'scriptName') as string;
   const scriptCurator = findTag(el, 'scriptCurator') as string;
+  const registrationOwner = findTag(el, 'sequencerOwner') as string;
 
   if (
-    !(await isValidRegistration(
-      el.node.id,
-      opFee,
-      el.node.owner.address,
-      scriptName,
-      scriptCurator,
-    ))
+    !(await isValidRegistration(el.node.id, opFee, registrationOwner, scriptName, scriptCurator))
   ) {
     filtered.splice(
-      filtered.findIndex((existing) => el.node.owner.address === existing.node.owner.address),
+      filtered.findIndex((existing) => el.node.id === existing.node.id),
       1,
     );
   }
-};
-
-const verify = async (el: IEdge, filtered: IEdge[]) => {
-  const confirmed = await isTxConfirmed(el.node.id);
-
-  const existingIdx = filtered.findIndex(
-    (existing) => el.node.owner.address === existing.node.owner.address,
-  );
-  const correctFee =
-    parseInt(el.node.quantity.ar, 10) === parseInt(OPERATOR_REGISTRATION_AR_FEE, 10);
-  if (confirmed && correctFee && existingIdx < 0) {
-    filtered.push(el);
-    return true;
-  } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
-    // found a new tx for an existing op, check dates
-    const existingTimestamp =
-      findTag(filtered[existingIdx], 'unixTime') ?? filtered[existingIdx].node.block.timestamp;
-    const newTimestamp = findTag(el, 'unixTime') ?? el.node.block.timestamp;
-    if (newTimestamp > existingTimestamp) {
-      // if new tx has more recent timestamp replace old one
-      filtered[existingIdx] = el;
-      return true;
-    }
-  } else {
-    // if tx is not confirmed or fee is not correct, skip adding it to list
-  }
-  return false;
 };
 
 const OperatorSelected = ({
@@ -118,7 +90,6 @@ const OperatorSelected = ({
       navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
         state: {
           operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
-          scriptFee: findTag(scriptTx as IEdge, 'scriptFee'),
           fullState: operatorsData[selectedIdx],
         },
       }),
@@ -126,23 +97,20 @@ const OperatorSelected = ({
   );
 
   const handleUseOperatorClick = useCallback(() => {
+    const opOwner = findTag(operatorsData[selectedIdx], 'sequencerOwner') as string;
+    const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') as string;
     const state = {
+      modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
       scriptName: findTag(scriptTx as IEdge, 'scriptName'),
-      scriptCurator: (scriptTx as IEdge).node.owner.address,
       fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
       scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
       fullState: scriptTx,
+      scriptCurator,
     };
     if (pathname.includes('chat')) {
-      return navigate(
-        pathname.replace(
-          pathname.split('/chat/')[1],
-          operatorsData[selectedIdx].node.owner.address,
-        ),
-        { state },
-      );
+      return navigate(pathname.replace(pathname.split('/chat/')[1], opOwner), { state });
     } else {
-      return navigate(`/chat/${operatorsData[selectedIdx].node.owner.address}`, { state });
+      return navigate(`/chat/${opOwner}`, { state });
     }
   }, [navigate, scriptTx, operatorsData, selectedIdx, pathname]);
 
@@ -211,19 +179,16 @@ const ChooseOperator = ({
   const elementsPerPage = 5;
 
   const tags = [
-    ...DEFAULT_TAGS,
-    {
-      name: TAG_NAMES.operationName,
-      values: [REGISTER_OPERATION],
-    },
+    /* ...DEFAULT_TAGS, */
     {
       name: TAG_NAMES.scriptCurator,
-      values: [scriptTx?.node.owner.address],
+      values: [findTag(scriptTx as IEdge, 'sequencerOwner')],
     },
     {
       name: TAG_NAMES.scriptName,
       values: [findTag(scriptTx as IEdge, 'scriptName')],
     },
+    ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
   ];
 
   const {
@@ -233,7 +198,7 @@ const ChooseOperator = ({
     networkStatus,
     refetch,
     fetchMore,
-  } = useQuery(QUERY_REGISTERED_OPERATORS, {
+  } = useQuery(FIND_BY_TAGS, {
     variables: { tags, first: elementsPerPage },
     skip: !scriptTx,
   });
@@ -278,10 +243,8 @@ const ChooseOperator = ({
       (async () => {
         const filtered: IEdge[] = [];
         for (const el of queryData.transactions.edges) {
-          const isVerified = await verify(el, filtered);
-          if (isVerified) {
-            await checkOpResponses(el, filtered);
-          }
+          filtered.push(el);
+          await checkOpResponses(el, filtered);
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setOperatorsData(filtered);

@@ -17,7 +17,7 @@
  */
 
 import { NET_ARWEAVE_URL, TAG_NAMES, defaultDecimalPlaces, secondInMS } from '@/constants';
-import { IEdge, ITransactions } from '@/interfaces/arweave';
+import { IContractEdge, IEdge, ITransactions } from '@/interfaces/arweave';
 export const formatNumbers = (value: string) => {
   try {
     return parseFloat(value).toFixed(defaultDecimalPlaces);
@@ -30,11 +30,11 @@ export const genLoadingArray = (numElements: number) =>
   Array.from({ length: numElements }, (_, index) => index);
 
 type tagName = keyof typeof TAG_NAMES;
-export const findTag = (tx: IEdge, tagName: tagName) =>
+export const findTag = (tx: IEdge | IContractEdge, tagName: tagName) =>
   tx.node.tags.find((tag) => tag.name === TAG_NAMES[tagName])?.value;
 
 export const findTagsWithKeyword = (
-  tx: IEdge,
+  tx: IEdge | IContractEdge,
   tagNames: string[],
   searchKeyword: string,
 ): boolean =>

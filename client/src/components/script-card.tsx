@@ -1,13 +1,39 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   AVATAR_ATTACHMENT,
   DEFAULT_TAGS,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
+  OPERATOR_REGISTRATION_AR_FEE,
   REGISTER_OPERATION,
   TAG_NAMES,
+  U_CONTRACT_ID,
+  U_DIVIDER,
+  VAULT_ADDRESS,
 } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
-import { GET_LATEST_MODEL_ATTACHMENTS, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
+import {
+  FIND_BY_TAGS,
+  GET_LATEST_MODEL_ATTACHMENTS,
+  QUERY_REGISTERED_OPERATORS,
+} from '@/queries/graphql';
 import { parseWinston } from '@/utils/arweave';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import {
@@ -33,29 +59,52 @@ interface Element {
   txid: string;
   uploader: string;
   avgFee: string;
-  scriptFee: string;
   totalOperators: number;
 }
 
-const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => {
+const ScriptCard = ({ scriptTx, index }: { scriptTx: IContractEdge; index: number }) => {
   const navigate = useNavigate();
   const [cardData, setCardData] = useState<Element>();
   const elementsPerPage = 5;
   const theme = useTheme();
 
+  const owner = useMemo(() => findTag(scriptTx, 'sequencerOwner'), [scriptTx]);
+
+  const operatorRegistrationInputNumber = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER,
+  });
+  const operatorRegistrationInputStr = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: (parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER).toString(),
+  });
+
   const tags = [
-    ...DEFAULT_TAGS,
-    { name: TAG_NAMES.operationName, values: [REGISTER_OPERATION] },
+    /* ...DEFAULT_TAGS, */
+    {
+      name: TAG_NAMES.operationName,
+      values: [REGISTER_OPERATION],
+    },
+    {
+      name: TAG_NAMES.scriptCurator,
+      values: [owner],
+    },
     {
       name: TAG_NAMES.scriptName,
-      values: [findTag(scriptTx, 'scriptName')],
+      values: [findTag(scriptTx as IEdge, 'scriptName')],
     },
-    { name: TAG_NAMES.scriptCurator, values: [scriptTx.node.owner.address] },
+    { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
+    {
+      name: TAG_NAMES.input,
+      values: [operatorRegistrationInputNumber, operatorRegistrationInputStr],
+    },
   ];
-  // get all operatorsRegistration for the model
-  const { data, loading, error, refetch, fetchMore } = useQuery(QUERY_REGISTERED_OPERATORS, {
+
+  const { data, loading, error, refetch, fetchMore } = useQuery(FIND_BY_TAGS, {
     variables: { tags, first: elementsPerPage },
-    skip: !scriptTx,
+    skip: !scriptTx && !owner,
   });
 
   const [getAvatar, { data: avatarData, loading: avatarLoading }] = useLazyQuery(
@@ -74,7 +123,7 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
     getAvatar({
       variables: {
         tags: attachmentAvatarTags,
-        owner: scriptTx.node.owner.address,
+        owner,
       },
     });
   }, []);
@@ -119,8 +168,9 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
 
       // filter registratiosn for same model (only keep latest one per operator)
       registrations.forEach((op: IEdge) =>
-        uniqueOperators.filter((unique) => op.node.owner.address === unique.node.owner.address)
-          .length > 0
+        uniqueOperators.filter(
+          (unique) => findTag(op, 'sequencerOwner') === findTag(unique, 'sequencerOwner'),
+        ).length > 0
           ? undefined
           : uniqueOperators.push(op),
       );
@@ -132,13 +182,11 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
       });
       const average = (arr: number[]) => arr.reduce((p, c) => p + c, 0) / arr.length;
       const avgFee = parseWinston(average(opFees).toString());
-      const scriptFee = findTag(scriptTx, 'scriptFee');
 
       setCardData({
         name: findTag(scriptTx, 'scriptName') || 'Name not Available',
         txid: findTag(scriptTx, 'scriptTransaction') || 'Transaction Not Available',
-        uploader: scriptTx.node.owner.address,
-        scriptFee: parseWinston(scriptFee) || 'Script Fee Not Available',
+        uploader: owner || 'Uploader Not Available',
         avgFee,
         totalOperators: uniqueOperators.length,
       });
@@ -152,13 +200,11 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
   };
 
   const getTimePassed = () => {
-    const timestamp = findTag(scriptTx, 'unixTime') || scriptTx.node.block?.timestamp;
+    const timestamp = findTag(scriptTx, 'unixTime');
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
-    const dateA = Number.isInteger(timestamp)
-      ? (timestamp as number) * 1000
-      : parseInt(timestamp as string, 10) * 1000;
+    const dateA = parseInt(timestamp as string, 10) * 1000;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;
@@ -231,38 +277,6 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
               textAlign: 'center',
             }}
           />
-          {/* <Typography>Name: {cardData?.name}</Typography>
-          <Typography>Transaction id: {cardData?.txid}</Typography>
-          <Typography>Creator: {cardData?.uploader}</Typography>
-          {loading ? (
-            <>
-              <Typography>
-                <Skeleton animation={'wave'} />
-              </Typography>
-              <Typography>
-                <Skeleton animation={'wave'} />
-              </Typography>
-              <Typography>
-                <Skeleton animation={'wave'} />
-              </Typography>
-            </>
-          ) : (
-            <>
-              <Typography>
-                Model Fee:{' '}
-                {Number.isNaN(cardData?.scriptFee) || cardData?.scriptFee === 'NaN'
-                  ? 'Invalid Fee'
-                  : `${cardData?.scriptFee} AR`}
-              </Typography>
-              <Typography>
-                Average Fee:{' '}
-                {Number.isNaN(cardData?.avgFee) || cardData?.avgFee === 'NaN'
-                  ? 'Not enough Operators for Fee'
-                  : `${cardData?.avgFee} AR`}
-              </Typography>
-              <Typography>Total Operators: {cardData?.totalOperators}</Typography>
-            </>
-          )} */}
           {!imgUrl || loading || avatarLoading ? (
             <Box
               sx={{
@@ -329,23 +343,6 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
                 }}
               >
                 {cardData?.totalOperators}
-              </Typography>
-            </Box>
-            <Box display={'flex'} flexDirection='column'>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 300,
-                  fontSize: '20px',
-                  lineHeight: '27px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                {Number.isNaN(cardData?.scriptFee) || cardData?.scriptFee === 'NaN'
-                  ? 'Invalid Fee'
-                  : `${cardData?.scriptFee} AR`}
               </Typography>
             </Box>
             <Box display={'flex'} flexDirection='column'>

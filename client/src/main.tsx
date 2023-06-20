@@ -23,7 +23,7 @@ import Root from '@/root';
 import Home from '@/pages/home';
 import Curators from '@/pages/curators';
 import UploadCreator from '@/pages/upload-creator';
-import Model, { getModelFeeAndAttachments } from '@/pages/model/model';
+import Model, { getModelAttachments } from '@/pages/model/model';
 import '@/styles/main.css';
 import Operators from '@/pages/operators';
 import Register from '@/pages/script/register';
@@ -35,7 +35,6 @@ import BlockOperatorGuard from '@/guards/block-operator';
 import ErrorDisplay from '@/pages/error-display';
 import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
-import ScriptFeeGuard from '@/guards/script-fee';
 import ScriptDetails from './pages/script/script-details';
 import Registrations from './pages/registrations';
 
@@ -55,7 +54,7 @@ const router = createHashRouter([
             children: [
               {
                 path: 'detail',
-                loader: getModelFeeAndAttachments,
+                loader: getModelAttachments,
                 element: <Detail />,
               },
             ],
@@ -81,7 +80,7 @@ const router = createHashRouter([
         children: [
           {
             path: 'change-operator',
-            loader: getModelFeeAndAttachments,
+            loader: getModelAttachments,
             element: <Detail />,
           },
         ],

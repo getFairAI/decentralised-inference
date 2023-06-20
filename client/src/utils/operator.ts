@@ -20,27 +20,47 @@ import {
   N_PREVIOUS_BLOCKS,
   DEFAULT_TAGS,
   TAG_NAMES,
-  INFERENCE_PERCENTAGE_FEE,
   VAULT_ADDRESS,
   CANCEL_OPERATION,
+  U_CONTRACT_ID,
+  SCRIPT_INFERENCE_REQUEST,
+  INFERENCE_PAYMENT,
+  SCRIPT_INFERENCE_RESPONSE,
+  OPERATOR_REGISTRATION_AR_FEE,
+  U_DIVIDER,
+  REGISTER_OPERATION,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import {
-  QUERY_REQUESTS_FOR_OPERATOR,
-  QUERY_TX_WITH,
-  QUERY_PAYMENT_TO_VAULT_WITH,
-} from '@/queries/graphql';
+import { QUERY_TX_WITH, FIND_BY_TAGS } from '@/queries/graphql';
 import { client } from './apollo';
 import { findTag } from './common';
 
-const getOperatorRequests = async (address: string, scriptName: string, scriptCurator: string) => {
+const getOperatorRequests = async (
+  address: string,
+  operatorFee: string,
+  scriptName: string,
+  scriptCurator: string,
+) => {
+  const qty = parseFloat(operatorFee);
+  const requestPaymentsInputNumber = JSON.stringify({
+    function: 'transfer',
+    target: address,
+    qty,
+  });
+  const requestPaymentsInputStr = JSON.stringify({
+    function: 'transfer',
+    target: address,
+    qty: qty.toString(),
+  });
   const { data } = await client.query({
-    query: QUERY_REQUESTS_FOR_OPERATOR,
+    query: FIND_BY_TAGS,
     variables: {
-      recipient: address,
       first: N_PREVIOUS_BLOCKS,
       tags: [
-        ...DEFAULT_TAGS,
+        /* ...DEFAULT_TAGS, */
+        { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
+        { name: TAG_NAMES.input, values: [requestPaymentsInputNumber, requestPaymentsInputStr] },
+        { name: TAG_NAMES.operationName, values: [INFERENCE_PAYMENT] },
         { name: TAG_NAMES.scriptName, values: [scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [scriptCurator] },
       ],
@@ -52,9 +72,9 @@ const getOperatorRequests = async (address: string, scriptName: string, scriptCu
 
 const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
   const responseTags = [
-    ...DEFAULT_TAGS,
+    /* ...DEFAULT_TAGS, */
     { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
-    { name: TAG_NAMES.operationName, values: ['Script Inference Response'] },
+    { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
   ];
 
   const { data } = await client.query({
@@ -66,31 +86,6 @@ const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
     return false;
   } else {
     return true;
-  }
-};
-
-const hasOperatorDistributedFees = async (
-  request: IEdge,
-  operatorFee: string,
-  opAddress: string,
-) => {
-  const distributionAmount = parseFloat(operatorFee) * INFERENCE_PERCENTAGE_FEE;
-  const feeDistributionTags = [
-    ...DEFAULT_TAGS,
-    { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
-    { name: TAG_NAMES.operationName, values: ['Fee Redistribution'] },
-  ];
-
-  const { data } = await client.query({
-    query: QUERY_PAYMENT_TO_VAULT_WITH,
-    variables: { tags: feeDistributionTags, owner: opAddress, recipient: VAULT_ADDRESS },
-  });
-
-  if (data.transactions.edges.length === 0) {
-    return false;
-  } else {
-    const paymentTx = data.transactions.edges[0];
-    return distributionAmount === parseFloat(paymentTx.node.quantity.winston);
   }
 };
 
@@ -120,20 +115,89 @@ export const isValidRegistration = async (
     return false;
   }
 
-  const lastRequests = await getOperatorRequests(opAddress, scriptName, scriptCurator);
-  let isValid = true;
-  // check if operator answere last 7 requests
+  const lastRequests = await getOperatorRequests(opAddress, operatorFee, scriptName, scriptCurator);
   for (const request of lastRequests) {
     // check if operator has answered last 7 requests
-    if (
-      !(await hasOperatorAnswered(request, opAddress)) ||
-      !(await hasOperatorDistributedFees(request, operatorFee, opAddress))
-    ) {
+    if (!(await hasOperatorAnswered(request, opAddress))) {
       // if any of the last 7 requests has not been answered, the operator is not valid
-      isValid = false;
-      return isValid;
+      return false;
     }
   }
 
-  return isValid;
+  return true;
+};
+
+export const checkHasOperators = async (scriptTx: IEdge, filtered: IEdge[]) => {
+  const elementsPerPage = 5;
+
+  const operatorRegistrationInputNumber = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER,
+  });
+  const operatorRegistrationInputStr = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: (parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER).toString(),
+  });
+
+  const registrationTags = [
+    /* ...DEFAULT_TAGS, */
+    {
+      name: TAG_NAMES.operationName,
+      values: [REGISTER_OPERATION],
+    },
+    {
+      name: TAG_NAMES.scriptCurator,
+      values: [findTag(scriptTx, 'sequencerOwner')],
+    },
+    {
+      name: TAG_NAMES.scriptName,
+      values: [findTag(scriptTx, 'scriptName')],
+    },
+    { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
+    {
+      name: TAG_NAMES.input,
+      values: [operatorRegistrationInputNumber, operatorRegistrationInputStr],
+    },
+  ];
+  const queryResult = await client.query({
+    query: FIND_BY_TAGS,
+    variables: { tags: registrationTags, first: elementsPerPage },
+  });
+
+  if (queryResult.data.transactions.edges.length === 0) {
+    filtered.splice(
+      filtered.findIndex((el) => el.node.id === scriptTx.node.id),
+      1,
+    );
+  } else {
+    let hasAtLeastOneValid = false;
+    for (const registration of queryResult.data.transactions.edges) {
+      const opFee = findTag(registration, 'operatorFee') as string;
+      const scriptName = findTag(registration, 'scriptName') as string;
+      const scriptCurator = findTag(registration, 'scriptCurator') as string;
+      const registrationOwner = findTag(registration, 'sequencerOwner') as string;
+
+      if (
+        await isValidRegistration(
+          registration.node.id,
+          opFee,
+          registrationOwner,
+          scriptName,
+          scriptCurator,
+        )
+      ) {
+        filtered.push(scriptTx);
+        hasAtLeastOneValid = true;
+      }
+    }
+
+    if (!hasAtLeastOneValid) {
+      filtered.splice(
+        filtered.findIndex((existing) => scriptTx.node.id === existing.node.id),
+        1,
+      );
+    }
+  }
 };

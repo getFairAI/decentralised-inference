@@ -33,7 +33,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import useOnScreen from '@/hooks/useOnScreen';
-import { MODEL_CREATION_PAYMENT, TAG_NAMES, U_CONTRACT_ID, modelPaymentInput } from '@/constants';
+import { MODEL_CREATION_PAYMENT_TAGS, TAG_NAMES } from '@/constants';
 import Featured from '@/components/featured';
 import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
@@ -54,11 +54,7 @@ export default function Home() {
 
   const { data, loading, error, fetchMore, networkStatus } = useQuery(FIND_BY_TAGS, {
     variables: {
-      tags: [
-        { name: TAG_NAMES.input, values: [modelPaymentInput] },
-        { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
-        { name: TAG_NAMES.operationName, values: [MODEL_CREATION_PAYMENT] },
-      ],
+      tags: [...MODEL_CREATION_PAYMENT_TAGS],
       first: elementsPerPage,
     },
   });

@@ -20,21 +20,15 @@ import {
   AVATAR_ATTACHMENT,
   DEFAULT_TAGS,
   MODEL_ATTACHMENT,
-  MODEL_FEE_UPDATE,
   NOTES_ATTACHMENT,
   TAG_NAMES,
 } from '@/constants';
 import { RouteLoaderResult } from '@/interfaces/router';
-import {
-  GET_LATEST_FEE_UPDATE,
-  GET_LATEST_MODEL_ATTACHMENTS,
-  GET_TX_OWNER,
-} from '@/queries/graphql';
+import { GET_LATEST_MODEL_ATTACHMENTS, GET_TX_OWNER } from '@/queries/graphql';
 import { client } from '@/utils/apollo';
-import { findTag } from '@/utils/common';
 import { Outlet, Params } from 'react-router-dom';
 
-export const getModelFeeAndAttachments = async ({
+export const getModelAttachments = async ({
   params,
 }: {
   params: Params;
@@ -44,20 +38,6 @@ export const getModelFeeAndAttachments = async ({
     variables: { id: params.txid },
   });
   const txOwner = txOwnerResult.data.transactions.edges[0].node.owner.address;
-
-  // get update fee transactions
-  const updateFeeTags = [
-    ...DEFAULT_TAGS,
-    { name: TAG_NAMES.operationName, values: [MODEL_FEE_UPDATE] },
-    { name: TAG_NAMES.modelTransaction, values: [params.txid] },
-  ];
-  const queryResult = await client.query({
-    query: GET_LATEST_FEE_UPDATE,
-    variables: { tags: updateFeeTags, owner: txOwner },
-  });
-  const updatedFee = queryResult?.data?.transactions?.edges[0]
-    ? findTag(queryResult.data.transactions.edges[0], 'modelFee')
-    : '';
 
   // get attachments teransactions
   const attachmentAvatarTags = [
@@ -97,7 +77,6 @@ export const getModelFeeAndAttachments = async ({
     : '';
 
   return {
-    updatedFee,
     avatarTxId,
     notesTxId,
   };

@@ -2,8 +2,9 @@ import { IEdge } from '@/interfaces/arweave';
 import { Checkbox, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { parseWinston } from '@/utils/arweave';
-import { findTag } from '@/utils/common';
-import { useCallback } from 'react';
+import { displayShortTxOrAddr, findTag } from '@/utils/common';
+import { useCallback, useMemo } from 'react';
+import { parseUBalance } from '@/utils/u';
 
 /**
  * @description React Function component to handle displaying a row for an operator
@@ -21,22 +22,23 @@ const ScriptRow = ({
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
+  const scriptOwner = useMemo(() => findTag(scriptTx, 'sequencerOwner'), [scriptTx]);
+
   const handleCopyClick = useCallback(async () => {
-    if (scriptTx.node.owner.address) {
-      await navigator.clipboard.writeText(scriptTx.node.owner.address);
+    if (scriptOwner) {
+      await navigator.clipboard.writeText(scriptOwner);
     } else {
       // do nothing
     }
-  }, [scriptTx, navigator]);
+  }, [scriptOwner, navigator]);
 
   return (
     <>
       <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
         <TableCell scope='row'>
-          <Tooltip title={scriptTx.node.owner.address}>
+          <Tooltip title={scriptOwner}>
             <Typography>
-              {scriptTx.node.owner.address.slice(0, 10)}...
-              {scriptTx.node.owner.address.slice(-2)}
+              {displayShortTxOrAddr(scriptOwner ?? '')}
               <IconButton size='small' onClick={handleCopyClick}>
                 <CopyIcon fontSize='inherit' />
               </IconButton>
@@ -47,7 +49,6 @@ const ScriptRow = ({
         <TableCell align='right'>
           {new Date(parseFloat(findTag(scriptTx, 'unixTime') as string) * 1000).toLocaleString()}
         </TableCell>
-        <TableCell align='right'>{parseWinston(findTag(scriptTx, 'scriptFee'))}</TableCell>
         <TableCell align='right'>{0}</TableCell>
         <TableCell align='right'>
           <Checkbox color='primary' checked={isSelected} onChange={() => setSelected(index)} />

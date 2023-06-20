@@ -197,6 +197,7 @@ const WalletState = () => {
             </Tooltip>
           )}
         </Box>
+        <Pending />
       </Box>
       <ProfileMenu />
     </>

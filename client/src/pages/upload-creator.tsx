@@ -227,8 +227,7 @@ const UploadCreator = () => {
 
     // upload the file
     const tags = [];
-    const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
-    const parsedUFee = parseUBalance(fee);
+    const parsedUFee = parseFloat(MARKETPLACE_FEE) * U_DIVIDER;
 
     if (currentUBalance < parseInt(MARKETPLACE_FEE, 10)) {
       enqueueSnackbar('Not Enough Balance in your Wallet to pay MarketPlace Fee', {
@@ -242,8 +241,7 @@ const UploadCreator = () => {
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
     tags.push({ name: TAG_NAMES.modelName, value: `${data.name}` });
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_CREATION });
-    tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
-    tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: parsedUFee.toString() });
     tags.push({ name: TAG_NAMES.paymentTarget, value: VAULT_ADDRESS });
     if (data.description) {
       tags.push({ name: TAG_NAMES.description, value: data.description });
@@ -259,7 +257,6 @@ const UploadCreator = () => {
         { name: TAG_NAMES.contentType, value: file.type },
         { name: TAG_NAMES.operationName, value: MODEL_CREATION_PAYMENT },
         { name: TAG_NAMES.modelName, value: data.name },
-        { name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) },
         { name: TAG_NAMES.modelTransaction, value: res.data.id },
         { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
       ];

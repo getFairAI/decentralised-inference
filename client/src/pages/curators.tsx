@@ -70,10 +70,11 @@ import {
   successStatusCode,
   secondInMS,
   U_DIVIDER,
-  defaultDecimalPlaces,
-  modelPaymentInput,
   U_CONTRACT_ID,
   MODEL_CREATION_PAYMENT,
+  SCRIPT_CREATION_FEE,
+  VAULT_ADDRESS,
+  MODEL_CREATION_PAYMENT_TAGS,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
@@ -86,7 +87,7 @@ import { FundContext } from '@/context/fund';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import { FIND_BY_TAGS, GET_LATEST_FEE_UPDATE } from '@/queries/graphql';
 import { IEdge, ITag } from '@/interfaces/arweave';
-import { commonUpdateQuery, findTag } from '@/utils/common';
+import { commonUpdateQuery, displayShortTxOrAddr, findTag } from '@/utils/common';
 import DebounceButton from '@/components/debounce-button';
 import { parseUBalance, sendU } from '@/utils/u';
 
@@ -195,8 +196,6 @@ const Curators = () => {
   const { currentAddress, currentBalance, updateUBalance } = useContext(WalletContext);
   const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
-  const { field: modelField } = useController({ name: 'model', control });
-  const [selectedModelFee, setSelectedModelFee] = useState(0);
 
   const {
     data: modelsData,
@@ -205,55 +204,17 @@ const Curators = () => {
     fetchMore: modelsFetchMore,
   } = useQuery(FIND_BY_TAGS, {
     variables: {
-      tags: [
-        { name: TAG_NAMES.input, values: [modelPaymentInput] },
-        { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
-        { name: TAG_NAMES.operationName, values: [MODEL_CREATION_PAYMENT] },
-      ],
+      tags: [...MODEL_CREATION_PAYMENT_TAGS],
       first: elementsPerPage,
     },
     notifyOnNetworkStatusChange: true,
   });
-
-  const [getSelectedModelFeeUpdates, { data: updatedFeeData }] =
-    useLazyQuery(GET_LATEST_FEE_UPDATE);
 
   useEffect(() => {
     if (modelsData) {
       setHasModelsNextPage(modelsData?.transactions?.pageInfo?.hasNextPage || false);
     }
   }, [modelsData]);
-
-  useEffect(() => {
-    if (modelField.value && (modelField.value as IEdge)) {
-      const value = JSON.parse(modelField.value);
-      const updateFeeTags = [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [MODEL_FEE_UPDATE] },
-        { name: TAG_NAMES.modelTransaction, values: [value.node.id] },
-      ];
-      getSelectedModelFeeUpdates({
-        variables: {
-          tags: updateFeeTags,
-          owner: value.node.owner.address,
-        },
-      });
-    } else {
-      setSelectedModelFee(0);
-    }
-  }, [modelField.value]);
-
-  useEffect(() => {
-    if (modelField.value && updatedFeeData && updatedFeeData.transactions.edges.length > 0) {
-      const updateFee = findTag(updatedFeeData.transactions.edges[0], 'modelFee');
-      setSelectedModelFee(parseFloat(parseWinston(updateFee)));
-    } else if (modelField.value) {
-      const modelFee = findTag(JSON.parse(modelField.value), 'modelFee');
-      setSelectedModelFee(parseFloat(parseWinston(modelFee)));
-    } else {
-      // do nothing
-    }
-  }, [updatedFeeData]);
 
   const onSubmit = async (data: FieldValues) => {
     await updateBalance();
@@ -387,32 +348,31 @@ const Curators = () => {
     // upload the file
     const tags = [];
     const modelData = JSON.parse(data.model) as IEdge;
-    const winstonFee = arweave.ar.arToWinston(selectedModelFee.toString());
-    const parsedUFee = parseUBalance(winstonFee);
+    const uFee = parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER;
 
-    if (currentBalance * U_DIVIDER < parsedUFee) {
+    if (currentBalance < parseFloat(SCRIPT_CREATION_FEE)) {
       enqueueSnackbar(
-        `Not Enought Balance in your Wallet to pay Model Fee (${selectedModelFee} U)`,
+        `Not Enought Balance in your Wallet to pay Script Creation Fee (${SCRIPT_CREATION_FEE} U)`,
         { variant: 'error' },
       );
       return;
     }
 
+    const modelOwner = findTag(modelData, 'sequencerOwner') as string;
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
     tags.push({ name: TAG_NAMES.scriptName, value: `${data.name}` });
     tags.push({ name: TAG_NAMES.category, value: data.category });
     tags.push({ name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string });
-    tags.push({ name: TAG_NAMES.modelCreator, value: modelData.node.owner.address });
+    tags.push({ name: TAG_NAMES.modelCreator, value: modelOwner });
     tags.push({
       name: TAG_NAMES.modelTransaction,
       value: findTag(modelData, 'modelTransaction') as string,
     });
     tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_CREATION });
-    tags.push({ name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) });
-    tags.push({ name: TAG_NAMES.paymentQuantity, value: winstonFee });
-    tags.push({ name: TAG_NAMES.paymentTarget, value: modelData.node.owner.address });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: uFee.toString() });
+    tags.push({ name: TAG_NAMES.paymentTarget, value: VAULT_ADDRESS });
     if (data.description) {
       tags.push({ name: TAG_NAMES.description, value: data.description });
     }
@@ -431,12 +391,11 @@ const Curators = () => {
         { name: TAG_NAMES.scriptName, value: `${data.name}` },
         { name: TAG_NAMES.category, value: data.category },
         { name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string },
-        { name: TAG_NAMES.modelCreator, value: modelData.node.owner.address },
+        { name: TAG_NAMES.modelCreator, value: modelOwner },
         {
           name: TAG_NAMES.modelTransaction,
           value: findTag(modelData, 'modelTransaction') as string,
         },
-        { name: TAG_NAMES.scriptFee, value: arweave.ar.arToWinston(`${data.fee}`) },
         { name: TAG_NAMES.scriptTransaction, value: res.data.id },
         { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
         { name: TAG_NAMES.allowFiles, value: `${data.allow.allowFiles}` },
@@ -447,16 +406,12 @@ const Curators = () => {
         paymentTags.push({ name: TAG_NAMES.description, value: data.description });
       }
 
-      const paymentId = await sendU(
-        modelData.node.owner.address,
-        parsedUFee.toString(),
-        paymentTags,
-      );
+      const paymentId = await sendU(VAULT_ADDRESS, uFee.toString(), paymentTags);
       await updateUBalance();
 
       enqueueSnackbar(
         <>
-          Paid Model Fee {selectedModelFee.toFixed(defaultDecimalPlaces)} U.
+          Paid Script Creation Fee {SCRIPT_CREATION_FEE} U.
           <br></br>
           <a
             href={`https://viewblock.io/arweave/tx/${paymentId}`}
@@ -589,57 +544,6 @@ const Curators = () => {
                       <MenuItem value={'audio'}>Audio</MenuItem>
                       <MenuItem value={'video'}>Video</MenuItem>
                     </SelectControl>
-                    <Box paddingLeft={'8px'}>
-                      <Typography
-                        sx={{
-                          fontStyle: 'normal',
-                          fontWeight: 700,
-                          fontSize: '23px',
-                          lineHeight: '31px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                        }}
-                      >
-                        Cost
-                      </Typography>
-                      <Box
-                        display={'flex'}
-                        alignItems={'center'}
-                        justifyContent='space-between'
-                        width={'45%'}
-                        height='60px'
-                      >
-                        <NumberControl
-                          name='fee'
-                          control={control}
-                          rules={{ required: true, min: 0.001 }}
-                          mat={{
-                            sx: {
-                              fontStyle: 'normal',
-                              fontWeight: 700,
-                              fontSize: '23px',
-                              lineHeight: '31px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              textAlign: 'center',
-                              paddingRight: '8px',
-                            },
-                          }}
-                        />
-                        <Icon sx={{ height: '50px', width: '50px' }}>
-                          <img
-                            src={
-                              theme.palette.mode === 'dark'
-                                ? './arweave-logo.svg'
-                                : './arweave-logo-for-light.png'
-                            }
-                            width={'50px'}
-                            height={'50px'}
-                          />
-                        </Icon>
-                      </Box>
-                    </Box>
                   </Box>
                   <TextControl
                     name='description'
@@ -667,9 +571,6 @@ const Curators = () => {
                     name='model'
                     control={control}
                     rules={{ required: true }}
-                    helperText={
-                      selectedModelFee ? `Selected Model Fee is ${selectedModelFee} AR` : ''
-                    }
                     mat={{
                       placeholder: 'Choose a Model',
                       sx: {
@@ -688,11 +589,10 @@ const Curators = () => {
                             {findTag(JSON.parse(selected as string), 'modelName')}
                           </Typography>
                           <Typography sx={{ opacity: '0.5' }}>
-                            {JSON.parse(selected as string).node.owner.address}
-                            {` (Creator: ${JSON.parse(selected as string).node.owner.address.slice(
-                              0,
-                              10,
-                            )}...${JSON.parse(selected as string).node.owner.address.slice(-3)})`}
+                            {findTag(JSON.parse(selected as string), 'sequencerOwner')}
+                            {` (Creator: ${displayShortTxOrAddr(
+                              findTag(JSON.parse(selected as string), 'sequencerOwner') as string,
+                            )})`}
                           </Typography>
                         </Box>
                       ),
@@ -739,11 +639,10 @@ const Curators = () => {
                         >
                           <Typography>{findTag(el, 'modelName')}</Typography>
                           <Typography sx={{ opacity: '0.5' }}>
-                            {el.node.id}
-                            {` (Creator: ${el.node.owner.address.slice(
-                              0,
-                              10,
-                            )}...${el.node.owner.address.slice(-3)})`}
+                            {findTag(el, 'modelTransaction')}
+                            {` (Creator: ${displayShortTxOrAddr(
+                              findTag(el, 'sequencerOwner') as string,
+                            )}`}
                           </Typography>
                         </MenuItem>
                       ))
@@ -789,9 +688,7 @@ const Curators = () => {
                 <DebounceButton
                   onClick={handleSubmit(onSubmit)}
                   disabled={
-                    (!control._formState.isValid && control._formState.isDirty) ||
-                    !currentAddress ||
-                    !selectedModelFee
+                    (!control._formState.isValid && control._formState.isDirty) || !currentAddress
                   }
                   sx={{
                     borderRadius: '7px',

@@ -38,7 +38,6 @@ import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useRef, useSt
 import {
   APP_VERSION,
   DEFAULT_TAGS,
-  INFERENCE_PERCENTAGE_FEE,
   TAG_NAMES,
   APP_NAME,
   INFERENCE_PAYMENT,
@@ -48,6 +47,12 @@ import {
   secondInMS,
   successStatusCode,
   textContentType,
+  OPERATOR_PERCENTAGE_FEE,
+  U_DIVIDER,
+  MARKETPLACE_PERCENTAGE_FEE,
+  CREATOR_PERCENTAGE_FEE,
+  CURATOR_PERCENTAGE_FEE,
+  VAULT_ADDRESS,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -482,6 +487,7 @@ const Chat = () => {
     if (!currentConversationId) {
       return false;
     }
+
     let dataSize;
     if (isFile && file) {
       dataSize = file.size;
@@ -497,6 +503,7 @@ const Chat = () => {
         enqueueSnackbar('Not Enough Bundlr Funds to send message', { variant: 'error' });
         return false;
       }
+
       return true;
     } catch (error) {
       enqueueSnackbar('Bundlr Error', { variant: 'error' });
@@ -505,7 +512,7 @@ const Chat = () => {
   };
 
   const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string) => {
-    const parsedUFee = parseUBalance(inferenceFee);
+    const parsedUFee = parseFloat(inferenceFee);
     try {
       const paymentTags = [
         { name: TAG_NAMES.appName, value: APP_NAME },
@@ -514,26 +521,41 @@ const Chat = () => {
         { name: TAG_NAMES.scriptName, value: state.scriptName },
         { name: TAG_NAMES.scriptCurator, value: state.scriptCurator },
         { name: TAG_NAMES.scriptTransaction, value: state.scriptTransaction },
-        { name: TAG_NAMES.scriptOperator, value: address || '' },
+        { name: TAG_NAMES.scriptOperator, value: address as string },
+        { name: TAG_NAMES.modelCreator, value: state.modelCreator },
         { name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` },
         { name: TAG_NAMES.inferenceTransaction, value: bundlrId },
         { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
         { name: TAG_NAMES.contentType, value: contentType },
       ];
 
-      const paymentId = await sendU(address as string, parsedUFee.toString(), paymentTags);
+      const operatorFeeShare = parsedUFee * OPERATOR_PERCENTAGE_FEE;
+      const marketPlaceFeeShare = parsedUFee * MARKETPLACE_PERCENTAGE_FEE;
+      const creatorFeeShare = parsedUFee * CREATOR_PERCENTAGE_FEE;
+      const curatorFeeShare = parsedUFee * CURATOR_PERCENTAGE_FEE;
+
+      // pay operator
+      await sendU(address as string, parseInt(operatorFeeShare.toString(), 10), paymentTags);
+      // pay curator
+      await sendU(state.scriptCurator, parseInt(curatorFeeShare.toString(), 10), paymentTags);
+      // pay model creator
+      await sendU(state.modelCreator, parseInt(creatorFeeShare.toString(), 10), paymentTags);
+      // pay marketplace
+      await sendU(VAULT_ADDRESS, parseInt(marketPlaceFeeShare.toString(), 10), paymentTags);
+
+      // update balance after payments
       await updateUBalance();
       enqueueSnackbar(
         <>
-          Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
-          <br></br>
+          Paid Inference costs: {parseUBalance(inferenceFee)} U.
+          {/*  <br></br>
           <a
             href={`https://viewblock.io/arweave/tx/${paymentId}`}
             target={'_blank'}
             rel='noreferrer'
           >
             <u>View Transaction in Explorer</u>
-          </a>
+          </a> */}
         </>,
         { variant: 'success' },
       );
@@ -550,12 +572,7 @@ const Chat = () => {
     const contentType = isFile && file ? file?.type : textContentType;
     const content = isFile && file ? file : newMessage;
 
-    const inferenceFee = (
-      parseFloat(state.fee) +
-      parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
-    ).toString();
-
-    if (currentUBalance < parseUBalance(inferenceFee)) {
+    if (currentUBalance < parseUBalance(state.fee)) {
       enqueueSnackbar('Not Enough U tokens to pay Operator', { variant: 'error' });
       return;
     }
@@ -569,7 +586,7 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.scriptOperator, value: address });
     tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_INFERENCE_REQUEST });
     tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
-    tags.push({ name: TAG_NAMES.paymentQuantity, value: inferenceFee });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: state.fee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
     const tempDate = Date.now() / secondInMS;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
@@ -664,7 +681,7 @@ const Chat = () => {
         },
       );
 
-      await handlePayment(bundlrId, inferenceFee, contentType);
+      await handlePayment(bundlrId, state.fee, contentType);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
     }

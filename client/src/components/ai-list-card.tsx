@@ -111,7 +111,6 @@ const AiListCard = ({
       state: {
         modelName: findTag(model, 'modelName'),
         modelCreator: owner,
-        fee: findTag(model, 'modelFee'),
         modelTransaction: modelId,
         fullState: model,
       },

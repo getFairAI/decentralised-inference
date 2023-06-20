@@ -8,6 +8,7 @@ import {
   SAVE_REGISTER_OPERATION,
   OPERATOR_REGISTRATION_AR_FEE,
   secondInMS,
+  U_DIVIDER,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { RouteLoaderResult } from '@/interfaces/router';
@@ -56,12 +57,13 @@ const Register = () => {
 
   const handleRegister = async (rate: string, operatorName: string, handleNext: () => void) => {
     try {
-      if (currentUBalance < parseInt(OPERATOR_REGISTRATION_AR_FEE, 10)) {
+      if (currentUBalance < parseFloat(OPERATOR_REGISTRATION_AR_FEE)) {
         enqueueSnackbar('Insufficient U Balance', { variant: 'error' });
         return;
       }
-      const winstonFee = arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE);
-      const parsedUFee = parseUBalance(winstonFee);
+
+      const parsedUFee = parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER;
+      const parsedOpFee = parseFloat(rate) * U_DIVIDER;
 
       const tags = [];
       tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
@@ -70,12 +72,15 @@ const Register = () => {
         name: TAG_NAMES.scriptName,
         value: findTag(state, 'scriptName') ?? '',
       });
-      tags.push({ name: TAG_NAMES.scriptCurator, value: state.node.owner.address });
+      tags.push({
+        name: TAG_NAMES.scriptCurator,
+        value: findTag(state, 'sequencerOwner') as string,
+      });
       tags.push({
         name: TAG_NAMES.scriptTransaction,
         value: findTag(state, 'scriptTransaction') as string,
       });
-      tags.push({ name: TAG_NAMES.operatorFee, value: arweave.ar.arToWinston(rate) });
+      tags.push({ name: TAG_NAMES.operatorFee, value: parsedOpFee.toString() });
       tags.push({ name: TAG_NAMES.operationName, value: REGISTER_OPERATION });
       tags.push({ name: TAG_NAMES.operatorName, value: operatorName });
       tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });

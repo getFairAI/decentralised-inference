@@ -81,7 +81,11 @@ export const swapArToU = async (amount: string) => {
   return result?.originalTxId;
 };
 
-export const sendU = async (to: string, amount: string, tags: ITag[]) => {
+export const sendU = async (to: string, amount: string | number, tags: ITag[]) => {
+  if (typeof amount === 'number') {
+    amount = amount.toString();
+  }
+
   const result = await contract.writeInteraction(
     {
       function: 'transfer',

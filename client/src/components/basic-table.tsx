@@ -128,7 +128,7 @@ const BasicTableContent = ({
           <OperatorRow
             key={row.node.id}
             operatorTx={row}
-            scriptCurator={state.node.owner.address}
+            scriptCurator={findTag(state, 'sequencerOwner') as string}
             scriptName={findTag(state, 'scriptName') as string}
             state={state}
             index={idx}
