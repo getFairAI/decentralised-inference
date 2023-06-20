@@ -87,7 +87,7 @@ export const queryTransactionsReceived = async (address: string, opFee: number, 
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: [SCRIPT_INFERENCE_REQUEST],
+      values: ['Inference Payment'],
     },
     {
       name: SCRIPT_CURATOR_TAG,
