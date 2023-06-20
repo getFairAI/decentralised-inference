@@ -312,19 +312,19 @@ const checkUserPaidInferenceFees = async (
   const marketpaceInput = JSON.stringify({
     function: 'transfer',
     target: VAULT_ADDRESS,
-    qty: marketplaceShare.toString(),
+    qty: parseInt(marketplaceShare.toString(), 10).toString(),
   });
 
   const curatorInput = JSON.stringify({
     function: 'transfer',
     target: curatorAddress,
-    qty: curatorShare.toString(),
+    qty: parseInt(curatorShare.toString(), 10).toString(),
   });
 
   const creatorInput = JSON.stringify({
     function: 'transfer',
     target: creatorAddress,
-    qty: creatorShare.toString(),
+    qty: parseInt(creatorShare.toString(), 10).toString(),
   });
 
   const paymentTxs: IEdge[] = await queryCheckUserPayment(txid, userAddress, [
@@ -390,7 +390,7 @@ const processRequest = async (
 
   if (
     !(await checkUserPaidInferenceFees(
-      requestId,
+      requestTx.node.id,
       reqUserAddr,
       modelOwner,
       CONFIG.scriptCurator,
