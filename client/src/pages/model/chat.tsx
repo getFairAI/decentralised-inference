@@ -38,7 +38,6 @@ import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useRef, useSt
 import {
   APP_VERSION,
   DEFAULT_TAGS,
-  INFERENCE_PERCENTAGE_FEE,
   TAG_NAMES,
   APP_NAME,
   INFERENCE_PAYMENT,
@@ -48,6 +47,11 @@ import {
   secondInMS,
   successStatusCode,
   textContentType,
+  OPERATOR_PERCENTAGE_FEE,
+  MARKETPLACE_PERCENTAGE_FEE,
+  CREATOR_PERCENTAGE_FEE,
+  CURATOR_PERCENTAGE_FEE,
+  VAULT_ADDRESS,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -55,7 +59,7 @@ import {
   QUERY_CHAT_RESPONSES,
   QUERY_CHAT_RESPONSES_POLLING,
 } from '@/queries/graphql';
-import { IEdge, ITag } from '@/interfaces/arweave';
+import { IEdge } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
@@ -65,7 +69,6 @@ import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
-import { WorkerContext } from '@/context/worker';
 import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
@@ -77,13 +80,14 @@ import CustomProgress from '@/components/progress';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import ChatBubble from '@/components/chat-bubble';
 import DebounceIconButton from '@/components/debounce-icon-button';
+import { parseUBalance, sendU } from '@/utils/u';
 
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const { address } = useParams();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { currentAddress: userAddr } = useContext(WalletContext);
+  const { currentAddress: userAddr, updateUBalance, currentUBalance } = useContext(WalletContext);
   const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [polledMessages, setPolledMessages] = useState<IMessage[]>([]);
@@ -99,7 +103,6 @@ const Chat = () => {
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
-  const { startJob } = useContext(WorkerContext);
   const { nodeBalance, upload, chunkUpload, getPrice } = useContext(BundlrContext);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
@@ -481,11 +484,14 @@ const Chat = () => {
     if (!currentConversationId) {
       return false;
     }
-    let dataSize;
-    if (isFile && file) {
-      dataSize = file.size;
-    } else if (isFile && !file) {
+
+    if (isFile && !file) {
       return false;
+    }
+
+    let dataSize;
+    if (isFile) {
+      dataSize = (file as File).size;
     } else {
       dataSize = new TextEncoder().encode(newMessage).length;
     }
@@ -496,6 +502,12 @@ const Chat = () => {
         enqueueSnackbar('Not Enough Bundlr Funds to send message', { variant: 'error' });
         return false;
       }
+
+      if (currentUBalance < parseUBalance(state.fee)) {
+        enqueueSnackbar('Not Enough U tokens to pay Operator', { variant: 'error' });
+        return false;
+      }
+
       return true;
     } catch (error) {
       enqueueSnackbar('Bundlr Error', { variant: 'error' });
@@ -503,51 +515,45 @@ const Chat = () => {
     }
   };
 
-  const handlePayment = async (
-    bundlrId: string,
-    inferenceFee: string,
-    contentType: string,
-    tags: ITag[],
-  ) => {
-    const tx = await arweave.createTransaction({
-      target: address,
-      quantity: inferenceFee,
-    });
+  const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string) => {
+    const parsedUFee = parseFloat(inferenceFee);
+    try {
+      const paymentTags = [
+        { name: TAG_NAMES.appName, value: APP_NAME },
+        { name: TAG_NAMES.appVersion, value: APP_VERSION },
+        { name: TAG_NAMES.operationName, value: INFERENCE_PAYMENT },
+        { name: TAG_NAMES.scriptName, value: state.scriptName },
+        { name: TAG_NAMES.scriptCurator, value: state.scriptCurator },
+        { name: TAG_NAMES.scriptTransaction, value: state.scriptTransaction },
+        { name: TAG_NAMES.scriptOperator, value: address as string },
+        { name: TAG_NAMES.modelCreator, value: state.modelCreator },
+        { name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` },
+        { name: TAG_NAMES.inferenceTransaction, value: bundlrId },
+        { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
+        { name: TAG_NAMES.contentType, value: contentType },
+      ];
 
-    tx.addTag(TAG_NAMES.appName, APP_NAME);
-    tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-    tx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
-    tx.addTag(TAG_NAMES.scriptName, state.scriptName);
-    tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
-    tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
-    tx.addTag(TAG_NAMES.scriptOperator, address || '');
-    tx.addTag(TAG_NAMES.conversationIdentifier, `${currentConversationId}`);
-    tx.addTag(TAG_NAMES.inferenceTransaction, bundlrId);
-    tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
-    tx.addTag(TAG_NAMES.contentType, contentType);
+      const operatorFeeShare = parsedUFee * OPERATOR_PERCENTAGE_FEE;
+      const marketPlaceFeeShare = parsedUFee * MARKETPLACE_PERCENTAGE_FEE;
+      const creatorFeeShare = parsedUFee * CREATOR_PERCENTAGE_FEE;
+      const curatorFeeShare = parsedUFee * CURATOR_PERCENTAGE_FEE;
 
-    await arweave.transactions.sign(tx);
-    const res = await arweave.transactions.post(tx);
-    if (res.status === successStatusCode) {
-      enqueueSnackbar(
-        <>
-          Paid Operator Fee ${arweave.ar.winstonToAr(inferenceFee)} AR.
-          <br></br>
-          <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-            <u>View Transaction in Explorer</u>
-          </a>
-        </>,
-        { variant: 'success' },
-      );
-      startJob({
-        address: userAddr,
-        operationName: SCRIPT_INFERENCE_REQUEST,
-        tags,
-        txid: bundlrId,
-        encodedTags: false,
+      // pay operator
+      await sendU(address as string, parseInt(operatorFeeShare.toString(), 10), paymentTags);
+      // pay curator
+      await sendU(state.scriptCurator, parseInt(curatorFeeShare.toString(), 10), paymentTags);
+      // pay model creator
+      await sendU(state.modelCreator, parseInt(creatorFeeShare.toString(), 10), paymentTags);
+      // pay marketplace
+      await sendU(VAULT_ADDRESS, parseInt(marketPlaceFeeShare.toString(), 10), paymentTags);
+
+      // update balance after payments
+      await updateUBalance();
+      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(inferenceFee)} U.</>, {
+        variant: 'success',
       });
-    } else {
-      enqueueSnackbar(res.statusText, { variant: 'error' });
+    } catch (error) {
+      enqueueSnackbar('An Error Occurred', { variant: 'error' });
     }
   };
 
@@ -559,11 +565,6 @@ const Chat = () => {
     const contentType = isFile && file ? file?.type : textContentType;
     const content = isFile && file ? file : newMessage;
 
-    const inferenceFee = (
-      parseFloat(state.fee) +
-      parseFloat(state.fee) * INFERENCE_PERCENTAGE_FEE
-    ).toString();
-
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
     tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
@@ -573,7 +574,7 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.scriptOperator, value: address });
     tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_INFERENCE_REQUEST });
     tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
-    tags.push({ name: TAG_NAMES.paymentQuantity, value: inferenceFee });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: state.fee });
     tags.push({ name: TAG_NAMES.paymentTarget, value: address });
     const tempDate = Date.now() / secondInMS;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
@@ -588,11 +589,7 @@ const Chat = () => {
         const handleUpload = (chunkInfo: ChunkInfo) => {
           const chunkNumber = chunkInfo.id + 1;
           // update the progress bar based on how much has been uploaded
-          if (chunkNumber >= totalChunks.current) {
-            setProgress(finishedPercentage);
-          } else {
-            setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
-          }
+          setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
         };
 
         // event callback: called if an error happens
@@ -627,7 +624,8 @@ const Chat = () => {
         if (bundlrRes.status === successStatusCode) {
           bundlrId = bundlrRes.data.id;
         } else {
-          throw new Error(`Could Not Upload File: ${bundlrRes.statusText}`);
+          enqueueSnackbar(`Could Not Upload File: ${bundlrRes.statusText}`, { variant: 'error' });
+          return;
         }
       } else {
         const bundlrRes = await upload(newMessage, tags);
@@ -668,7 +666,7 @@ const Chat = () => {
         },
       );
 
-      await handlePayment(bundlrId, inferenceFee, contentType, tags);
+      await handlePayment(bundlrId, state.fee, contentType);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
     }

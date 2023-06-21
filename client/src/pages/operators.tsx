@@ -1,7 +1,33 @@
-import { DEFAULT_TAGS, SCRIPT_CREATION_PAYMENT, TAG_NAMES } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
-import { GET_TX, QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
-import { commonUpdateQuery, findTag, genLoadingArray } from '@/utils/common';
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
+import {
+  DEFAULT_TAGS,
+  SCRIPT_CREATION_FEE,
+  SCRIPT_CREATION_PAYMENT,
+  TAG_NAMES,
+  U_CONTRACT_ID,
+  U_DIVIDER,
+  VAULT_ADDRESS,
+} from '@/constants';
+import { IContractEdge } from '@/interfaces/arweave';
+import { FIND_BY_TAGS } from '@/queries/graphql';
+import { commonUpdateQuery, genLoadingArray } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Container,
@@ -21,11 +47,9 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import ScriptCard from '@/components/script-card';
 import useOnScreen from '@/hooks/useOnScreen';
 import { Outlet } from 'react-router-dom';
-import { isTxConfirmed } from '@/utils/arweave';
-import { client } from '@/utils/apollo';
 
 const Operators = () => {
-  const [txs, setTxs] = useState<IEdge[]>([]);
+  const [txs, setTxs] = useState<IContractEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
@@ -33,7 +57,19 @@ const Operators = () => {
   const [hightlightTop, setHighLightTop] = useState(false);
   const theme = useTheme();
 
-  const mockArray = genLoadingArray(6);
+  const mockArray = genLoadingArray(elementsPerPage);
+
+  const scriptPaymentInputStr = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: (parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER).toString(),
+  });
+
+  const scriptPaymentInputNumber = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER,
+  });
 
   const tags = [
     ...DEFAULT_TAGS,
@@ -41,28 +77,25 @@ const Operators = () => {
       name: TAG_NAMES.operationName,
       values: [SCRIPT_CREATION_PAYMENT],
     },
+    { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
+    { name: TAG_NAMES.input, values: [scriptPaymentInputStr, scriptPaymentInputNumber] },
   ];
 
-  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(
-    QUERY_REGISTERED_SCRIPTS,
-    {
-      variables: {
-        tags,
-        first: elementsPerPage,
-      },
-      notifyOnNetworkStatusChange: true,
-    },
-  );
+  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(FIND_BY_TAGS, {
+    variables: { tags, first: elementsPerPage },
+    notifyOnNetworkStatusChange: true,
+  });
 
   useEffect(() => {
     if (isOnScreen && hasNextPage) {
       const allTxs = data.transactions.edges;
-      fetchMore({
-        variables: {
-          after: allTxs && allTxs.length > 0 ? allTxs[allTxs.length - 1].cursor : null,
-        },
-        updateQuery: commonUpdateQuery,
-      });
+      (async () =>
+        fetchMore({
+          variables: {
+            after: allTxs && allTxs.length > 0 ? allTxs[allTxs.length - 1].cursor : null,
+          },
+          updateQuery: commonUpdateQuery,
+        }))();
     }
   }, [isOnScreen, hasNextPage]);
 
@@ -73,29 +106,8 @@ const Operators = () => {
    */
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
-      (async () => {
-        const filtered: IEdge[] = [];
-        await Promise.all(
-          data.transactions.edges.map(async (el: IEdge) => {
-            const confirmed = await isTxConfirmed(el.node.id);
-            const queryResult = await client.query({
-              query: GET_TX,
-              variables: {
-                id: findTag(el, 'modelTransaction'),
-              },
-            });
-            const modelTx = queryResult.data.transactions.edges[0];
-            const correctFee =
-              parseInt(el.node.quantity.winston, 10) ===
-              parseInt(findTag(modelTx, 'modelFee') as string, 10);
-            if (confirmed && correctFee) {
-              filtered.push(el);
-            }
-          }),
-        );
-        setHasNextPage(data.transactions.pageInfo.hasNextPage);
-        setTxs(filtered);
-      })();
+      setHasNextPage(data.transactions.pageInfo.hasNextPage);
+      setTxs(data.transactions.edges);
     }
   }, [data]);
 
@@ -330,9 +342,7 @@ const Operators = () => {
                 </Typography>
               </Container>
             ) : (
-              txs.map((el: IEdge, idx: number) => (
-                <ScriptCard scriptTx={el} key={el.node.id} index={idx} />
-              ))
+              txs.map((el, idx) => <ScriptCard scriptTx={el} key={el.node.id} index={idx} />)
             )}
             {loading &&
               mockArray.map((val) => (

@@ -24,21 +24,15 @@ import {
   DialogTitle,
   Icon,
   IconButton,
-  InputBase,
   Typography,
   useTheme,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import { useLoaderData, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { APP_NAME, APP_VERSION, VAULT_ADDRESS, MODEL_FEE_UPDATE, TAG_NAMES } from '@/constants';
-import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import arweave from '@/utils/arweave';
+import { useMemo, useState } from 'react';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
 import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
-import { useSnackbar } from 'notistack';
-import { WalletContext } from '@/context/wallet';
-import { NumericFormat } from 'react-number-format';
 import ChooseOperator from '@/components/choose-operator';
 import ChooseScript from '@/components/choose-script';
 import { IEdge } from '@/interfaces/arweave';
@@ -49,28 +43,21 @@ const Detail = () => {
   const { state, pathname }: { state: ModelNavigationState; pathname: string } = useLocation();
   const { txid } = useParams();
   const navigate = useNavigate();
-  const [feeValue, setFeeValue] = useState(0);
-  const [feeDirty, setFeeDirty] = useState(false);
   const [showOperators, setShowOperators] = useState(false);
   const [showScripts, setShowScripts] = useState(false);
   const [scriptTx, setScriptTx] = useState<IEdge | undefined>(undefined);
-  const { currentAddress } = useContext(WalletContext);
-  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const [avatarTxId, setAvatarTxId] = useState<string | undefined>(undefined);
-  const [updatedFee, setUpdatedFee] = useState<string | undefined>(undefined);
 
   const imgUrl = useMemo(() => {
-    if (avatarTxId) {
-      return `https://arweave.net/${avatarTxId}`;
+    if (loaderData?.avatarTxId) {
+      return `https://arweave.net/${loaderData?.avatarTxId}`;
     }
     const img = toSvg(txid, 100);
     const svg = new Blob([img], { type: 'image/svg+xml' });
     return URL.createObjectURL(svg);
-  }, [avatarTxId]);
+  }, [loaderData]);
 
   // disable update fees on model for now
-  const updateDisabled = useMemo(() => true, [feeDirty, feeValue]);
 
   const handleClose = () => {
     if (pathname.includes('change-operator')) {
@@ -79,68 +66,6 @@ const Detail = () => {
     }
     navigate('/', { state });
   };
-
-  const updateFee = useCallback(async () => {
-    try {
-      const tx = await arweave.createTransaction({
-        quantity: arweave.ar.arToWinston('0'),
-        target: VAULT_ADDRESS,
-      });
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.operationName, MODEL_FEE_UPDATE);
-      tx.addTag(TAG_NAMES.modelName, state.modelName);
-      tx.addTag(TAG_NAMES.modelTransaction, state.modelTransaction);
-      tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${feeValue}`));
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      await arweave.transactions.sign(tx);
-      const payRes = await arweave.transactions.post(tx);
-      if (payRes.status === 200) {
-        enqueueSnackbar(
-          <>
-            Updated Model Fee
-            <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          {
-            variant: 'success',
-          },
-        );
-        setFeeDirty(false);
-      } else {
-        enqueueSnackbar(`Failed with error ${payRes.status}: ${payRes.statusText}`, {
-          variant: 'error',
-        });
-      }
-    } catch (err) {
-      enqueueSnackbar('Something Went Wrong', { variant: 'error' });
-    }
-  }, [arweave, enqueueSnackbar, setFeeDirty, state]);
-
-  const handleFeeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const val = event.target.value !== '' ? parseFloat(event.target.value) : 0;
-    setFeeValue(val);
-    setFeeDirty(true);
-  };
-
-  useEffect(() => {
-    if (updatedFee) {
-      const arValue = arweave.ar.winstonToAr(updatedFee);
-      setFeeValue(parseFloat(arValue));
-    } else {
-      const arValue = arweave.ar.winstonToAr(state.fee);
-      setFeeValue(parseFloat(arValue));
-    }
-  }, [updatedFee]);
-
-  useEffect(() => {
-    if (loaderData) {
-      setAvatarTxId(loaderData.avatarTxId);
-      setUpdatedFee(loaderData.updatedFee);
-    }
-  }, [loaderData]);
 
   const handleScriptChosen = (scriptTx: IEdge) => {
     setShowOperators(true);
@@ -303,76 +228,6 @@ const Detail = () => {
               {findTag(state.fullState, 'category')}
             </Typography>
           </Box>
-          <Box>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Cost
-            </Typography>
-            <Box
-              display={'flex'}
-              alignItems={'center'}
-              justifyContent='flex-start'
-              width={'100%'}
-              height='60px'
-            >
-              {currentAddress === state.modelCreator ? (
-                <NumericFormat
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    fontStyle: 'normal',
-                    fontWeight: 700,
-                    fontSize: '60px',
-                    lineHeight: '106px',
-                    textAlign: 'center',
-
-                    paddingRight: '8px',
-                  }}
-                  value={feeValue}
-                  onChange={handleFeeChange}
-                  customInput={InputBase}
-                  decimalScale={3}
-                  decimalSeparator={'.'}
-                />
-              ) : (
-                <Typography
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    fontStyle: 'normal',
-                    fontWeight: 700,
-                    fontSize: '60px',
-                    lineHeight: '106px',
-                    textAlign: 'center',
-
-                    paddingRight: '8px',
-                  }}
-                >
-                  {feeValue}
-                </Typography>
-              )}
-              <Icon sx={{ height: '50px', width: '50px' }}>
-                <img
-                  src={
-                    theme.palette.mode === 'dark'
-                      ? './arweave-logo.svg'
-                      : './arweave-logo-for-light.png'
-                  }
-                  width={'50px'}
-                  height={'50px'}
-                />
-              </Icon>
-            </Box>
-          </Box>
         </Box>
         <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'45%'}>
           <Box>
@@ -393,18 +248,7 @@ const Detail = () => {
               {findTag(state.fullState, 'description') || 'No Description Available.'}
             </Typography>
           </Box>
-          {currentAddress === state.modelCreator ? (
-            <Button variant='outlined' disabled={updateDisabled} onClick={updateFee}>
-              Update
-            </Button>
-          ) : (
-            <Vote
-              tx={state.fullState}
-              fee={feeValue}
-              owner={state.modelCreator}
-              voteFor={'model'}
-            />
-          )}
+          <Vote tx={state.fullState} voteFor={'model'} />
         </Box>
       </DialogContent>
       {showOperators ? (

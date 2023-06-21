@@ -26,7 +26,6 @@ import {
   CardContent,
   CardHeader,
   Container,
-  Icon,
   Snackbar,
   Typography,
   useTheme,
@@ -51,21 +50,19 @@ import {
   NOTES_ATTACHMENT,
   secondInMS,
   successStatusCode,
+  U_DIVIDER,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
-import arweave from '@/utils/arweave';
-import NumberControl from '@/components/number-control';
 import { WalletContext } from '@/context/wallet';
-import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
 import { ITag } from '@/interfaces/arweave';
 import DebounceButton from '@/components/debounce-button';
+import { sendU } from '@/utils/u';
 
 export interface CreateForm extends FieldValues {
   name: string;
-  fee: number;
   notes: string;
   file: File;
   description?: string;
@@ -75,7 +72,6 @@ const UploadCreator = () => {
   const { handleSubmit, reset, control } = useForm({
     defaultValues: {
       name: '',
-      fee: 0,
       description: '',
       notes: '',
       avatar: '',
@@ -90,8 +86,7 @@ const UploadCreator = () => {
   const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const { currentAddress, currentBalance } = useContext(WalletContext);
-  const { startJob } = useContext(WorkerContext);
+  const { currentAddress, currentUBalance, updateUBalance } = useContext(WalletContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
 
   const onSubmit = async (data: FieldValues) => {
@@ -225,9 +220,9 @@ const UploadCreator = () => {
 
     // upload the file
     const tags = [];
-    const fee = arweave.ar.arToWinston(MARKETPLACE_FEE);
+    const parsedUFee = parseFloat(MARKETPLACE_FEE) * U_DIVIDER;
 
-    if (currentBalance < parseFloat(MARKETPLACE_FEE)) {
+    if (currentUBalance < parseInt(MARKETPLACE_FEE, 10)) {
       enqueueSnackbar('Not Enough Balance in your Wallet to pay MarketPlace Fee', {
         variant: 'error',
       });
@@ -239,8 +234,7 @@ const UploadCreator = () => {
     tags.push({ name: TAG_NAMES.contentType, value: file.type });
     tags.push({ name: TAG_NAMES.modelName, value: `${data.name}` });
     tags.push({ name: TAG_NAMES.operationName, value: MODEL_CREATION });
-    tags.push({ name: TAG_NAMES.modelFee, value: arweave.ar.arToWinston(`${data.fee}`) });
-    tags.push({ name: TAG_NAMES.paymentQuantity, value: fee });
+    tags.push({ name: TAG_NAMES.paymentQuantity, value: parsedUFee.toString() });
     tags.push({ name: TAG_NAMES.paymentTarget, value: VAULT_ADDRESS });
     if (data.description) {
       tags.push({ name: TAG_NAMES.description, value: data.description });
@@ -249,54 +243,46 @@ const UploadCreator = () => {
     setSnackbarOpen(true);
     try {
       const res = await bundlrUpload(file, tags, 'Model Uploaded Successfully');
-      const tx = await arweave.createTransaction({
-        quantity: fee,
-        target: VAULT_ADDRESS,
-      });
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      tx.addTag(TAG_NAMES.contentType, file.type);
-      tx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
-      tx.addTag(TAG_NAMES.modelName, data.name);
-      tx.addTag(TAG_NAMES.modelFee, arweave.ar.arToWinston(`${data.fee}`));
+
+      const paymentTags = [
+        { name: TAG_NAMES.appName, value: APP_NAME },
+        { name: TAG_NAMES.appVersion, value: APP_VERSION },
+        { name: TAG_NAMES.contentType, value: file.type },
+        { name: TAG_NAMES.operationName, value: MODEL_CREATION_PAYMENT },
+        { name: TAG_NAMES.modelName, value: data.name },
+        { name: TAG_NAMES.modelTransaction, value: res.data.id },
+        { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
+      ];
+
       if (data.description) {
-        tx.addTag(TAG_NAMES.description, data.description);
+        paymentTags.push({ name: TAG_NAMES.description, value: data.description });
       }
-      tx.addTag(TAG_NAMES.modelTransaction, res.data.id);
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
 
-      await arweave.transactions.sign(tx);
-      const payRes = await arweave.transactions.post(tx);
-      if (payRes.status === successStatusCode) {
-        enqueueSnackbar(
-          <>
-            Paid Marketplace Fee {MARKETPLACE_FEE} AR.
-            <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-        startJob({
-          address: currentAddress,
-          operationName: MODEL_CREATION,
-          tags,
-          txid: res.data.id,
-          encodedTags: false,
-        });
+      const paymentId = await sendU(VAULT_ADDRESS, parsedUFee.toString(), paymentTags);
+      await updateUBalance();
+      enqueueSnackbar(
+        <>
+          Paid Marketplace Fee: {MARKETPLACE_FEE} U Tokens.
+          <br></br>
+          <a
+            href={`https://viewblock.io/arweave/tx/${paymentId}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        { variant: 'success' },
+      );
 
-        try {
-          await uploadUsageNotes(res.data.id, data.name, data.notes);
-          await uploadAvatarImage(res.data.id, data.avatar);
-        } catch (error) {
-          enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
-          // error uploading attachments
-        }
-        reset(); // reset form
-      } else {
-        enqueueSnackbar(payRes.statusText, { variant: 'error' });
+      try {
+        await uploadUsageNotes(res.data.id, data.name, data.notes);
+        await uploadAvatarImage(res.data.id, data.avatar);
+      } catch (error) {
+        enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
+        // error uploading attachments
       }
+      reset(); // reset form
     } catch (error) {
       setSnackbarOpen(false);
       setProgress(0);
@@ -376,56 +362,6 @@ const UploadCreator = () => {
                       }}
                       style={{ width: '100%' }}
                     />
-                    <Box paddingLeft={'8px'}>
-                      <Typography
-                        sx={{
-                          fontStyle: 'normal',
-                          fontWeight: 700,
-                          fontSize: '23px',
-                          lineHeight: '31px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                        }}
-                      >
-                        Cost
-                      </Typography>
-                      <Box
-                        display={'flex'}
-                        alignItems={'center'}
-                        justifyContent='space-between'
-                        width={'45%'}
-                        height='60px'
-                      >
-                        <NumberControl
-                          name='fee'
-                          control={control}
-                          mat={{
-                            sx: {
-                              fontStyle: 'normal',
-                              fontWeight: 700,
-                              fontSize: '23px',
-                              lineHeight: '31px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              textAlign: 'center',
-                              paddingRight: '8px',
-                            },
-                          }}
-                        />
-                        <Icon sx={{ height: '50px', width: '50px' }}>
-                          <img
-                            src={
-                              theme.palette.mode === 'dark'
-                                ? './arweave-logo.svg'
-                                : './arweave-logo-for-light.png'
-                            }
-                            width={'50px'}
-                            height={'50px'}
-                          />
-                        </Icon>
-                      </Box>
-                    </Box>
                   </Box>
                   <TextControl
                     name='description'

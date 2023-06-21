@@ -1,15 +1,34 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   AVATAR_ATTACHMENT,
   DEFAULT_TAGS,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
-  REGISTER_OPERATION,
+  OPERATOR_REGISTRATION_PAYMENT_TAGS,
   TAG_NAMES,
+  secondInMS,
 } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
-import { GET_LATEST_MODEL_ATTACHMENTS, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
+import { IContractEdge, IEdge, ITransactions } from '@/interfaces/arweave';
+import { FIND_BY_TAGS, GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { parseWinston } from '@/utils/arweave';
-import { useLazyQuery, useQuery } from '@apollo/client';
+import { ApolloQueryResult, useLazyQuery, useQuery } from '@apollo/client';
 import {
   Box,
   Button,
@@ -22,10 +41,10 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReplayIcon from '@mui/icons-material/Replay';
-import { findTag } from '@/utils/common';
+import { commonUpdateQuery, findTag } from '@/utils/common';
 import { toSvg } from 'jdenticon';
 
 interface Element {
@@ -33,29 +52,157 @@ interface Element {
   txid: string;
   uploader: string;
   avgFee: string;
-  scriptFee: string;
   totalOperators: number;
 }
 
-const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => {
+const ScriptError = ({
+  handleRefetch,
+}: {
+  handleRefetch: () => Promise<ApolloQueryResult<unknown>>;
+}) => {
+  return (
+    <Container>
+      <Typography alignItems='center' display='flex' flexDirection='column'>
+        Could not Fetch Registered Operators.
+        <Button
+          sx={{ width: 'fit-content' }}
+          endIcon={<ReplayIcon />}
+          onClick={handleRefetch as () => void}
+        >
+          Retry
+        </Button>
+      </Typography>
+    </Container>
+  );
+};
+
+const ScriptImage = ({
+  imgUrl,
+  loading,
+  avatarLoading,
+}: {
+  imgUrl?: string;
+  loading: boolean;
+  avatarLoading: boolean;
+}) => {
+  const isLoading = useMemo(
+    () => !imgUrl || loading || avatarLoading,
+    [loading, avatarLoading, imgUrl],
+  );
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '317px',
+          height: '352px',
+          background: 'linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)',
+          // backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover' /* <------ */,
+          backgroundPosition: 'center center',
+        }}
+      />
+    );
+  } else {
+    return (
+      <CardMedia
+        src={imgUrl}
+        sx={{
+          borderRadius: '16px',
+          height: '100px',
+          width: '100px',
+          background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%), url(${imgUrl})`,
+          backgroundPosition: 'center',
+          backgroundSize: 'contain',
+        }}
+      />
+    );
+  }
+};
+
+const parseScriptData = (
+  data: { transactions: ITransactions },
+  scriptTx: IContractEdge,
+  setCardData: Dispatch<SetStateAction<Element | undefined>>,
+  owner?: string,
+) => {
+  const uniqueOperators: IEdge[] = [];
+  const registrations: IEdge[] = data.transactions.edges;
+
+  // filter registratiosn for same model (only keep latest one per operator)
+  registrations.forEach((op: IEdge) =>
+    uniqueOperators.filter(
+      (unique) => findTag(op, 'sequencerOwner') === findTag(unique, 'sequencerOwner'),
+    ).length > 0
+      ? undefined
+      : uniqueOperators.push(op),
+  );
+
+  const opFees = uniqueOperators.map((op) => {
+    const fee = findTag(op, 'operatorFee');
+    if (fee) {
+      return parseFloat(fee);
+    } else {
+      return 0;
+    }
+  });
+  const average = (arr: number[]) => arr.reduce((p, c) => p + c, 0) / arr.length;
+  let avgFee = parseWinston(average(opFees).toString());
+
+  if (Number.isNaN(avgFee) || avgFee === 'NaN') {
+    avgFee = 'Not enough Operators for Fee';
+  }
+
+  setCardData({
+    avgFee,
+    name: findTag(scriptTx, 'scriptName') ?? 'Name not Available',
+    txid: findTag(scriptTx, 'scriptTransaction') ?? 'Transaction Not Available',
+    uploader: owner ?? 'Uploader Not Available',
+    totalOperators: uniqueOperators.length,
+  });
+};
+
+const commonTextProps = {
+  fontSize: '20px',
+  lineHeight: '27px',
+  display: 'flex',
+  alignItems: 'center',
+  textAlign: 'center',
+  fontStyle: 'normal',
+};
+const headerTextProps = {
+  fontWeight: 300,
+  ...commonTextProps,
+};
+
+const ScriptCard = ({ scriptTx, index }: { scriptTx: IContractEdge; index: number }) => {
   const navigate = useNavigate();
   const [cardData, setCardData] = useState<Element>();
   const elementsPerPage = 5;
   const theme = useTheme();
 
+  const owner = useMemo(() => findTag(scriptTx, 'sequencerOwner'), [scriptTx]);
+
   const tags = [
     ...DEFAULT_TAGS,
-    { name: TAG_NAMES.operationName, values: [REGISTER_OPERATION] },
+    {
+      name: TAG_NAMES.scriptCurator,
+      values: [owner],
+    },
     {
       name: TAG_NAMES.scriptName,
-      values: [findTag(scriptTx, 'scriptName')],
+      values: [findTag(scriptTx as IEdge, 'scriptName')],
     },
-    { name: TAG_NAMES.scriptCurator, values: [scriptTx.node.owner.address] },
+    ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
   ];
-  // get all operatorsRegistration for the model
-  const { data, loading, error, refetch, fetchMore } = useQuery(QUERY_REGISTERED_OPERATORS, {
+
+  const { data, loading, error, refetch, fetchMore } = useQuery(FIND_BY_TAGS, {
     variables: { tags, first: elementsPerPage },
-    skip: !scriptTx,
+    skip: !scriptTx && !owner,
   });
 
   const [getAvatar, { data: avatarData, loading: avatarLoading }] = useLazyQuery(
@@ -63,122 +210,104 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
   );
 
   useEffect(() => {
-    const scriptId = findTag(scriptTx, 'scriptTransaction');
-    const attachmentAvatarTags = [
-      ...DEFAULT_TAGS,
-      { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
-      { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-      { name: TAG_NAMES.scriptTransaction, values: [scriptId] },
-    ];
+    (async () => {
+      const scriptId = findTag(scriptTx, 'scriptTransaction');
+      const attachmentAvatarTags = [
+        ...DEFAULT_TAGS,
+        { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
+        { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
+        { name: TAG_NAMES.scriptTransaction, values: [scriptId] },
+      ];
 
-    getAvatar({
-      variables: {
-        tags: attachmentAvatarTags,
-        owner: scriptTx.node.owner.address,
-      },
-    });
+      await getAvatar({
+        variables: {
+          tags: attachmentAvatarTags,
+          owner,
+        },
+      });
+    })();
   }, []);
 
   const imgUrl = useMemo(() => {
-    if (avatarData) {
-      const avatarTxId =
-        avatarData.transactions.edges && avatarData.transactions.edges[0]
-          ? avatarData.transactions.edges[0].node.id
-          : undefined;
-      if (avatarTxId) {
-        return `${NET_ARWEAVE_URL}/${avatarTxId}`;
-      }
+    const avatarTxId = avatarData?.transactions?.edges[0]?.node?.id;
+    if (avatarTxId) {
+      return `${NET_ARWEAVE_URL}/${avatarTxId}`;
+    } else {
+      const imgSize = 100;
       const scriptId = findTag(scriptTx, 'scriptTransaction');
-      const img = toSvg(scriptId, 100);
+      const img = toSvg(scriptId, imgSize);
       const svg = new Blob([img], { type: 'image/svg+xml' });
       return URL.createObjectURL(svg);
-    } else {
-      return '';
     }
   }, [avatarData]);
 
   useEffect(() => {
-    if (data && data.transactions && data.transactions.pageInfo.hasNextPage) {
-      fetchMore({
-        variables: {
-          after: data.transactions.edges[data.transactions.edges.length - 1].cursor,
-        },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          return Object.assign({}, prev, {
-            transactions: {
-              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-        },
-      });
-    } else if (data && data.transactions) {
-      const uniqueOperators: IEdge[] = [];
-      const registrations: IEdge[] = data.transactions.edges;
-
-      // filter registratiosn for same model (only keep latest one per operator)
-      registrations.forEach((op: IEdge) =>
-        uniqueOperators.filter((unique) => op.node.owner.address === unique.node.owner.address)
-          .length > 0
-          ? undefined
-          : uniqueOperators.push(op),
-      );
-
-      const opFees = uniqueOperators.map((op) => {
-        const fee = findTag(op, 'operatorFee');
-        if (fee) return parseFloat(fee);
-        else return 0;
-      });
-      const average = (arr: number[]) => arr.reduce((p, c) => p + c, 0) / arr.length;
-      const avgFee = parseWinston(average(opFees).toString());
-      const scriptFee = findTag(scriptTx, 'scriptFee');
-
-      setCardData({
-        name: findTag(scriptTx, 'scriptName') || 'Name not Available',
-        txid: findTag(scriptTx, 'scriptTransaction') || 'Transaction Not Available',
-        uploader: scriptTx.node.owner.address,
-        scriptFee: parseWinston(scriptFee) || 'Script Fee Not Available',
-        avgFee,
-        totalOperators: uniqueOperators.length,
-      });
+    if (data?.transactions?.pageInfo.hasNextPage) {
+      (async () =>
+        fetchMore({
+          variables: {
+            after: data.transactions.edges[data.transactions.edges.length - 1].cursor,
+          },
+          updateQuery: commonUpdateQuery,
+        }))();
+    } else if (data?.transactions) {
+      parseScriptData(data, scriptTx, setCardData, owner);
+    } else {
+      // do nothing
     }
   }, [data]); // data changes
 
-  const handleCardClick = () => {
-    navigate(`/operators/register/${encodeURIComponent(cardData?.txid || 'error')}`, {
-      state: scriptTx,
-    });
-  };
+  const handleCardClick = useCallback(
+    () =>
+      navigate(`/operators/register/${encodeURIComponent(cardData?.txid ?? 'error')}`, {
+        state: scriptTx,
+      }),
+    [scriptTx, cardData, navigate],
+  );
 
   const getTimePassed = () => {
-    const timestamp = findTag(scriptTx, 'unixTime') || scriptTx.node.block?.timestamp;
-    if (!timestamp) return 'Pending';
+    const timestamp = findTag(scriptTx, 'unixTime');
+    if (!timestamp) {
+      return 'Pending';
+    }
     const currentTimestamp = Date.now();
 
-    const dateA = Number.isInteger(timestamp)
-      ? (timestamp as number) * 1000
-      : parseInt(timestamp as string, 10) * 1000;
+    const dateA = parseInt(timestamp, 10) * secondInMS;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;
 
+    const secondsInMinute = 60; // same as minutes in hour
+    const hoursInDay = 24;
+    const daysInWeek = 7;
+    const daysInMonth = 30; // round to 30 days, ignore odd months
+    const daysInYear = 365; // rounded odd years
     // 1 day = 1000 * 60 * 60
-    const day = 1000 * 60 * 60 * 24;
+    const day = secondInMS * secondsInMinute * secondsInMinute * hoursInDay;
+
     const nDaysDiff = Math.round(timeDiff / day);
 
     if (nDaysDiff <= 0) {
       return 'Today';
-    } else if (nDaysDiff > 7 && nDaysDiff <= 28) {
-      const nWeeks = Math.round(nDaysDiff / 7);
+    } else if (nDaysDiff > 0 && nDaysDiff < daysInWeek) {
+      return `${nDaysDiff} Day(s) ago`;
+    } else if (nDaysDiff > daysInWeek && nDaysDiff <= daysInMonth) {
+      const nWeeks = Math.round(nDaysDiff / daysInWeek);
       return `${nWeeks} Week(s) Ago`;
-    } else if (nDaysDiff > 14 && nDaysDiff <= 28) {
-      const nMonths = Math.round(nDaysDiff / 30);
+    } else if (nDaysDiff > daysInMonth && nDaysDiff <= daysInYear) {
+      const nMonths = Math.round(nDaysDiff / daysInMonth);
       return `${nMonths} Month(s) Ago`;
     } else {
-      return `${nDaysDiff} Day(s) ago`;
+      const nYears = Math.round(nDaysDiff / daysInYear);
+      return `${nYears} Year(s) ago`;
     }
   };
+
+  const handleRefetch = useCallback(async () => refetch({ tags }), [tags, refetch]);
+
+  if (error) {
+    return <ScriptError handleRefetch={handleRefetch} />;
+  }
 
   return (
     <Card
@@ -193,226 +322,59 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IEdge; index: number }) => 
         },
       }}
     >
-      {error ? (
-        <Container>
-          <Typography alignItems='center' display='flex' flexDirection='column'>
-            Could not Fetch Registered Operators.
-            <Button
-              sx={{ width: 'fit-content' }}
-              endIcon={<ReplayIcon />}
-              onClick={() => refetch({ tags })}
-            >
-              Retry
-            </Button>
-          </Typography>
-        </Container>
-      ) : (
-        <CardActionArea
+      <CardActionArea
+        sx={{
+          width: '100%',
+          height: '140px',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: '30px',
+        }}
+        onClick={handleCardClick}
+      >
+        <CardHeader
+          title={index + 1}
           sx={{
-            width: '100%',
-            height: '140px',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: '30px',
+            fontWeight: 600,
+            ...commonTextProps,
           }}
-          onClick={handleCardClick}
-        >
-          <CardHeader
-            title={index + 1}
+        />
+        <ScriptImage imgUrl={imgUrl} loading={loading} avatarLoading={avatarLoading} />
+        <CardContent>
+          <Typography
             sx={{
-              fontFamily: 'Open Sans',
-              fontStyle: 'normal',
-              fontWeight: 600,
-              fontSize: '20px',
-              lineHeight: '27px',
-              display: 'flex',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          />
-          {/* <Typography>Name: {cardData?.name}</Typography>
-          <Typography>Transaction id: {cardData?.txid}</Typography>
-          <Typography>Creator: {cardData?.uploader}</Typography>
-          {loading ? (
-            <>
-              <Typography>
-                <Skeleton animation={'wave'} />
-              </Typography>
-              <Typography>
-                <Skeleton animation={'wave'} />
-              </Typography>
-              <Typography>
-                <Skeleton animation={'wave'} />
-              </Typography>
-            </>
-          ) : (
-            <>
-              <Typography>
-                Model Fee:{' '}
-                {Number.isNaN(cardData?.scriptFee) || cardData?.scriptFee === 'NaN'
-                  ? 'Invalid Fee'
-                  : `${cardData?.scriptFee} AR`}
-              </Typography>
-              <Typography>
-                Average Fee:{' '}
-                {Number.isNaN(cardData?.avgFee) || cardData?.avgFee === 'NaN'
-                  ? 'Not enough Operators for Fee'
-                  : `${cardData?.avgFee} AR`}
-              </Typography>
-              <Typography>Total Operators: {cardData?.totalOperators}</Typography>
-            </>
-          )} */}
-          {!imgUrl || loading || avatarLoading ? (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: '317px',
-                height: '352px',
-                background:
-                  'linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)',
-                // backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: 'cover' /* <------ */,
-                backgroundPosition: 'center center',
-              }}
-            />
-          ) : (
-            <CardMedia
-              src={loading || avatarLoading ? '' : imgUrl}
-              sx={{
-                borderRadius: '16px',
-                height: '100px',
-                width: '100px',
-                background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%), url(${
-                  loading || avatarLoading ? '' : imgUrl
-                })`,
-                backgroundPosition: 'center',
-                backgroundSize: 'contain',
-              }}
-            />
-          )}
-          <CardContent>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              {findTag(scriptTx, 'scriptName') || 'Untitled'}
-            </Typography>
-          </CardContent>
-          <Box flexGrow={1}></Box>
-          <CardContent
-            sx={{
-              display: 'flex',
-              gap: '30px',
+              fontWeight: 700,
+              ...commonTextProps,
             }}
           >
-            <Box display={'flex'} flexDirection='column'>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 300,
-                  fontSize: '20px',
-                  lineHeight: '27px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                {cardData?.totalOperators}
-              </Typography>
-            </Box>
-            <Box display={'flex'} flexDirection='column'>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 300,
-                  fontSize: '20px',
-                  lineHeight: '27px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                {Number.isNaN(cardData?.scriptFee) || cardData?.scriptFee === 'NaN'
-                  ? 'Invalid Fee'
-                  : `${cardData?.scriptFee} AR`}
-              </Typography>
-            </Box>
-            <Box display={'flex'} flexDirection='column'>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 300,
-                  fontSize: '20px',
-                  lineHeight: '27px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                {Number.isNaN(cardData?.avgFee) || cardData?.avgFee === 'NaN'
-                  ? 'Not enough Operators for Fee'
-                  : `${cardData?.avgFee} AR`}
-              </Typography>
-            </Box>
-            <Box display={'flex'} flexDirection='column'>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 300,
-                  fontSize: '20px',
-                  lineHeight: '27px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                11k
-              </Typography>
-            </Box>
-            <Box display={'flex'} flexDirection='column'>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 300,
-                  fontSize: '20px',
-                  lineHeight: '27px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                12 Stamps
-              </Typography>
-            </Box>
-            <Box display={'flex'} flexDirection='column'>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 300,
-                  fontSize: '20px',
-                  lineHeight: '27px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                {getTimePassed()}
-              </Typography>
-            </Box>
-          </CardContent>
-        </CardActionArea>
-      )}
+            {findTag(scriptTx, 'scriptName') ?? 'Untitled'}
+          </Typography>
+        </CardContent>
+        <Box flexGrow={1}></Box>
+        <CardContent
+          sx={{
+            display: 'flex',
+            gap: '30px',
+          }}
+        >
+          <Box display={'flex'} flexDirection='column'>
+            <Typography sx={headerTextProps}>{cardData?.totalOperators}</Typography>
+          </Box>
+          <Box display={'flex'} flexDirection='column'>
+            <Typography sx={headerTextProps}>{cardData?.avgFee}</Typography>
+          </Box>
+          <Box display={'flex'} flexDirection='column'>
+            <Typography sx={headerTextProps}>11k</Typography>
+          </Box>
+          <Box display={'flex'} flexDirection='column'>
+            <Typography sx={headerTextProps}>12 Stamps</Typography>
+          </Box>
+          <Box display={'flex'} flexDirection='column'>
+            <Typography sx={headerTextProps}>{getTimePassed()}</Typography>
+          </Box>
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 };

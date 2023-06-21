@@ -17,7 +17,7 @@
  */
 
 import { WalletContext } from '@/context/wallet';
-import { QUERY_TX_WITH, QUERY_TXS_WITH } from '@/queries/graphql';
+import { FIND_BY_TAGS, QUERY_TX_WITH } from '@/queries/graphql';
 import { ApolloError, useQuery } from '@apollo/client';
 import {
   ChangeEvent,
@@ -31,13 +31,13 @@ import {
 } from 'react';
 import {
   TAG_NAMES,
-  SAVE_REGISTER_OPERATION,
   CANCEL_OPERATION,
-  REGISTER_OPERATION,
   APP_NAME,
   APP_VERSION,
   secondInMS,
   DEFAULT_TAGS,
+  OPERATOR_REGISTRATION_PAYMENT_TAGS,
+  U_LOGO_SRC,
 } from '@/constants';
 import { IEdge, ITransactions } from '@/interfaces/arweave';
 import {
@@ -92,8 +92,6 @@ const RegistrationContent = ({
   text: string;
   color: string;
 }) => {
-  const theme = useTheme();
-
   const handleCopy = useCallback(() => {
     if (registration.scriptTransaction) {
       (async () => {
@@ -153,24 +151,12 @@ const RegistrationContent = ({
         <Box display={'flex'} gap={'8px'} alignItems={'center'}>
           <Typography fontWeight={'600'}>Operator Fee:</Typography>
           <Typography>{parseWinston(registration.operatorFee)}</Typography>
-          <img
-            src={
-              theme.palette.mode === 'dark' ? './arweave-logo.svg' : './arweave-logo-for-light.png'
-            }
-            width={'18px'}
-            height={'18px'}
-          />
+          <img src={U_LOGO_SRC} width={'18px'} height={'18px'} />
         </Box>
         <Box display={'flex'} gap={'8px'} alignItems={'center'}>
           <Typography fontWeight={'600'}>Registration Fee:</Typography>
           <Typography>{parseWinston(registration.registrationFee)}</Typography>
-          <img
-            src={
-              theme.palette.mode === 'dark' ? './arweave-logo.svg' : './arweave-logo-for-light.png'
-            }
-            width={'18px'}
-            height={'18px'}
-          />
+          <img src={U_LOGO_SRC} width={'18px'} height={'18px'} />
         </Box>
       </Box>
       <Box display={'flex'} flexDirection={'column'} justifyContent={'center'}>
@@ -201,17 +187,6 @@ const RegistrationCard = ({ tx }: { tx: IEdge }) => {
   const { currentAddress, dispatchTx } = useContext(WalletContext);
   const { enqueueSnackbar } = useSnackbar();
 
-  const { data } = useQuery(QUERY_TX_WITH, {
-    variables: {
-      address: currentAddress,
-      tags: [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [REGISTER_OPERATION] },
-        { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
-      ],
-    },
-  });
-
   const registration = useMemo(() => {
     const scriptName = findTag(tx, 'scriptName') ?? 'Script Name Not Found';
     const scriptCurator = findTag(tx, 'scriptCurator') ?? 'Script Curator Not Found';
@@ -232,7 +207,7 @@ const RegistrationCard = ({ tx }: { tx: IEdge }) => {
     };
   }, [tx]);
 
-  const id: string = useMemo(() => data?.transactions.edges[0]?.node.id, [data]);
+  const id: string = useMemo(() => tx.node.id, [tx]);
 
   const { data: cancelData } = useQuery(QUERY_TX_WITH, {
     variables: {
@@ -407,10 +382,11 @@ const Registrations = () => {
 
   const tags = [
     ...DEFAULT_TAGS,
-    { name: TAG_NAMES.operationName, values: [SAVE_REGISTER_OPERATION] },
+    ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
+    { name: TAG_NAMES.sequencerOwner, values: [currentAddress] },
   ];
-  const { data, previousData, loading, error, fetchMore, refetch } = useQuery(QUERY_TXS_WITH, {
-    variables: { tags, address: currentAddress, first: elementsPerPage },
+  const { data, previousData, loading, error, fetchMore, refetch } = useQuery(FIND_BY_TAGS, {
+    variables: { tags, first: elementsPerPage },
     skip: !currentAddress,
   });
 
@@ -439,7 +415,6 @@ const Registrations = () => {
       const filteredData = data.transactions.edges.filter(
         (el: IEdge) =>
           el.node.id.toLowerCase().indexOf(filterValue) !== -1 ||
-          el.node.recipient.toLowerCase().indexOf(filterValue) !== -1 ||
           findTag(el, 'operationName')?.toLowerCase().indexOf(filterValue) !== -1,
       );
       setFilteredValues(filteredData);

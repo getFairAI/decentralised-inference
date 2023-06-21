@@ -1,9 +1,28 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   AVATAR_ATTACHMENT,
-  DEFAULT_TAGS,
+  DEFAULT_TAGS_RETRO,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
   TAG_NAMES,
+  secondInMS,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
@@ -40,7 +59,7 @@ const AiListCard = ({
   useEffect(() => {
     const modelId = findTag(model, 'modelTransaction');
     const attachmentAvatarTags = [
-      ...DEFAULT_TAGS,
+      ...DEFAULT_TAGS_RETRO,
       { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
       { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
       { name: TAG_NAMES.modelTransaction, values: [modelId] },
@@ -49,7 +68,7 @@ const AiListCard = ({
     getAvatar({
       variables: {
         tags: attachmentAvatarTags,
-        owner: model.node.owner.address,
+        owner,
       },
       fetchPolicy: 'no-cache',
     });
@@ -73,14 +92,14 @@ const AiListCard = ({
     }
   }, [data]);
 
+  const owner = useMemo(() => findTag(model, 'sequencerOwner'), [model]);
+
   const getTimePassed = () => {
-    const timestamp = findTag(model, 'unixTime') || model.node.block?.timestamp;
+    const timestamp = findTag(model, 'unixTime') as string;
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
-    const dateA = Number.isInteger(timestamp)
-      ? (timestamp as number) * 1000
-      : parseInt(timestamp as string, 10) * 1000;
+    const dateA = parseInt(timestamp, 10) * secondInMS;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;
@@ -109,8 +128,7 @@ const AiListCard = ({
     navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
       state: {
         modelName: findTag(model, 'modelName'),
-        modelCreator: model.node.owner.address,
-        fee: findTag(model, 'modelFee'),
+        modelCreator: owner,
         modelTransaction: modelId,
         fullState: model,
       },

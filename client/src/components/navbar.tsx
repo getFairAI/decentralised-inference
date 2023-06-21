@@ -22,14 +22,25 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext } from 'react';
-import { Button, Icon, IconButton, InputBase, styled, Tooltip, useTheme } from '@mui/material';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext, useState } from 'react';
+import {
+  Button,
+  Icon,
+  IconButton,
+  InputBase,
+  MenuItem,
+  Select,
+  styled,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import CloseIcon from '@mui/icons-material/Close';
 import Pending from './pending';
 import NavigationMenu from './navigation-menu';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
+import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -40,9 +51,81 @@ const Banner = styled(Toolbar)(({ theme }) => ({
   },
 }));
 
+const CustomDropDownIcon = () => (
+  <Icon
+    sx={{
+      pointerEvents: 'none',
+      position: 'absolute',
+      right: '7px',
+    }}
+  >
+    <img src='./chevron-bottom.svg' />
+  </Icon>
+);
+
+const CurrencyMenu = () => {
+  const [selected, setSelected] = useState<'AR' | 'U'>('AR');
+  const { currentBalance, currentUBalance } = useContext(WalletContext);
+  const theme = useTheme();
+  const handleArClick = useCallback(() => {
+    setSelected('AR');
+  }, [setSelected]);
+
+  const handleUClick = useCallback(() => {
+    setSelected('U');
+  }, [setSelected]);
+
+  return (
+    <>
+      <Select
+        sx={{
+          '& .MuiInputBase-input': {
+            display: 'flex',
+            backgroundColor: theme.palette.secondary.main,
+            border: 'none',
+            textTransform: 'none',
+            padding: 0,
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            border: 'none',
+          },
+        }}
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              background: theme.palette.secondary.main,
+            },
+          },
+        }}
+        IconComponent={CustomDropDownIcon}
+        value={selected}
+      >
+        <MenuItem value={'AR'} onClick={handleArClick}>
+          <Typography
+            sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
+            color={theme.palette.primary.contrastText}
+          >
+            {currentBalance.toFixed(defaultDecimalPlaces)}
+          </Typography>
+          <img width='20px' height='29px' src='./arweave-small.svg' />
+        </MenuItem>
+        <MenuItem value={'U'} onClick={handleUClick}>
+          <Typography
+            sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
+            color={theme.palette.primary.contrastText}
+          >
+            {currentUBalance.toFixed(defaultDecimalPlaces)}
+          </Typography>
+          <img width='20px' height='29px' src={U_LOGO_SRC} />
+        </MenuItem>
+      </Select>
+    </>
+  );
+};
+
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, currentBalance, isWalletVouched } = useContext(WalletContext);
+  const { currentAddress, isWalletVouched } = useContext(WalletContext);
 
   const { setOpen: connectWallet } = useContext(ChooseWalletContext);
 
@@ -88,10 +171,7 @@ const WalletState = () => {
         }}
       >
         <Box display={'flex'}>
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>
-            {currentBalance.toFixed(4)}
-          </Typography>
-          <img src='./arweave-small.svg' />
+          <CurrencyMenu />
         </Box>
         <Box
           sx={{

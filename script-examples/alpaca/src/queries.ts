@@ -19,15 +19,23 @@
 import { gql, ApolloClient, InMemoryCache } from '@apollo/client/core';
 import CONFIG from '../config.json' assert { type: 'json' };
 import {
+  CONTRACT_TAG,
   CONVERSATION_IDENTIFIER_TAG,
   INFERENCE_TRANSACTION_TAG,
+  INPUT_TAG,
   OPERATION_NAME_TAG,
+  OPERATOR_PERCENTAGE_FEE,
+  OPERATOR_REGISTRATION_AR_FEE,
   REQUEST_TRANSACTION_TAG,
   SCRIPT_CURATOR_TAG,
   SCRIPT_INFERENCE_REQUEST,
   SCRIPT_NAME_TAG,
   SCRIPT_OPERATOR_TAG,
   SCRIPT_USER_TAG,
+  SEQUENCE_OWNER_TAG,
+  U_CONTRACT_ID,
+  U_DIVIDER,
+  VAULT_ADDRESS,
 } from './constants';
 import { ITransactions } from './interfaces';
 
@@ -44,14 +52,42 @@ const clientGateway = new ApolloClient({
   },
 });
 
+const gqlQuery = gql`
+  query FIND_BY_TAGS($tags: [TagFilter!], $first: Int!, $after: String) {
+    transactions(tags: $tags, first: $first, after: $after, sort: HEIGHT_DESC) {
+      pageInfo {
+        hasNextPage
+      }
+      edges {
+        cursor
+        node {
+          id
+          tags {
+            name
+            value
+          }
+        }
+      }
+    }
+  }
+`;
+
 const parseQueryResult = (result: { data: { transactions: ITransactions } }) =>
   result.data.transactions.edges;
 
-export const queryTransactionsReceived = async (address: string) => {
+export const queryTransactionsReceived = async (address: string, opFee: number, after?: string) => {
+  const feeShare = opFee * OPERATOR_PERCENTAGE_FEE;
+
+  const paymentInput = JSON.stringify({
+    function: 'transfer',
+    target: address,
+    qty: feeShare.toString(),
+  });
+
   const tags = [
     {
       name: OPERATION_NAME_TAG,
-      values: [SCRIPT_INFERENCE_REQUEST],
+      values: ['Inference Payment'],
     },
     {
       name: SCRIPT_CURATOR_TAG,
@@ -62,14 +98,35 @@ export const queryTransactionsReceived = async (address: string) => {
       values: [CONFIG.scriptName],
     },
     {
+      name: INPUT_TAG,
+      values: [paymentInput],
+    },
+    {
+      name: CONTRACT_TAG,
+      values: [U_CONTRACT_ID],
+    },
+    {
       name: SCRIPT_OPERATOR_TAG,
       values: [address],
     },
   ];
+
+  const result = await clientGateway.query({
+    query: gqlQuery,
+    variables: { first: 10, tags, after },
+  });
+
+  return {
+    requestTxs: parseQueryResult(result),
+    hasNextPage: result.data.transactions.pageInfo.hasNextPage,
+  };
+};
+
+export const getRequest = async (transactionId: string) => {
   const result = await clientGateway.query({
     query: gql`
-      query TransactionsReceived($tags: [TagFilter!]) {
-        transactions(tags: $tags, sort: HEIGHT_DESC) {
+      query tx($id: ID!) {
+        transactions(first: 1, ids: [$id], sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -90,12 +147,11 @@ export const queryTransactionsReceived = async (address: string) => {
         }
       }
     `,
-    variables: { tags },
+    variables: { id: transactionId },
   });
 
-  return parseQueryResult(result);
+  return parseQueryResult(result)[0];
 };
-
 export const queryTransactionAnswered = async (transactionId: string, address: string) => {
   const tags = [
     {
@@ -145,48 +201,11 @@ export const queryTransactionAnswered = async (transactionId: string, address: s
   return parseQueryResult(result);
 };
 
-export const queryCheckUserScriptRequests = async (userAddress: string) => {
-  const tags = [
-    {
-      name: OPERATION_NAME_TAG,
-      values: [SCRIPT_INFERENCE_REQUEST],
-    },
-    {
-      name: SCRIPT_CURATOR_TAG,
-      values: [CONFIG.scriptCurator],
-    },
-    {
-      name: SCRIPT_NAME_TAG,
-      values: [CONFIG.scriptName],
-    },
-  ];
-  const result = await clientGateway.query({
-    query: gql`
-      query CheckUserScriptRequests($tags: [TagFilter!], $owner: String!) {
-        transactions(owners: [$owner], tags: $tags, sort: HEIGHT_DESC) {
-          edges {
-            node {
-              id
-              quantity {
-                winston
-                ar
-              }
-              tags {
-                name
-                value
-              }
-            }
-          }
-        }
-      }
-    `,
-    variables: { tags, owner: userAddress },
-  });
-
-  return parseQueryResult(result);
-};
-
-export const queryCheckUserPayment = async (userAddress: string, inferenceTransaction: string) => {
+export const queryCheckUserPayment = async (
+  inferenceTransaction: string,
+  userAddress: string,
+  inputValues: string[],
+) => {
   const tags = [
     {
       name: OPERATION_NAME_TAG,
@@ -204,112 +223,39 @@ export const queryCheckUserPayment = async (userAddress: string, inferenceTransa
       name: INFERENCE_TRANSACTION_TAG,
       values: [inferenceTransaction],
     },
-  ];
-  const result = await clientGateway.query({
-    query: gql`
-      query CheckUserPayment($tags: [TagFilter!], $owner: String!) {
-        transactions(first: 1, owners: [$owner], tags: $tags, sort: HEIGHT_DESC) {
-          edges {
-            node {
-              id
-              quantity {
-                winston
-                ar
-              }
-              tags {
-                name
-                value
-              }
-            }
-          }
-        }
-      }
-    `,
-    variables: { tags, owner: userAddress },
-  });
-
-  return parseQueryResult(result);
-};
-
-export const queryScriptFee = async () => {
-  const tags = [
     {
-      name: OPERATION_NAME_TAG,
-      values: ['Script Creation'],
+      name: CONTRACT_TAG,
+      values: [U_CONTRACT_ID],
     },
     {
-      name: SCRIPT_NAME_TAG,
-      values: [CONFIG.scriptName],
+      name: SEQUENCE_OWNER_TAG,
+      values: [userAddress],
+    },
+    {
+      name: INPUT_TAG,
+      values: inputValues,
     },
   ];
   const result = await clientGateway.query({
-    query: gql`
-      query ScriptFee($tags: [TagFilter!], $owner: String!) {
-        transactions(first: 1, owners: [$owner], tags: $tags, sort: HEIGHT_DESC) {
-          edges {
-            node {
-              id
-              quantity {
-                winston
-                ar
-              }
-              tags {
-                name
-                value
-              }
-            }
-          }
-        }
-      }
-    `,
-    variables: { tags, owner: CONFIG.scriptCurator },
-  });
-
-  return parseQueryResult(result);
-};
-
-export const queryCheckUserCuratorPayment = async (userAddress: string) => {
-  const tags = [
-    {
-      name: OPERATION_NAME_TAG,
-      values: ['Script Fee Payment'],
-    },
-    {
-      name: SCRIPT_CURATOR_TAG,
-      values: [CONFIG.scriptCurator],
-    },
-    {
-      name: SCRIPT_NAME_TAG,
-      values: [CONFIG.scriptName],
-    },
-  ];
-  const result = await clientGateway.query({
-    query: gql`
-      query CheckUserCuratorPayment($tags: [TagFilter!], $owner: String!, $recipient: String!) {
-        transactions(owners: [$owner], recipients: [$recipient], tags: $tags, sort: HEIGHT_DESC) {
-          edges {
-            node {
-              id
-              quantity {
-                winston
-                ar
-              }
-              tags {
-                name
-                value
-              }
-            }
-          }
-        }
-      }
-    `,
-    variables: { tags, owner: userAddress, recipient: CONFIG.scriptCurator },
+    query: gqlQuery,
+    variables: { tags, first: 3 },
   });
 
   return parseQueryResult(result);
 };
 
 export const queryOperatorFee = async (address: string) => {
+  const operatorPaymentInputStr = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: (parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER).toString(),
+  });
+
+  const operatorPaymentInputNumber = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER,
+  });
   const tags = [
     {
       name: OPERATION_NAME_TAG,
@@ -323,11 +269,44 @@ export const queryOperatorFee = async (address: string) => {
       name: SCRIPT_NAME_TAG,
       values: [CONFIG.scriptName],
     },
+    {
+      name: INPUT_TAG,
+      values: [operatorPaymentInputStr, operatorPaymentInputNumber],
+    },
+    {
+      name: CONTRACT_TAG,
+      values: [U_CONTRACT_ID],
+    },
+    {
+      name: SEQUENCE_OWNER_TAG,
+      values: [address],
+    },
   ];
+
+  const result = await clientGateway.query({
+    query: gqlQuery,
+    variables: { tags, first: 1 },
+  });
+
+  return parseQueryResult(result);
+};
+
+export const getModelOwner = async () => {
+  const tags = [
+    {
+      name: OPERATION_NAME_TAG,
+      values: ['Script Creation'],
+    },
+    {
+      name: SCRIPT_NAME_TAG,
+      values: [CONFIG.scriptName],
+    },
+  ];
+
   const result = await clientGateway.query({
     query: gql`
-      query OperatorFee($tags: [TagFilter!], $owner: String!) {
-        transactions(first: 1, owners: [$owner], tags: $tags, sort: HEIGHT_DESC) {
+      query tx($tags: [TagFilter!], $first: Int, $owners: [String!]) {
+        transactions(first: $first, tags: $tags, owners: $owners, sort: HEIGHT_DESC) {
           edges {
             node {
               id
@@ -335,21 +314,23 @@ export const queryOperatorFee = async (address: string) => {
                 name
                 value
               }
-              block {
-                id
-                timestamp
-                height
-                previous
-              }
             }
           }
         }
       }
     `,
-    variables: { tags, owner: address },
+    variables: { tags, first: 1, owner: [CONFIG.scriptCurator] },
   });
 
-  return parseQueryResult(result);
+  const tx = parseQueryResult(result)[0];
+
+  const creatorAddr = tx.node.tags.find((tag) => tag.name === 'Model-Creator')?.value;
+
+  if (!creatorAddr) {
+    throw new Error('Model creator not found');
+  }
+
+  return creatorAddr;
 };
 
 export const queryRequestsForConversation = async (userAddr: string, cid: string) => {

@@ -5,18 +5,16 @@ import {
   TAG_NAMES,
   APP_NAME,
   REGISTER_OPERATION,
-  SAVE_REGISTER_OPERATION,
   OPERATOR_REGISTRATION_AR_FEE,
+  secondInMS,
+  U_DIVIDER,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { RouteLoaderResult } from '@/interfaces/router';
-import arweave from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import {
   Box,
   Typography,
-  Icon,
-  InputBase,
   DialogContent,
   Dialog,
   DialogTitle,
@@ -27,11 +25,10 @@ import {
 import { toSvg } from 'jdenticon';
 import { useSnackbar } from 'notistack';
 import { useContext, useMemo, useState } from 'react';
-import { NumericFormat } from 'react-number-format';
 import { useLoaderData, useLocation, useNavigate } from 'react-router-dom';
 import '@/styles/ui.css';
 import { WalletContext } from '@/context/wallet';
-import { WorkerContext } from '@/context/worker';
+import { sendU } from '@/utils/u';
 
 const Register = () => {
   const { avatarTxId } = (useLoaderData() as RouteLoaderResult) || {};
@@ -40,8 +37,7 @@ const Register = () => {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { currentAddress, dispatchTx } = useContext(WalletContext);
-  const { startJob } = useContext(WorkerContext);
+  const { currentUBalance, updateUBalance } = useContext(WalletContext);
 
   const imgUrl = useMemo(() => {
     if (avatarTxId) {
@@ -54,72 +50,53 @@ const Register = () => {
 
   const handleRegister = async (rate: string, operatorName: string, handleNext: () => void) => {
     try {
-      const saveTx = await arweave.createTransaction({ data: 'Save Transaction' });
-      saveTx.addTag(TAG_NAMES.appName, APP_NAME);
-      saveTx.addTag(TAG_NAMES.appVersion, APP_VERSION);
-      saveTx.addTag(TAG_NAMES.operationName, SAVE_REGISTER_OPERATION);
-      saveTx.addTag(TAG_NAMES.scriptName, findTag(state, 'scriptName') || '');
-      saveTx.addTag(TAG_NAMES.scriptCurator, state.node.owner.address);
-      saveTx.addTag(TAG_NAMES.scriptTransaction, findTag(state, 'scriptTransaction') as string);
-      saveTx.addTag(TAG_NAMES.operatorFee, arweave.ar.arToWinston(rate));
-      saveTx.addTag(TAG_NAMES.operatorName, operatorName);
-      saveTx.addTag(TAG_NAMES.unixTime, (Date.now() / 1000).toString());
-      saveTx.addTag(
-        TAG_NAMES.paymentQuantity,
-        arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE),
-      );
-      saveTx.addTag(TAG_NAMES.paymentTarget, VAULT_ADDRESS);
-      const saveResult = await dispatchTx(saveTx);
+      if (currentUBalance < parseFloat(OPERATOR_REGISTRATION_AR_FEE)) {
+        enqueueSnackbar('Insufficient U Balance', { variant: 'error' });
+        return;
+      }
 
-      const tx = await arweave.createTransaction({
-        target: VAULT_ADDRESS,
-        quantity: arweave.ar.arToWinston(OPERATOR_REGISTRATION_AR_FEE),
-      });
+      const parsedUFee = parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER;
+      const parsedOpFee = parseFloat(rate) * U_DIVIDER;
+
       const tags = [];
-      tags.push({ name: TAG_NAMES.appName, values: APP_NAME });
-      tags.push({ name: TAG_NAMES.appVersion, values: APP_VERSION });
+      tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+      tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
       tags.push({
         name: TAG_NAMES.scriptName,
-        values: findTag(state, 'scriptName') || '',
+        value: findTag(state, 'scriptName') ?? '',
       });
-      tags.push({ name: TAG_NAMES.scriptCurator, values: state.node.owner.address });
+      tags.push({
+        name: TAG_NAMES.scriptCurator,
+        value: findTag(state, 'sequencerOwner') as string,
+      });
       tags.push({
         name: TAG_NAMES.scriptTransaction,
-        values: findTag(state, 'scriptTransaction') as string,
+        value: findTag(state, 'scriptTransaction') as string,
       });
-      tags.push({ name: TAG_NAMES.operatorFee, values: arweave.ar.arToWinston(rate) });
-      tags.push({ name: TAG_NAMES.operationName, values: REGISTER_OPERATION });
-      tags.push({ name: TAG_NAMES.operatorName, values: operatorName });
-      tags.push({ name: TAG_NAMES.unixTime, values: (Date.now() / 1000).toString() });
-      tags.push({ name: TAG_NAMES.saveTransaction, values: saveResult.id as string });
+      tags.push({ name: TAG_NAMES.operatorFee, value: parsedOpFee.toString() });
+      tags.push({ name: TAG_NAMES.operationName, value: REGISTER_OPERATION });
+      tags.push({ name: TAG_NAMES.operatorName, value: operatorName });
+      tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
+      // tags.push({ name: TAG_NAMES.saveTransaction, values: saveResult.id as string });
 
-      tags.forEach((tag) => tx.addTag(tag.name, tag.values));
-
-      await arweave.transactions.sign(tx);
-      const response = await arweave.transactions.post(tx);
-      if (response.status === 200) {
-        enqueueSnackbar(
-          <>
-            Operator Registration Submitted.
-            <br></br>
-            <a href={`https://viewblock.io/arweave/tx/${tx.id}`} target={'_blank'} rel='noreferrer'>
-              <u>View Transaction in Explorer</u>
-            </a>
-          </>,
-          { variant: 'success' },
-        );
-        startJob({
-          address: currentAddress,
-          operationName: SAVE_REGISTER_OPERATION,
-          tags: saveTx.tags,
-          txid: saveTx.id,
-          encodedTags: true,
-        });
-        setIsRegistered(true);
-        handleNext();
-      } else {
-        enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
-      }
+      const paymentId = await sendU(VAULT_ADDRESS, parsedUFee.toString(), tags);
+      await updateUBalance();
+      enqueueSnackbar(
+        <>
+          Operator Registration Submitted.
+          <br></br>
+          <a
+            href={`https://viewblock.io/arweave/tx/${paymentId}`}
+            target={'_blank'}
+            rel='noreferrer'
+          >
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        { variant: 'success' },
+      );
+      setIsRegistered(true);
+      handleNext();
     } catch (error) {
       enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
     }
@@ -256,58 +233,6 @@ const Register = () => {
             >
               {findTag(state, 'category')}
             </Typography>
-          </Box>
-          <Box>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Cost
-            </Typography>
-            <Box
-              display={'flex'}
-              alignItems={'center'}
-              justifyContent='flex-start'
-              width={'100%'}
-              height='60px'
-            >
-              <NumericFormat
-                value={arweave.ar.winstonToAr(findTag(state, 'scriptFee') || '0')}
-                customInput={InputBase}
-                decimalScale={3}
-                decimalSeparator={'.'}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontStyle: 'normal',
-                  fontWeight: 700,
-                  fontSize: '60px',
-                  lineHeight: '106px',
-                  textAlign: 'center',
-
-                  paddingRight: '8px',
-                }}
-                disabled
-              />
-              <Icon sx={{ height: '50px', width: '50px' }}>
-                <img
-                  src={
-                    theme.palette.mode === 'dark'
-                      ? './arweave-logo.svg'
-                      : './arweave-logo-for-light.png'
-                  }
-                  width={'50px'}
-                  height={'50px'}
-                />
-              </Icon>
-            </Box>
           </Box>
         </Box>
         <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'45%'}>

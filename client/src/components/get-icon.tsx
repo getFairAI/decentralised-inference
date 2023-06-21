@@ -20,6 +20,7 @@ import { GitHub, Article, Settings, Twitter, Logout } from '@mui/icons-material'
 import { SvgIcon, useTheme } from '@mui/material';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 type Props = {
   input: string;
@@ -33,6 +34,8 @@ const GetIcon = ({ input }: Props): JSX.Element => {
   switch (input) {
     case 'Bundlr Settings':
       return <Settings></Settings>;
+    case 'U Swap':
+      return <SwapHorizIcon></SwapHorizIcon>;
     case 'Whitepaper':
       return <Article></Article>;
     case 'Github':

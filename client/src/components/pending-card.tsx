@@ -1,27 +1,24 @@
-import {
-  MODEL_CREATION,
-  DEFAULT_TAGS,
-  TAG_NAMES,
-  MODEL_CREATION_PAYMENT,
-  SAVE_REGISTER_OPERATION,
-  REGISTER_OPERATION,
-  MODEL_FEE_PAYMENT_SAVE,
-  MODEL_FEE_PAYMENT,
-  INFERENCE_PAYMENT,
-  SCRIPT_INFERENCE_REQUEST,
-  SCRIPT_INFERENCE_RESPONSE,
-  INFERENCE_PAYMENT_DISTRIBUTION,
-  SCRIPT_CREATION_PAYMENT,
-  SCRIPT_CREATION,
-  SCRIPT_FEE_PAYMENT_SAVE,
-  SCRIPT_FEE_PAYMENT,
-} from '@/constants';
-import { WalletContext } from '@/context/wallet';
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
+import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_TX_WITH } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
-import { findTag } from '@/utils/common';
-import { useLazyQuery } from '@apollo/client';
+import { displayShortTxOrAddr, findTag, parseUnixTimestamp } from '@/utils/common';
 import {
   Card,
   Typography,
@@ -30,294 +27,51 @@ import {
   Box,
   Tooltip,
   IconButton,
-  CardActions,
   Button,
   useTheme,
 } from '@mui/material';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
-import { useSnackbar } from 'notistack';
-import _ from 'lodash';
-import { WorkerContext } from '@/context/worker';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { parseUBalance } from '@/utils/u';
 
 interface PaymentTx {
   id: string;
   quantity: string;
   timestamp: string;
-  status: string;
   target: string;
-  nConfirmations: number;
+  operationName: string;
+  appVersion: string;
 }
 
-type operationNames =
-  | 'Model Creation Payment'
-  | 'Script Creation Payment'
-  | 'Operator Registration Payment'
-  | 'Model Fee Payment'
-  | 'Script Fee Payment'
-  | 'Inference Request Payment'
-  | 'Inference Redistribution';
-
-const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
-  const { currentAddress } = useContext(WalletContext);
-  const [operationName, setOperationName] = useState<operationNames | undefined>(undefined);
-  const [getPayment, { data: paymentData, previousData: previousPaymentData }] =
-    useLazyQuery(QUERY_TX_WITH);
-  const [payment, setPayment] = useState<Partial<PaymentTx> | undefined>(undefined);
-  const { enqueueSnackbar } = useSnackbar();
+const PendingCard = ({ tx }: { tx: IEdge }) => {
   const theme = useTheme();
-  const { startJob } = useContext(WorkerContext);
 
-  useMemo(() => {
+  const payment: PaymentTx | undefined = useMemo(() => {
     if (tx) {
-      switch (findTag(tx, 'operationName')) {
-        case MODEL_CREATION:
-          // find payment for model creation
-          getPayment({
-            variables: {
-              address: currentAddress,
-              tags: [
-                ...DEFAULT_TAGS,
-                { name: TAG_NAMES.operationName, values: [MODEL_CREATION_PAYMENT] },
-                { name: TAG_NAMES.modelTransaction, values: tx.node.id },
-              ],
-            },
-          });
-          setOperationName('Model Creation Payment');
-          break;
-        case SCRIPT_CREATION:
-          // find payment for model creation
-          getPayment({
-            variables: {
-              address: currentAddress,
-              tags: [
-                ...DEFAULT_TAGS,
-                { name: TAG_NAMES.operationName, values: [SCRIPT_CREATION_PAYMENT] },
-                { name: TAG_NAMES.scriptTransaction, values: tx.node.id },
-              ],
-            },
-          });
-          setOperationName('Script Creation Payment');
-          break;
-        case SAVE_REGISTER_OPERATION:
-          // check there is register operation for this tx
-          getPayment({
-            variables: {
-              address: currentAddress,
-              tags: [
-                ...DEFAULT_TAGS,
-                { name: TAG_NAMES.operationName, values: [REGISTER_OPERATION] },
-                { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
-              ],
-            },
-          });
-          setOperationName('Operator Registration Payment');
-          break;
-        case MODEL_FEE_PAYMENT_SAVE:
-          // check there is a model fee payment for this tx
-          getPayment({
-            variables: {
-              address: currentAddress,
-              tags: [
-                ...DEFAULT_TAGS,
-                { name: TAG_NAMES.operationName, values: [MODEL_FEE_PAYMENT] },
-                { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
-              ],
-            },
-          });
-          setOperationName('Model Fee Payment');
-          break;
-        case SCRIPT_FEE_PAYMENT_SAVE:
-          // check there is a model fee payment for this tx
-          getPayment({
-            variables: {
-              address: currentAddress,
-              tags: [
-                ...DEFAULT_TAGS,
-                { name: TAG_NAMES.operationName, values: [SCRIPT_FEE_PAYMENT] },
-                { name: TAG_NAMES.saveTransaction, values: [tx.node.id] },
-              ],
-            },
-          });
-          setOperationName('Script Fee Payment');
-          break;
-        case SCRIPT_INFERENCE_REQUEST:
-          // check there is a inference payment for this tx
-          getPayment({
-            variables: {
-              address: currentAddress,
-              tags: [
-                ...DEFAULT_TAGS,
-                { name: TAG_NAMES.operationName, values: [INFERENCE_PAYMENT] },
-                { name: TAG_NAMES.inferenceTransaction, values: [tx.node.id] },
-              ],
-            },
-          });
-          setOperationName('Inference Request Payment');
-          break;
-        case SCRIPT_INFERENCE_RESPONSE:
-          // check there is a inferen payment distribution for this tx
-          getPayment({
-            variables: {
-              address: currentAddress,
-              tags: [
-                ...DEFAULT_TAGS,
-                { name: TAG_NAMES.operationName, values: [INFERENCE_PAYMENT_DISTRIBUTION] },
-                { name: TAG_NAMES.responseTransaction, values: [tx.node.id] },
-              ],
-            },
-          });
-          setOperationName('Inference Redistribution');
-          break;
-        default:
-          console.log('Invalid Operation Name');
-          return;
-      }
+      const input = findTag(tx, 'input') as string;
+      const quantity = JSON.parse(input).qty;
+      const target = JSON.parse(input).target;
+      const timestamp = findTag(tx, 'unixTime') as string;
+      const operationName = findTag(tx, 'operationName') as string;
+      const appVersion = findTag(tx, 'appVersion') as string;
+
+      return {
+        id: tx.node.id,
+        quantity: parseUBalance(quantity).toString(),
+        target,
+        timestamp,
+        operationName,
+        appVersion,
+      } as PaymentTx;
     }
+    return undefined;
   }, [tx]);
-
-  useEffect(() => {
-    if (!_.isEqual(paymentData, previousPaymentData)) {
-      (async () => {
-        if (paymentData && paymentData.transactions.edges.length === 0) {
-          // paymentTx not found show retry option
-          const quantity = findTag(tx, 'paymentQuantity') as string;
-          const target = findTag(tx, 'paymentTarget');
-          const timestamp = 'Not Available';
-          setPayment({
-            quantity: arweave.ar.winstonToAr(quantity),
-            target,
-            timestamp,
-            status: 'Failed',
-          });
-          const canRetry =
-            target && quantity && !Number.isNaN(quantity) && target !== currentAddress;
-          if (autoRetry && canRetry) {
-            startJob({
-              address: currentAddress,
-              operationName: findTag(tx, 'operationName') as string,
-              tags: tx.node.tags,
-              txid: tx.node.id,
-              encodedTags: false,
-            });
-          }
-        } else if (paymentData && paymentData.transactions.edges.length > 0) {
-          // found payment tx show status
-          const payment: IEdge = paymentData.transactions.edges[0];
-          const timestamp =
-            parseFloat(findTag(payment, 'unixTime') as string) || payment.node.block.timestamp;
-          const date = new Date(timestamp * 1000)
-            .toLocaleDateString()
-            .concat(' ')
-            .concat(new Date(timestamp * 1000).toLocaleTimeString());
-          const result = await arweave.transactions.getStatus(payment.node.id);
-
-          setPayment({
-            id: payment.node.id,
-            target: payment.node.recipient,
-            quantity: payment.node.quantity.ar,
-            timestamp: date,
-            status: result.confirmed ? 'Confirmed' : 'Pending',
-            nConfirmations: result.confirmed?.number_of_confirmations,
-          });
-        }
-      })();
-    }
-  }, [paymentData]);
-
-  const handleRetry = async () => {
-    // retry current tx
-    // get previous tags and filter quantity and target quantities and operation name
-    const tags = tx.node.tags.filter(
-      (el) =>
-        el.name !== TAG_NAMES.paymentQuantity &&
-        el.name !== TAG_NAMES.paymentTarget &&
-        el.name !== TAG_NAMES.operationName &&
-        el.name !== 'Signing-Client-Version' &&
-        el.name !== 'Signing-Client',
-    );
-    const quantity = findTag(tx, 'paymentQuantity');
-    const target = findTag(tx, 'paymentTarget');
-    if (!target || !quantity) {
-      enqueueSnackbar('Insufficient Tags to retry Transaction...', { variant: 'error' });
-      return;
-    }
-    const retryTx = await arweave.createTransaction({
-      target,
-      quantity,
-    });
-    switch (operationName) {
-      case 'Inference Redistribution':
-        retryTx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT_DISTRIBUTION);
-        retryTx.addTag(TAG_NAMES.responseTransaction, tx.node.id);
-        break;
-      case 'Model Fee Payment':
-        retryTx.addTag(TAG_NAMES.operationName, MODEL_FEE_PAYMENT);
-        retryTx.addTag(TAG_NAMES.saveTransaction, tx.node.id);
-        break;
-      case 'Script Fee Payment':
-        retryTx.addTag(TAG_NAMES.operationName, SCRIPT_FEE_PAYMENT);
-        retryTx.addTag(TAG_NAMES.saveTransaction, tx.node.id);
-        break;
-      case 'Inference Request Payment':
-        retryTx.addTag(TAG_NAMES.operationName, INFERENCE_PAYMENT);
-        retryTx.addTag(TAG_NAMES.inferenceTransaction, tx.node.id);
-        break;
-      case 'Model Creation Payment':
-        retryTx.addTag(TAG_NAMES.operationName, MODEL_CREATION_PAYMENT);
-        retryTx.addTag(TAG_NAMES.modelTransaction, tx.node.id);
-        break;
-      case 'Script Creation Payment':
-        retryTx.addTag(TAG_NAMES.operationName, SCRIPT_CREATION_PAYMENT);
-        retryTx.addTag(TAG_NAMES.scriptTransaction, tx.node.id);
-        break;
-      case 'Operator Registration Payment':
-        retryTx.addTag(TAG_NAMES.operationName, REGISTER_OPERATION);
-        retryTx.addTag(TAG_NAMES.saveTransaction, tx.node.id);
-        break;
-      default:
-        return;
-    }
-    tags.forEach((tag) =>
-      tag.name === TAG_NAMES.unixTime
-        ? retryTx.addTag(tag.name, (Date.now() / 1000).toString())
-        : retryTx.addTag(tag.name, tag.value),
-    );
-
-    await arweave.transactions.sign(retryTx);
-    const response = await arweave.transactions.post(retryTx);
-    if (response.status === 200) {
-      enqueueSnackbar(
-        <>
-          Transaction Retry
-          <br></br>
-          <a
-            href={`https://viewblock.io/arweave/tx/${retryTx.id}`}
-            target={'_blank'}
-            rel='noreferrer'
-          >
-            <u>View Transaction in Explorer</u>
-          </a>
-        </>,
-        { variant: 'success' },
-      );
-      startJob({
-        address: currentAddress,
-        operationName: findTag(tx, 'operationName') as string,
-        tags: tx.node.tags,
-        txid: tx.node.id,
-        encodedTags: false,
-      });
-    } else {
-      enqueueSnackbar('Something went Wrong. Please Try again...', { variant: 'error' });
-    }
-  };
 
   return (
     <Card sx={{ display: 'flex', flexDirection: 'column' }}>
       <CardHeader
-        title={operationName}
+        title={payment?.operationName}
         sx={{ padding: '8px 16px' }}
         action={
           <Tooltip title='View in Explorer'>
@@ -326,7 +80,6 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
                 size='small'
                 href={`https://viewblock.io/arweave/tx/${payment?.id}`}
                 target='_blank'
-                disabled={payment?.status === 'Failed'}
               >
                 <OpenInNewIcon />
               </IconButton>
@@ -344,8 +97,7 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
             {payment?.target ? (
               <Tooltip title={payment?.target}>
                 <Typography>
-                  {payment?.target?.slice(0, 6)}...
-                  {payment?.target?.slice(-2)}
+                  {displayShortTxOrAddr(payment.target)}
                   <IconButton
                     size='small'
                     onClick={() => {
@@ -362,86 +114,38 @@ const PendingCard = ({ tx, autoRetry }: { tx: IEdge; autoRetry: boolean }) => {
           </Box>
           <Box display={'flex'} gap={'8px'} alignItems={'center'}>
             <Typography fontWeight={'600'}>Quantity:</Typography>
-            <Typography>{parseFloat(payment?.quantity as string).toFixed(4)}</Typography>
-            <img
-              src={
-                theme.palette.mode === 'dark'
-                  ? './arweave-logo.svg'
-                  : './arweave-logo-for-light.png'
-              }
-              width={'20px'}
-              height={'20px'}
-            />
+            <Typography>
+              {parseFloat(payment?.quantity as string).toFixed(defaultDecimalPlaces)}
+            </Typography>
+            <img src={U_LOGO_SRC} width={'20px'} height={'20px'} />
           </Box>
           <Box display={'flex'} gap={'8px'}>
             <Typography fontWeight={'600'}>Timestamp:</Typography>
-            <Typography noWrap>{payment?.timestamp}</Typography>
+            <Typography noWrap>{parseUnixTimestamp(payment?.timestamp as string)}</Typography>
           </Box>
-          {payment?.status !== 'Failed' && (
-            <Box display={'flex'} gap={'8px'}>
-              <Typography fontWeight={'600'}>Confirmations:</Typography>
-              <Typography>{payment?.nConfirmations}</Typography>
-            </Box>
-          )}
+          <Box display={'flex'} gap={'8px'} alignItems={'center'}>
+            <Typography fontWeight={'600'}>App Version:</Typography>
+            <Typography noWrap>{payment?.appVersion}</Typography>
+          </Box>
         </Box>
         <Box display={'flex'} flexDirection={'column'} justifyContent={'center'}>
           <Box display={'flex'} gap={'8px'}>
             <Button
               variant='outlined'
-              color={
-                payment?.status === 'Confirmed'
-                  ? 'success'
-                  : payment?.status === 'Pending'
-                  ? 'warning'
-                  : 'error'
-              }
+              color={'success'}
               disabled
               sx={{
                 '&.MuiButtonBase-root:disabled': {
-                  color:
-                    payment?.status === 'Confirmed'
-                      ? theme.palette.success.main
-                      : payment?.status === 'Pending'
-                      ? theme.palette.warning.main
-                      : theme.palette.error.main,
-                  borderColor:
-                    payment?.status === 'Confirmed'
-                      ? theme.palette.success.main
-                      : payment?.status === 'Pending'
-                      ? theme.palette.warning.main
-                      : theme.palette.error.main,
+                  color: theme.palette.success.main,
+                  borderColor: theme.palette.success.main,
                 },
               }}
             >
-              {payment?.status}
+              {'Confirmed'}
             </Button>
           </Box>
         </Box>
       </CardContent>
-      {payment?.status === 'Failed' && (
-        <CardActions
-          sx={{ display: 'flex', justifyContent: 'center', padding: '8px 16px', gap: '8px' }}
-        >
-          {!payment.target ||
-          !payment.quantity ||
-          Number.isNaN(payment.quantity) ||
-          payment.target === currentAddress ? (
-            <>
-              <Tooltip title={'There is Not Sufficient Information to retry this Payment'}>
-                <span>
-                  <Button onClick={handleRetry} variant='outlined' disabled>
-                    Retry
-                  </Button>
-                </span>
-              </Tooltip>
-            </>
-          ) : (
-            <Button onClick={handleRetry} variant='outlined'>
-              Retry
-            </Button>
-          )}
-        </CardActions>
-      )}
     </Card>
   );
 };

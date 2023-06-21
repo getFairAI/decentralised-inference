@@ -1,21 +1,16 @@
 import PendingCard from '@/components/pending-card';
 import {
-  DEFAULT_TAGS,
   TAG_NAMES,
-  MODEL_CREATION,
-  SAVE_REGISTER_OPERATION,
-  MODEL_FEE_PAYMENT_SAVE,
-  SCRIPT_INFERENCE_REQUEST,
-  SCRIPT_INFERENCE_RESPONSE,
-  N_PREVIOUS_BLOCKS,
-  SCRIPT_CREATION,
-  SCRIPT_FEE_PAYMENT_SAVE,
+  MODEL_CREATION_PAYMENT,
+  SCRIPT_CREATION_PAYMENT,
+  REGISTER_OPERATION,
+  INFERENCE_PAYMENT,
+  U_CONTRACT_ID,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import useOnScreen from '@/hooks/useOnScreen';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
+import { FIND_BY_TAGS } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
 import {
   Box,
@@ -32,14 +27,13 @@ import {
 import { useContext, useState, useEffect, useRef, ChangeEvent } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import _ from 'lodash';
-import { findTag } from '@/utils/common';
+import { commonUpdateQuery, findTag } from '@/utils/common';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 const Payments = () => {
   const elementsPerPage = 10;
   const { currentAddress } = useContext(WalletContext);
-  const [minHeight, setMinHeight] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const [filteredValues, setFilteredValues] = useState<IEdge[]>([]);
@@ -49,40 +43,32 @@ const Payments = () => {
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
 
-  const { data, previousData, error, loading, refetch, fetchMore } = useQuery(
-    QUERY_USER_INTERACTIONS,
-    {
-      variables: {
-        address: currentAddress,
-        tags: [
-          ...DEFAULT_TAGS,
-          {
-            name: TAG_NAMES.operationName,
-            values: [
-              MODEL_CREATION,
-              SAVE_REGISTER_OPERATION,
-              MODEL_FEE_PAYMENT_SAVE,
-              SCRIPT_FEE_PAYMENT_SAVE,
-              SCRIPT_INFERENCE_REQUEST,
-              SCRIPT_INFERENCE_RESPONSE,
-              SCRIPT_CREATION,
-            ],
-          },
-        ],
-        minBlockHeight: 0,
-        first: elementsPerPage,
-      },
-      skip: !currentAddress || minHeight <= 0,
-      notifyOnNetworkStatusChange: true,
+  const { data, previousData, error, loading, refetch, fetchMore } = useQuery(FIND_BY_TAGS, {
+    variables: {
+      tags: [
+        {
+          name: TAG_NAMES.sequencerOwner,
+          values: [currentAddress],
+        },
+        {
+          name: TAG_NAMES.contract,
+          values: [U_CONTRACT_ID],
+        },
+        {
+          name: TAG_NAMES.operationName,
+          values: [
+            MODEL_CREATION_PAYMENT,
+            SCRIPT_CREATION_PAYMENT,
+            REGISTER_OPERATION,
+            INFERENCE_PAYMENT,
+          ],
+        },
+      ],
+      first: elementsPerPage,
     },
-  );
-
-  useEffect(() => {
-    (async () => {
-      const currentHeight = (await arweave.blocks.getCurrent()).height;
-      setMinHeight(currentHeight - N_PREVIOUS_BLOCKS);
-    })();
-  }, []);
+    skip: !currentAddress,
+    notifyOnNetworkStatusChange: true,
+  });
 
   useEffect(() => {
     if (data && !_.isEqual(data, previousData)) {
@@ -97,25 +83,7 @@ const Payments = () => {
         variables: {
           after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
         },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          const newData = fetchMoreResult.transactions.edges;
-
-          const merged: IEdge[] =
-            prev && prev.transactions?.edges ? prev.transactions.edges.slice(0) : [];
-          for (let i = 0; i < newData.length; ++i) {
-            if (!merged.find((el: IEdge) => el.node.id === newData[i].node.id)) {
-              merged.push(newData[i]);
-            }
-          }
-          const newResult = Object.assign({}, prev, {
-            transactions: {
-              edges: merged,
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-          return newResult;
-        },
+        updateQuery: commonUpdateQuery,
       });
     }
   }, [isOnScreen, hasNextPage]);
@@ -135,11 +103,6 @@ const Payments = () => {
       setFilteredValues([]);
     }
   }, [filterValue, data]);
-
-  useEffect(() => {
-    /* console.log(startDateFilter);
-    console.log(endDateFilter); */
-  }, [startDateFilter, endDateFilter]);
 
   const refreshClick = () => {
     refetch();
@@ -216,7 +179,7 @@ const Payments = () => {
           </Box>
           <Stack spacing={2}>
             {filteredValues.map((tx: IEdge) => (
-              <PendingCard tx={tx} key={tx.node.id} autoRetry={false} />
+              <PendingCard tx={tx} key={tx.node.id} />
             ))}
           </Stack>
         </>

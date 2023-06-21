@@ -42,6 +42,7 @@ import { StyledMaterialDesignContent } from './styles/components';
 import { useCallback, useEffect, useState } from 'react';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { ChooseWalletProvider } from './context/choose-wallet';
+import { SwapProvider } from './context/swap';
 
 const App = () => {
   const [hasAgreed, setHasAgreed] = useState(false);
@@ -183,8 +184,10 @@ export const Root = () => {
               <WorkerProvider>
                 <FundProvider>
                   <ChooseWalletProvider>
-                    <CssBaseline />
-                    <App />
+                    <SwapProvider>
+                      <CssBaseline />
+                      <App />
+                    </SwapProvider>
                   </ChooseWalletProvider>
                 </FundProvider>
               </WorkerProvider>

@@ -16,11 +16,18 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { DEFAULT_TAGS, TAG_NAMES, SCRIPT_CREATION_PAYMENT, REGISTER_OPERATION } from '@/constants';
+import {
+  TAG_NAMES,
+  SCRIPT_CREATION_PAYMENT,
+  U_CONTRACT_ID,
+  VAULT_ADDRESS,
+  SCRIPT_CREATION_FEE,
+  U_DIVIDER,
+  DEFAULT_TAGS,
+} from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
-import { GET_TX, QUERY_REGISTERED_OPERATORS, QUERY_REGISTERED_SCRIPTS } from '@/queries/graphql';
-import { isTxConfirmed } from '@/utils/arweave';
+import { FIND_BY_TAGS } from '@/queries/graphql';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
@@ -36,6 +43,7 @@ import {
   ChangeEvent,
   Dispatch,
   SetStateAction,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -44,8 +52,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
-import { client } from '@/utils/apollo';
-import { isValidRegistration } from '@/utils/operator';
+import { checkHasOperators } from '@/utils/operator';
 import { Timeout } from 'react-number-format/types/types';
 
 const ChooseScript = ({
@@ -67,6 +74,18 @@ const ChooseScript = ({
   const navigate = useNavigate();
   const elementsPerPage = 5;
 
+  const scriptPaymentInputStr = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: (parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER).toString(),
+  });
+
+  const scriptPaymentInputNumber = JSON.stringify({
+    function: 'transfer',
+    target: VAULT_ADDRESS,
+    qty: parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER,
+  });
+
   const tags = [
     ...DEFAULT_TAGS,
     {
@@ -85,6 +104,8 @@ const ChooseScript = ({
       name: TAG_NAMES.modelTransaction,
       values: [state.modelTransaction],
     },
+    { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
+    { name: TAG_NAMES.input, values: [scriptPaymentInputStr, scriptPaymentInputNumber] },
   ];
 
   const {
@@ -94,15 +115,13 @@ const ChooseScript = ({
     networkStatus,
     refetch,
     fetchMore,
-  } = useQuery(QUERY_REGISTERED_SCRIPTS, {
-    variables: { tags, first: elementsPerPage, recipients: [state.modelCreator] },
+  } = useQuery(FIND_BY_TAGS, {
+    variables: { tags, first: elementsPerPage },
   });
 
   const showLoading = useMemo(() => loading || filtering, [loading, filtering]);
 
-  const handleRetry = () => {
-    refetch({ tags });
-  };
+  const handleRetry = useCallback(() => refetch({ tags }), [refetch, tags]);
 
   let keyTimeout: Timeout;
   const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -120,92 +139,6 @@ const ChooseScript = ({
     }
   };
 
-  const checkHasOperators = async (scriptTx: IEdge, filtered: IEdge[]) => {
-    const registrationTags = [
-      ...DEFAULT_TAGS,
-      {
-        name: TAG_NAMES.operationName,
-        values: [REGISTER_OPERATION],
-      },
-      {
-        name: TAG_NAMES.scriptCurator,
-        values: [scriptTx?.node.owner.address],
-      },
-      {
-        name: TAG_NAMES.scriptName,
-        values: [findTag(scriptTx, 'scriptName')],
-      },
-    ];
-    const queryResult = await client.query({
-      query: QUERY_REGISTERED_OPERATORS,
-      variables: { tags: registrationTags, first: elementsPerPage },
-    });
-
-    if (queryResult.data.transactions.edges.length === 0) {
-      filtered.splice(
-        filtered.findIndex((el) => el.node.id === scriptTx.node.id),
-        1,
-      );
-    } else {
-      let hasAtLeastOneValid = false;
-      for (const registration of queryResult.data.transactions.edges) {
-        const opFee = findTag(registration, 'operatorFee') as string;
-        const scriptName = findTag(registration, 'scriptName') as string;
-        const scriptCurator = findTag(registration, 'scriptCurator') as string;
-
-        if (
-          await isValidRegistration(
-            registration.node.id,
-            opFee,
-            registration.node.owner.address,
-            scriptName,
-            scriptCurator,
-          )
-        ) {
-          hasAtLeastOneValid = true;
-        }
-      }
-      if (!hasAtLeastOneValid) {
-        filtered.splice(
-          filtered.findIndex((existing) => scriptTx.node.id === existing.node.id),
-          1,
-        );
-      }
-    }
-  };
-
-  const verify = async (el: IEdge, filtered: IEdge[]) => {
-    const confirmed = await isTxConfirmed(el.node.id);
-    const existingIdx = filtered.findIndex(
-      (existing) => el.node.owner.address === existing.node.owner.address,
-    );
-    const queryResult = await client.query({
-      query: GET_TX,
-      variables: {
-        id: findTag(el, 'modelTransaction'),
-      },
-    });
-    const modelTx = queryResult.data.transactions.edges[0];
-    const correctFee =
-      parseInt(el.node.quantity.winston, 10) ===
-      parseInt(findTag(modelTx, 'modelFee') as string, 10);
-    if (correctFee && existingIdx <= 0) {
-      filtered.push(el);
-    } else if (confirmed && correctFee && filtered[existingIdx].node.id !== el.node.id) {
-      // found a new tx for an existing op, check dates
-      const existingTimestamp =
-        findTag(filtered[existingIdx], 'unixTime') ?? filtered[existingIdx].node.block.timestamp;
-      const newTimestamp = findTag(el, 'unixTime') ?? el.node.block.timestamp;
-      if (newTimestamp > existingTimestamp) {
-        // if new tx has more recent timestamp replace old one
-        filtered[existingIdx] = el;
-      }
-    } else {
-      // do nothing
-    }
-    await checkHasOperators(el, filtered);
-  };
-
   /**
    * @description Effect that runs on query data changes;
    * it is responsible to set the nextPage status and to update current loaded transactionsm
@@ -219,7 +152,7 @@ const ChooseScript = ({
       (async () => {
         const filtered: IEdge[] = [];
         for (const el of queryData.transactions.edges) {
-          await verify(el, filtered);
+          await checkHasOperators(el, filtered);
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setScriptsData(filtered);
@@ -236,7 +169,9 @@ const ChooseScript = ({
         queryData.transactions.edges.filter(
           (el: IEdge) =>
             findTagsWithKeyword(el, [TAG_NAMES.scriptName], filterValue) ||
-            el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
+            (findTag(el, 'sequencerOwner') as string)
+              .toLowerCase()
+              .includes(filterValue.toLowerCase().trim()),
         ),
       );
       setFiltering(false);
@@ -341,7 +276,6 @@ const ChooseScript = ({
                 `/scripts/${findTag(scriptsData[selectedIdx], 'scriptTransaction')}/detail`,
                 {
                   state: {
-                    fee: findTag(scriptsData[selectedIdx], 'scriptFee'),
                     scriptName: findTag(scriptsData[selectedIdx], 'scriptName'),
                     scriptTransaction: findTag(scriptsData[selectedIdx], 'scriptTransaction'),
                     scriptCurator: findTag(scriptsData[selectedIdx], 'scriptCurator'),

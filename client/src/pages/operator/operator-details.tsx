@@ -48,8 +48,7 @@ import Vote from '@/components/vote';
 
 const OperatorDetails = () => {
   const { address } = useParams();
-  const { state }: { state: { operatorName: string; scriptFee: string; fullState: IEdge } } =
-    useLocation();
+  const { state }: { state: { operatorName: string; fullState: IEdge } } = useLocation();
   const navigate = useNavigate();
   const [firstRegistrationDate, setFirstregistrationDate] = useState('');
   const theme = useTheme();
@@ -57,7 +56,7 @@ const OperatorDetails = () => {
   const { data: firstRegistrationData, fetchMore } = useQuery(QUERY_FIRST_REGISTRATION, {
     variables: {
       owner: address,
-      tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: REGISTER_OPERATION }],
+      tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: [REGISTER_OPERATION] }],
     },
   });
 
@@ -137,18 +136,11 @@ const OperatorDetails = () => {
         <DialogContent sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Box display={'flex'}>
             <CardMedia image={imgUrl} sx={{ borderRadius: 8, width: 84, height: 84 }} />
-            <Box>
-              <Typography>{state.operatorName}</Typography>
-              <Typography>{address}</Typography>
-              {address && state.fullState && (
-                <Vote
-                  voteFor='operator'
-                  owner={address}
-                  fee={parseFloat(state.scriptFee)}
-                  tx={state.fullState}
-                />
-              )}
-            </Box>
+          </Box>
+          <Box>
+            <Typography>{state.operatorName}</Typography>
+            <Typography>{address}</Typography>
+            {address && state.fullState && <Vote voteFor='operator' tx={state.fullState} />}
           </Box>
           <Box display={'flex'} flexDirection='column'>
             <Typography>Date Registered</Typography>

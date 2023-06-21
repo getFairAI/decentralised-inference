@@ -1,26 +1,39 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   DEFAULT_TAGS,
   INFERENCE_PAYMENT,
-  INFERENCE_PERCENTAGE_FEE,
   SCRIPT_INFERENCE_RESPONSE,
   TAG_NAMES,
+  U_CONTRACT_ID,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import {
-  QUERY_PAID_FEE_OPERATORS,
-  QUERY_REQUESTS_FOR_OPERATOR,
-  QUERY_RESPONSES_BY_OPERATOR,
-} from '@/queries/graphql';
+import { FIND_BY_TAGS, QUERY_RESPONSES_BY_OPERATOR } from '@/queries/graphql';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import { Checkbox, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
-import { parseWinston } from '@/utils/arweave';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import { findTag } from '@/utils/common';
+import { commonUpdateQuery, displayShortTxOrAddr, findTag } from '@/utils/common';
+import { parseUBalance } from '@/utils/u';
 
 export interface RowData {
-  quantityAR: string;
   address: string;
   fee: string;
   availability: number;
@@ -39,22 +52,41 @@ export interface RowData {
  */
 const OperatorRow = ({
   operatorTx,
-  scriptCurator,
-  scriptName,
   state,
   index,
   isSelected,
   setSelected,
 }: {
   operatorTx: IEdge;
-  scriptCurator: string;
-  scriptName: string;
   state: IEdge;
   index: number;
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
   const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
+
+  const scriptCurator = useMemo(() => findTag(state, 'sequencerOwner') as string, [state]);
+  const scriptName = useMemo(() => findTag(state, 'scriptName') as string, [state]);
+  const scriptTransaction = useMemo(() => findTag(state, 'scriptTransaction') as string, [state]);
+
+  const input = useMemo(() => {
+    const qty = parseFloat(findTag(operatorTx, 'operatorFee') as string);
+    const address = findTag(operatorTx, 'sequencerOwner') as string;
+
+    const requestPaymentsInputNumber = JSON.stringify({
+      function: 'transfer',
+      target: address,
+      qty,
+    });
+    const requestPaymentsInputStr = JSON.stringify({
+      function: 'transfer',
+      target: address,
+      qty: qty.toString(),
+    });
+
+    return [requestPaymentsInputNumber, requestPaymentsInputStr];
+  }, [operatorTx]);
+
   const requestTags = [
     ...DEFAULT_TAGS,
     {
@@ -69,39 +101,32 @@ const OperatorRow = ({
       name: TAG_NAMES.operationName,
       values: [INFERENCE_PAYMENT],
     },
+    { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
+    { name: TAG_NAMES.input, values: input },
   ];
-  const { data, /* loading, error,  */ fetchMore } = useQuery(QUERY_REQUESTS_FOR_OPERATOR, {
-    skip: !operatorTx.node.owner.address && !scriptCurator && !scriptName,
+  const { data, /* loading, error,  */ fetchMore } = useQuery(FIND_BY_TAGS, {
+    skip: !scriptCurator && !scriptName && !input,
     variables: {
       first: 10,
-      recipient: operatorTx.node.owner.address,
       tags: requestTags,
     },
   });
 
   const [getOpResponses, opResponses] = useLazyQuery(QUERY_RESPONSES_BY_OPERATOR);
-  const [getPaidFee, paidFeeResult] = useLazyQuery(QUERY_PAID_FEE_OPERATORS);
 
   /**
    * @description Effect that runs on `operatorTx` changes; it will create an easier to read object
    * with the necessary props for the row (except availability)
    */
   useEffect(() => {
-    const address = operatorTx.node.owner.address;
-    const quantityAR = operatorTx.node.quantity.ar;
+    const address = findTag(operatorTx, 'sequencerOwner') as string;
     const stamps = 0;
     const fee = findTag(operatorTx, 'operatorFee');
-    const registrationTimestamp = operatorTx.node.block
-      ? new Date(operatorTx.node.block.timestamp * 1000).toLocaleString()
-      : 'Pending';
-    const scriptTransaction = findTag(state, 'scriptTransaction');
-    const scriptName = findTag(state, 'scriptName');
-    const scriptCurator = state.node.owner.address;
+    const registrationTimestamp = findTag(operatorTx, 'unixTime');
     const operatorName = findTag(operatorTx, 'operatorName') || 'No Name';
 
     setRow({
       address,
-      quantityAR,
       stamps,
       fee,
       registrationTimestamp,
@@ -123,20 +148,15 @@ const OperatorRow = ({
         variables: {
           after: data.transactions.edges[data.transactions.edges.length - 1].cursor,
         },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          return Object.assign({}, prev, {
-            transactions: {
-              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-        },
+        updateQuery: commonUpdateQuery,
       });
     } else if (data && data.transactions) {
       const inferenceReqIds = (data.transactions.edges as IEdge[]).map((req) => {
         return findTag(req, 'inferenceTransaction');
       });
+
+      const owner = findTag(operatorTx, 'sequencerOwner');
+
       const responseTags = [
         ...DEFAULT_TAGS,
         {
@@ -159,8 +179,8 @@ const OperatorRow = ({
       getOpResponses({
         variables: {
           first: 10,
-          owner: operatorTx.node.owner.address,
           tags: responseTags,
+          owner,
         },
       });
     }
@@ -184,45 +204,9 @@ const OperatorRow = ({
             opResponses.data.transactions.edges[opResponses.data.transactions.edges.length - 1]
               .cursor,
         },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          return Object.assign({}, prev, {
-            transactions: {
-              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-        },
+        updateQuery: commonUpdateQuery,
       });
     } else if (opResponses.data) {
-      const tags = [
-        ...DEFAULT_TAGS,
-        {
-          name: 'Operation-Name',
-          values: ['Operator Fee Payment'],
-        },
-        {
-          name: 'Response-Identifier',
-          values: [...opResponses.data.transactions.edges.map((el: IEdge) => el.node.id)],
-        },
-      ];
-
-      if (opResponses.data.transactions.edges.length > 0) {
-        (async () => {
-          const blockHeights = opResponses.data.transactions.edges.map(
-            (el: IEdge) => el.node.block.height,
-          );
-
-          getPaidFee({
-            variables: {
-              tags,
-              owner: operatorTx.node.owner.address,
-              minBlockHeight: Math.min(...blockHeights),
-              first: 10,
-            },
-          });
-        })();
-      }
       const reqs = data.transactions.edges;
       const responses = opResponses.data.transactions.edges;
       const availability = (reqs.length / responses.length) * 100;
@@ -230,54 +214,13 @@ const OperatorRow = ({
     }
   }, [opResponses.data]);
 
-  /**
-   * @description Effect that runs when data from `QUERY_PAID_FEE_OPERATORS` changes;
-   * It is responsible to fetch more transactions while `hasNextPage` is true, otherwise it will
-   * check for all the transactions that it has and confirm that operator paid the correct value to
-   * the marketplace
-   */
-  useEffect(() => {
-    if (paidFeeResult.data && paidFeeResult.data.transactions.pageInfo.hasNextPage) {
-      paidFeeResult.fetchMore({
-        variables: {
-          after:
-            paidFeeResult.data.transactions.edges[paidFeeResult.data.transactions.edges.length - 1]
-              .cursor,
-        },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          return Object.assign({}, prev, {
-            transactions: {
-              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
-              pageInfo: fetchMoreResult.transactions.pageInfo,
-            },
-          });
-        },
-      });
-    } else if (paidFeeResult.data) {
-      if (paidFeeResult.data.transactions.edges.length <= 0) {
-        // operator hasn't paid fees
-      }
-      paidFeeResult.data.transactions.edges.forEach((el: IEdge) => {
-        if (
-          parseFloat(el.node.quantity.winston) * INFERENCE_PERCENTAGE_FEE <=
-          parseFloat(findTag(operatorTx, 'operatorFee') || '0')
-        ) {
-          // handle case where operator did not pay request
-          // can return and not proccess remaining txs
-        }
-      });
-    }
-  }, [paidFeeResult.data]);
-
   return (
     <>
       <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
         <TableCell scope='row'>
           <Tooltip title={row?.address}>
             <Typography>
-              {operatorTx.node.owner.address.slice(0, 10)}...
-              {operatorTx.node.owner.address.slice(-2)}
+              {displayShortTxOrAddr(row?.address ?? '')}
               <IconButton
                 size='small'
                 onClick={() => {
@@ -291,7 +234,7 @@ const OperatorRow = ({
         </TableCell>
         <TableCell align='right'>{row?.operatorName}</TableCell>
         <TableCell align='right'>{row?.registrationTimestamp}</TableCell>
-        <TableCell align='right'>{parseWinston(row?.fee)}</TableCell>
+        <TableCell align='right'>{parseUBalance(row?.fee ?? '0')}</TableCell>
         <TableCell align='right'>
           <Tooltip
             title={

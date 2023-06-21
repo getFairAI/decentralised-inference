@@ -4,14 +4,18 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "upload": "ts-node src/upload.ts",
+    "pay": "ts-node src/pay.ts"
   },
   "author": "fair-protocol",
   "license": "AGPL-3.0 license",
   "dependencies": {
+    "@apollo/client": "3.7.13",
     "@bundlr-network/client": "^0.11.2",
     "arweave": "^1.13.7",
-    "pino": "^8.14.1"
+    "pino": "^8.14.1",
+    "warp-contracts": "^1.4.5"
   },
   "devDependencies": {
     "@types/node": "^20.1.5",

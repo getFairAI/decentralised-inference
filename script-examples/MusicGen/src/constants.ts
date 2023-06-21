@@ -33,6 +33,9 @@ export const PAYMENT_TARGET_TAG = 'Payment-Target';
 export const REQUEST_TOKENS_TAG = 'Request-Tokens';
 export const RESPONSE_TOKENS_TAG = 'Response-Tokens';
 export const INFERENCE_TRANSACTION_TAG = 'Inference-Transaction';
+export const CONTRACT_TAG = 'Contract';
+export const INPUT_TAG = 'Input';
+export const SEQUENCE_OWNER_TAG = 'Sequencer-Owner';
 
 export const SCRIPT_INFERENCE_REQUEST = 'Script Inference Request';
 
@@ -43,3 +46,17 @@ export const successStatusCode = 200;
 // https://github.com/facebookresearch/llama/issues/148
 // according to discussing llama was trained on 2048 tokens so we will use the same number
 // for the max tokens allowed to be passed in context
+export const MAX_ALPACA_TOKENS = 2048;
+
+export const VAULT_ADDRESS = 'tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ';
+export const MARKETPLACE_FEE = '0.1';
+export const SCRIPT_CREATION_FEE = '0.1';
+export const OPERATOR_REGISTRATION_AR_FEE = '0.05';
+
+export const OPERATOR_PERCENTAGE_FEE = 0.8;
+export const MARKETPLACE_PERCENTAGE_FEE = 0.15;
+export const CURATOR_PERCENTAGE_FEE = 0.025;
+export const CREATOR_PERCENTAGE_FEE = 0.025;
+
+export const U_CONTRACT_ID = 'rO8f4nTVarU6OtU2284C8-BIH6HscNd-srhWznUllTk';
+export const U_DIVIDER = 1e6;

@@ -56,7 +56,7 @@ import {
   DEFAULT_TAGS,
   NET_ARWEAVE_URL,
   OPERATOR_REGISTRATION_AR_FEE,
-  SAVE_REGISTER_OPERATION,
+  OPERATOR_REGISTRATION_PAYMENT_TAGS,
   TAG_NAMES,
   defaultDecimalPlaces,
 } from '@/constants';
@@ -70,7 +70,7 @@ import MarkdownControl from './md-control';
 import { WalletContext } from '@/context/wallet';
 import DebounceButton from './debounce-button';
 import { useQuery } from '@apollo/client';
-import { QUERY_TX_WITH } from '@/queries/graphql';
+import { FIND_BY_TAGS, QUERY_TX_WITH } from '@/queries/graphql';
 
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -150,17 +150,16 @@ const RegisterStep = ({
 
   const scriptTxid = useMemo(() => findTag(tx, 'scriptTransaction'), [tx]);
 
-  const { data, loading } = useQuery(QUERY_TX_WITH, {
+  const { data, loading } = useQuery(FIND_BY_TAGS, {
     variables: {
-      address: currentAddress,
       tags: [
         ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [SAVE_REGISTER_OPERATION] },
+        ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
         { name: TAG_NAMES.scriptTransaction, values: [scriptTxid] },
       ],
       first: 1,
     },
-    skip: !currentAddress && !scriptTxid,
+    skip: !scriptTxid,
   });
 
   const registrationId = useMemo(

@@ -1,19 +1,32 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
-  DEFAULT_TAGS,
-  MODEL_CREATION,
-  MODEL_FEE_PAYMENT_SAVE,
-  SCRIPT_INFERENCE_REQUEST,
-  SCRIPT_INFERENCE_RESPONSE,
-  N_PREVIOUS_BLOCKS,
-  SAVE_REGISTER_OPERATION,
-  SCRIPT_CREATION,
   TAG_NAMES,
-  SCRIPT_FEE_PAYMENT_SAVE,
+  INFERENCE_PAYMENT,
+  MODEL_CREATION_PAYMENT,
+  REGISTER_OPERATION,
+  SCRIPT_CREATION_PAYMENT,
+  U_CONTRACT_ID,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_USER_INTERACTIONS } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
+import { FIND_BY_TAGS } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
 import {
   useEffect,
@@ -55,43 +68,37 @@ const Content = ({
 }) => {
   const elementsPerPage = 10;
   const { currentAddress } = useContext(WalletContext);
-  const [minHeight, setMinHeight] = useState(0);
   const theme = useTheme();
   const { isAtBottom } = useScroll(scrollableRef);
   const navigate = useNavigate();
 
-  const { data, error, loading, refetch } = useQuery(QUERY_USER_INTERACTIONS, {
+  const { data, error, loading, refetch } = useQuery(FIND_BY_TAGS, {
     variables: {
-      address: currentAddress,
       tags: [
-        ...DEFAULT_TAGS,
+        {
+          name: TAG_NAMES.sequencerOwner,
+          values: [currentAddress],
+        },
+        {
+          name: TAG_NAMES.contract,
+          values: [U_CONTRACT_ID],
+        },
         {
           name: TAG_NAMES.operationName,
           values: [
-            MODEL_CREATION,
-            SCRIPT_CREATION,
-            SAVE_REGISTER_OPERATION,
-            MODEL_FEE_PAYMENT_SAVE,
-            SCRIPT_FEE_PAYMENT_SAVE,
-            SCRIPT_INFERENCE_REQUEST,
-            SCRIPT_INFERENCE_RESPONSE,
+            MODEL_CREATION_PAYMENT,
+            SCRIPT_CREATION_PAYMENT,
+            REGISTER_OPERATION,
+            INFERENCE_PAYMENT,
           ],
         },
       ],
-      minBlockHeight: 0,
       first: elementsPerPage,
     },
-    skip: !currentAddress || minHeight <= 0,
-    notifyOnNetworkStatusChange: true,
+    skip: !currentAddress,
     fetchPolicy: 'network-only',
+    notifyOnNetworkStatusChange: true,
   });
-
-  useEffect(() => {
-    (async () => {
-      const currentHeight = (await arweave.blocks.getCurrent()).height;
-      setMinHeight(currentHeight - N_PREVIOUS_BLOCKS);
-    })();
-  }, []);
 
   const refreshClick = () => {
     refetch();
@@ -123,9 +130,7 @@ const Content = ({
           </Box>
 
           {data &&
-            data.transactions.edges.map((tx: IEdge) => (
-              <PendingCard tx={tx} key={tx.node.id} autoRetry={true} />
-            ))}
+            data.transactions.edges.map((tx: IEdge) => <PendingCard tx={tx} key={tx.node.id} />)}
           <Zoom in={isAtBottom} timeout={500} mountOnEnter unmountOnExit>
             <Box
               display={'flex'}

@@ -12,7 +12,7 @@ import {
   OperationVariables,
 } from '@apollo/client';
 import ReplayIcon from '@mui/icons-material/Replay';
-import { findTag, genLoadingArray } from '@/utils/common';
+import { genLoadingArray } from '@/utils/common';
 import OperatorRow from './operator-row';
 import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
 import { useEffect, useRef } from 'react';
@@ -128,8 +128,6 @@ const BasicTableContent = ({
           <OperatorRow
             key={row.node.id}
             operatorTx={row}
-            scriptCurator={state.node.owner.address}
-            scriptName={findTag(state, 'scriptName') as string}
             state={state}
             index={idx}
             isSelected={selectedIdx === idx}

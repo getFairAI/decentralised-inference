@@ -16,25 +16,28 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { VOUCH_CONTRACT_ID } from '@/constants';
-import { WarpFactory } from 'warp-contracts';
+import SwapU from '@/components/swap-u';
+import { Dispatch, ReactNode, SetStateAction, createContext, useMemo, useState } from 'react';
 
-const warp = WarpFactory.forMainnet();
-
-const contract = warp.contract(VOUCH_CONTRACT_ID).connect('use_wallet').setEvaluationOptions({
-  allowBigInt: true,
-});
-
-interface VouchState {
-  state: {
-    vouched: {
-      [address: string]: unknown;
-    };
-  };
+export interface SwapContext {
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-export const isVouched = async (address: string) => {
-  const { cachedValue } = await contract.readState();
+export const SwapContext = createContext<SwapContext>({
+  open: false,
+  setOpen: () => undefined,
+});
 
-  return (cachedValue as VouchState).state.vouched[address] !== undefined;
+export const SwapProvider = ({ children }: { children: ReactNode }) => {
+  const [open, setOpen] = useState(false);
+
+  const value = useMemo(() => ({ open, setOpen }), [open, setOpen]);
+
+  return (
+    <SwapContext.Provider value={value}>
+      {children}
+      <SwapU open={open} setOpen={setOpen} />
+    </SwapContext.Provider>
+  );
 };
