@@ -24,21 +24,15 @@ import {
   DialogTitle,
   Icon,
   IconButton,
-  InputBase,
   Typography,
   useTheme,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import { useLoaderData, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { APP_NAME, APP_VERSION, VAULT_ADDRESS, MODEL_FEE_UPDATE, TAG_NAMES } from '@/constants';
-import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import arweave from '@/utils/arweave';
+import { useMemo, useState } from 'react';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
 import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
-import { useSnackbar } from 'notistack';
-import { WalletContext } from '@/context/wallet';
-import { NumericFormat } from 'react-number-format';
 import ChooseOperator from '@/components/choose-operator';
 import ChooseScript from '@/components/choose-script';
 import { IEdge } from '@/interfaces/arweave';
@@ -52,20 +46,16 @@ const Detail = () => {
   const [showOperators, setShowOperators] = useState(false);
   const [showScripts, setShowScripts] = useState(false);
   const [scriptTx, setScriptTx] = useState<IEdge | undefined>(undefined);
-  const { currentAddress } = useContext(WalletContext);
-  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const [avatarTxId, setAvatarTxId] = useState<string | undefined>(undefined);
-  const [updatedFee, setUpdatedFee] = useState<string | undefined>(undefined);
 
   const imgUrl = useMemo(() => {
-    if (avatarTxId) {
-      return `https://arweave.net/${avatarTxId}`;
+    if (loaderData?.avatarTxId) {
+      return `https://arweave.net/${loaderData?.avatarTxId}`;
     }
     const img = toSvg(txid, 100);
     const svg = new Blob([img], { type: 'image/svg+xml' });
     return URL.createObjectURL(svg);
-  }, [avatarTxId]);
+  }, [loaderData]);
 
   // disable update fees on model for now
 
@@ -76,13 +66,6 @@ const Detail = () => {
     }
     navigate('/', { state });
   };
-
-  useEffect(() => {
-    if (loaderData) {
-      setAvatarTxId(loaderData.avatarTxId);
-      setUpdatedFee(loaderData.updatedFee);
-    }
-  }, [loaderData]);
 
   const handleScriptChosen = (scriptTx: IEdge) => {
     setShowOperators(true);
@@ -243,21 +226,6 @@ const Detail = () => {
               }}
             >
               {findTag(state.fullState, 'category')}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Cost
             </Typography>
           </Box>
         </Box>

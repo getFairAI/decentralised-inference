@@ -25,13 +25,22 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { ChangeEvent, Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
+import {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import arweave from '@/utils/arweave';
-import { NumericFormat } from 'react-number-format';
+import { NumberFormatValues, NumericFormat } from 'react-number-format';
 import DebounceLoadingButton from './debounce-loading-button';
 import { swapArToU } from '@/utils/u';
+import { defaultDecimalPlaces } from '@/constants';
 
 const SwapU = ({
   open,
@@ -46,23 +55,25 @@ const SwapU = ({
   const { currentBalance: walletBalance, updateBalance: updateWalletBalance } =
     useContext(WalletContext);
 
-  const handleAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setAmount(+event.target.value);
-  };
-
   useEffect(() => {
     if (open) {
       (async () => updateWalletBalance())();
     }
   }, [open]);
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClose = useCallback(() => setOpen(false), [setOpen]);
+  const isAllowed = useCallback(
+    (val: NumberFormatValues) => !val.floatValue || val?.floatValue < walletBalance,
+    [walletBalance],
+  );
+  const handleAmountChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setAmount(+event.target.value),
+    [setAmount],
+  );
+  const handleMaxClick = useCallback(() => setAmount(walletBalance), [walletBalance, setAmount]);
 
-  const handleSwap = async () => {
+  const handleSwap = useCallback(async () => {
     setLoading(true);
-    // const bn = new BigNumber(amount);
     const winstonAmount = arweave.ar.arToWinston(amount.toString());
     try {
       const res = await swapArToU(winstonAmount);
@@ -83,7 +94,7 @@ const SwapU = ({
       setLoading(false);
       enqueueSnackbar(`Error: ${error}`, { variant: 'error' });
     }
-  };
+  }, [amount, setAmount, setLoading, setOpen, enqueueSnackbar]);
 
   return (
     <>
@@ -118,14 +129,14 @@ const SwapU = ({
               customInput={TextField}
               helperText={
                 <Typography sx={{ cursor: 'pointer' }} variant='caption'>
-                  <u>Max: {walletBalance.toFixed(4)}</u>
+                  <u>Max: {walletBalance.toFixed(defaultDecimalPlaces)}</u>
                 </Typography>
               }
               FormHelperTextProps={{
-                onClick: () => setAmount(walletBalance),
+                onClick: handleMaxClick,
               }}
               allowNegative={false}
-              isAllowed={(val) => !val.floatValue || val?.floatValue < walletBalance}
+              isAllowed={isAllowed}
               margin='dense'
               decimalScale={4}
               decimalSeparator={'.'}

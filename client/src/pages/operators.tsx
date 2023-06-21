@@ -24,7 +24,7 @@ import {
   U_DIVIDER,
   VAULT_ADDRESS,
 } from '@/constants';
-import { IContractEdge, IEdge } from '@/interfaces/arweave';
+import { IContractEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import { commonUpdateQuery, genLoadingArray } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';

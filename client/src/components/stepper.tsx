@@ -205,7 +205,7 @@ const RegisterStep = ({
         </Box>
       </Fragment>
     );
-  } /* else if (registrationId && cancelData?.transactions.edges.length === 0) {
+  } else if (registrationId && cancelData?.transactions.edges.length === 0) {
     return (
       <Fragment>
         <Box justifyContent={'space-between'} display={'flex'}>
@@ -216,7 +216,7 @@ const RegisterStep = ({
         </Box>
       </Fragment>
     );
-  } */ else {
+  } else {
     return (
       <Fragment>
         <Box justifyContent={'space-between'} display={'flex'}>

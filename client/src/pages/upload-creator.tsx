@@ -26,7 +26,6 @@ import {
   CardContent,
   CardHeader,
   Container,
-  Icon,
   Snackbar,
   Typography,
   useTheme,
@@ -55,19 +54,15 @@ import {
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
-import arweave from '@/utils/arweave';
-import NumberControl from '@/components/number-control';
 import { WalletContext } from '@/context/wallet';
-import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
 import { ITag } from '@/interfaces/arweave';
 import DebounceButton from '@/components/debounce-button';
-import { parseUBalance, sendU } from '@/utils/u';
+import { sendU } from '@/utils/u';
 
 export interface CreateForm extends FieldValues {
   name: string;
-  fee: number;
   notes: string;
   file: File;
   description?: string;
@@ -77,7 +72,6 @@ const UploadCreator = () => {
   const { handleSubmit, reset, control } = useForm({
     defaultValues: {
       name: '',
-      fee: 0,
       description: '',
       notes: '',
       avatar: '',
@@ -93,7 +87,6 @@ const UploadCreator = () => {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const { currentAddress, currentUBalance, updateUBalance } = useContext(WalletContext);
-  const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
 
   const onSubmit = async (data: FieldValues) => {
@@ -369,56 +362,6 @@ const UploadCreator = () => {
                       }}
                       style={{ width: '100%' }}
                     />
-                    <Box paddingLeft={'8px'}>
-                      <Typography
-                        sx={{
-                          fontStyle: 'normal',
-                          fontWeight: 700,
-                          fontSize: '23px',
-                          lineHeight: '31px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                        }}
-                      >
-                        Cost
-                      </Typography>
-                      <Box
-                        display={'flex'}
-                        alignItems={'center'}
-                        justifyContent='space-between'
-                        width={'45%'}
-                        height='60px'
-                      >
-                        <NumberControl
-                          name='fee'
-                          control={control}
-                          mat={{
-                            sx: {
-                              fontStyle: 'normal',
-                              fontWeight: 700,
-                              fontSize: '23px',
-                              lineHeight: '31px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              textAlign: 'center',
-                              paddingRight: '8px',
-                            },
-                          }}
-                        />
-                        <Icon sx={{ height: '50px', width: '50px' }}>
-                          <img
-                            src={
-                              theme.palette.mode === 'dark'
-                                ? './arweave-logo.svg'
-                                : './arweave-logo-for-light.png'
-                            }
-                            width={'50px'}
-                            height={'50px'}
-                          />
-                        </Icon>
-                      </Box>
-                    </Box>
                   </Box>
                   <TextControl
                     name='description'

@@ -1,15 +1,6 @@
 import PendingCard from '@/components/pending-card';
 import {
-  DEFAULT_TAGS,
   TAG_NAMES,
-  MODEL_CREATION,
-  SAVE_REGISTER_OPERATION,
-  MODEL_FEE_PAYMENT_SAVE,
-  SCRIPT_INFERENCE_REQUEST,
-  SCRIPT_INFERENCE_RESPONSE,
-  N_PREVIOUS_BLOCKS,
-  SCRIPT_CREATION,
-  SCRIPT_FEE_PAYMENT_SAVE,
   MODEL_CREATION_PAYMENT,
   SCRIPT_CREATION_PAYMENT,
   REGISTER_OPERATION,
@@ -19,8 +10,7 @@ import {
 import { WalletContext } from '@/context/wallet';
 import useOnScreen from '@/hooks/useOnScreen';
 import { IEdge } from '@/interfaces/arweave';
-import { FIND_BY_TAGS, QUERY_USER_INTERACTIONS } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
+import { FIND_BY_TAGS } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
 import {
   Box,

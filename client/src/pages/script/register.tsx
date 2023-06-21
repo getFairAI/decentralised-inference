@@ -5,20 +5,16 @@ import {
   TAG_NAMES,
   APP_NAME,
   REGISTER_OPERATION,
-  SAVE_REGISTER_OPERATION,
   OPERATOR_REGISTRATION_AR_FEE,
   secondInMS,
   U_DIVIDER,
 } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { RouteLoaderResult } from '@/interfaces/router';
-import arweave from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import {
   Box,
   Typography,
-  Icon,
-  InputBase,
   DialogContent,
   Dialog,
   DialogTitle,
@@ -29,12 +25,10 @@ import {
 import { toSvg } from 'jdenticon';
 import { useSnackbar } from 'notistack';
 import { useContext, useMemo, useState } from 'react';
-import { NumericFormat } from 'react-number-format';
 import { useLoaderData, useLocation, useNavigate } from 'react-router-dom';
 import '@/styles/ui.css';
 import { WalletContext } from '@/context/wallet';
-import { WorkerContext } from '@/context/worker';
-import { parseUBalance, sendU } from '@/utils/u';
+import { sendU } from '@/utils/u';
 
 const Register = () => {
   const { avatarTxId } = (useLoaderData() as RouteLoaderResult) || {};
@@ -44,7 +38,6 @@ const Register = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { currentUBalance, updateUBalance } = useContext(WalletContext);
-  const { startJob } = useContext(WorkerContext);
 
   const imgUrl = useMemo(() => {
     if (avatarTxId) {
@@ -240,58 +233,6 @@ const Register = () => {
             >
               {findTag(state, 'category')}
             </Typography>
-          </Box>
-          <Box>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Cost
-            </Typography>
-            <Box
-              display={'flex'}
-              alignItems={'center'}
-              justifyContent='flex-start'
-              width={'100%'}
-              height='60px'
-            >
-              <NumericFormat
-                value={arweave.ar.winstonToAr(findTag(state, 'scriptFee') || '0')}
-                customInput={InputBase}
-                decimalScale={3}
-                decimalSeparator={'.'}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontStyle: 'normal',
-                  fontWeight: 700,
-                  fontSize: '60px',
-                  lineHeight: '106px',
-                  textAlign: 'center',
-
-                  paddingRight: '8px',
-                }}
-                disabled
-              />
-              <Icon sx={{ height: '50px', width: '50px' }}>
-                <img
-                  src={
-                    theme.palette.mode === 'dark'
-                      ? './arweave-logo.svg'
-                      : './arweave-logo-for-light.png'
-                  }
-                  width={'50px'}
-                  height={'50px'}
-                />
-              </Icon>
-            </Box>
           </Box>
         </Box>
         <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'45%'}>

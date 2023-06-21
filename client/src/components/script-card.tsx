@@ -29,11 +29,7 @@ import {
   VAULT_ADDRESS,
 } from '@/constants';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
-import {
-  FIND_BY_TAGS,
-  GET_LATEST_MODEL_ATTACHMENTS,
-  QUERY_REGISTERED_OPERATORS,
-} from '@/queries/graphql';
+import { FIND_BY_TAGS, GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { parseWinston } from '@/utils/arweave';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import {

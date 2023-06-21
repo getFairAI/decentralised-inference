@@ -33,7 +33,6 @@ import {
   FormGroup,
   FormHelperText,
   FormLabel,
-  Icon,
   MenuItem,
   Snackbar,
   Typography,
@@ -65,31 +64,24 @@ import {
   NOTES_ATTACHMENT,
   SCRIPT_CREATION,
   SCRIPT_CREATION_PAYMENT,
-  DEFAULT_TAGS,
-  MODEL_FEE_UPDATE,
   successStatusCode,
   secondInMS,
   U_DIVIDER,
-  U_CONTRACT_ID,
-  MODEL_CREATION_PAYMENT,
   SCRIPT_CREATION_FEE,
   VAULT_ADDRESS,
   MODEL_CREATION_PAYMENT_TAGS,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
-import arweave, { parseWinston } from '@/utils/arweave';
-import NumberControl from '@/components/number-control';
 import { WalletContext } from '@/context/wallet';
-import { WorkerContext } from '@/context/worker';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
-import { useLazyQuery, useQuery } from '@apollo/client';
-import { FIND_BY_TAGS, GET_LATEST_FEE_UPDATE } from '@/queries/graphql';
+import { useQuery } from '@apollo/client';
+import { FIND_BY_TAGS } from '@/queries/graphql';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { commonUpdateQuery, displayShortTxOrAddr, findTag } from '@/utils/common';
 import DebounceButton from '@/components/debounce-button';
-import { parseUBalance, sendU } from '@/utils/u';
+import { sendU } from '@/utils/u';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -194,7 +186,6 @@ const Curators = () => {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const { currentAddress, currentBalance, updateUBalance } = useContext(WalletContext);
-  const { startJob } = useContext(WorkerContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
 
   const {

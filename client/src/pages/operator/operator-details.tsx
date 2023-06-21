@@ -137,6 +137,11 @@ const OperatorDetails = () => {
           <Box display={'flex'}>
             <CardMedia image={imgUrl} sx={{ borderRadius: 8, width: 84, height: 84 }} />
           </Box>
+          <Box>
+            <Typography>{state.operatorName}</Typography>
+            <Typography>{address}</Typography>
+            {address && state.fullState && <Vote voteFor='operator' tx={state.fullState} />}
+          </Box>
           <Box display={'flex'} flexDirection='column'>
             <Typography>Date Registered</Typography>
             <Typography>{firstRegistrationDate}</Typography>

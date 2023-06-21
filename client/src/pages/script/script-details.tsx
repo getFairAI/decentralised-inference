@@ -33,13 +33,13 @@ import {
 } from '@mui/material';
 import { useLoaderData, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getData, parseWinston } from '@/utils/arweave';
+import { getData } from '@/utils/arweave';
 import { toSvg } from 'jdenticon';
 import { download, findTag, printSize } from '@/utils/common';
 import { RouteLoaderResult, ScriptNavigationState } from '@/interfaces/router';
 import MarkdownControl from '@/components/md-control';
 import rehypeSanitize from 'rehype-sanitize';
-import { NET_ARWEAVE_URL, OPERATOR_REGISTRATION_AR_FEE } from '@/constants';
+import { NET_ARWEAVE_URL } from '@/constants';
 import DownloadIcon from '@mui/icons-material/Download';
 import Vote from '@/components/vote';
 
@@ -188,8 +188,6 @@ const DetailsContent = () => {
   const { avatarTxId } = useLoaderData() as RouteLoaderResult;
   const { state }: { state: ScriptNavigationState; pathname: string } = useLocation();
   const { txid } = useParams();
-  const theme = useTheme();
-
   const avatarSize = 100;
 
   const imgUrl = useMemo(() => {
@@ -254,43 +252,6 @@ const DetailsContent = () => {
           <Typography sx={typographyHeaderProps}>Category</Typography>
           <Typography sx={typographyTextProps}>{findTag(state.fullState, 'category')}</Typography>
         </Box>
-        <Box>
-          <Typography sx={typographyHeaderProps}>Cost</Typography>
-          <Box
-            display={'flex'}
-            alignItems={'center'}
-            justifyContent='flex-start'
-            width={'100%'}
-            height='60px'
-          >
-            <Typography
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '60px',
-                lineHeight: '106px',
-                textAlign: 'center',
-
-                paddingRight: '8px',
-              }}
-            >
-              {parseWinston(state.fee)}
-            </Typography>
-            <Icon sx={{ height: '50px', width: '50px' }}>
-              <img
-                src={
-                  theme.palette.mode === 'dark'
-                    ? './arweave-logo.svg'
-                    : './arweave-logo-for-light.png'
-                }
-                width={'50px'}
-                height={'50px'}
-              />
-            </Icon>
-          </Box>
-        </Box>
       </Box>
       <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'45%'}>
         <Box>
@@ -299,12 +260,7 @@ const DetailsContent = () => {
             {findTag(state.fullState, 'description') ?? 'No Description Available.'}
           </Typography>
         </Box>
-        <Vote
-          tx={state.fullState}
-          fee={parseFloat(OPERATOR_REGISTRATION_AR_FEE)}
-          owner={findTag(state.fullState, 'modelCreator') as string}
-          voteFor={'script'}
-        />
+        <Vote tx={state.fullState} voteFor={'script'} />
       </Box>
     </>
   );

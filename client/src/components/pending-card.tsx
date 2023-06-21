@@ -1,28 +1,6 @@
-import {
-  MODEL_CREATION,
-  DEFAULT_TAGS,
-  TAG_NAMES,
-  MODEL_CREATION_PAYMENT,
-  SAVE_REGISTER_OPERATION,
-  REGISTER_OPERATION,
-  MODEL_FEE_PAYMENT_SAVE,
-  MODEL_FEE_PAYMENT,
-  INFERENCE_PAYMENT,
-  SCRIPT_INFERENCE_REQUEST,
-  SCRIPT_INFERENCE_RESPONSE,
-  INFERENCE_PAYMENT_DISTRIBUTION,
-  SCRIPT_CREATION_PAYMENT,
-  SCRIPT_CREATION,
-  SCRIPT_FEE_PAYMENT_SAVE,
-  SCRIPT_FEE_PAYMENT,
-  defaultDecimalPlaces,
-} from '@/constants';
-import { WalletContext } from '@/context/wallet';
+import { defaultDecimalPlaces } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_TX_WITH } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
 import { displayShortTxOrAddr, findTag, parseUnixTimestamp } from '@/utils/common';
-import { useLazyQuery } from '@apollo/client';
 import {
   Card,
   Typography,
@@ -31,15 +9,11 @@ import {
   Box,
   Tooltip,
   IconButton,
-  CardActions,
   Button,
   useTheme,
 } from '@mui/material';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
-import { useSnackbar } from 'notistack';
-import _ from 'lodash';
-import { WorkerContext } from '@/context/worker';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { parseUBalance } from '@/utils/u';
 

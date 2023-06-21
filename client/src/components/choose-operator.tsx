@@ -16,19 +16,9 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  DEFAULT_TAGS,
-  TAG_NAMES,
-  REGISTER_OPERATION,
-  OPERATOR_REGISTRATION_AR_FEE,
-  U_CONTRACT_ID,
-  VAULT_ADDRESS,
-  U_DIVIDER,
-  OPERATOR_REGISTRATION_PAYMENT_TAGS,
-} from '@/constants';
+import { TAG_NAMES, OPERATOR_REGISTRATION_PAYMENT_TAGS } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
-import { FIND_BY_TAGS, QUERY_REGISTERED_OPERATORS } from '@/queries/graphql';
-import { isTxConfirmed } from '@/utils/arweave';
+import { FIND_BY_TAGS } from '@/queries/graphql';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
 import {

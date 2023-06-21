@@ -48,7 +48,6 @@ import {
   successStatusCode,
   textContentType,
   OPERATOR_PERCENTAGE_FEE,
-  U_DIVIDER,
   MARKETPLACE_PERCENTAGE_FEE,
   CREATOR_PERCENTAGE_FEE,
   CURATOR_PERCENTAGE_FEE,
@@ -60,7 +59,7 @@ import {
   QUERY_CHAT_RESPONSES,
   QUERY_CHAT_RESPONSES_POLLING,
 } from '@/queries/graphql';
-import { IEdge, ITag } from '@/interfaces/arweave';
+import { IEdge } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
@@ -70,7 +69,6 @@ import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
-import { WorkerContext } from '@/context/worker';
 import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
@@ -105,7 +103,6 @@ const Chat = () => {
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
-  const { startJob } = useContext(WorkerContext);
   const { nodeBalance, upload, chunkUpload, getPrice } = useContext(BundlrContext);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
@@ -504,6 +501,11 @@ const Chat = () => {
         return false;
       }
 
+      if (currentUBalance < parseUBalance(state.fee)) {
+        enqueueSnackbar('Not Enough U tokens to pay Operator', { variant: 'error' });
+        return;
+      }
+
       return true;
     } catch (error) {
       enqueueSnackbar('Bundlr Error', { variant: 'error' });
@@ -545,20 +547,9 @@ const Chat = () => {
 
       // update balance after payments
       await updateUBalance();
-      enqueueSnackbar(
-        <>
-          Paid Inference costs: {parseUBalance(inferenceFee)} U.
-          {/*  <br></br>
-          <a
-            href={`https://viewblock.io/arweave/tx/${paymentId}`}
-            target={'_blank'}
-            rel='noreferrer'
-          >
-            <u>View Transaction in Explorer</u>
-          </a> */}
-        </>,
-        { variant: 'success' },
-      );
+      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(inferenceFee)} U.</>, {
+        variant: 'success',
+      });
     } catch (error) {
       enqueueSnackbar('An Error Occurred', { variant: 'error' });
     }
@@ -571,11 +562,6 @@ const Chat = () => {
 
     const contentType = isFile && file ? file?.type : textContentType;
     const content = isFile && file ? file : newMessage;
-
-    if (currentUBalance < parseUBalance(state.fee)) {
-      enqueueSnackbar('Not Enough U tokens to pay Operator', { variant: 'error' });
-      return;
-    }
 
     const tags = [];
     tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
@@ -601,11 +587,7 @@ const Chat = () => {
         const handleUpload = (chunkInfo: ChunkInfo) => {
           const chunkNumber = chunkInfo.id + 1;
           // update the progress bar based on how much has been uploaded
-          if (chunkNumber >= totalChunks.current) {
-            setProgress(finishedPercentage);
-          } else {
-            setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
-          }
+          setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
         };
 
         // event callback: called if an error happens
@@ -640,7 +622,8 @@ const Chat = () => {
         if (bundlrRes.status === successStatusCode) {
           bundlrId = bundlrRes.data.id;
         } else {
-          throw new Error(`Could Not Upload File: ${bundlrRes.statusText}`);
+          enqueueSnackbar(`Could Not Upload File: ${bundlrRes.statusText}`, { variant: 'error' });
+          return;
         }
       } else {
         const bundlrRes = await upload(newMessage, tags);

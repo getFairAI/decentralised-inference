@@ -21,32 +21,18 @@ import {
   APP_VERSION,
   DEFAULT_TAGS,
   DOWN_VOTE,
-  VAULT_ADDRESS,
-  REGISTER_OPERATION,
-  SCRIPT_CREATION_PAYMENT,
-  SCRIPT_FEE_PAYMENT,
   TAG_NAMES,
   UP_VOTE,
   VOTE_FOR_MODEL,
   VOTE_FOR_OPERATOR,
   VOTE_FOR_SCRIPT,
   secondInMS,
-  U_CONTRACT_ID,
   SCRIPT_CREATION_PAYMENT_TAGS,
-  INFERENCE_PAYMENT,
   OPERATOR_REGISTRATION_PAYMENT_TAGS,
   SCRIPT_INFERENCE_REQUEST,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
-import {
-  FIND_BY_TAGS,
-  QUERY_FEE_PAYMENT,
-  QUERY_OPERATOR_REGISTRATION_PAYMENT,
-  QUERY_REGISTERED_SCRIPTS,
-  QUERY_TX_WITH,
-  QUERY_USER_HAS_VOTED,
-  QUERY_VOTES,
-} from '@/queries/graphql';
+import { FIND_BY_TAGS, QUERY_TX_WITH, QUERY_USER_HAS_VOTED, QUERY_VOTES } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
 import { ApolloQueryResult, useQuery } from '@apollo/client';
 import { Box, CircularProgress, Tooltip, Typography } from '@mui/material';
