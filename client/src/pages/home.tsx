@@ -51,6 +51,7 @@ export default function Home() {
   const filterValue = useContext(FilterContext);
   const theme = useTheme();
   const elementsPerPage = 5;
+  const featuredElements = 3;
 
   const { data, loading, error, fetchMore, networkStatus } = useQuery(FIND_BY_TAGS, {
     variables: {
@@ -80,7 +81,7 @@ export default function Home() {
         setHasNextPage(data.transactions.pageInfo.hasNextPage);
         setTxs(data.transactions.edges);
         if (featuredTxs.length === 0) {
-          setFeaturedTxs(data.transactions.edges.slice(0, 3));
+          setFeaturedTxs(data.transactions.edges.slice(0, featuredElements));
         }
       })();
     }

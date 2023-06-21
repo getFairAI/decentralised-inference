@@ -471,6 +471,7 @@ const start = async (useContext = false, allowFiles = false) => {
   } catch (e) {
     logger.error(`Errored with: ${e}`);
   }
+  logger.info(`Sleeping for ${CONFIG.sleepTimeSeconds} second(s)...`);
 };
 
 function sleep(ms: number) {
@@ -501,6 +502,5 @@ function sleep(ms: number) {
   while (true) {
     await start(useContext, allowFiles);
     await sleep(CONFIG.sleepTimeSeconds * secondInMS);
-    logger.info(`Slept for ${CONFIG.sleepTimeSeconds} second(s). Restarting cycle now...`);
   }
 })();

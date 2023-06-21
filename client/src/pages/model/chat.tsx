@@ -485,11 +485,13 @@ const Chat = () => {
       return false;
     }
 
-    let dataSize;
-    if (isFile && file) {
-      dataSize = file.size;
-    } else if (isFile && !file) {
+    if (isFile && !file) {
       return false;
+    }
+
+    let dataSize;
+    if (isFile) {
+      dataSize = (file as File).size;
     } else {
       dataSize = new TextEncoder().encode(newMessage).length;
     }
@@ -503,7 +505,7 @@ const Chat = () => {
 
       if (currentUBalance < parseUBalance(state.fee)) {
         enqueueSnackbar('Not Enough U tokens to pay Operator', { variant: 'error' });
-        return;
+        return false;
       }
 
       return true;
