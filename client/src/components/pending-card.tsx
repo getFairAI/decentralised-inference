@@ -1,4 +1,22 @@
-import { defaultDecimalPlaces } from '@/constants';
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
+import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { displayShortTxOrAddr, findTag, parseUnixTimestamp } from '@/utils/common';
 import {
@@ -23,6 +41,7 @@ interface PaymentTx {
   timestamp: string;
   target: string;
   operationName: string;
+  appVersion: string;
 }
 
 const PendingCard = ({ tx }: { tx: IEdge }) => {
@@ -35,6 +54,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
       const target = JSON.parse(input).target;
       const timestamp = findTag(tx, 'unixTime') as string;
       const operationName = findTag(tx, 'operationName') as string;
+      const appVersion = findTag(tx, 'appVersion') as string;
 
       return {
         id: tx.node.id,
@@ -42,6 +62,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
         target,
         timestamp,
         operationName,
+        appVersion,
       } as PaymentTx;
     }
     return undefined;
@@ -96,15 +117,15 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
             <Typography>
               {parseFloat(payment?.quantity as string).toFixed(defaultDecimalPlaces)}
             </Typography>
-            <img
-              src={'https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjrd5se740ftE'}
-              width={'20px'}
-              height={'20px'}
-            />
+            <img src={U_LOGO_SRC} width={'20px'} height={'20px'} />
           </Box>
           <Box display={'flex'} gap={'8px'}>
             <Typography fontWeight={'600'}>Timestamp:</Typography>
             <Typography noWrap>{parseUnixTimestamp(payment?.timestamp as string)}</Typography>
+          </Box>
+          <Box display={'flex'} gap={'8px'} alignItems={'center'}>
+            <Typography fontWeight={'600'}>App Version:</Typography>
+            <Typography noWrap>{payment?.appVersion}</Typography>
           </Box>
         </Box>
         <Box display={'flex'} flexDirection={'column'} justifyContent={'center'}>

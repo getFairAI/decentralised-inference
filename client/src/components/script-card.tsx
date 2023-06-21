@@ -188,7 +188,7 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IContractEdge; index: numbe
   const owner = useMemo(() => findTag(scriptTx, 'sequencerOwner'), [scriptTx]);
 
   const tags = [
-    /* ...DEFAULT_TAGS, */
+    ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.scriptCurator,
       values: [owner],

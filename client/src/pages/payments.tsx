@@ -46,7 +46,6 @@ const Payments = () => {
   const { data, previousData, error, loading, refetch, fetchMore } = useQuery(FIND_BY_TAGS, {
     variables: {
       tags: [
-        /* ...DEFAULT_TAGS, */
         {
           name: TAG_NAMES.sequencerOwner,
           values: [currentAddress],

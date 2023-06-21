@@ -40,7 +40,7 @@ import Pending from './pending';
 import NavigationMenu from './navigation-menu';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
-import { defaultDecimalPlaces } from '@/constants';
+import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -116,11 +116,7 @@ const CurrencyMenu = () => {
           >
             {currentUBalance.toFixed(defaultDecimalPlaces)}
           </Typography>
-          <img
-            width='20px'
-            height='29px'
-            src='https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjrd5se740ftE'
-          />
+          <img width='20px' height='29px' src={U_LOGO_SRC} />
         </MenuItem>
       </Select>
     </>

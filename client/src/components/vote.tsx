@@ -97,7 +97,7 @@ const countVouchedVotes = async (tx: IEdge, voteTxs: IEdge[], voteFor: voteForOp
 
 const checkCuratorPaidFee = async (txid: string, addr: string) => {
   const tags = [
-    /* ...DEFAULT_TAGS, */
+    ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.modelTransaction,
       values: [txid],
@@ -118,7 +118,7 @@ const checkCuratorPaidFee = async (txid: string, addr: string) => {
 
 const checkUserHasRequests = async (txid: string, addr: string) => {
   const tags = [
-    /*  ...DEFAULT_TAGS, */
+    ...DEFAULT_TAGS,
     { name: TAG_NAMES.scriptTransaction, values: txid },
     { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
   ];
@@ -132,7 +132,7 @@ const checkUserHasRequests = async (txid: string, addr: string) => {
 
 const checkOperatorPaidFee = async (txid: string, addr: string) => {
   const tags = [
-    /* ...DEFAULT_TAGS, */
+    ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.scriptTransaction,
       values: [txid],

@@ -17,6 +17,7 @@
  */
 
 import {
+  DEFAULT_TAGS,
   INFERENCE_PAYMENT,
   SCRIPT_INFERENCE_RESPONSE,
   TAG_NAMES,
@@ -87,7 +88,7 @@ const OperatorRow = ({
   }, [operatorTx]);
 
   const requestTags = [
-    /* ...DEFAULT_TAGS, */
+    ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.scriptCurator,
       values: [scriptCurator],
@@ -157,7 +158,7 @@ const OperatorRow = ({
       const owner = findTag(operatorTx, 'sequencerOwner');
 
       const responseTags = [
-        /* ...DEFAULT_TAGS, */
+        ...DEFAULT_TAGS,
         {
           name: TAG_NAMES.scriptCurator,
           values: [scriptCurator],

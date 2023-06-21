@@ -21,9 +21,11 @@ export const VAULT_ADDRESS = 'tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ';
 export const U_CONTRACT_ID = 'rO8f4nTVarU6OtU2284C8-BIH6HscNd-srhWznUllTk';
 export const U_DIVIDER = 1e6;
 export const VOUCH_CONTRACT_ID = '_z0ch80z_daDUFqC9jHjfOL8nekJcok4ZRkE_UesYsk';
+export const U_LOGO_SRC = 'https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjrd5se740ftE';
 
 export const APP_NAME = 'Fair Protocol';
-export const APP_VERSION = 'test';
+export const PREVIOUS_VERSIONS = ['0.1'];
+export const APP_VERSION = '0.2';
 
 export const MARKETPLACE_FEE = '0.1';
 export const SCRIPT_CREATION_FEE = '0.1';
@@ -143,6 +145,12 @@ export const MIN_CONFIRMATIONS = 7;
 export const DEFAULT_TAGS = [
   { name: TAG_NAMES.appName, values: [APP_NAME] },
   { name: TAG_NAMES.appVersion, values: [APP_VERSION] },
+];
+
+// export default tags with support for old version txs
+export const DEFAULT_TAGS_RETRO = [
+  { name: TAG_NAMES.appName, values: [APP_NAME] },
+  { name: TAG_NAMES.appVersion, values: [...PREVIOUS_VERSIONS, APP_VERSION] },
 ];
 
 export const GITHUB_LINK = 'https://github.com/FAIR-Protocol/decentralized-inference';

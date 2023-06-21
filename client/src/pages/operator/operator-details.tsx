@@ -56,7 +56,7 @@ const OperatorDetails = () => {
   const { data: firstRegistrationData, fetchMore } = useQuery(QUERY_FIRST_REGISTRATION, {
     variables: {
       owner: address,
-      tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: REGISTER_OPERATION }],
+      tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: [REGISTER_OPERATION] }],
     },
   });
 

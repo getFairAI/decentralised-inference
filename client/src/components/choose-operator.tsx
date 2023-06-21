@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { TAG_NAMES, OPERATOR_REGISTRATION_PAYMENT_TAGS } from '@/constants';
+import { TAG_NAMES, OPERATOR_REGISTRATION_PAYMENT_TAGS, DEFAULT_TAGS } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
@@ -169,7 +169,7 @@ const ChooseOperator = ({
   const elementsPerPage = 5;
 
   const tags = [
-    /* ...DEFAULT_TAGS, */
+    ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.scriptCurator,
       values: [findTag(scriptTx as IEdge, 'sequencerOwner')],

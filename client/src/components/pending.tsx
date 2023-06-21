@@ -75,7 +75,6 @@ const Content = ({
   const { data, error, loading, refetch } = useQuery(FIND_BY_TAGS, {
     variables: {
       tags: [
-        /* ...DEFAULT_TAGS, */
         {
           name: TAG_NAMES.sequencerOwner,
           values: [currentAddress],

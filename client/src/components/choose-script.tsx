@@ -23,6 +23,7 @@ import {
   VAULT_ADDRESS,
   SCRIPT_CREATION_FEE,
   U_DIVIDER,
+  DEFAULT_TAGS,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
@@ -86,7 +87,7 @@ const ChooseScript = ({
   });
 
   const tags = [
-    /* ...DEFAULT_TAGS, */
+    ...DEFAULT_TAGS,
     {
       name: TAG_NAMES.operationName,
       values: [SCRIPT_CREATION_PAYMENT],
