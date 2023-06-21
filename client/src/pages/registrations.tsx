@@ -92,8 +92,6 @@ const RegistrationContent = ({
   text: string;
   color: string;
 }) => {
-  const theme = useTheme();
-
   const handleCopy = useCallback(() => {
     if (registration.scriptTransaction) {
       (async () => {
