@@ -17,16 +17,13 @@
  */
 
 import {
-  Alert,
   Box,
   CircularProgress,
   FormControl,
   Grid,
   IconButton,
   InputAdornment,
-  InputBase,
   Paper,
-  Snackbar,
   TextField,
   Tooltip,
   Typography,
@@ -77,7 +74,7 @@ import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
 import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
-import _, { debounce } from 'lodash';
+import _ from 'lodash';
 import '@/styles/main.css';
 import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
@@ -86,7 +83,6 @@ import useScroll from '@/hooks/useScroll';
 import { IMessage } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
-import CustomProgress from '@/components/progress';
 import ChatBubble from '@/components/chat-bubble';
 import DebounceIconButton from '@/components/debounce-icon-button';
 import { parseUBalance, sendU } from '@/utils/u';
@@ -135,7 +131,7 @@ const Chat = () => {
     if (!currentConversationId || loading) {
       return true;
     } else {
-      return (newMessage.length === 0 || newMessage.length >= 10) && !file;
+      return (newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE) && !file;
     }
   }, [newMessage, file, currentConversationId, loading]);
 
@@ -1006,7 +1002,7 @@ const Chat = () => {
                       </>
                     ),
                   }}
-                  error={newMessage.length >= 10}
+                  error={newMessage.length >= MAX_MESSAGE_SIZE}
                   onChange={handleMessageChange}
                   onKeyDown={keyDownHandler}
                   fullWidth

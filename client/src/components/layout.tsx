@@ -29,15 +29,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import {
-  ReactElement,
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { ReactElement, useCallback, useContext, useEffect, useLayoutEffect, useState } from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
 import { ChooseWalletContext } from '@/context/choose-wallet';
