@@ -229,3 +229,8 @@ export const OPERATOR_REGISTRATION_PAYMENT_TAGS = [
   { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
   { name: TAG_NAMES.input, values: [operatorPaymentInputStr, operatorPaymentInputNumber] },
 ];
+
+const kb = 1024;
+const maxKb = 100;
+
+export const MAX_MESSAGE_SIZE = kb * maxKb;

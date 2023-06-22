@@ -36,7 +36,6 @@ import { BundlrProvider } from './context/bundlr';
 import { WalletProvider } from './context/wallet';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
-import { WorkerProvider } from './context/worker';
 import { FundProvider } from './context/fund';
 import { StyledMaterialDesignContent } from './styles/components';
 import { useCallback, useEffect, useState } from 'react';
@@ -45,7 +44,7 @@ import { ChooseWalletProvider } from './context/choose-wallet';
 import { SwapProvider } from './context/swap';
 
 const App = () => {
-  const [hasAgreed, setHasAgreed] = useState(false);
+  const [hasAgreed, setHasAgreed] = useState(true);
   const theme = useTheme();
 
   useEffect(() => {
@@ -160,9 +159,19 @@ const App = () => {
     );
   } else {
     return (
-      <Layout>
-        <Outlet />
-      </Layout>
+      <WalletProvider>
+        <BundlrProvider>
+          <FundProvider>
+            <ChooseWalletProvider>
+              <SwapProvider>
+                <Layout>
+                  <Outlet />
+                </Layout>
+              </SwapProvider>
+            </ChooseWalletProvider>
+          </FundProvider>
+        </BundlrProvider>
+      </WalletProvider>
     );
   }
 };
@@ -179,20 +188,8 @@ export const Root = () => {
             info: StyledMaterialDesignContent,
           }}
         >
-          <WalletProvider>
-            <BundlrProvider>
-              <WorkerProvider>
-                <FundProvider>
-                  <ChooseWalletProvider>
-                    <SwapProvider>
-                      <CssBaseline />
-                      <App />
-                    </SwapProvider>
-                  </ChooseWalletProvider>
-                </FundProvider>
-              </WorkerProvider>
-            </BundlrProvider>
-          </WalletProvider>
+          <CssBaseline />
+          <App />
         </SnackbarProvider>
       </AppThemeProvider>
     </ApolloProvider>

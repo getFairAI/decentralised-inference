@@ -16,32 +16,46 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
+import { BundlrContext } from '@/context/bundlr';
+import { FundContext } from '@/context/fund';
 import { WalletContext } from '@/context/wallet';
 import {
-  Alert,
-  Button,
   Dialog,
-  DialogActions,
-  DialogContent,
   DialogTitle,
   Typography,
+  DialogContent,
+  Alert,
+  DialogActions,
+  Button,
   useTheme,
 } from '@mui/material';
-import { ReactElement, useCallback, useContext } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
-  const { address } = useParams();
-  const navigate = useNavigate();
+const FundBundlr = ({ children }: { children: ReactElement }) => {
   const { currentAddress } = useContext(WalletContext);
+  const { nodeBalance, isLoading } = useContext(BundlrContext);
+  const { setOpen: setFundOpen } = useContext(FundContext);
+  const [ignore, setIgnore] = useState(false);
   const theme = useTheme();
 
-  const handleGoBack = useCallback(() => navigate(-1), [navigate]);
+  const isOpen = useMemo(
+    () => nodeBalance <= 0 && !ignore && !isLoading && !!currentAddress,
+    [nodeBalance, ignore, isLoading, currentAddress],
+  );
+
+  useEffect(() => setIgnore(false), [currentAddress]); // set ignore to false when user changes wallet
+
+  const handleFundNow = useCallback(() => {
+    setIgnore(true);
+    setFundOpen(true);
+  }, [setIgnore, setFundOpen]);
+
+  const handleIgnore = useCallback(() => setIgnore(true), [setIgnore]);
 
   return (
     <>
       <Dialog
-        open={address === currentAddress}
+        open={isOpen}
         maxWidth={'md'}
         fullWidth
         sx={{
@@ -57,32 +71,39 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
         <DialogTitle>
           <Typography
             sx={{
-              color: theme.palette.error.main,
+              color: theme.palette.warning.light,
               fontWeight: 700,
               fontSize: '23px',
               lineHeight: '31px',
             }}
           >
-            Error: Use a different wallet!
+            {'Missing Bundlr Funds'}
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Alert
+            /* onClose={() => setOpen(false)} */
             variant='outlined'
-            severity='error'
+            severity='warning'
             sx={{
               marginBottom: '16px',
-              borderRadius: '10px',
-              color: theme.palette.error.main,
+              borderRadius: '23px',
+              color: theme.palette.warning.light,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
+              backdropFilter: 'blur(4px)',
               '& .MuiAlert-icon': {
                 justifyContent: 'center',
               },
-              borderColor: theme.palette.error.main,
+              '& .MuiAlert-message': {
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              },
             }}
-            icon={<img src='./error-icon.svg' />}
+            icon={<img src='./warning-icon.svg'></img>}
           >
             <Typography
               sx={{
@@ -93,32 +114,41 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
                 textAlign: 'center',
               }}
             >
-              Chosen Operator is{' '}
-              <u>
-                <b>invalid.</b>
-              </u>{' '}
-              It is not allowed to use inference with the same wallet as the registered Operator.
-              <u>
-                <b>Please Choose another wallet or Operator and try again.</b>
-              </u>
+              {
+                'You do not have enough Bundlr Funds to use this app. Please fund your Bundlr Node to continue.'
+              }
             </Typography>
           </Alert>
         </DialogContent>
-        <DialogActions sx={{ display: 'flex', justifyContent: 'center', paddingBottom: '20px' }}>
+        <DialogActions
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '30px',
+            paddingBottom: '20px',
+          }}
+        >
           <Button
-            onClick={handleGoBack}
-            sx={{
-              borderRadius: '7px',
-            }}
+            onClick={handleIgnore}
             variant='outlined'
+            color='warning'
+            sx={{ width: 'fit-content' }}
           >
-            Go Back
+            <Typography color={theme.palette.warning.main}>Fund Later</Typography>
+          </Button>
+          <Button
+            onClick={handleFundNow}
+            variant='contained'
+            color='warning'
+            sx={{ width: 'fit-content' }}
+          >
+            <Typography color={theme.palette.primary.contrastText}>Fund Now</Typography>
           </Button>
         </DialogActions>
       </Dialog>
-      {address !== currentAddress && children}
+      {children}
     </>
   );
 };
 
-export default BlockOperatorGuard;
+export default FundBundlr;
