@@ -1,4 +1,21 @@
-// components/layout.js
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import FilterContext from '@/context/filter';
 import {
   Alert,
@@ -12,11 +29,9 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { ReactElement, useCallback, useContext, useEffect, useLayoutEffect, useState } from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
-import { BundlrContext } from '@/context/bundlr';
-import { FundContext } from '@/context/fund';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 
@@ -25,50 +40,38 @@ export default function Layout({ children }: { children: ReactElement }) {
   const [filterValue, setFilterValue] = useState('');
   const [headerHeight, setHeaderHeight] = useState('64px');
   const { currentAddress } = useContext(WalletContext);
-  const { nodeBalance, isLoading } = useContext(BundlrContext);
   const [ignore, setIgnore] = useState(false);
   const theme = useTheme();
-  const { setOpen: setFundOpen } = useContext(FundContext);
   const { open: chooseWalletOpen, setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const { width, height } = useWindowDimensions();
 
-  const showBundlrFunds = useMemo(
-    () => (!isLoading && nodeBalance === 0 && !!currentAddress) || !currentAddress,
-    [isLoading, nodeBalance, currentAddress],
-  );
-  const isOpen = useMemo(
-    () => !chooseWalletOpen && !ignore && showBundlrFunds,
-    [chooseWalletOpen, ignore, isLoading, nodeBalance, currentAddress],
-  );
-
-  const handleFundNow = () => {
-    setIgnore(true);
-    setFundOpen(true);
-  };
-
-  const getDialogTitle = () => {
-    if (!currentAddress) return 'Wallet Not Connected';
-    return 'Missing Bundlr Funds';
-  };
-
-  const getDialogContent = () => {
-    if (!currentAddress)
-      return 'Wallet Not Connected! App Functionalities will be limited, please consider connecting your wallet.';
-    return 'You do not have enough Bundlr Funds to use this app. Please fund your Bundlr Node to continue.';
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('wallet')) {
       setChooseWalletOpen(true);
     }
+    if (localStorage.getItem('ignoreWalletNotConnected')) {
+      setIgnore(true);
+    }
   }, []);
+
+  useEffect(
+    () => setIsOpen(!chooseWalletOpen && !ignore && !currentAddress),
+    [chooseWalletOpen, ignore, currentAddress],
+  ); // set ignore to false when user changes wallet
 
   useLayoutEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight;
     if (currHeaderHeight) {
       setHeaderHeight(`${currHeaderHeight}px`);
     }
-  }, [width, height]);
+  }, [width, height, showBanner]);
+
+  const handleIgnore = useCallback(() => {
+    localStorage.setItem('ignoreWalletNotConnected', 'true');
+    setIgnore(true);
+  }, [setIgnore]);
 
   return (
     <>
@@ -113,7 +116,7 @@ export default function Layout({ children }: { children: ReactElement }) {
                     lineHeight: '31px',
                   }}
                 >
-                  {getDialogTitle()}
+                  {'Wallet Not Connected'}
                 </Typography>
               </DialogTitle>
               <DialogContent>
@@ -150,7 +153,9 @@ export default function Layout({ children }: { children: ReactElement }) {
                       textAlign: 'center',
                     }}
                   >
-                    {getDialogContent()}
+                    {
+                      'Wallet Not Connected! App Functionalities will be limited, please consider connecting your wallet.'
+                    }
                   </Typography>
                 </Alert>
               </DialogContent>
@@ -162,35 +167,14 @@ export default function Layout({ children }: { children: ReactElement }) {
                   paddingBottom: '20px',
                 }}
               >
-                {!currentAddress ? (
-                  <Button
-                    onClick={() => setIgnore(true)}
-                    variant='contained'
-                    color='warning'
-                    sx={{ width: 'fit-content' }}
-                  >
-                    <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      onClick={() => setIgnore(true)}
-                      variant='outlined'
-                      color='warning'
-                      sx={{ width: 'fit-content' }}
-                    >
-                      <Typography color={theme.palette.warning.main}>Fund Later</Typography>
-                    </Button>
-                    <Button
-                      onClick={handleFundNow}
-                      variant='contained'
-                      color='warning'
-                      sx={{ width: 'fit-content' }}
-                    >
-                      <Typography color={theme.palette.primary.contrastText}>Fund Now</Typography>
-                    </Button>
-                  </>
-                )}
+                <Button
+                  onClick={handleIgnore}
+                  variant='contained'
+                  color='warning'
+                  sx={{ width: 'fit-content' }}
+                >
+                  <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
+                </Button>
               </DialogActions>
             </Dialog>
           </FilterContext.Provider>

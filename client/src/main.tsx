@@ -37,6 +37,7 @@ import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
 import ScriptDetails from './pages/script/script-details';
 import Registrations from './pages/registrations';
+import FundBundlr from './guards/fund-bundlr';
 
 const router = createHashRouter([
   {
@@ -91,11 +92,19 @@ const router = createHashRouter([
       },
       {
         path: 'upload-creator',
-        element: <UploadCreator />,
+        element: (
+          <FundBundlr>
+            <UploadCreator />
+          </FundBundlr>
+        ),
       },
       {
         path: 'upload',
-        element: <Curators />,
+        element: (
+          <FundBundlr>
+            <Curators />
+          </FundBundlr>
+        ),
       },
       {
         path: 'operators',
