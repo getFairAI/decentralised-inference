@@ -60,6 +60,7 @@ import { WalletContext } from '@/context/wallet';
 import { LoadingContainer } from '@/styles/components';
 import DebounceIconButton from './debounce-icon-button';
 import { Timeout } from 'react-number-format/types/types';
+import useWindowDimensions from '@/hooks/useWindowDimensions';
 
 const ConversationElement = ({
   cid,
@@ -82,6 +83,7 @@ const ConversationElement = ({
       selected={cid === currentConversationId}
       onClick={handleListItemClick}
       sx={{
+        flexGrow: 0,
         background: theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
         borderRadius: '21px',
         width: '100%',
@@ -137,6 +139,8 @@ const Conversations = ({
   const theme = useTheme();
   const { dispatchTx } = useContext(WalletContext);
   const [getConversationHistory] = useLazyQuery(QUERY_CONVERSATIONS_TX_ID);
+  const { height } = useWindowDimensions();
+  const [chatMaxHeight, setChatMaxHeight] = useState('100%');
 
   const {
     data: conversationsData,
@@ -295,6 +299,16 @@ const Conversations = ({
     }, 500);
   };
 
+  useEffect(() => {
+    const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
+    const searchbarHeight = document.querySelector('#searchConversation')?.clientHeight as number;
+    const addButtonHeight = document.querySelector('#addConversation')?.clientHeight as number;
+    const margins = 72; // 16 from search, 16 from button and 8 from bottom +16px * 3 for gaps
+    setChatMaxHeight(
+      `${height - (currHeaderHeight + searchbarHeight + addButtonHeight + margins)}px`,
+    );
+  }, [height]);
+
   return (
     <Paper
       sx={{
@@ -312,6 +326,7 @@ const Conversations = ({
     >
       <Box marginTop={'16px'}>
         <Box
+          id={'searchConversation'}
           sx={{
             background: theme.palette.common.white,
             borderRadius: '30px',
@@ -344,6 +359,7 @@ const Conversations = ({
       </Box>
       <Tooltip title='Start a new Conversation'>
         <DebounceIconButton
+          id={'addConversation'}
           onClick={handleAddConversation}
           sx={{
             margin: '0 20px',
@@ -362,6 +378,9 @@ const Conversations = ({
           alignItems: 'center',
           width: '100%',
           padding: '0 20px',
+          overflow: 'auto',
+          maxHeight: chatMaxHeight,
+          flexFlow: 'wrap',
         }}
       >
         {conversationsLoading && <LoadingContainer theme={theme} className='dot-pulse' />}
