@@ -188,14 +188,17 @@ const Chat = () => {
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
 
   useEffect(() => {
-    setChatMaxHeight(`${height - 94}px`);
+    const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
+    setChatMaxHeight(`${height - currHeaderHeight}px`);
   }, [height]);
 
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
       navigate(0);
-    } else if (!userAddr) {
+    } else if (!localStorage.getItem('wallet') && !userAddr) {
       navigate('/');
+    } else {
+      // ignore
     }
   }, [userAddr]);
 
