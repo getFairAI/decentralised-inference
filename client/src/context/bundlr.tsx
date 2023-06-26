@@ -51,10 +51,7 @@ interface BundlrContext {
   bundlr: WebBundlr | null;
   nodeBalance: number;
   isLoading: boolean;
-  changeNode: (
-    value: bundlrNodeUrl,
-    walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet,
-  ) => Promise<void>;
+  changeNode: (value: bundlrNodeUrl) => Promise<void>;
   updateBalance: () => Promise<void>;
   fundNode: (value: string) => Promise<FundResponse>;
   retryConnection: () => Promise<void>;
@@ -72,12 +69,13 @@ interface BundlrContext {
   ) => Promise<AxiosResponse<UploadResponse, any>>;
 }
 
-const createActions = (dispatch: Dispatch<BundlrAction>, bundlr: WebBundlr | null) => {
+const createActions = (
+  dispatch: Dispatch<BundlrAction>,
+  bundlr: WebBundlr | null,
+  walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet,
+) => {
   return {
-    changeNode: async (
-      value: bundlrNodeUrl,
-      walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet,
-    ) => asyncChangeNode(dispatch, value, walletInstance),
+    changeNode: async (value: bundlrNodeUrl) => asyncChangeNode(dispatch, value, walletInstance),
     updateBalance: async () => asyncUpdateBalance(dispatch, bundlr),
     updateLoading: (isLoading: boolean) => dispatch({ type: 'update_loading', isLoading }),
   };
@@ -169,7 +167,7 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
   });
   const { currentAddress, walletInstance } = useContext(WalletContext);
   const actions = useMemo(
-    () => createActions(dispatch, state.bundlr),
+    () => createActions(dispatch, state.bundlr, walletInstance),
     [state.bundlr, currentAddress, walletInstance],
   );
 
@@ -177,10 +175,10 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
     if (currentAddress) {
       (async () => {
         actions.updateLoading(true);
-        await actions.changeNode(NODE1_BUNDLR_URL, walletInstance);
+        await actions.changeNode(NODE1_BUNDLR_URL);
       })();
     }
-  }, [currentAddress, walletInstance]);
+  }, [currentAddress]);
 
   const retryConnection = async () => state.bundlr?.ready();
 
