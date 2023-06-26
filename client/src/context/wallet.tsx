@@ -18,10 +18,9 @@
 
 import { createContext, Dispatch, ReactNode, useEffect, useMemo, useReducer, useRef } from 'react';
 import { PermissionType, DispatchResult as ArConnectDispatchResult } from 'arconnect';
-import arweave from '@/utils/arweave';
+import arweave, { wallet } from '@/utils/arweave';
 import _ from 'lodash';
 import { isVouched } from '@/utils/vouch';
-import { ArweaveWebWallet } from 'arweave-wallet-connector';
 import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
 import Transaction from 'arweave/web/lib/transaction';
 import { connectToU, getUBalance, parseUBalance } from '@/utils/u';
@@ -29,14 +28,6 @@ import { usePollingEffect } from '@/hooks/usePollingEffect';
 
 const arweaveApp = 'arweave.app';
 const arConnect = 'arconnect';
-
-const wallet = new ArweaveWebWallet({
-  // optionally provide information about your app that will be displayed in the wallet provider interface
-  name: 'Fair Protocol',
-  logo: 'https://7kekrsiqzdrmjh222sx5xohduoemsoosicy33nqic4q5rbdcqybq.arweave.net/-oioyRDI4sSfWtSv27jjo4jJOdJAsb22CBch2IRihgM',
-});
-
-wallet.setUrl(arweaveApp);
 
 const DEFAULT_PERMISSSIONS: PermissionType[] = [
   'ACCESS_PUBLIC_KEY',
@@ -107,8 +98,8 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
     const currentPermissions = await window.arweaveWallet.getPermissions();
     if (!_.isEqual(currentPermissions, DEFAULT_PERMISSSIONS)) {
       await window.arweaveWallet.connect(DEFAULT_PERMISSSIONS);
-      dispatch({ type: 'wallet_connected', wallet: window.arweaveWallet });
     }
+    dispatch({ type: 'wallet_connected', wallet: window.arweaveWallet });
     localStorage.setItem('wallet', arConnect);
     const addr = await window.arweaveWallet.getActiveAddress();
     dispatch({ type: 'wallet_address_updated', address: addr });
@@ -135,6 +126,7 @@ const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
     await wallet.connect();
     localStorage.setItem('wallet', arweaveApp);
     const walletInstance = wallet.namespaces.arweaveWallet;
+    walletInstance.walletName = arweaveApp;
     dispatch({ type: 'wallet_connected', wallet: walletInstance });
     const addr = (await walletInstance.getActiveAddress()) as string;
     dispatch({ type: 'wallet_address_updated', address: addr });
