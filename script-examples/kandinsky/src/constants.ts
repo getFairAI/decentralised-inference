@@ -58,5 +58,5 @@ export const MARKETPLACE_PERCENTAGE_FEE = 0.15;
 export const CURATOR_PERCENTAGE_FEE = 0.025;
 export const CREATOR_PERCENTAGE_FEE = 0.025;
 
-export const U_CONTRACT_ID = 'rO8f4nTVarU6OtU2284C8-BIH6HscNd-srhWznUllTk';
+export const U_CONTRACT_ID = 'KTzTXT_ANmF84fWEKHzWURD1LWd9QaFR9yfYUwH2Lxw';
 export const U_DIVIDER = 1e6;

@@ -23,7 +23,7 @@ import Pino from 'pino';
 import fs from 'node:fs';
 import { WarpFactory } from "warp-contracts";
 
-const U_CONTRACT_ID = 'rO8f4nTVarU6OtU2284C8-BIH6HscNd-srhWznUllTk';
+const U_CONTRACT_ID = 'KTzTXT_ANmF84fWEKHzWURD1LWd9QaFR9yfYUwH2Lxw';
 const VAULT_ADDRESS = 'tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ';
 const MARKETPLACE_FEE = 0.1;
 const U_DIVIDER = 1e6;
