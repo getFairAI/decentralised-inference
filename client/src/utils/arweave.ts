@@ -17,7 +17,16 @@
  */
 
 import { MIN_CONFIRMATIONS, NET_ARWEAVE_URL } from '../constants';
-import Arweave from 'arweave';
+import Arweave from 'arweave/web';
+import { ArweaveWebWallet } from 'arweave-wallet-connector';
+
+export const wallet = new ArweaveWebWallet({
+  // optionally provide information about your app that will be displayed in the wallet provider interface
+  name: 'Fair Protocol',
+  logo: 'https://7kekrsiqzdrmjh222sx5xohduoemsoosicy33nqic4q5rbdcqybq.arweave.net/-oioyRDI4sSfWtSv27jjo4jJOdJAsb22CBch2IRihgM',
+});
+
+wallet.setUrl('arweave.app');
 
 const arweave = Arweave.init({
   host: NET_ARWEAVE_URL.split('//')[1],

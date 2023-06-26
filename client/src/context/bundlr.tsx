@@ -1,4 +1,21 @@
-import { WebBundlr } from 'bundlr-custom';
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import {
   createContext,
   Dispatch,
@@ -14,9 +31,11 @@ import { WalletContext } from './wallet';
 import { ITag } from '@/interfaces/arweave';
 import fileReaderStream from 'filereader-stream';
 import BigNumber from 'bignumber.js';
-import { FundResponse, UploadResponse } from 'bundlr-custom/build/common/types';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { AxiosResponse } from 'axios';
+import arweave, { wallet } from '@/utils/arweave';
+import { WebBundlr } from 'bundlr-custom';
+import { FundResponse, UploadResponse } from 'bundlr-custom/build/cjs/common/types';
 
 export type bundlrNodeUrl =
   | typeof DEV_BUNDLR_URL
@@ -50,17 +69,27 @@ interface BundlrContext {
   ) => Promise<AxiosResponse<UploadResponse, any>>;
 }
 
-const createActions = (dispatch: Dispatch<BundlrAction>, bundlr: WebBundlr | null) => {
+const createActions = (
+  dispatch: Dispatch<BundlrAction>,
+  bundlr: WebBundlr | null,
+  walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet,
+) => {
   return {
-    changeNode: async (value: bundlrNodeUrl) => asyncChangeNode(dispatch, value),
+    changeNode: async (value: bundlrNodeUrl) => asyncChangeNode(dispatch, value, walletInstance),
     updateBalance: async () => asyncUpdateBalance(dispatch, bundlr),
     updateLoading: (isLoading: boolean) => dispatch({ type: 'update_loading', isLoading }),
   };
 };
 
-const asyncChangeNode = async (dispatch: Dispatch<BundlrAction>, node: bundlrNodeUrl) => {
-  if (!window.arweaveWallet) return;
-  const bundlr = new WebBundlr(node, 'arweave', window.arweaveWallet);
+const asyncChangeNode = async (
+  dispatch: Dispatch<BundlrAction>,
+  node: bundlrNodeUrl,
+  walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet,
+) => {
+  if (!walletInstance) {
+    return;
+  }
+  const bundlr = new WebBundlr(node, 'arweave', walletInstance, { providerInstance: arweave });
   try {
     await bundlr.ready();
     dispatch({ type: 'node_changed', bundlr });
@@ -136,19 +165,22 @@ export const BundlrProvider = ({ children }: { children: ReactNode }) => {
     nodeBalance: 0,
     isLoading: false,
   });
-  const walletState = useContext(WalletContext);
-  const actions = useMemo(() => createActions(dispatch, state.bundlr), [state.bundlr, walletState]);
+  const { currentAddress, walletInstance } = useContext(WalletContext);
+  const actions = useMemo(
+    () => createActions(dispatch, state.bundlr, walletInstance),
+    [state.bundlr, currentAddress, walletInstance],
+  );
 
   useEffect(() => {
-    if (walletState.currentAddress) {
+    if (currentAddress) {
       (async () => {
         actions.updateLoading(true);
         await actions.changeNode(NODE1_BUNDLR_URL);
       })();
     }
-  }, [walletState.currentAddress]);
+  }, [currentAddress]);
 
-  const retryConnection = async () => await state.bundlr?.ready();
+  const retryConnection = async () => state.bundlr?.ready();
 
   const getPrice = async (bytes: number, currency?: string) => {
     if (state.bundlr) {
