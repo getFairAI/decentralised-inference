@@ -1,0 +1,9 @@
+{
+  "url": "http://127.0.0.1:8088",
+  "sleepTimeSeconds": 7,
+  "scriptCurator": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8",
+  "scriptName": "DreamShaper Script",
+  "vaultAddress": "tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ",
+  "nPreviousBlocks": 1,
+  "minBlockConfirmations": 6
+}
