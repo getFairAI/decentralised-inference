@@ -51,7 +51,7 @@ const Register = () => {
   const handleRegister = async (rate: string, operatorName: string, handleNext: () => void) => {
     try {
       if (currentUBalance < parseFloat(OPERATOR_REGISTRATION_AR_FEE)) {
-        enqueueSnackbar('Insufficient U Balance', { variant: 'error' });
+        enqueueSnackbar('Insufficient $U Balance', { variant: 'error' });
         return;
       }
 

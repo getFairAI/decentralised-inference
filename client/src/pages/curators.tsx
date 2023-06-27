@@ -343,7 +343,7 @@ const Curators = () => {
 
     if (currentBalance < parseFloat(SCRIPT_CREATION_FEE)) {
       enqueueSnackbar(
-        `Not Enought Balance in your Wallet to pay Script Creation Fee (${SCRIPT_CREATION_FEE} U)`,
+        `Not Enought Balance in your Wallet to pay Script Creation Fee (${SCRIPT_CREATION_FEE} $U)`,
         { variant: 'error' },
       );
       return;
@@ -402,7 +402,7 @@ const Curators = () => {
 
       enqueueSnackbar(
         <>
-          Paid Script Creation Fee {SCRIPT_CREATION_FEE} U.
+          Paid Script Creation Fee {SCRIPT_CREATION_FEE} $U.
           <br></br>
           <a
             href={`https://viewblock.io/arweave/tx/${paymentId}`}

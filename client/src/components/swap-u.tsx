@@ -80,7 +80,7 @@ const SwapU = ({
       setAmount(0);
       enqueueSnackbar(
         <>
-          Swapped {amount} AR to U tokens
+          Swapped {amount} AR to $U tokens
           <br></br>
           <a href={`https://viewblock.io/arweave/tx/${res}`} target={'_blank'} rel='noreferrer'>
             <u> View Transaction in Explorer</u>
@@ -107,14 +107,14 @@ const SwapU = ({
               lineHeight: '31px',
             }}
           >
-            Swap AR to U
+            Swap AR to $U
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Alert variant='outlined' severity='info' sx={{ marginBottom: '16px' }}>
             <Typography>
-              Swapping Ar to U tokens implies burning AR. This proccess can take up to 10 minutes to
-              be fully confirmed on the network.
+              Swapping Ar to $U tokens implies burning AR. This proccess can take up to 10 minutes
+              to be fully confirmed on the network.
             </Typography>
           </Alert>
           <Box

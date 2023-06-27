@@ -262,7 +262,7 @@ const UploadCreator = () => {
       await updateUBalance();
       enqueueSnackbar(
         <>
-          Paid Marketplace Fee: {MARKETPLACE_FEE} U Tokens.
+          Paid Marketplace Fee: {MARKETPLACE_FEE} $U Tokens.
           <br></br>
           <a
             href={`https://viewblock.io/arweave/tx/${paymentId}`}

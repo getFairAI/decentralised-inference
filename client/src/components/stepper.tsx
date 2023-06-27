@@ -254,7 +254,7 @@ const RegisterStep = ({
         </Box>
         <Alert severity='warning' variant='outlined' sx={{ borderRadius: '23px' }}>
           <Typography>
-            Registration Requires {OPERATOR_REGISTRATION_AR_FEE} AR to prevent malicious actors.
+            Registration Requires {OPERATOR_REGISTRATION_AR_FEE} $U to prevent malicious actors.
           </Typography>
         </Alert>
         <Box display={'flex'} justifyContent={'space-between'}>

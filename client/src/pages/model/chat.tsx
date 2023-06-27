@@ -506,7 +506,7 @@ const Chat = () => {
       }
 
       if (currentUBalance < parseUBalance(state.fee)) {
-        enqueueSnackbar('Not Enough U tokens to pay Operator', { variant: 'error' });
+        enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
         return false;
       }
 
@@ -571,7 +571,7 @@ const Chat = () => {
 
       // update balance after payments
       await updateUBalance();
-      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(inferenceFee)} U.</>, {
+      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(inferenceFee)} $U.</>, {
         variant: 'success',
       });
     } catch (error) {
