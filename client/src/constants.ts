@@ -25,11 +25,11 @@ export const U_LOGO_SRC = 'https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjr
 
 export const APP_NAME = 'Fair Protocol';
 export const PREVIOUS_VERSIONS = ['0.1'];
-export const APP_VERSION = '0.2';
+export const APP_VERSION = '0.3';
 
-export const MARKETPLACE_FEE = '0.1';
-export const SCRIPT_CREATION_FEE = '0.1';
-export const OPERATOR_REGISTRATION_AR_FEE = '0.05';
+export const MARKETPLACE_FEE = '0.5'; // u
+export const SCRIPT_CREATION_FEE = '0.5'; // u
+export const OPERATOR_REGISTRATION_AR_FEE = '0.05'; // u
 
 export const OPERATOR_PERCENTAGE_FEE = 0.8;
 export const MARKETPLACE_PERCENTAGE_FEE = 0.15;
