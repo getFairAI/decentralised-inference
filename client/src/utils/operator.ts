@@ -191,12 +191,9 @@ export const checkHasOperators = async (scriptTx: IEdge, filtered: IEdge[]) => {
         hasAtLeastOneValid = true;
       }
     }
-
-    if (!hasAtLeastOneValid) {
-      filtered.splice(
-        filtered.findIndex((existing) => scriptTx.node.id === existing.node.id),
-        1,
-      );
+    const arrayPos = filtered.findIndex((existing) => scriptTx.node.id === existing.node.id);
+    if (!hasAtLeastOneValid && arrayPos >= 0) {
+      filtered.splice(arrayPos, 1);
     }
   }
 };
