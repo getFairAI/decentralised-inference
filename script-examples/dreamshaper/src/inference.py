@@ -55,7 +55,7 @@ serverPort = 8088
 
 class MyServer(BaseHTTPRequestHandler):
   def do_POST(self):
-    if self.path == '/textToImage':
+    if self.path == '/':
       content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
       post_data = self.rfile.read(content_length) # <--- Gets the data itself
       prompt = post_data.decode("utf-8")
