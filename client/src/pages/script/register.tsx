@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { toSvg } from 'jdenticon';
 import { useSnackbar } from 'notistack';
-import { useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { useLoaderData, useLocation, useNavigate } from 'react-router-dom';
 import '@/styles/ui.css';
 import { WalletContext } from '@/context/wallet';
@@ -102,9 +102,7 @@ const Register = () => {
     }
   };
 
-  const handleClose = () => {
-    navigate(-1);
-  };
+  const handleClose = useCallback(() => navigate(-1), [navigate]);
 
   return (
     <Dialog
@@ -255,7 +253,12 @@ const Register = () => {
         </Box>
       </CardContent>
       <DialogContent sx={{ padding: '20px 32px' }}>
-        <CustomStepper data={state} handleSubmit={handleRegister} isRegistered={isRegistered} />
+        <CustomStepper
+          data={state}
+          handleSubmit={handleRegister}
+          handleClose={handleClose}
+          isRegistered={isRegistered}
+        />
       </DialogContent>
     </Dialog>
   );
