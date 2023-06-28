@@ -18,7 +18,7 @@
 
 import CONFIG from '../config.json' assert { type: 'json' };
 import fs from 'fs';
-import Bundlr from '@bundlr-network/client';
+import NodeBundlr from '@bundlr-network/client/build/esm/node/index';
 import Arweave from 'arweave';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 import { default as Pino } from 'pino';
@@ -58,7 +58,7 @@ let modelOwner: string;
 let operatorFee: number;
 
 const logger = Pino({
-  name: 'kandinsky',
+  name: 'dreamshaper',
   level: 'debug',
 });
 
@@ -71,7 +71,7 @@ const arweave = Arweave.init({
 const JWK: JWKInterface = JSON.parse(fs.readFileSync('wallet.json').toString());
 // initailze the bundlr SDK
 // const bundlr: Bundlr = new (Bundlr as any).default(
-const bundlr = new Bundlr('https://node1.bundlr.network', 'arweave', JWK);
+const bundlr = new NodeBundlr('https://node1.bundlr.network', 'arweave', JWK);
 
 const sendToBundlr = async (
   responses: string[],
@@ -117,7 +117,7 @@ const inference = async function (requestTx: IEdge) {
   const text = await (await requestData.blob()).text();
   logger.info(`User Prompt: ${text}`);
 
-  const res = await fetch(`${CONFIG.url}/textToImage`, {
+  const res = await fetch(`${CONFIG.url}/`, {
     method: 'POST',
     body: text,
   });
@@ -147,7 +147,7 @@ const getOperatorFee = async (operatorAddress = address) => {
     throw new Error('Invalid Operator Fee Found for registration.');
   }
 
-  return operatorFee;
+  return opFee;
 };
 
 const checkUserPaidInferenceFees = async (

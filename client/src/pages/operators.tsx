@@ -311,19 +311,6 @@ const Operators = () => {
                 textAlign: 'center',
               }}
             >
-              Script Fee
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
               Current # of Operators
             </Typography>
           </Box>

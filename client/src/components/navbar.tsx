@@ -64,7 +64,7 @@ const CustomDropDownIcon = () => (
 );
 
 const CurrencyMenu = () => {
-  const [selected, setSelected] = useState<'AR' | 'U'>('AR');
+  const [selected, setSelected] = useState<'AR' | 'U'>('U');
   const { currentBalance, currentUBalance } = useContext(WalletContext);
   const theme = useTheme();
   const handleArClick = useCallback(() => {

@@ -126,6 +126,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState(0);
   const [inputHeight, setInputHeight] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const sendDisabled = useMemo(() => {
     if (!currentConversationId || loading) {
@@ -324,13 +325,21 @@ const Chat = () => {
         { name: TAG_NAMES.scriptUser, values: [userAddr] },
         {
           name: TAG_NAMES.requestTransaction,
-          values: messages.map((el) => el.id).slice(-1), // last 5 requests
+          values: messages
+            .filter((el) => el.type === 'request')
+            .map((el) => el.id)
+            .slice(-1), // last request
         }, // slice from end to get latest requests
       ];
       const owners = Array.from(
         new Set(
           requestsData.transactions.edges
-            .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
+            .filter((el: IEdge) =>
+              messages
+                .filter((el) => el.type === 'request')
+                .slice(-1)
+                .find((msg) => msg.id === el.node.id),
+            )
             .map((el: IEdge) => findTag(el, 'scriptOperator')),
         ),
       );
@@ -357,13 +366,21 @@ const Chat = () => {
         { name: TAG_NAMES.scriptUser, values: [userAddr] },
         {
           name: TAG_NAMES.requestTransaction,
-          values: messages.map((el) => el.id).slice(-1), // last 5 requests
+          values: messages
+            .filter((el) => el.type === 'request')
+            .map((el) => el.id)
+            .slice(-1), // last request
         }, // slice from end to get latest requests
       ];
       const owners = Array.from(
         new Set(
           requestsData.transactions.edges
-            .filter((el: IEdge) => messages.slice(-1).find((msg) => msg.id === el.node.id))
+            .filter((el: IEdge) =>
+              messages
+                .filter((el) => el.type === 'request')
+                .slice(-1)
+                .find((msg) => msg.id === el.node.id),
+            )
             .map((el: IEdge) => findTag(el, 'scriptOperator')),
         ),
       );
@@ -506,7 +523,7 @@ const Chat = () => {
       }
 
       if (currentUBalance < parseUBalance(state.fee)) {
-        enqueueSnackbar('Not Enough U tokens to pay Operator', { variant: 'error' });
+        enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
         return false;
       }
 
@@ -571,7 +588,7 @@ const Chat = () => {
 
       // update balance after payments
       await updateUBalance();
-      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(inferenceFee)} U.</>, {
+      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(inferenceFee)} $U.</>, {
         variant: 'success',
       });
     } catch (error) {
@@ -599,6 +616,9 @@ const Chat = () => {
     });
     setMessages(temp);
     setNewMessage('');
+    if (inputRef?.current) {
+      inputRef.current.value = '';
+    }
     setFile(undefined);
     setIsWaitingResponse(true);
     setResponseTimeout(false);
@@ -951,6 +971,7 @@ const Chat = () => {
             ) : (
               <>
                 <TextField
+                  inputRef={inputRef}
                   sx={{
                     color:
                       theme.palette.mode === 'dark'
