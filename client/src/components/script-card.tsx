@@ -25,7 +25,7 @@ import {
   TAG_NAMES,
   secondInMS,
 } from '@/constants';
-import { IContractEdge, IEdge, ITransactions } from '@/interfaces/arweave';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS, GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { parseWinston } from '@/utils/arweave';
 import { ApolloQueryResult, useLazyQuery, useQuery } from '@apollo/client';
