@@ -309,6 +309,7 @@ const RegisterStep = ({
 export const CustomStepper = (props: {
   data: IEdge;
   handleSubmit: (rate: string, name: string, handleNext: () => void) => Promise<void>;
+  handleClose: () => void;
   isRegistered: boolean;
 }) => {
   const { notesTxId, modelTxId, modelName } =
@@ -439,12 +440,13 @@ export const CustomStepper = (props: {
       {activeStep === 3 ? (
         <Fragment>
           <Typography sx={{ mt: 2, mb: 1 }} alignContent={'center'} textAlign={'center'}>
-            Registration has been Submitted Successfully. Please wait until the transaction is
-            confirmed in the network...
+            Registration has been Submitted Successfully.
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
             <Box sx={{ flex: '1 1 auto' }} />
-            {/* <Button onClick={handleReset} variant='outlined'>Reset</Button> */}
+            <Button onClick={props.handleClose} variant='outlined'>
+              Close
+            </Button>
           </Box>
         </Fragment>
       ) : activeStep === 2 ? (

@@ -255,8 +255,6 @@ const Chat = () => {
   useEffect(() => {
     if (isOnScreen && hasRequestNextPage) {
       if (!requestsData) return;
-      const messages = document.querySelectorAll('.message-container');
-      setLastEl(messages.item(0));
       requestFetchMore({
         variables: {
           after:
@@ -270,7 +268,14 @@ const Chat = () => {
   }, [isOnScreen, hasRequestNextPage]);
 
   useEffect(() => {
-    if (hasResponseNextPage) {
+    if (messages.length > 0) {
+      const msgElements = document.querySelectorAll('.message-container');
+      setLastEl(msgElements.item(0));
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (responsesData && hasResponseNextPage) {
       responsesFetchMore({
         variables: {
           after:
@@ -281,7 +286,7 @@ const Chat = () => {
         updateQuery: commonUpdateQuery,
       });
     }
-  }, [hasResponseNextPage]);
+  }, [responsesData, hasResponseNextPage]);
 
   useEffect(() => {
     // start polling only on latest messages
@@ -458,7 +463,7 @@ const Chat = () => {
 
     const contentType = findTag(el, 'contentType');
     const data =
-      msgIdx < 0 ? await getData(el.node.id, findTag(el, 'fileName')) : polledMessages[msgIdx].msg;
+      msgIdx <= 0 ? await getData(el.node.id, findTag(el, 'fileName')) : polledMessages[msgIdx].msg;
     const timestamp =
       parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
@@ -485,7 +490,11 @@ const Chat = () => {
     await Promise.all(newData.map(async (el) => temp.push(await mapTransactionsToMessages(el))));
 
     if (!_.isEqual(temp, polledMessages)) {
-      setPolledMessages([...polledMessages, ...temp]);
+      // only add new polled messages
+      setPolledMessages([
+        ...polledMessages,
+        ...temp.filter((tmp) => !polledMessages.find((el) => el.id === tmp.id)),
+      ]);
     }
 
     const uniqueNewMessages = [...polledMessages, ...temp].filter(
@@ -496,8 +505,16 @@ const Chat = () => {
     sortMessages(newMessages);
 
     const filteredNewMsgs = newMessages.filter((el) => el.cid === currentConversationId);
-    if (!_.isEqual(messages, newMessages)) {
-      setMessages(filteredNewMsgs);
+    const uniqueMsgs: IMessage[] = [];
+
+    // filter registratiosn for same model (only keep latest one per operator)
+    filteredNewMsgs.forEach((msg: IMessage) =>
+      uniqueMsgs.filter((unique) => unique.id === msg.id).length > 0
+        ? undefined
+        : uniqueMsgs.push(msg),
+    );
+    if (!_.isEqual(messages, uniqueMsgs)) {
+      setMessages(uniqueMsgs);
     }
     if (filteredNewMsgs[filteredNewMsgs.length - 1]?.type === 'response') {
       setIsWaitingResponse(false);
@@ -729,8 +746,7 @@ const Chat = () => {
 
   const reqData = async (allResponses: IEdge[]) => {
     // slice number of responses = to number of requests
-    const limitResponses = allResponses.slice(requestsData.transactions.length);
-    const allData = [...requestsData.transactions.edges, ...limitResponses];
+    const allData = [...requestsData.transactions.edges, ...allResponses];
 
     const filteredData = allData.filter((el: IEdge) => {
       const cid = findTag(el, 'conversationIdentifier');
@@ -755,9 +771,17 @@ const Chat = () => {
     sortMessages(newMessages);
 
     const filteredNewMsgs = newMessages.filter((el) => el.cid === currentConversationId);
-    if (!_.isEqual(newMessages, messages)) {
-      // remove duplicates
-      setMessages(filteredNewMsgs);
+    // remove duplicates
+    const uniqueMsgs: IMessage[] = [];
+
+    // filter registratiosn for same model (only keep latest one per operator)
+    filteredNewMsgs.forEach((msg: IMessage) =>
+      uniqueMsgs.filter((unique) => unique.id === msg.id).length > 0
+        ? undefined
+        : uniqueMsgs.push(msg),
+    );
+    if (!_.isEqual(uniqueMsgs, messages)) {
+      setMessages(uniqueMsgs);
     }
 
     if (filteredNewMsgs[filteredNewMsgs.length - 1]?.type === 'response') {

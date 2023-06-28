@@ -30,7 +30,12 @@ import { Checkbox, IconButton, TableCell, TableRow, Tooltip, Typography } from '
 import { useEffect, useMemo, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import { commonUpdateQuery, displayShortTxOrAddr, findTag } from '@/utils/common';
+import {
+  commonUpdateQuery,
+  displayShortTxOrAddr,
+  findTag,
+  parseUnixTimestamp,
+} from '@/utils/common';
 import { parseUBalance } from '@/utils/u';
 
 export interface RowData {
@@ -233,7 +238,9 @@ const OperatorRow = ({
           </Tooltip>
         </TableCell>
         <TableCell align='right'>{row?.operatorName}</TableCell>
-        <TableCell align='right'>{row?.registrationTimestamp}</TableCell>
+        <TableCell align='right'>
+          {parseUnixTimestamp(row?.registrationTimestamp as string)}
+        </TableCell>
         <TableCell align='right'>{parseUBalance(row?.fee ?? '0')}</TableCell>
         <TableCell align='right'>
           <Tooltip
