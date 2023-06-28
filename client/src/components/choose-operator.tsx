@@ -178,6 +178,10 @@ const ChooseOperator = ({
       name: TAG_NAMES.scriptName,
       values: [findTag(scriptTx as IEdge, 'scriptName')],
     },
+    {
+      name: TAG_NAMES.scriptTransaction,
+      values: [findTag(scriptTx as IEdge, 'scriptTransaction')],
+    },
     ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
   ];
 

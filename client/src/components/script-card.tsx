@@ -46,6 +46,23 @@ import { useNavigate } from 'react-router-dom';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { commonUpdateQuery, findTag } from '@/utils/common';
 import { toSvg } from 'jdenticon';
+import { isValidRegistration } from '@/utils/operator';
+
+const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
+  const opFee = findTag(el, 'operatorFee') as string;
+  const scriptName = findTag(el, 'scriptName') as string;
+  const scriptCurator = findTag(el, 'scriptCurator') as string;
+  const registrationOwner = findTag(el, 'sequencerOwner') as string;
+
+  if (
+    !(await isValidRegistration(el.node.id, opFee, registrationOwner, scriptName, scriptCurator))
+  ) {
+    filtered.splice(
+      filtered.findIndex((existing) => el.node.id === existing.node.id),
+      1,
+    );
+  }
+};
 
 interface Element {
   name: string;
@@ -125,13 +142,13 @@ const ScriptImage = ({
 };
 
 const parseScriptData = (
-  data: { transactions: ITransactions },
+  data: IEdge[],
   scriptTx: IContractEdge,
   setCardData: Dispatch<SetStateAction<Element | undefined>>,
   owner?: string,
 ) => {
   const uniqueOperators: IEdge[] = [];
-  const registrations: IEdge[] = data.transactions.edges;
+  const registrations: IEdge[] = data;
 
   // filter registratiosn for same model (only keep latest one per operator)
   registrations.forEach((op: IEdge) =>
@@ -197,6 +214,10 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IContractEdge; index: numbe
       name: TAG_NAMES.scriptName,
       values: [findTag(scriptTx as IEdge, 'scriptName')],
     },
+    {
+      name: TAG_NAMES.scriptTransaction,
+      values: [findTag(scriptTx as IEdge, 'scriptTransaction')],
+    },
     ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
   ];
 
@@ -251,7 +272,14 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IContractEdge; index: numbe
           updateQuery: commonUpdateQuery,
         }))();
     } else if (data?.transactions) {
-      parseScriptData(data, scriptTx, setCardData, owner);
+      (async () => {
+        const filtered: IEdge[] = [];
+        for (const el of data.transactions.edges) {
+          filtered.push(el);
+          await checkOpResponses(el, filtered);
+        }
+        parseScriptData(filtered, scriptTx, setCardData, owner);
+      })();
     } else {
       // do nothing
     }
