@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "upload": "ts-node src/upload.ts",
-    "pay": "ts-node src/pay.ts"
+    "pay": "ts-node src/pay.ts",
+    "fake-delete": "ts-node src/fake-delete.ts"
   },
   "author": "fair-protocol",
   "license": "AGPL-3.0 license",

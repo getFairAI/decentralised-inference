@@ -17,6 +17,7 @@
  */
 
 export const VAULT_ADDRESS = 'tXd-BOaxmxtgswzwMLnryROAYlX5uDC9-XK2P4VNCQQ';
+export const MARKETPLACE_ADDRESS = 'RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo';
 
 export const U_CONTRACT_ID = 'KTzTXT_ANmF84fWEKHzWURD1LWd9QaFR9yfYUwH2Lxw';
 export const U_DIVIDER = 1e6;
@@ -83,6 +84,8 @@ export const TAG_NAMES = {
 export const MODEL_CREATION = 'Model Creation';
 
 export const SCRIPT_CREATION = 'Script Creation';
+
+export const SCRIPT_DELETION = 'Script Deletion';
 
 export const SCRIPT_CREATION_PAYMENT = 'Script Creation Payment';
 

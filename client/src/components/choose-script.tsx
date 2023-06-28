@@ -54,6 +54,7 @@ import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
 import { checkHasOperators } from '@/utils/operator';
 import { Timeout } from 'react-number-format/types/types';
+import { isFakeDeleted } from '@/utils/script';
 
 const ChooseScript = ({
   setShowScripts,
@@ -152,7 +153,12 @@ const ChooseScript = ({
       (async () => {
         const filtered: IEdge[] = [];
         for (const el of queryData.transactions.edges) {
-          await checkHasOperators(el, filtered);
+          const scriptId = findTag(el, 'scriptTransaction') as string;
+          if (await isFakeDeleted(scriptId)) {
+            // if fake deleted ignore
+          } else {
+            await checkHasOperators(el, filtered);
+          }
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setScriptsData(filtered);

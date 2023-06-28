@@ -27,7 +27,7 @@ import {
 } from '@/constants';
 import { IContractEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
-import { commonUpdateQuery, genLoadingArray } from '@/utils/common';
+import { commonUpdateQuery, findTag, genLoadingArray } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Container,
@@ -47,6 +47,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import ScriptCard from '@/components/script-card';
 import useOnScreen from '@/hooks/useOnScreen';
 import { Outlet } from 'react-router-dom';
+import { isFakeDeleted } from '@/utils/script';
 
 const Operators = () => {
   const [txs, setTxs] = useState<IContractEdge[]>([]);
@@ -107,7 +108,18 @@ const Operators = () => {
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
       setHasNextPage(data.transactions.pageInfo.hasNextPage);
-      setTxs(data.transactions.edges);
+      (async () => {
+        const filtered: IContractEdge[] = [];
+        for (const el of data.transactions.edges) {
+          const scriptId = findTag(el, 'scriptTransaction') as string;
+          if (await isFakeDeleted(scriptId)) {
+            // if fake deleted ignore
+          } else {
+            filtered.push(el);
+          }
+        }
+        setTxs(filtered);
+      })();
     }
   }, [data]);
 
