@@ -35,7 +35,7 @@ import { findTag } from '@/utils/common';
 import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
 import ChooseOperator from '@/components/choose-operator';
 import ChooseScript from '@/components/choose-script';
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import Vote from '@/components/vote';
 
 const Detail = () => {
@@ -45,7 +45,7 @@ const Detail = () => {
   const navigate = useNavigate();
   const [showOperators, setShowOperators] = useState(false);
   const [showScripts, setShowScripts] = useState(false);
-  const [scriptTx, setScriptTx] = useState<IEdge | undefined>(undefined);
+  const [scriptTx, setScriptTx] = useState<IEdge | IContractEdge | undefined>(undefined);
   const theme = useTheme();
 
   const imgUrl = useMemo(() => {
@@ -67,7 +67,7 @@ const Detail = () => {
     navigate('/', { state });
   };
 
-  const handleScriptChosen = (scriptTx: IEdge) => {
+  const handleScriptChosen = (scriptTx: IEdge | IContractEdge) => {
     setShowOperators(true);
     setScriptTx(scriptTx);
   };

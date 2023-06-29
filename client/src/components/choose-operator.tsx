@@ -17,7 +17,7 @@
  */
 
 import { TAG_NAMES, OPERATOR_REGISTRATION_PAYMENT_TAGS, DEFAULT_TAGS } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
@@ -68,7 +68,7 @@ const OperatorSelected = ({
   selectedIdx,
 }: {
   operatorsData: IEdge[];
-  scriptTx?: IEdge;
+  scriptTx?: IEdge | IContractEdge;
   selectedIdx: number;
 }) => {
   const { pathname } = useLocation();
@@ -159,7 +159,7 @@ const ChooseOperator = ({
   scriptTx,
 }: {
   setShowOperators: Dispatch<SetStateAction<boolean>>;
-  scriptTx?: IEdge;
+  scriptTx?: IEdge | IContractEdge;
 }) => {
   const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);

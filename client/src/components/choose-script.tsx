@@ -63,7 +63,7 @@ const ChooseScript = ({
 }: {
   setShowScripts: Dispatch<SetStateAction<boolean>>;
   handleScriptChosen: (scriptTx: IEdge | IContractEdge) => void;
-  defaultScriptTx?: IEdge;
+  defaultScriptTx?: IEdge | IContractEdge;
 }) => {
   const [scriptsData, setScriptsData] = useState<IContractEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
