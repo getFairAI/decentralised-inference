@@ -744,11 +744,13 @@ const Curators = () => {
   const handleSwitchModeUpload = useCallback(() => {
     reset();
     setMode('upload');
+    document.querySelector('#switch-icon')?.classList.remove('rotate');
   }, [setMode, reset]);
 
   const handleSwitchModeUpdate = useCallback(() => {
     reset();
     setMode('update');
+    document.querySelector('#switch-icon')?.classList.add('rotate');
   }, [setMode, reset]);
 
   return (
@@ -789,7 +791,7 @@ const Curators = () => {
             >
               <CardHeader
                 title={
-                  <Box display={'flex'} gap={'16px'}>
+                  <Box display={'flex'} gap={'16px'} alignContent={'center'}>
                     <Typography
                       sx={{
                         fontStyle: 'normal',
@@ -802,7 +804,18 @@ const Curators = () => {
                     >
                       Upload Script
                     </Typography>
-                    <CachedIcon />
+                    <CachedIcon
+                      id='switch-icon'
+                      sx={{
+                        transform: 'rotate(0deg)',
+                        transition: 'transform 0.5s linear',
+                        '&.rotate': {
+                          transform: 'rotate(180deg)',
+                          transition: 'transform 0.5s linear',
+                        },
+                      }}
+                      fontSize='large'
+                    />
                     <Typography
                       sx={{
                         fontStyle: 'normal',
