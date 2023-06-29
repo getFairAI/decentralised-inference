@@ -253,9 +253,10 @@ const ModelSelect = ({
   const theme = useTheme();
 
   const selectLoadMore = (event: UIEvent<HTMLDivElement>) => {
+    const bottomOffset = 100;
     const bottom =
       event.currentTarget.scrollHeight - event.currentTarget.scrollTop <=
-      event.currentTarget.clientHeight + 100;
+      event.currentTarget.clientHeight + bottomOffset;
     if (bottom && hasNextPage) {
       // user is at the end of the list so load more items
       loadMore({
@@ -269,6 +270,16 @@ const ModelSelect = ({
       });
     }
   };
+
+  const hasData = useMemo(
+    () => !error && !loading && data?.transactions.edges.length > 0,
+    [error, loading, data],
+  );
+
+  const hasNoData = useMemo(
+    () => !error && !loading && (!data.transactions.edges || data.transactions.edges.length === 0),
+    [error, loading, data],
+  );
 
   return (
     <SelectControl
@@ -313,7 +324,7 @@ const ModelSelect = ({
       {loading && (
         <Backdrop
           sx={{
-            zIndex: (theme) => theme.zIndex.drawer + 1,
+            zIndex: theme.zIndex.drawer + 1,
             borderRadius: '23px',
             backdropFilter: 'blur(1px)',
             display: 'flex',
@@ -326,11 +337,13 @@ const ModelSelect = ({
           <CircularProgress color='primary'></CircularProgress>
         </Backdrop>
       )}
-      {error ? (
+      {error && (
         <Box>
           <Typography>Could Not Fetch Available Models</Typography>
         </Box>
-      ) : data && data.transactions.edges.length > 0 ? (
+      )}
+
+      {hasData &&
         data.transactions.edges.map((el: IContractEdge) => (
           <MenuItem
             key={el.node.id}
@@ -346,8 +359,8 @@ const ModelSelect = ({
               {` (Creator: ${displayShortTxOrAddr(findTag(el, 'sequencerOwner') as string)}`}
             </Typography>
           </MenuItem>
-        ))
-      ) : (
+        ))}
+      {hasNoData && (
         <Box>
           <Typography>There Are no Available Models</Typography>
         </Box>
@@ -771,7 +784,7 @@ const Curators = () => {
     >
       <Backdrop
         sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          zIndex: theme.zIndex.drawer + 1,
           position: 'relative',
           height: '100%',
           width: '100%',
@@ -798,7 +811,7 @@ const Curators = () => {
                         fontWeight: 600,
                         fontSize: '30px',
                         fontHeight: '41px',
-                        opacity: mode === 'upload' ? 1 : 0.5,
+                        opacity: mode === 'upload' ? 1 : '0.5',
                       }}
                       onClick={handleSwitchModeUpload}
                     >
@@ -816,16 +829,7 @@ const Curators = () => {
                       }}
                       fontSize='large'
                     />
-                    <Typography
-                      sx={{
-                        fontStyle: 'normal',
-                        fontWeight: 600,
-                        fontSize: '30px',
-                        fontHeight: '41px',
-                        opacity: mode === 'update' ? 1 : 0.5,
-                      }}
-                      onClick={handleSwitchModeUpdate}
-                    >
+                    <Typography sx={{}} onClick={handleSwitchModeUpdate}>
                       Update Script
                     </Typography>
                   </Box>
@@ -918,7 +922,7 @@ const Curators = () => {
                     </Box>
                     <Box padding='0px 32px'>
                       <MarkdownControl
-                        props={{ name: 'notes', control, rules: { required: true } }}
+                        props={{ control, name: 'notes', rules: { required: true } }}
                       />
                     </Box>
                     <Box padding='0px 32px'>
@@ -983,7 +987,7 @@ const Curators = () => {
                         {scriptsLoading && (
                           <Backdrop
                             sx={{
-                              zIndex: (theme) => theme.zIndex.drawer + 1,
+                              zIndex: theme.zIndex.drawer + 1,
                               borderRadius: '23px',
                               backdropFilter: 'blur(1px)',
                               display: 'flex',
@@ -996,11 +1000,12 @@ const Curators = () => {
                             <CircularProgress color='primary'></CircularProgress>
                           </Backdrop>
                         )}
-                        {scriptsError ? (
+                        {scriptsError && (
                           <Box>
                             <Typography>Could Not Fetch Available Scripts</Typography>
                           </Box>
-                        ) : scriptTxs.length > 0 ? (
+                        )}
+                        {scriptTxs.length > 0 ? (
                           scriptTxs.map((el: IContractEdge) => (
                             <ScriptOption
                               key={el.node.id}
@@ -1097,7 +1102,7 @@ const Curators = () => {
                     </Box>
                     <Box padding='0px 32px'>
                       <MarkdownControl
-                        props={{ name: 'notes', control, rules: { required: true } }}
+                        props={{ control, name: 'notes', rules: { required: true } }}
                       />
                     </Box>
                     <Box padding='0px 32px'>
