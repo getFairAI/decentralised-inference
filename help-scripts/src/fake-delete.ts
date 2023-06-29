@@ -86,6 +86,8 @@ const fakeDeleteScript = async (wallet: string, txid: string) => {
     throw new Error('Loaded Wallet does not match Marketplace address');
   }
   const tags: Tag[] = [
+    { name: 'App-Name', value: 'Fair-Protocol' },
+    { name: 'App-Version', value: '0.3' },
     { name: 'Operation-Name', value: 'Script Deletion' },
     { name: 'Script-Transaction', value: txid }
   ]
