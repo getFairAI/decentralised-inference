@@ -741,6 +741,16 @@ const Curators = () => {
     [scriptAnchorEl, setScriptAnchorEl],
   );
 
+  const handleSwitchModeUpload = useCallback(() => {
+    reset();
+    setMode('upload');
+  }, [setMode, reset]);
+
+  const handleSwitchModeUpdate = useCallback(() => {
+    reset();
+    setMode('update');
+  }, [setMode, reset]);
+
   return (
     <Container
       sx={{
@@ -788,7 +798,7 @@ const Curators = () => {
                         fontHeight: '41px',
                         opacity: mode === 'upload' ? 1 : 0.5,
                       }}
-                      onClick={() => setMode('upload')}
+                      onClick={handleSwitchModeUpload}
                     >
                       Upload Script
                     </Typography>
@@ -801,7 +811,7 @@ const Curators = () => {
                         fontHeight: '41px',
                         opacity: mode === 'update' ? 1 : 0.5,
                       }}
-                      onClick={() => setMode('update')}
+                      onClick={handleSwitchModeUpdate}
                     >
                       Update Script
                     </Typography>
