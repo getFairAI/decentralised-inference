@@ -26,7 +26,7 @@ import {
   DEFAULT_TAGS,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
@@ -54,7 +54,7 @@ import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
 import { checkHasOperators } from '@/utils/operator';
 import { Timeout } from 'react-number-format/types/types';
-import { isFakeDeleted } from '@/utils/script';
+import { filterPreviousVersions, isFakeDeleted } from '@/utils/script';
 
 const ChooseScript = ({
   setShowScripts,
@@ -62,10 +62,10 @@ const ChooseScript = ({
   defaultScriptTx,
 }: {
   setShowScripts: Dispatch<SetStateAction<boolean>>;
-  handleScriptChosen: (scriptTx: IEdge) => void;
+  handleScriptChosen: (scriptTx: IEdge | IContractEdge) => void;
   defaultScriptTx?: IEdge;
 }) => {
-  const [scriptsData, setScriptsData] = useState<IEdge[]>([]);
+  const [scriptsData, setScriptsData] = useState<IContractEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
@@ -151,8 +151,11 @@ const ChooseScript = ({
     }
     if (queryData && networkStatus === NetworkStatus.ready) {
       (async () => {
-        const filtered: IEdge[] = [];
-        for (const el of queryData.transactions.edges) {
+        const filteredScritps = filterPreviousVersions<IContractEdge[]>(
+          queryData.transactions.edges,
+        );
+        const filtered: IContractEdge[] = [];
+        for (const el of filteredScritps) {
           const scriptId = findTag(el, 'scriptTransaction') as string;
           if (await isFakeDeleted(scriptId)) {
             // if fake deleted ignore

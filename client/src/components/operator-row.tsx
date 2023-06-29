@@ -23,7 +23,7 @@ import {
   TAG_NAMES,
   U_CONTRACT_ID,
 } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS, QUERY_RESPONSES_BY_OPERATOR } from '@/queries/graphql';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import { Checkbox, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
@@ -62,7 +62,7 @@ const OperatorRow = ({
   isSelected,
   setSelected,
 }: {
-  operatorTx: IEdge;
+  operatorTx: IEdge | IContractEdge;
   state: IEdge;
   index: number;
   isSelected: boolean;

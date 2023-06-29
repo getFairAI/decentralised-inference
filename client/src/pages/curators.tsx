@@ -93,11 +93,11 @@ import {
   useQuery,
 } from '@apollo/client';
 import { FIND_BY_TAGS } from '@/queries/graphql';
-import { IContractEdge, IContractQueryResult, IEdge, ITag } from '@/interfaces/arweave';
+import { IContractEdge, IContractQueryResult, ITag } from '@/interfaces/arweave';
 import { commonUpdateQuery, displayShortTxOrAddr, findTag } from '@/utils/common';
 import DebounceButton from '@/components/debounce-button';
 import { sendU } from '@/utils/u';
-import { isFakeDeleted } from '@/utils/script';
+import { filterPreviousVersions, isFakeDeleted } from '@/utils/script';
 import CachedIcon from '@mui/icons-material/Cached';
 
 export interface CreateForm extends FieldValues {
@@ -239,13 +239,15 @@ const ModelSelect = ({
   error,
   loading,
   hasNextPage,
+  disabled = false,
   loadMore,
 }: {
-  control: Control<FieldValues, any>;
+  control: Control<FieldValues, unknown>;
   data: IContractQueryResult;
   error?: ApolloError;
   loading: boolean;
   hasNextPage: boolean;
+  disabled?: boolean;
   loadMore: fetchMoreFn;
 }) => {
   const theme = useTheme();
@@ -274,6 +276,7 @@ const ModelSelect = ({
       control={control}
       rules={{ required: true }}
       mat={{
+        disabled,
         placeholder: 'Choose a Model',
         sx: {
           borderWidth: '1px',
@@ -430,9 +433,12 @@ const Curators = () => {
 
   useEffect(() => {
     if (scriptsData?.transactions?.edges) {
+      const filteredScritps = filterPreviousVersions<IContractEdge[]>(
+        scriptsData.transactions.edges,
+      );
       (async () => {
         const filtered: IContractEdge[] = [];
-        for (const el of scriptsData.transactions.edges) {
+        for (const el of filteredScritps) {
           const scriptId = findTag(el, 'scriptTransaction') as string;
           if (await isFakeDeleted(scriptId)) {
             // if fake deleted ignore
@@ -992,6 +998,7 @@ const Curators = () => {
                         error={modelsError}
                         loading={modelsLoading}
                         hasNextPage={hasModelsNextPage}
+                        disabled={true}
                         loadMore={modelsFetchMore}
                       />
                     </Box>
