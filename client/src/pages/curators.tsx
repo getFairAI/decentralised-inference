@@ -50,6 +50,7 @@ import {
   MouseEvent,
 } from 'react';
 import {
+  Control,
   FieldValues,
   UseControllerProps,
   UseFormSetValue,
@@ -84,7 +85,13 @@ import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
-import { useQuery } from '@apollo/client';
+import {
+  ApolloError,
+  ApolloQueryResult,
+  FetchMoreQueryOptions,
+  OperationVariables,
+  useQuery,
+} from '@apollo/client';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import { IContractEdge, IContractQueryResult, IEdge, ITag } from '@/interfaces/arweave';
 import { commonUpdateQuery, displayShortTxOrAddr, findTag } from '@/utils/common';
@@ -208,6 +215,141 @@ const ScriptOption = ({
         {` (Creator: ${displayShortTxOrAddr(findTag(el, 'sequencerOwner') as string)}`}
       </Typography>
     </MenuItem>
+  );
+};
+
+type fetchMoreFn = <
+  TFetchData = unknown,
+  TFetchVars extends OperationVariables = { tags: ITag[]; first: number },
+>(
+  fetchMoreOptions: FetchMoreQueryOptions<TFetchVars, TFetchData> & {
+    updateQuery?: (
+      previousQueryResult: TFetchData,
+      options: {
+        fetchMoreResult: TFetchData;
+        variables: TFetchVars;
+      },
+    ) => TFetchData;
+  },
+) => Promise<ApolloQueryResult<TFetchData | undefined>>;
+
+const ModelSelect = ({
+  control,
+  data,
+  error,
+  loading,
+  hasNextPage,
+  loadMore,
+}: {
+  control: Control<FieldValues, any>;
+  data: IContractQueryResult;
+  error?: ApolloError;
+  loading: boolean;
+  hasNextPage: boolean;
+  loadMore: fetchMoreFn;
+}) => {
+  const theme = useTheme();
+
+  const selectLoadMore = (event: UIEvent<HTMLDivElement>) => {
+    const bottom =
+      event.currentTarget.scrollHeight - event.currentTarget.scrollTop <=
+      event.currentTarget.clientHeight + 100;
+    if (bottom && hasNextPage) {
+      // user is at the end of the list so load more items
+      loadMore({
+        variables: {
+          after:
+            data && data.transactions.edges.length > 0
+              ? data.transactions.edges[data.transactions.edges.length - 1].cursor
+              : undefined,
+        },
+        updateQuery: commonUpdateQuery,
+      });
+    }
+  };
+
+  return (
+    <SelectControl
+      name='model'
+      control={control}
+      rules={{ required: true }}
+      mat={{
+        placeholder: 'Choose a Model',
+        sx: {
+          borderWidth: '1px',
+          borderColor: theme.palette.text.primary,
+          borderRadius: '16px',
+        },
+        renderValue: (selected) => (
+          <Box
+            sx={{
+              display: 'flex',
+              gap: '16px',
+            }}
+          >
+            <Typography>{findTag(JSON.parse(selected as string), 'modelName')}</Typography>
+            <Typography sx={{ opacity: '0.5' }}>
+              {findTag(JSON.parse(selected as string), 'sequencerOwner')}
+              {` (Creator: ${displayShortTxOrAddr(
+                findTag(JSON.parse(selected as string), 'sequencerOwner') as string,
+              )})`}
+            </Typography>
+          </Box>
+        ),
+        MenuProps: {
+          PaperProps: {
+            onScroll: selectLoadMore,
+            sx: {
+              maxHeight: '144px',
+              overflowY: loading ? 'hidden' : 'auto',
+            },
+          },
+        },
+      }}
+    >
+      {loading && (
+        <Backdrop
+          sx={{
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            borderRadius: '23px',
+            backdropFilter: 'blur(1px)',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'absolute',
+            height: '144px',
+          }}
+          open={true}
+        >
+          <CircularProgress color='primary'></CircularProgress>
+        </Backdrop>
+      )}
+      {error ? (
+        <Box>
+          <Typography>Could Not Fetch Available Models</Typography>
+        </Box>
+      ) : data && data.transactions.edges.length > 0 ? (
+        data.transactions.edges.map((el: IContractEdge) => (
+          <MenuItem
+            key={el.node.id}
+            value={JSON.stringify(el)}
+            sx={{
+              display: 'flex',
+              gap: '16px',
+            }}
+          >
+            <Typography>{findTag(el, 'modelName')}</Typography>
+            <Typography sx={{ opacity: '0.5' }}>
+              {findTag(el, 'modelTransaction')}
+              {` (Creator: ${displayShortTxOrAddr(findTag(el, 'sequencerOwner') as string)}`}
+            </Typography>
+          </MenuItem>
+        ))
+      ) : (
+        <Box>
+          <Typography>There Are no Available Models</Typography>
+        </Box>
+      )}
+    </SelectControl>
   );
 };
 
@@ -564,24 +706,6 @@ const Curators = () => {
     }
   };
 
-  const selectLoadMore = (event: UIEvent<HTMLDivElement>) => {
-    const bottom =
-      event.currentTarget.scrollHeight - event.currentTarget.scrollTop <=
-      event.currentTarget.clientHeight + 100;
-    if (bottom && hasModelsNextPage) {
-      // user is at the end of the list so load more items
-      modelsFetchMore({
-        variables: {
-          after:
-            modelsData && modelsData.transactions.edges.length > 0
-              ? modelsData.transactions.edges[modelsData.transactions.edges.length - 1].cursor
-              : undefined,
-        },
-        updateQuery: commonUpdateQuery,
-      });
-    }
-  };
-
   const selectLoadMoreScripts = (event: UIEvent<HTMLDivElement>) => {
     const bottom =
       event.currentTarget.scrollHeight - event.currentTarget.scrollTop <=
@@ -751,94 +875,14 @@ const Curators = () => {
                       />
                     </Box>
                     <Box padding='0px 32px'>
-                      <SelectControl
-                        name='model'
+                      <ModelSelect
                         control={control}
-                        rules={{ required: true }}
-                        mat={{
-                          placeholder: 'Choose a Model',
-                          sx: {
-                            borderWidth: '1px',
-                            borderColor: theme.palette.text.primary,
-                            borderRadius: '16px',
-                          },
-                          renderValue: (selected) => (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                gap: '16px',
-                              }}
-                            >
-                              <Typography>
-                                {findTag(JSON.parse(selected as string), 'modelName')}
-                              </Typography>
-                              <Typography sx={{ opacity: '0.5' }}>
-                                {findTag(JSON.parse(selected as string), 'sequencerOwner')}
-                                {` (Creator: ${displayShortTxOrAddr(
-                                  findTag(
-                                    JSON.parse(selected as string),
-                                    'sequencerOwner',
-                                  ) as string,
-                                )})`}
-                              </Typography>
-                            </Box>
-                          ),
-                          MenuProps: {
-                            PaperProps: {
-                              onScroll: selectLoadMore,
-                              sx: {
-                                maxHeight: '144px',
-                                overflowY: modelsLoading ? 'hidden' : 'auto',
-                              },
-                            },
-                          },
-                        }}
-                      >
-                        {modelsLoading && (
-                          <Backdrop
-                            sx={{
-                              zIndex: (theme) => theme.zIndex.drawer + 1,
-                              borderRadius: '23px',
-                              backdropFilter: 'blur(1px)',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              position: 'absolute',
-                              height: '144px',
-                            }}
-                            open={true}
-                          >
-                            <CircularProgress color='primary'></CircularProgress>
-                          </Backdrop>
-                        )}
-                        {modelsError ? (
-                          <Box>
-                            <Typography>Could Not Fetch Available Models</Typography>
-                          </Box>
-                        ) : modelsData && modelsData.transactions.edges.length > 0 ? (
-                          modelsData.transactions.edges.map((el: IEdge) => (
-                            <MenuItem
-                              key={el.node.id}
-                              value={JSON.stringify(el)}
-                              sx={{
-                                display: 'flex',
-                                gap: '16px',
-                              }}
-                            >
-                              <Typography>{findTag(el, 'modelName')}</Typography>
-                              <Typography sx={{ opacity: '0.5' }}>
-                                {findTag(el, 'modelTransaction')}
-                                {` (Creator: ${displayShortTxOrAddr(
-                                  findTag(el, 'sequencerOwner') as string,
-                                )}`}
-                              </Typography>
-                            </MenuItem>
-                          ))
-                        ) : (
-                          <Box>
-                            <Typography>There Are no Available Models</Typography>
-                          </Box>
-                        )}
-                      </SelectControl>
+                        data={modelsData}
+                        error={modelsError}
+                        loading={modelsLoading}
+                        hasNextPage={hasModelsNextPage}
+                        loadMore={modelsFetchMore}
+                      />
                     </Box>
                     <Box padding='0px 32px'>
                       <AllowGroupControl name={'allow'} control={control} />
@@ -942,50 +986,14 @@ const Curators = () => {
                           </Box>
                         )}
                       </SelectControl>
-                      <SelectControl
-                        name='model'
+                      <ModelSelect
                         control={control}
-                        rules={{ required: true }}
-                        mat={{
-                          disabled: true,
-                          placeholder: 'Choose a Model',
-                          sx: {
-                            borderWidth: '1px',
-                            borderColor: theme.palette.text.primary,
-                            borderRadius: '16px',
-                          },
-                          renderValue: (selected) => (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                gap: '16px',
-                              }}
-                            >
-                              <Typography>
-                                {findTag(JSON.parse(selected as string), 'modelName')}
-                              </Typography>
-                              <Typography sx={{ opacity: '0.5' }}>
-                                {findTag(JSON.parse(selected as string), 'sequencerOwner')}
-                                {` (Creator: ${displayShortTxOrAddr(
-                                  findTag(
-                                    JSON.parse(selected as string),
-                                    'sequencerOwner',
-                                  ) as string,
-                                )})`}
-                              </Typography>
-                            </Box>
-                          ),
-                          MenuProps: {
-                            PaperProps: {
-                              onScroll: selectLoadMore,
-                              sx: {
-                                maxHeight: '144px',
-                                overflowY: modelsLoading ? 'hidden' : 'auto',
-                              },
-                            },
-                          },
-                        }}
-                      ></SelectControl>
+                        data={modelsData}
+                        error={modelsError}
+                        loading={modelsLoading}
+                        hasNextPage={hasModelsNextPage}
+                        loadMore={modelsFetchMore}
+                      />
                     </Box>
                     <Box
                       display={'flex'}
