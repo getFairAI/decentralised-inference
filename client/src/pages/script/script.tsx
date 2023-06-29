@@ -42,13 +42,18 @@ export const getScriptAttachments = async ({
   const txOwner = tx.node.owner.address;
   const modelTxId = findTag(tx, 'modelTransaction');
   const modelName = findTag(tx, 'modelName');
-
-  // get attachments teransactions
+  let firstScriptVersionTx;
+  try {
+    firstScriptVersionTx = (JSON.parse(findTag(tx, 'previousVersions') as string) as string[])[0];
+  } catch (err) {
+    firstScriptVersionTx = params.txid;
+  }
+  // get attachments transactions
   const attachmentAvatarTags = [
     ...DEFAULT_TAGS_RETRO,
     { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
     { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-    { name: TAG_NAMES.scriptTransaction, values: [params.txid] },
+    { name: TAG_NAMES.scriptTransaction, values: [firstScriptVersionTx] },
   ];
   const avatarAttachmentsResult = await client.query({
     query: GET_LATEST_MODEL_ATTACHMENTS,
