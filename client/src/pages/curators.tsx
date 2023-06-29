@@ -47,8 +47,15 @@ import {
   useMemo,
   useRef,
   useState,
+  MouseEvent,
 } from 'react';
-import { FieldValues, UseControllerProps, useController, useForm } from 'react-hook-form';
+import {
+  FieldValues,
+  UseControllerProps,
+  UseFormSetValue,
+  useController,
+  useForm,
+} from 'react-hook-form';
 import TextControl from '@/components/text-control';
 import SelectControl from '@/components/select-control';
 import MarkdownControl from '@/components/md-control';
@@ -70,6 +77,7 @@ import {
   SCRIPT_CREATION_FEE,
   VAULT_ADDRESS,
   MODEL_CREATION_PAYMENT_TAGS,
+  SCRIPT_CREATION_PAYMENT_TAGS,
 } from '@/constants';
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
@@ -78,10 +86,12 @@ import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
 import { useQuery } from '@apollo/client';
 import { FIND_BY_TAGS } from '@/queries/graphql';
-import { IEdge, ITag } from '@/interfaces/arweave';
+import { IContractEdge, IContractQueryResult, IEdge, ITag } from '@/interfaces/arweave';
 import { commonUpdateQuery, displayShortTxOrAddr, findTag } from '@/utils/common';
 import DebounceButton from '@/components/debounce-button';
 import { sendU } from '@/utils/u';
+import { isFakeDeleted } from '@/utils/script';
+import CachedIcon from '@mui/icons-material/Cached';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -90,6 +100,7 @@ export interface CreateForm extends FieldValues {
   notes: string;
   file: File;
   model: string;
+  script: string;
   description?: string;
   avatar?: File;
   allow: { allowFiles: boolean; allowText: boolean };
@@ -158,9 +169,51 @@ const AllowGroupControl = (props: UseControllerProps) => {
   );
 };
 
+const ScriptOption = ({
+  el,
+  setValue,
+  modelsData,
+}: {
+  el: IContractEdge;
+  setValue: UseFormSetValue<FieldValues>;
+  modelsData: IContractQueryResult;
+}) => {
+  const handleScriptChoice = useCallback(() => {
+    const scriptModel = modelsData.transactions.edges.find(
+      (model) => findTag(model, 'modelTransaction') === findTag(el, 'modelTransaction'),
+    );
+    setValue('model', JSON.stringify(scriptModel), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setValue('script', JSON.stringify(el), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+  }, [el, modelsData, setValue]);
+
+  return (
+    <MenuItem
+      onClick={handleScriptChoice}
+      sx={{
+        display: 'flex',
+        gap: '16px',
+      }}
+    >
+      <Typography>{findTag(el, 'scriptName')}</Typography>
+      <Typography sx={{ opacity: '0.5' }}>
+        {findTag(el, 'scriptTransaction')}
+        {` (Creator: ${displayShortTxOrAddr(findTag(el, 'sequencerOwner') as string)}`}
+      </Typography>
+    </MenuItem>
+  );
+};
+
 const Curators = () => {
   const elementsPerPage = 5;
-  const { handleSubmit, reset, control } = useForm<FieldValues>({
+  const { handleSubmit, reset, control, setValue } = useForm<FieldValues>({
     defaultValues: {
       name: '',
       fee: 0,
@@ -170,6 +223,7 @@ const Curators = () => {
       avatar: '',
       file: '',
       model: '',
+      script: '',
       allow: {
         allowFiles: false,
         allowText: true,
@@ -181,12 +235,37 @@ const Curators = () => {
   const [, setMessage] = useState('');
   const [formData, setFormData] = useState<CreateForm | undefined>(undefined);
   const [hasModelsNextPage, setHasModelsNextPage] = useState(false);
+  const [hasScriptsNextPage, setHasScriptsNextPage] = useState(false);
   const totalChunks = useRef(0);
   const { nodeBalance, getPrice, chunkUpload, updateBalance } = useContext(BundlrContext);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const { currentAddress, currentBalance, updateUBalance } = useContext(WalletContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
+  const [mode, setMode] = useState<'upload' | 'update'>('upload');
+  const [scriptTxs, setScriptTxs] = useState<IContractEdge[]>([]);
+  const [scriptAnchorEl, setScriptAnchorEl] = useState<null | HTMLElement>(null);
+  const scriptOpen = useMemo(() => Boolean(scriptAnchorEl), [scriptAnchorEl]);
+
+  const {
+    data: scriptsData,
+    loading: scriptsLoading,
+    error: scriptsError,
+    fetchMore: scriptsFetchMore,
+  } = useQuery(FIND_BY_TAGS, {
+    variables: {
+      tags: [
+        ...SCRIPT_CREATION_PAYMENT_TAGS,
+        {
+          name: TAG_NAMES.sequencerOwner,
+          values: [currentAddress],
+        },
+      ],
+      first: elementsPerPage,
+    },
+    notifyOnNetworkStatusChange: true,
+    skip: !currentAddress,
+  });
 
   const {
     data: modelsData,
@@ -206,6 +285,24 @@ const Curators = () => {
       setHasModelsNextPage(modelsData?.transactions?.pageInfo?.hasNextPage || false);
     }
   }, [modelsData]);
+
+  useEffect(() => {
+    if (scriptsData?.transactions?.edges) {
+      (async () => {
+        const filtered: IContractEdge[] = [];
+        for (const el of scriptsData.transactions.edges) {
+          const scriptId = findTag(el, 'scriptTransaction') as string;
+          if (await isFakeDeleted(scriptId)) {
+            // if fake deleted ignore
+          } else {
+            filtered.push(el);
+          }
+        }
+        setScriptTxs(filtered);
+        setHasScriptsNextPage(scriptsData?.transactions?.pageInfo?.hasNextPage || false);
+      })();
+    }
+  }, [scriptsData]);
 
   const onSubmit = async (data: FieldValues) => {
     await updateBalance();
@@ -338,12 +435,13 @@ const Curators = () => {
 
     // upload the file
     const tags = [];
-    const modelData = JSON.parse(data.model) as IEdge;
+    const modelData = JSON.parse(data.model) as IContractEdge;
+    const scriptData = JSON.parse(data.script) as IContractEdge;
     const uFee = parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER;
 
     if (currentBalance < parseFloat(SCRIPT_CREATION_FEE)) {
       enqueueSnackbar(
-        `Not Enought Balance in your Wallet to pay Script Creation Fee (${SCRIPT_CREATION_FEE} $U)`,
+        `Not Enough Balance in your Wallet to pay Script Creation Fee (${SCRIPT_CREATION_FEE} $U)`,
         { variant: 'error' },
       );
       return;
@@ -370,6 +468,21 @@ const Curators = () => {
     tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
     tags.push({ name: TAG_NAMES.allowFiles, value: `${data.allow.allowFiles}` });
     tags.push({ name: TAG_NAMES.allowText, value: `${data.allow.allowText}` });
+    if (mode === 'update') {
+      tags.push({ name: TAG_NAMES.updateFor, value: scriptData.node.id });
+      if (findTag(scriptData, 'previousVersions')) {
+        const prevVersions: string[] = JSON.parse(
+          findTag(scriptData, 'previousVersions') as string,
+        );
+        prevVersions.push(scriptData.node.id);
+        tags.push({ name: TAG_NAMES.previousVersions, value: JSON.stringify(prevVersions) });
+      } else {
+        tags.push({
+          name: TAG_NAMES.previousVersions,
+          value: JSON.stringify([scriptData.node.id]),
+        });
+      }
+    }
     setSnackbarOpen(true);
     try {
       const res = await bundlrUpload(file, tags, 'Script Uploaded Successfully');
@@ -396,6 +509,24 @@ const Curators = () => {
       if (data.description) {
         paymentTags.push({ name: TAG_NAMES.description, value: data.description });
       }
+      if (mode === 'update') {
+        paymentTags.push({ name: TAG_NAMES.updateFor, value: scriptData.node.id });
+        if (findTag(scriptData, 'previousVersions')) {
+          const prevVersions: string[] = JSON.parse(
+            findTag(scriptData, 'previousVersions') as string,
+          );
+          prevVersions.push(scriptData.node.id);
+          paymentTags.push({
+            name: TAG_NAMES.previousVersions,
+            value: JSON.stringify(prevVersions),
+          });
+        } else {
+          paymentTags.push({
+            name: TAG_NAMES.previousVersions,
+            value: JSON.stringify([scriptData.node.id]),
+          });
+        }
+      }
 
       const paymentId = await sendU(VAULT_ADDRESS, uFee.toString(), paymentTags);
       await updateUBalance();
@@ -417,7 +548,9 @@ const Curators = () => {
 
       try {
         await uploadUsageNotes(res.data.id, data.name, data.notes);
-        await uploadAvatarImage(res.data.id, data.avatar);
+        if (mode === 'upload') {
+          await uploadAvatarImage(res.data.id, data.avatar);
+        }
       } catch (error) {
         enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
         // error uploading attachments
@@ -448,6 +581,35 @@ const Curators = () => {
       });
     }
   };
+
+  const selectLoadMoreScripts = (event: UIEvent<HTMLDivElement>) => {
+    const bottom =
+      event.currentTarget.scrollHeight - event.currentTarget.scrollTop <=
+      event.currentTarget.clientHeight + 100;
+    if (bottom && hasScriptsNextPage) {
+      // user is at the end of the list so load more items
+      scriptsFetchMore({
+        variables: {
+          after:
+            scriptsData && scriptsData.transactions.edges.length > 0
+              ? scriptsData.transactions.edges[scriptsData.transactions.edges.length - 1].cursor
+              : undefined,
+        },
+        updateQuery: commonUpdateQuery,
+      });
+    }
+  };
+
+  const handleScriptSelectClick = useCallback(
+    (event: MouseEvent<HTMLElement>) => {
+      if (scriptAnchorEl) {
+        setScriptAnchorEl(null);
+      } else {
+        setScriptAnchorEl(event.currentTarget);
+      }
+    },
+    [scriptAnchorEl, setScriptAnchorEl],
+  );
 
   return (
     <Container
@@ -485,174 +647,426 @@ const Curators = () => {
                 borderRadius: '30px',
               }}
             >
-              <CardHeader title='Upload Script' sx={{ paddingLeft: '48px', paddingTop: '32px' }}>
-                {/* <Typography variant="h5" gutterBottom>Create Your Model</Typography> */}
-              </CardHeader>
+              <CardHeader
+                title={
+                  <Box display={'flex'} gap={'16px'}>
+                    <Typography
+                      sx={{
+                        fontStyle: 'normal',
+                        fontWeight: 600,
+                        fontSize: '30px',
+                        fontHeight: '41px',
+                        opacity: mode === 'upload' ? 1 : 0.5,
+                      }}
+                      onClick={() => setMode('upload')}
+                    >
+                      Upload Script
+                    </Typography>
+                    <CachedIcon />
+                    <Typography
+                      sx={{
+                        fontStyle: 'normal',
+                        fontWeight: 600,
+                        fontSize: '30px',
+                        fontHeight: '41px',
+                        opacity: mode === 'update' ? 1 : 0.5,
+                      }}
+                      onClick={() => setMode('update')}
+                    >
+                      Update Script
+                    </Typography>
+                  </Box>
+                }
+                sx={{ paddingLeft: '48px', paddingTop: '32px' }}
+              ></CardHeader>
               <CardContent
                 sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}
               >
-                <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
-                  <Box width={'22%'}>
-                    <AvatarControl name='avatar' control={control} />
-                  </Box>
-                  <Box
-                    display={'flex'}
-                    justifyContent={'space-between'}
-                    flexDirection='column'
-                    flexGrow={1}
-                    width={'30%'}
-                  >
-                    <TextControl
-                      name='name'
-                      control={control}
-                      rules={{ required: true }}
-                      mat={{
-                        variant: 'outlined',
-                        InputProps: {
+                {mode === 'upload' ? (
+                  <>
+                    <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
+                      <Box width={'22%'}>
+                        <AvatarControl name='avatar' control={control} />
+                      </Box>
+                      <Box
+                        display={'flex'}
+                        justifyContent={'space-between'}
+                        flexDirection='column'
+                        flexGrow={1}
+                        width={'30%'}
+                      >
+                        <TextControl
+                          name='name'
+                          control={control}
+                          rules={{ required: true }}
+                          mat={{
+                            variant: 'outlined',
+                            InputProps: {
+                              sx: {
+                                borderWidth: '1px',
+                                borderColor: theme.palette.text.primary,
+                                borderRadius: '16px',
+                              },
+                            },
+                          }}
+                          style={{ width: '100%' }}
+                        />
+                        <SelectControl
+                          name='category'
+                          control={control}
+                          rules={{ required: true }}
+                          mat={{
+                            sx: {
+                              borderWidth: '1px',
+                              borderColor: theme.palette.text.primary,
+                              borderRadius: '16px',
+                            },
+                            placeholder: 'Select a Category',
+                          }}
+                        >
+                          <MenuItem value={'text'}>Text</MenuItem>
+                          <MenuItem value={'audio'}>Audio</MenuItem>
+                          <MenuItem value={'video'}>Video</MenuItem>
+                        </SelectControl>
+                      </Box>
+                      <TextControl
+                        name='description'
+                        control={control}
+                        mat={{
+                          variant: 'outlined',
+                          multiline: true,
+                          margin: 'normal',
+                          minRows: 6,
+                          maxRows: 6,
+                          InputProps: {
+                            sx: {
+                              borderWidth: '1px',
+                              borderColor: theme.palette.text.primary,
+                              borderRadius: '23px',
+                              height: '100%',
+                            },
+                          },
+                        }}
+                        style={{ width: '40%', marginTop: 0 }}
+                      />
+                    </Box>
+                    <Box padding='0px 32px'>
+                      <SelectControl
+                        name='model'
+                        control={control}
+                        rules={{ required: true }}
+                        mat={{
+                          placeholder: 'Choose a Model',
                           sx: {
                             borderWidth: '1px',
                             borderColor: theme.palette.text.primary,
                             borderRadius: '16px',
                           },
-                        },
-                      }}
-                      style={{ width: '100%' }}
-                    />
-                    <SelectControl
-                      name='category'
-                      control={control}
-                      rules={{ required: true }}
-                      mat={{
-                        sx: {
-                          borderWidth: '1px',
-                          borderColor: theme.palette.text.primary,
-                          borderRadius: '16px',
-                        },
-                        placeholder: 'Select a Category',
-                      }}
-                    >
-                      <MenuItem value={'text'}>Text</MenuItem>
-                      <MenuItem value={'audio'}>Audio</MenuItem>
-                      <MenuItem value={'video'}>Video</MenuItem>
-                    </SelectControl>
-                  </Box>
-                  <TextControl
-                    name='description'
-                    control={control}
-                    mat={{
-                      variant: 'outlined',
-                      multiline: true,
-                      margin: 'normal',
-                      minRows: 6,
-                      maxRows: 6,
-                      InputProps: {
-                        sx: {
-                          borderWidth: '1px',
-                          borderColor: theme.palette.text.primary,
-                          borderRadius: '23px',
-                          height: '100%',
-                        },
-                      },
-                    }}
-                    style={{ width: '40%', marginTop: 0 }}
-                  />
-                </Box>
-                <Box padding='0px 32px'>
-                  <SelectControl
-                    name='model'
-                    control={control}
-                    rules={{ required: true }}
-                    mat={{
-                      placeholder: 'Choose a Model',
-                      sx: {
-                        borderWidth: '1px',
-                        borderColor: theme.palette.text.primary,
-                        borderRadius: '16px',
-                      },
-                      renderValue: (selected) => (
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            gap: '16px',
-                          }}
-                        >
-                          <Typography>
-                            {findTag(JSON.parse(selected as string), 'modelName')}
-                          </Typography>
-                          <Typography sx={{ opacity: '0.5' }}>
-                            {findTag(JSON.parse(selected as string), 'sequencerOwner')}
-                            {` (Creator: ${displayShortTxOrAddr(
-                              findTag(JSON.parse(selected as string), 'sequencerOwner') as string,
-                            )})`}
-                          </Typography>
-                        </Box>
-                      ),
-                      MenuProps: {
-                        PaperProps: {
-                          onScroll: selectLoadMore,
-                          sx: {
-                            maxHeight: '144px',
-                            overflowY: modelsLoading ? 'hidden' : 'auto',
+                          renderValue: (selected) => (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                gap: '16px',
+                              }}
+                            >
+                              <Typography>
+                                {findTag(JSON.parse(selected as string), 'modelName')}
+                              </Typography>
+                              <Typography sx={{ opacity: '0.5' }}>
+                                {findTag(JSON.parse(selected as string), 'sequencerOwner')}
+                                {` (Creator: ${displayShortTxOrAddr(
+                                  findTag(
+                                    JSON.parse(selected as string),
+                                    'sequencerOwner',
+                                  ) as string,
+                                )})`}
+                              </Typography>
+                            </Box>
+                          ),
+                          MenuProps: {
+                            PaperProps: {
+                              onScroll: selectLoadMore,
+                              sx: {
+                                maxHeight: '144px',
+                                overflowY: modelsLoading ? 'hidden' : 'auto',
+                              },
+                            },
                           },
-                        },
-                      },
-                    }}
-                  >
-                    {modelsLoading && (
-                      <Backdrop
-                        sx={{
-                          zIndex: (theme) => theme.zIndex.drawer + 1,
-                          borderRadius: '23px',
-                          backdropFilter: 'blur(1px)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          position: 'absolute',
-                          height: '144px',
                         }}
-                        open={true}
                       >
-                        <CircularProgress color='primary'></CircularProgress>
-                      </Backdrop>
-                    )}
-                    {modelsError ? (
-                      <Box>
-                        <Typography>Could Not Fetch Available Models</Typography>
-                      </Box>
-                    ) : modelsData && modelsData.transactions.edges.length > 0 ? (
-                      modelsData.transactions.edges.map((el: IEdge) => (
-                        <MenuItem
-                          key={el.node.id}
-                          value={JSON.stringify(el)}
-                          sx={{
-                            display: 'flex',
-                            gap: '16px',
-                          }}
-                        >
-                          <Typography>{findTag(el, 'modelName')}</Typography>
-                          <Typography sx={{ opacity: '0.5' }}>
-                            {findTag(el, 'modelTransaction')}
-                            {` (Creator: ${displayShortTxOrAddr(
-                              findTag(el, 'sequencerOwner') as string,
-                            )}`}
-                          </Typography>
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <Box>
-                        <Typography>There Are no Available Models</Typography>
-                      </Box>
-                    )}
-                  </SelectControl>
-                </Box>
-                <Box padding='0px 32px'>
-                  <AllowGroupControl name={'allow'} control={control} />
-                </Box>
-                <Box padding='0px 32px'>
-                  <MarkdownControl props={{ name: 'notes', control, rules: { required: true } }} />
-                </Box>
-                <Box padding='0px 32px'>
-                  <FileControl name='file' control={control} rules={{ required: true }} />
-                </Box>
+                        {modelsLoading && (
+                          <Backdrop
+                            sx={{
+                              zIndex: (theme) => theme.zIndex.drawer + 1,
+                              borderRadius: '23px',
+                              backdropFilter: 'blur(1px)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              position: 'absolute',
+                              height: '144px',
+                            }}
+                            open={true}
+                          >
+                            <CircularProgress color='primary'></CircularProgress>
+                          </Backdrop>
+                        )}
+                        {modelsError ? (
+                          <Box>
+                            <Typography>Could Not Fetch Available Models</Typography>
+                          </Box>
+                        ) : modelsData && modelsData.transactions.edges.length > 0 ? (
+                          modelsData.transactions.edges.map((el: IEdge) => (
+                            <MenuItem
+                              key={el.node.id}
+                              value={JSON.stringify(el)}
+                              sx={{
+                                display: 'flex',
+                                gap: '16px',
+                              }}
+                            >
+                              <Typography>{findTag(el, 'modelName')}</Typography>
+                              <Typography sx={{ opacity: '0.5' }}>
+                                {findTag(el, 'modelTransaction')}
+                                {` (Creator: ${displayShortTxOrAddr(
+                                  findTag(el, 'sequencerOwner') as string,
+                                )}`}
+                              </Typography>
+                            </MenuItem>
+                          ))
+                        ) : (
+                          <Box>
+                            <Typography>There Are no Available Models</Typography>
+                          </Box>
+                        )}
+                      </SelectControl>
+                    </Box>
+                    <Box padding='0px 32px'>
+                      <AllowGroupControl name={'allow'} control={control} />
+                    </Box>
+                    <Box padding='0px 32px'>
+                      <MarkdownControl
+                        props={{ name: 'notes', control, rules: { required: true } }}
+                      />
+                    </Box>
+                    <Box padding='0px 32px'>
+                      <FileControl name='file' control={control} rules={{ required: true }} />
+                    </Box>
+                  </>
+                ) : (
+                  <Box
+                    width={'100%'}
+                    padding='0px 32px'
+                    display={'flex'}
+                    flexDirection={'column'}
+                    gap={'16px'}
+                  >
+                    <Box padding='0px 32px' display={'flex'} flexDirection={'column'} gap={'16px'}>
+                      <SelectControl
+                        name='script'
+                        control={control}
+                        rules={{ required: true }}
+                        mat={{
+                          onClick: handleScriptSelectClick,
+                          placeholder: 'Choose a Script',
+                          sx: {
+                            borderWidth: '1px',
+                            borderColor: theme.palette.text.primary,
+                            borderRadius: '16px',
+                          },
+                          renderValue: (selected) => (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                gap: '16px',
+                              }}
+                            >
+                              <Typography>
+                                {findTag(JSON.parse(selected as string), 'scriptName')}
+                              </Typography>
+                              <Typography sx={{ opacity: '0.5' }}>
+                                {findTag(JSON.parse(selected as string), 'sequencerOwner')}
+                                {` (Creator: ${displayShortTxOrAddr(
+                                  findTag(
+                                    JSON.parse(selected as string),
+                                    'sequencerOwner',
+                                  ) as string,
+                                )})`}
+                              </Typography>
+                            </Box>
+                          ),
+                          MenuProps: {
+                            anchorEl: scriptAnchorEl,
+                            open: scriptOpen,
+                            PaperProps: {
+                              onScroll: selectLoadMoreScripts,
+                              sx: {
+                                maxHeight: '144px',
+                                overflowY: scriptsLoading ? 'hidden' : 'auto',
+                              },
+                            },
+                          },
+                        }}
+                      >
+                        {scriptsLoading && (
+                          <Backdrop
+                            sx={{
+                              zIndex: (theme) => theme.zIndex.drawer + 1,
+                              borderRadius: '23px',
+                              backdropFilter: 'blur(1px)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              position: 'absolute',
+                              height: '144px',
+                            }}
+                            open={true}
+                          >
+                            <CircularProgress color='primary'></CircularProgress>
+                          </Backdrop>
+                        )}
+                        {scriptsError ? (
+                          <Box>
+                            <Typography>Could Not Fetch Available Scripts</Typography>
+                          </Box>
+                        ) : scriptTxs.length > 0 ? (
+                          scriptTxs.map((el: IContractEdge) => (
+                            <ScriptOption
+                              key={el.node.id}
+                              el={el}
+                              setValue={setValue}
+                              modelsData={modelsData}
+                            />
+                          ))
+                        ) : (
+                          <Box>
+                            <Typography>This account has no previous Scripts Created</Typography>
+                          </Box>
+                        )}
+                      </SelectControl>
+                      <SelectControl
+                        name='model'
+                        control={control}
+                        rules={{ required: true }}
+                        mat={{
+                          disabled: true,
+                          placeholder: 'Choose a Model',
+                          sx: {
+                            borderWidth: '1px',
+                            borderColor: theme.palette.text.primary,
+                            borderRadius: '16px',
+                          },
+                          renderValue: (selected) => (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                gap: '16px',
+                              }}
+                            >
+                              <Typography>
+                                {findTag(JSON.parse(selected as string), 'modelName')}
+                              </Typography>
+                              <Typography sx={{ opacity: '0.5' }}>
+                                {findTag(JSON.parse(selected as string), 'sequencerOwner')}
+                                {` (Creator: ${displayShortTxOrAddr(
+                                  findTag(
+                                    JSON.parse(selected as string),
+                                    'sequencerOwner',
+                                  ) as string,
+                                )})`}
+                              </Typography>
+                            </Box>
+                          ),
+                          MenuProps: {
+                            PaperProps: {
+                              onScroll: selectLoadMore,
+                              sx: {
+                                maxHeight: '144px',
+                                overflowY: modelsLoading ? 'hidden' : 'auto',
+                              },
+                            },
+                          },
+                        }}
+                      ></SelectControl>
+                    </Box>
+                    <Box
+                      display={'flex'}
+                      justifyContent={'space-between'}
+                      alignItems={'center'}
+                      flexGrow={1}
+                      width={'100%'}
+                      padding='0px 32px'
+                      gap='16px'
+                    >
+                      <TextControl
+                        name='name'
+                        control={control}
+                        rules={{ required: true }}
+                        mat={{
+                          variant: 'outlined',
+                          InputProps: {
+                            sx: {
+                              borderWidth: '1px',
+                              borderColor: theme.palette.text.primary,
+                              borderRadius: '16px',
+                            },
+                          },
+                        }}
+                        style={{ width: '100%' }}
+                      />
+                      <SelectControl
+                        name='category'
+                        control={control}
+                        rules={{ required: true }}
+                        mat={{
+                          sx: {
+                            borderWidth: '1px',
+                            borderColor: theme.palette.text.primary,
+                            borderRadius: '16px',
+                            marginTop: 0,
+                            marginBottom: 0,
+                          },
+                          placeholder: 'Select a Category',
+                        }}
+                      >
+                        <MenuItem value={'text'}>Text</MenuItem>
+                        <MenuItem value={'audio'}>Audio</MenuItem>
+                        <MenuItem value={'video'}>Video</MenuItem>
+                      </SelectControl>
+                    </Box>
+                    <Box padding='0px 32px'>
+                      <TextControl
+                        name='description'
+                        control={control}
+                        mat={{
+                          variant: 'outlined',
+                          multiline: true,
+                          margin: 'normal',
+                          minRows: 6,
+                          maxRows: 6,
+                          InputProps: {
+                            sx: {
+                              borderWidth: '1px',
+                              borderColor: theme.palette.text.primary,
+                              borderRadius: '23px',
+                              height: '100%',
+                            },
+                          },
+                        }}
+                        style={{ width: '100%', marginTop: 0 }}
+                      />
+                    </Box>
+                    <Box padding='0px 32px'>
+                      <AllowGroupControl name={'allow'} control={control} />
+                    </Box>
+                    <Box padding='0px 32px'>
+                      <MarkdownControl
+                        props={{ name: 'notes', control, rules: { required: true } }}
+                      />
+                    </Box>
+                    <Box padding='0px 32px'>
+                      <FileControl name='file' control={control} rules={{ required: true }} />
+                    </Box>
+                  </Box>
+                )}
               </CardContent>
               <CardActions sx={{ paddingBottom: '32px', justifyContent: 'center' }}>
                 <Button
