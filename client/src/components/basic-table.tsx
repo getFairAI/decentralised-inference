@@ -14,7 +14,7 @@ import {
 import ReplayIcon from '@mui/icons-material/Replay';
 import { genLoadingArray } from '@/utils/common';
 import OperatorRow from './operator-row';
-import { IEdge, ITag, ITransactions } from '@/interfaces/arweave';
+import { IContractEdge, IEdge, ITag, ITransactions } from '@/interfaces/arweave';
 import { useEffect, useRef } from 'react';
 import useOnScreen from '@/hooks/useOnScreen';
 import { operatorHeaders, scriptHeaders } from '@/constants';
@@ -48,7 +48,7 @@ const BasicTableContent = ({
   retry,
 }: {
   type: tableType;
-  data: IEdge[];
+  data: IEdge[] | IContractEdge[];
   loading: boolean;
   error?: ApolloError;
   state: IEdge;
@@ -149,7 +149,7 @@ const BasicTableContent = ({
 
 export default function BasicTable(props: {
   type: tableType;
-  data: IEdge[];
+  data: IEdge[] | IContractEdge[];
   loading: boolean;
   error?: ApolloError;
   state: IEdge;

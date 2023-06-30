@@ -19,6 +19,7 @@
 import {
   AVATAR_ATTACHMENT,
   DEFAULT_TAGS,
+  DEFAULT_TAGS_RETRO,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
   OPERATOR_REGISTRATION_PAYMENT_TAGS,
@@ -232,12 +233,19 @@ const ScriptCard = ({ scriptTx, index }: { scriptTx: IContractEdge; index: numbe
 
   useEffect(() => {
     (async () => {
-      const scriptId = findTag(scriptTx, 'scriptTransaction');
+      let firstScriptVersionTx;
+      try {
+        firstScriptVersionTx = (
+          JSON.parse(findTag(scriptTx, 'previousVersions') as string) as string[]
+        )[0];
+      } catch (err) {
+        firstScriptVersionTx = findTag(scriptTx, 'scriptTransaction');
+      }
       const attachmentAvatarTags = [
-        ...DEFAULT_TAGS,
+        ...DEFAULT_TAGS_RETRO, // filter from previous app versions as well
         { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
         { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-        { name: TAG_NAMES.scriptTransaction, values: [scriptId] },
+        { name: TAG_NAMES.scriptTransaction, values: [firstScriptVersionTx] },
       ];
 
       await getAvatar({

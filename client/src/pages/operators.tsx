@@ -47,7 +47,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import ScriptCard from '@/components/script-card';
 import useOnScreen from '@/hooks/useOnScreen';
 import { Outlet } from 'react-router-dom';
-import { isFakeDeleted } from '@/utils/script';
+import { filterPreviousVersions, isFakeDeleted } from '@/utils/script';
 
 const Operators = () => {
   const [txs, setTxs] = useState<IContractEdge[]>([]);
@@ -109,8 +109,9 @@ const Operators = () => {
     if (data && networkStatus === NetworkStatus.ready) {
       setHasNextPage(data.transactions.pageInfo.hasNextPage);
       (async () => {
+        const filteredScritps = filterPreviousVersions<IContractEdge[]>(data.transactions.edges);
         const filtered: IContractEdge[] = [];
-        for (const el of data.transactions.edges) {
+        for (const el of filteredScritps) {
           const scriptId = findTag(el, 'scriptTransaction') as string;
           if (await isFakeDeleted(scriptId)) {
             // if fake deleted ignore

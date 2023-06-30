@@ -29,7 +29,7 @@ import {
   U_DIVIDER,
   REGISTER_OPERATION,
 } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { QUERY_TX_WITH, FIND_BY_TAGS } from '@/queries/graphql';
 import { client } from './apollo';
 import { findTag } from './common';
@@ -126,7 +126,10 @@ export const isValidRegistration = async (
   return true;
 };
 
-export const checkHasOperators = async (scriptTx: IEdge, filtered: IEdge[]) => {
+export const checkHasOperators = async (
+  scriptTx: IEdge | IContractEdge,
+  filtered: Array<IEdge | IContractEdge>,
+) => {
   const elementsPerPage = 5;
 
   const operatorRegistrationInputNumber = JSON.stringify({

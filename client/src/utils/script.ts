@@ -19,6 +19,8 @@
 import { MARKETPLACE_ADDRESS, SCRIPT_DELETION, TAG_NAMES } from '@/constants';
 import { client } from './apollo';
 import { QUERY_TX_WITH } from '@/queries/graphql';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
+import { findTag } from './common';
 
 export const isFakeDeleted = async (txid: string) => {
   const delteTags = [
@@ -32,4 +34,21 @@ export const isFakeDeleted = async (txid: string) => {
   });
 
   return data.transactions.edges.length > 0;
+};
+
+export const filterPreviousVersions = <T extends Array<IContractEdge | IEdge>>(data: T) => {
+  const oldVersionsTxIds: string[] = [];
+
+  for (const el of data) {
+    // const previousVersion = findTag(el, 'updateFor');
+    // previousVersions should include all versions including updateFor
+    const olderVersions = findTag(el, 'previousVersions');
+    if (olderVersions) {
+      const versionsArray: string[] = JSON.parse(olderVersions);
+      oldVersionsTxIds.push(...versionsArray);
+    }
+    // Array.from(new Set(el))
+  }
+
+  return data.filter((el) => !oldVersionsTxIds.find((oldTxId) => el.node.id === oldTxId)) as T;
 };

@@ -1,5 +1,5 @@
 import { FormControl, FormHelperText, InputLabel, Select, SelectProps } from '@mui/material';
-import { CSSProperties, ReactElement } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 import { useController, UseControllerProps } from 'react-hook-form';
 
 type SelectControlProps = UseControllerProps & {
@@ -8,7 +8,7 @@ type SelectControlProps = UseControllerProps & {
   helperText?: string;
 };
 
-const SelectControl = (props: SelectControlProps & { children: ReactElement[] }) => {
+const SelectControl = (props: SelectControlProps & { children: ReactNode }) => {
   const { field, fieldState } = useController(props);
 
   const showHelperText = () => {
@@ -21,7 +21,7 @@ const SelectControl = (props: SelectControlProps & { children: ReactElement[] })
 
   return (
     <>
-      <FormControl fullWidth margin='normal' error={fieldState.invalid}>
+      <FormControl fullWidth margin='none' error={fieldState.invalid}>
         <InputLabel>{props.mat?.placeholder || field.name}</InputLabel>
         <Select
           label={props.mat?.placeholder || field.name}

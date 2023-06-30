@@ -78,6 +78,8 @@ export const TAG_NAMES = {
   input: 'Input',
   contract: 'Contract',
   sequencerOwner: 'Sequencer-Owner',
+  updateFor: 'Update-For',
+  previousVersions: 'Previous-Versions',
 };
 
 // Operation Names

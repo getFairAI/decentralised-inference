@@ -1,4 +1,4 @@
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { Checkbox, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { displayShortTxOrAddr, findTag } from '@/utils/common';
@@ -15,7 +15,7 @@ const ScriptRow = ({
   isSelected,
   setSelected,
 }: {
-  scriptTx: IEdge;
+  scriptTx: IEdge | IContractEdge;
   index: number;
   isSelected: boolean;
   setSelected: (index: number) => void;
