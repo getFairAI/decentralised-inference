@@ -67,12 +67,8 @@ import {
   APP_VERSION,
   TAG_NAMES,
   APP_NAME,
-  MODEL_ATTACHMENT,
-  AVATAR_ATTACHMENT,
-  NOTES_ATTACHMENT,
   SCRIPT_CREATION,
   SCRIPT_CREATION_PAYMENT,
-  successStatusCode,
   secondInMS,
   U_DIVIDER,
   SCRIPT_CREATION_FEE,
@@ -83,22 +79,23 @@ import {
 import { BundlrContext } from '@/context/bundlr';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
-import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
 import { FundContext } from '@/context/fund';
-import {
-  ApolloError,
-  ApolloQueryResult,
-  FetchMoreQueryOptions,
-  OperationVariables,
-  useQuery,
-} from '@apollo/client';
+import { ApolloError, useQuery } from '@apollo/client';
 import { FIND_BY_TAGS } from '@/queries/graphql';
-import { IContractEdge, IContractQueryResult, ITag } from '@/interfaces/arweave';
-import { commonUpdateQuery, displayShortTxOrAddr, findTag } from '@/utils/common';
+import { IContractEdge, IContractQueryResult } from '@/interfaces/arweave';
+import {
+  bundlrUpload,
+  commonUpdateQuery,
+  displayShortTxOrAddr,
+  findTag,
+  uploadAvatarImage,
+  uploadUsageNotes,
+} from '@/utils/common';
 import DebounceButton from '@/components/debounce-button';
 import { sendU } from '@/utils/u';
 import { filterPreviousVersions, isFakeDeleted } from '@/utils/script';
 import CachedIcon from '@mui/icons-material/Cached';
+import { fetchMoreFn } from '@/utils/apollo';
 
 export interface CreateForm extends FieldValues {
   name: string;
@@ -182,23 +179,27 @@ const ScriptOption = ({
   modelsData,
 }: {
   el: IContractEdge;
-  setValue: UseFormSetValue<FieldValues>;
-  modelsData: IContractQueryResult;
+  setValue?: UseFormSetValue<FieldValues>;
+  modelsData?: IContractQueryResult;
 }) => {
   const handleScriptChoice = useCallback(() => {
-    const scriptModel = modelsData.transactions.edges.find(
-      (model) => findTag(model, 'modelTransaction') === findTag(el, 'modelTransaction'),
-    );
-    setValue('model', JSON.stringify(scriptModel), {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
-    setValue('script', JSON.stringify(el), {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
+    if (!setValue || !modelsData) {
+      return;
+    } else {
+      const scriptModel = modelsData.transactions.edges.find(
+        (model) => findTag(model, 'modelTransaction') === findTag(el, 'modelTransaction'),
+      );
+      setValue('model', JSON.stringify(scriptModel), {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+      setValue('script', JSON.stringify(el), {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    }
   }, [el, modelsData, setValue]);
 
   return (
@@ -218,39 +219,49 @@ const ScriptOption = ({
   );
 };
 
-type fetchMoreFn = <
-  TFetchData = unknown,
-  TFetchVars extends OperationVariables = { tags: ITag[]; first: number },
->(
-  fetchMoreOptions: FetchMoreQueryOptions<TFetchVars, TFetchData> & {
-    updateQuery?: (
-      previousQueryResult: TFetchData,
-      options: {
-        fetchMoreResult: TFetchData;
-        variables: TFetchVars;
-      },
-    ) => TFetchData;
-  },
-) => Promise<ApolloQueryResult<TFetchData | undefined>>;
+const ModelOption = ({ el }: { el: IContractEdge }) => {
+  return (
+    <MenuItem
+      sx={{
+        display: 'flex',
+        gap: '16px',
+      }}
+    >
+      <Typography>{findTag(el, 'modelName')}</Typography>
+      <Typography sx={{ opacity: '0.5' }}>
+        {findTag(el, 'modelTransaction')}
+        {` (Creator: ${displayShortTxOrAddr(findTag(el, 'sequencerOwner') as string)}`}
+      </Typography>
+    </MenuItem>
+  );
+};
 
-const ModelSelect = ({
+const GenericSelect = ({
+  name,
   control,
   data,
   error,
   loading,
   hasNextPage,
   disabled = false,
+  modelsData,
+  setValue,
   loadMore,
 }: {
+  name: string;
   control: Control<FieldValues, unknown>;
   data: IContractQueryResult;
   error?: ApolloError;
   loading: boolean;
   hasNextPage: boolean;
   disabled?: boolean;
+  modelsData?: IContractQueryResult;
+  setValue?: UseFormSetValue<FieldValues>;
   loadMore: fetchMoreFn;
 }) => {
   const theme = useTheme();
+  const [scriptAnchorEl, setScriptAnchorEl] = useState<null | HTMLElement>(null);
+  const scriptOpen = useMemo(() => Boolean(scriptAnchorEl), [scriptAnchorEl]);
 
   const selectLoadMore = (event: UIEvent<HTMLDivElement>) => {
     const bottomOffset = 100;
@@ -270,23 +281,91 @@ const ModelSelect = ({
       });
     }
   };
-
-  const hasData = useMemo(
-    () => !error && !loading && data?.transactions.edges.length > 0,
-    [error, loading, data],
+  const isScript = useMemo(() => name === 'script', [name]);
+  const hasModelData = useMemo(
+    () => !isScript && !error && !loading && data?.transactions.edges.length > 0,
+    [isScript, error, loading, data],
   );
-
   const hasNoData = useMemo(
     () => !error && !loading && (!data.transactions.edges || data.transactions.edges.length === 0),
     [error, loading, data],
   );
+  const scriptData = useMemo(() => {
+    if (isScript) {
+      const filteredScritps = filterPreviousVersions<IContractEdge[]>(data.transactions.edges);
+      const filtered: IContractEdge[] = [];
+      (async () => {
+        for (const el of filteredScritps) {
+          const scriptId = findTag(el, 'scriptTransaction') as string;
+          if (await isFakeDeleted(scriptId)) {
+            // if fake deleted ignore
+          } else {
+            filtered.push(el);
+          }
+        }
+      })();
+      return filtered;
+    } else {
+      return [] as IContractEdge[];
+    }
+  }, [isScript, data]);
+  const hasScriptData = useMemo(
+    () => !error && !loading && scriptData.length > 0,
+    [error, loading, scriptData],
+  );
+  const handleScriptSelectClick = useCallback(
+    (event: MouseEvent<HTMLElement>) => {
+      if (scriptAnchorEl) {
+        setScriptAnchorEl(null);
+      } else {
+        setScriptAnchorEl(event.currentTarget);
+      }
+    },
+    [scriptAnchorEl, setScriptAnchorEl],
+  );
+  const renderValueFn = useCallback(
+    (selected: unknown) => {
+      let title;
+      let mainText;
+      let subText;
+      if (typeof selected !== 'string') {
+        return '';
+      }
+      if (isScript) {
+        title = findTag(JSON.parse(selected), 'scriptName');
+        mainText = findTag(JSON.parse(selected), 'scriptTransaction');
+        subText = findTag(JSON.parse(selected), 'sequencerOwner');
+      } else {
+        title = findTag(JSON.parse(selected), 'modelName');
+        mainText = findTag(JSON.parse(selected), 'modelTransaction');
+        subText = findTag(JSON.parse(selected), 'sequencerOwner');
+      }
+
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            gap: '16px',
+          }}
+        >
+          <Typography>{title}</Typography>
+          <Typography sx={{ opacity: '0.5' }}>
+            {mainText}
+            {` (Creator: ${displayShortTxOrAddr(subText as string)})`}
+          </Typography>
+        </Box>
+      );
+    },
+    [isScript],
+  );
 
   return (
     <SelectControl
-      name='model'
+      name={name}
       control={control}
-      rules={{ required: true }}
+      rules={{ required: !disabled }}
       mat={{
+        ...(isScript && { onClick: handleScriptSelectClick }),
         disabled,
         placeholder: 'Choose a Model',
         sx: {
@@ -294,23 +373,9 @@ const ModelSelect = ({
           borderColor: theme.palette.text.primary,
           borderRadius: '16px',
         },
-        renderValue: (selected) => (
-          <Box
-            sx={{
-              display: 'flex',
-              gap: '16px',
-            }}
-          >
-            <Typography>{findTag(JSON.parse(selected as string), 'modelName')}</Typography>
-            <Typography sx={{ opacity: '0.5' }}>
-              {findTag(JSON.parse(selected as string), 'sequencerOwner')}
-              {` (Creator: ${displayShortTxOrAddr(
-                findTag(JSON.parse(selected as string), 'sequencerOwner') as string,
-              )})`}
-            </Typography>
-          </Box>
-        ),
+        renderValue: renderValueFn,
         MenuProps: {
+          ...(isScript && { anchorEl: scriptAnchorEl, open: scriptOpen }),
           PaperProps: {
             onScroll: selectLoadMore,
             sx: {
@@ -343,7 +408,17 @@ const ModelSelect = ({
         </Box>
       )}
 
-      {hasData &&
+      {hasModelData &&
+        data.transactions.edges.map((el: IContractEdge) => (
+          <ModelOption key={el.node.id} el={el} />
+        ))}
+
+      {hasScriptData &&
+        scriptData.map((el: IContractEdge) => (
+          <ScriptOption key={el.node.id} el={el} setValue={setValue} modelsData={modelsData} />
+        ))}
+
+      {hasModelData &&
         data.transactions.edges.map((el: IContractEdge) => (
           <MenuItem
             key={el.node.id}
@@ -360,6 +435,7 @@ const ModelSelect = ({
             </Typography>
           </MenuItem>
         ))}
+
       {hasNoData && (
         <Box>
           <Typography>There Are no Available Models</Typography>
@@ -371,7 +447,7 @@ const ModelSelect = ({
 
 const Curators = () => {
   const elementsPerPage = 5;
-  const { handleSubmit, reset, control, setValue } = useForm<FieldValues>({
+  const { handleSubmit, reset, control, setValue } = useForm({
     defaultValues: {
       name: '',
       fee: 0,
@@ -387,7 +463,7 @@ const Curators = () => {
         allowText: true,
       },
     },
-  });
+  } as FieldValues);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [, setMessage] = useState('');
@@ -401,9 +477,6 @@ const Curators = () => {
   const { currentAddress, currentBalance, updateUBalance } = useContext(WalletContext);
   const { setOpen: setFundOpen } = useContext(FundContext);
   const [mode, setMode] = useState<'upload' | 'update'>('upload');
-  const [scriptTxs, setScriptTxs] = useState<IContractEdge[]>([]);
-  const [scriptAnchorEl, setScriptAnchorEl] = useState<null | HTMLElement>(null);
-  const scriptOpen = useMemo(() => Boolean(scriptAnchorEl), [scriptAnchorEl]);
 
   const {
     data: scriptsData,
@@ -438,6 +511,41 @@ const Curators = () => {
     notifyOnNetworkStatusChange: true,
   });
 
+  const showSuccessSnackbar = (id: string, message: string) => {
+    enqueueSnackbar(
+      <>
+        {message} <br></br>
+        <a href={`https://viewblock.io/arweave/tx/${id}`} target={'_blank'} rel='noreferrer'>
+          <u>View Transaction in Explorer</u>
+        </a>
+      </>,
+      { variant: 'success' },
+    );
+  };
+
+  const commonUploadProps = useMemo(
+    () => ({
+      nodeBalance,
+      totalChunks,
+      chunkUpload,
+      enqueueSnackbar,
+      setSnackbarOpen,
+      setProgress,
+      getPrice,
+      showSuccessSnackbar,
+    }),
+    [
+      nodeBalance,
+      totalChunks,
+      chunkUpload,
+      enqueueSnackbar,
+      setSnackbarOpen,
+      setProgress,
+      getPrice,
+      showSuccessSnackbar,
+    ],
+  );
+
   useEffect(() => {
     if (modelsData) {
       setHasModelsNextPage(modelsData?.transactions?.pageInfo?.hasNextPage || false);
@@ -445,23 +553,8 @@ const Curators = () => {
   }, [modelsData]);
 
   useEffect(() => {
-    if (scriptsData?.transactions?.edges) {
-      const filteredScritps = filterPreviousVersions<IContractEdge[]>(
-        scriptsData.transactions.edges,
-      );
-      (async () => {
-        const filtered: IContractEdge[] = [];
-        for (const el of filteredScritps) {
-          const scriptId = findTag(el, 'scriptTransaction') as string;
-          if (await isFakeDeleted(scriptId)) {
-            // if fake deleted ignore
-          } else {
-            filtered.push(el);
-          }
-        }
-        setScriptTxs(filtered);
-        setHasScriptsNextPage(scriptsData?.transactions?.pageInfo?.hasNextPage || false);
-      })();
+    if (scriptsData) {
+      setHasScriptsNextPage(scriptsData?.transactions?.pageInfo?.hasNextPage || false);
     }
   }, [scriptsData]);
 
@@ -476,109 +569,50 @@ const Curators = () => {
     }
   };
 
-  const bundlrUpload = async (fileToUpload: File, tags: ITag[], successMessage: string) => {
-    const filePrice = await getPrice(fileToUpload.size);
-    if (filePrice.toNumber() > nodeBalance) {
-      enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
-    }
-    const finishedPercentage = 100;
-
-    /** Register Event Callbacks */
-    // event callback: called for every chunk uploaded
-    const handleUpload = (chunkInfo: ChunkInfo) => {
-      const chunkNumber = chunkInfo.id + 1;
-      // update the progress bar based on how much has been uploaded
-      if (chunkNumber >= totalChunks.current) {
-        setProgress(finishedPercentage);
-      } else {
-        setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
-      }
-    };
-
-    // event callback: called if an error happens
-    const handleError = (e: ChunkError) => {
-      setSnackbarOpen(false);
-      enqueueSnackbar(
-        `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
-        { variant: 'error' },
-      );
-    };
-
-    // event callback: called when file is fully uploaded
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleDone = (_finishRes: unknown) => {
-      // set the progress bar to 100
-      setProgress(finishedPercentage);
-      setSnackbarOpen(false);
-    };
-
-    const res = await chunkUpload(
-      fileToUpload,
-      tags,
-      totalChunks,
-      handleUpload,
-      handleError,
-      handleDone,
-    );
-    if (res.status === successStatusCode) {
-      enqueueSnackbar(
-        <>
-          {successMessage} <br></br>
-          <a
-            href={`https://viewblock.io/arweave/tx/${res.data.id}`}
-            target={'_blank'}
-            rel='noreferrer'
-          >
-            <u>View Transaction in Explorer</u>
-          </a>
-        </>,
-        { variant: 'success' },
-      );
-    } else {
-      throw new Error(res.statusText);
-    }
-
-    return res;
-  };
-
-  const uploadAvatarImage = async (scriptTx: string, image?: File) => {
-    if (!image || !(image instanceof File)) {
-      return;
-    }
-
-    // upload the file
-    const tags = [];
-    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
-    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
-    tags.push({ name: TAG_NAMES.contentType, value: image.type });
-    tags.push({ name: TAG_NAMES.scriptTransaction, value: scriptTx });
-    tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
-    tags.push({ name: TAG_NAMES.attachmentName, value: image.name });
-    tags.push({ name: TAG_NAMES.attachmentRole, value: AVATAR_ATTACHMENT });
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
-    setSnackbarOpen(true);
-
-    await bundlrUpload(image, tags, 'Avatar Uploaded Successfully');
-  };
-
-  const uploadUsageNotes = async (scriptTx: string, scriptName: string, usageNotes: string) => {
-    const file = new File([usageNotes], `${scriptName}-usage.md`, {
-      type: 'text/markdown',
+  const getCommonTags = (
+    data: CreateForm,
+    modelData: IContractEdge,
+    scriptData: IContractEdge,
+    modelOwner: string,
+  ) => {
+    const file = data.file;
+    const commonTags = [];
+    commonTags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+    commonTags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
+    commonTags.push({ name: TAG_NAMES.contentType, value: file.type });
+    commonTags.push({ name: TAG_NAMES.scriptName, value: `${data.name}` });
+    commonTags.push({ name: TAG_NAMES.category, value: data.category });
+    commonTags.push({
+      name: TAG_NAMES.modelName,
+      value: findTag(modelData, 'modelName') as string,
     });
-
-    // upload the file
-    const tags = [];
-    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
-    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
-    tags.push({ name: TAG_NAMES.contentType, value: file.type });
-    tags.push({ name: TAG_NAMES.scriptTransaction, value: scriptTx });
-    tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
-    tags.push({ name: TAG_NAMES.attachmentName, value: file.name });
-    tags.push({ name: TAG_NAMES.attachmentRole, value: NOTES_ATTACHMENT });
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
-    setSnackbarOpen(true);
-
-    await bundlrUpload(file, tags, 'Usage Notes Uploaded Successfully');
+    commonTags.push({ name: TAG_NAMES.modelCreator, value: modelOwner });
+    commonTags.push({
+      name: TAG_NAMES.modelTransaction,
+      value: findTag(modelData, 'modelTransaction') as string,
+    });
+    if (data.description) {
+      commonTags.push({ name: TAG_NAMES.description, value: data.description });
+    }
+    commonTags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
+    commonTags.push({ name: TAG_NAMES.allowFiles, value: `${data.allow.allowFiles}` });
+    commonTags.push({ name: TAG_NAMES.allowText, value: `${data.allow.allowText}` });
+    if (mode === 'update') {
+      commonTags.push({ name: TAG_NAMES.updateFor, value: scriptData.node.id });
+      if (findTag(scriptData, 'previousVersions')) {
+        const prevVersions: string[] = JSON.parse(
+          findTag(scriptData, 'previousVersions') as string,
+        );
+        prevVersions.push(scriptData.node.id);
+        commonTags.push({ name: TAG_NAMES.previousVersions, value: JSON.stringify(prevVersions) });
+      } else {
+        commonTags.push({
+          name: TAG_NAMES.previousVersions,
+          value: JSON.stringify([scriptData.node.id]),
+        });
+      }
+    }
+    return commonTags;
   };
 
   const handleFundFinished = async (data?: CreateForm) => {
@@ -595,7 +629,6 @@ const Curators = () => {
     const file = data.file;
 
     // upload the file
-    const tags = [];
     const modelData = JSON.parse(data.model) as IContractEdge;
     const scriptData = JSON.parse(data.script) as IContractEdge;
     const uFee = parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER;
@@ -609,108 +642,40 @@ const Curators = () => {
     }
 
     const modelOwner = findTag(modelData, 'sequencerOwner') as string;
-    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
-    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
-    tags.push({ name: TAG_NAMES.contentType, value: file.type });
-    tags.push({ name: TAG_NAMES.scriptName, value: `${data.name}` });
-    tags.push({ name: TAG_NAMES.category, value: data.category });
-    tags.push({ name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string });
-    tags.push({ name: TAG_NAMES.modelCreator, value: modelOwner });
-    tags.push({
-      name: TAG_NAMES.modelTransaction,
-      value: findTag(modelData, 'modelTransaction') as string,
-    });
-    tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_CREATION });
-    tags.push({ name: TAG_NAMES.paymentQuantity, value: uFee.toString() });
-    tags.push({ name: TAG_NAMES.paymentTarget, value: VAULT_ADDRESS });
-    if (data.description) {
-      tags.push({ name: TAG_NAMES.description, value: data.description });
-    }
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
-    tags.push({ name: TAG_NAMES.allowFiles, value: `${data.allow.allowFiles}` });
-    tags.push({ name: TAG_NAMES.allowText, value: `${data.allow.allowText}` });
-    if (mode === 'update') {
-      tags.push({ name: TAG_NAMES.updateFor, value: scriptData.node.id });
-      if (findTag(scriptData, 'previousVersions')) {
-        const prevVersions: string[] = JSON.parse(
-          findTag(scriptData, 'previousVersions') as string,
-        );
-        prevVersions.push(scriptData.node.id);
-        tags.push({ name: TAG_NAMES.previousVersions, value: JSON.stringify(prevVersions) });
-      } else {
-        tags.push({
-          name: TAG_NAMES.previousVersions,
-          value: JSON.stringify([scriptData.node.id]),
-        });
-      }
-    }
+    const commonTags = getCommonTags(data, modelData, scriptData, modelOwner);
+    // add extra tags for payment save
+    const uploadTags = [...commonTags];
+    uploadTags.push({ name: TAG_NAMES.paymentQuantity, value: uFee.toString() });
+    uploadTags.push({ name: TAG_NAMES.paymentTarget, value: VAULT_ADDRESS });
+    uploadTags.push({ name: TAG_NAMES.operationName, value: SCRIPT_CREATION });
+
     setSnackbarOpen(true);
     try {
-      const res = await bundlrUpload(file, tags, 'Script Uploaded Successfully');
+      const res = await bundlrUpload({
+        ...commonUploadProps,
+        tags: uploadTags,
+        fileToUpload: file,
+        successMessage: 'Script Uploaded Successfully',
+      });
 
       const paymentTags = [
-        { name: TAG_NAMES.appName, value: APP_NAME },
-        { name: TAG_NAMES.appVersion, value: APP_VERSION },
-        { name: TAG_NAMES.contentType, value: file.type },
-        { name: TAG_NAMES.operationName, value: SCRIPT_CREATION_PAYMENT },
-        { name: TAG_NAMES.scriptName, value: `${data.name}` },
-        { name: TAG_NAMES.category, value: data.category },
-        { name: TAG_NAMES.modelName, value: findTag(modelData, 'modelName') as string },
-        { name: TAG_NAMES.modelCreator, value: modelOwner },
-        {
-          name: TAG_NAMES.modelTransaction,
-          value: findTag(modelData, 'modelTransaction') as string,
-        },
+        ...commonTags,
         { name: TAG_NAMES.scriptTransaction, value: res.data.id },
-        { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
-        { name: TAG_NAMES.allowFiles, value: `${data.allow.allowFiles}` },
-        { name: TAG_NAMES.allowText, value: `${data.allow.allowText}` },
+        { name: TAG_NAMES.operationName, value: SCRIPT_CREATION_PAYMENT },
       ];
-
-      if (data.description) {
-        paymentTags.push({ name: TAG_NAMES.description, value: data.description });
-      }
-      if (mode === 'update') {
-        paymentTags.push({ name: TAG_NAMES.updateFor, value: scriptData.node.id });
-        if (findTag(scriptData, 'previousVersions')) {
-          const prevVersions: string[] = JSON.parse(
-            findTag(scriptData, 'previousVersions') as string,
-          );
-          prevVersions.push(scriptData.node.id);
-          paymentTags.push({
-            name: TAG_NAMES.previousVersions,
-            value: JSON.stringify(prevVersions),
-          });
-        } else {
-          paymentTags.push({
-            name: TAG_NAMES.previousVersions,
-            value: JSON.stringify([scriptData.node.id]),
-          });
-        }
-      }
 
       const paymentId = await sendU(VAULT_ADDRESS, uFee.toString(), paymentTags);
       await updateUBalance();
 
-      enqueueSnackbar(
-        <>
-          Paid Script Creation Fee {SCRIPT_CREATION_FEE} $U.
-          <br></br>
-          <a
-            href={`https://viewblock.io/arweave/tx/${paymentId}`}
-            target={'_blank'}
-            rel='noreferrer'
-          >
-            <u>View Transaction in Explorer</u>
-          </a>
-        </>,
-        { variant: 'success' },
+      showSuccessSnackbar(
+        paymentId as string,
+        `Paid Script Creation Fee ${SCRIPT_CREATION_FEE} $U.`,
       );
 
       try {
-        await uploadUsageNotes(res.data.id, data.name, data.notes);
+        await uploadUsageNotes(res.data.id, data.name, data.notes, commonUploadProps, 'script');
         if (mode === 'upload') {
-          await uploadAvatarImage(res.data.id, data.avatar);
+          await uploadAvatarImage(res.data.id, commonUploadProps, 'script', data.avatar);
         }
       } catch (error) {
         enqueueSnackbar('Error Uploading An Attchment', { variant: 'error' });
@@ -725,35 +690,6 @@ const Curators = () => {
     }
   };
 
-  const selectLoadMoreScripts = (event: UIEvent<HTMLDivElement>) => {
-    const bottom =
-      event.currentTarget.scrollHeight - event.currentTarget.scrollTop <=
-      event.currentTarget.clientHeight + 100;
-    if (bottom && hasScriptsNextPage) {
-      // user is at the end of the list so load more items
-      scriptsFetchMore({
-        variables: {
-          after:
-            scriptsData && scriptsData.transactions.edges.length > 0
-              ? scriptsData.transactions.edges[scriptsData.transactions.edges.length - 1].cursor
-              : undefined,
-        },
-        updateQuery: commonUpdateQuery,
-      });
-    }
-  };
-
-  const handleScriptSelectClick = useCallback(
-    (event: MouseEvent<HTMLElement>) => {
-      if (scriptAnchorEl) {
-        setScriptAnchorEl(null);
-      } else {
-        setScriptAnchorEl(event.currentTarget);
-      }
-    },
-    [scriptAnchorEl, setScriptAnchorEl],
-  );
-
   const handleSwitchModeUpload = useCallback(() => {
     reset();
     setMode('upload');
@@ -765,6 +701,197 @@ const Curators = () => {
     setMode('update');
     document.querySelector('#switch-icon')?.classList.add('rotate');
   }, [setMode, reset]);
+
+  const getContent = () => {
+    return (
+      <Box width={'100%'} padding='0px 32px' display={'flex'} flexDirection={'column'} gap={'16px'}>
+        {mode === 'upload' ? (
+          <>
+            <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
+              <Box width={'22%'}>
+                <AvatarControl name='avatar' control={control} />
+              </Box>
+              <Box
+                display={'flex'}
+                justifyContent={'space-between'}
+                flexDirection='column'
+                flexGrow={1}
+                width={'30%'}
+              >
+                <TextControl
+                  name='name'
+                  control={control}
+                  rules={{ required: true }}
+                  mat={{
+                    variant: 'outlined',
+                    InputProps: {
+                      sx: {
+                        borderWidth: '1px',
+                        borderColor: theme.palette.text.primary,
+                        borderRadius: '16px',
+                      },
+                    },
+                  }}
+                  style={{ width: '100%' }}
+                />
+                <SelectControl
+                  name='category'
+                  control={control}
+                  rules={{ required: true }}
+                  mat={{
+                    sx: {
+                      borderWidth: '1px',
+                      borderColor: theme.palette.text.primary,
+                      borderRadius: '16px',
+                    },
+                    placeholder: 'Select a Category',
+                  }}
+                >
+                  <MenuItem value={'text'}>Text</MenuItem>
+                  <MenuItem value={'audio'}>Audio</MenuItem>
+                  <MenuItem value={'video'}>Video</MenuItem>
+                </SelectControl>
+              </Box>
+              <TextControl
+                name='description'
+                control={control}
+                mat={{
+                  variant: 'outlined',
+                  multiline: true,
+                  margin: 'normal',
+                  minRows: 6,
+                  maxRows: 6,
+                  InputProps: {
+                    sx: {
+                      borderWidth: '1px',
+                      borderColor: theme.palette.text.primary,
+                      borderRadius: '23px',
+                      height: '100%',
+                    },
+                  },
+                }}
+                style={{ width: '40%', marginTop: 0 }}
+              />
+            </Box>
+            <Box padding='0px 32px'>
+              <GenericSelect
+                name='model'
+                control={control}
+                data={modelsData}
+                error={modelsError}
+                loading={modelsLoading}
+                hasNextPage={hasModelsNextPage}
+                loadMore={modelsFetchMore}
+              />
+            </Box>
+          </>
+        ) : (
+          <>
+            <Box padding='0px 32px' display={'flex'} flexDirection={'column'} gap={'16px'}>
+              <GenericSelect
+                name='script'
+                control={control}
+                data={scriptsData}
+                error={scriptsError}
+                loading={scriptsLoading}
+                hasNextPage={hasScriptsNextPage}
+                disabled={false}
+                modelsData={modelsData}
+                loadMore={scriptsFetchMore}
+                setValue={setValue}
+              />
+              <GenericSelect
+                name='model'
+                control={control}
+                data={modelsData}
+                error={modelsError}
+                loading={modelsLoading}
+                hasNextPage={hasModelsNextPage}
+                disabled={true}
+                loadMore={modelsFetchMore}
+              />
+            </Box>
+            <Box
+              display={'flex'}
+              justifyContent={'space-between'}
+              alignItems={'center'}
+              flexGrow={1}
+              width={'100%'}
+              padding='0px 32px'
+              gap='16px'
+            >
+              <TextControl
+                name='name'
+                control={control}
+                rules={{ required: true }}
+                mat={{
+                  variant: 'outlined',
+                  InputProps: {
+                    sx: {
+                      borderWidth: '1px',
+                      borderColor: theme.palette.text.primary,
+                      borderRadius: '16px',
+                    },
+                  },
+                }}
+                style={{ width: '100%' }}
+              />
+              <SelectControl
+                name='category'
+                control={control}
+                rules={{ required: true }}
+                mat={{
+                  sx: {
+                    borderWidth: '1px',
+                    borderColor: theme.palette.text.primary,
+                    borderRadius: '16px',
+                    marginTop: 0,
+                    marginBottom: 0,
+                  },
+                  placeholder: 'Select a Category',
+                }}
+              >
+                <MenuItem value={'text'}>Text</MenuItem>
+                <MenuItem value={'audio'}>Audio</MenuItem>
+                <MenuItem value={'video'}>Video</MenuItem>
+              </SelectControl>
+            </Box>
+            <Box padding='0px 32px'>
+              <TextControl
+                name='description'
+                control={control}
+                mat={{
+                  variant: 'outlined',
+                  multiline: true,
+                  margin: 'normal',
+                  minRows: 6,
+                  maxRows: 6,
+                  InputProps: {
+                    sx: {
+                      borderWidth: '1px',
+                      borderColor: theme.palette.text.primary,
+                      borderRadius: '23px',
+                      height: '100%',
+                    },
+                  },
+                }}
+                style={{ width: '100%', marginTop: 0 }}
+              />
+            </Box>
+          </>
+        )}
+        <Box padding='0px 32px'>
+          <AllowGroupControl name={'allow'} control={control} />
+        </Box>
+        <Box padding='0px 32px'>
+          <MarkdownControl props={{ control, name: 'notes', rules: { required: true } }} />
+        </Box>
+        <Box padding='0px 32px'>
+          <FileControl name='file' control={control} rules={{ required: true }} />
+        </Box>
+      </Box>
+    );
+  };
 
   return (
     <Container
@@ -839,277 +966,7 @@ const Curators = () => {
               <CardContent
                 sx={{ paddingBottom: 0, gap: '32px', display: 'flex', flexDirection: 'column' }}
               >
-                {mode === 'upload' ? (
-                  <>
-                    <Box display={'flex'} gap={'30px'} width={'100%'} padding='0px 32px'>
-                      <Box width={'22%'}>
-                        <AvatarControl name='avatar' control={control} />
-                      </Box>
-                      <Box
-                        display={'flex'}
-                        justifyContent={'space-between'}
-                        flexDirection='column'
-                        flexGrow={1}
-                        width={'30%'}
-                      >
-                        <TextControl
-                          name='name'
-                          control={control}
-                          rules={{ required: true }}
-                          mat={{
-                            variant: 'outlined',
-                            InputProps: {
-                              sx: {
-                                borderWidth: '1px',
-                                borderColor: theme.palette.text.primary,
-                                borderRadius: '16px',
-                              },
-                            },
-                          }}
-                          style={{ width: '100%' }}
-                        />
-                        <SelectControl
-                          name='category'
-                          control={control}
-                          rules={{ required: true }}
-                          mat={{
-                            sx: {
-                              borderWidth: '1px',
-                              borderColor: theme.palette.text.primary,
-                              borderRadius: '16px',
-                            },
-                            placeholder: 'Select a Category',
-                          }}
-                        >
-                          <MenuItem value={'text'}>Text</MenuItem>
-                          <MenuItem value={'audio'}>Audio</MenuItem>
-                          <MenuItem value={'video'}>Video</MenuItem>
-                        </SelectControl>
-                      </Box>
-                      <TextControl
-                        name='description'
-                        control={control}
-                        mat={{
-                          variant: 'outlined',
-                          multiline: true,
-                          margin: 'normal',
-                          minRows: 6,
-                          maxRows: 6,
-                          InputProps: {
-                            sx: {
-                              borderWidth: '1px',
-                              borderColor: theme.palette.text.primary,
-                              borderRadius: '23px',
-                              height: '100%',
-                            },
-                          },
-                        }}
-                        style={{ width: '40%', marginTop: 0 }}
-                      />
-                    </Box>
-                    <Box padding='0px 32px'>
-                      <ModelSelect
-                        control={control}
-                        data={modelsData}
-                        error={modelsError}
-                        loading={modelsLoading}
-                        hasNextPage={hasModelsNextPage}
-                        loadMore={modelsFetchMore}
-                      />
-                    </Box>
-                    <Box padding='0px 32px'>
-                      <AllowGroupControl name={'allow'} control={control} />
-                    </Box>
-                    <Box padding='0px 32px'>
-                      <MarkdownControl
-                        props={{ control, name: 'notes', rules: { required: true } }}
-                      />
-                    </Box>
-                    <Box padding='0px 32px'>
-                      <FileControl name='file' control={control} rules={{ required: true }} />
-                    </Box>
-                  </>
-                ) : (
-                  <Box
-                    width={'100%'}
-                    padding='0px 32px'
-                    display={'flex'}
-                    flexDirection={'column'}
-                    gap={'16px'}
-                  >
-                    <Box padding='0px 32px' display={'flex'} flexDirection={'column'} gap={'16px'}>
-                      <SelectControl
-                        name='script'
-                        control={control}
-                        rules={{ required: true }}
-                        mat={{
-                          onClick: handleScriptSelectClick,
-                          placeholder: 'Choose a Script',
-                          sx: {
-                            borderWidth: '1px',
-                            borderColor: theme.palette.text.primary,
-                            borderRadius: '16px',
-                          },
-                          renderValue: (selected) => (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                gap: '16px',
-                              }}
-                            >
-                              <Typography>
-                                {findTag(JSON.parse(selected as string), 'scriptName')}
-                              </Typography>
-                              <Typography sx={{ opacity: '0.5' }}>
-                                {findTag(JSON.parse(selected as string), 'sequencerOwner')}
-                                {` (Creator: ${displayShortTxOrAddr(
-                                  findTag(
-                                    JSON.parse(selected as string),
-                                    'sequencerOwner',
-                                  ) as string,
-                                )})`}
-                              </Typography>
-                            </Box>
-                          ),
-                          MenuProps: {
-                            anchorEl: scriptAnchorEl,
-                            open: scriptOpen,
-                            PaperProps: {
-                              onScroll: selectLoadMoreScripts,
-                              sx: {
-                                maxHeight: '144px',
-                                overflowY: scriptsLoading ? 'hidden' : 'auto',
-                              },
-                            },
-                          },
-                        }}
-                      >
-                        {scriptsLoading && (
-                          <Backdrop
-                            sx={{
-                              zIndex: theme.zIndex.drawer + 1,
-                              borderRadius: '23px',
-                              backdropFilter: 'blur(1px)',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              position: 'absolute',
-                              height: '144px',
-                            }}
-                            open={true}
-                          >
-                            <CircularProgress color='primary'></CircularProgress>
-                          </Backdrop>
-                        )}
-                        {scriptsError && (
-                          <Box>
-                            <Typography>Could Not Fetch Available Scripts</Typography>
-                          </Box>
-                        )}
-                        {scriptTxs.length > 0 ? (
-                          scriptTxs.map((el: IContractEdge) => (
-                            <ScriptOption
-                              key={el.node.id}
-                              el={el}
-                              setValue={setValue}
-                              modelsData={modelsData}
-                            />
-                          ))
-                        ) : (
-                          <Box>
-                            <Typography>This account has no previous Scripts Created</Typography>
-                          </Box>
-                        )}
-                      </SelectControl>
-                      <ModelSelect
-                        control={control}
-                        data={modelsData}
-                        error={modelsError}
-                        loading={modelsLoading}
-                        hasNextPage={hasModelsNextPage}
-                        disabled={true}
-                        loadMore={modelsFetchMore}
-                      />
-                    </Box>
-                    <Box
-                      display={'flex'}
-                      justifyContent={'space-between'}
-                      alignItems={'center'}
-                      flexGrow={1}
-                      width={'100%'}
-                      padding='0px 32px'
-                      gap='16px'
-                    >
-                      <TextControl
-                        name='name'
-                        control={control}
-                        rules={{ required: true }}
-                        mat={{
-                          variant: 'outlined',
-                          InputProps: {
-                            sx: {
-                              borderWidth: '1px',
-                              borderColor: theme.palette.text.primary,
-                              borderRadius: '16px',
-                            },
-                          },
-                        }}
-                        style={{ width: '100%' }}
-                      />
-                      <SelectControl
-                        name='category'
-                        control={control}
-                        rules={{ required: true }}
-                        mat={{
-                          sx: {
-                            borderWidth: '1px',
-                            borderColor: theme.palette.text.primary,
-                            borderRadius: '16px',
-                            marginTop: 0,
-                            marginBottom: 0,
-                          },
-                          placeholder: 'Select a Category',
-                        }}
-                      >
-                        <MenuItem value={'text'}>Text</MenuItem>
-                        <MenuItem value={'audio'}>Audio</MenuItem>
-                        <MenuItem value={'video'}>Video</MenuItem>
-                      </SelectControl>
-                    </Box>
-                    <Box padding='0px 32px'>
-                      <TextControl
-                        name='description'
-                        control={control}
-                        mat={{
-                          variant: 'outlined',
-                          multiline: true,
-                          margin: 'normal',
-                          minRows: 6,
-                          maxRows: 6,
-                          InputProps: {
-                            sx: {
-                              borderWidth: '1px',
-                              borderColor: theme.palette.text.primary,
-                              borderRadius: '23px',
-                              height: '100%',
-                            },
-                          },
-                        }}
-                        style={{ width: '100%', marginTop: 0 }}
-                      />
-                    </Box>
-                    <Box padding='0px 32px'>
-                      <AllowGroupControl name={'allow'} control={control} />
-                    </Box>
-                    <Box padding='0px 32px'>
-                      <MarkdownControl
-                        props={{ control, name: 'notes', rules: { required: true } }}
-                      />
-                    </Box>
-                    <Box padding='0px 32px'>
-                      <FileControl name='file' control={control} rules={{ required: true }} />
-                    </Box>
-                  </Box>
-                )}
+                {getContent()}
               </CardContent>
               <CardActions sx={{ paddingBottom: '32px', justifyContent: 'center' }}>
                 <Button

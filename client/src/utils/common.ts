@@ -16,8 +16,25 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { NET_ARWEAVE_URL, TAG_NAMES, defaultDecimalPlaces, secondInMS } from '@/constants';
-import { IContractEdge, IEdge, ITransactions } from '@/interfaces/arweave';
+import {
+  APP_NAME,
+  APP_VERSION,
+  AVATAR_ATTACHMENT,
+  MODEL_ATTACHMENT,
+  NET_ARWEAVE_URL,
+  NOTES_ATTACHMENT,
+  TAG_NAMES,
+  defaultDecimalPlaces,
+  secondInMS,
+  successStatusCode,
+} from '@/constants';
+import { IContractEdge, IEdge, ITag, ITransactions } from '@/interfaces/arweave';
+import { ChunkError, ChunkInfo } from '@/interfaces/bundlr';
+import { AxiosResponse } from 'axios';
+import BigNumber from 'bignumber.js';
+import { UploadResponse } from 'bundlr-custom/build/cjs/common/types';
+import { EnqueueSnackbar } from 'notistack';
+
 export const formatNumbers = (value: string) => {
   try {
     return parseFloat(value).toFixed(defaultDecimalPlaces);
@@ -136,3 +153,194 @@ const secondSliceStart = -2;
 
 export const displayShortTxOrAddr = (addrOrTx: string) =>
   `${addrOrTx.slice(start, firstSliceEnd)}...${addrOrTx.slice(secondSliceStart)}`;
+
+export const bundlrUpload = async ({
+  fileToUpload,
+  tags,
+  nodeBalance,
+  totalChunks,
+  successMessage,
+  chunkUpload,
+  enqueueSnackbar,
+  setSnackbarOpen,
+  setProgress,
+  showSuccessSnackbar,
+  getPrice,
+}: {
+  fileToUpload: File;
+  tags: ITag[];
+  nodeBalance: number;
+  totalChunks: React.MutableRefObject<number>;
+  successMessage: string;
+  chunkUpload: (
+    file: File,
+    tags: ITag[],
+    totalChunks: React.MutableRefObject<number>,
+    handleUpload: (value: ChunkInfo) => void,
+    handleError: (e: ChunkError) => void,
+    handleDone: (value: unknown) => void,
+  ) => Promise<AxiosResponse<UploadResponse, unknown>>;
+  enqueueSnackbar: EnqueueSnackbar;
+  setSnackbarOpen: (open: boolean) => void;
+  setProgress: (progress: number) => void;
+  showSuccessSnackbar: (id: string, message: string) => void;
+  getPrice: (size: number) => Promise<BigNumber>;
+}) => {
+  const filePrice = await getPrice(fileToUpload.size);
+  if (filePrice.toNumber() > nodeBalance) {
+    enqueueSnackbar('Not Enought Balance in Bundlr Node', { variant: 'error' });
+  }
+  const finishedPercentage = 100;
+
+  /** Register Event Callbacks */
+  // event callback: called for every chunk uploaded
+  const handleUpload = (chunkInfo: ChunkInfo) => {
+    const chunkNumber = chunkInfo.id + 1;
+    // update the progress bar based on how much has been uploaded
+    if (chunkNumber >= totalChunks.current) {
+      setProgress(finishedPercentage);
+    } else {
+      setProgress((chunkNumber / totalChunks.current) * finishedPercentage);
+    }
+  };
+
+  // event callback: called if an error happens
+  const handleError = (e: ChunkError) => {
+    setSnackbarOpen(false);
+    enqueueSnackbar(
+      `Error uploading chunk number ${e.id} - ${(e.res as { statusText: string }).statusText}`,
+      { variant: 'error' },
+    );
+  };
+
+  // event callback: called when file is fully uploaded
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleDone = (_finishRes: unknown) => {
+    // set the progress bar to 100
+    setProgress(finishedPercentage);
+    setSnackbarOpen(false);
+  };
+
+  const res = await chunkUpload(
+    fileToUpload,
+    tags,
+    totalChunks,
+    handleUpload,
+    handleError,
+    handleDone,
+  );
+  if (res.status === successStatusCode) {
+    showSuccessSnackbar(res.data.id, successMessage);
+  } else {
+    throw new Error(res.statusText);
+  }
+
+  return res;
+};
+
+export const uploadAvatarImage = async (
+  refTx: string,
+  extraProps: {
+    nodeBalance: number;
+    totalChunks: React.MutableRefObject<number>;
+    chunkUpload: (
+      file: File,
+      tags: ITag[],
+      totalChunks: React.MutableRefObject<number>,
+      handleUpload: (value: ChunkInfo) => void,
+      handleError: (e: ChunkError) => void,
+      handleDone: (value: unknown) => void,
+    ) => Promise<AxiosResponse<UploadResponse, unknown>>;
+    enqueueSnackbar: EnqueueSnackbar;
+    setSnackbarOpen: (open: boolean) => void;
+    setProgress: (progress: number) => void;
+    getPrice: (size: number) => Promise<BigNumber>;
+    showSuccessSnackbar: (id: string, message: string) => void;
+  },
+  imageFor: 'script' | 'model',
+  image?: File,
+) => {
+  if (!image || !(image instanceof File)) {
+    return;
+  }
+
+  // upload the file
+  const tags = [];
+  tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+  tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
+  tags.push({ name: TAG_NAMES.contentType, value: image.type });
+  tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
+  tags.push({ name: TAG_NAMES.attachmentName, value: image.name });
+  tags.push({ name: TAG_NAMES.attachmentRole, value: AVATAR_ATTACHMENT });
+  tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
+  if (imageFor === 'script') {
+    tags.push({ name: TAG_NAMES.scriptTransaction, value: refTx });
+  } else if (imageFor === 'model') {
+    tags.push({ name: TAG_NAMES.modelTransaction, value: refTx });
+  } else {
+    throw new Error('Can only Upload Attachments for Models or Scripts');
+  }
+  extraProps.setSnackbarOpen(true);
+
+  await bundlrUpload({
+    ...extraProps,
+    tags,
+    showSuccessSnackbar: extraProps.showSuccessSnackbar,
+    fileToUpload: image,
+    successMessage: 'Avatar Uploaded Successfully.',
+  });
+};
+
+export const uploadUsageNotes = async (
+  refTx: string,
+  refName: string,
+  usageNotes: string,
+  extraProps: {
+    nodeBalance: number;
+    totalChunks: React.MutableRefObject<number>;
+    chunkUpload: (
+      file: File,
+      tags: ITag[],
+      totalChunks: React.MutableRefObject<number>,
+      handleUpload: (value: ChunkInfo) => void,
+      handleError: (e: ChunkError) => void,
+      handleDone: (value: unknown) => void,
+    ) => Promise<AxiosResponse<UploadResponse, unknown>>;
+    enqueueSnackbar: EnqueueSnackbar;
+    setSnackbarOpen: (open: boolean) => void;
+    setProgress: (progress: number) => void;
+    getPrice: (size: number) => Promise<BigNumber>;
+    showSuccessSnackbar: (id: string, message: string) => void;
+  },
+  notesFor: 'script' | 'model',
+) => {
+  const file = new File([usageNotes], `${refName}-usage.md`, {
+    type: 'text/markdown',
+  });
+
+  // upload the file
+  const tags = [];
+  tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
+  tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
+  tags.push({ name: TAG_NAMES.contentType, value: file.type });
+  tags.push({ name: TAG_NAMES.operationName, value: MODEL_ATTACHMENT });
+  tags.push({ name: TAG_NAMES.attachmentName, value: file.name });
+  tags.push({ name: TAG_NAMES.attachmentRole, value: NOTES_ATTACHMENT });
+  tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
+  extraProps.setSnackbarOpen(true);
+  if (notesFor === 'script') {
+    tags.push({ name: TAG_NAMES.scriptTransaction, value: refTx });
+  } else if (notesFor === 'model') {
+    tags.push({ name: TAG_NAMES.modelTransaction, value: refTx });
+  } else {
+    throw new Error('Can only Upload Attachments for Models or Scripts');
+  }
+
+  await bundlrUpload({
+    ...extraProps,
+    tags,
+    showSuccessSnackbar: extraProps.showSuccessSnackbar,
+    fileToUpload: file,
+    successMessage: 'Usage Notes Uploaded Successfully',
+  });
+};
