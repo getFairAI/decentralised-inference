@@ -262,7 +262,7 @@ const Navbar = ({
           <Box sx={{ flexGrow: 1 }} display={{ sm: 'none', lg: 'flex' }}>
             {' '}
             {/* hide searchbar on small screens */}
-            {pathname && (pathname === '/' || pathname === '/explore') && (
+            {pathname && pathname === '/' && (
               <Box
                 sx={{
                   borderRadius: '30px',
@@ -327,45 +327,10 @@ const Navbar = ({
                     Change Operator
                   </Typography>
                 </Button>
-                <NavLink to='/' className='navbar-links'>
-                  Explore
-                </NavLink>
                 <WalletState />
               </>
             ) : (
               <>
-                <Typography
-                  component={NavLink}
-                  to='/'
-                  className='navbar-links'
-                  sx={navbarLinkStyles}
-                >
-                  Explore
-                </Typography>
-                <Typography
-                  component={NavLink}
-                  to='/upload-creator'
-                  className='navbar-links'
-                  sx={navbarLinkStyles}
-                >
-                  Creators
-                </Typography>
-                <Typography
-                  component={NavLink}
-                  to='/upload'
-                  className='navbar-links'
-                  sx={navbarLinkStyles}
-                >
-                  Curators
-                </Typography>
-                <Typography
-                  component={NavLink}
-                  to='/operators'
-                  className='navbar-links'
-                  sx={navbarLinkStyles}
-                >
-                  Operators
-                </Typography>
                 <NavigationMenu navStyles={navbarLinkStyles} />
                 <WalletState />
               </>

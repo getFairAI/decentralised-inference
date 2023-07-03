@@ -19,34 +19,28 @@
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { useNavigate } from 'react-router-dom';
 import { Tooltip, Typography } from '@mui/material';
 import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK, DISCORD_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import { WalletContext } from '@/context/wallet';
-import { FundContext } from '@/context/fund';
 import GetIcon from './get-icon';
 import Box from '@mui/material/Box';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { useState, useContext, MouseEvent, useCallback, Dispatch } from 'react';
 import { SwapContext } from '@/context/swap';
 
-const bundlrSettings = 'Bundlr Settings';
 const changeWallet = 'Change Wallet';
-const operatorRegistrations = 'Operator Registrations';
 const options = [
-  bundlrSettings,
   'U Swap',
   'Whitepaper',
   'Github',
   'Discord',
   'Twitter',
-  operatorRegistrations,
   changeWallet,
   'Disconnect',
 ];
-const disableableOptions = [bundlrSettings, operatorRegistrations, changeWallet, 'Disconnect'];
+const disableableOptions = [changeWallet, 'Disconnect'];
 
 const ITEM_HEIGHT = 64;
 
@@ -57,19 +51,13 @@ const Option = ({
   option: string;
   setAnchorEl: Dispatch<React.SetStateAction<HTMLElement | null>>;
 }) => {
-  const navigate = useNavigate();
   const { disconnectWallet } = useContext(WalletContext);
-  const { setOpen: setFundOpen } = useContext(FundContext);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const { setOpen: setSwapOpen } = useContext(SwapContext);
 
   const handleOptionClick = useCallback(() => {
     (async () => {
       switch (option) {
-        case bundlrSettings:
-          setFundOpen(true);
-          setAnchorEl(null);
-          break;
         case 'Github':
           window.open(GITHUB_LINK, '_blank');
           break;
@@ -81,10 +69,6 @@ const Option = ({
           break;
         case 'Whitepaper':
           window.open(WHITEPAPER_LINK, '_blank');
-          break;
-        case operatorRegistrations:
-          setAnchorEl(null);
-          navigate('/registrations');
           break;
         case changeWallet:
           setAnchorEl(null);

@@ -21,12 +21,8 @@ import ReactDOM from 'react-dom/client';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import Root from '@/root';
 import Home from '@/pages/home';
-import Curators from '@/pages/curators';
-import UploadCreator from '@/pages/upload-creator';
 import Model, { getModelAttachments } from '@/pages/model/model';
 import '@/styles/main.css';
-import Operators from '@/pages/operators';
-import Register from '@/pages/script/register';
 import Detail from '@/pages/model/detail';
 import OperatorDetails from '@/pages/operator/operator-details';
 import Chat from '@/pages/model/chat';
@@ -36,8 +32,6 @@ import ErrorDisplay from '@/pages/error-display';
 import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
 import ScriptDetails from './pages/script/script-details';
-import Registrations from './pages/registrations';
-import FundBundlr from './guards/fund-bundlr';
 import ChangeOperator from './pages/model/change-operator';
 
 const router = createHashRouter([
@@ -91,45 +85,8 @@ const router = createHashRouter([
         element: <History />,
       },
       {
-        path: 'upload-creator',
-        element: (
-          <FundBundlr>
-            <UploadCreator />
-          </FundBundlr>
-        ),
-      },
-      {
-        path: 'upload',
-        element: (
-          <FundBundlr>
-            <Curators />
-          </FundBundlr>
-        ),
-      },
-      {
-        path: 'operators',
-        children: [
-          {
-            path: '',
-            element: <Operators />,
-            children: [
-              {
-                path: 'register/:txid/',
-                id: 'register',
-                loader: getScriptAttachments,
-                element: <Register />,
-              },
-            ],
-          },
-        ],
-      },
-      {
         path: 'payments',
         element: <Payments />,
-      },
-      {
-        path: 'registrations',
-        element: <Registrations />,
       },
     ],
   },

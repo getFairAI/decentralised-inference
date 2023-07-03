@@ -32,11 +32,9 @@ import {
 import { SnackbarProvider } from 'notistack';
 import { Outlet } from 'react-router-dom';
 import Layout from './components/layout';
-import { BundlrProvider } from './context/bundlr';
 import { WalletProvider } from './context/wallet';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
-import { FundProvider } from './context/fund';
 import { StyledMaterialDesignContent } from './styles/components';
 import { useCallback, useEffect, useState } from 'react';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -160,17 +158,13 @@ const App = () => {
   } else {
     return (
       <WalletProvider>
-        <BundlrProvider>
-          <FundProvider>
-            <ChooseWalletProvider>
-              <SwapProvider>
-                <Layout>
-                  <Outlet />
-                </Layout>
-              </SwapProvider>
-            </ChooseWalletProvider>
-          </FundProvider>
-        </BundlrProvider>
+        <ChooseWalletProvider>
+          <SwapProvider>
+            <Layout>
+              <Outlet />
+            </Layout>
+          </SwapProvider>
+        </ChooseWalletProvider>
       </WalletProvider>
     );
   }
