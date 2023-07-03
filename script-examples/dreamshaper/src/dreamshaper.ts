@@ -223,14 +223,15 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
   const requestTx: IEdge = await getRequest(requestId);
   if (!requestTx) {
     // If the request doesn't exist, skip
-
-    return;
+    logger.error(`Request ${requestId} does not exist. Skipping...`);
+    return false;
   }
 
   const responseTxs: IEdge[] = await queryTransactionAnswered(requestId, address);
   if (responseTxs.length > 0) {
     // If the request has already been answered, we don't need to do anything
-    return;
+    logger.info(`Request ${requestId} has already been answered. Skipping...`);
+    return false;
   }
 
   if (
@@ -241,7 +242,8 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
       CONFIG.scriptCurator,
     ))
   ) {
-    return;
+    logger.error(`Could not find payment for request ${requestId}. Skipping...`);
+    return false;
   }
 
   const appVersion = requestTx.node.tags.find((tag) => tag.name === 'App-Version')?.value;
@@ -250,8 +252,8 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
   )?.value;
   if (!appVersion || !conversationIdentifier) {
     // If the request doesn't have the necessary tags, skip
-
-    return;
+    logger.error(`Request ${requestId} does not have the necessary tags.`);
+    return false;
   }
 
   const inferenceResult = await inference(requestTx);
@@ -264,6 +266,8 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
     requestTx.node.id,
     conversationIdentifier,
   );
+
+  return true;
 };
 
 const lastProcessedTxs: IEdge[] = [];
@@ -296,19 +300,27 @@ const start = async () => {
     }
 
     for (const edge of newRequestTxs) {
+      logger.info(`Processing request ${edge.node.id} ...`);
       // Check if request already answered:
       const reqTxId = edge.node.tags.find((tag) => tag.name === INFERENCE_TRANSACTION_TAG)?.value;
       const reqUserAddr = edge.node.tags.find((tag) => tag.name === SEQUENCE_OWNER_TAG)?.value;
 
+      let successRequest = false;
+
       if (reqTxId && reqUserAddr) {
-        await processRequest(reqTxId, reqUserAddr);
+        successRequest = await processRequest(reqTxId, reqUserAddr);
       } else {
+        logger.error('No inference Tx or userAddr. Skipping...');
         // skip requests without inference transaction tag
       }
-    }
 
-    // save latest tx id
-    lastProcessedTxs.push(...newRequestTxs);
+      if (successRequest) {
+        // save latest tx id only for successful processed requests
+        lastProcessedTxs.push(...newRequestTxs);
+      } else {
+        // if request was not processed successfully, do not add it to lastProcessedTxs
+      }
+    }
   } catch (e) {
     logger.error(`Errored with: ${e}`);
   }
