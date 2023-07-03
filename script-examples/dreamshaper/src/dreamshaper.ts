@@ -223,13 +223,14 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
   const requestTx: IEdge = await getRequest(requestId);
   if (!requestTx) {
     // If the request doesn't exist, skip
-
+    logger.error(`Request ${requestId} does not exist. Skipping...`);
     return;
   }
 
   const responseTxs: IEdge[] = await queryTransactionAnswered(requestId, address);
   if (responseTxs.length > 0) {
     // If the request has already been answered, we don't need to do anything
+    logger.info(`Request ${requestId} has already been answered. Skipping...`);
     return;
   }
 
@@ -241,6 +242,7 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
       CONFIG.scriptCurator,
     ))
   ) {
+    logger.error(`Could not find payment for request ${requestId}. Skipping...`);
     return;
   }
 
@@ -250,7 +252,7 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
   )?.value;
   if (!appVersion || !conversationIdentifier) {
     // If the request doesn't have the necessary tags, skip
-
+    logger.error(`Request ${requestId} does not have the necessary tags.`);
     return;
   }
 
@@ -296,19 +298,20 @@ const start = async () => {
     }
 
     for (const edge of newRequestTxs) {
+      logger.info(`Processing request ${edge.node.id} ...`);
       // Check if request already answered:
       const reqTxId = edge.node.tags.find((tag) => tag.name === INFERENCE_TRANSACTION_TAG)?.value;
       const reqUserAddr = edge.node.tags.find((tag) => tag.name === SEQUENCE_OWNER_TAG)?.value;
 
       if (reqTxId && reqUserAddr) {
         await processRequest(reqTxId, reqUserAddr);
+        // save latest tx id only for successful processed requests
+        lastProcessedTxs.push(...newRequestTxs);
       } else {
+        logger.error('No inference Tx or userAddr. Skipping...');
         // skip requests without inference transaction tag
       }
     }
-
-    // save latest tx id
-    lastProcessedTxs.push(...newRequestTxs);
   } catch (e) {
     logger.error(`Errored with: ${e}`);
   }
