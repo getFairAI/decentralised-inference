@@ -231,7 +231,7 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
   if (responseTxs.length > 0) {
     // If the request has already been answered, we don't need to do anything
     logger.info(`Request ${requestId} has already been answered. Skipping...`);
-    return false;
+    return true;
   }
 
   if (
