@@ -79,21 +79,6 @@ const NavigationMenu = ({ navStyles }: { navStyles: SxProps }) => {
             Explore
           </Typography>
         </MenuItem>
-        <MenuItem key={'creators'} onClick={handleCloseNavMenu}>
-          <Typography component={NavLink} to='/upload-creator'>
-            Creators
-          </Typography>
-        </MenuItem>
-        <MenuItem key={'curators'} onClick={handleCloseNavMenu}>
-          <Typography component={NavLink} to='/upload'>
-            Curators
-          </Typography>
-        </MenuItem>
-        <MenuItem key={'operators'} onClick={handleCloseNavMenu}>
-          <Typography component={NavLink} to='/operators'>
-            Operators
-          </Typography>
-        </MenuItem>
       </Menu>
     </Box>
   );

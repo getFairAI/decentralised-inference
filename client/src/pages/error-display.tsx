@@ -17,7 +17,6 @@
  */
 
 import Layout from '@/components/layout';
-import { BundlrProvider } from '@/context/bundlr';
 import { WalletProvider } from '@/context/wallet';
 import { Alert, Box, Container, CssBaseline, Typography } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
@@ -59,39 +58,37 @@ const ErrorDisplay = () => {
           }}
         >
           <WalletProvider>
-            <BundlrProvider>
-              <CssBaseline />
-              <Layout>
-                <Container
-                  sx={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}
-                  maxWidth={false}
+            <CssBaseline />
+            <Layout>
+              <Container
+                sx={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}
+                maxWidth={false}
+              >
+                <Box
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
                 >
-                  <Box
+                  <Alert
+                    severity='error'
+                    variant='outlined'
+                    icon={<ErrorOutlineIcon fontSize='large' />}
                     sx={{
-                      height: '100%',
+                      width: '80%',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'center',
                       alignItems: 'center',
                     }}
                   >
-                    <Alert
-                      severity='error'
-                      variant='outlined'
-                      icon={<ErrorOutlineIcon fontSize='large' />}
-                      sx={{
-                        width: '80%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Typography align='center'>{errorMessage}</Typography>
-                    </Alert>
-                  </Box>
-                </Container>
-              </Layout>
-            </BundlrProvider>
+                    <Typography align='center'>{errorMessage}</Typography>
+                  </Alert>
+                </Box>
+              </Container>
+            </Layout>
           </WalletProvider>
         </SnackbarProvider>
       </AppThemeProvider>

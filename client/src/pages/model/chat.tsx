@@ -76,7 +76,6 @@ import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
-import { BundlrContext } from '@/context/bundlr';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
 import useScroll from '@/hooks/useScroll';
@@ -113,7 +112,6 @@ const Chat = () => {
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
-  const { nodeBalance, getPrice } = useContext(BundlrContext);
   const target = useRef<HTMLDivElement>(null);
   const isOnScreen = useOnScreen(target);
   const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
@@ -533,12 +531,6 @@ const Chat = () => {
     }
 
     try {
-      const messagePrice = await getPrice(dataSize);
-      if (!nodeBalance || messagePrice.toNumber() > nodeBalance) {
-        enqueueSnackbar('Not Enough Bundlr Funds to send message', { variant: 'error' });
-        return false;
-      }
-
       if (currentUBalance < parseUBalance(state.fee)) {
         enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
         return false;
