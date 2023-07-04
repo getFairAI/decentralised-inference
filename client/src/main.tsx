@@ -38,6 +38,7 @@ import { getScriptAttachments } from './pages/script/script';
 import ScriptDetails from './pages/script/script-details';
 import Registrations from './pages/registrations';
 import FundBundlr from './guards/fund-bundlr';
+import ChangeOperator from './pages/model/change-operator';
 
 const router = createHashRouter([
   {
@@ -81,8 +82,7 @@ const router = createHashRouter([
         children: [
           {
             path: 'change-operator',
-            loader: getModelAttachments,
-            element: <Detail />,
+            element: <ChangeOperator />,
           },
         ],
       },

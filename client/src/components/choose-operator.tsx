@@ -75,16 +75,15 @@ const OperatorSelected = ({
   const navigate = useNavigate();
   const { currentAddress } = useContext(WalletContext);
 
-  const handleHistoryClick = useCallback(
-    () =>
-      navigate(`/operators/details/${operatorsData[selectedIdx].node.owner.address}`, {
-        state: {
-          operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
-          fullState: operatorsData[selectedIdx],
-        },
-      }),
-    [navigate, scriptTx, operatorsData, selectedIdx],
-  );
+  const handleHistoryClick = useCallback(() => {
+    const opAddress = findTag(operatorsData[selectedIdx], 'sequencerOwner') as string;
+    navigate(`/operators/details/${opAddress}`, {
+      state: {
+        operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
+        fullState: operatorsData[selectedIdx],
+      },
+    });
+  }, [navigate, scriptTx, operatorsData, selectedIdx]);
 
   const handleUseOperatorClick = useCallback(() => {
     const opOwner = findTag(operatorsData[selectedIdx], 'sequencerOwner') as string;
@@ -158,7 +157,7 @@ const ChooseOperator = ({
   setShowOperators,
   scriptTx,
 }: {
-  setShowOperators: Dispatch<SetStateAction<boolean>>;
+  setShowOperators?: Dispatch<SetStateAction<boolean>>;
   scriptTx?: IEdge | IContractEdge;
 }) => {
   const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
@@ -266,38 +265,44 @@ const ChooseOperator = ({
   }, [filterValue]);
 
   const handleBackClick = useCallback(() => {
-    setShowOperators(false);
-  }, []);
+    if (setShowOperators) {
+      setShowOperators(false);
+    } else {
+      // ignore
+    }
+  }, [setShowOperators]);
 
   return (
     <>
       <DialogActions
         sx={{
-          justifyContent: 'space-between',
+          justifyContent: setShowOperators ? 'space-between' : 'flex-end',
           padding: '32px 12px 8px 20px',
         }}
       >
-        <Button
-          sx={{
-            fontStyle: 'normal',
-            fontWeight: 700,
-            fontSize: '23px',
-            lineHeight: '31px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            textAlign: 'left',
-            borderRadius: '30px',
-          }}
-          variant='contained'
-          onClick={handleBackClick}
-        >
-          <Box display='flex'>
-            <Icon sx={{ rotate: '90deg' }}>
-              <img src='./triangle.svg' />
-            </Icon>
-            <Typography>{' Back to Scripts'}</Typography>
-          </Box>
-        </Button>
+        {!!setShowOperators && (
+          <Button
+            sx={{
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '23px',
+              lineHeight: '31px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              textAlign: 'left',
+              borderRadius: '30px',
+            }}
+            variant='contained'
+            onClick={handleBackClick}
+          >
+            <Box display='flex'>
+              <Icon sx={{ rotate: '90deg' }}>
+                <img src='./triangle.svg' />
+              </Icon>
+              <Typography>{' Back to Scripts'}</Typography>
+            </Box>
+          </Button>
+        )}
         <Box
           sx={{
             background: 'transparent',
