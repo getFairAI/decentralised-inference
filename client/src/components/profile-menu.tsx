@@ -20,7 +20,7 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { Tooltip, Typography } from '@mui/material';
-import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK, DISCORD_LINK } from '@/constants';
+import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK, DISCORD_LINK, STUDIO_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import { WalletContext } from '@/context/wallet';
@@ -32,6 +32,7 @@ import { SwapContext } from '@/context/swap';
 
 const changeWallet = 'Change Wallet';
 const options = [
+  'Studio',
   'U Swap',
   'Whitepaper',
   'Github',
@@ -58,6 +59,9 @@ const Option = ({
   const handleOptionClick = useCallback(() => {
     (async () => {
       switch (option) {
+        case 'Studio':
+          window.open(STUDIO_LINK, '_blank');
+          break;
         case 'Github':
           window.open(GITHUB_LINK, '_blank');
           break;
