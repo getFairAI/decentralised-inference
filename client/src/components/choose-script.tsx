@@ -60,9 +60,11 @@ const ChooseScript = ({
   setShowScripts,
   handleScriptChosen,
   defaultScriptTx,
+  setGlobalLoading,
 }: {
   setShowScripts: Dispatch<SetStateAction<boolean>>;
   handleScriptChosen: (scriptTx: IEdge | IContractEdge) => void;
+  setGlobalLoading: Dispatch<SetStateAction<boolean>>;
   defaultScriptTx?: IEdge | IContractEdge;
 }) => {
   const [scriptsData, setScriptsData] = useState<IContractEdge[]>([]);
@@ -165,6 +167,12 @@ const ChooseScript = ({
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setScriptsData(filtered);
+        if (filtered.length === 1) {
+          handleScriptChosen(filtered[0]);
+          setShowScripts(false);
+        } else {
+          setGlobalLoading(false);
+        }
         setSelectedIdx(filtered.findIndex((el) => el.node.id === defaultScriptTx?.node?.id));
         setFiltering(false);
       })();

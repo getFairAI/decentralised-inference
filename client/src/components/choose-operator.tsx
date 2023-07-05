@@ -156,9 +156,11 @@ const OperatorSelected = ({
 const ChooseOperator = ({
   setShowOperators,
   scriptTx,
+  setGlobalLoading,
 }: {
   setShowOperators?: Dispatch<SetStateAction<boolean>>;
   scriptTx?: IEdge | IContractEdge;
+  setGlobalLoading?: Dispatch<SetStateAction<boolean>>;
 }) => {
   const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -166,6 +168,8 @@ const ChooseOperator = ({
   const [selectedIdx, setSelectedIdx] = useState(-1);
   const [filtering, setFiltering] = useState(false);
   const elementsPerPage = 5;
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const tags = [
     ...DEFAULT_TAGS,
@@ -241,6 +245,26 @@ const ChooseOperator = ({
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setOperatorsData(filtered);
+        if (filtered.length === 1 && !!setShowOperators) {
+          const opOwner = findTag(filtered[0], 'sequencerOwner') as string;
+          const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') as string;
+          const state = {
+            modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
+            scriptName: findTag(scriptTx as IEdge, 'scriptName'),
+            fee: findTag(filtered[0], 'operatorFee'),
+            scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
+            fullState: scriptTx,
+            scriptCurator,
+          };
+          if (pathname.includes('chat')) {
+            navigate(pathname.replace(pathname.split('/chat/')[1], opOwner), { state });
+          } else {
+            navigate(`/chat/${opOwner}`, { state });
+          }
+          setShowOperators(false);
+        } else if (setGlobalLoading) {
+          setGlobalLoading(false);
+        }
         setFiltering(false);
       })();
     }
