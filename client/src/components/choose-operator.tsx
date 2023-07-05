@@ -38,13 +38,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { isValidRegistration } from '@/utils/operator';
-import { Timeout } from 'react-number-format/types/types';
 
 const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
   const opFee = findTag(el, 'operatorFee') as string;
@@ -153,12 +153,111 @@ const OperatorSelected = ({
   );
 };
 
+const ChooseOperatorHeader = ({
+  setShowOperators,
+  setFilterValue,
+}: {
+  setShowOperators?: Dispatch<SetStateAction<boolean>>;
+  setFilterValue: Dispatch<SetStateAction<string>>;
+}) => {
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleFilterChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const timeoutDelay = 500;
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      } else {
+        // ignore
+      }
+      timeoutIdRef.current = setTimeout(() => {
+        setFilterValue(event.target.value);
+      }, timeoutDelay);
+    },
+    [setFilterValue],
+  );
+
+  const handleBackClick = useCallback(() => {
+    if (setShowOperators) {
+      setShowOperators(false);
+    } else {
+      // ignore
+    }
+  }, [setShowOperators]);
+
+  return (
+    <DialogActions
+      sx={{
+        justifyContent: setShowOperators ? 'space-between' : 'flex-end',
+        padding: '32px 12px 8px 20px',
+      }}
+    >
+      {!!setShowOperators && (
+        <Button
+          sx={{
+            fontStyle: 'normal',
+            fontWeight: 700,
+            fontSize: '23px',
+            lineHeight: '31px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            textAlign: 'left',
+            borderRadius: '30px',
+          }}
+          variant='contained'
+          onClick={handleBackClick}
+        >
+          <Box display='flex'>
+            <Icon sx={{ rotate: '90deg' }}>
+              <img src='./triangle.svg' />
+            </Icon>
+            <Typography>{' Back to Scripts'}</Typography>
+          </Box>
+        </Button>
+      )}
+      <Box
+        sx={{
+          background: 'transparent',
+          border: '2px solid',
+          borderRadius: '30px',
+          margin: '0 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: '3px 20px 3px 20px',
+          alignItems: 'center',
+        }}
+      >
+        <InputBase
+          sx={{
+            fontStyle: 'normal',
+            fontWeight: 400,
+            fontSize: '12px',
+            lineHeight: '16px',
+            minWidth: '210px',
+          }}
+          placeholder='Search by Operator Name or Address...'
+          onChange={handleFilterChange}
+        />
+        <Icon
+          sx={{
+            height: '30px',
+          }}
+        >
+          <img src='./search-icon.svg'></img>
+        </Icon>
+      </Box>
+    </DialogActions>
+  );
+};
+
 const ChooseOperator = ({
   setShowOperators,
   scriptTx,
+  setGlobalLoading,
 }: {
   setShowOperators?: Dispatch<SetStateAction<boolean>>;
   scriptTx?: IEdge | IContractEdge;
+  setGlobalLoading?: Dispatch<SetStateAction<boolean>>;
 }) => {
   const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -166,6 +265,8 @@ const ChooseOperator = ({
   const [selectedIdx, setSelectedIdx] = useState(-1);
   const [filtering, setFiltering] = useState(false);
   const elementsPerPage = 5;
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const tags = [
     ...DEFAULT_TAGS,
@@ -202,14 +303,6 @@ const ChooseOperator = ({
     refetch({ tags });
   }, [refetch]);
 
-  let keyTimeout: Timeout;
-  const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(keyTimeout);
-    keyTimeout = setTimeout(() => {
-      setFilterValue(event.target.value);
-    }, 500);
-  };
-
   const handleSelected = useCallback(
     (index: number) => {
       if (selectedIdx === index) {
@@ -220,6 +313,31 @@ const ChooseOperator = ({
     },
     [setSelectedIdx],
   );
+
+  const checkSingleOperator = (filtered: IEdge[]) => {
+    if (filtered.length === 1 && !!setShowOperators) {
+      const opOwner = findTag(filtered[0], 'sequencerOwner') as string;
+      const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') as string;
+      const state = {
+        modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
+        scriptName: findTag(scriptTx as IEdge, 'scriptName'),
+        fee: findTag(filtered[0], 'operatorFee'),
+        scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
+        fullState: scriptTx,
+        scriptCurator,
+      };
+      if (pathname.includes('chat')) {
+        navigate(pathname.replace(pathname.split('/chat/')[1], opOwner), { state });
+      } else {
+        navigate(`/chat/${opOwner}`, { state });
+      }
+      setShowOperators(false);
+    } else if (setGlobalLoading) {
+      setGlobalLoading(false);
+    } else {
+      // ignore
+    }
+  };
 
   /**
    * @description Effect that runs on query data changes;
@@ -241,6 +359,7 @@ const ChooseOperator = ({
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setOperatorsData(filtered);
+        checkSingleOperator(filtered);
         setFiltering(false);
       })();
     }
@@ -264,77 +383,9 @@ const ChooseOperator = ({
     }
   }, [filterValue]);
 
-  const handleBackClick = useCallback(() => {
-    if (setShowOperators) {
-      setShowOperators(false);
-    } else {
-      // ignore
-    }
-  }, [setShowOperators]);
-
   return (
     <>
-      <DialogActions
-        sx={{
-          justifyContent: setShowOperators ? 'space-between' : 'flex-end',
-          padding: '32px 12px 8px 20px',
-        }}
-      >
-        {!!setShowOperators && (
-          <Button
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '23px',
-              lineHeight: '31px',
-              display: 'flex',
-              alignItems: 'flex-start',
-              textAlign: 'left',
-              borderRadius: '30px',
-            }}
-            variant='contained'
-            onClick={handleBackClick}
-          >
-            <Box display='flex'>
-              <Icon sx={{ rotate: '90deg' }}>
-                <img src='./triangle.svg' />
-              </Icon>
-              <Typography>{' Back to Scripts'}</Typography>
-            </Box>
-          </Button>
-        )}
-        <Box
-          sx={{
-            background: 'transparent',
-            border: '2px solid',
-            borderRadius: '30px',
-            margin: '0 20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '3px 20px 3px 20px',
-            alignItems: 'center',
-          }}
-        >
-          <InputBase
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 400,
-              fontSize: '12px',
-              lineHeight: '16px',
-              minWidth: '210px',
-            }}
-            placeholder='Search by Operator Name or Address...'
-            onChange={handleFilterChange}
-          />
-          <Icon
-            sx={{
-              height: '30px',
-            }}
-          >
-            <img src='./search-icon.svg'></img>
-          </Icon>
-        </Box>
-      </DialogActions>
+      <ChooseOperatorHeader setFilterValue={setFilterValue} setShowOperators={setShowOperators} />
       <DialogContent sx={{ overflow: 'unset' }}>
         <BasicTable
           type='operators'
