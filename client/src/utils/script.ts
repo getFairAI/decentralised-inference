@@ -50,5 +50,10 @@ export const filterPreviousVersions = <T extends Array<IContractEdge | IEdge>>(d
     // Array.from(new Set(el))
   }
 
-  return data.filter((el) => !oldVersionsTxIds.find((oldTxId) => el.node.id === oldTxId)) as T;
+  return data.filter(
+    (el) =>
+      !oldVersionsTxIds.find(
+        (oldTxId) => el.node.id === oldTxId || findTag(el, 'scriptTransaction') === oldTxId,
+      ),
+  ) as T;
 };
