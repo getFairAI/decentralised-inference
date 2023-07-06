@@ -41,6 +41,7 @@ import {
   SCRIPT_USER_TAG,
   SEQUENCE_OWNER_TAG,
   UNIX_TIME_TAG,
+  U_DIVIDER,
   VAULT_ADDRESS,
   secondInMS,
 } from './constants';
@@ -270,7 +271,7 @@ const processRequest = async (requestId: string, reqUserAddr: string) => {
   return true;
 };
 
-const lastProcessedTxs: IEdge[] = [];
+const lastProcessedTxs: string[] = [];
 
 const start = async () => {
   try {
@@ -278,7 +279,7 @@ const start = async () => {
     const { requestTxs, hasNextPage } = await queryTransactionsReceived(address, operatorFee);
 
     const newRequestTxs = requestTxs.filter(
-      (tx) => !lastProcessedTxs.find((el) => el.node.id === tx.node.id),
+      (tx) => !lastProcessedTxs.find((txid) => txid === tx.node.id),
     );
 
     let fetchMore = hasNextPage;
@@ -316,7 +317,7 @@ const start = async () => {
 
       if (successRequest) {
         // save latest tx id only for successful processed requests
-        lastProcessedTxs.push(...newRequestTxs);
+        lastProcessedTxs.push(edge.node.id);
       } else {
         // if request was not processed successfully, do not add it to lastProcessedTxs
       }
@@ -338,6 +339,7 @@ function sleep(ms: number) {
 
   try {
     modelOwner = await getModelOwner();
+    logger.info(`Found Model owner: ${modelOwner}`);
   } catch (err) {
     logger.error('Error getting model owner');
     logger.info('Shutting down...');
@@ -347,6 +349,7 @@ function sleep(ms: number) {
 
   try {
     operatorFee = await getOperatorFee();
+    logger.info(`Found Operator fee: ${operatorFee / U_DIVIDER} $u`);
   } catch (err) {
     logger.error('Error fetching operator fee');
     logger.info('Shutting down...');
