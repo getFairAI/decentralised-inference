@@ -36,6 +36,7 @@ import {
   NET_ARWEAVE_URL,
   OPERATION_NAME_TAG,
   REQUEST_TRANSACTION_TAG,
+  RESPONSE_DETAILS_TAG,
   SCRIPT_CURATOR_TAG,
   SCRIPT_NAME_TAG,
   SCRIPT_USER_TAG,
@@ -75,7 +76,10 @@ const JWK: JWKInterface = JSON.parse(fs.readFileSync('wallet.json').toString());
 const bundlr = new NodeBundlr('https://node1.bundlr.network', 'arweave', JWK);
 
 const sendToBundlr = async (
-  response: string,
+  response: {
+    details: unknown;
+    result: string;
+  },
   appVersion: string,
   userAddress: string,
   requestTransaction: string,
@@ -98,12 +102,13 @@ const sendToBundlr = async (
     { name: REQUEST_TRANSACTION_TAG, value: requestTransaction },
     { name: OPERATION_NAME_TAG, value: 'Script Inference Response' },
     { name: CONVERSATION_IDENTIFIER_TAG, value: conversationIdentifier },
+    { name: RESPONSE_DETAILS_TAG, value: JSON.stringify(response.details) },
     { name: CONTENT_TYPE_TAG, value: 'text/plain' },
     { name: UNIX_TIME_TAG, value: (Date.now() / secondInMS).toString() },
   ];
 
   try {
-    const transaction = await bundlr.upload(response, { tags });
+    const transaction = await bundlr.upload(response.result, { tags });
     logger.info(`Data uploaded ==> https://arweave.net/${transaction.id}`);
   } catch (e) {
     // throw error to be handled by caller
@@ -120,7 +125,10 @@ const inference = async function (requestTx: IEdge) {
     method: 'POST',
     body: text,
   });
-  const tempData: string = await res.text();
+  const tempData: {
+    details: unknown;
+    result: string;
+  } = await res.json();
 
   return tempData;
 };

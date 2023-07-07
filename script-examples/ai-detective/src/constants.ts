@@ -36,6 +36,7 @@ export const INFERENCE_TRANSACTION_TAG = 'Inference-Transaction';
 export const CONTRACT_TAG = 'Contract';
 export const INPUT_TAG = 'Input';
 export const SEQUENCE_OWNER_TAG = 'Sequencer-Owner';
+export const RESPONSE_DETAILS_TAG = 'Response-Details';
 
 export const SCRIPT_INFERENCE_REQUEST = 'Script Inference Request';
 
