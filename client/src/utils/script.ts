@@ -16,25 +16,8 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MARKETPLACE_ADDRESS, SCRIPT_DELETION, TAG_NAMES } from '@/constants';
-import { client } from './apollo';
-import { QUERY_TX_WITH } from '@/queries/graphql';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { findTag } from './common';
-
-export const isFakeDeleted = async (txid: string) => {
-  const delteTags = [
-    // do not use default tags for filtering
-    { name: TAG_NAMES.operationName, values: [SCRIPT_DELETION] },
-    { name: TAG_NAMES.scriptTransaction, values: [txid] },
-  ];
-  const { data } = await client.query({
-    query: QUERY_TX_WITH,
-    variables: { tags: delteTags, address: MARKETPLACE_ADDRESS },
-  });
-
-  return data.transactions.edges.length > 0;
-};
 
 export const filterPreviousVersions = <T extends Array<IContractEdge | IEdge>>(data: T) => {
   const oldVersionsTxIds: string[] = [];

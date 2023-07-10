@@ -1178,3 +1178,23 @@ export const QUERY_VOTES = gql`
     }
   }
 `;
+
+export const QUERY_TX_WITH_OWNERS = gql`
+  query QUERY_TX_WITH_OWNERS($owners: [String!], $tags: [TagFilter!]) {
+    transactions(owners: $owners, tags: $tags, sort: HEIGHT_DESC, first: 1) {
+      pageInfo {
+        hasNextPage
+      }
+      edges {
+        cursor
+        node {
+          id
+          owner {
+            address
+            key
+          }
+        }
+      }
+    }
+  }
+`;
