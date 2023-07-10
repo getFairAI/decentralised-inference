@@ -16,7 +16,15 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MARKETPLACE_ADDRESS, MODEL_DELETION, NET_ARWEAVE_URL, SCRIPT_DELETION, TAG_NAMES, defaultDecimalPlaces, secondInMS } from '@/constants';
+import {
+  MARKETPLACE_ADDRESS,
+  MODEL_DELETION,
+  NET_ARWEAVE_URL,
+  SCRIPT_DELETION,
+  TAG_NAMES,
+  defaultDecimalPlaces,
+  secondInMS,
+} from '@/constants';
 import { IContractEdge, IEdge, ITransactions } from '@/interfaces/arweave';
 import { QUERY_TX_WITH_OWNERS } from '@/queries/graphql';
 import { client } from './apollo';
@@ -140,9 +148,7 @@ const secondSliceStart = -2;
 export const displayShortTxOrAddr = (addrOrTx: string) =>
   `${addrOrTx.slice(start, firstSliceEnd)}...${addrOrTx.slice(secondSliceStart)}`;
 
-
 export const isFakeDeleted = async (txid: string, owner: string, type: 'script' | 'model') => {
-
   const deleteTags = [];
 
   if (type === 'model') {
@@ -155,7 +161,7 @@ export const isFakeDeleted = async (txid: string, owner: string, type: 'script' 
 
   const { data } = await client.query({
     query: QUERY_TX_WITH_OWNERS,
-    variables: { tags: deleteTags, owners: [ MARKETPLACE_ADDRESS, owner ] },
+    variables: { tags: deleteTags, owners: [MARKETPLACE_ADDRESS, owner] },
   });
 
   return data.transactions.edges.length > 0;
