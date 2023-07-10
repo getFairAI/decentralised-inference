@@ -28,7 +28,7 @@ import {
 import { WalletContext } from '@/context/wallet';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
-import { findTag, findTagsWithKeyword } from '@/utils/common';
+import { findTag, findTagsWithKeyword, isFakeDeleted } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   DialogActions,
@@ -54,7 +54,7 @@ import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
 import { checkHasOperators } from '@/utils/operator';
 import { Timeout } from 'react-number-format/types/types';
-import { filterPreviousVersions, isFakeDeleted } from '@/utils/script';
+import { filterPreviousVersions } from '@/utils/script';
 
 const ChooseScript = ({
   setShowScripts,
@@ -159,7 +159,8 @@ const ChooseScript = ({
         const filtered: IContractEdge[] = [];
         for (const el of filteredScritps) {
           const scriptId = findTag(el, 'scriptTransaction') as string;
-          if (await isFakeDeleted(scriptId)) {
+          const scriptOwner = findTag(el, 'sequencerOwner') as string;
+          if (await isFakeDeleted(scriptId, scriptOwner, 'script')) {
             // if fake deleted ignore
           } else {
             await checkHasOperators(el, filtered);

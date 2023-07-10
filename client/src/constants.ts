@@ -85,6 +85,8 @@ export const TAG_NAMES = {
 // Operation Names
 export const MODEL_CREATION = 'Model Creation';
 
+export const MODEL_DELETION = 'Model Deletion';
+
 export const SCRIPT_CREATION = 'Script Creation';
 
 export const SCRIPT_DELETION = 'Script Deletion';

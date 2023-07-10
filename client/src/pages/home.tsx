@@ -39,7 +39,7 @@ import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import FilterContext from '@/context/filter';
-import { commonUpdateQuery, findTagsWithKeyword } from '@/utils/common';
+import { commonUpdateQuery, findTag, findTagsWithKeyword, isFakeDeleted } from '@/utils/common';
 
 export default function Home() {
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -78,10 +78,20 @@ export default function Home() {
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
       (async () => {
+        const filtered: IEdge[] = [];
+        for (const el of data.transactions.edges) {
+          const modelId = findTag(el, 'modelTransaction') as string;
+          const modelOwner = findTag(el, 'sequencerOwner') as string;
+          if (!(await isFakeDeleted(modelId, modelOwner, 'model'))) {
+            filtered.push(el);
+          } else {
+            // ignore
+          }
+        }
         setHasNextPage(data.transactions.pageInfo.hasNextPage);
-        setTxs(data.transactions.edges);
+        setTxs(filtered);
         if (featuredTxs.length === 0) {
-          setFeaturedTxs(data.transactions.edges.slice(0, featuredElements));
+          setFeaturedTxs(filtered.slice(0, featuredElements));
         }
       })();
     }
