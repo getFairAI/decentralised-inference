@@ -142,7 +142,19 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
             }}
           >
             {getTimePassed(message.timestamp, index)}
-            {'  -  '}
+          </Typography>
+          <Typography
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              margin: '8px',
+              color:
+                message.type === 'response'
+                  ? theme.palette.secondary.contrastText
+                  : theme.palette.terciary.contrastText,
+            }}
+          >
+            {' - '}
           </Typography>
           <Typography
             sx={{
