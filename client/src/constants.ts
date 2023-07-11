@@ -37,6 +37,9 @@ export const MARKETPLACE_PERCENTAGE_FEE = 0.15;
 export const CURATOR_PERCENTAGE_FEE = 0.025;
 export const CREATOR_PERCENTAGE_FEE = 0.025;
 
+// Choose the latest script and operator
+export const IS_TO_CHOOSE_MODEL_AUTOMATICALLY = true;
+
 export const TAG_NAMES = {
   appName: 'App-Name',
   appVersion: 'App-Version',
