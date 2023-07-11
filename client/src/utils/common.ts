@@ -156,7 +156,7 @@ export const isFakeDeleted = async (txid: string, owner: string, type: 'script' 
     deleteTags.push({ name: TAG_NAMES.modelTransaction, values: [txid] });
   } else {
     deleteTags.push({ name: TAG_NAMES.operationName, values: [SCRIPT_DELETION] });
-    deleteTags.push({ name: TAG_NAMES.scriptCurator, values: [txid] });
+    deleteTags.push({ name: TAG_NAMES.scriptTransaction, values: [txid] });
   }
 
   const { data } = await client.query({
