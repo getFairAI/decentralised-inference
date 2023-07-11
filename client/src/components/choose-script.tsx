@@ -77,7 +77,7 @@ const ChooseScript = ({
   const { currentAddress } = useContext(WalletContext);
   const navigate = useNavigate();
   const elementsPerPage = 5;
-  
+
   const scriptPaymentInputStr = JSON.stringify({
     function: 'transfer',
     target: VAULT_ADDRESS,

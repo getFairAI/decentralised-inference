@@ -16,7 +16,12 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { TAG_NAMES, OPERATOR_REGISTRATION_PAYMENT_TAGS, DEFAULT_TAGS, IS_TO_CHOOSE_MODEL_AUTOMATICALLY } from '@/constants';
+import {
+  TAG_NAMES,
+  OPERATOR_REGISTRATION_PAYMENT_TAGS,
+  DEFAULT_TAGS,
+  IS_TO_CHOOSE_MODEL_AUTOMATICALLY,
+} from '@/constants';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
@@ -315,7 +320,10 @@ const ChooseOperator = ({
   );
 
   const checkSingleOperator = (filtered: IEdge[]) => {
-    if ((filtered.length === 1 || (IS_TO_CHOOSE_MODEL_AUTOMATICALLY && filtered.length > 1)) && !!setShowOperators) {
+    if (
+      (filtered.length === 1 || (IS_TO_CHOOSE_MODEL_AUTOMATICALLY && filtered.length > 1)) &&
+      !!setShowOperators
+    ) {
       const opOwner = findTag(filtered[0], 'sequencerOwner') as string;
       const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') as string;
       const state = {
