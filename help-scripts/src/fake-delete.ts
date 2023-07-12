@@ -48,7 +48,7 @@ const client = new ApolloClient({
 });
 
 const logger = Pino({
-  name: 'Delete Tx Script',
+  name: 'Fake Delete Txs',
   level: 'debug',
 });
 
@@ -80,22 +80,37 @@ const getById = gql`
 
 const bundlr = new NodeBundlr(NODE2_BUNDLR_URL, 'arweave', JWK);
 
-const fakeDeleteScript = async (wallet: string, txid: string) => {
+const operationNameTag = 'Operation-Name';
+
+const fakeDeleteScript = async (wallet: string, txid: string, owner: string) => {
   // currently only marketplace address can fake delete scripts
-  if (wallet !== MARKETPLACE_ADDRESS) {
-    throw new Error('Loaded Wallet does not match Marketplace address');
+  if (wallet !== owner && wallet !== MARKETPLACE_ADDRESS) {
+    throw new Error('Loaded Wallet is not owner of the Script Creation Tx Nor Marketplace address');
   }
   const tags: Tag[] = [
     { name: 'App-Name', value: 'Fair-Protocol' },
     { name: 'App-Version', value: '0.3' },
-    { name: 'Operation-Name', value: 'Script Deletion' },
+    { name: operationNameTag, value: 'Script Deletion' },
     { name: 'Script-Transaction', value: txid }
   ]
   const result = await bundlr.upload('Script Deletion', { tags })
   logger.info(result.id);
-}
+};
 
-
+const fakeDeleteModel = async (wallet: string, txid: string, owner: string) => {
+  // currently only marketplace address can fake delete scripts
+  if (wallet !== owner && wallet !== MARKETPLACE_ADDRESS) {
+    throw new Error('Loaded Wallet is not owner of the Model Creation Tx Nor Marketplace address');
+  }
+  const tags: Tag[] = [
+    { name: 'App-Name', value: 'Fair-Protocol' },
+    { name: 'App-Version', value: '0.3' },
+    { name: operationNameTag, value: 'Model Deletion' },
+    { name: 'Model-Transaction', value: txid }
+  ]
+  const result = await bundlr.upload('Model Deletion', { tags })
+  logger.info(result.id);
+};
 
 const main = async () => {
   const [ ,, txid ] = process.argv;
@@ -112,19 +127,19 @@ const main = async () => {
         id: txid,
       },
     });
-    if (!result.data.transactions.edges[0]) {
+    if (!result.data.transactions.edges[0]) {
       throw new Error(`Could not Find Tx with id: ${txid}`)
     }
     const txTags = result.data.transactions.edges[0].node.tags;
-
-    const operationName = txTags.find((tag: Tag) => tag.name === 'Operation-Name')?.value;
+    const owner = result.data.transactions.edges[0].node.owner.address;
+    const operationName = txTags.find((tag: Tag) => tag.name === operationNameTag)?.value;
     
     switch (operationName) {
       case 'Model Creation':
-        logger.info('Not Implemented');
+        await fakeDeleteModel(wallet, txid, owner);
         break;
       case 'Script Creation':
-        await fakeDeleteScript(wallet, txid);
+        await fakeDeleteScript(wallet, txid, owner);
         break;
       case 'Operator Registration':
         logger.info('Not Implemented');
