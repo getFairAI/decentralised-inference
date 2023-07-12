@@ -24,6 +24,7 @@ import {
   SCRIPT_CREATION_FEE,
   U_DIVIDER,
   DEFAULT_TAGS,
+  IS_TO_CHOOSE_MODEL_AUTOMATICALLY,
 } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
@@ -126,12 +127,14 @@ const ChooseScript = ({
 
   const handleRetry = useCallback(() => refetch({ tags }), [refetch, tags]);
 
+  const timeoutSeconds = 500;
+
   let keyTimeout: Timeout;
   const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
       setFilterValue(event.target.value);
-    }, 500);
+    }, timeoutSeconds);
   };
 
   const handleSelected = (index: number) => {
@@ -168,7 +171,8 @@ const ChooseScript = ({
         }
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setScriptsData(filtered);
-        if (filtered.length === 1) {
+
+        if (filtered.length === 1 || (IS_TO_CHOOSE_MODEL_AUTOMATICALLY && filtered.length > 1)) {
           handleScriptChosen(filtered[0]);
           setShowScripts(false);
         } else {
