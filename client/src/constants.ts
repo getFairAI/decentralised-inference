@@ -157,6 +157,12 @@ export const DEFAULT_TAGS = [
   { name: TAG_NAMES.appVersion, values: [APP_VERSION] },
 ];
 
+// add smartWeaveContract tags so atomic tokens can be picked up
+export const DEFAULT_TAGS_FOR_TOKENS = [
+  { name: TAG_NAMES.appName, values: [APP_NAME, 'SmartWeaveContract'] },
+  { name: TAG_NAMES.appVersion, values: [APP_VERSION, '0.3.0'] },
+];
+
 // export default tags with support for old version txs
 export const DEFAULT_TAGS_RETRO = [
   { name: TAG_NAMES.appName, values: [APP_NAME] },
