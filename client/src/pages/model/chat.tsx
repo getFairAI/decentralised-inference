@@ -59,6 +59,7 @@ import {
   CURATOR_PERCENTAGE_FEE,
   VAULT_ADDRESS,
   MAX_MESSAGE_SIZE,
+  DEFAULT_TAGS_FOR_TOKENS,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -203,13 +204,10 @@ const Chat = () => {
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      const commonTags = [
-        ...DEFAULT_TAGS,
+      const tagsResponses = [
+        ...DEFAULT_TAGS_FOR_TOKENS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-      ];
-      const tagsResponses = [
-        ...commonTags,
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
         { name: TAG_NAMES.scriptUser, values: [userAddr] },
@@ -296,14 +294,11 @@ const Chat = () => {
     if (messages && requestsData && !messagesLoading && isFirstPage) {
       setIsFirstPage(false);
       stopRequestPolling();
-      const pollTags = [
+
+      const tagsRequests = [
         ...DEFAULT_TAGS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-      ];
-
-      const tagsRequests = [
-        ...pollTags,
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
       ];
 
@@ -316,13 +311,10 @@ const Chat = () => {
         pollInterval: 5000,
       });
       stopResponsePolling();
-      const commonTags = [
-        ...DEFAULT_TAGS,
+      const tagsResponses = [
+        ...DEFAULT_TAGS_FOR_TOKENS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-      ];
-      const tagsResponses = [
-        ...commonTags,
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
         { name: TAG_NAMES.scriptUser, values: [userAddr] },
@@ -357,13 +349,10 @@ const Chat = () => {
     } else if (messages && requestsData && !messagesLoading) {
       // restart responses polling on new messages
       stopResponsePolling();
-      const commonTags = [
-        ...DEFAULT_TAGS,
+      const tagsResponses = [
+        ...DEFAULT_TAGS_FOR_TOKENS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-      ];
-      const tagsResponses = [
-        ...commonTags,
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
         // { name: 'Conversation-Identifier', values: [currentConversationId] },
         { name: TAG_NAMES.scriptUser, values: [userAddr] },
