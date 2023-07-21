@@ -156,7 +156,9 @@ const ChooseScript = ({
     }
     if (queryData && networkStatus === NetworkStatus.ready) {
       (async () => {
-        const uniqueScripts = filterByUniqueScriptTxId<IContractEdge[]>(queryData.transactions.edges);
+        const uniqueScripts = filterByUniqueScriptTxId<IContractEdge[]>(
+          queryData.transactions.edges,
+        );
         const filteredScritps = filterPreviousVersions<IContractEdge[]>(
           uniqueScripts as IContractEdge[],
         );
