@@ -19,6 +19,28 @@
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { findTag } from './common';
 
+export const filterByUniqueScriptTxId = <T extends Array<IContractEdge | IEdge>>(data: T) => {
+  const newData: string[] = [];
+  data.sort((a: IContractEdge | IEdge, b: IContractEdge | IEdge) => {
+    const aTimestamp = parseInt(findTag(a, 'unixTime') as string, 10);
+    const bTimestamp = parseInt(findTag(b, 'unixTime') as string, 10);
+
+    if (aTimestamp === bTimestamp) {
+      return 1;
+    }
+    return aTimestamp - bTimestamp;
+  });
+
+  return data.filter((el) => {
+    if (newData.includes(findTag(el, 'scriptTransaction') as string)) {
+      return false;
+    } else {
+      newData.push(findTag(el, 'scriptTransaction') as string);
+      return true;
+    }
+  });
+};
+
 export const filterPreviousVersions = <T extends Array<IContractEdge | IEdge>>(data: T) => {
   const oldVersionsTxIds: string[] = [];
 

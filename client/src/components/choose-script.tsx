@@ -55,7 +55,7 @@ import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
 import { checkHasOperators } from '@/utils/operator';
 import { Timeout } from 'react-number-format/types/types';
-import { filterPreviousVersions } from '@/utils/script';
+import { filterByUniqueScriptTxId, filterPreviousVersions } from '@/utils/script';
 
 const ChooseScript = ({
   setShowScripts,
@@ -156,8 +156,11 @@ const ChooseScript = ({
     }
     if (queryData && networkStatus === NetworkStatus.ready) {
       (async () => {
-        const filteredScritps = filterPreviousVersions<IContractEdge[]>(
+        const uniqueScripts = filterByUniqueScriptTxId<IContractEdge[]>(
           queryData.transactions.edges,
+        );
+        const filteredScritps = filterPreviousVersions<IContractEdge[]>(
+          uniqueScripts as IContractEdge[],
         );
         const filtered: IContractEdge[] = [];
         for (const el of filteredScritps) {
