@@ -313,7 +313,7 @@ const MessageDetail = ({
                       textAlign: 'center',
                     }}
                   >
-                    {contractState?.owner}
+                    {contractState?.firstOwner}
                   </Typography>
                 </Box>
                 <Box display={'flex'} justifyContent={'space-between'}>
