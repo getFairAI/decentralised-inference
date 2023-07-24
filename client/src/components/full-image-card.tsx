@@ -15,8 +15,8 @@ export const FiCard = styled((props: CardProps) => {
 })(( { width, height }: { width?: string, height?: string }) => ({
   borderRadius: '23px',
   position: 'relative',
-  width: width || '317px',
-  height: height || '352px',
+  width: width ?? '317px',
+  height: height ?? '352px',
   boxShadow: 'none',
   '&:hover': {
     boxShadow:

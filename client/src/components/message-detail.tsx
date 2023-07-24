@@ -36,6 +36,26 @@ import { PstState, connect, getContractByTxId, getState } from '@/utils/pst';
 import Chart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 
+const headerText = {
+  fontStyle: 'normal',
+  fontWeight: 700,
+  fontSize: '23px',
+  lineHeight: '31px',
+  display: 'flex',
+  alignItems: 'center',
+  textAlign: 'center',
+};
+
+const valueText = {
+  fontStyle: 'normal',
+  fontWeight: 400,
+  fontSize: '23px',
+  lineHeight: '31px',
+  display: 'flex',
+  alignItems: 'center',
+  textAlign: 'center',
+};
+
 const MessageDetail = ({
   message,
   open,
@@ -91,13 +111,13 @@ const MessageDetail = ({
 
   useEffect(() => {
     if (contractState) {
-      const labels = Object.keys(contractState.balances).map(el => displayShortTxOrAddr(el)); // balance addresses
-      const series = Object.values(contractState.balances); // balance values;
+      const labels = Object.keys(contractState.balances).map((el) => displayShortTxOrAddr(el)); // balance addresses
+      const values = Object.values(contractState.balances); // balance values;
       setOptions({
         ...options,
         labels
       });
-      setSeries(series);
+      setSeries(values);
     }
   }, [ contractState ]);
 
@@ -146,140 +166,63 @@ const MessageDetail = ({
           
           <Box display={'flex'} justifyContent={'space-between'} alignItems={'flex-start'}>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={headerText}
             >
               Prompt
             </Typography>
             <Typography
               sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
+                ...valueText,
                 textAlign: 'end',
               }}
             >
-              {message.tags.find(el => el.name === 'Description')?.value ?? 'Not Available'}
+              {message.tags.find((el) => el.name === 'Description')?.value ?? 'Not Available'}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={headerText}
             >
               PST Name (PST Ticker)
             </Typography>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={valueText}
             >
               {`${contractState?.name} (${contractState?.ticker})`}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={headerText}
             >
               Model Name
             </Typography>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={valueText}
             >
               {findTag(state.fullState, 'modelName')}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={headerText}
             >
               Script Name
             </Typography>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={valueText}
             >
               {state.scriptName}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={headerText}
             >
               Date
             </Typography>
             <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
+              sx={valueText}
             >
               {new Date(message.timestamp * 1000).toLocaleString()}
               {` (${message.timestamp})`}
@@ -290,56 +233,24 @@ const MessageDetail = ({
               <>
                 <Box display={'flex'} justifyContent={'space-between'}>
                   <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 700,
-                      fontSize: '23px',
-                      lineHeight: '31px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                    }}
+                    sx={headerText}
                   >
                     Original Owner
                   </Typography>
                   <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 400,
-                      fontSize: '23px',
-                      lineHeight: '31px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                    }}
+                    sx={valueText}
                   >
                     {contractState?.firstOwner}
                   </Typography>
                 </Box>
                 <Box display={'flex'} justifyContent={'space-between'}>
                   <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 700,
-                      fontSize: '23px',
-                      lineHeight: '31px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                    }}
+                    sx={headerText}
                   >
                     Operator
                   </Typography>
                   <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 400,
-                      fontSize: '23px',
-                      lineHeight: '31px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                    }}
+                    sx={valueText}
                   >
                     {message.from}
                   </Typography>

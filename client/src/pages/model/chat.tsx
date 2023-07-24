@@ -465,9 +465,9 @@ const Chat = () => {
       height: el.node.block ? el.node.block.height : currentHeight,
       to: isRequest ? (findTag(el, 'scriptOperator') as string) : userAddr,
       from: isRequest ? userAddr : el.node.owner.address,
+      tags: el.node.tags,
       contentType,
       timestamp,
-      tags: el.node.tags,
     };
 
     return msg;
