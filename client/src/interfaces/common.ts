@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { ITag } from "./arweave";
+import { ITag } from './arweave';
 
 export interface IMessage {
   id: string;

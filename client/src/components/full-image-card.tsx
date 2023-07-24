@@ -12,7 +12,7 @@ import { styled } from '@mui/system';
 
 export const FiCard = styled((props: CardProps) => {
   return <Card {...props} />;
-})(( { width, height }: { width?: string, height?: string }) => ({
+})(({ width, height }: { width?: string; height?: string }) => ({
   borderRadius: '23px',
   position: 'relative',
   width: width ?? '317px',

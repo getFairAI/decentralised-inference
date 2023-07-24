@@ -35,6 +35,7 @@ import MessageDisplay from './message-display';
 import { PstState, connect, getContractByTxId, getState } from '@/utils/pst';
 import Chart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
+import { secondInMS } from '@/constants';
 
 const headerText = {
   fontStyle: 'normal',
@@ -67,8 +68,8 @@ const MessageDetail = ({
 }) => {
   const theme = useTheme();
   const { state } = useLocation();
-  const [ showMore, setShowMore ] = useState(false);
-  const [ options, setOptions ] = useState<ApexOptions>({
+  const [showMore, setShowMore] = useState(false);
+  const [options, setOptions] = useState<ApexOptions>({
     title: {
       text: 'Ownership',
       align: 'left',
@@ -76,7 +77,7 @@ const MessageDetail = ({
         fontWeight: 700,
         fontSize: '23px',
         fontFamily: theme.typography.fontFamily,
-      }
+      },
     },
     legend: {
       position: 'left',
@@ -85,16 +86,16 @@ const MessageDetail = ({
       fontSize: '18px',
       fontFamily: theme.typography.fontFamily,
     },
-    colors: [ theme.palette.primary.main, theme.palette.secondary.main, theme.palette.terciary.main ],
+    colors: [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.terciary.main],
   });
-  const [ series, setSeries ] = useState<number[]>([]);
-  const [ contractState, setContractState ] = useState<PstState | undefined>(undefined);
+  const [series, setSeries] = useState<number[]>([]);
+  const [contractState, setContractState] = useState<PstState | undefined>(undefined);
 
   useEffect(() => {
     if (open) {
       try {
         const contract = connect(getContractByTxId(message.id));
-  
+
         (async () => {
           const result = await getState(contract);
           setContractState(result);
@@ -107,7 +108,7 @@ const MessageDetail = ({
       // ignore
       setContractState(undefined);
     }
-  }, [ message, open ]);
+  }, [message, open]);
 
   useEffect(() => {
     if (contractState) {
@@ -115,18 +116,19 @@ const MessageDetail = ({
       const values = Object.values(contractState.balances); // balance values;
       setOptions({
         ...options,
-        labels
+        labels,
       });
       setSeries(values);
     }
-  }, [ contractState ]);
+  }, [contractState]);
 
-  const toggleShowMore = useCallback(() => setShowMore(!showMore), [ showMore, setShowMore ]);
+  const toggleShowMore = useCallback(() => setShowMore(!showMore), [showMore, setShowMore]);
+  const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
   return (
     <Dialog
       open={open}
-      onClose={() => setOpen(false)}
+      onClose={handleClose}
       maxWidth={'lg'}
       fullWidth
       sx={{
@@ -141,7 +143,7 @@ const MessageDetail = ({
     >
       <DialogTitle display='flex' justifyContent={'flex-end'} alignItems='center' lineHeight={0}>
         <IconButton
-          onClick={() => setOpen(false)}
+          onClick={handleClose}
           sx={{
             background: theme.palette.primary.main,
             '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
@@ -158,18 +160,12 @@ const MessageDetail = ({
       >
         <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'100%'}>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <MessageDisplay message={message} forDetails={true}/>
-            {
-              contractState && <Chart options={options} series={series} type={'pie'} width="500" />
-            }
+            <MessageDisplay message={message} forDetails={true} />
+            {contractState && <Chart options={options} series={series} type={'pie'} width='500' />}
           </Box>
-          
+
           <Box display={'flex'} justifyContent={'space-between'} alignItems={'flex-start'}>
-            <Typography
-              sx={headerText}
-            >
-              Prompt
-            </Typography>
+            <Typography sx={headerText}>Prompt</Typography>
             <Typography
               sx={{
                 ...valueText,
@@ -180,87 +176,41 @@ const MessageDetail = ({
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <Typography
-              sx={headerText}
-            >
-              PST Name (PST Ticker)
-            </Typography>
-            <Typography
-              sx={valueText}
-            >
+            <Typography sx={headerText}>PST Name (PST Ticker)</Typography>
+            <Typography sx={valueText}>
               {`${contractState?.name} (${contractState?.ticker})`}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <Typography
-              sx={headerText}
-            >
-              Model Name
-            </Typography>
-            <Typography
-              sx={valueText}
-            >
-              {findTag(state.fullState, 'modelName')}
-            </Typography>
+            <Typography sx={headerText}>Model Name</Typography>
+            <Typography sx={valueText}>{findTag(state.fullState, 'modelName')}</Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <Typography
-              sx={headerText}
-            >
-              Script Name
-            </Typography>
-            <Typography
-              sx={valueText}
-            >
-              {state.scriptName}
-            </Typography>
+            <Typography sx={headerText}>Script Name</Typography>
+            <Typography sx={valueText}>{state.scriptName}</Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <Typography
-              sx={headerText}
-            >
-              Date
-            </Typography>
-            <Typography
-              sx={valueText}
-            >
-              {new Date(message.timestamp * 1000).toLocaleString()}
+            <Typography sx={headerText}>Date</Typography>
+            <Typography sx={valueText}>
+              {new Date(message.timestamp * secondInMS).toLocaleString()}
               {` (${message.timestamp})`}
             </Typography>
           </Box>
-          {
-            showMore && (
-              <>
-                <Box display={'flex'} justifyContent={'space-between'}>
-                  <Typography
-                    sx={headerText}
-                  >
-                    Original Owner
-                  </Typography>
-                  <Typography
-                    sx={valueText}
-                  >
-                    {contractState?.firstOwner}
-                  </Typography>
-                </Box>
-                <Box display={'flex'} justifyContent={'space-between'}>
-                  <Typography
-                    sx={headerText}
-                  >
-                    Operator
-                  </Typography>
-                  <Typography
-                    sx={valueText}
-                  >
-                    {message.from}
-                  </Typography>
-                </Box>
-              </>
-            )
-          }
+          {showMore && (
+            <>
+              <Box display={'flex'} justifyContent={'space-between'}>
+                <Typography sx={headerText}>Original Owner</Typography>
+                <Typography sx={valueText}>{contractState?.firstOwner}</Typography>
+              </Box>
+              <Box display={'flex'} justifyContent={'space-between'}>
+                <Typography sx={headerText}>Operator</Typography>
+                <Typography sx={valueText}>{message.from}</Typography>
+              </Box>
+            </>
+          )}
         </Box>
       </DialogContent>
-      <DialogActions sx={{ display: 'flex', justifyContent: 'center'}}>
+      <DialogActions sx={{ display: 'flex', justifyContent: 'center' }}>
         <Button onClick={toggleShowMore}>{showMore ? 'Show Less' : 'Show More'}</Button>
       </DialogActions>
     </Dialog>
