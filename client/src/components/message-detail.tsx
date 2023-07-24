@@ -24,12 +24,38 @@ import {
   Box,
   Typography,
   useTheme,
+  DialogActions,
+  Button,
 } from '@mui/material';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { IMessage } from '@/interfaces/common';
-import { findTag } from '@/utils/common';
+import { displayShortTxOrAddr, findTag } from '@/utils/common';
 import { useLocation } from 'react-router-dom';
 import MessageDisplay from './message-display';
+import { PstState, connect, getContractByTxId, getState } from '@/utils/pst';
+import Chart from 'react-apexcharts';
+import { ApexOptions } from 'apexcharts';
+import { secondInMS } from '@/constants';
+
+const headerText = {
+  fontStyle: 'normal',
+  fontWeight: 700,
+  fontSize: '23px',
+  lineHeight: '31px',
+  display: 'flex',
+  alignItems: 'center',
+  textAlign: 'center',
+};
+
+const valueText = {
+  fontStyle: 'normal',
+  fontWeight: 400,
+  fontSize: '23px',
+  lineHeight: '31px',
+  display: 'flex',
+  alignItems: 'center',
+  textAlign: 'center',
+};
 
 const MessageDetail = ({
   message,
@@ -42,11 +68,67 @@ const MessageDetail = ({
 }) => {
   const theme = useTheme();
   const { state } = useLocation();
+  const [showMore, setShowMore] = useState(false);
+  const [options, setOptions] = useState<ApexOptions>({
+    title: {
+      text: 'Ownership',
+      align: 'left',
+      style: {
+        fontWeight: 700,
+        fontSize: '23px',
+        fontFamily: theme.typography.fontFamily,
+      },
+    },
+    legend: {
+      position: 'left',
+      offsetY: 25,
+      fontWeight: 400,
+      fontSize: '18px',
+      fontFamily: theme.typography.fontFamily,
+    },
+    colors: [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.terciary.main],
+  });
+  const [series, setSeries] = useState<number[]>([]);
+  const [contractState, setContractState] = useState<PstState | undefined>(undefined);
+
+  useEffect(() => {
+    if (open) {
+      try {
+        const contract = connect(getContractByTxId(message.id));
+
+        (async () => {
+          const result = await getState(contract);
+          setContractState(result);
+        })();
+      } catch (err) {
+        // ignore
+        setContractState(undefined);
+      }
+    } else {
+      // ignore
+      setContractState(undefined);
+    }
+  }, [message, open]);
+
+  useEffect(() => {
+    if (contractState) {
+      const labels = Object.keys(contractState.balances).map((el) => displayShortTxOrAddr(el)); // balance addresses
+      const values = Object.values(contractState.balances); // balance values;
+      setOptions({
+        ...options,
+        labels,
+      });
+      setSeries(values);
+    }
+  }, [contractState]);
+
+  const toggleShowMore = useCallback(() => setShowMore(!showMore), [showMore, setShowMore]);
+  const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
   return (
     <Dialog
       open={open}
-      onClose={() => setOpen(false)}
+      onClose={handleClose}
       maxWidth={'lg'}
       fullWidth
       sx={{
@@ -61,7 +143,7 @@ const MessageDetail = ({
     >
       <DialogTitle display='flex' justifyContent={'flex-end'} alignItems='center' lineHeight={0}>
         <IconButton
-          onClick={() => setOpen(false)}
+          onClick={handleClose}
           sx={{
             background: theme.palette.primary.main,
             '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
@@ -76,151 +158,61 @@ const MessageDetail = ({
           gap: '48px',
         }}
       >
-        <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
-          <MessageDisplay message={message} />
+        <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'100%'}>
           <Box display={'flex'} justifyContent={'space-between'}>
+            <MessageDisplay message={message} forDetails={true} />
+            {contractState && <Chart options={options} series={series} type={'pie'} width='500' />}
+          </Box>
+
+          <Box display={'flex'} justifyContent={'space-between'} alignItems={'flex-start'}>
+            <Typography sx={headerText}>Prompt</Typography>
             <Typography
               sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
+                ...valueText,
+                textAlign: 'end',
               }}
             >
-              From
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              {message.from}
+              {message.tags.find((el) => el.name === 'Description')?.value ?? 'Not Available'}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              To
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              {message.to}
+            <Typography sx={headerText}>PST Name (PST Ticker)</Typography>
+            <Typography sx={valueText}>
+              {`${contractState?.name} (${contractState?.ticker})`}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Model Name
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              {findTag(state.fullState, 'modelName')}
-            </Typography>
+            <Typography sx={headerText}>Model Name</Typography>
+            <Typography sx={valueText}>{findTag(state.fullState, 'modelName')}</Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Script Name
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              {state.scriptName}
-            </Typography>
+            <Typography sx={headerText}>Script Name</Typography>
+            <Typography sx={valueText}>{state.scriptName}</Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              Date
-            </Typography>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '23px',
-                lineHeight: '31px',
-                display: 'flex',
-                alignItems: 'center',
-                textAlign: 'center',
-              }}
-            >
-              {new Date(message.timestamp * 1000).toLocaleString()}
+            <Typography sx={headerText}>Date</Typography>
+            <Typography sx={valueText}>
+              {new Date(message.timestamp * secondInMS).toLocaleString()}
               {` (${message.timestamp})`}
             </Typography>
           </Box>
+          {showMore && (
+            <>
+              <Box display={'flex'} justifyContent={'space-between'}>
+                <Typography sx={headerText}>Original Owner</Typography>
+                <Typography sx={valueText}>{contractState?.firstOwner}</Typography>
+              </Box>
+              <Box display={'flex'} justifyContent={'space-between'}>
+                <Typography sx={headerText}>Operator</Typography>
+                <Typography sx={valueText}>{message.from}</Typography>
+              </Box>
+            </>
+          )}
         </Box>
       </DialogContent>
+      <DialogActions sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Button onClick={toggleShowMore}>{showMore ? 'Show Less' : 'Show More'}</Button>
+      </DialogActions>
     </Dialog>
   );
 };

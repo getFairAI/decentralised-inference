@@ -16,19 +16,29 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { ITag } from './arweave';
+import { Contract, WarpFactory } from 'warp-contracts';
 
-export interface IMessage {
-  id: string;
-  msg: string | File;
-  contentType?: string;
-  type: 'response' | 'request';
-  timestamp: number;
-  height: number;
-  cid?: number;
-  from: string;
-  to: string;
-  tags: ITag[];
+const warp = WarpFactory.forMainnet();
+
+interface GenericState {
+  state: PstState;
 }
 
-export type voteForOptions = 'model' | 'script' | 'operator';
+export interface PstState {
+  name: string;
+  ticker: string;
+  firstOwner: string;
+  balances: { [address: string]: number };
+  claimable: Array<{ txid: string; to: string }>;
+  claims: string[];
+}
+
+export const getContractByTxId = (txId: string) => warp.contract(txId);
+
+export const connect = (contract: Contract<unknown>) => contract.connect('use_wallet');
+
+export const getState = async (contract: Contract<unknown>) => {
+  const { cachedValue } = await contract.readState();
+
+  return (cachedValue as GenericState).state;
+};

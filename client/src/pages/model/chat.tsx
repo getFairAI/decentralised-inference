@@ -465,6 +465,7 @@ const Chat = () => {
       height: el.node.block ? el.node.block.height : currentHeight,
       to: isRequest ? (findTag(el, 'scriptOperator') as string) : userAddr,
       from: isRequest ? userAddr : el.node.owner.address,
+      tags: el.node.tags,
       contentType,
       timestamp,
     };
@@ -611,6 +612,7 @@ const Chat = () => {
       to: address as string,
       from: userAddr,
       contentType,
+      tags,
     });
     setMessages(temp);
     setNewMessage('');

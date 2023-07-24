@@ -30,8 +30,9 @@ import {
 import { useCallback } from 'react';
 import DownloadIcon from '@mui/icons-material/Download';
 import '@/styles/main.css';
+import { FiCard, FicardMedia } from './full-image-card';
 
-const MessageDisplay = ({ message }: { message: IMessage }) => {
+const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails?: boolean }) => {
   const theme = useTheme();
 
   const handleDownload = useCallback(() => {
@@ -44,7 +45,26 @@ const MessageDisplay = ({ message }: { message: IMessage }) => {
   }, [message]);
 
   if (message.contentType?.includes('image')) {
-    return <img src={`${NET_ARWEAVE_URL}/${message.id}`}></img>;
+    return (
+      <FiCard
+        sx={{
+          flexGrow: 0,
+        }}
+        width={forDetails ? undefined : '512px'}
+        height={forDetails ? undefined : '512px'}
+      >
+        <FicardMedia
+          src={`${NET_ARWEAVE_URL}/${message.id}`}
+          sx={{
+            background: `url(${NET_ARWEAVE_URL}/${message.id})`,
+            // backgroundPosition: 'center',s
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover' /* <------ */,
+            backgroundPosition: 'center center',
+          }}
+        />
+      </FiCard>
+    );
   } else if (message.contentType?.includes('audio')) {
     const fileUrl = URL.createObjectURL(message.msg as File);
     return <audio controls src={fileUrl}></audio>;
@@ -64,7 +84,6 @@ const MessageDisplay = ({ message }: { message: IMessage }) => {
               : theme.palette.terciary.contrastText,
           whiteSpace: 'pre-wrap',
           overflow: 'hidden' /* Ensures the content is not revealed until the animation */,
-          borderRight: '.15em solid orange',
           animation: {
             typing: '3.5s steps(40, end)',
             blinkCaret: '.75s step-end infinite',
