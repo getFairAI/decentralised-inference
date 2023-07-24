@@ -24,12 +24,17 @@ import {
   Box,
   Typography,
   useTheme,
+  DialogActions,
+  Button,
 } from '@mui/material';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { IMessage } from '@/interfaces/common';
-import { findTag } from '@/utils/common';
+import { displayShortTxOrAddr, findTag } from '@/utils/common';
 import { useLocation } from 'react-router-dom';
 import MessageDisplay from './message-display';
+import { PstState, connect, getContractByTxId, getState } from '@/utils/pst';
+import Chart from 'react-apexcharts';
+import { ApexOptions } from 'apexcharts';
 
 const MessageDetail = ({
   message,
@@ -42,6 +47,61 @@ const MessageDetail = ({
 }) => {
   const theme = useTheme();
   const { state } = useLocation();
+  const [ showMore, setShowMore ] = useState(false);
+  const [ options, setOptions ] = useState<ApexOptions>({
+    title: {
+      text: 'Ownership',
+      align: 'left',
+      style: {
+        fontWeight: 700,
+        fontSize: '23px',
+        fontFamily: theme.typography.fontFamily,
+      }
+    },
+    legend: {
+      position: 'left',
+      offsetY: 25,
+      fontWeight: 400,
+      fontSize: '18px',
+      fontFamily: theme.typography.fontFamily,
+    },
+    colors: [ theme.palette.primary.main, theme.palette.secondary.main, theme.palette.terciary.main ],
+  });
+  const [ series, setSeries ] = useState<number[]>([]);
+  const [ contractState, setContractState ] = useState<PstState | undefined>(undefined);
+
+  useEffect(() => {
+    if (open) {
+      try {
+        const contract = connect(getContractByTxId(message.id));
+  
+        (async () => {
+          const result = await getState(contract);
+          setContractState(result);
+        })();
+      } catch (err) {
+        // ignore
+        setContractState(undefined);
+      }
+    } else {
+      // ignore
+      setContractState(undefined);
+    }
+  }, [ message, open ]);
+
+  useEffect(() => {
+    if (contractState) {
+      const labels = Object.keys(contractState.balances).map(el => displayShortTxOrAddr(el)); // balance addresses
+      const series = Object.values(contractState.balances); // balance values;
+      setOptions({
+        ...options,
+        labels
+      });
+      setSeries(series);
+    }
+  }, [ contractState ]);
+
+  const toggleShowMore = useCallback(() => setShowMore(!showMore), [ showMore, setShowMore ]);
 
   return (
     <Dialog
@@ -76,9 +136,15 @@ const MessageDetail = ({
           gap: '48px',
         }}
       >
-        <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
-          <MessageDisplay message={message} />
+        <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'100%'}>
           <Box display={'flex'} justifyContent={'space-between'}>
+            <MessageDisplay message={message} forDetails={true}/>
+            {
+              contractState && <Chart options={options} series={series} type={'pie'} width="500" />
+            }
+          </Box>
+          
+          <Box display={'flex'} justifyContent={'space-between'} alignItems={'flex-start'}>
             <Typography
               sx={{
                 fontStyle: 'normal',
@@ -90,7 +156,7 @@ const MessageDetail = ({
                 textAlign: 'center',
               }}
             >
-              From
+              Prompt
             </Typography>
             <Typography
               sx={{
@@ -100,10 +166,10 @@ const MessageDetail = ({
                 lineHeight: '31px',
                 display: 'flex',
                 alignItems: 'center',
-                textAlign: 'center',
+                textAlign: 'end',
               }}
             >
-              {message.from}
+              {message.tags.find(el => el.name === 'Description')?.value ?? 'Not Available'}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
@@ -118,7 +184,7 @@ const MessageDetail = ({
                 textAlign: 'center',
               }}
             >
-              To
+              PST Name (PST Ticker)
             </Typography>
             <Typography
               sx={{
@@ -131,7 +197,7 @@ const MessageDetail = ({
                 textAlign: 'center',
               }}
             >
-              {message.to}
+              {`${contractState?.name} (${contractState?.ticker})`}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
@@ -219,8 +285,73 @@ const MessageDetail = ({
               {` (${message.timestamp})`}
             </Typography>
           </Box>
+          {
+            showMore && (
+              <>
+                <Box display={'flex'} justifyContent={'space-between'}>
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 700,
+                      fontSize: '23px',
+                      lineHeight: '31px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Original Owner
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 400,
+                      fontSize: '23px',
+                      lineHeight: '31px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {contractState?.owner}
+                  </Typography>
+                </Box>
+                <Box display={'flex'} justifyContent={'space-between'}>
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 700,
+                      fontSize: '23px',
+                      lineHeight: '31px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Operator
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 400,
+                      fontSize: '23px',
+                      lineHeight: '31px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {message.from}
+                  </Typography>
+                </Box>
+              </>
+            )
+          }
         </Box>
       </DialogContent>
+      <DialogActions sx={{ display: 'flex', justifyContent: 'center'}}>
+        <Button onClick={toggleShowMore}>{showMore ? 'Show Less' : 'Show More'}</Button>
+      </DialogActions>
     </Dialog>
   );
 };

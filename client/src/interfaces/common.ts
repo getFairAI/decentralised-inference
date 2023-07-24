@@ -16,6 +16,8 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
+import { ITag } from "./arweave";
+
 export interface IMessage {
   id: string;
   msg: string | File;
@@ -26,6 +28,7 @@ export interface IMessage {
   cid?: number;
   from: string;
   to: string;
+  tags: ITag[];
 }
 
 export type voteForOptions = 'model' | 'script' | 'operator';

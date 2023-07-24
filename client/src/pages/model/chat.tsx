@@ -467,6 +467,7 @@ const Chat = () => {
       from: isRequest ? userAddr : el.node.owner.address,
       contentType,
       timestamp,
+      tags: el.node.tags,
     };
 
     return msg;
@@ -611,6 +612,7 @@ const Chat = () => {
       to: address as string,
       from: userAddr,
       contentType,
+      tags,
     });
     setMessages(temp);
     setNewMessage('');
