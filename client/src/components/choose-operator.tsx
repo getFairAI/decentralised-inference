@@ -55,7 +55,7 @@ const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
   const opFee = findTag(el, 'operatorFee') as string;
   const scriptName = findTag(el, 'scriptName') as string;
   const scriptCurator = findTag(el, 'scriptCurator') as string;
-  const registrationOwner = findTag(el, 'sequencerOwner') as string;
+  const registrationOwner = findTag(el, 'sequencerOwner') as string ?? el.node.owner.address;
 
   if (
     !(await isValidRegistration(el.node.id, opFee, registrationOwner, scriptName, scriptCurator))
@@ -81,7 +81,7 @@ const OperatorSelected = ({
   const { currentAddress } = useContext(WalletContext);
 
   const handleHistoryClick = useCallback(() => {
-    const opAddress = findTag(operatorsData[selectedIdx], 'sequencerOwner') as string;
+    const opAddress = findTag(operatorsData[selectedIdx], 'sequencerOwner') as string ?? operatorsData[selectedIdx].node.owner.address;
     navigate(`/operators/details/${opAddress}`, {
       state: {
         operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
@@ -91,7 +91,7 @@ const OperatorSelected = ({
   }, [navigate, scriptTx, operatorsData, selectedIdx]);
 
   const handleUseOperatorClick = useCallback(() => {
-    const opOwner = findTag(operatorsData[selectedIdx], 'sequencerOwner') as string;
+    const opOwner = findTag(operatorsData[selectedIdx], 'sequencerOwner') as string ?? operatorsData[selectedIdx].node.owner.address;
     const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') as string;
     const state = {
       modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
@@ -324,7 +324,7 @@ const ChooseOperator = ({
       (filtered.length === 1 || (IS_TO_CHOOSE_MODEL_AUTOMATICALLY && filtered.length > 1)) &&
       !!setShowOperators
     ) {
-      const opOwner = findTag(filtered[0], 'sequencerOwner') as string;
+      const opOwner = findTag(filtered[0], 'sequencerOwner') as string ?? filtered[0].node.owner.address;
       const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') as string;
       const state = {
         modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
