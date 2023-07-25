@@ -180,7 +180,8 @@ export const checkHasOperators = async (
       const opFee = findTag(registration, 'operatorFee') as string;
       const scriptName = findTag(registration, 'scriptName') as string;
       const scriptCurator = findTag(registration, 'scriptCurator') as string;
-      const registrationOwner = findTag(registration, 'sequencerOwner') as string ?? registration.node.owner.address;
+      const registrationOwner =
+        (findTag(registration, 'sequencerOwner') as string) ?? registration.node.owner.address;
 
       if (
         await isValidRegistration(
