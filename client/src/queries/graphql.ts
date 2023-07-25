@@ -119,6 +119,9 @@ export const FIND_BY_TAGS = gql`
             name
             value
           }
+          owner {
+            address
+          }
         }
       }
     }
