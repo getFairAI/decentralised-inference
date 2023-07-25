@@ -81,6 +81,7 @@ export interface IContractEdge {
   cursor: string;
   node: {
     id: string;
+    owner: IOwner;
     tags: ITag[];
   };
 }

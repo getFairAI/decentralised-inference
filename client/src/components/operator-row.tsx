@@ -76,7 +76,8 @@ const OperatorRow = ({
 
   const input = useMemo(() => {
     const qty = parseFloat(findTag(operatorTx, 'operatorFee') as string);
-    const address = findTag(operatorTx, 'sequencerOwner') as string;
+    const address =
+      (findTag(operatorTx, 'sequencerOwner') as string) ?? operatorTx.node.owner.address;
 
     const requestPaymentsInputNumber = JSON.stringify({
       function: 'transfer',
@@ -124,7 +125,8 @@ const OperatorRow = ({
    * with the necessary props for the row (except availability)
    */
   useEffect(() => {
-    const address = findTag(operatorTx, 'sequencerOwner') as string;
+    const address =
+      (findTag(operatorTx, 'sequencerOwner') as string) ?? operatorTx.node.owner.address;
     const stamps = 0;
     const fee = findTag(operatorTx, 'operatorFee');
     const registrationTimestamp = findTag(operatorTx, 'unixTime');
@@ -160,7 +162,7 @@ const OperatorRow = ({
         return findTag(req, 'inferenceTransaction');
       });
 
-      const owner = findTag(operatorTx, 'sequencerOwner');
+      const owner = findTag(operatorTx, 'sequencerOwner') ?? operatorTx.node.owner.address;
 
       const responseTags = [
         ...DEFAULT_TAGS,
