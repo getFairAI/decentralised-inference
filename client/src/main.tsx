@@ -33,6 +33,7 @@ import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
 import ScriptDetails from './pages/script/script-details';
 import ChangeOperator from './pages/model/change-operator';
+import SignIn from './pages/sign-in';
 
 const router = createHashRouter([
   {
@@ -67,6 +68,10 @@ const router = createHashRouter([
         ],
       },
       {
+        path: '/sign-in',
+        element: <SignIn />,
+      },
+      {
         path: 'chat/:address',
         element: (
           <BlockOperatorGuard>
@@ -89,7 +94,7 @@ const router = createHashRouter([
         element: <Payments />,
       },
     ],
-  },
+  }
 ]);
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

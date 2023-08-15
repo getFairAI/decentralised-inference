@@ -50,20 +50,20 @@ const lightTheme = createTheme({
     },
   },
   shape: {
-    borderRadius: 23,
+    borderRadius: 8,
   },
   palette: {
     mode: 'light',
     background: {
-      default: '#FFFEFE',
-      paper: '#FFFEFE',
+      default: '#EDEDED',
+      paper: '#EDEDED',
     },
     primary: {
       // light: will be calculated from palette.primary.main,
-      light: '#09ABE6',
-      main: '#09ABE6',
-      dark: '#09ABE6',
-      contrastText: '#FFFFFF',
+      light: '#1F1F26',
+      main: '#1F1F26',
+      dark: '#1F1F26',
+      contrastText: '#EDEDED',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
@@ -105,7 +105,7 @@ const lightTheme = createTheme({
       dark: '#DC5141',
     },
     text: {
-      primary: '#355064', // same as rgba(34,55,69,255)
+      primary: '#1F1F26', // same as rgba(34,55,69,255)
       secondary: 'rgba(34,55,69, 0.6)',
       disabled: 'rgba(34,55,69,0.3)',
     },

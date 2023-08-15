@@ -30,132 +30,34 @@ import {
   useTheme,
 } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/layout';
 import { WalletProvider } from './context/wallet';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
 import { StyledMaterialDesignContent } from './styles/components';
 import { useCallback, useEffect, useState } from 'react';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { ChooseWalletProvider } from './context/choose-wallet';
 import { SwapProvider } from './context/swap';
 import { TradeProvider } from './context/trade';
+import SignIn from './pages/sign-in';
 
 const App = () => {
-  const [hasAgreed, setHasAgreed] = useState(true);
-  const theme = useTheme();
+  const [ isFirstTime, setIsFirstTime ] = useState(true);
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    setHasAgreed(localStorage.getItem('hasAgreed') === 'true');
+    setIsFirstTime(localStorage.getItem('isFirstTime') === 'true');
   }, []);
 
-  const handleAgree = useCallback(() => {
-    localStorage.setItem('hasAgreed', 'true');
-    setHasAgreed(true);
-  }, [setHasAgreed]);
 
-  if (!hasAgreed) {
-    return (
-      <Backdrop open={true} sx={{ zIndex: theme.zIndex.drawer + 1 }}>
-        <Dialog
-          open={true}
-          maxWidth={'md'}
-          fullWidth
-          sx={{
-            '& .MuiPaper-root': {
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(61, 61, 61, 0.9)'
-                  : theme.palette.background.default,
-              borderRadius: '30px',
-            },
-          }}
-        >
-          <DialogTitle>
-            <Typography
-              sx={{
-                fontWeight: 700,
-                fontSize: '23px',
-                lineHeight: '31px',
-                color: theme.palette.primary.main,
-              }}
-            >
-              {'Terms And Conditions'}
-            </Typography>
-          </DialogTitle>
-          <DialogContent>
-            <Alert
-              /* onClose={() => setOpen(false)} */
-              variant='outlined'
-              severity='info'
-              sx={{
-                marginBottom: '16px',
-                borderRadius: '23px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                backdropFilter: 'blur(4px)',
-                '& .MuiAlert-icon': {
-                  justifyContent: 'center',
-                },
-                '& .MuiAlert-message': {
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                },
-                color: theme.palette.primary.main,
-              }}
-              icon={<InfoOutlinedIcon fontSize='large' color='primary' />}
-            >
-              <Typography
-                sx={{
-                  fontWeight: 400,
-                  fontSize: '30px',
-                  lineHeight: '41px',
-                  display: 'block',
-                  textAlign: 'justify',
-                }}
-              >
-                All the communication between participants in this network is done through Arweave.
-                When anything is written on Arweave, it&apos;s publicly stored forever due to the
-                particularities of that blockchain. As such, kindly exercise caution when inserting
-                any information on this website.
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: 400,
-                  fontSize: '30px',
-                  lineHeight: '41px',
-                  display: 'block',
-                  textAlign: 'justify',
-                }}
-              >
-                By using this app, you acknowledge and accept these terms and conditions.
-              </Typography>
-            </Alert>
-          </DialogContent>
-          <DialogActions
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '30px',
-              paddingBottom: '20px',
-            }}
-          >
-            <Button
-              onClick={handleAgree}
-              variant='contained'
-              color='primary'
-              sx={{ width: 'fit-content' }}
-            >
-              <Typography color={theme.palette.primary.contrastText}>I Accept</Typography>
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Backdrop>
-    );
+  if (!isFirstTime) {
+    return <WalletProvider>
+      <ChooseWalletProvider>
+        <SignIn />
+      </ChooseWalletProvider>
+    </WalletProvider>;
   } else {
     return (
       <WalletProvider>
