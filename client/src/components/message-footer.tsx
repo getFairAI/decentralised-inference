@@ -31,7 +31,7 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
   const { state } = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const updateMessageTime = (timer: NodeJS.Timer, unixTimestamp: number, index: number) => {
+  const updateMessageTime = (timer: NodeJS.Timeout, unixTimestamp: number, index: number) => {
     const elements = document.querySelectorAll('.timeLabel');
     const current = elements.item(index);
     if (!current) {
@@ -60,7 +60,7 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
     const year = day * 365;
 
     if (secondsDiff < min) {
-      const timer: NodeJS.Timer = setInterval(
+      const timer: NodeJS.Timeout = setInterval(
         () => updateMessageTime(timer, unixTimestamp, index),
         5000,
       );
