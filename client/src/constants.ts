@@ -83,7 +83,10 @@ export const TAG_NAMES = {
   sequencerOwner: 'Sequencer-Owner',
   updateFor: 'Update-For',
   previousVersions: 'Previous-Versions',
+  txOrigin: 'Transaction-Origin',
 };
+
+export const TX_ORIGIN = 'Fair Protocol UI';
 
 // Operation Names
 export const MODEL_CREATION = 'Model Creation';
