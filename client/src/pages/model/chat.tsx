@@ -510,17 +510,17 @@ const Chat = () => {
     }
   };
 
-  const checkCanSend = async (dataSize: number) => {
-    if (!currentConversationId) {
-      return false;
-    }
-
-    if (dataSize > MAX_MESSAGE_SIZE) {
-      enqueueSnackbar('Message Too Long', { variant: 'error' });
-      return false;
-    }
-
+  const checkCanSend = (dataSize: number) => {
     try {
+      if (!currentConversationId) {
+        return false;
+      }
+
+      if (dataSize > MAX_MESSAGE_SIZE) {
+        enqueueSnackbar('Message Too Long', { variant: 'error' });
+        return false;
+      }
+
       if (currentUBalance < parseUBalance(state.fee)) {
         enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
         return false;
@@ -528,7 +528,7 @@ const Chat = () => {
 
       return true;
     } catch (error) {
-      enqueueSnackbar('Bundlr Error', { variant: 'error' });
+      enqueueSnackbar('Something went wrong', { variant: 'error' });
       return false;
     }
   };
@@ -645,15 +645,15 @@ const Chat = () => {
 
     const dataSize = file.size;
 
-    if (!(await checkCanSend(dataSize))) {
+    if (!checkCanSend(dataSize)) {
       return;
     }
 
     const contentType = file.type;
     const content = file;
 
-    const tags: ITag[] = getUploadTags(content.name, contentType);
     try {
+      const tags: ITag[] = getUploadTags(content.name, contentType);
       // upload with dispatch
       const data = await content.arrayBuffer(); // it's safe to convert to arrayBuffer bc max size is 100kb
       const tx = await arweave.createTransaction({ data });
@@ -678,15 +678,15 @@ const Chat = () => {
 
     const dataSize = new TextEncoder().encode(newMessage).length;
 
-    if (!(await checkCanSend(dataSize))) {
+    if (!checkCanSend(dataSize)) {
       return;
     }
 
     const contentType = textContentType;
     const content = newMessage;
 
-    const tags: ITag[] = getUploadTags(contentType);
     try {
+      const tags: ITag[] = getUploadTags(contentType);
       // upload with dispatch
       const tx = await arweave.createTransaction({ data: newMessage });
       tags.forEach((tag) => tx.addTag(tag.name, tag.value));
