@@ -23,7 +23,7 @@ import { WarpFactory } from 'warp-contracts';
 const warp = WarpFactory.forMainnet();
 
 const contract = warp.contract(U_CONTRACT_ID).setEvaluationOptions({
-  remoteStateSyncSource: 'https://dre-6.warp.cc/contract',
+  remoteStateSyncSource: 'https://dre-u.warp.cc/contract',
   remoteStateSyncEnabled: true,
   unsafeClient: 'skip',
   allowBigInt: true,
