@@ -60,6 +60,7 @@ import {
   VAULT_ADDRESS,
   MAX_MESSAGE_SIZE,
   DEFAULT_TAGS_FOR_TOKENS,
+  TX_ORIGIN,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -549,6 +550,7 @@ const Chat = () => {
     const tempDate = Date.now() / secondInMS;
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
     tags.push({ name: TAG_NAMES.contentType, value: contentType });
+    tags.push({ name: TAG_NAMES.txOrigin, value: TX_ORIGIN });
 
     return tags;
   };
@@ -569,6 +571,7 @@ const Chat = () => {
         { name: TAG_NAMES.inferenceTransaction, value: bundlrId },
         { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
         { name: TAG_NAMES.contentType, value: contentType },
+        { name: TAG_NAMES.txOrigin, value: TX_ORIGIN },
       ];
 
       const operatorFeeShare = parsedUFee * OPERATOR_PERCENTAGE_FEE;
