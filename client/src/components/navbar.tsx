@@ -20,9 +20,17 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext, useState } from 'react';
+import {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import {
   Button,
   Icon,
@@ -41,6 +49,7 @@ import NavigationMenu from './navigation-menu';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
 import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
+import { usePollingEffect } from '@/hooks/usePollingEffect';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -64,16 +73,46 @@ const CustomDropDownIcon = () => (
 );
 
 const CurrencyMenu = () => {
+  const pollingTimeout = 10000;
   const [selected, setSelected] = useState<'AR' | 'U'>('U');
-  const { currentBalance, currentUBalance } = useContext(WalletContext);
+  const { currentAddress, currentBalance, currentUBalance, updateBalance, updateUBalance } =
+    useContext(WalletContext);
   const theme = useTheme();
+
+  const pollingFn = () => {
+    if (selected === 'AR') {
+      return updateBalance();
+    } else {
+      return updateUBalance();
+    }
+  };
+
+  const [startPolling, stopPolling] = usePollingEffect(
+    pollingFn,
+    [currentAddress, selected],
+    pollingTimeout,
+  );
+
   const handleArClick = useCallback(() => {
+    stopPolling();
     setSelected('AR');
-  }, [setSelected]);
+    startPolling();
+  }, [setSelected, startPolling, stopPolling]);
 
   const handleUClick = useCallback(() => {
+    stopPolling();
     setSelected('U');
-  }, [setSelected]);
+    startPolling();
+  }, [setSelected, startPolling, stopPolling]);
+
+  useEffect(() => {
+    if (!currentAddress) {
+      stopPolling();
+    } else {
+      // if address changes, restart polling
+      startPolling();
+    }
+  }, [currentAddress]);
 
   return (
     <>
