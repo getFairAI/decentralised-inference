@@ -22,7 +22,15 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import {
   Button,
   Icon,
@@ -67,7 +75,8 @@ const CustomDropDownIcon = () => (
 const CurrencyMenu = () => {
   const pollingTimeout = 10000;
   const [selected, setSelected] = useState<'AR' | 'U'>('U');
-  const { currentAddress, currentBalance, currentUBalance, updateBalance, updateUBalance } = useContext(WalletContext);
+  const { currentAddress, currentBalance, currentUBalance, updateBalance, updateUBalance } =
+    useContext(WalletContext);
   const theme = useTheme();
 
   const pollingFn = () => {
@@ -80,10 +89,10 @@ const CurrencyMenu = () => {
 
   const [startPolling, stopPolling] = usePollingEffect(
     pollingFn,
-    [ currentAddress, selected ],
+    [currentAddress, selected],
     pollingTimeout,
   );
-  
+
   const handleArClick = useCallback(() => {
     stopPolling();
     setSelected('AR');
@@ -104,7 +113,6 @@ const CurrencyMenu = () => {
       startPolling();
     }
   }, [currentAddress]);
-
 
   return (
     <>
