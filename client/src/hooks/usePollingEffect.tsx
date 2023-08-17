@@ -47,7 +47,7 @@ export const usePollingEffect: PollingFn = (asyncCallback, dependencies, interva
         }
       })();
     } else {
-      return;
+      // ignore
     }
 
     // Clean up if dependencies change
