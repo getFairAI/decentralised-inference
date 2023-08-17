@@ -24,7 +24,6 @@ import { isVouched } from '@/utils/vouch';
 import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
 import Transaction from 'arweave/web/lib/transaction';
 import { connectToU, getUBalance, parseUBalance } from '@/utils/u';
-import { usePollingEffect } from '@/hooks/usePollingEffect';
 
 const arweaveApp = 'arweave.app';
 const arConnect = 'arconnect';
@@ -61,7 +60,7 @@ type WalletAction =
   | WalletPermissionsChangedAction
   | WalletVouchedAction;
 
-interface WalletContext {
+interface IWalletContext {
   isArConnectAvailable: boolean;
   walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet;
   currentAddress: string;
@@ -76,7 +75,7 @@ interface WalletContext {
   dispatchTx: (tx: Transaction) => Promise<DispatchResult | ArConnectDispatchResult>;
 }
 
-const createActions = (dispatch: Dispatch<WalletAction>, state: WalletContext) => {
+const createActions = (dispatch: Dispatch<WalletAction>, state: IWalletContext) => {
   return {
     arConnectAvailable: async () => dispatch({ type: 'arconnect_available' }),
     walletDisconnect: async () => asyncDisconnectWallet(dispatch, state.walletInstance),
@@ -217,7 +216,7 @@ const asyncUpdateUBalance = async (
   }
 };
 
-const walletReducer = (state: WalletContext, action?: WalletAction) => {
+const walletReducer = (state: IWalletContext, action?: WalletAction) => {
   if (!action) {
     return state;
   }
@@ -266,7 +265,7 @@ const dispatchTx = async (tx: Transaction) => {
   }
 };
 
-const initialState: WalletContext = {
+const initialState: IWalletContext = {
   isArConnectAvailable: false,
   currentAddress: '',
   currentPermissions: [],
@@ -285,7 +284,7 @@ const initialState: WalletContext = {
   dispatchTx,
 };
 
-export const WalletContext = createContext<WalletContext>(initialState);
+export const WalletContext = createContext<IWalletContext>(initialState);
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(walletReducer, initialState);
@@ -294,7 +293,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const connectWalletSubscriptionRef = useRef<boolean>(false);
   const switchWalletSubscriptionRef = useRef<boolean>(false);
 
-  const value: WalletContext = useMemo(
+  const value: IWalletContext = useMemo(
     () => ({
       ...state,
       connectWallet: (walletInstance: 'arweave.app' | 'arconnect') =>
@@ -376,19 +375,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       wallet.off('change', arweaveAppWalletSwitched);
     };
   }, []);
-
-  const pollingTimeout = 10000;
-
-  usePollingEffect(
-    actions.updateUBalance,
-    [state.currentAddress, actions.updateUBalance],
-    pollingTimeout,
-  );
-  usePollingEffect(
-    actions.updateBalance,
-    [state.currentAddress, actions.updateBalance],
-    pollingTimeout,
-  );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };

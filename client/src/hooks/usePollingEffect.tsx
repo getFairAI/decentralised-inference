@@ -16,32 +16,38 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type PollingFn = (
-  asyncCallback: () => Promise<void>,
+  asyncCallback: () => Promise<void> | void,
   dependencies: unknown[],
   interval?: number,
   cleanUp?: () => void,
-) => void;
+) => [() => void, () => void];
 
 export const usePollingEffect: PollingFn = (asyncCallback, dependencies, interval, cleanUp) => {
   const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
-    // Stop previous timeout
-    let _stopped = false;
-    if (dependencies[0] !== '') {
+    let _stopped;
+    if (isRunning) {
+      _stopped = false;
+      // Start polling
       (async function pollingCallback() {
         try {
           await asyncCallback();
         } finally {
           // Set timeout after it finished, unless stopped
-          timeoutIdRef.current = !_stopped && setTimeout(() => pollingCallback, interval);
+          if (_stopped) {
+            // ignore
+          } else {
+            timeoutIdRef.current = setTimeout(pollingCallback, interval);
+          }
         }
       })();
     } else {
-      _stopped = true;
+      return;
     }
 
     // Clean up if dependencies change
@@ -54,5 +60,11 @@ export const usePollingEffect: PollingFn = (asyncCallback, dependencies, interva
         cleanUp();
       }
     };
-  }, [...dependencies, interval]);
+  }, [...dependencies, interval, isRunning]);
+
+  const start = useCallback(() => setIsRunning(true), [setIsRunning]);
+
+  const stop = useCallback(() => setIsRunning(false), [setIsRunning]);
+
+  return [start, stop];
 };
