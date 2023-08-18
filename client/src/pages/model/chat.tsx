@@ -76,7 +76,7 @@ import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
 import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
-import _ from 'lodash';
+import _, { debounce } from 'lodash';
 import '@/styles/main.css';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
@@ -126,6 +126,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState(0);
   const [inputHeight, setInputHeight] = useState(0);
+  const [isSending, setIsSending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const sendDisabled = useMemo(() => {
@@ -705,20 +706,6 @@ const Chat = () => {
     }
   };
 
-  const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.code === 'Enter') {
-      event.preventDefault();
-      if (!sendDisabled) {
-        if (file) {
-          // handle send file
-          await handleSendFile();
-        } else {
-          await handleSendText();
-        }
-      }
-    }
-  };
-
   const sortMessages = (messages: IMessage[]) => {
     messages.sort((a, b) => {
       if (a.timestamp === b.timestamp && a.type !== b.type) {
@@ -842,13 +829,38 @@ const Chat = () => {
   }, [setFile]);
 
   const handleSendClick = useCallback(async () => {
+    if (isSending) {
+      return;
+    } else {
+      // continue
+    }
+    setIsSending(true);
+
     if (file) {
       // handle send file
       await handleSendFile();
     } else {
       await handleSendText();
     }
-  }, [handleSendFile, handleSendText, file]);
+
+    setIsSending(false);
+  }, [handleSendFile, handleSendText, file, isSending]);
+
+  const keyDownHandler = debounce(async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.code === 'Enter') {
+      event.preventDefault();
+      if (!sendDisabled && !isSending) {
+        setIsSending(true);
+        if (file) {
+          // handle send file
+          await handleSendFile();
+        } else {
+          await handleSendText();
+        }
+        setIsSending(false);
+      }
+    }
+  }, secondInMS);
 
   const handleMessageChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setNewMessage(event.target.value),
