@@ -76,16 +76,18 @@ const getOperatorRequests = async (
       } else if (inputTag === requestPaymentsInputNumber || inputTag === requestPaymentsInputStr) {
         return true;
       } else {
-        const inputObj: { qty: number | string, function: string, target: string } = JSON.parse(inputTag);
-        const qtyNumber = typeof inputObj.qty === 'string' ? parseFloat(inputObj.qty) : inputObj.qty;
+        const inputObj: { qty: number | string; function: string; target: string } =
+          JSON.parse(inputTag);
+        const qtyNumber =
+          typeof inputObj.qty === 'string' ? parseFloat(inputObj.qty) : inputObj.qty;
 
-        return qtyNumber >= qty && inputObj.function === inputFnName && inputObj.target === address; 
+        return qtyNumber >= qty && inputObj.function === inputFnName && inputObj.target === address;
       }
     } catch (err) {
       return false;
     }
   }) as IEdge[];
- //  return data.transactions.edges as IEdge[];
+  //  return data.transactions.edges as IEdge[];
 };
 
 const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
