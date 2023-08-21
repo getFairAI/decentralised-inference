@@ -41,7 +41,6 @@ import MarkdownControl from '@/components/md-control';
 import rehypeSanitize from 'rehype-sanitize';
 import { NET_ARWEAVE_URL } from '@/constants';
 import DownloadIcon from '@mui/icons-material/Download';
-import Vote from '@/components/vote';
 
 const ScriptAttachments = ({
   handleShowAttachmentsChanged,
@@ -260,7 +259,6 @@ const DetailsContent = () => {
             {findTag(state.fullState, 'description') ?? 'No Description Available.'}
           </Typography>
         </Box>
-        <Vote tx={state.fullState} voteFor={'script'} />
       </Box>
     </>
   );
