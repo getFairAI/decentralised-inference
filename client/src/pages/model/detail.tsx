@@ -38,7 +38,6 @@ import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
 import ChooseOperator from '@/components/choose-operator';
 import ChooseScript from '@/components/choose-script';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
-import Vote from '@/components/vote';
 
 const DetailContent = ({
   showOperators,
@@ -199,7 +198,6 @@ const DetailContent = ({
               {findTag(state.fullState, 'description') || 'No Description Available.'}
             </Typography>
           </Box>
-          <Vote tx={state.fullState} voteFor={'model'} />
         </Box>
       </DialogContent>
       <DialogActions

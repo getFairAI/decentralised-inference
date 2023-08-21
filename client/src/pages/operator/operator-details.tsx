@@ -44,7 +44,6 @@ import { createAvatar } from '@dicebear/core';
 import { bottts } from '@dicebear/collection';
 import HistoryTable from '@/components/history-table';
 import { findTag } from '@/utils/common';
-import Vote from '@/components/vote';
 
 const OperatorDetails = () => {
   const { address } = useParams();
@@ -140,7 +139,6 @@ const OperatorDetails = () => {
           <Box>
             <Typography>{state.operatorName}</Typography>
             <Typography>{address}</Typography>
-            {address && state.fullState && <Vote voteFor='operator' tx={state.fullState} />}
           </Box>
           <Box display={'flex'} flexDirection='column'>
             <Typography>Date Registered</Typography>
