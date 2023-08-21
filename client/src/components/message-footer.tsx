@@ -19,10 +19,12 @@
 import { IMessage } from '@/interfaces/common';
 import { Box, Typography, IconButton, Menu, MenuItem, useTheme } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import MessageDetail from './message-detail';
+import useTimeInterval from '@/hooks/useTimeInterval';
+import { secondInMS } from '@/constants';
 
 const MessageFooter = ({ message, index }: { message: IMessage; index: number }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -30,26 +32,23 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
   const theme = useTheme();
   const { state } = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const min = 60;
+  const time = useTimeInterval(secondInMS * min);
 
-  const updateMessageTime = (timer: NodeJS.Timeout, unixTimestamp: number, index: number) => {
+  useEffect(() => {
+    // every time 1 min passes update time
     const elements = document.querySelectorAll('.timeLabel');
     const current = elements.item(index);
     if (!current) {
-      clearInterval(timer);
       return;
     }
-    const newTimestamp = Date.now() / 1000;
-    const newSecondsDiff = newTimestamp - unixTimestamp;
-    if (newSecondsDiff < 60) {
-      current.textContent = `${newSecondsDiff.toFixed(0)} Seconds Ago`;
-    } else {
-      current.textContent = '1 Minute Ago';
-      clearInterval(timer);
-    }
-  };
+    const newTimestamp = time / 1000;
+    current.textContent = getTimePassed(message.timestamp, newTimestamp);
+  }, [ time ]);
 
-  const getTimePassed = (unixTimestamp: number, index: number) => {
-    const timestampNow = Date.now() / 1000;
+
+  const getTimePassed = (unixTimestamp: number, currentTime?: number) => {
+    const timestampNow = currentTime ?? Date.now() / 1000;
     const secondsDiff = timestampNow - unixTimestamp;
 
     const min = 60;
@@ -60,11 +59,7 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
     const year = day * 365;
 
     if (secondsDiff < min) {
-      const timer: NodeJS.Timeout = setInterval(
-        () => updateMessageTime(timer, unixTimestamp, index),
-        5000,
-      );
-      return `${secondsDiff.toFixed(0)} Second(s) Ago`;
+      return 'A Few Seconds Ago';
     } else if (secondsDiff < hour) {
       return `${(secondsDiff / min).toFixed(0)} Minute(s) Ago`;
     } else if (secondsDiff < day) {
@@ -141,7 +136,7 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
                   : theme.palette.terciary.contrastText,
             }}
           >
-            {getTimePassed(message.timestamp, index)}
+            {getTimePassed(message.timestamp)}
           </Typography>
           <Typography
             sx={{
