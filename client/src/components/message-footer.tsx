@@ -42,16 +42,15 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
     if (!current) {
       return;
     }
-    const newTimestamp = time / 1000;
+    const newTimestamp = time / secondInMS;
     current.textContent = getTimePassed(message.timestamp, newTimestamp);
   }, [ time ]);
 
 
   const getTimePassed = (unixTimestamp: number, currentTime?: number) => {
-    const timestampNow = currentTime ?? Date.now() / 1000;
+    const timestampNow = currentTime ?? Date.now() / secondInMS;
     const secondsDiff = timestampNow - unixTimestamp;
 
-    const min = 60;
     const hour = 60 * 60;
     const day = hour * 24;
     const week = day * 7;
