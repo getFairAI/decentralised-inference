@@ -31,7 +31,7 @@ const useTimeInterval = (intervalLength: number) => {
     return () => {
       clearInterval(interval);
     };
-  }, [ intervalLength ]);
+  }, [intervalLength]);
 
   return time;
 };

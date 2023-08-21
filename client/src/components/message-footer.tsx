@@ -44,8 +44,7 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
     }
     const newTimestamp = time / secondInMS;
     current.textContent = getTimePassed(message.timestamp, newTimestamp);
-  }, [ time ]);
-
+  }, [time]);
 
   const getTimePassed = (unixTimestamp: number, currentTime?: number) => {
     const timestampNow = currentTime ?? Date.now() / secondInMS;
