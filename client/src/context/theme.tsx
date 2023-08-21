@@ -69,10 +69,10 @@ const lightTheme = createTheme({
     },
     secondary: {
       // light: will be calculated from palette.primary.main,
-      light: '#007099',
-      main: '#007099',
-      dark: '#007099',
-      contrastText: '#FFFFFF',
+      light: '#EDEDED',
+      main: '#EDEDED',
+      dark: '#EDEDED',
+      contrastText: '#1F1F26',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },

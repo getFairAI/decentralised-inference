@@ -17,82 +17,64 @@
  */
 
 import { ApolloProvider } from '@apollo/client';
-import {
-  Alert,
-  Backdrop,
-  Button,
-  CssBaseline,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import { CssBaseline } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Layout from './components/layout';
 import { WalletProvider } from './context/wallet';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
 import { StyledMaterialDesignContent } from './styles/components';
-import { useCallback, useEffect, useState } from 'react';
+import { ReactElement, useEffect } from 'react';
 import { ChooseWalletProvider } from './context/choose-wallet';
 import { SwapProvider } from './context/swap';
 import { TradeProvider } from './context/trade';
 import SignIn from './pages/sign-in';
 
-const App = () => {
-  const [ isFirstTime, setIsFirstTime ] = useState(true);
-  const { pathname } = useLocation();
+const BaseRoot = ({ children }: { children: ReactElement }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setIsFirstTime(localStorage.getItem('isFirstTime') === 'true');
-  }, []);
+    if (localStorage.getItem('hasSignedIn') !== 'true') {
+      navigate('/sign-in');
+    }
+  }, [ localStorage ]);
 
-
-  if (!isFirstTime) {
-    return <WalletProvider>
-      <ChooseWalletProvider>
-        <SignIn />
-      </ChooseWalletProvider>
-    </WalletProvider>;
-  } else {
-    return (
-      <WalletProvider>
-        <ChooseWalletProvider>
-          <SwapProvider>
-            <TradeProvider>
-              <Layout>
-                <Outlet />
-              </Layout>
-            </TradeProvider>
-          </SwapProvider>
-        </ChooseWalletProvider>
-      </WalletProvider>
-    );
-  }
+  return <ApolloProvider client={client}>
+    <AppThemeProvider>
+      <SnackbarProvider
+        maxSnack={3}
+        Components={{
+          error: StyledMaterialDesignContent,
+          success: StyledMaterialDesignContent,
+          info: StyledMaterialDesignContent,
+        }}
+      >
+        <CssBaseline />
+        <WalletProvider>
+          <ChooseWalletProvider>
+            <SwapProvider>
+              <TradeProvider>
+                {children}
+              </TradeProvider>
+            </SwapProvider>
+          </ChooseWalletProvider>
+        </WalletProvider>
+      </SnackbarProvider>
+    </AppThemeProvider>
+  </ApolloProvider>;
 };
 
 export const Root = () => {
-  return (
-    <ApolloProvider client={client}>
-      <AppThemeProvider>
-        <SnackbarProvider
-          maxSnack={3}
-          Components={{
-            error: StyledMaterialDesignContent,
-            success: StyledMaterialDesignContent,
-            info: StyledMaterialDesignContent,
-          }}
-        >
-          <CssBaseline />
-          <App />
-        </SnackbarProvider>
-      </AppThemeProvider>
-    </ApolloProvider>
-  );
+  return <BaseRoot>
+    <Outlet />
+  </BaseRoot>;
 };
 
-export default Root;
+export const LayoutRoot = () => {
+  return <BaseRoot>
+    <Layout>
+      <Outlet />
+    </Layout>
+  </BaseRoot>;
+};

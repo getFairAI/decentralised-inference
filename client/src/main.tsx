@@ -19,7 +19,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
-import Root from '@/root';
+import { Root, LayoutRoot } from '@/root';
 import Home from '@/pages/home';
 import Model, { getModelAttachments } from '@/pages/model/model';
 import '@/styles/main.css';
@@ -38,7 +38,7 @@ import SignIn from './pages/sign-in';
 const router = createHashRouter([
   {
     path: '/',
-    element: <Root />,
+    element: <LayoutRoot />,
     errorElement: <ErrorDisplay />,
     children: [
       {
@@ -68,10 +68,6 @@ const router = createHashRouter([
         ],
       },
       {
-        path: '/sign-in',
-        element: <SignIn />,
-      },
-      {
         path: 'chat/:address',
         element: (
           <BlockOperatorGuard>
@@ -94,7 +90,17 @@ const router = createHashRouter([
         element: <Payments />,
       },
     ],
-  }
+  },
+  {
+    path: '/',
+    element: <Root />,
+    children: [
+      {
+        path: 'sign-in',
+        element: <SignIn />
+      }
+    ]
+  },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

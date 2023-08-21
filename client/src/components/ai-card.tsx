@@ -110,6 +110,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
     event.preventDefault();
     const modelId = findTag(model, 'modelTransaction');
     if (!modelId) return;
+    localStorage.setItem('hasSignedIn', 'true');
     navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
       state: {
         modelName: findTag(model, 'modelName'),

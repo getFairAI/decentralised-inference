@@ -50,6 +50,7 @@ import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
 import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 import { usePollingEffect } from '@/hooks/usePollingEffect';
+import Logo from './logo';
 
 const Banner = styled(Toolbar)(({ theme }) => ({
   backgroundColor: theme.palette.error.main,
@@ -270,7 +271,7 @@ const Navbar = ({
 
   return (
     <>
-      <AppBar className='navbar' sx={{ zIndex }}>
+      <AppBar className='navbar' sx={{ zIndex }} color='secondary' style={{ boxShadow: 'none' }}>
         {showBanner && (
           <Banner>
             <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
@@ -289,13 +290,7 @@ const Navbar = ({
         <Toolbar>
           <Box display={'flex'} flexDirection={'row'}>
             <Link to='/'>
-              <img
-                src={
-                  theme.palette.mode === 'dark'
-                    ? './fair-protocol-logo.svg'
-                    : './fair-protocol-logo-light.svg'
-                }
-              />
+              <Logo />
             </Link>
           </Box>
           <Box sx={{ flexGrow: 1 }} display={{ sm: 'none', lg: 'flex' }}>
