@@ -68,7 +68,7 @@ const getOperatorRequests = async (
     },
   });
 
-  return data.transactions.filter((el: IEdge) => {
+  return data.transactions.edges.filter((el: IEdge) => {
     try {
       const inputTag = findTag(el, 'input');
       if (!inputTag) {
@@ -87,7 +87,6 @@ const getOperatorRequests = async (
       return false;
     }
   }) as IEdge[];
-  //  return data.transactions.edges as IEdge[];
 };
 
 const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
