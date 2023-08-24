@@ -128,7 +128,6 @@ const Chat = () => {
   const [inputHeight, setInputHeight] = useState(0);
   const [isSending, setIsSending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  
 
   const sendDisabled = useMemo(() => {
     if (!currentConversationId || loading) {
@@ -864,7 +863,6 @@ const Chat = () => {
     }
   };
 
-
   const handleMessageChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setNewMessage(event.target.value),
     [setNewMessage],
@@ -994,7 +992,7 @@ const Chat = () => {
                 {loading && <CircularProgress variant='indeterminate' />}
               </FormControl>
             ) : (
-               <>
+              <>
                 <TextField
                   inputRef={inputRef}
                   multiline
