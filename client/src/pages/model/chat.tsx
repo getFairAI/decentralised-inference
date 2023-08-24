@@ -127,7 +127,8 @@ const Chat = () => {
   const [inputWidth, setInputWidth] = useState(0);
   const [inputHeight, setInputHeight] = useState(0);
   const [isSending, setIsSending] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  
 
   const sendDisabled = useMemo(() => {
     if (!currentConversationId || loading) {
@@ -846,8 +847,9 @@ const Chat = () => {
     setIsSending(false);
   }, [handleSendFile, handleSendText, file, isSending]);
 
-  const keyDownHandler = debounce(async (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.code === 'Enter') {
+  // avoid send duplicated messages and show the new line if it's only the Enter key
+  const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.code === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       if (!sendDisabled && !isSending) {
         setIsSending(true);
@@ -860,7 +862,8 @@ const Chat = () => {
         setIsSending(false);
       }
     }
-  }, secondInMS);
+  };
+
 
   const handleMessageChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setNewMessage(event.target.value),
@@ -991,9 +994,12 @@ const Chat = () => {
                 {loading && <CircularProgress variant='indeterminate' />}
               </FormControl>
             ) : (
-              <>
+               <>
                 <TextField
                   inputRef={inputRef}
+                  multiline
+                  minRows={1}
+                  maxRows={3}
                   sx={{
                     color:
                       theme.palette.mode === 'dark'
@@ -1004,6 +1010,7 @@ const Chat = () => {
                     fontSize: '20px',
                     lineHeight: '16px',
                     width: '100%',
+                    marginTop: '10px',
                     boxShadow:
                       '0px 15px 50px rgba(0,0,0,0.4), 0px -15px 50px rgba(0,0,0,0.4), 15px 0px 50px rgba(0,0,0,0.4), -15px 0px 50px rgba(0,0,0,0.4)',
                     background: theme.palette.background.default,
@@ -1037,8 +1044,6 @@ const Chat = () => {
                         <DebounceIconButton
                           onClick={handleSendClick}
                           sx={{
-                            height: '60px',
-                            width: '60px',
                             color: theme.palette.neutral.contrastText,
                           }}
                           disabled={sendDisabled}
