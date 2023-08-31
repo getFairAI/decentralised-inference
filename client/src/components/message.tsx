@@ -16,12 +16,14 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { Stack, Box, Tooltip, Card, CardContent, useTheme } from '@mui/material';
+import { Stack, Box, Tooltip, Card, CardContent, useTheme, Button } from '@mui/material';
 import { IMessage } from '@/interfaces/common';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import MessageFooter from './message-footer';
 import MessageDisplay from './message-display';
+import { TradeContext } from '@/context/trade';
+import { useCallback, useContext } from 'react';
 
 const Message = ({
   message,
@@ -33,6 +35,9 @@ const Message = ({
   pendingTxs: Transaction[];
 }) => {
   const theme = useTheme();
+  const { setOpenWithId } = useContext(TradeContext);
+
+  const handleTradeClick = useCallback(() => setOpenWithId(message.id, true), [ message ]);
 
   return (
     <Stack spacing={4} flexDirection='row'>
@@ -81,6 +86,15 @@ const Message = ({
             >
               <MessageDisplay message={message} />
               <MessageFooter message={message} index={index} />
+              { message.type === 'response' && (
+                <Button
+                  fullWidth
+                  variant='contained'
+                  onClick={handleTradeClick}
+                >
+                  Trade on Bazar
+                </Button>
+              )}
             </CardContent>
           </Card>
         </Box>
