@@ -24,6 +24,9 @@ export const U_DIVIDER = 1e6;
 export const VOUCH_CONTRACT_ID = '_z0ch80z_daDUFqC9jHjfOL8nekJcok4ZRkE_UesYsk';
 export const U_LOGO_SRC = 'https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjrd5se740ftE';
 
+export const UCM_CONTRACT_ID = 'tfalT8Z-88riNtoXdF5ldaBtmsfcSmbMqWLh2DHJIbg';
+export const UCM_DIVIDER = 1e6;
+
 export const APP_NAME = 'Fair Protocol';
 export const PREVIOUS_VERSIONS = ['0.1'];
 export const APP_VERSION = '0.3';
@@ -254,3 +257,5 @@ const kb = 1024;
 const maxKb = 100;
 
 export const MAX_MESSAGE_SIZE = kb * maxKb;
+
+export const BAZAR_ASSETS_LINK = 'https://bazar.ar-io.dev/#/asset/';
