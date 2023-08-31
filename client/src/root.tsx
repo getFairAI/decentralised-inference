@@ -40,6 +40,7 @@ import { useCallback, useEffect, useState } from 'react';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { ChooseWalletProvider } from './context/choose-wallet';
 import { SwapProvider } from './context/swap';
+import { TradeProvider } from './context/trade';
 
 const App = () => {
   const [hasAgreed, setHasAgreed] = useState(true);
@@ -160,9 +161,11 @@ const App = () => {
       <WalletProvider>
         <ChooseWalletProvider>
           <SwapProvider>
-            <Layout>
-              <Outlet />
-            </Layout>
+            <TradeProvider>
+              <Layout>
+                <Outlet />
+              </Layout>
+            </TradeProvider>
           </SwapProvider>
         </ChooseWalletProvider>
       </WalletProvider>

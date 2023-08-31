@@ -24,6 +24,7 @@ import { isVouched } from '@/utils/vouch';
 import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
 import Transaction from 'arweave/web/lib/transaction';
 import { connectToU, getUBalance, parseUBalance } from '@/utils/u';
+import { connectToUCM } from '@/utils/ucm';
 
 const arweaveApp = 'arweave.app';
 const arConnect = 'arconnect';
@@ -111,6 +112,7 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
     dispatch({ type: 'wallet_vouched', isWalletVouched: isAddrVouched });
     // connect wallet to contract
     connectToU();
+    connectToUCM();
   } catch (error) {
     // manually remove arconnect overlay
     const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll(
@@ -138,6 +140,7 @@ const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
     dispatch({ type: 'wallet_vouched', isWalletVouched: isAddrVouched });
     // connect wallet to contract
     connectToU();
+    connectToUCM();
   } catch (error) {
     dispatch({ type: 'wallet_disconnect' });
     localStorage.removeItem('wallet');
