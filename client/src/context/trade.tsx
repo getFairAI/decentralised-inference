@@ -36,9 +36,9 @@ export const TradeProvider = ({ children }: { children: ReactNode }) => {
   const [open, setOpen] = useState(false);
   const [ assetId, setAssetId ] = useState('');
 
-  const setOpenWithId = useCallback((assetId: string, value: boolean) => {
-    setAssetId(assetId);
-    setOpen(value);
+  const setOpenWithId = useCallback((newAssetId: string, newOpenState: boolean) => {
+    setAssetId(newAssetId);
+    setOpen(newOpenState);
   }, [ setOpen, setAssetId ]);
 
   const value = useMemo(() => ({ open, setOpenWithId, assetId }), [open, setOpen, assetId]);

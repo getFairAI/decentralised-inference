@@ -47,6 +47,8 @@ import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useState } fr
 import { NumberFormatValues, NumericFormat } from 'react-number-format';
 
 const maxSliderValue = 1000; // max value that slider renders without performance issues (using step 1)
+const errorStr = 'An Error Occured';
+const flexSpaceBetween = 'space-between';
 
 const steps = [
   'Create Pair',
@@ -74,7 +76,7 @@ const CreateSellOrderStep = ({ handleNext, handleBack, currentAllowance, isProce
     [setQuantity],
   );
 
-  const handleSliderChange = useCallback((event: Event, newValue: number | number[]) => setQuantity(newValue as number), [ setQuantity ]);
+  const handleSliderChange = useCallback((_event: Event, newValue: number | number[]) => setQuantity(newValue as number), [ setQuantity ]);
 
   const handlePriceChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setPrice(+event.target.value),
@@ -183,7 +185,7 @@ const AllowStep = ({ handleNext, handleBack, maxBalance, currentAllowance, isPro
     [setAmount],
   );
 
-  const handleSliderChange = useCallback((event: Event, newValue: number | number[]) => setAmount(newValue as number), [ setAmount ]);
+  const handleSliderChange = useCallback((_event: Event, newValue: number | number[]) => setAmount(newValue as number), [ setAmount ]);
 
   const handleClick = useCallback(() => handleNext(amount), [ amount, handleNext ]);
 
@@ -242,7 +244,7 @@ const AllowStep = ({ handleNext, handleBack, maxBalance, currentAllowance, isPro
       </Box>)
     }
     
-    <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+    <Box sx={{ mb: 2, display: 'flex', justifyContent: flexSpaceBetween }}>
       <Box>
         <Button
           variant="contained"
@@ -289,11 +291,11 @@ const CreatePairStep = ({ handleNext, isProcessing }: { handleNext: (token: stri
           '& .MuiInputBase-input': {
             display: 'flex',
             gap: '24px',
-            justifyContent: 'space-between'
+            justifyContent: flexSpaceBetween
           },
         }}
       >
-        <MenuItem value={'u'} sx={{ display: 'flex', justifyContent: 'space-between'}}>
+        <MenuItem value={'u'} sx={{ display: 'flex', justifyContent: flexSpaceBetween}}>
           <Typography>
             {`$U (${displayShortTxOrAddr(U_CONTRACT_ID)})`}
           </Typography>
@@ -346,27 +348,23 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string}) => {
     }
   }, [ assetId, currentAddress ]);
 
-  useEffect(() => console.log(activeStep), [ activeStep]);
-
   const handleBack = useCallback(() => setActiveStep((prevActiveStep) => prevActiveStep - 1), [ setActiveStep ]);
 
   const handleCreatePair= useCallback(async (token: string) => {
-    switch (token) {
-      case 'u':
-        try {
-          setIsProcessing(true);
-          if (!(await checkPairExists(assetId))) {
-            await createPair(assetId); 
-          }
-          setActiveStep((prevActiveStep) => prevActiveStep + 1);
-          setIsProcessing(false);
-        } catch (error) {
-          setIsProcessing(false);
-          enqueueSnackbar('An Error Occured', { variant: 'error' });
+    if (token === 'u') {
+      try {
+        setIsProcessing(true);
+        if (!(await checkPairExists(assetId))) {
+          await createPair(assetId); 
         }
-        break;
-      default:
-        return;
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        setIsProcessing(false);
+      } catch (error) {
+        setIsProcessing(false);
+        enqueueSnackbar(errorStr, { variant: 'error' });
+      }
+    } else {
+      // ignore
     }
   }, [ assetId, setActiveStep, setIsProcessing ]);
 
@@ -385,7 +383,7 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string}) => {
       }
     } catch (error) {
       setIsProcessing(false);
-      enqueueSnackbar('An Error Occured', { variant: 'error' });
+      enqueueSnackbar(errorStr, { variant: 'error' });
     }
   }, [ assetId, currentAllowance, setActiveStep ]);
 
@@ -406,17 +404,21 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string}) => {
       }
     } catch (error) {
       setIsProcessing(false);
-      enqueueSnackbar('An Error Occured', { variant: 'error' });
+      enqueueSnackbar(errorStr, { variant: 'error' });
     }
   }, [ assetId, currentAddress, currentAllowance, setActiveStep ]);
 
   const renderStep = useCallback((index: number) => {
+    const firstStep = 0;
+    const secondStep = 1;
+    const thirdStep = 2;
+  
     switch (index) {
-      case 1:
+      case secondStep:
         return <AllowStep handleNext={handleAllow} handleBack={handleBack} maxBalance={maxBalance}  currentAllowance={currentAllowance} isProcessing={isProcessing} />;
-      case 2:
+      case thirdStep:
         return <CreateSellOrderStep handleNext={handleCreateOrder} handleBack={handleBack} currentAllowance={currentAllowance} isProcessing={isProcessing} />;
-      case 0:
+      case firstStep:
       default:
         return <CreatePairStep handleNext={handleCreatePair} isProcessing={isProcessing} />;
     }

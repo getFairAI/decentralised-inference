@@ -109,8 +109,6 @@ export const createPair = async (assetAddr: string, currencyAssetAddr = U_CONTRA
     },
     { strict: true },
   );
-
-  return;
 };
 
 /**
@@ -143,8 +141,6 @@ export const allowUCMonAsset = async (assetAddr: string, qty: number) => {
     },
     { strict: true },
   );
-
-  return;
 };
 
 /**
@@ -161,8 +157,6 @@ export const rejectUCMonAsset = async (assetAddr: string, tx: string) => {
     },
     { strict: true },
   );
-
-  return;
 };
 
 export const getAssetBalance = async (assetAddr: string, userAddr: string) => {
@@ -178,7 +172,7 @@ export const getAssetAllowance = async (assetAddr: string, currentAddress: strin
     return 0;
   }
 
-  const existingClaims = (cachedValue as UCMState).state.claimable.filter(claim => claim.from === currentAddress && claim.to === target);
+  const existingClaims = (cachedValue as UCMState).state.claimable.filter((claim) => claim.from === currentAddress && claim.to === target);
 
   return existingClaims.map(el => el.qty).reduce((a, b) => a + b, 0);
 };
@@ -190,7 +184,7 @@ export const getAssetClaims = async (assetAddr: string, currentAddress: string, 
     return [];
   }
 
-  const existingClaims = (cachedValue as UCMState).state.claimable.filter(claim => claim.from === currentAddress && claim.to === target);
+  const existingClaims = (cachedValue as UCMState).state.claimable.filter((claim) => claim.from === currentAddress && claim.to === target);
 
   return existingClaims.map((claim) => claim.txID);
 };
@@ -204,8 +198,8 @@ export const getAssetBalanceAndAllowed = async (assetAddr: string, currentAddres
     return [ balance, 0 ];
   }
 
-  const existingClaims = (cachedValue as UCMState).state.claimable.filter(claim => claim.from === currentAddress);
-  const allowedBalance = existingClaims.map(el => el.qty).reduce((a, b) => a + b, 0);
+  const existingClaims = (cachedValue as UCMState).state.claimable.filter((claim) => claim.from === currentAddress);
+  const allowedBalance = existingClaims.map((el) => el.qty).reduce((a, b) => a + b, 0);
 
   return [ balance, allowedBalance ];
 };
@@ -213,9 +207,9 @@ export const getAssetBalanceAndAllowed = async (assetAddr: string, currentAddres
 export const getClaimId = async (assetAddr: string, currentAddress: string, quantity: number, target = UCM_CONTRACT_ID) => {
   const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet').readState();
 
-  const claim = (cachedValue as UCMState).state.claimable.find(claim => claim.from === currentAddress && claim.to === target && claim.qty === quantity);
+  const existingClaim = (cachedValue as UCMState).state.claimable.find((claim) => claim.from === currentAddress && claim.to === target && claim.qty === quantity);
   
-  return claim?.txID;
+  return existingClaim?.txID;
 };
 
 export const getUserOrdersForAsset = async (assetAddr: string, userAddr: string) => {
@@ -272,6 +266,4 @@ export const createSellOrder = async (assetAddr: string,  qty: number, price: nu
     },
     { strict: true },
   );
-
-  return;
 };
