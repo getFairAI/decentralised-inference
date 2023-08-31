@@ -37,7 +37,7 @@ const Message = ({
   const theme = useTheme();
   const { setOpenWithId } = useContext(TradeContext);
 
-  const handleTradeClick = useCallback(() => setOpenWithId(message.id, true), [ message ]);
+  const handleTradeClick = useCallback(() => setOpenWithId(message.id, true), [message]);
 
   return (
     <Stack spacing={4} flexDirection='row'>
@@ -86,12 +86,8 @@ const Message = ({
             >
               <MessageDisplay message={message} />
               <MessageFooter message={message} index={index} />
-              { message.type === 'response' && (
-                <Button
-                  fullWidth
-                  variant='contained'
-                  onClick={handleTradeClick}
-                >
+              {message.type === 'response' && (
+                <Button fullWidth variant='contained' onClick={handleTradeClick}>
                   Trade on Bazar
                 </Button>
               )}

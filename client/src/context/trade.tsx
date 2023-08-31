@@ -32,21 +32,23 @@ export const TradeContext = createContext<TradeContext>({
 });
 
 export const TradeProvider = ({ children }: { children: ReactNode }) => {
-
   const [open, setOpen] = useState(false);
-  const [ assetId, setAssetId ] = useState('');
+  const [assetId, setAssetId] = useState('');
 
-  const setOpenWithId = useCallback((newAssetId: string, newOpenState: boolean) => {
-    setAssetId(newAssetId);
-    setOpen(newOpenState);
-  }, [ setOpen, setAssetId ]);
+  const setOpenWithId = useCallback(
+    (newAssetId: string, newOpenState: boolean) => {
+      setAssetId(newAssetId);
+      setOpen(newOpenState);
+    },
+    [setOpen, setAssetId],
+  );
 
   const value = useMemo(() => ({ open, setOpenWithId, assetId }), [open, setOpen, assetId]);
 
   return (
     <TradeContext.Provider value={value}>
       {children}
-      <Trade open={open} setOpenWithId={setOpenWithId} assetId={assetId}/>
+      <Trade open={open} setOpenWithId={setOpenWithId} assetId={assetId} />
     </TradeContext.Provider>
   );
 };

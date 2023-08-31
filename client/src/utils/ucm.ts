@@ -47,7 +47,7 @@ interface UCMState {
     ticker: string;
     settings: Array<Array<string>>;
     balances: { [address: string]: number };
-    claimable: Array<{ txID: string; to: string, qty: number; from: string }>;
+    claimable: Array<{ txID: string; to: string; qty: number; from: string }>;
     divisibility: number;
     contributors: unknown;
     creator: string;
@@ -56,17 +56,17 @@ interface UCMState {
     pairs: [
       {
         pair: string[];
-        orders: UCMOrder[]
-      }
-    ]
+        orders: UCMOrder[];
+      },
+    ];
     recentRewards: {
       [key: string]: number;
     };
     streaks: {
       days: number;
       lastHeight: number;
-    }
-    transferable: boolean
+    };
+    transferable: boolean;
   };
 }
 
@@ -105,7 +105,7 @@ export const createPair = async (assetAddr: string, currencyAssetAddr = U_CONTRA
   await contract.writeInteraction(
     {
       function: 'addPair',
-      pair: [ assetAddr, currencyAssetAddr ]
+      pair: [assetAddr, currencyAssetAddr],
     },
     { strict: true },
   );
@@ -120,7 +120,7 @@ export const checkPairExists = async (assetAddr: string, currencyAssetAddr = U_C
   const { cachedValue } = await contract.readState();
 
   const pairIdx = (cachedValue as UCMState).state.pairs.findIndex(
-    (pairObj) => pairObj.pair.includes(assetAddr) && pairObj.pair.includes(currencyAssetAddr)
+    (pairObj) => pairObj.pair.includes(assetAddr) && pairObj.pair.includes(currencyAssetAddr),
   );
 
   return pairIdx >= 0;
@@ -137,7 +137,7 @@ export const allowUCMonAsset = async (assetAddr: string, qty: number) => {
     {
       function: 'allow',
       target: UCM_CONTRACT_ID,
-      qty
+      qty,
     },
     { strict: true },
   );
@@ -153,7 +153,7 @@ export const rejectUCMonAsset = async (assetAddr: string, tx: string) => {
   await assetContract.writeInteraction(
     {
       function: 'reject',
-      tx
+      tx,
     },
     { strict: true },
   );
@@ -165,26 +165,38 @@ export const getAssetBalance = async (assetAddr: string, userAddr: string) => {
   return (cachedValue as UCMState).state.balances[userAddr];
 };
 
-export const getAssetAllowance = async (assetAddr: string, currentAddress: string, target = UCM_CONTRACT_ID) => {
+export const getAssetAllowance = async (
+  assetAddr: string,
+  currentAddress: string,
+  target = UCM_CONTRACT_ID,
+) => {
   const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet').readState();
 
   if (!(cachedValue as UCMState).state.claimable) {
     return 0;
   }
 
-  const existingClaims = (cachedValue as UCMState).state.claimable.filter((claim) => claim.from === currentAddress && claim.to === target);
+  const existingClaims = (cachedValue as UCMState).state.claimable.filter(
+    (claim) => claim.from === currentAddress && claim.to === target,
+  );
 
-  return existingClaims.map(el => el.qty).reduce((a, b) => a + b, 0);
+  return existingClaims.map((el) => el.qty).reduce((a, b) => a + b, 0);
 };
 
-export const getAssetClaims = async (assetAddr: string, currentAddress: string, target = UCM_CONTRACT_ID) => {
+export const getAssetClaims = async (
+  assetAddr: string,
+  currentAddress: string,
+  target = UCM_CONTRACT_ID,
+) => {
   const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet').readState();
 
   if (!(cachedValue as UCMState).state.claimable) {
     return [];
   }
 
-  const existingClaims = (cachedValue as UCMState).state.claimable.filter((claim) => claim.from === currentAddress && claim.to === target);
+  const existingClaims = (cachedValue as UCMState).state.claimable.filter(
+    (claim) => claim.from === currentAddress && claim.to === target,
+  );
 
   return existingClaims.map((claim) => claim.txID);
 };
@@ -195,28 +207,37 @@ export const getAssetBalanceAndAllowed = async (assetAddr: string, currentAddres
   const balance = (cachedValue as UCMState).state.balances[currentAddress];
 
   if (!(cachedValue as UCMState).state.claimable) {
-    return [ balance, 0 ];
+    return [balance, 0];
   }
 
-  const existingClaims = (cachedValue as UCMState).state.claimable.filter((claim) => claim.from === currentAddress);
+  const existingClaims = (cachedValue as UCMState).state.claimable.filter(
+    (claim) => claim.from === currentAddress,
+  );
   const allowedBalance = existingClaims.map((el) => el.qty).reduce((a, b) => a + b, 0);
 
-  return [ balance, allowedBalance ];
+  return [balance, allowedBalance];
 };
 
-export const getClaimId = async (assetAddr: string, currentAddress: string, quantity: number, target = UCM_CONTRACT_ID) => {
+export const getClaimId = async (
+  assetAddr: string,
+  currentAddress: string,
+  quantity: number,
+  target = UCM_CONTRACT_ID,
+) => {
   const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet').readState();
 
-  const existingClaim = (cachedValue as UCMState).state.claimable.find((claim) => claim.from === currentAddress && claim.to === target && claim.qty === quantity);
-  
+  const existingClaim = (cachedValue as UCMState).state.claimable.find(
+    (claim) => claim.from === currentAddress && claim.to === target && claim.qty === quantity,
+  );
+
   return existingClaim?.txID;
 };
 
 export const getUserOrdersForAsset = async (assetAddr: string, userAddr: string) => {
   const { cachedValue } = await contract.readState();
 
-  const matchingPairs = (cachedValue as UCMState).state.pairs.filter(
-    (pairObj) => pairObj.pair.includes(assetAddr)
+  const matchingPairs = (cachedValue as UCMState).state.pairs.filter((pairObj) =>
+    pairObj.pair.includes(assetAddr),
   );
 
   const allOrders: UCMOrder[] = [];
@@ -229,17 +250,25 @@ export const getUserOrdersForAsset = async (assetAddr: string, userAddr: string)
   return allOrders;
 };
 
-export const existsOrder = async (assetAddr: string, qty: number, transaction: string, currencyAssetAddr = UCM_CONTRACT_ID) => {
+export const existsOrder = async (
+  assetAddr: string,
+  qty: number,
+  transaction: string,
+  currencyAssetAddr = UCM_CONTRACT_ID,
+) => {
   const { cachedValue } = await contract.readState();
 
   const matchingPairs = (cachedValue as UCMState).state.pairs.filter(
-    (pairObj) => pairObj.pair.includes(assetAddr) && pairObj.pair.includes(currencyAssetAddr)
+    (pairObj) => pairObj.pair.includes(assetAddr) && pairObj.pair.includes(currencyAssetAddr),
   );
 
   let exists = false;
   for (const pair of matchingPairs) {
     // check orders
-    const matchingOrderIdx = pair.orders.filter((order) => order.token === assetAddr && order.transfer === transaction && order.quantity === qty);
+    const matchingOrderIdx = pair.orders.filter(
+      (order) =>
+        order.token === assetAddr && order.transfer === transaction && order.quantity === qty,
+    );
     if (matchingOrderIdx.length > 0) {
       exists = true;
     } else {
@@ -253,13 +282,19 @@ export const existsOrder = async (assetAddr: string, qty: number, transaction: s
  * Creates a pair in the ucm
  * @param assetAddr the asset address to create a pair with
  * @param currencyAssetAddr By default create pairs against U token
- * @returns 
+ * @returns
  */
-export const createSellOrder = async (assetAddr: string,  qty: number, price: number, transaction: string, currencyAssetAddr = U_CONTRACT_ID) => {
+export const createSellOrder = async (
+  assetAddr: string,
+  qty: number,
+  price: number,
+  transaction: string,
+  currencyAssetAddr = U_CONTRACT_ID,
+) => {
   await contract.writeInteraction(
     {
       function: 'createOrder',
-      pair: [ assetAddr, currencyAssetAddr ],
+      pair: [assetAddr, currencyAssetAddr],
       price: price * UCM_DIVIDER,
       qty,
       transaction,
