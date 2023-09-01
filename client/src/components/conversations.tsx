@@ -43,6 +43,7 @@ import {
   ListItemButton,
   Typography,
   useTheme,
+  IconButton,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
@@ -61,6 +62,7 @@ import { LoadingContainer } from '@/styles/components';
 import DebounceIconButton from './debounce-icon-button';
 import { Timeout } from 'react-number-format/types/types';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 const ConversationElement = ({
   cid,
@@ -123,11 +125,15 @@ const Conversations = ({
   setCurrentConversationId,
   state,
   userAddr,
+  drawerOpen,
+  setDrawerOpen,
 }: {
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
   state: ScriptNavigationState;
   userAddr: string;
+  drawerOpen: boolean;
+  setDrawerOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
   const [hasConversationNextPage, setHasConversationNextPage] = useState(false);
   const [conversationIds, setConversationIds] = useState<number[]>([]);
@@ -309,92 +315,105 @@ const Conversations = ({
     );
   }, [height]);
 
+  const toggleDrawer = useCallback(() => {
+    setDrawerOpen(!drawerOpen);
+  }, [ drawerOpen, setDrawerOpen ]);
+
   return (
     <Paper
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
+        borderRadius: '0px',
         height: '100%',
-        // background: 'rgba(21, 21, 21, 1)',
-        gap: '16px',
         background: theme.palette.secondary.main,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
         // opacity: '0.3',
-        borderRadius: ' 0px 20px 20px 0px',
       }}
       elevation={4}
     >
-      <Box marginTop={'16px'}>
-        <Box
-          id={'searchConversation'}
-          sx={{
-            background: theme.palette.common.white,
-            borderRadius: '30px',
-            margin: '0 20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '3px 20px 3px 50px',
-            alignItems: 'center',
-          }}
-        >
-          <InputBase
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        gap: '16px',
+        height: '100%',
+      }}>
+        <Box marginTop={'16px'}>
+          <Box
+            id={'searchConversation'}
             sx={{
-              color: theme.palette.text.primary,
-              fontStyle: 'normal',
-              fontWeight: 400,
-              fontSize: '12px',
-              lineHeight: '16px',
-            }}
-            placeholder='Search Conversations...'
-            onChange={handleFilterChange}
-          />
-          <Icon
-            sx={{
-              height: '30px',
+              background: theme.palette.common.white,
+              borderRadius: '30px',
+              marginLeft: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '3px 20px 3px 20px',
+              alignItems: 'center',
             }}
           >
-            <img src='./search-icon.svg'></img>
-          </Icon>
+            <InputBase
+              sx={{
+                color: theme.palette.text.primary,
+                fontStyle: 'normal',
+                fontWeight: 400,
+                fontSize: '12px',
+                lineHeight: '16px',
+              }}
+              placeholder='Search Conversations...'
+              onChange={handleFilterChange}
+            />
+            <Icon
+              sx={{
+                height: '30px',
+              }}
+            >
+              <img src='./search-icon.svg'></img>
+            </Icon>
+          </Box>
         </Box>
-      </Box>
-      <Tooltip title='Start a new Conversation'>
-        <DebounceIconButton
-          id={'addConversation'}
-          onClick={handleAddConversation}
+        <Tooltip title='Start a new Conversation'>
+          <DebounceIconButton
+            id={'addConversation'}
+            onClick={handleAddConversation}
+            sx={{
+              marginLeft: '20px',
+              borderRadius: '30px',
+              color: theme.palette.primary.contrastText,
+            }}
+          >
+            <AddIcon />
+          </DebounceIconButton>
+        </Tooltip>
+        <List
           sx={{
-            margin: '0 20px',
-            borderRadius: '30px',
-            color: theme.palette.primary.contrastText,
+            display: 'flex',
+            gap: '16px',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+            paddingLeft: '20px',
+            overflow: 'auto',
+            maxHeight: chatMaxHeight,
+            flexFlow: 'wrap',
           }}
         >
-          <AddIcon />
-        </DebounceIconButton>
-      </Tooltip>
-      <List
-        sx={{
-          display: 'flex',
-          gap: '16px',
-          flexDirection: 'column',
-          alignItems: 'center',
-          width: '100%',
-          padding: '0 20px',
-          overflow: 'auto',
-          maxHeight: chatMaxHeight,
-          flexFlow: 'wrap',
-        }}
-      >
-        {conversationsLoading && <LoadingContainer theme={theme} className='dot-pulse' />}
-        {filteredConversationIds.map((cid) => (
-          <ConversationElement
-            cid={cid}
-            key={cid}
-            currentConversationId={currentConversationId}
-            setCurrentConversationId={setCurrentConversationId}
-          />
-        ))}
-        <Box sx={{ paddingBottom: '8px' }} ref={conversationsTarget}></Box>
-      </List>
-      <Box flexGrow={1}></Box>
+          {conversationsLoading && <LoadingContainer theme={theme} className='dot-pulse' />}
+          {filteredConversationIds.map((cid) => (
+            <ConversationElement
+              cid={cid}
+              key={cid}
+              currentConversationId={currentConversationId}
+              setCurrentConversationId={setCurrentConversationId}
+            />
+          ))}
+          <Box sx={{ paddingBottom: '8px' }} ref={conversationsTarget}></Box>
+        </List>
+        <Box flexGrow={1}></Box>
+      </Box>
+      <IconButton size='large' sx={{ height: 'fit-content' }} onClick={toggleDrawer}>
+        <ChevronLeftIcon />
+      </IconButton>
     </Paper>
   );
 };

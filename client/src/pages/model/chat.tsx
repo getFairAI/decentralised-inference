@@ -19,8 +19,8 @@
 import {
   Box,
   CircularProgress,
+  Drawer,
   FormControl,
-  Grid,
   IconButton,
   InputAdornment,
   Paper,
@@ -92,6 +92,7 @@ import DebounceIconButton from '@/components/debounce-icon-button';
 import { parseUBalance, sendU } from '@/utils/u';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const InputField = ({
   file,
@@ -453,6 +454,9 @@ const Chat = () => {
   const [inputHeight, setInputHeight] = useState(0);
 
   const [ isExpanded, setIsExpanded ] = useState(false);
+
+  const [ drawerOpen, setDrawerOpen] = useState(true);
+  const [ headerHeight, setHeaderHeight ] = useState('64px');
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const assetNamesRef = useRef<HTMLTextAreaElement>(null);
@@ -1173,18 +1177,29 @@ const Chat = () => {
     }
   }, [width, isExpanded ]);
 
+  useLayoutEffect(() => {
+    const currHeaderHeight = document.querySelector('header')?.clientHeight;
+    if (currHeaderHeight) {
+      setHeaderHeight(`${currHeaderHeight}px`);
+    }
+  }, [width, height]);
+
   return (
     <>
-      <Grid container spacing={0} sx={{ height: '100%' }}>
-        <Grid
-          item
-          xs
+      <Box sx={{ height: '100%', display: 'flex' }}>
+        <Drawer
+          variant='persistent'
+          anchor="left"
+          open={drawerOpen}
           sx={{
-            width: '100%',
-            bgcolor: 'background.paper',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
+            width: '240px',
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: '240px',
+              boxSizing: 'border-box',
+              top: headerHeight,
+              height: `calc(100% - ${headerHeight})`,
+            },
           }}
         >
           <Conversations
@@ -1192,98 +1207,125 @@ const Chat = () => {
             setCurrentConversationId={setCurrentConversationId}
             state={state}
             userAddr={userAddr}
+            drawerOpen={drawerOpen}
+            setDrawerOpen={setDrawerOpen}
           />
-        </Grid>
-        <Grid
-          id='chat'
-          item
-          xs={10}
-          sx={{
-            width: '100%',
-            height: '100%',
-            bgcolor: 'background.paper',
+        </Drawer>
+        <Box id='chat' sx={{
+          width: '100%',
+          height: '100%',
+          bgcolor: 'background.paper',
+          display: 'flex',
+          flexGrow: 1,
+          background: theme.palette.background.default,
+          transition: theme.transitions.create('margin', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+          }),
+          marginLeft: '-240px',
+          ...(drawerOpen && {
+            transition: theme.transitions.create('margin', {
+              easing: theme.transitions.easing.easeOut,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+            marginLeft: 0,
+          }),
+        }}>
+          {
+            !drawerOpen && (
+              <Paper sx={{ background: theme.palette.secondary.main, height: '100%', borderRadius: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <Box>
+                  <IconButton  onClick={() => setDrawerOpen(true)} >
+                    <ChevronRightIcon/>
+                  </IconButton>
+                </Box>
+              </Paper>
+            )
+          }
+          <Box sx={{
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
-            background: theme.palette.background.default,
-          }}
-        >
-          <Box flexGrow={1}>
-            <Paper
-              elevation={1}
+            width: '100%',
+            height: '100%',
+          }}>
+            <Box flexGrow={1}>
+              <Paper
+                elevation={1}
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end',
+                  background: theme.palette.background.default,
+                  boxShadow: 'none',
+                }}
+              >
+                <Box
+                  sx={{
+                    overflow: 'auto',
+                    maxHeight: chatMaxHeight,
+                    pt: '150px',
+                    paddingBottom: `${inputHeight}px`,
+                  }}
+                  ref={scrollableRef}
+                >
+                  <Box ref={target} sx={{ padding: '8px' }}></Box>
+                  <ChatBubble
+                    messages={messages}
+                    showError={showError}
+                    showLoading={showLoading}
+                    isWaitingResponse={isWaitingResponse}
+                    responseTimeout={responseTimeout}
+                    pendingTxs={pendingTxs}
+                    messagesLoading={messagesLoading}
+                  />
+                  <Box ref={messagesEndRef} sx={{ padding: '8px' }}></Box>
+                </Box>
+              </Paper>
+            </Box>
+            <Box
+              id={'chat-input'}
               sx={{
-                height: '100%',
+                background: 'transparent',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'flex-end',
-                background: theme.palette.background.default,
-                boxShadow: 'none',
+                borderRadius: '23px',
+                justifyContent: 'flex-start',
+                position: 'absolute',
+                margin: '8px 16px',
+                width: inputWidth,
               }}
             >
-              <Box
-                sx={{
-                  overflow: 'auto',
-                  maxHeight: chatMaxHeight,
-                  pt: '150px',
-                  paddingBottom: `${inputHeight}px`,
-                }}
-                ref={scrollableRef}
-              >
-                <Box ref={target} sx={{ padding: '8px' }}></Box>
-                <ChatBubble
-                  messages={messages}
-                  showError={showError}
-                  showLoading={showLoading}
-                  isWaitingResponse={isWaitingResponse}
-                  responseTimeout={responseTimeout}
-                  pendingTxs={pendingTxs}
-                  messagesLoading={messagesLoading}
-                />
-                <Box ref={messagesEndRef} sx={{ padding: '8px' }}></Box>
-              </Box>
-            </Paper>
+              <InputField
+                file={file}
+                loading={loading}
+                currentConversationId={currentConversationId}
+                newMessage={newMessage}
+                inputRef={inputRef}
+                assetNamesRef={assetNamesRef}
+                negativePromptRef={negativePromptRef}
+                isExpanded={isExpanded}
+                setIsExpanded={setIsExpanded}
+                handleFileUpload={handleFileUpload}
+                handleUploadClick={handleUploadClick}
+                handleRemoveFile={handleRemoveFile}
+                handleSendFile={handleSendFile}
+                handleSendText={handleSendText}
+                handleMessageChange={handleMessageChange}
+              />
+              {newMessage.length >= MAX_MESSAGE_SIZE && (
+                <Typography
+                  variant='subtitle1'
+                  sx={{ color: theme.palette.error.main, fontWeight: 500, paddingLeft: '20px' }}
+                >
+                  Message Too Long
+                </Typography>
+              )}
+            </Box>
           </Box>
-          <Box
-            id={'chat-input'}
-            sx={{
-              background: 'transparent',
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: '23px',
-              justifyContent: 'flex-start',
-              position: 'absolute',
-              margin: '8px 16px',
-              width: inputWidth,
-            }}
-          >
-            <InputField
-              file={file}
-              loading={loading}
-              currentConversationId={currentConversationId}
-              newMessage={newMessage}
-              inputRef={inputRef}
-              assetNamesRef={assetNamesRef}
-              negativePromptRef={negativePromptRef}
-              isExpanded={isExpanded}
-              setIsExpanded={setIsExpanded}
-              handleFileUpload={handleFileUpload}
-              handleUploadClick={handleUploadClick}
-              handleRemoveFile={handleRemoveFile}
-              handleSendFile={handleSendFile}
-              handleSendText={handleSendText}
-              handleMessageChange={handleMessageChange}
-            />
-            {newMessage.length >= MAX_MESSAGE_SIZE && (
-              <Typography
-                variant='subtitle1'
-                sx={{ color: theme.palette.error.main, fontWeight: 500, paddingLeft: '20px' }}
-              >
-                Message Too Long
-              </Typography>
-            )}
-          </Box>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
       <Outlet />
     </>
   );
