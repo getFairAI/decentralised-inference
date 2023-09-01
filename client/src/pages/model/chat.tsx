@@ -34,6 +34,7 @@ import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import {
   ChangeEvent,
+  RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -76,7 +77,7 @@ import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
 import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
-import _, { debounce } from 'lodash';
+import _ from 'lodash';
 import '@/styles/main.css';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
@@ -87,6 +88,311 @@ import ClearIcon from '@mui/icons-material/Clear';
 import ChatBubble from '@/components/chat-bubble';
 import DebounceIconButton from '@/components/debounce-icon-button';
 import { parseUBalance, sendU } from '@/utils/u';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+
+const InputField = ({
+  file,
+  loading,
+  currentConversationId,
+  newMessage,
+  inputRef,
+  assetNamesRef,
+  handleSendFile,
+  handleSendText,
+  handleRemoveFile,
+  handleMessageChange,
+  handleUploadClick,
+  handleFileUpload
+}: {
+  file?: File,
+  loading: boolean,
+  currentConversationId: number,
+  newMessage: string,
+  inputRef: RefObject<HTMLTextAreaElement>,
+  assetNamesRef: RefObject<HTMLTextAreaElement>,
+  handleSendFile: () => Promise<void>,
+  handleSendText: () => Promise<void>,
+  handleRemoveFile: () => void,
+  handleMessageChange: (event: ChangeEvent<HTMLInputElement>) => void,
+  handleUploadClick: () => void,
+  handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => void
+}) => {
+  const theme = useTheme();
+  const { state } = useLocation();
+
+  const [ isExpanded, setIsExpanded ] = useState(false);
+
+  const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
+  const allowText = useMemo(
+    () =>
+      !findTag(state.fullState, 'allowText')
+        ? true
+        : findTag(state.fullState, 'allowText') === 'true',
+    [state],
+  );
+  const uploadDisabled = useMemo(
+    () => file instanceof File || loading || !allowFiles,
+    [file, loading, allowFiles],
+  );
+  const [isSending, setIsSending] = useState(false);
+
+  const sendDisabled = useMemo(() => {
+    if (!currentConversationId || loading) {
+      return true;
+    } else {
+      return (newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE) && !file;
+    }
+  }, [newMessage, file, currentConversationId, loading]);
+
+  const checkAssetNamesValidity = useCallback(() => {
+    const assetNames = assetNamesRef?.current?.value;
+    if (assetNames) {
+      const assetNamesArray = assetNames.split(';');
+      return assetNamesArray.every((assetName) => assetName.length > 0);
+    } else {
+      return false;
+    }
+  }, [ assetNamesRef?.current?.value ]);
+
+  const hasAssetNameError = useMemo(() => !checkAssetNamesValidity(), [assetNamesRef?.current?.value]);
+
+  const handleExpandClick = useCallback(() => {
+    setIsExpanded(!isExpanded);
+  }, [ isExpanded, setIsExpanded ]);
+
+  const handleSendClick = useCallback(async () => {
+    if (isSending) {
+      return;
+    } else {
+      // continue
+    }
+    setIsSending(true);
+
+    if (file) {
+      // handle send file
+      await handleSendFile();
+    } else {
+      await handleSendText();
+    }
+
+    setIsSending(false);
+  }, [handleSendFile, handleSendText, file, isSending]);
+
+  // avoid send duplicated messages and show the new line if it's only the Enter key
+  const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.code === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (!sendDisabled && !isSending) {
+        setIsSending(true);
+        if (file) {
+          // handle send file
+          await handleSendFile();
+        } else {
+          await handleSendText();
+        }
+        setIsSending(false);
+      }
+    }
+  };
+
+  if (loading || file) {
+    return <FormControl variant='outlined' fullWidth>
+      {file && (
+        <TextField
+          value={file?.name}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position='start'>
+                <IconButton aria-label='Remove' onClick={handleRemoveFile}>
+                  <ClearIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position='start'>{printSize(file)}</InputAdornment>
+            ),
+            sx: {
+              borderWidth: '1px',
+              borderColor: theme.palette.text.primary,
+              borderRadius: '23px',
+            },
+            readOnly: true,
+          }}
+        />
+      )}
+      {loading && <CircularProgress variant='indeterminate' />}
+    </FormControl>;
+  } else if (isExpanded) {
+    return <Box sx={{
+      display: 'flex',
+      color:
+        theme.palette.mode === 'dark'
+          ? '#1A1A1A'
+          : theme.palette.neutral.contrastText,
+      fontStyle: 'normal',
+      fontWeight: 400,
+      fontSize: '20px',
+      lineHeight: '16px',
+      width: '100%',
+      marginTop: '10px',
+      boxShadow:
+        '0px 15px 50px rgba(0,0,0,0.4), 0px -15px 50px rgba(0,0,0,0.4), 15px 0px 50px rgba(0,0,0,0.4), -15px 0px 50px rgba(0,0,0,0.4)',
+      background: theme.palette.background.default,
+      borderRadius: '23px',
+      padding: '16px'
+    }}>
+      <Box display={'flex'} flexDirection={'column'} width={'100%'} gap={'8px'}>
+        <TextField
+          label={'Prompt'}
+          inputRef={inputRef}
+          multiline
+          minRows={1}
+          maxRows={3}
+          error={newMessage.length >= MAX_MESSAGE_SIZE}
+          onChange={handleMessageChange}
+          onKeyDown={keyDownHandler}
+          fullWidth
+          disabled={!allowText}
+          placeholder='Start Chatting...'
+        />
+        <TextField
+          inputRef={assetNamesRef}
+          label={'Atomic Asset Name(s)'}
+          multiline
+          minRows={1}
+          maxRows={3}
+          error={hasAssetNameError}
+        />
+      </Box>
+      <Box display={'flex'} alignItems={'center'}>
+        <Tooltip
+          title={'Toggle Advanced Input configuration'}
+        >
+          <span>
+            <IconButton
+              component='label'
+              onClick={handleExpandClick}
+            >
+              { isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip
+          title={
+            !allowFiles ? 'Script does not support Uploading files' : 'File Loaded'
+          }
+        >
+          <span>
+            <IconButton
+              component='label'
+              disabled={uploadDisabled}
+              onClick={handleUploadClick}
+            >
+              <AttachFileIcon />
+              <input
+                type='file'
+                hidden
+                multiple={false}
+                onInput={handleFileUpload}
+              />
+            </IconButton>
+          </span>
+        </Tooltip>
+
+        <DebounceIconButton
+          onClick={handleSendClick}
+          sx={{
+            color: theme.palette.neutral.contrastText,
+          }}
+          disabled={sendDisabled || hasAssetNameError}
+        >
+          <SendIcon />
+        </DebounceIconButton>
+      </Box>
+    </Box>;
+  } else {
+    return  <>
+      <TextField
+        inputRef={inputRef}
+        multiline
+        minRows={1}
+        maxRows={3}
+        sx={{
+          color:
+            theme.palette.mode === 'dark'
+              ? '#1A1A1A'
+              : theme.palette.neutral.contrastText,
+          fontStyle: 'normal',
+          fontWeight: 400,
+          fontSize: '20px',
+          lineHeight: '16px',
+          width: '100%',
+          marginTop: '10px',
+          boxShadow:
+            '0px 15px 50px rgba(0,0,0,0.4), 0px -15px 50px rgba(0,0,0,0.4), 15px 0px 50px rgba(0,0,0,0.4), -15px 0px 50px rgba(0,0,0,0.4)',
+          background: theme.palette.background.default,
+          borderRadius: '23px',
+        }}
+        InputProps={{
+          endAdornment: (
+            <>
+              <Tooltip
+                title={'Advanced Input configuration'}
+              >
+                <span>
+                  <IconButton
+                    component='label'
+                    onClick={handleExpandClick}
+                  >
+                    { isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip
+                title={
+                  !allowFiles ? 'Script does not support Uploading files' : 'File Loaded'
+                }
+              >
+                <span>
+                  <IconButton
+                    component='label'
+                    disabled={uploadDisabled}
+                    onClick={handleUploadClick}
+                  >
+                    <AttachFileIcon />
+                    <input
+                      type='file'
+                      hidden
+                      multiple={false}
+                      onInput={handleFileUpload}
+                    />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <DebounceIconButton
+                onClick={handleSendClick}
+                sx={{
+                  color: theme.palette.neutral.contrastText,
+                }}
+                disabled={sendDisabled}
+              >
+                <SendIcon />
+              </DebounceIconButton>
+            </>
+          ),
+        }}
+        error={newMessage.length >= MAX_MESSAGE_SIZE}
+        onChange={handleMessageChange}
+        onKeyDown={keyDownHandler}
+        fullWidth
+        disabled={!allowText}
+        placeholder='Start Chatting...'
+      />
+    </>;
+  }
+};
 
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
@@ -126,29 +432,9 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState(0);
   const [inputHeight, setInputHeight] = useState(0);
-  const [isSending, setIsSending] = useState(false);
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const sendDisabled = useMemo(() => {
-    if (!currentConversationId || loading) {
-      return true;
-    } else {
-      return (newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE) && !file;
-    }
-  }, [newMessage, file, currentConversationId, loading]);
-
-  const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
-  const allowText = useMemo(
-    () =>
-      !findTag(state.fullState, 'allowText')
-        ? true
-        : findTag(state.fullState, 'allowText') === 'true',
-    [state],
-  );
-  const uploadDisabled = useMemo(
-    () => file instanceof File || loading || !allowFiles,
-    [file, loading, allowFiles],
-  );
+  const assetNamesRef = useRef<HTMLTextAreaElement>(null);
 
   const [
     getChatRequests,
@@ -552,6 +838,10 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
     tags.push({ name: TAG_NAMES.contentType, value: contentType });
     tags.push({ name: TAG_NAMES.txOrigin, value: TX_ORIGIN });
+    if (assetNamesRef?.current?.value) {
+      const assetNamesArray = assetNamesRef?.current?.value.split(';');
+      tags.push({ name: TAG_NAMES.assetNames, value: JSON.stringify(assetNamesArray) });
+    }
 
     return tags;
   };
@@ -574,6 +864,10 @@ const Chat = () => {
         { name: TAG_NAMES.contentType, value: contentType },
         { name: TAG_NAMES.txOrigin, value: TX_ORIGIN },
       ];
+      if (assetNamesRef?.current?.value) {
+        const assetNamesArray = assetNamesRef?.current?.value.split(';');
+        paymentTags.push({ name: TAG_NAMES.assetNames, value: JSON.stringify(assetNamesArray) });
+      }
 
       const operatorFeeShare = parsedUFee * OPERATOR_PERCENTAGE_FEE;
       const marketPlaceFeeShare = parsedUFee * MARKETPLACE_PERCENTAGE_FEE;
@@ -622,6 +916,9 @@ const Chat = () => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
+    }
+    if (assetNamesRef?.current) {
+      assetNamesRef.current.value = '';
     }
     setFile(undefined);
     setIsWaitingResponse(true);
@@ -828,41 +1125,6 @@ const Chat = () => {
     setFile(undefined);
   }, [setFile]);
 
-  const handleSendClick = useCallback(async () => {
-    if (isSending) {
-      return;
-    } else {
-      // continue
-    }
-    setIsSending(true);
-
-    if (file) {
-      // handle send file
-      await handleSendFile();
-    } else {
-      await handleSendText();
-    }
-
-    setIsSending(false);
-  }, [handleSendFile, handleSendText, file, isSending]);
-
-  // avoid send duplicated messages and show the new line if it's only the Enter key
-  const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.code === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      if (!sendDisabled && !isSending) {
-        setIsSending(true);
-        if (file) {
-          // handle send file
-          await handleSendFile();
-        } else {
-          await handleSendText();
-        }
-        setIsSending(false);
-      }
-    }
-  };
-
   const handleMessageChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setNewMessage(event.target.value),
     [setNewMessage],
@@ -964,102 +1226,20 @@ const Chat = () => {
               width: inputWidth,
             }}
           >
-            {loading || file ? (
-              <FormControl variant='outlined' fullWidth>
-                {file && (
-                  <TextField
-                    value={file?.name}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <IconButton aria-label='Remove' onClick={handleRemoveFile}>
-                            <ClearIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position='start'>{printSize(file)}</InputAdornment>
-                      ),
-                      sx: {
-                        borderWidth: '1px',
-                        borderColor: theme.palette.text.primary,
-                        borderRadius: '23px',
-                      },
-                      readOnly: true,
-                    }}
-                  />
-                )}
-                {loading && <CircularProgress variant='indeterminate' />}
-              </FormControl>
-            ) : (
-              <>
-                <TextField
-                  inputRef={inputRef}
-                  multiline
-                  minRows={1}
-                  maxRows={3}
-                  sx={{
-                    color:
-                      theme.palette.mode === 'dark'
-                        ? '#1A1A1A'
-                        : theme.palette.neutral.contrastText,
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '20px',
-                    lineHeight: '16px',
-                    width: '100%',
-                    marginTop: '10px',
-                    boxShadow:
-                      '0px 15px 50px rgba(0,0,0,0.4), 0px -15px 50px rgba(0,0,0,0.4), 15px 0px 50px rgba(0,0,0,0.4), -15px 0px 50px rgba(0,0,0,0.4)',
-                    background: theme.palette.background.default,
-                    borderRadius: '23px',
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <>
-                        <Tooltip
-                          title={
-                            !allowFiles ? 'Script does not support Uploading files' : 'File Loaded'
-                          }
-                        >
-                          <span>
-                            <IconButton
-                              component='label'
-                              disabled={uploadDisabled}
-                              onClick={handleUploadClick}
-                            >
-                              <AttachFileIcon />
-                              <input
-                                type='file'
-                                hidden
-                                multiple={false}
-                                onInput={handleFileUpload}
-                              />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-
-                        <DebounceIconButton
-                          onClick={handleSendClick}
-                          sx={{
-                            color: theme.palette.neutral.contrastText,
-                          }}
-                          disabled={sendDisabled}
-                        >
-                          <SendIcon />
-                        </DebounceIconButton>
-                      </>
-                    ),
-                  }}
-                  error={newMessage.length >= MAX_MESSAGE_SIZE}
-                  onChange={handleMessageChange}
-                  onKeyDown={keyDownHandler}
-                  fullWidth
-                  disabled={!allowText}
-                  placeholder='Start Chatting...'
-                />
-              </>
-            )}
+            <InputField
+              file={file}
+              loading={loading}
+              currentConversationId={currentConversationId}
+              newMessage={newMessage}
+              inputRef={inputRef}
+              assetNamesRef={assetNamesRef}
+              handleFileUpload={handleFileUpload}
+              handleUploadClick={handleUploadClick}
+              handleRemoveFile={handleRemoveFile}
+              handleSendFile={handleSendFile}
+              handleSendText={handleSendText}
+              handleMessageChange={handleMessageChange}
+            />
             {newMessage.length >= MAX_MESSAGE_SIZE && (
               <Typography
                 variant='subtitle1'
