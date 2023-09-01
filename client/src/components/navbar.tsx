@@ -34,32 +34,19 @@ import {
 import {
   Button,
   Icon,
-  IconButton,
   InputBase,
   MenuItem,
   Select,
-  styled,
   Tooltip,
   useTheme,
 } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
-import CloseIcon from '@mui/icons-material/Close';
-import Pending from './pending';
 import NavigationMenu from './navigation-menu';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
 import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 import { usePollingEffect } from '@/hooks/usePollingEffect';
 import Logo from './logo';
-
-const Banner = styled(Toolbar)(({ theme }) => ({
-  backgroundColor: theme.palette.error.main,
-  color: theme.palette.error.contrastText,
-  // Override media queries injected by theme.mixins.toolbar
-  '@media all': {
-    minHeight: '25px',
-  },
-}));
 
 const CustomDropDownIcon = () => (
   <Icon
@@ -151,7 +138,7 @@ const CurrencyMenu = () => {
         </MenuItem>
         <MenuItem value={'U'} onClick={handleUClick}>
           <Typography
-            sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
+            sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}
             color={theme.palette.primary.contrastText}
           >
             {currentUBalance.toFixed(defaultDecimalPlaces)}
@@ -174,23 +161,25 @@ const WalletState = () => {
   if (!currentAddress || currentAddress === '') {
     return (
       <>
-        <Box
+        <Button
+          variant='outlined'
           sx={{
-            borderRadius: '23px',
+            borderRadius: '8px',
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: 0,
             gap: '17px',
-            background: theme.palette.secondary.main,
+            border: 'solid',
+            borderColor: theme.palette.terciary.main,
+            borderWidth: '0.5px',
+            paddingTop: '11px',
+            paddingBottom: '11px'
           }}
+          onClick={handleConnect}
         >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>Connect Wallet</Typography>
-          <IconButton onClick={handleConnect} sx={{ paddingRight: '16px' }}>
-            <img src='./icon-empty-wallet.svg' />
-          </IconButton>
-        </Box>
+          <Typography sx={{ lineHeight: '18.9px', fontSize: '14px' }}>Connect</Typography>
+        </Button>
         <ProfileMenu />
       </>
     );
@@ -200,7 +189,7 @@ const WalletState = () => {
     <>
       <Box
         sx={{
-          borderRadius: '23px',
+          borderRadius: '8px',
           display: 'flex',
           flexDirection: 'row',
           justifyContent: 'center',
@@ -215,39 +204,37 @@ const WalletState = () => {
         </Box>
         <Box
           sx={{
-            background: theme.palette.background.default,
+            background: theme.palette.secondary.contrastText,
             borderRadius: '43px',
             padding: '7px 20px 7px 20px',
+            alignItems: 'center',
           }}
           display={'flex'}
           gap={'8px'}
         >
           <Tooltip title={currentAddress} placement={'left-start'}>
-            <Typography sx={{ color: theme.palette.text.primary }}>
+            <Typography sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px' }}>
               {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
             </Typography>
           </Tooltip>
           {isWalletVouched && (
             <Tooltip title={'Wallet is Vouched'}>
-              <img src='./vouch.svg' />
+              <img src='./vouch.svg' width={'15px'} height={'15px'} />
             </Tooltip>
           )}
         </Box>
-        <Pending />
+        <ProfileMenu />
       </Box>
-      <ProfileMenu />
     </>
   );
 };
 
 const Navbar = ({
-  showBanner,
-  setShowBanner,
   setFilterValue,
+  isScrolled,
 }: {
-  showBanner: boolean;
-  setShowBanner: Dispatch<SetStateAction<boolean>>;
   setFilterValue: Dispatch<SetStateAction<string>>;
+  isScrolled: boolean;
 }) => {
   const { pathname, state } = useLocation();
   const navigate = useNavigate();
@@ -269,26 +256,18 @@ const Navbar = ({
     }, 500);
   };
 
+  const appBarStyle = {
+    zIndex,
+    alignContent: 'center',
+    padding: '10px 20px 10px 20px',
+    ...(!isScrolled && { boxShadow: 'none' }),
+  };
+
   return (
     <>
-      <AppBar className='navbar' sx={{ zIndex }} color='secondary' style={{ boxShadow: 'none' }}>
-        {showBanner && (
-          <Banner>
-            <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-              <Typography variant='h4'>
-                This App is in <b>ALPHA</b> version and the code has not been audited yet. Please
-                make sure you understand before using any of the functionalities.
-              </Typography>
-            </Box>
-            <Box sx={{ flexGrow: 0 }}>
-              <IconButton size='small' onClick={() => setShowBanner(false)}>
-                <CloseIcon fontSize='inherit' />
-              </IconButton>
-            </Box>
-          </Banner>
-        )}
+      <AppBar sx={appBarStyle} color='inherit'>
         <Toolbar>
-          <Box display={'flex'} flexDirection={'row'}>
+          <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
             <Link to='/'>
               <Logo />
             </Link>
@@ -299,13 +278,16 @@ const Navbar = ({
             {pathname && pathname === '/' && (
               <Box
                 sx={{
-                  borderRadius: '30px',
+                  borderRadius: '8px',
                   margin: '0 50px',
                   display: 'flex',
                   justifyContent: 'space-between',
                   padding: '3px 20px 3px 50px',
                   alignItems: 'center',
-                  background: theme.palette.background.default,
+                  border: 'solid',
+                  borderColor: theme.palette.terciary.main,
+                  borderWidth: '0.5px',
+                  width: '100%',
                 }}
               >
                 <InputBase
@@ -372,8 +354,7 @@ const Navbar = ({
           </Box>
         </Toolbar>
       </AppBar>
-      <Toolbar />
-      {showBanner && <Banner />}
+      <Toolbar sx={{}}/>
     </>
   );
 };

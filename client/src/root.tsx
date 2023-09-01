@@ -29,7 +29,6 @@ import { ReactElement, useEffect } from 'react';
 import { ChooseWalletProvider } from './context/choose-wallet';
 import { SwapProvider } from './context/swap';
 import { TradeProvider } from './context/trade';
-import SignIn from './pages/sign-in';
 
 const BaseRoot = ({ children }: { children: ReactElement }) => {
   const navigate = useNavigate();

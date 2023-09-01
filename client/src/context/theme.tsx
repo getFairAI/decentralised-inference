@@ -69,19 +69,19 @@ const lightTheme = createTheme({
     },
     secondary: {
       // light: will be calculated from palette.primary.main,
-      light: '#EDEDED',
-      main: '#EDEDED',
-      dark: '#EDEDED',
-      contrastText: '#1F1F26',
+      light: '#222222',
+      main: '#222222',
+      dark: '#222222',
+      contrastText: '#D9D9D9',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     terciary: {
       // light: will be calculated from palette.primary.main,
-      light: '#FF9524', // D04C5A // FF9524
-      main: '#FF9524',
-      dark: '#FF9524',
-      contrastText: '#223745',
+      light: '#6C6C6C', // D04C5A // FF9524
+      main: '#6C6C6C',
+      dark: '#6C6C6C',
+      contrastText: '#151515',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
