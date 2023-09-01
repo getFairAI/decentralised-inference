@@ -34,7 +34,9 @@ import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import {
   ChangeEvent,
+  Dispatch,
   RefObject,
+  SetStateAction,
   useCallback,
   useContext,
   useEffect,
@@ -98,6 +100,9 @@ const InputField = ({
   newMessage,
   inputRef,
   assetNamesRef,
+  negativePromptRef,
+  isExpanded,
+  setIsExpanded,
   handleSendFile,
   handleSendText,
   handleRemoveFile,
@@ -111,6 +116,9 @@ const InputField = ({
   newMessage: string,
   inputRef: RefObject<HTMLTextAreaElement>,
   assetNamesRef: RefObject<HTMLTextAreaElement>,
+  negativePromptRef: RefObject<HTMLTextAreaElement>,
+  isExpanded: boolean,
+  setIsExpanded: Dispatch<SetStateAction<boolean>>,
   handleSendFile: () => Promise<void>,
   handleSendText: () => Promise<void>,
   handleRemoveFile: () => void,
@@ -121,7 +129,7 @@ const InputField = ({
   const theme = useTheme();
   const { state } = useLocation();
 
-  const [ isExpanded, setIsExpanded ] = useState(false);
+  const [ isAssetNamesDirty, setIsAssetNamesDirty ] = useState(false);
 
   const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
   const allowText = useMemo(
@@ -151,7 +159,7 @@ const InputField = ({
       const assetNamesArray = assetNames.split(';');
       return assetNamesArray.every((assetName) => assetName.length > 0);
     } else {
-      return false;
+      return true;
     }
   }, [ assetNamesRef?.current?.value ]);
 
@@ -195,6 +203,8 @@ const InputField = ({
       }
     }
   };
+
+  const handleAssetNamesBlur = useCallback(() => setIsAssetNamesDirty(true), [setIsAssetNamesDirty]);
 
   if (loading || file) {
     return <FormControl variant='outlined' fullWidth>
@@ -257,12 +267,21 @@ const InputField = ({
           placeholder='Start Chatting...'
         />
         <TextField
+          label={'Negative Prompt'}
+          inputRef={negativePromptRef}
+          multiline
+          minRows={1}
+          maxRows={3}
+          fullWidth
+        />
+        <TextField
           inputRef={assetNamesRef}
           label={'Atomic Asset Name(s)'}
           multiline
           minRows={1}
           maxRows={3}
-          error={hasAssetNameError}
+          error={isAssetNamesDirty && hasAssetNameError}
+          onBlur={handleAssetNamesBlur}
         />
       </Box>
       <Box display={'flex'} alignItems={'center'}>
@@ -433,8 +452,11 @@ const Chat = () => {
   const [inputWidth, setInputWidth] = useState(0);
   const [inputHeight, setInputHeight] = useState(0);
 
+  const [ isExpanded, setIsExpanded ] = useState(false);
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const assetNamesRef = useRef<HTMLTextAreaElement>(null);
+  const negativePromptRef = useRef<HTMLTextAreaElement>(null);
 
   const [
     getChatRequests,
@@ -843,6 +865,10 @@ const Chat = () => {
       tags.push({ name: TAG_NAMES.assetNames, value: JSON.stringify(assetNamesArray) });
     }
 
+    if (negativePromptRef?.current?.value) {
+      tags.push({ name: TAG_NAMES.negativePrompt, value: negativePromptRef?.current?.value });
+    }
+
     return tags;
   };
 
@@ -867,6 +893,10 @@ const Chat = () => {
       if (assetNamesRef?.current?.value) {
         const assetNamesArray = assetNamesRef?.current?.value.split(';');
         paymentTags.push({ name: TAG_NAMES.assetNames, value: JSON.stringify(assetNamesArray) });
+      }
+
+      if (negativePromptRef?.current?.value) {
+        paymentTags.push({ name: TAG_NAMES.negativePrompt, value: negativePromptRef?.current?.value });
       }
 
       const operatorFeeShare = parsedUFee * OPERATOR_PERCENTAGE_FEE;
@@ -1141,7 +1171,7 @@ const Chat = () => {
       const margins = 16; // 8px on each side
       setInputHeight(currInputHeight + margins);
     }
-  }, [width]);
+  }, [width, isExpanded ]);
 
   return (
     <>
@@ -1233,6 +1263,9 @@ const Chat = () => {
               newMessage={newMessage}
               inputRef={inputRef}
               assetNamesRef={assetNamesRef}
+              negativePromptRef={negativePromptRef}
+              isExpanded={isExpanded}
+              setIsExpanded={setIsExpanded}
               handleFileUpload={handleFileUpload}
               handleUploadClick={handleUploadClick}
               handleRemoveFile={handleRemoveFile}
