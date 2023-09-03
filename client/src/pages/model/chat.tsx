@@ -107,21 +107,21 @@ const InputField = ({
   handleRemoveFile,
   handleMessageChange,
   handleUploadClick,
-  handleFileUpload
+  handleFileUpload,
 }: {
-  file?: File,
-  loading: boolean,
-  currentConversationId: number,
-  newMessage: string,
-  inputRef: RefObject<HTMLTextAreaElement>,
-  configurationDrawerOpen: boolean,
-  setConfigurationDrawerOpen: Dispatch<SetStateAction<boolean>>,
-  handleSendFile: () => Promise<void>,
-  handleSendText: () => Promise<void>,
-  handleRemoveFile: () => void,
-  handleMessageChange: (event: ChangeEvent<HTMLInputElement>) => void,
-  handleUploadClick: () => void,
-  handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => void
+  file?: File;
+  loading: boolean;
+  currentConversationId: number;
+  newMessage: string;
+  inputRef: RefObject<HTMLTextAreaElement>;
+  configurationDrawerOpen: boolean;
+  setConfigurationDrawerOpen: Dispatch<SetStateAction<boolean>>;
+  handleSendFile: () => Promise<void>;
+  handleSendText: () => Promise<void>;
+  handleRemoveFile: () => void;
+  handleMessageChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  handleUploadClick: () => void;
+  handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => void;
 }) => {
   const theme = useTheme();
   const { state } = useLocation();
@@ -148,7 +148,10 @@ const InputField = ({
     }
   }, [newMessage, file, currentConversationId, loading]);
 
-  const handleExpandClick = useCallback(() => setConfigurationDrawerOpen(!configurationDrawerOpen), [ configurationDrawerOpen, setConfigurationDrawerOpen ]);
+  const handleExpandClick = useCallback(
+    () => setConfigurationDrawerOpen(!configurationDrawerOpen),
+    [configurationDrawerOpen, setConfigurationDrawerOpen],
+  );
 
   const handleSendClick = useCallback(async () => {
     if (isSending) {
@@ -186,112 +189,99 @@ const InputField = ({
   };
 
   if (loading || file) {
-    return <FormControl variant='outlined' fullWidth>
-      {file && (
-        <TextField
-          value={file?.name}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start'>
-                <IconButton aria-label='Remove' onClick={handleRemoveFile}>
-                  <ClearIcon />
-                </IconButton>
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position='start'>{printSize(file)}</InputAdornment>
-            ),
-            sx: {
-              borderWidth: '1px',
-              borderColor: theme.palette.text.primary,
-              borderRadius: '23px',
-            },
-            readOnly: true,
-          }}
-        />
-      )}
-      {loading && <CircularProgress variant='indeterminate' />}
-    </FormControl>;
+    return (
+      <FormControl variant='outlined' fullWidth>
+        {file && (
+          <TextField
+            value={file?.name}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <IconButton aria-label='Remove' onClick={handleRemoveFile}>
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+              endAdornment: <InputAdornment position='start'>{printSize(file)}</InputAdornment>,
+              sx: {
+                borderWidth: '1px',
+                borderColor: theme.palette.text.primary,
+                borderRadius: '23px',
+              },
+              readOnly: true,
+            }}
+          />
+        )}
+        {loading && <CircularProgress variant='indeterminate' />}
+      </FormControl>
+    );
   } else {
-    return  <>
-      <TextField
-        inputRef={inputRef}
-        multiline
-        minRows={1}
-        maxRows={3}
-        sx={{
-          color:
-            theme.palette.mode === 'dark'
-              ? '#1A1A1A'
-              : theme.palette.neutral.contrastText,
-          fontStyle: 'normal',
-          fontWeight: 400,
-          fontSize: '20px',
-          lineHeight: '16px',
-          width: '100%',
-          marginTop: '10px',
-          boxShadow:
-            '0px 15px 50px rgba(0,0,0,0.4), 0px -15px 50px rgba(0,0,0,0.4), 15px 0px 50px rgba(0,0,0,0.4), -15px 0px 50px rgba(0,0,0,0.4)',
-          background: theme.palette.background.default,
-          borderRadius: '23px',
-        }}
-        InputProps={{
-          endAdornment: (
-            <>
-              <Tooltip
-                title={'Advanced Input configuration'}
-              >
-                <span>
-                  <IconButton
-                    component='label'
-                    onClick={handleExpandClick}
-                  >
-                    <SettingsIcon />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip
-                title={
-                  !allowFiles ? 'Script does not support Uploading files' : 'File Loaded'
-                }
-              >
-                <span>
-                  <IconButton
-                    component='label'
-                    disabled={uploadDisabled}
-                    onClick={handleUploadClick}
-                  >
-                    <AttachFileIcon />
-                    <input
-                      type='file'
-                      hidden
-                      multiple={false}
-                      onInput={handleFileUpload}
-                    />
-                  </IconButton>
-                </span>
-              </Tooltip>
+    return (
+      <>
+        <TextField
+          inputRef={inputRef}
+          multiline
+          minRows={1}
+          maxRows={3}
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
+            fontStyle: 'normal',
+            fontWeight: 400,
+            fontSize: '20px',
+            lineHeight: '16px',
+            width: '100%',
+            marginTop: '10px',
+            boxShadow:
+              '0px 15px 50px rgba(0,0,0,0.4), 0px -15px 50px rgba(0,0,0,0.4), 15px 0px 50px rgba(0,0,0,0.4), -15px 0px 50px rgba(0,0,0,0.4)',
+            background: theme.palette.background.default,
+            borderRadius: '23px',
+          }}
+          InputProps={{
+            endAdornment: (
+              <>
+                <Tooltip title={'Advanced Input configuration'}>
+                  <span>
+                    <IconButton component='label' onClick={handleExpandClick}>
+                      <SettingsIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip
+                  title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}
+                >
+                  <span>
+                    <IconButton
+                      component='label'
+                      disabled={uploadDisabled}
+                      onClick={handleUploadClick}
+                    >
+                      <AttachFileIcon />
+                      <input type='file' hidden multiple={false} onInput={handleFileUpload} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
 
-              <DebounceIconButton
-                onClick={handleSendClick}
-                sx={{
-                  color: theme.palette.neutral.contrastText,
-                }}
-                disabled={sendDisabled}
-              >
-                <SendIcon />
-              </DebounceIconButton>
-            </>
-          ),
-        }}
-        error={newMessage.length >= MAX_MESSAGE_SIZE}
-        onChange={handleMessageChange}
-        onKeyDown={keyDownHandler}
-        fullWidth
-        disabled={!allowText}
-        placeholder='Start Chatting...'
-      />
-    </>;
+                <DebounceIconButton
+                  onClick={handleSendClick}
+                  sx={{
+                    color: theme.palette.neutral.contrastText,
+                  }}
+                  disabled={sendDisabled}
+                >
+                  <SendIcon />
+                </DebounceIconButton>
+              </>
+            ),
+          }}
+          error={newMessage.length >= MAX_MESSAGE_SIZE}
+          onChange={handleMessageChange}
+          onKeyDown={keyDownHandler}
+          fullWidth
+          disabled={!allowText}
+          placeholder='Start Chatting...'
+        />
+      </>
+    );
   }
 };
 
@@ -334,15 +324,15 @@ const Chat = () => {
   const [inputWidth, setInputWidth] = useState(0);
   const [inputHeight, setInputHeight] = useState(0);
 
-  const [ drawerOpen, setDrawerOpen ] = useState(true);
-  const [ configurationDrawerOpen, setConfigurationDrawerOpen ] = useState(false);
-  const [ headerHeight, setHeaderHeight ] = useState('64px');
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState('64px');
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const assetNamesRef = useRef<HTMLTextAreaElement>(null);
   const negativePromptRef = useRef<HTMLTextAreaElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const customTagsRef = useRef<{name: string, value: string}[]>([]);
+  const customTagsRef = useRef<{ name: string; value: string }[]>([]);
   const keepConfigRef = useRef<HTMLInputElement>(null);
 
   const [
@@ -747,7 +737,7 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
     tags.push({ name: TAG_NAMES.contentType, value: contentType });
     tags.push({ name: TAG_NAMES.txOrigin, value: TX_ORIGIN });
-    
+
     addConfigTags(tags);
 
     return tags;
@@ -1081,7 +1071,7 @@ const Chat = () => {
       const margins = 16; // 8px on each side
       setInputHeight(currInputHeight + margins);
     }
-  }, [ width ]);
+  }, [width]);
 
   useLayoutEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight;
@@ -1102,11 +1092,11 @@ const Chat = () => {
       const newWidth = currInputWidth + drawerWidth;
       setInputWidth(newWidth);
     }
-  }, [ configurationDrawerOpen ]);
+  }, [configurationDrawerOpen]);
 
   useLayoutEffect(() => {
     const currInputWidth = document.querySelector('#chat-input')?.clientWidth;
-    const drawerWidth =  240 - 48;
+    const drawerWidth = 240 - 48;
     if (currInputWidth && drawerOpen) {
       // cut drawer width (40%)
       const newWidth = currInputWidth - drawerWidth;
@@ -1116,7 +1106,7 @@ const Chat = () => {
       const newWidth = currInputWidth + drawerWidth;
       setInputWidth(newWidth);
     }
-  }, [ drawerOpen ]);
+  }, [drawerOpen]);
 
   return (
     <>
@@ -1130,7 +1120,7 @@ const Chat = () => {
             boxSizing: 'border-box',
             top: headerHeight,
             height: `calc(100% - ${headerHeight})`,
-          }
+          },
         }}
       >
         <Box sx={{ height: '100%', display: 'flex' }}>
@@ -1147,7 +1137,7 @@ const Chat = () => {
       <Box sx={{ height: '100%', display: 'flex' }}>
         <Drawer
           variant='persistent'
-          anchor="left"
+          anchor='left'
           open={drawerOpen}
           sx={{
             width: '240px',
@@ -1169,52 +1159,57 @@ const Chat = () => {
             setDrawerOpen={setDrawerOpen}
           />
         </Drawer>
-        <Box id='chat' sx={{
-          width: '100%',
-          height: '100%',
-          bgcolor: 'background.paper',
-          display: 'flex',
-          flexGrow: 1,
-          background: theme.palette.background.default,
-          transition: theme.transitions.create('margin', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-          marginLeft: '-240px',
-          ...(drawerOpen && {
+        <Box
+          id='chat'
+          sx={{
+            width: '100%',
+            height: '100%',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            flexGrow: 1,
+            background: theme.palette.background.default,
             transition: theme.transitions.create('margin', {
-              easing: theme.transitions.easing.easeOut,
-              duration: theme.transitions.duration.enteringScreen,
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.leavingScreen,
             }),
-            marginLeft: 0,
-          }),
-          alignItems: 'center'
-        }}>
-          {
-            !drawerOpen && (
-              <Paper sx={{
+            marginLeft: '-240px',
+            ...(drawerOpen && {
+              transition: theme.transitions.create('margin', {
+                easing: theme.transitions.easing.easeOut,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+              marginLeft: 0,
+            }),
+            alignItems: 'center',
+          }}
+        >
+          {!drawerOpen && (
+            <Paper
+              sx={{
                 background: theme.palette.secondary.main,
                 // borderTopRightRadius: '23px',
                 borderRadius: '23px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
-              }}>
-                <Box>
-                  <IconButton  onClick={() => setDrawerOpen(true)} disableRipple={true}>
-                    <ChevronRightIcon/>
-                  </IconButton>
-                </Box>
-              </Paper>
-            )
-          }
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-            width: '100%',
-            height: '100%',
-          }}>
+              }}
+            >
+              <Box>
+                <IconButton onClick={() => setDrawerOpen(true)} disableRipple={true}>
+                  <ChevronRightIcon />
+                </IconButton>
+              </Box>
+            </Paper>
+          )}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+              width: '100%',
+              height: '100%',
+            }}
+          >
             <Box flexGrow={1}>
               <Paper
                 elevation={1}

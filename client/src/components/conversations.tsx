@@ -317,7 +317,7 @@ const Conversations = ({
 
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
-  }, [ drawerOpen, setDrawerOpen ]);
+  }, [drawerOpen, setDrawerOpen]);
 
   return (
     <Paper
@@ -327,18 +327,20 @@ const Conversations = ({
         background: theme.palette.secondary.main,
         display: 'flex',
         alignItems: 'center',
-        gap: '8px'
+        gap: '8px',
         // opacity: '0.3',
       }}
       elevation={4}
     >
-      <Box sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        gap: '16px',
-        height: '100%',
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          gap: '16px',
+          height: '100%',
+        }}
+      >
         <Box marginTop={'16px'}>
           <Box
             id={'searchConversation'}
