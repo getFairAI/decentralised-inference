@@ -448,6 +448,7 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
         } else if (amount > 0) {
           setIsProcessing(true);
           await allowUCMonAsset(assetId, amount);
+          setCurrentAllowance(await getAssetAllowance(assetId, currentAddress));
           setIsProcessing(false);
           setActiveStep((prevActiveStep) => prevActiveStep + 1);
         } else {

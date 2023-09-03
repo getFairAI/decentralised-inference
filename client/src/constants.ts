@@ -87,6 +87,9 @@ export const TAG_NAMES = {
   updateFor: 'Update-For',
   previousVersions: 'Previous-Versions',
   txOrigin: 'Transaction-Origin',
+  assetNames: 'Asset-Names',
+  negativePrompt: 'Negative-Prompt',
+  userCustomTags: 'User-Custom-Tags',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';
