@@ -323,6 +323,7 @@ const Chat = () => {
   const assetNamesRef = useRef<HTMLTextAreaElement>(null);
   const negativePromptRef = useRef<HTMLTextAreaElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const nImagesRef = useRef<number>(0);
   const customTagsRef = useRef<{ name: string; value: string }[]>([]);
   const keepConfigRef = useRef<HTMLInputElement>(null);
 
@@ -751,6 +752,10 @@ const Chat = () => {
     if (customTagsRef?.current && customTagsRef?.current?.length > 0) {
       tags.push({ name: TAG_NAMES.userCustomTags, value: JSON.stringify(customTagsRef?.current) });
     }
+
+    if (nImagesRef.current > 0) {
+      tags.push({ name: TAG_NAMES.nImages, value: nImagesRef.current.toString() });
+    }
   };
 
   const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string) => {
@@ -811,6 +816,9 @@ const Chat = () => {
     }
     if (customTagsRef?.current) {
       customTagsRef.current = [];
+    }
+    if (nImagesRef.current) {
+      nImagesRef.current = 0;
     }
   };
 
@@ -1143,6 +1151,7 @@ const Chat = () => {
             negativePromptRef={negativePromptRef}
             keepConfigRef={keepConfigRef}
             descriptionRef={descriptionRef}
+            nImagesRef={nImagesRef}
             customTagsRef={customTagsRef}
             handleClose={handleAdvancedClose}
           />

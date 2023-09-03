@@ -90,6 +90,7 @@ export const TAG_NAMES = {
   assetNames: 'Asset-Names',
   negativePrompt: 'Negative-Prompt',
   userCustomTags: 'User-Custom-Tags',
+  nImages: 'N-Images',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';

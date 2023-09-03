@@ -24,6 +24,7 @@ import {
   Divider,
   FormControlLabel,
   IconButton,
+  Slider,
   TextField,
   Typography,
   useTheme,
@@ -74,6 +75,7 @@ const Configuration = ({
   assetNamesRef,
   keepConfigRef,
   descriptionRef,
+  nImagesRef,
   customTagsRef,
   handleClose,
 }: {
@@ -81,6 +83,7 @@ const Configuration = ({
   assetNamesRef: RefObject<HTMLTextAreaElement>;
   keepConfigRef: RefObject<HTMLInputElement>;
   descriptionRef: RefObject<HTMLTextAreaElement>;
+  nImagesRef: MutableRefObject<number>;
   customTagsRef: MutableRefObject<{ name: string; value: string }[]>;
   handleClose: () => void;
 }) => {
@@ -141,6 +144,12 @@ const Configuration = ({
       customTagsRef.current = customTags;
     }
   }, [customTags]);
+
+  const handleSliderChange = useCallback((_event: Event, newValue: number | number[]) => {
+    if (nImagesRef.current) {
+      nImagesRef.current = (newValue as number);
+    }
+  }, [nImagesRef]);
 
   return (
     <Box
@@ -221,6 +230,24 @@ const Configuration = ({
         error={isAssetNamesDirty && hasAssetNameError}
         onBlur={handleAssetNamesBlur}
       />
+       <Box
+          sx={{
+            marginLeft: '16px',
+          }}
+        >
+          <Typography sx={{ marginBottom: '16px' }} variant='caption'>
+            Number of Images To Generate
+          </Typography>
+          <Slider
+            onChange={handleSliderChange}
+            disabled={false}
+            marks
+            max={10}
+            step={1}
+            min={0}
+            valueLabelDisplay='auto'
+          />
+        </Box>
       <Box>
         <Divider textAlign='left'>
           <Typography variant='h4'>Custom Tags</Typography>
