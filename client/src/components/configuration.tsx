@@ -127,7 +127,7 @@ const Configuration = ({
         valueRef.current.value = '';
       }
     }
-  }, [nameRef?.current?.value, valueRef?.current?.value, customTags ]);
+  }, [nameRef?.current?.value, valueRef?.current?.value, customTags]);
 
   const handleRemove = useCallback(
     (name: string, value: string) => {

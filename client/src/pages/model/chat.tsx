@@ -1057,11 +1057,12 @@ const Chat = () => {
     const openDrawerButtonWidth = 48;
     const drawerWidth = 240;
     const configDrawerWidth = width * 0.3;
-    const margins = 32; 
+    const margins = 32;
 
     if (currInputWidth) {
       const drawerOpenInputWidth = width - drawerWidth - openDrawerButtonWidth - margins;
-      const configDrawerOpenInputWidth = width - configDrawerWidth - margins - openDrawerButtonWidth;
+      const configDrawerOpenInputWidth =
+        width - configDrawerWidth - margins - openDrawerButtonWidth;
 
       if (drawerOpen && currInputWidth !== drawerOpenInputWidth) {
         setInputWidth(drawerOpenInputWidth);
@@ -1073,14 +1074,18 @@ const Chat = () => {
         return;
       }
 
-      if (!drawerOpen && !configurationDrawerOpen && currInputWidth !== (width - margins - openDrawerButtonWidth)) {
+      if (
+        !drawerOpen &&
+        !configurationDrawerOpen &&
+        currInputWidth !== width - margins - openDrawerButtonWidth
+      ) {
         setInputWidth(width - margins - openDrawerButtonWidth);
         return;
       }
 
       setInputWidth(width - margins - openDrawerButtonWidth);
     }
-  }, [ drawerOpen, configurationDrawerOpen, width, height, setInputWidth ]);
+  }, [drawerOpen, configurationDrawerOpen, width, height, setInputWidth]);
 
   useLayoutEffect(() => {
     const currInputHeight = document.querySelector('#chat-input')?.clientHeight;
@@ -1093,7 +1098,7 @@ const Chat = () => {
     if (currHeaderHeight) {
       setHeaderHeight(`${currHeaderHeight}px`);
     }
-  }, [ width, height ]);
+  }, [width, height]);
 
   const handleAdvanced = useCallback(() => {
     setConfigurationDrawerOpen((previousValue) => {
@@ -1103,16 +1108,16 @@ const Chat = () => {
 
       return !previousValue;
     });
-  }, [ setDrawerOpen, setConfigurationDrawerOpen]);
+  }, [setDrawerOpen, setConfigurationDrawerOpen]);
 
   const handleAdvancedClose = useCallback(() => {
     setConfigurationDrawerOpen(false);
-  }, [ setConfigurationDrawerOpen]);
+  }, [setConfigurationDrawerOpen]);
 
   const handleShowConversations = useCallback(() => {
     setConfigurationDrawerOpen(false);
     setDrawerOpen(true);
-  }, [ setConfigurationDrawerOpen, setDrawerOpen]);
+  }, [setConfigurationDrawerOpen, setDrawerOpen]);
 
   return (
     <>
@@ -1129,7 +1134,7 @@ const Chat = () => {
           },
         }}
         PaperProps={{
-          elevation: 24
+          elevation: 24,
         }}
       >
         <Box sx={{ height: '100%', display: 'flex' }}>
