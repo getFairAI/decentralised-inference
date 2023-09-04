@@ -168,11 +168,15 @@ export const rejectUCMonAsset = async (assetAddr: string, tx: string) => {
 };
 
 export const getAssetBalance = async (assetAddr: string, userAddr: string) => {
-  const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet').setEvaluationOptions({
-    unsafeClient: 'skip',
-    allowBigInt: true,
-    internalWrites: true,
-  }).readState();
+  const { cachedValue } = await warp
+    .contract(assetAddr)
+    .connect('use_wallet')
+    .setEvaluationOptions({
+      unsafeClient: 'skip',
+      allowBigInt: true,
+      internalWrites: true,
+    })
+    .readState();
 
   return (cachedValue as UCMState).state.balances[userAddr];
 };
@@ -182,12 +186,15 @@ export const getAssetAllowance = async (
   currentAddress: string,
   target = UCM_CONTRACT_ID,
 ) => {
-  const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet')
-  .setEvaluationOptions({
-    unsafeClient: 'skip',
-    allowBigInt: true,
-    internalWrites: true,
-  }).readState();
+  const { cachedValue } = await warp
+    .contract(assetAddr)
+    .connect('use_wallet')
+    .setEvaluationOptions({
+      unsafeClient: 'skip',
+      allowBigInt: true,
+      internalWrites: true,
+    })
+    .readState();
 
   if (!(cachedValue as UCMState).state.claimable) {
     return 0;
@@ -205,11 +212,15 @@ export const getAssetClaims = async (
   currentAddress: string,
   target = UCM_CONTRACT_ID,
 ) => {
-  const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet').setEvaluationOptions({
-    unsafeClient: 'skip',
-    allowBigInt: true,
-    internalWrites: true,
-  }).readState();
+  const { cachedValue } = await warp
+    .contract(assetAddr)
+    .connect('use_wallet')
+    .setEvaluationOptions({
+      unsafeClient: 'skip',
+      allowBigInt: true,
+      internalWrites: true,
+    })
+    .readState();
 
   if (!(cachedValue as UCMState).state.claimable) {
     return [];
@@ -223,11 +234,15 @@ export const getAssetClaims = async (
 };
 
 export const getAssetBalanceAndAllowed = async (assetAddr: string, currentAddress: string) => {
-  const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet').setEvaluationOptions({
-    unsafeClient: 'skip',
-    allowBigInt: true,
-    internalWrites: true,
-  }).readState();
+  const { cachedValue } = await warp
+    .contract(assetAddr)
+    .connect('use_wallet')
+    .setEvaluationOptions({
+      unsafeClient: 'skip',
+      allowBigInt: true,
+      internalWrites: true,
+    })
+    .readState();
 
   const balance = (cachedValue as UCMState).state.balances[currentAddress];
 
@@ -249,11 +264,15 @@ export const getClaimId = async (
   quantity: number,
   target = UCM_CONTRACT_ID,
 ) => {
-  const { cachedValue } = await warp.contract(assetAddr).connect('use_wallet').setEvaluationOptions({
-    unsafeClient: 'skip',
-    allowBigInt: true,
-    internalWrites: true,
-  }).readState();
+  const { cachedValue } = await warp
+    .contract(assetAddr)
+    .connect('use_wallet')
+    .setEvaluationOptions({
+      unsafeClient: 'skip',
+      allowBigInt: true,
+      internalWrites: true,
+    })
+    .readState();
 
   const existingClaim = (cachedValue as UCMState).state.claimable.find(
     (claim) => claim.from === currentAddress && claim.to === target && claim.qty === quantity,
