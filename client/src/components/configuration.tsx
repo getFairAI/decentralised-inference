@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import { U_LOGO_SRC } from '@/constants';
 import { displayShortTxOrAddr } from '@/utils/common';
 import {
@@ -24,6 +42,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { parseUBalance } from '@/utils/u';
+import { enqueueSnackbar } from 'notistack';
 
 const CustomTag = ({
   name,
@@ -56,14 +75,14 @@ const Configuration = ({
   keepConfigRef,
   descriptionRef,
   customTagsRef,
-  setConfigurationDraweOpen,
+  handleClose,
 }: {
   negativePromptRef: RefObject<HTMLTextAreaElement>;
   assetNamesRef: RefObject<HTMLTextAreaElement>;
   keepConfigRef: RefObject<HTMLInputElement>;
   descriptionRef: RefObject<HTMLTextAreaElement>;
   customTagsRef: MutableRefObject<{ name: string; value: string }[]>;
-  setConfigurationDraweOpen: (open: boolean) => void;
+  handleClose: () => void;
 }) => {
   const theme = useTheme();
   const { state } = useLocation();
@@ -74,11 +93,6 @@ const Configuration = ({
   const valueRef = useRef<HTMLTextAreaElement>(null);
 
   const fee = useMemo(() => (state?.fee ? parseUBalance(state?.fee) : 0), [state?.fee]);
-
-  const handleClose = useCallback(
-    () => setConfigurationDraweOpen(false),
-    [setConfigurationDraweOpen],
-  );
 
   const checkAssetNamesValidity = useCallback(() => {
     const assetNames = assetNamesRef?.current?.value;
@@ -105,11 +119,15 @@ const Configuration = ({
     if (nameRef?.current?.value && valueRef?.current?.value) {
       const name = nameRef?.current?.value;
       const value = valueRef?.current?.value;
-      setCustomTags((prev) => [...prev, { name, value }]);
-      nameRef.current.value = '';
-      valueRef.current.value = '';
+      if (customTags.findIndex((tag) => tag.name === name) >= 0) {
+        enqueueSnackbar('Tag name already exists', { variant: 'error' });
+      } else {
+        setCustomTags((prev) => [...prev, { name, value }]);
+        nameRef.current.value = '';
+        valueRef.current.value = '';
+      }
     }
-  }, [nameRef?.current?.value, valueRef?.current?.value]);
+  }, [nameRef?.current?.value, valueRef?.current?.value, customTags ]);
 
   const handleRemove = useCallback(
     (name: string, value: string) => {
@@ -134,10 +152,7 @@ const Configuration = ({
         fontSize: '20px',
         lineHeight: '16px',
         width: '100%',
-        boxShadow:
-          '0px 15px 50px rgba(0,0,0,0.4), 0px -15px 50px rgba(0,0,0,0.4), 15px 0px 50px rgba(0,0,0,0.4), -15px 0px 50px rgba(0,0,0,0.4)',
         background: theme.palette.background.default,
-        borderRadius: '23px',
         padding: '16px',
         flexDirection: 'column',
         gap: '16px',
@@ -148,7 +163,7 @@ const Configuration = ({
           <CloseIcon />
         </IconButton>
         <Typography sx={{ fontWeight: 700, fontSize: '23px', lineHeight: '31px' }}>
-          {'Configuration'}
+          {'Advanced Options'}
         </Typography>
       </Box>
 
@@ -218,8 +233,8 @@ const Configuration = ({
           <AddIcon />
         </IconButton>
       </Box>
-      {customTags.map(({ name, value }, index) => (
-        <CustomTag key={index} name={name} value={value} handleRemove={handleRemove} />
+      {customTags.map(({ name, value }) => (
+        <CustomTag key={name} name={name} value={value} handleRemove={handleRemove} />
       ))}
       <FormControlLabel
         control={<Checkbox inputRef={keepConfigRef} />}

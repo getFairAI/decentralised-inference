@@ -34,9 +34,7 @@ import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import {
   ChangeEvent,
-  Dispatch,
   RefObject,
-  SetStateAction,
   useCallback,
   useContext,
   useEffect,
@@ -100,8 +98,7 @@ const InputField = ({
   currentConversationId,
   newMessage,
   inputRef,
-  configurationDrawerOpen,
-  setConfigurationDrawerOpen,
+  handleAdvanced,
   handleSendFile,
   handleSendText,
   handleRemoveFile,
@@ -114,8 +111,7 @@ const InputField = ({
   currentConversationId: number;
   newMessage: string;
   inputRef: RefObject<HTMLTextAreaElement>;
-  configurationDrawerOpen: boolean;
-  setConfigurationDrawerOpen: Dispatch<SetStateAction<boolean>>;
+  handleAdvanced: () => void;
   handleSendFile: () => Promise<void>;
   handleSendText: () => Promise<void>;
   handleRemoveFile: () => void;
@@ -147,11 +143,6 @@ const InputField = ({
       return (newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE) && !file;
     }
   }, [newMessage, file, currentConversationId, loading]);
-
-  const handleExpandClick = useCallback(
-    () => setConfigurationDrawerOpen(!configurationDrawerOpen),
-    [configurationDrawerOpen, setConfigurationDrawerOpen],
-  );
 
   const handleSendClick = useCallback(async () => {
     if (isSending) {
@@ -241,7 +232,7 @@ const InputField = ({
               <>
                 <Tooltip title={'Advanced Input configuration'}>
                   <span>
-                    <IconButton component='label' onClick={handleExpandClick}>
+                    <IconButton component='label' onClick={handleAdvanced}>
                       <SettingsIcon />
                     </IconButton>
                   </span>
@@ -1061,52 +1052,67 @@ const Chat = () => {
   );
 
   useLayoutEffect(() => {
-    const currContentWidth = document.querySelector('#chat')?.clientWidth;
-    if (currContentWidth) {
-      const margins = 32; // 16px on each side
-      setInputWidth(currContentWidth - margins); // subtract margins from size
+    // if conversations drawr is open
+    const currInputWidth = document.querySelector('#chat')?.clientWidth;
+    const openDrawerButtonWidth = 48;
+    const drawerWidth = 240;
+    const configDrawerWidth = width * 0.3;
+    const margins = 32; 
+
+    if (currInputWidth) {
+      const drawerOpenInputWidth = width - drawerWidth - openDrawerButtonWidth - margins;
+      const configDrawerOpenInputWidth = width - configDrawerWidth - margins - openDrawerButtonWidth;
+
+      if (drawerOpen && currInputWidth !== drawerOpenInputWidth) {
+        setInputWidth(drawerOpenInputWidth);
+        return;
+      }
+
+      if (configurationDrawerOpen && currInputWidth !== configDrawerOpenInputWidth) {
+        setInputWidth(configDrawerOpenInputWidth);
+        return;
+      }
+
+      if (!drawerOpen && !configurationDrawerOpen && currInputWidth !== (width - margins - openDrawerButtonWidth)) {
+        setInputWidth(width - margins - openDrawerButtonWidth);
+        return;
+      }
+
+      setInputWidth(width - margins - openDrawerButtonWidth);
     }
+  }, [ drawerOpen, configurationDrawerOpen, width, height, setInputWidth ]);
+
+  useLayoutEffect(() => {
     const currInputHeight = document.querySelector('#chat-input')?.clientHeight;
     if (currInputHeight) {
       const margins = 16; // 8px on each side
       setInputHeight(currInputHeight + margins);
     }
-  }, [width]);
 
-  useLayoutEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight;
     if (currHeaderHeight) {
       setHeaderHeight(`${currHeaderHeight}px`);
     }
-  }, [width, height]);
+  }, [ width, height ]);
 
-  useLayoutEffect(() => {
-    const currInputWidth = document.querySelector('#chat-input')?.clientWidth;
-    const drawerWidth = width * 0.3;
-    if (currInputWidth && configurationDrawerOpen) {
-      // cut drawer width (40%)
-      const newWidth = currInputWidth - drawerWidth;
-      setInputWidth(newWidth);
-    } else if (currInputWidth && !configurationDrawerOpen) {
-      // cut drawer width (40%)
-      const newWidth = currInputWidth + drawerWidth;
-      setInputWidth(newWidth);
-    }
-  }, [configurationDrawerOpen]);
+  const handleAdvanced = useCallback(() => {
+    setConfigurationDrawerOpen((previousValue) => {
+      if (!previousValue) {
+        setDrawerOpen(false);
+      }
 
-  useLayoutEffect(() => {
-    const currInputWidth = document.querySelector('#chat-input')?.clientWidth;
-    const drawerWidth = 240 - 48;
-    if (currInputWidth && drawerOpen) {
-      // cut drawer width (40%)
-      const newWidth = currInputWidth - drawerWidth;
-      setInputWidth(newWidth);
-    } else if (currInputWidth && !drawerOpen) {
-      // cut drawer width (40%)
-      const newWidth = currInputWidth + drawerWidth;
-      setInputWidth(newWidth);
-    }
-  }, [drawerOpen]);
+      return !previousValue;
+    });
+  }, [ setDrawerOpen, setConfigurationDrawerOpen]);
+
+  const handleAdvancedClose = useCallback(() => {
+    setConfigurationDrawerOpen(false);
+  }, [ setConfigurationDrawerOpen]);
+
+  const handleShowConversations = useCallback(() => {
+    setConfigurationDrawerOpen(false);
+    setDrawerOpen(true);
+  }, [ setConfigurationDrawerOpen, setDrawerOpen]);
 
   return (
     <>
@@ -1122,6 +1128,9 @@ const Chat = () => {
             height: `calc(100% - ${headerHeight})`,
           },
         }}
+        PaperProps={{
+          elevation: 24
+        }}
       >
         <Box sx={{ height: '100%', display: 'flex' }}>
           <Configuration
@@ -1130,7 +1139,7 @@ const Chat = () => {
             keepConfigRef={keepConfigRef}
             descriptionRef={descriptionRef}
             customTagsRef={customTagsRef}
-            setConfigurationDraweOpen={setConfigurationDrawerOpen}
+            handleClose={handleAdvancedClose}
           />
         </Box>
       </Drawer>
@@ -1180,6 +1189,14 @@ const Chat = () => {
               }),
               marginLeft: 0,
             }),
+            marginRight: '0',
+            ...(configurationDrawerOpen && {
+              transition: theme.transitions.create('margin', {
+                easing: theme.transitions.easing.easeOut,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+              marginRight: '30%',
+            }),
             alignItems: 'center',
           }}
         >
@@ -1195,7 +1212,7 @@ const Chat = () => {
               }}
             >
               <Box>
-                <IconButton onClick={() => setDrawerOpen(true)} disableRipple={true}>
+                <IconButton onClick={handleShowConversations} disableRipple={true}>
                   <ChevronRightIcon />
                 </IconButton>
               </Box>
@@ -1264,8 +1281,7 @@ const Chat = () => {
                 currentConversationId={currentConversationId}
                 newMessage={newMessage}
                 inputRef={inputRef}
-                configurationDrawerOpen={configurationDrawerOpen}
-                setConfigurationDrawerOpen={setConfigurationDrawerOpen}
+                handleAdvanced={handleAdvanced}
                 handleFileUpload={handleFileUpload}
                 handleUploadClick={handleUploadClick}
                 handleRemoveFile={handleRemoveFile}
