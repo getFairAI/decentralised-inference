@@ -91,6 +91,8 @@ export const TAG_NAMES = {
   negativePrompt: 'Negative-Prompt',
   userCustomTags: 'User-Custom-Tags',
   nImages: 'N-Images',
+  output: 'Output',
+  outputConfiguration: 'Output-Configuration',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';
