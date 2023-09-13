@@ -327,7 +327,10 @@ const Chat = () => {
   const customTagsRef = useRef<{ name: string; value: string }[]>([]);
   const keepConfigRef = useRef<HTMLInputElement>(null);
 
-  const isStableDiffusion = useMemo(() => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion', [state]);
+  const isStableDiffusion = useMemo(
+    () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
+    [state],
+  );
 
   const [
     getChatRequests,
