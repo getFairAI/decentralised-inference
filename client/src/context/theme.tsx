@@ -87,9 +87,9 @@ const lightTheme = createTheme({
     },
     neutral: {
       // light: will be calculated from palette.primary.main,
-      light: '#C0C0C0',
-      main: '#C0C0C0',
-      dark: '#C0C0C0',
+      light: '#6C6C6C',
+      main: '#6C6C6C',
+      dark: '#6C6C6C',
       contrastText: '#223745',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main

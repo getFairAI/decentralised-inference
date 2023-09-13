@@ -59,8 +59,8 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
             background: `url(${NET_ARWEAVE_URL}/${message.id})`,
             // backgroundPosition: 'center',s
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover' /* <------ */,
-            backgroundPosition: 'center center',
+            backgroundSize: 'contain' /* <------ */,
+            backgroundPosition: 'center',
           }}
         />
       </FiCard>

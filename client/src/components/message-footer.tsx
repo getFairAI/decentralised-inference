@@ -17,21 +17,14 @@
  */
 
 import { IMessage } from '@/interfaces/common';
-import { Box, Typography, IconButton, Menu, MenuItem, useTheme } from '@mui/material';
-import { enqueueSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
+import { Box, Typography } from '@mui/material';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import MessageDetail from './message-detail';
 import useTimeInterval from '@/hooks/useTimeInterval';
 import { secondInMS } from '@/constants';
 
 const MessageFooter = ({ message, index }: { message: IMessage; index: number }) => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const theme = useTheme();
   const { state } = useLocation();
-  const [dialogOpen, setDialogOpen] = useState(false);
   const min = 60;
   const time = useTimeInterval(secondInMS * min);
 
@@ -73,43 +66,6 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
     }
   };
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleCopy = async () => {
-    setAnchorEl(null);
-    try {
-      if (typeof message.msg === 'string') {
-        await navigator.clipboard.writeText(message.msg);
-        enqueueSnackbar('Copied to clipboard', { variant: 'info' });
-      } else {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            [message.contentType as string]: message.msg,
-          }),
-        ]);
-        enqueueSnackbar('Copied to clipboard', { variant: 'info' });
-        // copy file
-      }
-    } catch (error) {
-      enqueueSnackbar('Cannot copy this message', { variant: 'error' });
-    }
-  };
-
-  const handleViewTx = () => {
-    setAnchorEl(null);
-    window.open(`https://viewblock.io/arweave/tx/${message.id}`, '_blank');
-  };
-
-  const handleViewDetails = () => {
-    setAnchorEl(null);
-    setDialogOpen(true);
-  };
-
   return (
     <>
       <Box
@@ -128,10 +84,6 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
               lineHeight: '27px',
               display: 'flex',
               alignItems: 'center',
-              color:
-                message.type === 'response'
-                  ? theme.palette.secondary.contrastText
-                  : theme.palette.terciary.contrastText,
             }}
           >
             {getTimePassed(message.timestamp)}
@@ -141,10 +93,6 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
               display: 'flex',
               alignItems: 'center',
               margin: '8px',
-              color:
-                message.type === 'response'
-                  ? theme.palette.secondary.contrastText
-                  : theme.palette.terciary.contrastText,
             }}
           >
             {' - '}
@@ -157,49 +105,12 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
               lineHeight: '27px',
               display: 'flex',
               alignItems: 'center',
-              color:
-                message.type === 'response'
-                  ? theme.palette.secondary.contrastText
-                  : theme.palette.terciary.contrastText,
             }}
           >
             {message.type === 'response' ? state.scriptName : 'You'}
           </Typography>
-        </Box>
-        <Box display={'flex'} alignItems='center'>
-          <IconButton
-            sx={{
-              color:
-                message.type === 'response'
-                  ? theme.palette.secondary.contrastText
-                  : theme.palette.terciary.contrastText,
-            }}
-            onClick={handleClick}
-          >
-            <MoreHorizIcon fontSize='large' />
-          </IconButton>
-          <Menu
-            id='demo-positioned-menu'
-            aria-labelledby='demo-positioned-button'
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleClose}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
-            }}
-          >
-            <MenuItem onClick={handleCopy}>Copy Content</MenuItem>
-            <MenuItem onClick={handleViewTx}>View Transaction</MenuItem>
-            <MenuItem onClick={handleViewDetails}>View Details</MenuItem>
-          </Menu>
-        </Box>
+        </Box> 
       </Box>
-      <MessageDetail open={dialogOpen} setOpen={setDialogOpen} message={message} />
     </>
   );
 };
