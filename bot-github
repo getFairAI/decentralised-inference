@@ -1,0 +1,45 @@
+import discord
+from discord.ext import commands, tasks
+import requests
+
+# Initialize bot
+bot = commands.Bot(command_prefix='!')
+
+# GitHub user and repository details
+github_username = "your_github_username"
+repository_name = "your_repository_name"
+github_api_url = f"https://api.github.com/repos/{github_username}/{repository_name}/commits"
+
+# Channel name where commits will be sent
+commit_channel_name = "commits"
+
+# Function to get the latest commit from GitHub
+def get_latest_commit():
+    try:
+        response = requests.get(github_api_url)
+        response.raise_for_status()
+        commit = response.json()[0]  # Get the latest commit
+        return commit
+    except requests.exceptions.RequestException:
+        return None
+
+# Event handler for when the bot is ready
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')
+    check_commits.start()
+
+# Task to check for new commits and send them to the specified channel
+@tasks.loop(minutes=30)  # Check every 30 minutes
+async def check_commits():
+    channel = discord.utils.get(bot.get_all_channels(), name=commit_channel_name)
+    
+    if channel is not None:
+        latest_commit = get_latest_commit()
+        
+        if latest_commit:
+            commit_message = f"New commit by {latest_commit['commit']['committer']['name']}: {latest_commit['commit']['message']}\n{latest_commit['html_url']}"
+            await channel.send(commit_message)
+
+# Start the bot with your token
+bot.run('YOUR_BOT_TOKEN')
