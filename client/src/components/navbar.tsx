@@ -41,7 +41,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
-import NavigationMenu from './navigation-menu';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
 import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
@@ -65,7 +64,6 @@ const CurrencyMenu = () => {
   const [selected, setSelected] = useState<'AR' | 'U'>('U');
   const { currentAddress, currentBalance, currentUBalance, updateBalance, updateUBalance } =
     useContext(WalletContext);
-  const theme = useTheme();
 
   const pollingFn = () => {
     if (selected === 'AR') {
@@ -108,7 +106,7 @@ const CurrencyMenu = () => {
         sx={{
           '& .MuiInputBase-input': {
             display: 'flex',
-            backgroundColor: theme.palette.secondary.main,
+            alignItems: 'center',
             border: 'none',
             textTransform: 'none',
             padding: 0,
@@ -117,33 +115,24 @@ const CurrencyMenu = () => {
             border: 'none',
           },
         }}
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              background: theme.palette.secondary.main,
-            },
-          },
-        }}
         IconComponent={CustomDropDownIcon}
         value={selected}
       >
-        <MenuItem value={'AR'} onClick={handleArClick}>
+        <MenuItem value={'AR'} onClick={handleArClick} sx={{ display: 'flex', justifyContent: 'space-between'}}>
           <Typography
             sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
-            color={theme.palette.primary.contrastText}
           >
             {currentBalance.toFixed(defaultDecimalPlaces)}
           </Typography>
-          <img width='20px' height='29px' src='./arweave-small.svg' />
+          <img width='20px' height='20px' src='./arweave-logo-for-light.png' />
         </MenuItem>
-        <MenuItem value={'U'} onClick={handleUClick}>
+        <MenuItem value={'U'} onClick={handleUClick} sx={{ display: 'flex', justifyContent: 'space-between'}}>
           <Typography
             sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}
-            color={theme.palette.primary.contrastText}
           >
             {currentUBalance.toFixed(defaultDecimalPlaces)}
           </Typography>
-          <img width='20px' height='29px' src={U_LOGO_SRC} />
+          <img width='20px' height='20px' src={U_LOGO_SRC} />
         </MenuItem>
       </Select>
     </>
@@ -196,7 +185,9 @@ const WalletState = () => {
           alignItems: 'center',
           padding: 0,
           gap: '17px',
-          background: theme.palette.secondary.main,
+          border: 'solid',
+          borderColor: theme.palette.terciary.main,
+          borderWidth: '0.5px',
         }}
       >
         <Box display={'flex'}>
@@ -205,7 +196,7 @@ const WalletState = () => {
         <Box
           sx={{
             background: theme.palette.secondary.contrastText,
-            borderRadius: '43px',
+            borderRadius: '8px',
             padding: '7px 20px 7px 20px',
             alignItems: 'center',
           }}
@@ -241,13 +232,6 @@ const Navbar = ({
   const theme = useTheme();
   const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
   const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
-  const navbarLinkStyles = {
-    fontWeight: 400,
-    fontSize: '18px',
-    lineHeight: '24px',
-    display: { sm: 'none', md: 'flex' },
-  };
-
   let keyTimeout: Timeout;
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
@@ -322,7 +306,7 @@ const Navbar = ({
             {pathname.includes('chat') ? (
               <>
                 <Button
-                  sx={{ borderRadius: '20px', padding: '8px 16px' }}
+                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '12px 16px' }}
                   startIcon={<img src='./chevron-bottom.svg' />}
                   onClick={() =>
                     navigate(`${pathname}/change-operator`, {
@@ -332,12 +316,7 @@ const Navbar = ({
                 >
                   <Typography
                     sx={{
-                      fontWeight: 500,
-                      fontSize: '18px',
-                      lineHeight: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: theme.palette.primary.contrastText,
+                      lineHeight: '18.9px'
                     }}
                   >
                     Change Operator
@@ -347,7 +326,6 @@ const Navbar = ({
               </>
             ) : (
               <>
-                <NavigationMenu navStyles={navbarLinkStyles} />
                 <WalletState />
               </>
             )}

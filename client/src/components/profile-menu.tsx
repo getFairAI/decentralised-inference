@@ -129,7 +129,7 @@ export default function ProfileMenu() {
     if (!currentAddress) {
       return <>{open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}</>;
     } else {
-      return <img src='./icon-empty-wallet.svg' width={'27px'} height={'27px'} />;
+      return <img src='./icon-empty-wallet.png' width={'27px'} height={'27px'} />;
     }
   };
 
