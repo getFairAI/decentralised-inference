@@ -49,6 +49,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
       <FiCard
         sx={{
           flexGrow: 0,
+          borderRadius: '8px',
         }}
         width={forDetails ? undefined : '512px'}
         height={forDetails ? undefined : '512px'}
