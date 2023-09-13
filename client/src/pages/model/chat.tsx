@@ -323,8 +323,14 @@ const Chat = () => {
   const assetNamesRef = useRef<HTMLTextAreaElement>(null);
   const negativePromptRef = useRef<HTMLTextAreaElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const nImagesRef = useRef<number>(0);
   const customTagsRef = useRef<{ name: string; value: string }[]>([]);
   const keepConfigRef = useRef<HTMLInputElement>(null);
+
+  const isStableDiffusion = useMemo(
+    () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
+    [state],
+  );
 
   const [
     getChatRequests,
@@ -751,6 +757,10 @@ const Chat = () => {
     if (customTagsRef?.current && customTagsRef?.current?.length > 0) {
       tags.push({ name: TAG_NAMES.userCustomTags, value: JSON.stringify(customTagsRef?.current) });
     }
+
+    if (nImagesRef.current > 0) {
+      tags.push({ name: TAG_NAMES.nImages, value: nImagesRef.current.toString() });
+    }
   };
 
   const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string) => {
@@ -775,10 +785,22 @@ const Chat = () => {
       //
       addConfigTags(paymentTags);
 
-      const operatorFeeShare = parsedUFee * OPERATOR_PERCENTAGE_FEE;
-      const marketPlaceFeeShare = parsedUFee * MARKETPLACE_PERCENTAGE_FEE;
-      const creatorFeeShare = parsedUFee * CREATOR_PERCENTAGE_FEE;
-      const curatorFeeShare = parsedUFee * CURATOR_PERCENTAGE_FEE;
+      let adjustedInferenceFee = parsedUFee;
+      if (isStableDiffusion && nImagesRef.current > 0) {
+        // calculate fee for n-images
+        adjustedInferenceFee = parsedUFee * nImagesRef.current;
+      } else if (isStableDiffusion) {
+        // default n images is 4 if not specified
+        const defaultNImages = 4;
+        adjustedInferenceFee = parsedUFee * defaultNImages;
+      } else {
+        // no need to change inference fee
+      }
+
+      const operatorFeeShare = adjustedInferenceFee * OPERATOR_PERCENTAGE_FEE;
+      const marketPlaceFeeShare = adjustedInferenceFee * MARKETPLACE_PERCENTAGE_FEE;
+      const creatorFeeShare = adjustedInferenceFee * CREATOR_PERCENTAGE_FEE;
+      const curatorFeeShare = adjustedInferenceFee * CURATOR_PERCENTAGE_FEE;
 
       // pay operator
       await sendU(address as string, parseInt(operatorFeeShare.toString(), 10), paymentTags);
@@ -791,7 +813,7 @@ const Chat = () => {
 
       // update balance after payments
       await updateUBalance();
-      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(inferenceFee)} $U.</>, {
+      enqueueSnackbar(<>Paid Inference costs: {adjustedInferenceFee} $U.</>, {
         variant: 'success',
       });
     } catch (error) {
@@ -811,6 +833,9 @@ const Chat = () => {
     }
     if (customTagsRef?.current) {
       customTagsRef.current = [];
+    }
+    if (nImagesRef.current) {
+      nImagesRef.current = 0;
     }
   };
 
@@ -1143,6 +1168,7 @@ const Chat = () => {
             negativePromptRef={negativePromptRef}
             keepConfigRef={keepConfigRef}
             descriptionRef={descriptionRef}
+            nImagesRef={nImagesRef}
             customTagsRef={customTagsRef}
             handleClose={handleAdvancedClose}
           />

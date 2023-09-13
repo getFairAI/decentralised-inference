@@ -17,13 +17,14 @@
  */
 
 import { U_LOGO_SRC } from '@/constants';
-import { displayShortTxOrAddr } from '@/utils/common';
+import { displayShortTxOrAddr, findTag } from '@/utils/common';
 import {
   Box,
   Checkbox,
   Divider,
   FormControlLabel,
   IconButton,
+  Slider,
   TextField,
   Typography,
   useTheme,
@@ -69,11 +70,97 @@ const CustomTag = ({
   );
 };
 
+const StableDiffusionConfigurations = ({
+  negativePromptRef,
+  nImagesRef,
+}: {
+  negativePromptRef: RefObject<HTMLTextAreaElement>;
+  nImagesRef: MutableRefObject<number>;
+}) => {
+  const { state } = useLocation();
+
+  const [cost, setCost] = useState(0);
+  const showOutputConfiguration = useMemo(
+    () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
+    [state],
+  );
+
+  useEffect(() => {
+    const defaultImages = 4;
+    const fee = state?.fee ? parseUBalance(state?.fee) : 0;
+    setCost(fee * defaultImages);
+  }, []);
+
+  const handleSliderChange = useCallback(
+    (_event: Event, newValue: number | number[]) => {
+      if (nImagesRef.current !== newValue) {
+        nImagesRef.current = newValue as number;
+        const fee = state?.fee ? parseUBalance(state?.fee) : 0;
+        setCost(fee * (newValue as number));
+      }
+    },
+    [nImagesRef, state],
+  );
+
+  if (!showOutputConfiguration) {
+    // force negative prompt and nImages to be null
+    if (negativePromptRef.current) {
+      negativePromptRef.current.value = '';
+    }
+    nImagesRef.current = 0;
+    return null;
+  }
+
+  return (
+    <>
+      <Box>
+        <Divider textAlign='left' variant='fullWidth'>
+          <Typography variant='h4'>Stable Diffusion Configurations</Typography>
+        </Divider>
+      </Box>
+      <TextField
+        label={'Negative Prompt'}
+        inputRef={negativePromptRef}
+        multiline
+        minRows={3}
+        maxRows={5}
+        fullWidth
+      />
+      <Box
+        sx={{
+          marginLeft: '16px',
+        }}
+      >
+        <Typography sx={{ marginBottom: '16px' }} variant='caption'>
+          Number of Images To Generate
+        </Typography>
+        <Slider
+          onChange={handleSliderChange}
+          defaultValue={4}
+          disabled={false}
+          marks
+          max={10}
+          step={1}
+          min={1}
+          valueLabelDisplay='auto'
+        />
+        <Box display={'flex'} gap={'8px'}>
+          <Typography sx={{ marginBottom: '16px' }} variant='caption'>
+            Total Cost: {cost.toPrecision(1)}
+          </Typography>
+          <img width='17px' height='17px' src={U_LOGO_SRC} />
+        </Box>
+      </Box>
+    </>
+  );
+};
+
 const Configuration = ({
   negativePromptRef,
   assetNamesRef,
   keepConfigRef,
   descriptionRef,
+  nImagesRef,
   customTagsRef,
   handleClose,
 }: {
@@ -81,12 +168,14 @@ const Configuration = ({
   assetNamesRef: RefObject<HTMLTextAreaElement>;
   keepConfigRef: RefObject<HTMLInputElement>;
   descriptionRef: RefObject<HTMLTextAreaElement>;
+  nImagesRef: MutableRefObject<number>;
   customTagsRef: MutableRefObject<{ name: string; value: string }[]>;
   handleClose: () => void;
 }) => {
   const theme = useTheme();
   const { state } = useLocation();
   const { address } = useParams();
+  const [isAssetNamesDirty, setIsAssetNamesDirty] = useState(false);
   const [customTags, setCustomTags] = useState<{ name: string; value: string }[]>([]);
 
   const nameRef = useRef<HTMLInputElement>(null);
@@ -104,7 +193,6 @@ const Configuration = ({
     }
   }, [assetNamesRef?.current?.value]);
 
-  const [isAssetNamesDirty, setIsAssetNamesDirty] = useState(false);
   const hasAssetNameError = useMemo(
     () => !checkAssetNamesValidity(),
     [assetNamesRef?.current?.value],
@@ -196,22 +284,15 @@ const Configuration = ({
           }}
         />
       </Box>
-      <TextField
-        label={'Description'}
-        inputRef={descriptionRef}
-        multiline
-        minRows={1}
-        maxRows={3}
-        fullWidth
+      <StableDiffusionConfigurations
+        negativePromptRef={negativePromptRef}
+        nImagesRef={nImagesRef}
       />
-      <TextField
-        label={'Negative Prompt'}
-        inputRef={negativePromptRef}
-        multiline
-        minRows={3}
-        maxRows={5}
-        fullWidth
-      />
+      <Box>
+        <Divider textAlign='left' variant='fullWidth'>
+          <Typography variant='h4'>Transaction Configurations</Typography>
+        </Divider>
+      </Box>
       <TextField
         inputRef={assetNamesRef}
         label={'Atomic Asset Name(s)'}
@@ -221,8 +302,16 @@ const Configuration = ({
         error={isAssetNamesDirty && hasAssetNameError}
         onBlur={handleAssetNamesBlur}
       />
+      <TextField
+        label={'Description'}
+        inputRef={descriptionRef}
+        multiline
+        minRows={1}
+        maxRows={3}
+        fullWidth
+      />
       <Box>
-        <Divider textAlign='left'>
+        <Divider textAlign='left' variant='fullWidth'>
           <Typography variant='h4'>Custom Tags</Typography>
         </Divider>
       </Box>
