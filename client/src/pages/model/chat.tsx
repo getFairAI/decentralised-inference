@@ -742,32 +742,36 @@ const Chat = () => {
     addConfigTags(tags);
 
     // add atomic asset tags
-    tags.push({ name: TAG_NAMES.appName, value: 'SmartWeaveContract' }),
-      tags.push({ name: TAG_NAMES.appVersion, value: '0.3.0' }),
-      tags.push({ name: TAG_NAMES.contractSrc, value: ATOMIC_ASSET_CONTRACT_SOURCE_ID }), // use contract source here
-      tags.push({
-        name: TAG_NAMES.contractManifest,
-        value: JSON.stringify({
-          evaluationOptions: {
-            sourceType: 'redstone-sequencer',
-            allowBigInt: true,
-            internalWrites: true,
-            unsafeClient: 'skip',
-            useConstructor: false,
-          },
-        }),
-      });
+    const manifest = {
+      evaluationOptions: {
+        sourceType: 'redstone-sequencer',
+        allowBigInt: true,
+        internalWrites: true,
+        unsafeClient: 'skip',
+        useConstructor: false,
+      },
+    };
+    const initState = {
+      firstOwner: userAddr,
+      canEvolve: false,
+      balances: {
+        [userAddr]: 1,
+      },
+      name: 'Fair Protocol Prompt Atomic Asset',
+      ticker: 'FPPAA',
+    };
+
+    tags.push({ name: TAG_NAMES.appName, value: 'SmartWeaveContract' });
+    tags.push({ name: TAG_NAMES.appVersion, value: '0.3.0' });
+    tags.push({ name: TAG_NAMES.contractSrc, value: ATOMIC_ASSET_CONTRACT_SOURCE_ID }); // use contract source here
+
+    tags.push({
+      name: TAG_NAMES.contractManifest,
+      value: JSON.stringify(manifest),
+    });
     tags.push({
       name: TAG_NAMES.initState,
-      value: JSON.stringify({
-        firstOwner: userAddr,
-        canEvolve: false,
-        balances: {
-          [userAddr]: 1,
-        },
-        name: 'Fair Protocol Atomic Asset',
-        ticker: 'FPAA',
-      }),
+      value: JSON.stringify(initState),
     });
 
     tags.push({ name: TAG_NAMES.license, value: UDL_ID });
