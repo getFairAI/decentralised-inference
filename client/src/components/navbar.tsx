@@ -256,6 +256,18 @@ const Navbar = ({
             <Link to='/'>
               <Logo />
             </Link>
+            <Typography
+              sx={{
+                fontSize: '14px',
+                mt: '-18px',
+                ml: '8px',
+                padding: '0px 8px',
+                border: '0.5px solid',
+                borderRadius: '8px',
+              }}
+            >
+              EARLY
+            </Typography>
           </Box>
           <Box sx={{ flexGrow: 1 }} display={{ sm: 'none', lg: 'flex' }}>
             {' '}
@@ -333,7 +345,7 @@ const Navbar = ({
           </Box>
         </Toolbar>
       </AppBar>
-      <Toolbar sx={{}} />
+      <Toolbar />
     </>
   );
 };
