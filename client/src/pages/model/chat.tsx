@@ -91,6 +91,7 @@ import { parseUBalance, sendU } from '@/utils/u';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Configuration from '@/components/configuration';
+import useComponentDimensions from '@/hooks/useComponentDimensions';
 
 const InputField = ({
   file,
@@ -215,17 +216,14 @@ const InputField = ({
           minRows={1}
           maxRows={3}
           sx={{
-            color: theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
+            background: theme.palette.background.default,
             fontStyle: 'normal',
             fontWeight: 400,
             fontSize: '20px',
             lineHeight: '16px',
             width: '100%',
             marginTop: '10px',
-            boxShadow:
-              '0px 15px 50px rgba(0,0,0,0.4), 0px -15px 50px rgba(0,0,0,0.4), 15px 0px 50px rgba(0,0,0,0.4), -15px 0px 50px rgba(0,0,0,0.4)',
-            background: theme.palette.background.default,
-            borderRadius: '23px',
+            borderRadius: '8px',
           }}
           InputProps={{
             endAdornment: (
@@ -294,7 +292,9 @@ const Chat = () => {
   const [pendingTxs] = useState<Transaction[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowDimensions();
+  const { width: chatWidth } = useComponentDimensions(chatRef);
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
   const { enqueueSnackbar } = useSnackbar();
   const elementsPerPage = 5;
@@ -1077,40 +1077,8 @@ const Chat = () => {
   );
 
   useLayoutEffect(() => {
-    // if conversations drawr is open
-    const currInputWidth = document.querySelector('#chat')?.clientWidth;
-    const openDrawerButtonWidth = 48;
-    const drawerWidth = 240;
-    const configDrawerWidth = width * 0.3;
-    const margins = 32;
-
-    if (currInputWidth) {
-      const drawerOpenInputWidth = width - drawerWidth - openDrawerButtonWidth - margins;
-      const configDrawerOpenInputWidth =
-        width - configDrawerWidth - margins - openDrawerButtonWidth;
-
-      if (drawerOpen && currInputWidth !== drawerOpenInputWidth) {
-        setInputWidth(drawerOpenInputWidth);
-        return;
-      }
-
-      if (configurationDrawerOpen && currInputWidth !== configDrawerOpenInputWidth) {
-        setInputWidth(configDrawerOpenInputWidth);
-        return;
-      }
-
-      if (
-        !drawerOpen &&
-        !configurationDrawerOpen &&
-        currInputWidth !== width - margins - openDrawerButtonWidth
-      ) {
-        setInputWidth(width - margins - openDrawerButtonWidth);
-        return;
-      }
-
-      setInputWidth(width - margins - openDrawerButtonWidth);
-    }
-  }, [drawerOpen, configurationDrawerOpen, width, height, setInputWidth]);
+    setInputWidth(chatWidth);
+  }, [chatWidth]);
 
   useLayoutEffect(() => {
     const currInputHeight = document.querySelector('#chat-input')?.clientHeight;
@@ -1187,6 +1155,7 @@ const Chat = () => {
               boxSizing: 'border-box',
               top: headerHeight,
               height: `calc(100% - ${headerHeight})`,
+              border: 'none',
             },
           }}
         >
@@ -1234,9 +1203,10 @@ const Chat = () => {
           {!drawerOpen && (
             <Paper
               sx={{
-                background: theme.palette.secondary.main,
-                // borderTopRightRadius: '23px',
-                borderRadius: '23px',
+                borderRight: '8px',
+                border: '0.5px solid',
+                borderTopLeftRadius: '0px',
+                borderBottomLeftRadius: '0px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
@@ -1250,6 +1220,7 @@ const Chat = () => {
             </Paper>
           )}
           <Box
+            ref={chatRef}
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -1296,14 +1267,15 @@ const Chat = () => {
             <Box
               id={'chat-input'}
               sx={{
-                background: 'transparent',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '23px',
+                borderRadius: '8px',
                 justifyContent: 'flex-start',
                 position: 'absolute',
-                margin: '8px 16px',
+                margin: '8px 0px',
                 width: inputWidth,
+                paddingRight: '24px',
+                paddingLeft: '8px',
               }}
             >
               <InputField

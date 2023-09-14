@@ -50,46 +50,46 @@ const lightTheme = createTheme({
     },
   },
   shape: {
-    borderRadius: 23,
+    borderRadius: 8,
   },
   palette: {
     mode: 'light',
     background: {
-      default: '#FFFEFE',
-      paper: '#FFFEFE',
+      default: '#EDEDED',
+      paper: '#EDEDED',
     },
     primary: {
       // light: will be calculated from palette.primary.main,
-      light: '#09ABE6',
-      main: '#09ABE6',
-      dark: '#09ABE6',
-      contrastText: '#FFFFFF',
+      light: '#1F1F26',
+      main: '#1F1F26',
+      dark: '#1F1F26',
+      contrastText: '#EDEDED',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     secondary: {
       // light: will be calculated from palette.primary.main,
-      light: '#007099',
-      main: '#007099',
-      dark: '#007099',
-      contrastText: '#FFFFFF',
+      light: '#222222',
+      main: '#222222',
+      dark: '#222222',
+      contrastText: '#D9D9D9',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     terciary: {
       // light: will be calculated from palette.primary.main,
-      light: '#FF9524', // D04C5A // FF9524
-      main: '#FF9524',
-      dark: '#FF9524',
-      contrastText: '#223745',
+      light: '#6C6C6C', // D04C5A // FF9524
+      main: '#6C6C6C',
+      dark: '#6C6C6C',
+      contrastText: '#151515',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
     },
     neutral: {
       // light: will be calculated from palette.primary.main,
-      light: '#C0C0C0',
-      main: '#C0C0C0',
-      dark: '#C0C0C0',
+      light: '#6C6C6C',
+      main: '#6C6C6C',
+      dark: '#6C6C6C',
       contrastText: '#223745',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
@@ -105,7 +105,7 @@ const lightTheme = createTheme({
       dark: '#DC5141',
     },
     text: {
-      primary: '#355064', // same as rgba(34,55,69,255)
+      primary: '#1F1F26', // same as rgba(34,55,69,255)
       secondary: 'rgba(34,55,69, 0.6)',
       disabled: 'rgba(34,55,69,0.3)',
     },

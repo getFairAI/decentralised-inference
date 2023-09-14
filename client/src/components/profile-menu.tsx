@@ -29,11 +29,15 @@ import Box from '@mui/material/Box';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { useState, useContext, MouseEvent, useCallback, Dispatch } from 'react';
 import { SwapContext } from '@/context/swap';
+import { useNavigate } from 'react-router-dom';
 
 const changeWallet = 'Change Wallet';
+const uSwap = 'U Swap';
+const viewPayments = 'View Payments';
 const options = [
   'Studio',
-  'U Swap',
+  uSwap,
+  viewPayments,
   'Whitepaper',
   'Github',
   'Discord',
@@ -41,7 +45,7 @@ const options = [
   changeWallet,
   'Disconnect',
 ];
-const disableableOptions = [changeWallet, 'Disconnect'];
+const disableableOptions = [changeWallet, 'Disconnect', uSwap, viewPayments];
 
 const ITEM_HEIGHT = 64;
 
@@ -55,10 +59,14 @@ const Option = ({
   const { disconnectWallet } = useContext(WalletContext);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const { setOpen: setSwapOpen } = useContext(SwapContext);
+  const navigate = useNavigate();
 
   const handleOptionClick = useCallback(() => {
     (async () => {
       switch (option) {
+        case viewPayments:
+          navigate('payments');
+          break;
         case 'Studio':
           window.open(STUDIO_LINK, '_blank');
           break;
@@ -82,7 +90,7 @@ const Option = ({
           await disconnectWallet();
           setAnchorEl(null);
           return;
-        case 'U Swap':
+        case uSwap:
           setAnchorEl(null);
           setSwapOpen(true);
           return;
@@ -117,6 +125,14 @@ export default function ProfileMenu() {
     setAnchorEl(null);
   }, []);
 
+  const showIcon = () => {
+    if (!currentAddress) {
+      return <>{open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}</>;
+    } else {
+      return <img src='./icon-empty-wallet.png' width={'27px'} height={'27px'} />;
+    }
+  };
+
   return (
     <div>
       <IconButton
@@ -127,7 +143,7 @@ export default function ProfileMenu() {
         aria-haspopup='true'
         onClick={handleClick}
       >
-        {open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}
+        {showIcon()}
       </IconButton>
       <Menu
         id='long-menu'

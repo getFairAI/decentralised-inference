@@ -221,7 +221,7 @@ const Pending = () => {
         aria-haspopup='true'
         onClick={handleToggle}
       >
-        <img src='./icon-empty-wallet.svg' />
+        <img src='./icon-empty-wallet.svg' width={'27px'} height={'27px'} />
       </IconButton>
       <Popper
         open={open}

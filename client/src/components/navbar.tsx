@@ -31,34 +31,13 @@ import {
   useEffect,
   useState,
 } from 'react';
-import {
-  Button,
-  Icon,
-  IconButton,
-  InputBase,
-  MenuItem,
-  Select,
-  styled,
-  Tooltip,
-  useTheme,
-} from '@mui/material';
+import { Button, Icon, InputBase, MenuItem, Select, Tooltip, useTheme } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
-import CloseIcon from '@mui/icons-material/Close';
-import Pending from './pending';
-import NavigationMenu from './navigation-menu';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
 import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 import { usePollingEffect } from '@/hooks/usePollingEffect';
-
-const Banner = styled(Toolbar)(({ theme }) => ({
-  backgroundColor: theme.palette.error.main,
-  color: theme.palette.error.contrastText,
-  // Override media queries injected by theme.mixins.toolbar
-  '@media all': {
-    minHeight: '25px',
-  },
-}));
+import Logo from './logo';
 
 const CustomDropDownIcon = () => (
   <Icon
@@ -74,10 +53,11 @@ const CustomDropDownIcon = () => (
 
 const CurrencyMenu = () => {
   const pollingTimeout = 10000;
+  const spaceBetween = 'space-between';
+
   const [selected, setSelected] = useState<'AR' | 'U'>('U');
   const { currentAddress, currentBalance, currentUBalance, updateBalance, updateUBalance } =
     useContext(WalletContext);
-  const theme = useTheme();
 
   const pollingFn = () => {
     if (selected === 'AR') {
@@ -120,7 +100,7 @@ const CurrencyMenu = () => {
         sx={{
           '& .MuiInputBase-input': {
             display: 'flex',
-            backgroundColor: theme.palette.secondary.main,
+            alignItems: 'center',
             border: 'none',
             textTransform: 'none',
             padding: 0,
@@ -129,33 +109,28 @@ const CurrencyMenu = () => {
             border: 'none',
           },
         }}
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              background: theme.palette.secondary.main,
-            },
-          },
-        }}
         IconComponent={CustomDropDownIcon}
         value={selected}
       >
-        <MenuItem value={'AR'} onClick={handleArClick}>
-          <Typography
-            sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
-            color={theme.palette.primary.contrastText}
-          >
+        <MenuItem
+          value={'AR'}
+          onClick={handleArClick}
+          sx={{ display: 'flex', justifyContent: spaceBetween }}
+        >
+          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}>
             {currentBalance.toFixed(defaultDecimalPlaces)}
           </Typography>
-          <img width='20px' height='29px' src='./arweave-small.svg' />
+          <img width='20px' height='20px' src='./arweave-logo-for-light.png' />
         </MenuItem>
-        <MenuItem value={'U'} onClick={handleUClick}>
-          <Typography
-            sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
-            color={theme.palette.primary.contrastText}
-          >
+        <MenuItem
+          value={'U'}
+          onClick={handleUClick}
+          sx={{ display: 'flex', justifyContent: spaceBetween }}
+        >
+          <Typography sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}>
             {currentUBalance.toFixed(defaultDecimalPlaces)}
           </Typography>
-          <img width='20px' height='29px' src={U_LOGO_SRC} />
+          <img width='20px' height='20px' src={U_LOGO_SRC} />
         </MenuItem>
       </Select>
     </>
@@ -173,23 +148,25 @@ const WalletState = () => {
   if (!currentAddress || currentAddress === '') {
     return (
       <>
-        <Box
+        <Button
+          variant='outlined'
           sx={{
-            borderRadius: '23px',
+            borderRadius: '8px',
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: 0,
             gap: '17px',
-            background: theme.palette.secondary.main,
+            border: 'solid',
+            borderColor: theme.palette.terciary.main,
+            borderWidth: '0.5px',
+            paddingTop: '11px',
+            paddingBottom: '11px',
           }}
+          onClick={handleConnect}
         >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px' }}>Connect Wallet</Typography>
-          <IconButton onClick={handleConnect} sx={{ paddingRight: '16px' }}>
-            <img src='./icon-empty-wallet.svg' />
-          </IconButton>
-        </Box>
+          <Typography sx={{ lineHeight: '18.9px', fontSize: '14px' }}>Connect</Typography>
+        </Button>
         <ProfileMenu />
       </>
     );
@@ -199,14 +176,16 @@ const WalletState = () => {
     <>
       <Box
         sx={{
-          borderRadius: '23px',
+          borderRadius: '8px',
           display: 'flex',
           flexDirection: 'row',
           justifyContent: 'center',
           alignItems: 'center',
           padding: 0,
           gap: '17px',
-          background: theme.palette.secondary.main,
+          border: 'solid',
+          borderColor: theme.palette.terciary.main,
+          borderWidth: '0.5px',
         }}
       >
         <Box display={'flex'}>
@@ -214,52 +193,45 @@ const WalletState = () => {
         </Box>
         <Box
           sx={{
-            background: theme.palette.background.default,
-            borderRadius: '43px',
+            background: theme.palette.secondary.contrastText,
+            borderRadius: '8px',
             padding: '7px 20px 7px 20px',
+            alignItems: 'center',
           }}
           display={'flex'}
           gap={'8px'}
         >
           <Tooltip title={currentAddress} placement={'left-start'}>
-            <Typography sx={{ color: theme.palette.text.primary }}>
+            <Typography
+              sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px' }}
+            >
               {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
             </Typography>
           </Tooltip>
           {isWalletVouched && (
             <Tooltip title={'Wallet is Vouched'}>
-              <img src='./vouch.svg' />
+              <img src='./vouch.svg' width={'15px'} height={'15px'} />
             </Tooltip>
           )}
         </Box>
-        <Pending />
+        <ProfileMenu />
       </Box>
-      <ProfileMenu />
     </>
   );
 };
 
 const Navbar = ({
-  showBanner,
-  setShowBanner,
   setFilterValue,
+  isScrolled,
 }: {
-  showBanner: boolean;
-  setShowBanner: Dispatch<SetStateAction<boolean>>;
   setFilterValue: Dispatch<SetStateAction<string>>;
+  isScrolled: boolean;
 }) => {
   const { pathname, state } = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
   const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
   const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
-  const navbarLinkStyles = {
-    fontWeight: 400,
-    fontSize: '18px',
-    lineHeight: '24px',
-    display: { sm: 'none', md: 'flex' },
-  };
-
   let keyTimeout: Timeout;
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
@@ -268,34 +240,21 @@ const Navbar = ({
     }, 500);
   };
 
+  const appBarStyle = {
+    zIndex,
+    alignContent: 'center',
+    padding: '10px 20px 10px 20px',
+    ...(!isScrolled && { boxShadow: 'none' }),
+  };
+  const spaceBetween = 'space-between';
+
   return (
     <>
-      <AppBar className='navbar' sx={{ zIndex }}>
-        {showBanner && (
-          <Banner>
-            <Box sx={{ flexGrow: 1, display: { md: 'flex', justifyContent: 'flex-start' } }}>
-              <Typography variant='h4'>
-                This App is in <b>ALPHA</b> version and the code has not been audited yet. Please
-                make sure you understand before using any of the functionalities.
-              </Typography>
-            </Box>
-            <Box sx={{ flexGrow: 0 }}>
-              <IconButton size='small' onClick={() => setShowBanner(false)}>
-                <CloseIcon fontSize='inherit' />
-              </IconButton>
-            </Box>
-          </Banner>
-        )}
+      <AppBar sx={appBarStyle} color='inherit'>
         <Toolbar>
-          <Box display={'flex'} flexDirection={'row'}>
+          <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
             <Link to='/'>
-              <img
-                src={
-                  theme.palette.mode === 'dark'
-                    ? './fair-protocol-logo.svg'
-                    : './fair-protocol-logo-light.svg'
-                }
-              />
+              <Logo />
             </Link>
           </Box>
           <Box sx={{ flexGrow: 1 }} display={{ sm: 'none', lg: 'flex' }}>
@@ -304,13 +263,16 @@ const Navbar = ({
             {pathname && pathname === '/' && (
               <Box
                 sx={{
-                  borderRadius: '30px',
+                  borderRadius: '8px',
                   margin: '0 50px',
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  justifyContent: spaceBetween,
                   padding: '3px 20px 3px 50px',
                   alignItems: 'center',
-                  background: theme.palette.background.default,
+                  border: 'solid',
+                  borderColor: theme.palette.terciary.main,
+                  borderWidth: '0.5px',
+                  width: '100%',
                 }}
               >
                 <InputBase
@@ -345,7 +307,7 @@ const Navbar = ({
             {pathname.includes('chat') ? (
               <>
                 <Button
-                  sx={{ borderRadius: '20px', padding: '8px 16px' }}
+                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '12px 16px' }}
                   startIcon={<img src='./chevron-bottom.svg' />}
                   onClick={() =>
                     navigate(`${pathname}/change-operator`, {
@@ -355,12 +317,7 @@ const Navbar = ({
                 >
                   <Typography
                     sx={{
-                      fontWeight: 500,
-                      fontSize: '18px',
-                      lineHeight: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: theme.palette.primary.contrastText,
+                      lineHeight: '18.9px',
                     }}
                   >
                     Change Operator
@@ -370,15 +327,13 @@ const Navbar = ({
               </>
             ) : (
               <>
-                <NavigationMenu navStyles={navbarLinkStyles} />
                 <WalletState />
               </>
             )}
           </Box>
         </Toolbar>
       </AppBar>
-      <Toolbar />
-      {showBanner && <Banner />}
+      <Toolbar sx={{}} />
     </>
   );
 };

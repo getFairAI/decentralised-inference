@@ -43,7 +43,7 @@ import {
   ListItemButton,
   Typography,
   useTheme,
-  IconButton,
+  Button,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
@@ -62,7 +62,6 @@ import { LoadingContainer } from '@/styles/components';
 import DebounceIconButton from './debounce-icon-button';
 import { Timeout } from 'react-number-format/types/types';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 const ConversationElement = ({
   cid,
@@ -86,19 +85,17 @@ const ConversationElement = ({
       onClick={handleListItemClick}
       sx={{
         flexGrow: 0,
-        background: theme.palette.mode === 'dark' ? '#434343' : theme.palette.primary.main,
-        borderRadius: '21px',
+        borderRadius: '8px',
+        border: 'solid 0.5px',
         width: '100%',
         justifyContent: 'center',
         height: '91px',
-        color: theme.palette.secondary.contrastText,
+        color: theme.palette.neutral.main,
+        borderColor: theme.palette.neutral.main,
         '&.Mui-selected, &.Mui-selected:hover': {
-          opacity: 1,
-          backdropFilter: 'brightness(0.5)',
-          color: theme.palette.primary.contrastText,
-        },
-        '&:hover': {
-          backdropFilter: 'brightness(0.5)',
+          backgroundColor: theme.palette.background.default,
+          color: theme.palette.text.primary,
+          borderColor: theme.palette.text.primary,
         },
       }}
     >
@@ -111,7 +108,6 @@ const ConversationElement = ({
           display: 'flex',
           alignItems: 'center',
           textAlign: 'center',
-          color: 'inherit',
         }}
       >
         Conversation {cid}
@@ -322,39 +318,38 @@ const Conversations = ({
   return (
     <Paper
       sx={{
-        borderRadius: '0px',
         height: '100%',
-        background: theme.palette.secondary.main,
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
         // opacity: '0.3',
       }}
-      elevation={4}
     >
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
+          alignItems: 'center',
           gap: '16px',
           height: '100%',
         }}
       >
-        <Box marginTop={'16px'}>
+        <Box marginTop={'16px'} width={'100%'} padding={'0px 20px'}>
           <Box
             id={'searchConversation'}
             sx={{
-              background: theme.palette.common.white,
-              borderRadius: '30px',
-              marginLeft: '20px',
+              borderRadius: '8px',
               display: 'flex',
               justifyContent: 'space-between',
               padding: '3px 20px 3px 20px',
               alignItems: 'center',
+              border: 'solid 0.5px',
+              width: '100%',
             }}
           >
             <InputBase
+              fullWidth
               sx={{
                 color: theme.palette.text.primary,
                 fontStyle: 'normal',
@@ -380,8 +375,8 @@ const Conversations = ({
             onClick={handleAddConversation}
             sx={{
               marginLeft: '20px',
-              borderRadius: '30px',
-              color: theme.palette.primary.contrastText,
+              width: 'fit-content',
+              borderRadius: '8px',
             }}
           >
             <AddIcon />
@@ -395,6 +390,7 @@ const Conversations = ({
             alignItems: 'center',
             width: '100%',
             paddingLeft: '20px',
+            paddingRight: '20px',
             overflow: 'auto',
             maxHeight: chatMaxHeight,
             flexFlow: 'wrap',
@@ -412,10 +408,10 @@ const Conversations = ({
           <Box sx={{ paddingBottom: '8px' }} ref={conversationsTarget}></Box>
         </List>
         <Box flexGrow={1}></Box>
+        <Button variant='outlined' sx={{ mb: '8px', borderWidth: '0.5px' }} onClick={toggleDrawer}>
+          <Typography>Hide</Typography>
+        </Button>
       </Box>
-      <IconButton size='large' sx={{ height: 'fit-content' }} onClick={toggleDrawer}>
-        <ChevronLeftIcon />
-      </IconButton>
     </Paper>
   );
 };

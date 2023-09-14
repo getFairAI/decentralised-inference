@@ -49,6 +49,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
       <FiCard
         sx={{
           flexGrow: 0,
+          borderRadius: '8px',
         }}
         width={forDetails ? undefined : '512px'}
         height={forDetails ? undefined : '512px'}
@@ -59,8 +60,8 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
             background: `url(${NET_ARWEAVE_URL}/${message.id})`,
             // backgroundPosition: 'center',s
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover' /* <------ */,
-            backgroundPosition: 'center center',
+            backgroundSize: 'contain' /* <------ */,
+            backgroundPosition: 'center',
           }}
         />
       </FiCard>

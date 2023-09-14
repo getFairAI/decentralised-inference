@@ -19,7 +19,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
-import Root from '@/root';
+import { Root, LayoutRoot } from '@/root';
 import Home from '@/pages/home';
 import Model, { getModelAttachments } from '@/pages/model/model';
 import '@/styles/main.css';
@@ -33,11 +33,12 @@ import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
 import ScriptDetails from './pages/script/script-details';
 import ChangeOperator from './pages/model/change-operator';
+import SignIn from './pages/sign-in';
 
 const router = createHashRouter([
   {
     path: '/',
-    element: <Root />,
+    element: <LayoutRoot />,
     errorElement: <ErrorDisplay />,
     children: [
       {
@@ -87,6 +88,16 @@ const router = createHashRouter([
       {
         path: 'payments',
         element: <Payments />,
+      },
+    ],
+  },
+  {
+    path: '/',
+    element: <Root />,
+    children: [
+      {
+        path: 'sign-in',
+        element: <SignIn />,
       },
     ],
   },

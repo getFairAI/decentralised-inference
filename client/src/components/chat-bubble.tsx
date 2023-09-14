@@ -78,7 +78,7 @@ const ChatBubble = ({
                           ? 'rgba(52, 52, 52, 0.7)'
                           : theme.palette.secondary.main,
                       // opacity: '0.4',
-                      borderRadius: '40px',
+                      borderRadius: '8px',
                     }}
                   >
                     <CardContent
