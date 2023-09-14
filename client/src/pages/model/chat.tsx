@@ -1078,7 +1078,7 @@ const Chat = () => {
 
   useLayoutEffect(() => {
     setInputWidth(chatWidth);
-  }, [ chatWidth ]);
+  }, [chatWidth]);
 
   useLayoutEffect(() => {
     const currInputHeight = document.querySelector('#chat-input')?.clientHeight;
@@ -1155,7 +1155,7 @@ const Chat = () => {
               boxSizing: 'border-box',
               top: headerHeight,
               height: `calc(100% - ${headerHeight})`,
-              border: 'none'
+              border: 'none',
             },
           }}
         >

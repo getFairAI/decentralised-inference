@@ -16,7 +16,20 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { Stack, Box, Tooltip, Card, CardContent, useTheme, Button, Avatar, Typography, IconButton, Menu, MenuItem } from '@mui/material';
+import {
+  Stack,
+  Box,
+  Tooltip,
+  Card,
+  CardContent,
+  useTheme,
+  Button,
+  Avatar,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+} from '@mui/material';
 import { IMessage } from '@/interfaces/common';
 import Transaction from 'arweave/node/lib/transaction';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
@@ -27,7 +40,13 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toSvg } from 'jdenticon';
 import { useLazyQuery } from '@apollo/client';
-import { AVATAR_ATTACHMENT, DEFAULT_TAGS_RETRO, MODEL_ATTACHMENT, NET_ARWEAVE_URL, TAG_NAMES } from '@/constants';
+import {
+  AVATAR_ATTACHMENT,
+  DEFAULT_TAGS_RETRO,
+  MODEL_ATTACHMENT,
+  NET_ARWEAVE_URL,
+  TAG_NAMES,
+} from '@/constants';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { enqueueSnackbar } from 'notistack';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -38,7 +57,7 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
   const { state } = useLocation();
   const theme = useTheme();
 
-  const [ dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -79,9 +98,7 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
     setDialogOpen(true);
   };
 
-  const [getAvatar, { data: avatarData }] = useLazyQuery(
-    GET_LATEST_MODEL_ATTACHMENTS,
-  );
+  const [getAvatar, { data: avatarData }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
 
   const { setOpenWithId } = useContext(TradeContext);
 
@@ -96,7 +113,7 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
       const svg = new Blob([img], { type: 'image/svg+xml' });
       return URL.createObjectURL(svg);
     }
-  }, [ avatarData, state ]);
+  }, [avatarData, state]);
 
   useEffect(() => {
     (async () => {
@@ -127,58 +144,66 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
 
   const handleTradeClick = useCallback(() => setOpenWithId(message.id, true), [message]);
 
-  return <Box display={'flex'} gap={'8px'} width={'100%'}>
-    { message.type === 'response' && <Avatar variant='rounded' src={imgUrl} sx={{ width: 56, height: 56 }}/>}
-    <Box display={'flex'} justifyContent={'space-between'} width={'100%'}>
-      { message.type === 'response' && 
-        <Box display={'flex'} flexDirection={'column'}>
-        <Typography sx={{
-          fontSize: '20px',
-          fontWeight: 400,
-        }}>
-          {state.scriptName}
-        </Typography>
-        <Typography sx={{
-          fontSize: '16px',
-          fontWeight: 300,
-          color: theme.palette.neutral.main,
-        }}>
-          {state.scriptTransaction}
-        </Typography>
-        </Box>
-      }
-      <Box display={'flex'} alignItems='center'>
+  return (
+    <Box display={'flex'} gap={'8px'} width={'100%'}>
+      {message.type === 'response' && (
+        <Avatar variant='rounded' src={imgUrl} sx={{ width: 56, height: 56 }} />
+      )}
+      <Box display={'flex'} justifyContent={'space-between'} width={'100%'}>
         {message.type === 'response' && (
-          <Button variant='outlined' onClick={handleTradeClick}>
-            Trade on Bazar
-          </Button>
+          <Box display={'flex'} flexDirection={'column'}>
+            <Typography
+              sx={{
+                fontSize: '20px',
+                fontWeight: 400,
+              }}
+            >
+              {state.scriptName}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '16px',
+                fontWeight: 300,
+                color: theme.palette.neutral.main,
+              }}
+            >
+              {state.scriptTransaction}
+            </Typography>
+          </Box>
         )}
-        <IconButton onClick={handleClick}>
-          <MoreHorizIcon fontSize='large' />
-        </IconButton>
-        <Menu
-          id='demo-positioned-menu'
-          aria-labelledby='demo-positioned-button'
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-          }}
-        >
-          <MenuItem onClick={handleCopy}>Copy Content</MenuItem>
-          <MenuItem onClick={handleViewTx}>View Transaction</MenuItem>
-          <MenuItem onClick={handleViewDetails}>View Details</MenuItem>
-        </Menu>
+        <Box display={'flex'} alignItems='center'>
+          {message.type === 'response' && (
+            <Button variant='outlined' onClick={handleTradeClick}>
+              Trade on Bazar
+            </Button>
+          )}
+          <IconButton onClick={handleClick}>
+            <MoreHorizIcon fontSize='large' />
+          </IconButton>
+          <Menu
+            id='demo-positioned-menu'
+            aria-labelledby='demo-positioned-button'
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+          >
+            <MenuItem onClick={handleCopy}>Copy Content</MenuItem>
+            <MenuItem onClick={handleViewTx}>View Transaction</MenuItem>
+            <MenuItem onClick={handleViewDetails}>View Details</MenuItem>
+          </Menu>
+        </Box>
+        <MessageDetail open={dialogOpen} setOpen={setDialogOpen} message={message} />
       </Box>
-      <MessageDetail open={dialogOpen} setOpen={setDialogOpen} message={message} />
     </Box>
-  </Box>;
+  );
 };
 
 const Message = ({

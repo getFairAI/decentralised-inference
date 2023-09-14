@@ -97,9 +97,9 @@ const router = createHashRouter([
     children: [
       {
         path: 'sign-in',
-        element: <SignIn />
-      }
-    ]
+        element: <SignIn />,
+      },
+    ],
   },
 ]);
 

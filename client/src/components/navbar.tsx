@@ -31,15 +31,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import {
-  Button,
-  Icon,
-  InputBase,
-  MenuItem,
-  Select,
-  Tooltip,
-  useTheme,
-} from '@mui/material';
+import { Button, Icon, InputBase, MenuItem, Select, Tooltip, useTheme } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
@@ -118,18 +110,22 @@ const CurrencyMenu = () => {
         IconComponent={CustomDropDownIcon}
         value={selected}
       >
-        <MenuItem value={'AR'} onClick={handleArClick} sx={{ display: 'flex', justifyContent: 'space-between'}}>
-          <Typography
-            sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}
-          >
+        <MenuItem
+          value={'AR'}
+          onClick={handleArClick}
+          sx={{ display: 'flex', justifyContent: 'space-between' }}
+        >
+          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}>
             {currentBalance.toFixed(defaultDecimalPlaces)}
           </Typography>
           <img width='20px' height='20px' src='./arweave-logo-for-light.png' />
         </MenuItem>
-        <MenuItem value={'U'} onClick={handleUClick} sx={{ display: 'flex', justifyContent: 'space-between'}}>
-          <Typography
-            sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}
-          >
+        <MenuItem
+          value={'U'}
+          onClick={handleUClick}
+          sx={{ display: 'flex', justifyContent: 'space-between' }}
+        >
+          <Typography sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}>
             {currentUBalance.toFixed(defaultDecimalPlaces)}
           </Typography>
           <img width='20px' height='20px' src={U_LOGO_SRC} />
@@ -163,7 +159,7 @@ const WalletState = () => {
             borderColor: theme.palette.terciary.main,
             borderWidth: '0.5px',
             paddingTop: '11px',
-            paddingBottom: '11px'
+            paddingBottom: '11px',
           }}
           onClick={handleConnect}
         >
@@ -204,7 +200,9 @@ const WalletState = () => {
           gap={'8px'}
         >
           <Tooltip title={currentAddress} placement={'left-start'}>
-            <Typography sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px' }}>
+            <Typography
+              sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px' }}
+            >
               {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
             </Typography>
           </Tooltip>
@@ -316,7 +314,7 @@ const Navbar = ({
                 >
                   <Typography
                     sx={{
-                      lineHeight: '18.9px'
+                      lineHeight: '18.9px',
                     }}
                   >
                     Change Operator
@@ -332,7 +330,7 @@ const Navbar = ({
           </Box>
         </Toolbar>
       </AppBar>
-      <Toolbar sx={{}}/>
+      <Toolbar sx={{}} />
     </>
   );
 };

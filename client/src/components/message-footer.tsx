@@ -109,7 +109,7 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
           >
             {message.type === 'response' ? state.scriptName : 'You'}
           </Typography>
-        </Box> 
+        </Box>
       </Box>
     </>
   );

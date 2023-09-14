@@ -17,16 +17,16 @@ const SignIn = () => {
   const [featuredTxs, setFeaturedTxs] = useState<IEdge[]>([]);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const { currentAddress } = useContext(WalletContext);
-  const isconnected = useMemo(() => !!currentAddress, [ currentAddress ]);
+  const isconnected = useMemo(() => !!currentAddress, [currentAddress]);
 
   const navigate = useNavigate();
 
-  const handleClick = useCallback(() => setChooseWalletOpen(true), [ setChooseWalletOpen ]);
+  const handleClick = useCallback(() => setChooseWalletOpen(true), [setChooseWalletOpen]);
 
   const handleSkip = useCallback(() => {
     localStorage.setItem('hasSignedIn', 'true');
     navigate('/');
-  }, [ localStorage ]);
+  }, [localStorage]);
 
   const { data, loading, fetchMore } = useQuery(FIND_BY_TAGS, {
     variables: {
@@ -40,7 +40,10 @@ const SignIn = () => {
       (async () => {
         await fetchMore({
           variables: {
-            after: data.transactions.edges.length > 0 ? data.transactions.edges[data.transactions.edges.length - 1].cursor : undefined,
+            after:
+              data.transactions.edges.length > 0
+                ? data.transactions.edges[data.transactions.edges.length - 1].cursor
+                : undefined,
           },
           updateQuery: commonUpdateQuery,
         });
@@ -63,32 +66,77 @@ const SignIn = () => {
       })();
     }
   }, [data]);
-  
-  return <>
-    <Container sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '21px' }}>
-      <Box display={'flex'}  minWidth={'300px'}>
-        <Logo />
-      </Box>
-      <Box>
-        <Typography sx={{ color: '#1F1F26' }} fontWeight={300} fontSize={'30px'} lineHeight={'40.5px'} align='center'>First, Lets get connected!</Typography>
-      </Box>
-      { !isconnected && <Button sx={{ borderRadius: '8px', gap: '10px', background: '#FFF'}} onClick={handleClick}>
-        <Typography sx={{ color: '#1F1F26' }} fontWeight={700} fontSize={'18px'} lineHeight={'24.3px'}>Connect Wallet</Typography>
-      </Button>}
 
-      {isconnected && <>
-        <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
-          {featuredTxs.map((el) => (<Box key={el.node.id} display={'flex'} flexDirection={'column'} gap={'30px'}>
-            <AiCard model={el} key={el.node.id} loading={loading} />
-            <Typography>{findTag(el, 'description')}</Typography>
-          </Box>))}
+  return (
+    <>
+      <Container
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '21px',
+        }}
+      >
+        <Box display={'flex'} minWidth={'300px'}>
+          <Logo />
         </Box>
-        <Button sx={{ bottom: '20px', position: 'fixed', borderRadius: '8px', gap: '10px', background: '#FFF' }} onClick={handleSkip}>
-          <Typography>Skip</Typography>
-        </Button>
-      </>}
-    </Container>
-  </>;
+        <Box>
+          <Typography
+            sx={{ color: '#1F1F26' }}
+            fontWeight={300}
+            fontSize={'30px'}
+            lineHeight={'40.5px'}
+            align='center'
+          >
+            First, Lets get connected!
+          </Typography>
+        </Box>
+        {!isconnected && (
+          <Button
+            sx={{ borderRadius: '8px', gap: '10px', background: '#FFF' }}
+            onClick={handleClick}
+          >
+            <Typography
+              sx={{ color: '#1F1F26' }}
+              fontWeight={700}
+              fontSize={'18px'}
+              lineHeight={'24.3px'}
+            >
+              Connect Wallet
+            </Typography>
+          </Button>
+        )}
+
+        {isconnected && (
+          <>
+            <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
+              {featuredTxs.map((el) => (
+                <Box key={el.node.id} display={'flex'} flexDirection={'column'} gap={'30px'}>
+                  <AiCard model={el} key={el.node.id} loading={loading} />
+                  <Typography>{findTag(el, 'description')}</Typography>
+                </Box>
+              ))}
+            </Box>
+            <Button
+              sx={{
+                bottom: '20px',
+                position: 'fixed',
+                borderRadius: '8px',
+                gap: '10px',
+                background: '#FFF',
+              }}
+              onClick={handleSkip}
+            >
+              <Typography>Skip</Typography>
+            </Button>
+          </>
+        )}
+      </Container>
+    </>
+  );
 };
 
 export default SignIn;

@@ -45,7 +45,7 @@ const options = [
   changeWallet,
   'Disconnect',
 ];
-const disableableOptions = [ changeWallet, 'Disconnect', uSwap, viewPayments ];
+const disableableOptions = [changeWallet, 'Disconnect', uSwap, viewPayments];
 
 const ITEM_HEIGHT = 64;
 

@@ -29,7 +29,15 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { ReactElement, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  ReactElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import Navbar from './navbar';
 import { WalletContext } from '@/context/wallet';
 import { ChooseWalletContext } from '@/context/choose-wallet';
@@ -77,10 +85,7 @@ export default function Layout({ children }: { children: ReactElement }) {
 
   return (
     <>
-      <Navbar
-        setFilterValue={setFilterValue}
-        isScrolled={isScrolled}
-      />
+      <Navbar setFilterValue={setFilterValue} isScrolled={isScrolled} />
       <Container
         disableGutters
         sx={{
@@ -93,7 +98,9 @@ export default function Layout({ children }: { children: ReactElement }) {
       >
         <Box height='100%'>
           <FilterContext.Provider value={filterValue}>
-            <main style={{ height: '100%' }} ref={scrollableRef}>{children}</main>
+            <main style={{ height: '100%' }} ref={scrollableRef}>
+              {children}
+            </main>
             <Dialog
               open={isOpen}
               maxWidth={'md'}

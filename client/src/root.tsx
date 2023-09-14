@@ -37,43 +37,47 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
     if (localStorage.getItem('hasSignedIn') !== 'true') {
       navigate('/sign-in');
     }
-  }, [ localStorage ]);
+  }, [localStorage]);
 
-  return <ApolloProvider client={client}>
-    <AppThemeProvider>
-      <SnackbarProvider
-        maxSnack={3}
-        Components={{
-          error: StyledMaterialDesignContent,
-          success: StyledMaterialDesignContent,
-          info: StyledMaterialDesignContent,
-        }}
-      >
-        <CssBaseline />
-        <WalletProvider>
-          <ChooseWalletProvider>
-            <SwapProvider>
-              <TradeProvider>
-                {children}
-              </TradeProvider>
-            </SwapProvider>
-          </ChooseWalletProvider>
-        </WalletProvider>
-      </SnackbarProvider>
-    </AppThemeProvider>
-  </ApolloProvider>;
+  return (
+    <ApolloProvider client={client}>
+      <AppThemeProvider>
+        <SnackbarProvider
+          maxSnack={3}
+          Components={{
+            error: StyledMaterialDesignContent,
+            success: StyledMaterialDesignContent,
+            info: StyledMaterialDesignContent,
+          }}
+        >
+          <CssBaseline />
+          <WalletProvider>
+            <ChooseWalletProvider>
+              <SwapProvider>
+                <TradeProvider>{children}</TradeProvider>
+              </SwapProvider>
+            </ChooseWalletProvider>
+          </WalletProvider>
+        </SnackbarProvider>
+      </AppThemeProvider>
+    </ApolloProvider>
+  );
 };
 
 export const Root = () => {
-  return <BaseRoot>
-    <Outlet />
-  </BaseRoot>;
+  return (
+    <BaseRoot>
+      <Outlet />
+    </BaseRoot>
+  );
 };
 
 export const LayoutRoot = () => {
-  return <BaseRoot>
-    <Layout>
-      <Outlet />
-    </Layout>
-  </BaseRoot>;
+  return (
+    <BaseRoot>
+      <Layout>
+        <Outlet />
+      </Layout>
+    </BaseRoot>
+  );
 };
