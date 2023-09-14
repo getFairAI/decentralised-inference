@@ -27,6 +27,10 @@ export const U_LOGO_SRC = 'https://arweave.net/J3WXX4OGa6wP5E9oLhNyqlN4deYI7ARjr
 export const UCM_CONTRACT_ID = 'tfalT8Z-88riNtoXdF5ldaBtmsfcSmbMqWLh2DHJIbg';
 export const UCM_DIVIDER = 1e6;
 
+export const ATOMIC_ASSET_CONTRACT_SOURCE_ID = 'h9v17KHV4SXwdW2-JHU6a23f6R0YtbXZJJht8LfP8QM';
+
+export const UDL_ID = 'yRj4a5KMctX_uOmKWCFJIjmY8DeJcusVk6-HzLiM_t8';
+
 export const APP_NAME = 'Fair Protocol';
 export const PREVIOUS_VERSIONS = ['0.1'];
 export const APP_VERSION = '0.3';
@@ -45,7 +49,9 @@ export const IS_TO_CHOOSE_MODEL_AUTOMATICALLY = true;
 
 export const TAG_NAMES = {
   appName: 'App-Name',
+  customAppName: 'Custom-App-Name',
   appVersion: 'App-Version',
+  customAppVersion: 'Custom-App-Version',
   contentType: 'Content-Type',
   unixTime: 'Unix-Time',
   modelName: 'Model-Name',
@@ -93,6 +99,12 @@ export const TAG_NAMES = {
   nImages: 'N-Images',
   output: 'Output',
   outputConfiguration: 'Output-Configuration',
+  contractSrc: 'Contract-Src',
+  contractManifest: 'Contract-Manifest',
+  initState: 'Init-State',
+  license: 'License',
+  derivation: 'Derivation',
+  commercialUse: 'Commercial-Use',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';
@@ -171,8 +183,10 @@ export const DEFAULT_TAGS = [
 
 // add smartWeaveContract tags so atomic tokens can be picked up
 export const DEFAULT_TAGS_FOR_TOKENS = [
-  { name: TAG_NAMES.appName, values: [APP_NAME, 'SmartWeaveContract'] },
-  { name: TAG_NAMES.appVersion, values: [APP_VERSION, '0.3.0'] },
+  { name: TAG_NAMES.appName, values: ['SmartWeaveContract'] },
+  { name: TAG_NAMES.appVersion, values: ['0.3.0'] },
+  { name: TAG_NAMES.customAppName, values: [APP_NAME] },
+  { name: TAG_NAMES.customAppVersion, values: [APP_VERSION] },
 ];
 
 // export default tags with support for old version txs
