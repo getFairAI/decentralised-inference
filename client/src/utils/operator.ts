@@ -59,7 +59,7 @@ const getOperatorRequests = async (
     variables: {
       first: N_PREVIOUS_BLOCKS,
       tags: [
-        ...DEFAULT_TAGS,
+        /* ...DEFAULT_TAGS_FOR_TOKENS, */
         { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
         { name: TAG_NAMES.operationName, values: [INFERENCE_PAYMENT] },
         { name: TAG_NAMES.scriptName, values: [scriptName] },

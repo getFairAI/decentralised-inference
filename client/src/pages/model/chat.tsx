@@ -45,7 +45,6 @@ import {
 } from 'react';
 import {
   APP_VERSION,
-  DEFAULT_TAGS,
   TAG_NAMES,
   APP_NAME,
   INFERENCE_PAYMENT,
@@ -62,6 +61,8 @@ import {
   MAX_MESSAGE_SIZE,
   DEFAULT_TAGS_FOR_TOKENS,
   TX_ORIGIN,
+  ATOMIC_ASSET_CONTRACT_SOURCE_ID,
+  UDL_ID,
 } from '@/constants';
 import {
   QUERY_CHAT_REQUESTS,
@@ -92,6 +93,10 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Configuration from '@/components/configuration';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
+import { WarpFactory } from 'warp-contracts';
+import { DeployPlugin } from 'warp-contracts-plugin-deploy';
+
+const warp = WarpFactory.forMainnet().use(new DeployPlugin());
 
 const InputField = ({
   file,
@@ -480,7 +485,7 @@ const Chat = () => {
       stopRequestPolling();
 
       const tagsRequests = [
-        ...DEFAULT_TAGS,
+        /* ...DEFAULT_TAGS_FOR_TOKENS, */
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
@@ -577,16 +582,15 @@ const Chat = () => {
       setPreviousResponses([]); // clear previous responses
       setIsFirstPage(true);
       // get messages for current conversation
-      const commonTags = [
-        ...DEFAULT_TAGS,
+
+      const tagsRequests = [
+        /* ...DEFAULT_TAGS_FOR_TOKENS, */
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-      ];
-      const tagsRequests = [
-        ...commonTags,
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
         { name: TAG_NAMES.conversationIdentifier, values: [`${currentConversationId}`] },
       ];
+
       getChatRequests({
         variables: {
           first: elementsPerPage,
@@ -719,8 +723,8 @@ const Chat = () => {
 
   const getUploadTags = (contentType: string, fileName?: string) => {
     const tags = [];
-    tags.push({ name: TAG_NAMES.appName, value: APP_NAME });
-    tags.push({ name: TAG_NAMES.appVersion, value: APP_VERSION });
+    tags.push({ name: TAG_NAMES.customAppName, value: APP_NAME });
+    tags.push({ name: TAG_NAMES.customAppVersion, value: APP_VERSION });
     tags.push({ name: TAG_NAMES.scriptName, value: state.scriptName });
     tags.push({ name: TAG_NAMES.scriptCurator, value: state.scriptCurator });
     tags.push({ name: TAG_NAMES.scriptTransaction, value: state.scriptTransaction });
@@ -736,6 +740,39 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.txOrigin, value: TX_ORIGIN });
 
     addConfigTags(tags);
+
+    // add atomic asset tags
+    tags.push({ name: TAG_NAMES.appName, value: 'SmartWeaveContract' }),
+      tags.push({ name: TAG_NAMES.appVersion, value: '0.3.0' }),
+      tags.push({ name: TAG_NAMES.contractSrc, value: ATOMIC_ASSET_CONTRACT_SOURCE_ID }), // use contract source here
+      tags.push({
+        name: TAG_NAMES.contractManifest,
+        value: JSON.stringify({
+          evaluationOptions: {
+            sourceType: 'redstone-sequencer',
+            allowBigInt: true,
+            internalWrites: true,
+            unsafeClient: 'skip',
+            useConstructor: false,
+          },
+        }),
+      });
+    tags.push({
+      name: TAG_NAMES.initState,
+      value: JSON.stringify({
+        firstOwner: userAddr,
+        canEvolve: false,
+        balances: {
+          [userAddr]: 1,
+        },
+        name: 'Fair Protocol Atomic Asset',
+        ticker: 'FPAA',
+      }),
+    });
+
+    tags.push({ name: TAG_NAMES.license, value: UDL_ID });
+    tags.push({ name: TAG_NAMES.derivation, value: 'Allowed-With-License-Passthrough' });
+    tags.push({ name: TAG_NAMES.commercialUse, value: 'Allowed' });
 
     return tags;
   };
@@ -912,6 +949,7 @@ const Chat = () => {
         enqueueSnackbar('An Error Occurred', { variant: 'error' });
         return;
       }
+      await warp.register(txid, 'node2');
       updateMessagesAndPay(content, contentType, txid, tags);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
@@ -943,6 +981,7 @@ const Chat = () => {
         enqueueSnackbar('An Error Occurred.', { variant: 'error' });
         return;
       }
+      await warp.register(txid, 'node2');
       await updateMessagesAndPay(content, contentType, txid, tags);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
