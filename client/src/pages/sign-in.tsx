@@ -1,9 +1,27 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import AiCard from '@/components/ai-card';
 import Logo from '@/components/logo';
 import { DEFAULT_TAGS_RETRO, MODEL_CREATION_PAYMENT_TAGS } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { WalletContext } from '@/context/wallet';
-import { IEdge } from '@/interfaces/arweave';
+import { IEdge, IQueryResult } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import { commonUpdateQuery, findTag, isFakeDeleted } from '@/utils/common';
 import { useQuery } from '@apollo/client';
@@ -17,7 +35,7 @@ const SignIn = () => {
   const [featuredTxs, setFeaturedTxs] = useState<IEdge[]>([]);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const { currentAddress } = useContext(WalletContext);
-  const isconnected = useMemo(() => !!currentAddress, [currentAddress]);
+  const isConnected = useMemo(() => !!currentAddress, [currentAddress]);
 
   const navigate = useNavigate();
 
@@ -35,8 +53,26 @@ const SignIn = () => {
     },
   });
 
+  const filterTxs = async (txsData: IQueryResult) => {
+    const filtered: IEdge[] = [];
+    for (const el of txsData.transactions.edges) {
+      const modelId = findTag(el, 'modelTransaction') as string;
+      const modelOwner = findTag(el, 'sequencerOwner') as string;
+      if (!(await isFakeDeleted(modelId, modelOwner, 'model'))) {
+        filtered.push(el);
+      } else {
+        // ignore
+      }
+    }
+    if (featuredTxs.length === 0) {
+      setFeaturedTxs(filtered.slice(0, elementsPerPage));
+    } else {
+      // ignore
+    }
+  };
+
   useEffect(() => {
-    if (data && data.transactions.pageInfo.hasNextPage) {
+    if (data?.transactions?.pageInfo.hasNextPage) {
       (async () => {
         await fetchMore({
           variables: {
@@ -50,20 +86,10 @@ const SignIn = () => {
       })();
     } else if (data) {
       (async () => {
-        const filtered: IEdge[] = [];
-        for (const el of data.transactions.edges) {
-          const modelId = findTag(el, 'modelTransaction') as string;
-          const modelOwner = findTag(el, 'sequencerOwner') as string;
-          if (!(await isFakeDeleted(modelId, modelOwner, 'model'))) {
-            filtered.push(el);
-          } else {
-            // ignore
-          }
-        }
-        if (featuredTxs.length === 0) {
-          setFeaturedTxs(filtered.slice(0, elementsPerPage));
-        }
+        await filterTxs(data);
       })();
+    } else {
+      // ignore
     }
   }, [data]);
 
@@ -91,10 +117,10 @@ const SignIn = () => {
             lineHeight={'40.5px'}
             align='center'
           >
-            First, Lets get connected!
+            {!isConnected ? 'First, Lets get connected!' : 'Now Pick a Model To Get you Started!'}
           </Typography>
         </Box>
-        {!isconnected && (
+        {!isConnected && (
           <Button
             sx={{ borderRadius: '8px', gap: '10px', background: '#FFF' }}
             onClick={handleClick}
@@ -110,7 +136,7 @@ const SignIn = () => {
           </Button>
         )}
 
-        {isconnected && (
+        {isConnected && (
           <>
             <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
               {featuredTxs.map((el) => (

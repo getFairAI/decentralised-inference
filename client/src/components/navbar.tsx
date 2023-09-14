@@ -53,6 +53,8 @@ const CustomDropDownIcon = () => (
 
 const CurrencyMenu = () => {
   const pollingTimeout = 10000;
+  const spaceBetween = 'space-between';
+
   const [selected, setSelected] = useState<'AR' | 'U'>('U');
   const { currentAddress, currentBalance, currentUBalance, updateBalance, updateUBalance } =
     useContext(WalletContext);
@@ -113,7 +115,7 @@ const CurrencyMenu = () => {
         <MenuItem
           value={'AR'}
           onClick={handleArClick}
-          sx={{ display: 'flex', justifyContent: 'space-between' }}
+          sx={{ display: 'flex', justifyContent: spaceBetween }}
         >
           <Typography sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}>
             {currentBalance.toFixed(defaultDecimalPlaces)}
@@ -123,7 +125,7 @@ const CurrencyMenu = () => {
         <MenuItem
           value={'U'}
           onClick={handleUClick}
-          sx={{ display: 'flex', justifyContent: 'space-between' }}
+          sx={{ display: 'flex', justifyContent: spaceBetween }}
         >
           <Typography sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}>
             {currentUBalance.toFixed(defaultDecimalPlaces)}
@@ -244,6 +246,7 @@ const Navbar = ({
     padding: '10px 20px 10px 20px',
     ...(!isScrolled && { boxShadow: 'none' }),
   };
+  const spaceBetween = 'space-between';
 
   return (
     <>
@@ -263,7 +266,7 @@ const Navbar = ({
                   borderRadius: '8px',
                   margin: '0 50px',
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  justifyContent: spaceBetween,
                   padding: '3px 20px 3px 50px',
                   alignItems: 'center',
                   border: 'solid',

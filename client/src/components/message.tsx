@@ -61,14 +61,18 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      setAnchorEl(event.currentTarget);
+    },
+    [setAnchorEl],
+  );
 
-  const handleCopy = async () => {
+  const handleClose = useCallback(() => {
+    setAnchorEl(null);
+  }, [setAnchorEl]);
+
+  const handleCopy = useCallback(async () => {
     setAnchorEl(null);
     try {
       if (typeof message.msg === 'string') {
@@ -86,17 +90,17 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
     } catch (error) {
       enqueueSnackbar('Cannot copy this message', { variant: 'error' });
     }
-  };
+  }, [message, navigator, enqueueSnackbar, setAnchorEl]);
 
-  const handleViewTx = () => {
+  const handleViewTx = useCallback(() => {
     setAnchorEl(null);
     window.open(`https://viewblock.io/arweave/tx/${message.id}`, '_blank');
-  };
+  }, [message, window, setAnchorEl]);
 
-  const handleViewDetails = () => {
+  const handleViewDetails = useCallback(() => {
     setAnchorEl(null);
     setDialogOpen(true);
-  };
+  }, [setAnchorEl, setDialogOpen]);
 
   const [getAvatar, { data: avatarData }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
 
