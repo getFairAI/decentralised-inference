@@ -17,8 +17,8 @@
  */
 
 import {
-  APP_NAME,
-  APP_VERSION,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
   DEFAULT_TAGS,
   DOWN_VOTE,
   TAG_NAMES,
@@ -161,8 +161,8 @@ const vote = async (
 ) => {
   try {
     const tx = await arweave.createTransaction({ data: up ? UP_VOTE : DOWN_VOTE });
-    tx.addTag(TAG_NAMES.appName, APP_NAME);
-    tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+    tx.addTag(TAG_NAMES.protocolName, PROTOCOL_NAME);
+    tx.addTag(TAG_NAMES.protocolVersion, PROTOCOL_VERSION);
     tx.addTag(TAG_NAMES.operationName, up ? UP_VOTE : DOWN_VOTE);
     tx.addTag(TAG_NAMES.voteFor, voteForTag);
     tx.addTag(TAG_NAMES.votedTransaction, txid);
