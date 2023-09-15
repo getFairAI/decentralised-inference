@@ -18,7 +18,7 @@
 
 import {
   AVATAR_ATTACHMENT,
-  DEFAULT_TAGS_RETRO,
+  DEFAULT_TAGS,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
   TAG_NAMES,
@@ -59,7 +59,7 @@ const AiListCard = ({
   useEffect(() => {
     const modelId = findTag(model, 'modelTransaction');
     const attachmentAvatarTags = [
-      ...DEFAULT_TAGS_RETRO,
+      ...DEFAULT_TAGS,
       { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
       { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
       { name: TAG_NAMES.modelTransaction, values: [modelId] },

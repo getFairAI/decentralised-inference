@@ -18,7 +18,7 @@
 
 import AiCard from '@/components/ai-card';
 import Logo from '@/components/logo';
-import { DEFAULT_TAGS_RETRO, MODEL_CREATION_PAYMENT_TAGS } from '@/constants';
+import { DEFAULT_TAGS, MODEL_CREATION_PAYMENT_TAGS } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { WalletContext } from '@/context/wallet';
 import { IEdge, IQueryResult } from '@/interfaces/arweave';
@@ -48,7 +48,7 @@ const SignIn = () => {
 
   const { data, loading, fetchMore } = useQuery(FIND_BY_TAGS, {
     variables: {
-      tags: [...DEFAULT_TAGS_RETRO, ...MODEL_CREATION_PAYMENT_TAGS],
+      tags: [...DEFAULT_TAGS, ...MODEL_CREATION_PAYMENT_TAGS],
       first: elementsPerPage,
     },
   });

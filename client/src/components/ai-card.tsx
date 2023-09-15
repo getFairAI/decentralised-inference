@@ -30,7 +30,7 @@ import {
   MODEL_ATTACHMENT,
   TAG_NAMES,
   NET_ARWEAVE_URL,
-  DEFAULT_TAGS_RETRO,
+  DEFAULT_TAGS,
 } from '@/constants';
 import { ModelNavigationState } from '@/interfaces/router';
 
@@ -63,7 +63,7 @@ const AiCard = ({ model, loading }: { model: IEdge; loading: boolean }) => {
   useEffect(() => {
     const modelId = findTag(model, 'modelTransaction');
     const attachmentAvatarTags = [
-      ...DEFAULT_TAGS_RETRO, // allow avatars from previous versions
+      ...DEFAULT_TAGS, // allow avatars from previous versions
       { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
       { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
       { name: TAG_NAMES.modelTransaction, values: [modelId] },

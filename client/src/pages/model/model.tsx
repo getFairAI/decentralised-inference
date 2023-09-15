@@ -18,7 +18,7 @@
 
 import {
   AVATAR_ATTACHMENT,
-  DEFAULT_TAGS_RETRO,
+  DEFAULT_TAGS,
   MODEL_ATTACHMENT,
   NOTES_ATTACHMENT,
   TAG_NAMES,
@@ -41,7 +41,7 @@ export const getModelAttachments = async ({
 
   // get attachments teransactions
   const attachmentAvatarTags = [
-    ...DEFAULT_TAGS_RETRO,
+    ...DEFAULT_TAGS,
     { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
     { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
     { name: TAG_NAMES.modelTransaction, values: [params.txid] },
@@ -59,7 +59,7 @@ export const getModelAttachments = async ({
     : '';
 
   const attachmentNotestTags = [
-    ...DEFAULT_TAGS_RETRO,
+    ...DEFAULT_TAGS,
     { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
     { name: TAG_NAMES.attachmentRole, values: [NOTES_ATTACHMENT] },
     { name: TAG_NAMES.modelTransaction, values: [params.txid] },

@@ -17,8 +17,8 @@
  */
 
 import {
-  APP_NAME,
-  APP_VERSION,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
   CONVERSATION_START,
   textContentType,
   DEFAULT_TAGS,
@@ -171,8 +171,8 @@ const Conversations = ({
   const createNewConversation = async (id: number) => {
     try {
       const tx = await arweave.createTransaction({ data: 'Conversation Start' });
-      tx.addTag(TAG_NAMES.appName, APP_NAME);
-      tx.addTag(TAG_NAMES.appVersion, APP_VERSION);
+      tx.addTag(TAG_NAMES.protocolName, PROTOCOL_NAME);
+      tx.addTag(TAG_NAMES.protocolVersion, PROTOCOL_VERSION);
       tx.addTag(TAG_NAMES.operationName, CONVERSATION_START);
       tx.addTag(TAG_NAMES.scriptName, state.scriptName);
       tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);

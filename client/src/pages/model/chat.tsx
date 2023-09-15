@@ -44,9 +44,9 @@ import {
   useState,
 } from 'react';
 import {
-  APP_VERSION,
+  PROTOCOL_VERSION,
   TAG_NAMES,
-  APP_NAME,
+  PROTOCOL_NAME,
   INFERENCE_PAYMENT,
   N_PREVIOUS_BLOCKS,
   SCRIPT_INFERENCE_RESPONSE,
@@ -59,7 +59,7 @@ import {
   CURATOR_PERCENTAGE_FEE,
   VAULT_ADDRESS,
   MAX_MESSAGE_SIZE,
-  DEFAULT_TAGS_FOR_TOKENS,
+  DEFAULT_TAGS,
   TX_ORIGIN,
   ATOMIC_ASSET_CONTRACT_SOURCE_ID,
   UDL_ID,
@@ -394,7 +394,7 @@ const Chat = () => {
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       const tagsResponses = [
-        ...DEFAULT_TAGS_FOR_TOKENS,
+        ...DEFAULT_TAGS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
@@ -485,7 +485,7 @@ const Chat = () => {
       stopRequestPolling();
 
       const tagsRequests = [
-        /* ...DEFAULT_TAGS_FOR_TOKENS, */
+        ...DEFAULT_TAGS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
@@ -501,7 +501,7 @@ const Chat = () => {
       });
       stopResponsePolling();
       const tagsResponses = [
-        ...DEFAULT_TAGS_FOR_TOKENS,
+        ...DEFAULT_TAGS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
@@ -539,7 +539,7 @@ const Chat = () => {
       // restart responses polling on new messages
       stopResponsePolling();
       const tagsResponses = [
-        ...DEFAULT_TAGS_FOR_TOKENS,
+        ...DEFAULT_TAGS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
@@ -584,7 +584,7 @@ const Chat = () => {
       // get messages for current conversation
 
       const tagsRequests = [
-        /* ...DEFAULT_TAGS_FOR_TOKENS, */
+        ...DEFAULT_TAGS,
         { name: TAG_NAMES.scriptName, values: [state.scriptName] },
         { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
@@ -723,8 +723,8 @@ const Chat = () => {
 
   const getUploadTags = (contentType: string, fileName?: string) => {
     const tags = [];
-    tags.push({ name: TAG_NAMES.customAppName, value: APP_NAME });
-    tags.push({ name: TAG_NAMES.customAppVersion, value: APP_VERSION });
+    tags.push({ name: TAG_NAMES.protocolName, value: PROTOCOL_NAME });
+    tags.push({ name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION });
     tags.push({ name: TAG_NAMES.scriptName, value: state.scriptName });
     tags.push({ name: TAG_NAMES.scriptCurator, value: state.scriptCurator });
     tags.push({ name: TAG_NAMES.scriptTransaction, value: state.scriptTransaction });
@@ -808,8 +808,8 @@ const Chat = () => {
     const parsedUFee = parseFloat(inferenceFee);
     try {
       const paymentTags = [
-        { name: TAG_NAMES.appName, value: APP_NAME },
-        { name: TAG_NAMES.appVersion, value: APP_VERSION },
+        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
         { name: TAG_NAMES.operationName, value: INFERENCE_PAYMENT },
         { name: TAG_NAMES.scriptName, value: state.scriptName },
         { name: TAG_NAMES.scriptCurator, value: state.scriptCurator },

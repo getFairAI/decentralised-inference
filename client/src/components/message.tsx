@@ -42,7 +42,7 @@ import { toSvg } from 'jdenticon';
 import { useLazyQuery } from '@apollo/client';
 import {
   AVATAR_ATTACHMENT,
-  DEFAULT_TAGS_RETRO,
+  DEFAULT_TAGS,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
   TAG_NAMES,
@@ -131,7 +131,7 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
         firstScriptVersionTx = state?.scriptTransaction;
       }
       const attachmentAvatarTags = [
-        ...DEFAULT_TAGS_RETRO, // filter from previous app versions as well
+        ...DEFAULT_TAGS, // filter from previous app versions as well
         { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
         { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
         { name: TAG_NAMES.scriptTransaction, values: [firstScriptVersionTx, currentScriptTx] },

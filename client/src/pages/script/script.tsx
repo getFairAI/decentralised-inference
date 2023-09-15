@@ -18,7 +18,7 @@
 
 import {
   AVATAR_ATTACHMENT,
-  DEFAULT_TAGS_RETRO,
+  DEFAULT_TAGS,
   MODEL_ATTACHMENT,
   NOTES_ATTACHMENT,
   TAG_NAMES,
@@ -50,7 +50,7 @@ export const getScriptAttachments = async ({
   }
   // get attachments transactions
   const attachmentAvatarTags = [
-    ...DEFAULT_TAGS_RETRO,
+    ...DEFAULT_TAGS,
     { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
     { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
     { name: TAG_NAMES.scriptTransaction, values: [firstScriptVersionTx] },
@@ -70,7 +70,7 @@ export const getScriptAttachments = async ({
       : '';
 
   const attachmentNotestTags = [
-    ...DEFAULT_TAGS_RETRO,
+    ...DEFAULT_TAGS,
     { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
     { name: TAG_NAMES.attachmentRole, values: [NOTES_ATTACHMENT] },
     { name: TAG_NAMES.scriptTransaction, values: [params.txid] },
