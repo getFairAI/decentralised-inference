@@ -99,7 +99,7 @@ const StableDiffusionConfigurations = ({
     const fee = state?.fee ? parseUBalance(state?.fee) : 0;
     setCost(fee * defaultImages);
     setUsdCost(currentArPrice * fee * defaultImages);
-  }, []);
+  }, [currentArPrice, state]);
 
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
@@ -110,7 +110,7 @@ const StableDiffusionConfigurations = ({
         setUsdCost(currentArPrice * fee * (newValue as number));
       }
     },
-    [nImagesRef, state],
+    [nImagesRef, state, currentArPrice, setCost, setUsdCost, parseUBalance],
   );
 
   if (!showOutputConfiguration) {
