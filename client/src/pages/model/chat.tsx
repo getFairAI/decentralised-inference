@@ -855,7 +855,9 @@ const Chat = () => {
       // update balance after payments
       await updateUBalance();
       const nDigits = 4;
-      const usdFee = (await parseCost(parseUBalance(adjustedInferenceFee.toString()))).toFixed(nDigits);
+      const usdFee = (await parseCost(parseUBalance(adjustedInferenceFee.toString()))).toFixed(
+        nDigits,
+      );
       enqueueSnackbar(
         <Typography>{`Paid Inference costs: ${usdFee}$ (${parseUBalance(
           adjustedInferenceFee.toString(),
