@@ -34,7 +34,15 @@ import {
 } from '@/constants';
 import { ModelNavigationState } from '@/interfaces/router';
 
-const AiCard = ({ model, loading, useModel = false }: { model: IEdge; loading: boolean, useModel?: boolean }) => {
+const AiCard = ({
+  model,
+  loading,
+  useModel = false,
+}: {
+  model: IEdge;
+  loading: boolean;
+  useModel?: boolean;
+}) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
@@ -111,7 +119,9 @@ const AiCard = ({ model, loading, useModel = false }: { model: IEdge; loading: b
     const modelId = findTag(model, 'modelTransaction');
     if (!modelId) return;
     localStorage.setItem('hasSignedIn', 'true');
-    const url = useModel ? `/model/${encodeURIComponent(modelId)}/detail?useModel=true` : `/model/${encodeURIComponent(modelId)}/detail`;
+    const url = useModel
+      ? `/model/${encodeURIComponent(modelId)}/detail?useModel=true`
+      : `/model/${encodeURIComponent(modelId)}/detail`;
     navigate(url, {
       state: {
         modelName: findTag(model, 'modelName'),

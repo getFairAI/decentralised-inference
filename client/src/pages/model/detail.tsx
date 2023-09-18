@@ -30,7 +30,13 @@ import {
   Backdrop,
   CircularProgress,
 } from '@mui/material';
-import { useLoaderData, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  useLoaderData,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
@@ -78,7 +84,7 @@ const DetailContent = ({
         setFiltering(true);
       }
     });
-  }, [ searchParams, setShowScripts, setFiltering ]);
+  }, [searchParams, setShowScripts, setFiltering]);
 
   if (showOperators) {
     return (

@@ -847,7 +847,13 @@ export const QUERY_OPERATOR_SENT_HISTORY = gql`
 
 export const QUERY_TX_WITH = gql`
   query QUERY_TX_WITH($address: String!, $tags: [TagFilter!], $blockFilter: BlockFilter) {
-    transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: 1, block: $blockFilter) {
+    transactions(
+      tags: $tags
+      owners: [$address]
+      sort: HEIGHT_DESC
+      first: 1
+      block: $blockFilter
+    ) {
       edges {
         cursor
         node {

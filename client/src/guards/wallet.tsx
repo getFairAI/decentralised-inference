@@ -23,7 +23,10 @@ import { Navigate } from 'react-router-dom';
 const WalletGuard = ({ children }: { children: ReactElement }) => {
   const { currentAddress, currentUBalance } = useContext(WalletContext);
 
-  const canUseInference = useMemo(() => currentAddress && currentUBalance > 0, [ currentAddress, currentUBalance ]);
+  const canUseInference = useMemo(
+    () => currentAddress && currentUBalance > 0,
+    [currentAddress, currentUBalance],
+  );
 
   if (canUseInference) {
     return children;

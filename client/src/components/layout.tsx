@@ -17,19 +17,8 @@
  */
 
 import FilterContext from '@/context/filter';
-import {
-  Box,
-  Container,
-  Typography,
-  useTheme,
-} from '@mui/material';
-import {
-  ReactElement,
-  useContext,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { Box, Container, Typography, useTheme } from '@mui/material';
+import { ReactElement, useContext, useLayoutEffect, useRef, useState } from 'react';
 import Navbar from './navbar';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
@@ -41,9 +30,23 @@ const WarningMessage = () => {
   const theme = useTheme();
 
   if (!currentAddress) {
-    return <Typography padding={'4px 32px'} sx={{background: theme.palette.warning.main ,}}>Wallet Not Connected, some functionalities will not be available. <Link to={'/sign-in'}><u>Start Onboarding</u></Link></Typography>;
+    return (
+      <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
+        Wallet Not Connected, some functionalities will not be available.{' '}
+        <Link to={'/sign-in'}>
+          <u>Start Onboarding</u>
+        </Link>
+      </Typography>
+    );
   } else if (currentUBalance <= 0) {
-    return <Typography padding={'4px 32px'} sx={{background: theme.palette.warning.main ,}}>Insufficient $U balance, some functionalities will not be available. <Link to={'/sign-in'}><u>Click here to Get $U</u></Link></Typography>;
+    return (
+      <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
+        Insufficient $U balance, some functionalities will not be available.{' '}
+        <Link to={'/sign-in'}>
+          <u>Click here to Get $U</u>
+        </Link>
+      </Typography>
+    );
   } else {
     return <></>;
   }
