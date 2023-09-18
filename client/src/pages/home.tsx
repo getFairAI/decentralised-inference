@@ -82,7 +82,10 @@ export default function Home() {
         for (const el of data.transactions.edges) {
           const modelId = findTag(el, 'modelTransaction') as string;
           const modelOwner = findTag(el, 'sequencerOwner') as string;
-          if (!(await isFakeDeleted(modelId, modelOwner, 'model'))) {
+
+          if (!modelOwner || !modelId) {
+            // ignore
+          } else if (!(await isFakeDeleted(modelId, modelOwner, 'model'))) {
             filtered.push(el);
           } else {
             // ignore
