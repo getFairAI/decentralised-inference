@@ -854,7 +854,7 @@ const Chat = () => {
 
       // update balance after payments
       await updateUBalance();
-      enqueueSnackbar(<>Paid Inference costs: {adjustedInferenceFee} $U.</>, {
+      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(adjustedInferenceFee.toString())} $U.</>, {
         variant: 'success',
       });
     } catch (error) {
@@ -876,7 +876,7 @@ const Chat = () => {
       customTagsRef.current = [];
     }
     if (nImagesRef.current) {
-      nImagesRef.current = 0;
+      nImagesRef.current = 4;
     }
   };
 
@@ -899,6 +899,7 @@ const Chat = () => {
       contentType,
       tags,
     });
+    await handlePayment(txid, state.fee, contentType);
     setMessages(temp);
     setNewMessage('');
     if (inputRef?.current) {
@@ -922,8 +923,6 @@ const Chat = () => {
         variant: 'success',
       },
     );
-
-    await handlePayment(txid, state.fee, contentType);
   };
 
   const handleSendFile = async () => {
