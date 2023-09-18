@@ -76,7 +76,7 @@ import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
+import { commonUpdateQuery, findTag, parseCost, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
@@ -854,8 +854,9 @@ const Chat = () => {
 
       // update balance after payments
       await updateUBalance();
+      const usdFee = await parseCost(adjustedInferenceFee);
       enqueueSnackbar(
-        <>Paid Inference costs: {parseUBalance(adjustedInferenceFee.toString())} $U.</>,
+        <Typography>{`Paid Inference costs: ${usdFee}$ (${parseUBalance(adjustedInferenceFee.toString())} $U)`}</Typography>,
         {
           variant: 'success',
         },
