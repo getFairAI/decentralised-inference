@@ -77,6 +77,7 @@ const StableDiffusionConfigurations = ({
   negativePromptRef: RefObject<HTMLTextAreaElement>;
   nImagesRef: MutableRefObject<number>;
 }) => {
+  const nDigits = 4;
   const { state } = useLocation();
 
   const [cost, setCost] = useState(0);
@@ -156,12 +157,14 @@ const StableDiffusionConfigurations = ({
           valueLabelDisplay='auto'
         />
         <Box display={'flex'} gap={'8px'}>
-          <Typography variant='caption'>Estimated Total Cost: {cost.toPrecision(4)}</Typography>
+          <Typography variant='caption'>
+            Estimated Total Cost: {cost.toPrecision(nDigits)}
+          </Typography>
           <img width='17px' height='17px' src={U_LOGO_SRC} />
         </Box>
         <Box display={'flex'}>
           <Typography sx={{ marginBottom: '16px' }} variant='caption'>
-            Estimated Total USD Cost: ${usdCost.toPrecision(4)}
+            Estimated Total USD Cost: ${usdCost.toPrecision(nDigits)}
           </Typography>
         </Box>
       </Box>

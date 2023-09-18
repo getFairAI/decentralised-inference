@@ -31,7 +31,16 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Button, Icon, InputBase, MenuItem, Select, TextField, Tooltip, useTheme } from '@mui/material';
+import {
+  Button,
+  Icon,
+  InputBase,
+  MenuItem,
+  Select,
+  TextField,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
 import { WalletContext } from '@/context/wallet';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
@@ -236,7 +245,7 @@ const Navbar = ({
   const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
   const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
   let keyTimeout: Timeout;
-  const [ usdFee, setUsdFee ] = useState(0);
+  const [usdFee, setUsdFee] = useState(0);
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
@@ -251,6 +260,7 @@ const Navbar = ({
     ...(!isScrolled && { boxShadow: 'none' }),
   };
   const spaceBetween = 'space-between';
+  const nDigits = 4;
 
   useEffect(() => {
     (async () => {
@@ -259,12 +269,12 @@ const Navbar = ({
 
       setUsdFee(uCost * arPrice);
     })();
-  }, [ state, parseUBalance, getArPriceUSD ]);
+  }, [state, parseUBalance, getArPriceUSD]);
 
   return (
     <>
       <AppBar sx={appBarStyle} color='inherit'>
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Toolbar sx={{ justifyContent: spaceBetween }}>
           <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
             <Link to='/'>
               <Logo />
@@ -336,7 +346,7 @@ const Navbar = ({
                 <NumericFormat
                   label='Cost per Prompt'
                   placeholder='Cost per Prompt'
-                  value={usdFee.toFixed(4)}
+                  value={usdFee.toFixed(nDigits)}
                   customInput={TextField}
                   disabled={true}
                   InputProps={{
@@ -345,8 +355,8 @@ const Navbar = ({
                   sx={{
                     width: '120px',
                     '& .MuiInputBase-input': {
-                      padding: '10.5px'
-                    }
+                      padding: '10.5px',
+                    },
                   }}
                 />
                 <Button

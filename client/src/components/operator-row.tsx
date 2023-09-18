@@ -69,6 +69,7 @@ const OperatorRow = ({
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
+  const nDigits = 4;
   const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
 
   const scriptCurator = useMemo(() => findTag(state, 'sequencerOwner') as string, [state]);
@@ -254,7 +255,7 @@ const OperatorRow = ({
           {parseUnixTimestamp(row?.registrationTimestamp as string)}
         </TableCell>
         <TableCell align='right'>
-          {parseUBalance(row?.fee ?? '0')}/{usdFee.toPrecision(4)}
+          {parseUBalance(row?.fee ?? '0')}/{usdFee.toPrecision(nDigits)}
         </TableCell>
         <TableCell align='right'>
           <Tooltip
