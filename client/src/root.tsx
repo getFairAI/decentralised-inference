@@ -19,26 +19,17 @@
 import { ApolloProvider } from '@apollo/client';
 import { CssBaseline } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import Layout from './components/layout';
 import { WalletProvider } from './context/wallet';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
 import { StyledMaterialDesignContent } from './styles/components';
-import { ReactElement, useEffect } from 'react';
+import { ReactElement } from 'react';
 import { ChooseWalletProvider } from './context/choose-wallet';
-import { SwapProvider } from './context/swap';
 import { TradeProvider } from './context/trade';
 
 const BaseRoot = ({ children }: { children: ReactElement }) => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (localStorage.getItem('hasSignedIn') !== 'true') {
-      navigate('/sign-in');
-    }
-  }, [localStorage]);
-
   return (
     <ApolloProvider client={client}>
       <AppThemeProvider>
@@ -53,9 +44,7 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
           <CssBaseline />
           <WalletProvider>
             <ChooseWalletProvider>
-              <SwapProvider>
-                <TradeProvider>{children}</TradeProvider>
-              </SwapProvider>
+              <TradeProvider>{children}</TradeProvider>
             </ChooseWalletProvider>
           </WalletProvider>
         </SnackbarProvider>
@@ -65,14 +54,6 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
 };
 
 export const Root = () => {
-  return (
-    <BaseRoot>
-      <Outlet />
-    </BaseRoot>
-  );
-};
-
-export const LayoutRoot = () => {
   return (
     <BaseRoot>
       <Layout>

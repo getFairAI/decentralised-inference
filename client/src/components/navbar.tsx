@@ -272,7 +272,7 @@ const Navbar = ({
           <Box sx={{ flexGrow: 1 }} display={{ sm: 'none', lg: 'flex' }}>
             {' '}
             {/* hide searchbar on small screens */}
-            {pathname && pathname === '/' && (
+            {pathname && pathname === '/' && (<>
               <Box
                 sx={{
                   borderRadius: '8px',
@@ -306,7 +306,7 @@ const Navbar = ({
                   <img src='./search-icon.svg'></img>
                 </Icon>
               </Box>
-            )}
+            </>)}
           </Box>
           <Box
             className={'navbar-right-content'}

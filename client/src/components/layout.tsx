@@ -18,58 +18,44 @@
 
 import FilterContext from '@/context/filter';
 import {
-  Alert,
   Box,
-  Button,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Typography,
   useTheme,
 } from '@mui/material';
 import {
   ReactElement,
-  useCallback,
   useContext,
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import Navbar from './navbar';
-import { WalletContext } from '@/context/wallet';
-import { ChooseWalletContext } from '@/context/choose-wallet';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
+import { WalletContext } from '@/context/wallet';
+import { Link, useLocation } from 'react-router-dom';
+
+const WarningMessage = () => {
+  const { currentAddress, currentUBalance } = useContext(WalletContext);
+  const theme = useTheme();
+
+  if (!currentAddress) {
+    return <Typography padding={'4px 32px'} sx={{background: theme.palette.warning.main ,}}>Wallet Not Connected, some functionalities will not be available. <Link to={'/sign-in'}><u>Start Onboarding</u></Link></Typography>;
+  } else if (currentUBalance <= 0) {
+    return <Typography padding={'4px 32px'} sx={{background: theme.palette.warning.main ,}}>Insufficient $U balance, some functionalities will not be available. <Link to={'/sign-in'}><u>Click here to Get $U</u></Link></Typography>;
+  } else {
+    return <></>;
+  }
+};
 
 export default function Layout({ children }: { children: ReactElement }) {
   const [filterValue, setFilterValue] = useState('');
   const [headerHeight, setHeaderHeight] = useState('64px');
   const scrollableRef = useRef<HTMLDivElement>(null);
-  const { currentAddress } = useContext(WalletContext);
-  const [ignore, setIgnore] = useState(false);
-  const theme = useTheme();
-  const { open: chooseWalletOpen, setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const { width, height } = useWindowDimensions();
   const { isScrolled } = useScroll(scrollableRef);
-
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (!localStorage.getItem('wallet')) {
-      setChooseWalletOpen(true);
-    }
-    if (localStorage.getItem('ignoreWalletNotConnected')) {
-      setIgnore(true);
-    }
-  }, []);
-
-  useEffect(
-    () => setIsOpen(!chooseWalletOpen && !ignore && !currentAddress),
-    [chooseWalletOpen, ignore, currentAddress],
-  ); // set ignore to false when user changes wallet
+  const { pathname } = useLocation();
 
   useLayoutEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight;
@@ -78,10 +64,9 @@ export default function Layout({ children }: { children: ReactElement }) {
     }
   }, [width, height]);
 
-  const handleIgnore = useCallback(() => {
-    localStorage.setItem('ignoreWalletNotConnected', 'true');
-    setIgnore(true);
-  }, [setIgnore]);
+  if (pathname === '/sign-in' || pathname === '/swap') {
+    return children;
+  }
 
   return (
     <>
@@ -98,93 +83,10 @@ export default function Layout({ children }: { children: ReactElement }) {
       >
         <Box height='100%'>
           <FilterContext.Provider value={filterValue}>
+            <WarningMessage />
             <main style={{ height: '100%' }} ref={scrollableRef}>
               {children}
             </main>
-            <Dialog
-              open={isOpen}
-              maxWidth={'md'}
-              fullWidth
-              sx={{
-                '& .MuiPaper-root': {
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(61, 61, 61, 0.9)'
-                      : theme.palette.background.default,
-                  borderRadius: '30px',
-                },
-              }}
-            >
-              <DialogTitle>
-                <Typography
-                  sx={{
-                    color: theme.palette.warning.light,
-                    fontWeight: 700,
-                    fontSize: '23px',
-                    lineHeight: '31px',
-                  }}
-                >
-                  {'Wallet Not Connected'}
-                </Typography>
-              </DialogTitle>
-              <DialogContent>
-                <Alert
-                  /* onClose={() => setOpen(false)} */
-                  variant='outlined'
-                  severity='warning'
-                  sx={{
-                    marginBottom: '16px',
-                    borderRadius: '23px',
-                    color: theme.palette.warning.light,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    backdropFilter: 'blur(4px)',
-                    '& .MuiAlert-icon': {
-                      justifyContent: 'center',
-                    },
-                    '& .MuiAlert-message': {
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '8px',
-                    },
-                  }}
-                  icon={<img src='./warning-icon.svg'></img>}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: 400,
-                      fontSize: '30px',
-                      lineHeight: '41px',
-                      display: 'block',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {
-                      'Wallet Not Connected! App Functionalities will be limited, please consider connecting your wallet.'
-                    }
-                  </Typography>
-                </Alert>
-              </DialogContent>
-              <DialogActions
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: '30px',
-                  paddingBottom: '20px',
-                }}
-              >
-                <Button
-                  onClick={handleIgnore}
-                  variant='contained'
-                  color='warning'
-                  sx={{ width: 'fit-content' }}
-                >
-                  <Typography color={theme.palette.primary.contrastText}>I Understand</Typography>
-                </Button>
-              </DialogActions>
-            </Dialog>
           </FilterContext.Provider>
         </Box>
       </Container>

@@ -845,55 +845,9 @@ export const QUERY_OPERATOR_SENT_HISTORY = gql`
   }
 `;
 
-export const QUERY_USER_INTERACTIONS = gql`
-  query QUERY_USER_INTERACTIONS(
-    $address: String!
-    $tags: [TagFilter!]
-    $minBlockHeight: Int!
-    $first: Int
-    $after: String
-  ) {
-    transactions(
-      tags: $tags
-      owners: [$address]
-      sort: HEIGHT_DESC
-      block: { min: $minBlockHeight }
-      first: $first
-      after: $after
-    ) {
-      edges {
-        cursor
-        node {
-          id
-          recipient
-          owner {
-            address
-          }
-          fee {
-            ar
-          }
-          quantity {
-            ar
-          }
-          tags {
-            name
-            value
-          }
-          block {
-            timestamp
-          }
-        }
-      }
-      pageInfo {
-        hasNextPage
-      }
-    }
-  }
-`;
-
 export const QUERY_TX_WITH = gql`
-  query QUERY_TX_WITH($address: String!, $tags: [TagFilter!]) {
-    transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: 1) {
+  query QUERY_TX_WITH($address: String!, $tags: [TagFilter!], $blockFilter: BlockFilter) {
+    transactions(tags: $tags, owners: [$address], sort: HEIGHT_DESC, first: 1, block: $blockFilter) {
       edges {
         cursor
         node {
@@ -1139,6 +1093,34 @@ export const QUERY_TX_WITH_OWNERS = gql`
           owner {
             address
             key
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const QUERY_TXS_BY_RECIPIENT = gql`
+  query QUERY_TX_WITH_OWNERS($recipients: [String!], $first: Int) {
+    transactions(recipients: $recipients, sort: HEIGHT_DESC, first: $first) {
+      pageInfo {
+        hasNextPage
+      }
+      edges {
+        cursor
+        node {
+          id
+          owner {
+            address
+            key
+          }
+          fee {
+            ar
+            winston
+          }
+          quantity {
+            ar
+            winston
           }
         }
       }
