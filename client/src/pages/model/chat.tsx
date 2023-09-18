@@ -856,7 +856,9 @@ const Chat = () => {
       await updateUBalance();
       const usdFee = await parseCost(adjustedInferenceFee);
       enqueueSnackbar(
-        <Typography>{`Paid Inference costs: ${usdFee}$ (${parseUBalance(adjustedInferenceFee.toString())} $U)`}</Typography>,
+        <Typography>{`Paid Inference costs: ${usdFee}$ (${parseUBalance(
+          adjustedInferenceFee.toString(),
+        )} $U)`}</Typography>,
         {
           variant: 'success',
         },

@@ -80,8 +80,8 @@ const StableDiffusionConfigurations = ({
   const { state } = useLocation();
 
   const [cost, setCost] = useState(0);
-  const [ usdCost, setUsdCost ] = useState(0);
-  const [ currentArPrice, setCurrentArPrice ] = useState(0);
+  const [usdCost, setUsdCost] = useState(0);
+  const [currentArPrice, setCurrentArPrice] = useState(0);
   const showOutputConfiguration = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
     [state],
@@ -92,7 +92,7 @@ const StableDiffusionConfigurations = ({
       const arPrice = await getArPriceUSD();
       setCurrentArPrice(arPrice);
     })();
-  }, [ getArPriceUSD, setCurrentArPrice ]);
+  }, [getArPriceUSD, setCurrentArPrice]);
 
   useEffect(() => {
     const defaultImages = 4;
@@ -156,11 +156,8 @@ const StableDiffusionConfigurations = ({
           valueLabelDisplay='auto'
         />
         <Box display={'flex'} gap={'8px'}>
-          <Typography variant='caption'>
-            Estimated Total Cost: {cost.toPrecision(4)}
-          </Typography>
+          <Typography variant='caption'>Estimated Total Cost: {cost.toPrecision(4)}</Typography>
           <img width='17px' height='17px' src={U_LOGO_SRC} />
-          
         </Box>
         <Box display={'flex'}>
           <Typography sx={{ marginBottom: '16px' }} variant='caption'>
