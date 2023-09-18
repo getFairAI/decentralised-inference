@@ -201,7 +201,7 @@ export const operatorHeaders = [
   'Address',
   'Name',
   'Registration',
-  'Fee ($U)',
+  'Fee ($U/$USD)',
   'Status',
   'Stamps',
   'Selected',

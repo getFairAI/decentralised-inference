@@ -78,12 +78,14 @@ const DetailContent = ({
   }, [setShowScripts]);
 
   useEffect(() => {
-    searchParams.forEach((value, key) => {
-      if (key === 'useModel' && value === 'true') {
-        setShowScripts(true);
-        setFiltering(true);
-      }
-    });
+    if (searchParams) {
+      searchParams.forEach((value, key) => {
+        if (key === 'useModel' && value === 'true') {
+          setShowScripts(true);
+          setFiltering(true);
+        }
+      });
+    }
   }, [searchParams, setShowScripts, setFiltering]);
 
   if (showOperators) {

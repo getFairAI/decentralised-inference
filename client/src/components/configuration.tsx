@@ -17,7 +17,7 @@
  */
 
 import { U_LOGO_SRC } from '@/constants';
-import { displayShortTxOrAddr, findTag } from '@/utils/common';
+import { displayShortTxOrAddr, findTag, getArPriceUSD } from '@/utils/common';
 import {
   Box,
   Checkbox,
@@ -77,19 +77,30 @@ const StableDiffusionConfigurations = ({
   negativePromptRef: RefObject<HTMLTextAreaElement>;
   nImagesRef: MutableRefObject<number>;
 }) => {
+  const nDigits = 4;
   const { state } = useLocation();
 
   const [cost, setCost] = useState(0);
+  const [usdCost, setUsdCost] = useState(0);
+  const [currentArPrice, setCurrentArPrice] = useState(0);
   const showOutputConfiguration = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
     [state],
   );
 
   useEffect(() => {
+    (async () => {
+      const arPrice = await getArPriceUSD();
+      setCurrentArPrice(arPrice);
+    })();
+  }, [getArPriceUSD, setCurrentArPrice]);
+
+  useEffect(() => {
     const defaultImages = 4;
     const fee = state?.fee ? parseUBalance(state?.fee) : 0;
     setCost(fee * defaultImages);
-  }, []);
+    setUsdCost(currentArPrice * fee * defaultImages);
+  }, [currentArPrice, state]);
 
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
@@ -97,9 +108,10 @@ const StableDiffusionConfigurations = ({
         nImagesRef.current = newValue as number;
         const fee = state?.fee ? parseUBalance(state?.fee) : 0;
         setCost(fee * (newValue as number));
+        setUsdCost(currentArPrice * fee * (newValue as number));
       }
     },
-    [nImagesRef, state],
+    [nImagesRef, state, currentArPrice, setCost, setUsdCost, parseUBalance],
   );
 
   if (!showOutputConfiguration) {
@@ -145,10 +157,15 @@ const StableDiffusionConfigurations = ({
           valueLabelDisplay='auto'
         />
         <Box display={'flex'} gap={'8px'}>
-          <Typography sx={{ marginBottom: '16px' }} variant='caption'>
-            Total Cost: {cost.toPrecision(1)}
+          <Typography variant='caption'>
+            Estimated Total Cost: {cost.toPrecision(nDigits)}
           </Typography>
           <img width='17px' height='17px' src={U_LOGO_SRC} />
+        </Box>
+        <Box display={'flex'}>
+          <Typography sx={{ marginBottom: '16px' }} variant='caption'>
+            Estimated Total USD Cost: ${usdCost.toPrecision(nDigits)}
+          </Typography>
         </Box>
       </Box>
     </>

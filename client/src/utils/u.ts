@@ -46,13 +46,9 @@ export const connectToU = () => {
 };
 
 export const getUBalance = async (address: string) => {
-  try {
-    const { cachedValue } = await contract.readState();
+  const { cachedValue } = await contract.readState();
 
-    return (cachedValue as UState).state.balances[address];
-  } catch (error) {
-    return '0';
-  }
+  return (cachedValue as UState).state.balances[address];
 };
 
 export const parseUBalance = (balance: string) => {

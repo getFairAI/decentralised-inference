@@ -34,6 +34,7 @@ import {
   commonUpdateQuery,
   displayShortTxOrAddr,
   findTag,
+  parseCost,
   parseUnixTimestamp,
 } from '@/utils/common';
 import { parseUBalance } from '@/utils/u';
@@ -68,11 +69,13 @@ const OperatorRow = ({
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
+  const nDigits = 4;
   const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
 
   const scriptCurator = useMemo(() => findTag(state, 'sequencerOwner') as string, [state]);
   const scriptName = useMemo(() => findTag(state, 'scriptName') as string, [state]);
   const scriptTransaction = useMemo(() => findTag(state, 'scriptTransaction') as string, [state]);
+  const [usdFee, setUsdFee] = useState(0);
 
   const input = useMemo(() => {
     const qty = parseFloat(findTag(operatorTx, 'operatorFee') as string);
@@ -221,6 +224,14 @@ const OperatorRow = ({
     }
   }, [opResponses.data]);
 
+  useEffect(() => {
+    (async () => {
+      const uBalance = parseUBalance(row?.fee ?? '0');
+      const price = await parseCost(uBalance);
+      setUsdFee(price);
+    })();
+  }, [row?.fee]);
+
   return (
     <>
       <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
@@ -243,7 +254,9 @@ const OperatorRow = ({
         <TableCell align='right'>
           {parseUnixTimestamp(row?.registrationTimestamp as string)}
         </TableCell>
-        <TableCell align='right'>{parseUBalance(row?.fee ?? '0')}</TableCell>
+        <TableCell align='right'>
+          {parseUBalance(row?.fee ?? '0')}/{usdFee.toPrecision(nDigits)}
+        </TableCell>
         <TableCell align='right'>
           <Tooltip
             title={

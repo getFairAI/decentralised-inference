@@ -91,11 +91,11 @@ const WalletnotConnectedContent = () => {
         </Typography>
       </Button>
       <Box display={'flex'} gap={'8px'}>
-        <Typography display={'flex'} gap={'8px'} alignItems={'center'} fontWeight={'500'}>
+        <Typography display={'flex'} gap={'8px'} alignItems={'center'} fontWeight={'500'} noWrap>
           <InfoOutlined /* sx={{ fontSize: '12px' }}  */ />
           Don&apos;t have a wallet yet?
         </Typography>
-        <Typography display={'flex'} gap={'8px'} alignItems={'center'}>
+        <Typography display={'flex'} gap={'8px'} alignItems={'center'} noWrap>
           <a
             href='https://docs.arweave.org/info/wallets/generating-cold-wallet'
             target='_blank'
@@ -246,14 +246,12 @@ const WalletNoFundsContent = () => {
 
   const isPending = useMemo(() => !!lastMintTx && lastMintTx?.status !== 'confirmed', [lastMintTx]);
 
-  useEffect(() => console.log(currentUBalance), [currentUBalance]);
-
   return (
     <>
       <Stepper
         activeStep={activeStep}
         orientation='vertical'
-        sx={{ width: '40%', ml: '50%', /*  */ mr: '50%' }}
+        sx={{ width: '60%', ml: '50%', /*  */ mr: '50%' }}
       >
         <Step sx={{ width: '100%' }}>
           <StepLabel>
@@ -286,11 +284,12 @@ const WalletNoFundsContent = () => {
                       alignItems={'center'}
                       fontWeight={'500'}
                       color={'primary'}
+                      noWrap
                     >
                       <InfoOutlined />
                       Looking for a way to buy AR?
                     </Typography>
-                    <Typography alignItems={'center'} color='primary'>
+                    <Typography alignItems={'center'} color='primary' noWrap>
                       <a
                         href='https://www.coinbase.com/how-to-buy/arweave'
                         target='_blank'
