@@ -28,7 +28,6 @@ import GetIcon from './get-icon';
 import Box from '@mui/material/Box';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { useState, useContext, MouseEvent, useCallback, Dispatch } from 'react';
-import { SwapContext } from '@/context/swap';
 import { useNavigate } from 'react-router-dom';
 
 const changeWallet = 'Change Wallet';
@@ -58,7 +57,6 @@ const Option = ({
 }) => {
   const { disconnectWallet } = useContext(WalletContext);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
-  const { setOpen: setSwapOpen } = useContext(SwapContext);
   const navigate = useNavigate();
 
   const handleOptionClick = useCallback(() => {
@@ -92,7 +90,7 @@ const Option = ({
           return;
         case uSwap:
           setAnchorEl(null);
-          setSwapOpen(true);
+          navigate('/swap');
           return;
         default:
           setAnchorEl(null);

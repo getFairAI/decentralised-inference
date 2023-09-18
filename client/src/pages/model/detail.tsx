@@ -30,8 +30,14 @@ import {
   Backdrop,
   CircularProgress,
 } from '@mui/material';
-import { useLoaderData, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
+import {
+  useLoaderData,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
 import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
@@ -55,6 +61,7 @@ const DetailContent = ({
   setFiltering: Dispatch<SetStateAction<boolean>>;
 }) => {
   const { state }: { state: ModelNavigationState } = useLocation();
+  const [searchParams] = useSearchParams();
   const [scriptTx, setScriptTx] = useState<IEdge | IContractEdge | undefined>(undefined);
 
   const handleScriptChosen = useCallback(
@@ -69,6 +76,15 @@ const DetailContent = ({
     setShowScripts(true);
     setFiltering(true);
   }, [setShowScripts]);
+
+  useEffect(() => {
+    searchParams.forEach((value, key) => {
+      if (key === 'useModel' && value === 'true') {
+        setShowScripts(true);
+        setFiltering(true);
+      }
+    });
+  }, [searchParams, setShowScripts, setFiltering]);
 
   if (showOperators) {
     return (

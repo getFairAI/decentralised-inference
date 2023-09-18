@@ -16,28 +16,25 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import SwapU from '@/components/swap-u';
-import { Dispatch, ReactNode, SetStateAction, createContext, useMemo, useState } from 'react';
+import { WalletContext } from '@/context/wallet';
+import { ReactElement, useContext, useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 
-export interface SwapContext {
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-}
+const WalletGuard = ({ children }: { children: ReactElement }) => {
+  const { currentAddress, currentUBalance } = useContext(WalletContext);
 
-export const SwapContext = createContext<SwapContext>({
-  open: false,
-  setOpen: () => undefined,
-});
-
-export const SwapProvider = ({ children }: { children: ReactNode }) => {
-  const [open, setOpen] = useState(false);
-
-  const value = useMemo(() => ({ open, setOpen }), [open, setOpen]);
-
-  return (
-    <SwapContext.Provider value={value}>
-      {children}
-      <SwapU open={open} setOpen={setOpen} />
-    </SwapContext.Provider>
+  const canUseInference = useMemo(
+    () => currentAddress && currentUBalance > 0,
+    [currentAddress, currentUBalance],
   );
+
+  if (canUseInference) {
+    return children;
+  } else if (currentAddress) {
+    return <Navigate to={'/swap'} />;
+  } else {
+    return <Navigate to={'/sign-in'} />;
+  }
 };
+
+export default WalletGuard;

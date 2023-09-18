@@ -273,39 +273,41 @@ const Navbar = ({
             {' '}
             {/* hide searchbar on small screens */}
             {pathname && pathname === '/' && (
-              <Box
-                sx={{
-                  borderRadius: '8px',
-                  margin: '0 50px',
-                  display: 'flex',
-                  justifyContent: spaceBetween,
-                  padding: '3px 20px 3px 50px',
-                  alignItems: 'center',
-                  border: 'solid',
-                  borderColor: theme.palette.terciary.main,
-                  borderWidth: '0.5px',
-                  width: '100%',
-                }}
-              >
-                <InputBase
+              <>
+                <Box
                   sx={{
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '18px',
-                    lineHeight: '16px',
+                    borderRadius: '8px',
+                    margin: '0 50px',
+                    display: 'flex',
+                    justifyContent: spaceBetween,
+                    padding: '3px 20px 3px 50px',
+                    alignItems: 'center',
+                    border: 'solid',
+                    borderColor: theme.palette.terciary.main,
+                    borderWidth: '0.5px',
                     width: '100%',
                   }}
-                  onChange={handleChange}
-                  placeholder='Search...'
-                />
-                <Icon
-                  sx={{
-                    height: '30px',
-                  }}
                 >
-                  <img src='./search-icon.svg'></img>
-                </Icon>
-              </Box>
+                  <InputBase
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 400,
+                      fontSize: '18px',
+                      lineHeight: '16px',
+                      width: '100%',
+                    }}
+                    onChange={handleChange}
+                    placeholder='Search...'
+                  />
+                  <Icon
+                    sx={{
+                      height: '30px',
+                    }}
+                  >
+                    <img src='./search-icon.svg'></img>
+                  </Icon>
+                </Box>
+              </>
             )}
           </Box>
           <Box

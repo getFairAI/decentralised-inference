@@ -102,7 +102,7 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
     dispatch({ type: 'wallet_connected', wallet: window.arweaveWallet });
     localStorage.setItem('wallet', arConnect);
     const addr = await window.arweaveWallet.getActiveAddress();
-    dispatch({ type: 'wallet_address_updated', address: addr });
+
     const winstonBalance = await arweave.wallets.getBalance(addr);
     dispatch({
       type: 'wallet_balance_updated',
@@ -113,6 +113,10 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
     // connect wallet to contract
     connectToU();
     connectToUCM();
+    await asyncUpdateUBalance(dispatch, addr, 0);
+
+    // only load wallet adderss after fetching first balances
+    dispatch({ type: 'wallet_address_updated', address: addr });
   } catch (error) {
     // manually remove arconnect overlay
     const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll(
@@ -130,7 +134,6 @@ const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
     walletInstance.walletName = arweaveApp;
     dispatch({ type: 'wallet_connected', wallet: walletInstance });
     const addr = (await walletInstance.getActiveAddress()) as string;
-    dispatch({ type: 'wallet_address_updated', address: addr });
     const winstonBalance = await arweave.wallets.getBalance(addr);
     dispatch({
       type: 'wallet_balance_updated',
@@ -141,6 +144,10 @@ const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
     // connect wallet to contract
     connectToU();
     connectToUCM();
+    await asyncUpdateUBalance(dispatch, addr, 0);
+
+    // only load wallet adderss after fetching first balances
+    dispatch({ type: 'wallet_address_updated', address: addr });
   } catch (error) {
     dispatch({ type: 'wallet_disconnect' });
     localStorage.removeItem('wallet');
