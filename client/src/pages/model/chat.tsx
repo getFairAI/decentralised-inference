@@ -854,9 +854,12 @@ const Chat = () => {
 
       // update balance after payments
       await updateUBalance();
-      enqueueSnackbar(<>Paid Inference costs: {parseUBalance(adjustedInferenceFee.toString())} $U.</>, {
-        variant: 'success',
-      });
+      enqueueSnackbar(
+        <>Paid Inference costs: {parseUBalance(adjustedInferenceFee.toString())} $U.</>,
+        {
+          variant: 'success',
+        },
+      );
     } catch (error) {
       enqueueSnackbar('An Error Occurred', { variant: 'error' });
     }
