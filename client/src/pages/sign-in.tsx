@@ -578,7 +578,7 @@ const SignIn = () => {
 
       {isConnected && (currentUBalance <= 0 || isSwap) && <WalletNoFundsContent />}
 
-      {!isSwap && currentUBalance > 0 && <SinginWithFunds />}
+      {!isSwap && isConnected && currentUBalance > 0 && <SinginWithFunds />}
 
       <IconButton
         sx={{
