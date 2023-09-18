@@ -194,7 +194,7 @@ const AiListCard = ({
               background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)
               , url(${loading || avatarLoading ? '' : imgUrl})`,
               backgroundPosition: 'center',
-              backgroundSize: 'contain',
+              backgroundSize: 'cover',
             }}
           />
         )}

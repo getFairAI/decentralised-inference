@@ -28,6 +28,7 @@ import {
 import { IContractEdge, IEdge, ITransactions } from '@/interfaces/arweave';
 import { QUERY_TX_WITH_OWNERS } from '@/queries/graphql';
 import { client } from './apollo';
+import redstone from 'redstone-api';
 
 export const formatNumbers = (value: string) => {
   try {
@@ -165,4 +166,14 @@ export const isFakeDeleted = async (txid: string, owner: string, type: 'script' 
   });
 
   return data.transactions.edges.length > 0;
+};
+
+export const getArPriceUSD = async () => {
+  const price = await redstone.getPrice('AR');
+  return price.value;
+};
+
+export const parseCost = async (cost: number) => {
+  const arPrice = await getArPriceUSD();
+  return cost * arPrice;
 };

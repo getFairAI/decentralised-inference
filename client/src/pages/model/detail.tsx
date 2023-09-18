@@ -102,23 +102,16 @@ const DetailContent = ({
       >
         <Box
           sx={{
-            background: 'linear-gradient(180deg, #474747 0%, rgba(71, 71, 71, 0) 100%)',
             borderRadius: '23px',
-            backgroundPosition: 'center',
-            width: 'fit-content',
-            '&::after': {
-              height: '100%',
-              width: '100%',
-              content: '""',
-              display: 'block',
-              position: 'relative',
-              bottom: '281px',
-              borderRadius: '23px',
-            },
+            width: '317px',
+            height: '352px',
+            background: `url(${imgUrl ? imgUrl : ''})`,
+            // backgroundPosition: 'center',s
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover' /* <------ */,
+            backgroundPosition: 'center center',
           }}
-        >
-          <img src={imgUrl} width='275px' height={'275px'} style={{ borderRadius: '23px' }} />
-        </Box>
+        />
         <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'30%'}>
           <Box>
             <Typography
