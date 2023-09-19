@@ -23,6 +23,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import GavelIcon from '@mui/icons-material/Gavel';
 
 type Props = {
   input: string;
@@ -60,6 +61,8 @@ const GetIcon = ({ input }: Props): JSX.Element => {
       );
     case 'Operator Registrations':
       return <AssignmentIcon></AssignmentIcon>;
+    case 'Terms And Conditions':
+      return <GavelIcon></GavelIcon>;
     case 'Change Wallet':
       return <SyncAltIcon></SyncAltIcon>;
     case 'View Payments':
