@@ -33,6 +33,7 @@ import { useNavigate } from 'react-router-dom';
 const changeWallet = 'Change Wallet';
 const uSwap = 'U Swap';
 const viewPayments = 'View Payments';
+const viewTerms = 'Terms And Conditions';
 const options = [
   'Studio',
   uSwap,
@@ -41,6 +42,7 @@ const options = [
   'Github',
   'Discord',
   'Twitter',
+  viewTerms,
   changeWallet,
   'Disconnect',
 ];
@@ -91,6 +93,10 @@ const Option = ({
         case uSwap:
           setAnchorEl(null);
           navigate('/swap');
+          return;
+        case viewTerms:
+          setAnchorEl(null);
+          navigate('/terms');
           return;
         default:
           setAnchorEl(null);
