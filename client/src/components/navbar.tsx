@@ -344,8 +344,8 @@ const Navbar = ({
             {pathname.includes('chat') ? (
               <>
                 <NumericFormat
-                  label='Cost per Prompt'
-                  placeholder='Cost per Prompt'
+                  label='Cost per Asset'
+                  placeholder='Cost per Asset'
                   value={usdFee.toFixed(nDigits)}
                   customInput={TextField}
                   disabled={true}

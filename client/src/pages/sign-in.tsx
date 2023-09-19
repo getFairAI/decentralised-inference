@@ -115,11 +115,15 @@ const WalletNoFundsContent = () => {
   const [lastTx, setLastTx] = useState<EdgeWithStatus | null>(null);
   const [lastMintTx, setLastMintTx] = useState<EdgeWithStatus | null>(null);
   const [activeStep, setActiveStep] = useState(0);
-  const [amount, setAmount] = useState(0);
+  const [percentageAmount, setPercentageAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const [currentHeight, setCurrentHeight] = useState(0);
   const navigate = useNavigate();
+
+  const minPercentage = 0;
+  const stepPercentage = 1;
+  const maxPercentage = 100;
 
   useEffect(() => {
     (async () => {
@@ -139,8 +143,8 @@ const WalletNoFundsContent = () => {
   const handleSkip = useCallback(() => navigate('/'), [navigate]);
 
   const handleSliderChange = useCallback(
-    (_event: Event, newValue: number | number[]) => setAmount(newValue as number),
-    [setAmount],
+    (_event: Event, newValue: number | number[]) => setPercentageAmount(newValue as number),
+    [percentageAmount],
   );
 
   const { data: receivedData } = useQuery(QUERY_TXS_BY_RECIPIENT, {
@@ -208,6 +212,7 @@ const WalletNoFundsContent = () => {
   }, [mintData]);
 
   const handleSwap = useCallback(async () => {
+    const amount = currentBalance * (percentageAmount / maxPercentage);
     const winstonAmount = arweave.ar.arToWinston(amount.toString());
     try {
       const res = await swapArToU(winstonAmount);
@@ -236,13 +241,13 @@ const WalletNoFundsContent = () => {
         },
         status: 'pending',
       });
-      setAmount(0);
+      setPercentageAmount(0);
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     } catch (error) {
       setLoading(false);
       enqueueSnackbar(`Error: ${error}`, { variant: 'error' });
     }
-  }, [amount, enqueueSnackbar, refetch, setLoading]);
+  }, [percentageAmount, currentBalance, enqueueSnackbar, refetch, setLoading]);
 
   const isPending = useMemo(() => !!lastMintTx && lastMintTx?.status !== 'confirmed', [lastMintTx]);
 
@@ -371,16 +376,16 @@ const WalletNoFundsContent = () => {
                 )}
               </Box>
               <Box>
-                <Typography>Amount of AR to Swap to $U</Typography>
+                <Typography>Percentage of AR Balance to Swap to $U</Typography>
                 <Slider
                   sx={{
                     width: '100%',
                   }}
-                  value={amount}
+                  value={percentageAmount}
                   onChange={handleSliderChange}
-                  max={currentBalance}
-                  min={0}
-                  step={(Math.floor(currentBalance) + 1) / 100}
+                  max={maxPercentage}
+                  min={minPercentage}
+                  step={stepPercentage}
                   marks={true}
                   valueLabelDisplay='auto'
                 />
@@ -444,8 +449,8 @@ const WalletNoFundsContent = () => {
           >
             <Typography fontWeight={'500'}>All Done!</Typography>
             <Typography>
-              Your Transaction is being processed by the network. This proccess can take up to 15
-              min and your funds will not be available until then.
+              Your Transaction is being processed by the network. This proccess is expected to take
+              about 15 min and your $U funds will not be available until then.
             </Typography>
             <Typography>
               You can track the process{' '}
@@ -578,7 +583,7 @@ const SignIn = () => {
 
       {isConnected && (currentUBalance <= 0 || isSwap) && <WalletNoFundsContent />}
 
-      {!isSwap && currentUBalance > 0 && <SinginWithFunds />}
+      {!isSwap && isConnected && currentUBalance > 0 && <SinginWithFunds />}
 
       <IconButton
         sx={{
