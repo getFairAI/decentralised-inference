@@ -103,8 +103,8 @@ const router = createHashRouter([
       },
       {
         path: 'terms',
-        element: <Terms />
-      }
+        element: <Terms />,
+      },
     ],
   },
 ]);
