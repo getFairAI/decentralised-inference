@@ -18,6 +18,8 @@
 
 import Logo from '@/components/logo';
 import {
+  BUY_AR_LINK,
+  CREATE_WALLET_LINK,
   DEFAULT_TAGS,
   MODEL_CREATION_PAYMENT_TAGS,
   TAG_NAMES,
@@ -96,11 +98,7 @@ const WalletnotConnectedContent = () => {
           Don&apos;t have a wallet yet?
         </Typography>
         <Typography display={'flex'} gap={'8px'} alignItems={'center'} noWrap>
-          <a
-            href='https://docs.arweave.org/info/wallets/generating-cold-wallet'
-            target='_blank'
-            rel='noreferrer'
-          >
+          <a href={CREATE_WALLET_LINK} target='_blank' rel='noreferrer'>
             <u>Learn how to create one.</u>
           </a>
         </Typography>
@@ -295,11 +293,7 @@ const WalletNoFundsContent = () => {
                       Looking for a way to buy AR?
                     </Typography>
                     <Typography alignItems={'center'} color='primary' noWrap>
-                      <a
-                        href='https://www.coinbase.com/how-to-buy/arweave'
-                        target='_blank'
-                        rel='noreferrer'
-                      >
+                      <a href={BUY_AR_LINK} target='_blank' rel='noreferrer'>
                         <u>Find out How.</u>
                       </a>
                     </Typography>
