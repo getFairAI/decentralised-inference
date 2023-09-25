@@ -700,7 +700,12 @@ const Chat = () => {
     // find latest request
     const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
     if (lastRequest) {
-      const responses = filteredNewMsgs.filter((el) => el.type === 'response' && el.tags.find(tag => tag.name === TAG_NAMES.requestTransaction)?.value === lastRequest.id);
+      const responses = filteredNewMsgs.filter(
+        (el) =>
+          el.type === 'response' &&
+          el.tags.find((tag) => tag.name === TAG_NAMES.requestTransaction)?.value ===
+            lastRequest.id,
+      );
       const nImages = lastRequest.tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value;
       if (nImages && isStableDiffusion) {
         setIsWaitingResponse(responses.length < parseInt(nImages, 10));
@@ -1072,7 +1077,12 @@ const Chat = () => {
     // find latest request
     const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
     if (lastRequest) {
-      const responses = filteredNewMsgs.filter((el) => el.type === 'response' && el.tags.find(tag => tag.name === TAG_NAMES.requestTransaction)?.value === lastRequest.id);
+      const responses = filteredNewMsgs.filter(
+        (el) =>
+          el.type === 'response' &&
+          el.tags.find((tag) => tag.name === TAG_NAMES.requestTransaction)?.value ===
+            lastRequest.id,
+      );
       const nImages = lastRequest.tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value;
       if (nImages && isStableDiffusion) {
         setIsWaitingResponse(responses.length < parseInt(nImages, 10));
