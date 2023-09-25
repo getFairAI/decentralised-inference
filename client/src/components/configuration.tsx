@@ -87,6 +87,7 @@ const StableDiffusionConfigurations = ({
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
     [state],
   );
+  const sliderValue = useMemo(() => nImagesRef.current, [nImagesRef.current]);
 
   useEffect(() => {
     (async () => {
@@ -147,6 +148,7 @@ const StableDiffusionConfigurations = ({
           Number of Images To Generate
         </Typography>
         <Slider
+          value={sliderValue}
           onChange={handleSliderChange}
           defaultValue={4}
           disabled={false}
