@@ -34,6 +34,7 @@ import {
 import {
   Button,
   Icon,
+  IconButton,
   InputBase,
   MenuItem,
   Select,
@@ -50,6 +51,8 @@ import Logo from './logo';
 import { NumericFormat } from 'react-number-format';
 import { parseUBalance } from '@/utils/u';
 import { getArPriceUSD } from '@/utils/common';
+import CopyIcon from '@mui/icons-material/ContentCopy';
+import { useSnackbar } from 'notistack';
 
 const CustomDropDownIcon = () => (
   <Icon
@@ -156,6 +159,16 @@ const WalletState = () => {
   const { setOpen: connectWallet } = useContext(ChooseWalletContext);
 
   const handleConnect = useCallback(() => connectWallet(true), [connectWallet]);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const handleCopyClick = useCallback(async () => {
+    if (currentAddress) {
+      await navigator.clipboard.writeText(currentAddress);
+      enqueueSnackbar('Address Copied to clipboard', { variant: 'info' });
+    } else {
+      // do nothing
+    }
+  }, [currentAddress, navigator]);
 
   if (!currentAddress || currentAddress === '') {
     return (
@@ -225,6 +238,13 @@ const WalletState = () => {
               <img src='./vouch.svg' width={'15px'} height={'15px'} />
             </Tooltip>
           )}
+          <Tooltip title='Copy Address'>
+            <Typography sx={{ lineHeight: '20.25px', fontSize: '15px' }}>
+              <IconButton onClick={handleCopyClick} sx={{ padding: 0 }} size='small'>
+                <CopyIcon fontSize='inherit' />
+              </IconButton>
+            </Typography>
+          </Tooltip>
         </Box>
         <ProfileMenu />
       </Box>
