@@ -101,6 +101,7 @@ const warp = WarpFactory.forMainnet().use(new DeployPlugin());
 const InputField = ({
   file,
   loading,
+  disabled,
   currentConversationId,
   newMessage,
   inputRef,
@@ -114,6 +115,7 @@ const InputField = ({
 }: {
   file?: File;
   loading: boolean;
+  disabled: boolean;
   currentConversationId: number;
   newMessage: string;
   inputRef: RefObject<HTMLTextAreaElement>;
@@ -143,12 +145,14 @@ const InputField = ({
   const [isSending, setIsSending] = useState(false);
 
   const sendDisabled = useMemo(() => {
-    if (!currentConversationId || loading) {
+    if (isSending) {
+      return true;
+    } else if (!currentConversationId || loading) {
       return true;
     } else {
       return (newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE) && !file;
     }
-  }, [newMessage, file, currentConversationId, loading]);
+  }, [newMessage, file, currentConversationId, loading, isSending]);
 
   const handleSendClick = useCallback(async () => {
     if (isSending) {
@@ -191,6 +195,7 @@ const InputField = ({
         {file && (
           <TextField
             value={file?.name}
+            disabled={disabled}
             InputProps={{
               startAdornment: (
                 <InputAdornment position='start'>
@@ -271,7 +276,7 @@ const InputField = ({
           onChange={handleMessageChange}
           onKeyDown={keyDownHandler}
           fullWidth
-          disabled={!allowText}
+          disabled={isSending || disabled || !allowText}
           placeholder='Start Chatting...'
         />
       </>
@@ -692,9 +697,22 @@ const Chat = () => {
     if (!_.isEqual(messages, uniqueMsgs)) {
       setMessages(uniqueMsgs);
     }
-    if (filteredNewMsgs[filteredNewMsgs.length - 1]?.type === 'response') {
-      setIsWaitingResponse(false);
-      setResponseTimeout(false);
+    // find latest request
+    const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
+    if (lastRequest) {
+      const responses = filteredNewMsgs.filter((el) => el.type === 'response' && el.tags.find(tag => tag.name === TAG_NAMES.requestTransaction)?.value === lastRequest.id);
+      const nImages = lastRequest.tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value;
+      if (nImages && isStableDiffusion) {
+        setIsWaitingResponse(responses.length < parseInt(nImages, 10));
+        setResponseTimeout(false);
+      } else if (isStableDiffusion) {
+        const defaultNImages = 4;
+        setIsWaitingResponse(responses.length < defaultNImages);
+        setResponseTimeout(false);
+      } else {
+        setIsWaitingResponse(responses.length < 1);
+        setResponseTimeout(false);
+      }
     }
   };
 
@@ -1051,9 +1069,22 @@ const Chat = () => {
       setMessages(uniqueMsgs);
     }
 
-    if (filteredNewMsgs[filteredNewMsgs.length - 1]?.type === 'response') {
-      setIsWaitingResponse(false);
-      setResponseTimeout(false);
+    // find latest request
+    const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
+    if (lastRequest) {
+      const responses = filteredNewMsgs.filter((el) => el.type === 'response' && el.tags.find(tag => tag.name === TAG_NAMES.requestTransaction)?.value === lastRequest.id);
+      const nImages = lastRequest.tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value;
+      if (nImages && isStableDiffusion) {
+        setIsWaitingResponse(responses.length < parseInt(nImages, 10));
+        setResponseTimeout(false);
+      } else if (isStableDiffusion) {
+        const defaultNImages = 4;
+        setIsWaitingResponse(responses.length < defaultNImages);
+        setResponseTimeout(false);
+      } else {
+        setIsWaitingResponse(responses.length < 1);
+        setResponseTimeout(false);
+      }
     }
     setMessagesLoading(false);
   };
@@ -1332,6 +1363,7 @@ const Chat = () => {
               <InputField
                 file={file}
                 loading={loading}
+                disabled={isWaitingResponse}
                 currentConversationId={currentConversationId}
                 newMessage={newMessage}
                 inputRef={inputRef}
