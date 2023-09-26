@@ -276,7 +276,7 @@ const InputField = ({
           onChange={handleMessageChange}
           onKeyDown={keyDownHandler}
           fullWidth
-          /* disabled={isSending || disabled || !allowText} */
+          disabled={isSending || disabled || !allowText}
           placeholder='Start Chatting...'
         />
       </>
@@ -818,7 +818,10 @@ const Chat = () => {
     }
 
     if (configuration.customTags && configuration.customTags?.length > 0) {
-      tags.push({ name: TAG_NAMES.userCustomTags, value: JSON.stringify(configuration.customTags) });
+      tags.push({
+        name: TAG_NAMES.userCustomTags,
+        value: JSON.stringify(configuration.customTags),
+      });
     }
 
     if (configuration.nImages && configuration.nImages > 0) {
@@ -826,7 +829,12 @@ const Chat = () => {
     }
   };
 
-  const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string, configuration: IConfiguration) => {
+  const handlePayment = async (
+    bundlrId: string,
+    inferenceFee: string,
+    contentType: string,
+    configuration: IConfiguration,
+  ) => {
     const parsedUFee = parseFloat(inferenceFee);
     try {
       const paymentTags = [
@@ -930,7 +938,12 @@ const Chat = () => {
     };
   };
 
-  const updateMessages = async (txid: string, content: string | File, contentType: string, tags: ITag[]) => {
+  const updateMessages = async (
+    txid: string,
+    content: string | File,
+    contentType: string,
+    tags: ITag[],
+  ) => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
@@ -1021,7 +1034,7 @@ const Chat = () => {
     try {
       const configuration = getConfigValues();
       const tags: ITag[] = getUploadTags(contentType, configuration);
-      
+
       // upload with dispatch
       const tx = await arweave.createTransaction({ data: newMessage });
       tags.forEach((tag) => tx.addTag(tag.name, tag.value));
