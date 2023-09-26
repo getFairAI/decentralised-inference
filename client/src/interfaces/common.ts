@@ -31,4 +31,12 @@ export interface IMessage {
   tags: ITag[];
 }
 
+export interface IConfiguration {
+  assetNames?: string[];
+  negativePrompt?: string;
+  description?: string;
+  customTags?: { name: string, value: string }[];
+  nImages?: number;
+}
+
 export type voteForOptions = 'model' | 'script' | 'operator';

@@ -83,7 +83,7 @@ import '@/styles/main.css';
 import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
 import useScroll from '@/hooks/useScroll';
-import { IMessage } from '@/interfaces/common';
+import { IMessage, IConfiguration } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatBubble from '@/components/chat-bubble';
@@ -276,7 +276,7 @@ const InputField = ({
           onChange={handleMessageChange}
           onKeyDown={keyDownHandler}
           fullWidth
-          disabled={isSending || disabled || !allowText}
+          /* disabled={isSending || disabled || !allowText} */
           placeholder='Start Chatting...'
         />
       </>
@@ -744,7 +744,7 @@ const Chat = () => {
     }
   };
 
-  const getUploadTags = (contentType: string, fileName?: string) => {
+  const getUploadTags = (contentType: string, configuration: IConfiguration, fileName?: string) => {
     const tags = [];
     tags.push({ name: TAG_NAMES.protocolName, value: PROTOCOL_NAME });
     tags.push({ name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION });
@@ -762,7 +762,7 @@ const Chat = () => {
     tags.push({ name: TAG_NAMES.contentType, value: contentType });
     tags.push({ name: TAG_NAMES.txOrigin, value: TX_ORIGIN });
 
-    addConfigTags(tags);
+    addConfigTags(tags, configuration);
 
     // add atomic asset tags
     const manifest = {
@@ -804,30 +804,29 @@ const Chat = () => {
     return tags;
   };
 
-  const addConfigTags = (tags: ITag[]) => {
-    if (assetNamesRef?.current?.value) {
-      const assetNamesArray = assetNamesRef?.current?.value.split(';');
-      tags.push({ name: TAG_NAMES.assetNames, value: JSON.stringify(assetNamesArray) });
+  const addConfigTags = (tags: ITag[], configuration: IConfiguration) => {
+    if (configuration.assetNames && configuration.assetNames.length > 0) {
+      tags.push({ name: TAG_NAMES.assetNames, value: JSON.stringify(configuration.assetNames) });
     }
 
-    if (negativePromptRef?.current?.value) {
-      tags.push({ name: TAG_NAMES.negativePrompt, value: negativePromptRef?.current?.value });
+    if (configuration.negativePrompt) {
+      tags.push({ name: TAG_NAMES.negativePrompt, value: configuration.negativePrompt });
     }
 
-    if (descriptionRef?.current?.value) {
-      tags.push({ name: TAG_NAMES.description, value: descriptionRef?.current?.value });
+    if (configuration.description) {
+      tags.push({ name: TAG_NAMES.description, value: configuration.description });
     }
 
-    if (customTagsRef?.current && customTagsRef?.current?.length > 0) {
-      tags.push({ name: TAG_NAMES.userCustomTags, value: JSON.stringify(customTagsRef?.current) });
+    if (configuration.customTags && configuration.customTags?.length > 0) {
+      tags.push({ name: TAG_NAMES.userCustomTags, value: JSON.stringify(configuration.customTags) });
     }
 
-    if (nImagesRef.current > 0) {
+    if (configuration.nImages && configuration.nImages > 0) {
       tags.push({ name: TAG_NAMES.nImages, value: nImagesRef.current.toString() });
     }
   };
 
-  const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string) => {
+  const handlePayment = async (bundlrId: string, inferenceFee: string, contentType: string, configuration: IConfiguration) => {
     const parsedUFee = parseFloat(inferenceFee);
     try {
       const paymentTags = [
@@ -847,12 +846,13 @@ const Chat = () => {
       ];
 
       //
-      addConfigTags(paymentTags);
+      addConfigTags(paymentTags, configuration);
 
       let adjustedInferenceFee = parsedUFee;
-      if (isStableDiffusion && nImagesRef.current > 0) {
+      const nImages = configuration.nImages;
+      if (isStableDiffusion && nImages && nImages > 0) {
         // calculate fee for n-images
-        adjustedInferenceFee = parsedUFee * nImagesRef.current;
+        adjustedInferenceFee = parsedUFee * nImages;
       } else if (isStableDiffusion) {
         // default n images is 4 if not specified
         const defaultNImages = 4;
@@ -912,27 +912,25 @@ const Chat = () => {
     }
   };
 
-  const updateMessagesAndPay = async (
-    content: string | File,
-    contentType: string,
-    txid: string,
-    tags: ITag[],
-  ) => {
-    const temp = [...messages];
-    temp.push({
-      msg: content,
-      type: 'request',
-      timestamp: parseFloat(tags.find((tag) => tag.name === TAG_NAMES.unixTime)?.value as string),
-      id: txid,
-      cid: currentConversationId,
-      height: (await arweave.blocks.getCurrent()).height,
-      to: address as string,
-      from: userAddr,
-      contentType,
-      tags,
-    });
-    await handlePayment(txid, state.fee, contentType);
-    setMessages(temp);
+  const getConfigValues = () => {
+    const assetNames = assetNamesRef?.current?.value
+      ? assetNamesRef.current.value.split(';').map((el) => el.trim())
+      : undefined;
+    const negativePrompt = negativePromptRef?.current?.value;
+    const description = descriptionRef?.current?.value;
+    const customTags = customTagsRef?.current;
+    const nImages = nImagesRef?.current;
+
+    return {
+      assetNames,
+      negativePrompt,
+      description,
+      customTags,
+      nImages,
+    };
+  };
+
+  const updateMessages = async (txid: string, content: string | File, contentType: string, tags: ITag[]) => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
@@ -955,6 +953,20 @@ const Chat = () => {
         variant: 'success',
       },
     );
+    const temp = [...messages];
+    temp.push({
+      msg: content,
+      type: 'request',
+      timestamp: parseFloat(tags.find((tag) => tag.name === TAG_NAMES.unixTime)?.value as string),
+      id: txid,
+      cid: currentConversationId,
+      height: (await arweave.blocks.getCurrent()).height,
+      to: address as string,
+      from: userAddr,
+      contentType,
+      tags,
+    });
+    setMessages(temp);
   };
 
   const handleSendFile = async () => {
@@ -972,7 +984,8 @@ const Chat = () => {
     const content = file;
 
     try {
-      const tags: ITag[] = getUploadTags(content.name, contentType);
+      const configuration = getConfigValues();
+      const tags: ITag[] = getUploadTags(content.name, configuration, contentType);
       // upload with dispatch
       const data = await content.arrayBuffer(); // it's safe to convert to arrayBuffer bc max size is 100kb
       const tx = await arweave.createTransaction({ data });
@@ -984,8 +997,9 @@ const Chat = () => {
         enqueueSnackbar('An Error Occurred', { variant: 'error' });
         return;
       }
+      await updateMessages(txid, content, contentType, tags);
       await warp.register(txid, 'node2');
-      updateMessagesAndPay(content, contentType, txid, tags);
+      await handlePayment(txid, state.fee, contentType, configuration);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
     }
@@ -1003,10 +1017,11 @@ const Chat = () => {
     }
 
     const contentType = textContentType;
-    const content = newMessage;
 
     try {
-      const tags: ITag[] = getUploadTags(contentType);
+      const configuration = getConfigValues();
+      const tags: ITag[] = getUploadTags(contentType, configuration);
+      
       // upload with dispatch
       const tx = await arweave.createTransaction({ data: newMessage });
       tags.forEach((tag) => tx.addTag(tag.name, tag.value));
@@ -1016,8 +1031,9 @@ const Chat = () => {
         enqueueSnackbar('An Error Occurred.', { variant: 'error' });
         return;
       }
+      await updateMessages(txid, newMessage, contentType, tags);
       await warp.register(txid, 'node2');
-      await updateMessagesAndPay(content, contentType, txid, tags);
+      await handlePayment(txid, state.fee, contentType, configuration);
     } catch (error) {
       enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
     }
