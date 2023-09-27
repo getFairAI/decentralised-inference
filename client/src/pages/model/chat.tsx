@@ -585,6 +585,7 @@ const Chat = () => {
     if (currentConversationId) {
       setMessagesLoading(true);
       setPreviousResponses([]); // clear previous responses
+      setIsWaitingResponse(false);
       setIsFirstPage(true);
       // get messages for current conversation
 
