@@ -41,6 +41,7 @@ import { gql } from '@apollo/client';
 const inputFnName = 'transfer';
 const DEFAULT_PAGE_SIZE = 10;
 const RADIX = 10;
+const MAX_IMAGES = 10;
 
 const FIND_BY_TAGS_WITH_OWNERS = gql`
   query FIND_BY_TAGS_WITH_OWNERS(
@@ -226,7 +227,7 @@ export const checkUserPaidInferenceFees = async (
         }
 
         const inputObj = JSON.parse(input);
-        const qty = parseInt(inputObj.qty, 10);
+        const qty = parseInt(inputObj.qty, RADIX);
         if (inputObj.function !== inputFnName) {
           return false;
         } else if (qty >= marketplaceShare && inputObj.target === VAULT_ADDRESS) {
@@ -253,7 +254,7 @@ const checkLastRequests = async (
   operatorFee: string,
   scriptName: string,
   scriptCurator: string,
-  isStableDiffusion?: boolean,
+  isStableDiffusion = false,
 ) => {
   const { query, variables } = getRequestsQuery(
     undefined,
@@ -283,7 +284,7 @@ const checkLastRequests = async (
     if (
       isStableDiffusion &&
       nImages &&
-      (parseInt(nImages, RADIX) > 0 || parseInt(nImages, RADIX) < 10)
+      (parseInt(nImages, RADIX) > 0 || parseInt(nImages, RADIX) < MAX_IMAGES)
     ) {
       const actualFee = baseFee * parseInt(nImages, RADIX);
 
@@ -369,7 +370,7 @@ const isValidRegistration = async (
   opAddress: string,
   scriptName: string,
   scriptCurator: string,
-  isStableDiffusion?: boolean,
+  isStableDiffusion = false,
 ) => {
   const isCancelledTx = await isCancelled(txid, opAddress);
   if (isCancelledTx) {
