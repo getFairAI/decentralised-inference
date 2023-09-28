@@ -825,7 +825,7 @@ const Chat = () => {
     }
 
     if (configuration.nImages && configuration.nImages > 0) {
-      tags.push({ name: TAG_NAMES.nImages, value: nImagesRef.current.toString() });
+      tags.push({ name: TAG_NAMES.nImages, value: configuration.nImages.toString() });
     }
   };
 
