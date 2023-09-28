@@ -49,23 +49,7 @@ import {
 import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { isValidRegistration } from '@/utils/operator';
-
-const checkOpResponses = async (el: IEdge, filtered: IEdge[]) => {
-  const opFee = findTag(el, 'operatorFee') as string;
-  const scriptName = findTag(el, 'scriptName') as string;
-  const scriptCurator = findTag(el, 'scriptCurator') as string;
-  const registrationOwner = (findTag(el, 'sequencerOwner') as string) ?? el.node.owner.address;
-
-  if (
-    !(await isValidRegistration(el.node.id, opFee, registrationOwner, scriptName, scriptCurator))
-  ) {
-    filtered.splice(
-      filtered.findIndex((existing) => el.node.id === existing.node.id),
-      1,
-    );
-  }
-};
+import { checkOpResponses } from '@/utils/operator';
 
 const OperatorSelected = ({
   operatorsData,
