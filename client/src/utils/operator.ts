@@ -25,85 +25,124 @@ import {
   U_CONTRACT_ID,
   INFERENCE_PAYMENT,
   SCRIPT_INFERENCE_RESPONSE,
-  OPERATOR_REGISTRATION_AR_FEE,
-  U_DIVIDER,
-  REGISTER_OPERATION,
+  CREATOR_PERCENTAGE_FEE,
+  CURATOR_PERCENTAGE_FEE,
+  MARKETPLACE_PERCENTAGE_FEE,
+  PROTOCOL_NAME,
+  SCRIPT_INFERENCE_REQUEST,
+  OPERATOR_REGISTRATION_PAYMENT_TAGS,
 } from '@/constants';
-import { IContractEdge, IEdge } from '@/interfaces/arweave';
-import { QUERY_TX_WITH, FIND_BY_TAGS } from '@/queries/graphql';
+import { IContractEdge, IContractQueryResult, IEdge, IQueryResult } from '@/interfaces/arweave';
+import { QUERY_TX_WITH, FIND_BY_TAGS, QUERY_TX_WITH_OWNERS } from '@/queries/graphql';
 import { client } from './apollo';
 import { findTag } from './common';
+import { gql } from '@apollo/client';
 
 const inputFnName = 'transfer';
+const DEFAULT_PAGE_SIZE = 10;
+const RADIX = 10;
 
-const getOperatorRequests = async (
-  address: string,
-  operatorFee: string,
-  scriptName: string,
-  scriptCurator: string,
-) => {
-  const qty = parseFloat(operatorFee);
-  const requestPaymentsInputNumber = JSON.stringify({
-    function: inputFnName,
-    target: address,
-    qty,
-  });
-  const requestPaymentsInputStr = JSON.stringify({
-    function: inputFnName,
-    target: address,
-    qty: qty.toString(),
-  });
-  const { data } = await client.query({
-    query: FIND_BY_TAGS,
-    variables: {
-      first: N_PREVIOUS_BLOCKS,
-      tags: [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
-        { name: TAG_NAMES.operationName, values: [INFERENCE_PAYMENT] },
-        { name: TAG_NAMES.scriptName, values: [scriptName] },
-        { name: TAG_NAMES.scriptCurator, values: [scriptCurator] },
-      ],
-    },
-  });
-
-  return data.transactions.edges.filter((el: IEdge) => {
-    try {
-      const inputTag = findTag(el, 'input');
-      if (!inputTag) {
-        return false;
-      } else if (inputTag === requestPaymentsInputNumber || inputTag === requestPaymentsInputStr) {
-        return true;
-      } else {
-        const inputObj: { qty: number | string; function: string; target: string } =
-          JSON.parse(inputTag);
-        const qtyNumber =
-          typeof inputObj.qty === 'string' ? parseFloat(inputObj.qty) : inputObj.qty;
-
-        return qtyNumber >= qty && inputObj.function === inputFnName && inputObj.target === address;
+const FIND_BY_TAGS_WITH_OWNERS = gql`
+  query FIND_BY_TAGS_WITH_OWNERS(
+    $owners: [String!]
+    $tags: [TagFilter!]
+    $first: Int!
+    $after: String
+  ) {
+    transactions(owners: $owners, tags: $tags, first: $first, after: $after, sort: HEIGHT_DESC) {
+      pageInfo {
+        hasNextPage
       }
-    } catch (err) {
-      return false;
+      edges {
+        cursor
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          owner {
+            address
+            key
+          }
+        }
+      }
     }
-  }) as IEdge[];
-};
+  }
+`;
 
-const hasOperatorAnswered = async (request: IEdge, opAddress: string) => {
-  const responseTags = [
+const QUERY_TX_BY_ID = gql`
+  query QUERY_TX_BY_ID($id: ID!) {
+    transactions(ids: [$id], sort: HEIGHT_DESC, first: 1) {
+      pageInfo {
+        hasNextPage
+      }
+      edges {
+        cursor
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          owner {
+            address
+            key
+          }
+        }
+      }
+    }
+  }
+`;
+
+const getRequestsQuery = (
+  userAddress?: string,
+  scriptName?: string,
+  scriptCurator?: string,
+  scriptOperator?: string,
+  currenctConversationId?: number,
+  first = DEFAULT_PAGE_SIZE,
+  after?: string,
+) => {
+  const tags = [
     ...DEFAULT_TAGS,
-    { name: TAG_NAMES.requestTransaction, values: [findTag(request, 'inferenceTransaction')] },
-    { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
+    { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
   ];
+  if (scriptName) {
+    tags.push({ name: TAG_NAMES.scriptName, values: [scriptName] });
+  }
 
-  const { data } = await client.query({
-    query: QUERY_TX_WITH,
-    variables: { tags: responseTags, address: opAddress },
-  });
+  if (scriptCurator) {
+    tags.push({ name: TAG_NAMES.scriptCurator, values: [scriptCurator] });
+  }
 
-  if (data.transactions.edges.length === 0) {
-    return false;
+  if (scriptOperator) {
+    tags.push({ name: TAG_NAMES.scriptOperator, values: [scriptOperator] });
+  }
+
+  if (currenctConversationId) {
+    tags.push({ name: TAG_NAMES.conversationIdentifier, values: [`${currenctConversationId}`] });
+  }
+
+  if (userAddress) {
+    return {
+      query: FIND_BY_TAGS_WITH_OWNERS,
+      variables: {
+        owners: [userAddress],
+        tags,
+        first,
+        after,
+      },
+    };
   } else {
-    return true;
+    return {
+      query: FIND_BY_TAGS,
+      variables: {
+        tags,
+        first,
+        after,
+      },
+    };
   }
 };
 
@@ -121,28 +160,251 @@ const isCancelled = async (txid: string, opAdress: string) => {
   return data.transactions.edges.length > 0;
 };
 
-export const isValidRegistration = async (
+const queryCheckUserPayment = async (
+  inferenceTransaction: string,
+  userAddress: string,
+  scriptId: string,
+) => {
+  const tags = [
+    {
+      name: TAG_NAMES.protocolName,
+      values: [PROTOCOL_NAME],
+    },
+    {
+      name: TAG_NAMES.operationName,
+      values: [INFERENCE_PAYMENT],
+    },
+    {
+      name: TAG_NAMES.scriptTransaction,
+      values: [scriptId],
+    },
+    {
+      name: TAG_NAMES.inferenceTransaction,
+      values: [inferenceTransaction],
+    },
+    {
+      name: TAG_NAMES.contract,
+      values: [U_CONTRACT_ID],
+    },
+    {
+      name: TAG_NAMES.sequencerOwner,
+      values: [userAddress],
+    },
+  ];
+
+  const { data: result}: {data: IQueryResult} = await client.query({
+    query: FIND_BY_TAGS, 
+    variables: { tags, first: 4 },
+  });
+
+  return result.transactions.edges;
+};
+
+export const checkUserPaidInferenceFees = async (
+  txid: string,
+  userAddress: string,
+  creatorAddress: string,
+  curatorAddress: string,
+  operatorFee: number,
+  scriptId: string,
+) => {
+  const marketplaceShare = operatorFee * MARKETPLACE_PERCENTAGE_FEE;
+  const curatorShare = operatorFee * CURATOR_PERCENTAGE_FEE;
+  const creatorShare = operatorFee * CREATOR_PERCENTAGE_FEE;
+
+  const paymentTxs = await queryCheckUserPayment(txid, userAddress, scriptId);
+  const necessaryPayments = 3;
+
+  if (paymentTxs.length < necessaryPayments) {
+    return false;
+  } else {
+    const validPayments = paymentTxs.filter((tx) => {
+      try {
+        const input = findTag(tx, 'input');
+        if (!input) {
+          return false;
+        }
+
+        const inputObj = JSON.parse(input);
+        const qty = parseInt(inputObj.qty, 10);
+        if (inputObj.function !== inputFnName) {
+          return false;
+        } else if (qty >= marketplaceShare && inputObj.target === VAULT_ADDRESS) {
+          return true;
+        } else if (qty >= curatorShare && inputObj.target === curatorAddress) {
+          return true;
+        } else if (qty >= creatorShare && inputObj.target === creatorAddress) {
+          return true;
+        } else {
+          return false;
+        }
+      } catch (error) {
+        return false;
+      }
+    });
+
+    return validPayments.length >= necessaryPayments;
+  }
+};
+
+// app logic
+const checkLastRequests = async (
+  operatorAddr: string,
+  operatorFee: string,
+  scriptName: string,
+  scriptCurator: string,
+  isStableDiffusion?: boolean,
+) => {
+  const { query, variables } = getRequestsQuery(
+    undefined,
+    scriptName,
+    scriptCurator,
+    operatorAddr,
+    undefined,
+    N_PREVIOUS_BLOCKS,
+  );
+
+  const { data }: {data: IQueryResult} = await client.query({
+    query,
+    variables,
+  });
+
+  const baseFee = parseFloat(operatorFee);
+
+  const validTxs: IEdge[] = [];
+  for (const requestTx of data.transactions.edges) {
+    const nImages = findTag(requestTx, 'nImages');
+    const userAddr = requestTx.node.owner.address;
+    const creatorAddr = findTag(requestTx, 'modelCreator') as string;
+    const curatorAddr = findTag(requestTx, 'scriptCurator') as string;
+    const scriptId = findTag(requestTx, 'scriptTransaction') as string;
+
+    let isValidRequest = false;
+    if (
+      isStableDiffusion &&
+      nImages &&
+      (parseInt(nImages, RADIX) > 0 || parseInt(nImages, RADIX) < 10)
+    ) {
+      const actualFee = baseFee * parseInt(nImages, RADIX);
+
+      isValidRequest = await checkUserPaidInferenceFees(
+        requestTx.node.id,
+        userAddr,
+        creatorAddr,
+        curatorAddr,
+        actualFee,
+        scriptId,
+      );
+    } else if (isStableDiffusion) {
+      // default nImages
+      const defaultNImages = 4;
+      const actualFee = baseFee * defaultNImages;
+
+      isValidRequest = await checkUserPaidInferenceFees(
+        requestTx.node.id,
+        userAddr,
+        creatorAddr,
+        curatorAddr,
+        actualFee,
+        scriptId,
+      );
+    } else {
+      isValidRequest = await checkUserPaidInferenceFees(
+        requestTx.node.id,
+        userAddr,
+        creatorAddr,
+        curatorAddr,
+        baseFee,
+        scriptId,
+      );
+    }
+
+    if (isValidRequest) {
+      const hasAnswered = await hasOperatorAnswered(requestTx, operatorAddr);
+      if (hasAnswered) {
+        validTxs.push(requestTx);
+      }
+    } else {
+      // ignore
+      validTxs.push(requestTx);
+    }
+  }
+
+  return validTxs.length === data.transactions.edges.length;
+};
+
+interface ITagFilter {
+  name: string;
+  values: string[];
+};
+
+const hasOperatorAnswered = async (request: IEdge | IContractEdge, opAddress: string) => {
+  const responseTags: ITagFilter[] = [
+    ...DEFAULT_TAGS,
+    {
+      name: TAG_NAMES.requestTransaction,
+      values: [findTag(request, 'inferenceTransaction') as string],
+    },
+    { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
+  ];
+
+  const { data }= await client.query({
+    query: QUERY_TX_WITH_OWNERS,
+    variables: {
+      tags: responseTags,
+      owners: [ opAddress],
+    }
+  });
+
+  if (data.transactions.edges.length === 0) {
+    return false;
+  } else {
+    return true;
+  }
+};
+
+const isValidRegistration = async (
   txid: string,
   operatorFee: string,
   opAddress: string,
   scriptName: string,
   scriptCurator: string,
+  isStableDiffusion?: boolean,
 ) => {
   const isCancelledTx = await isCancelled(txid, opAddress);
   if (isCancelledTx) {
     return false;
   }
 
-  const lastRequests = await getOperatorRequests(opAddress, operatorFee, scriptName, scriptCurator);
-  for (const request of lastRequests) {
-    // check if operator has answered last 7 requests
-    if (!(await hasOperatorAnswered(request, opAddress))) {
-      // if any of the last 7 requests has not been answered, the operator is not valid
-      return false;
-    }
+  return checkLastRequests(opAddress, operatorFee, scriptName, scriptCurator, isStableDiffusion);
+};
+
+const getOperatorQueryForScript = (
+  scriptId: string,
+  scriptName?: string,
+  scriptCurator?: string,
+  first = DEFAULT_PAGE_SIZE,
+  after?: string,
+) => {
+  const tags = [
+    ...DEFAULT_TAGS,
+    ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
+    { name: TAG_NAMES.scriptTransaction, values: [scriptId] },
+  ];
+
+  if (scriptName && scriptCurator) {
+    tags.push({ name: TAG_NAMES.scriptName, values: [scriptName] });
+    tags.push({ name: TAG_NAMES.scriptCurator, values: [scriptCurator] });
   }
 
-  return true;
+  return {
+    query: FIND_BY_TAGS,
+    variables: {
+      tags,
+      first,
+      after,
+    },
+  };
 };
 
 export const checkHasOperators = async (
@@ -151,53 +413,29 @@ export const checkHasOperators = async (
 ) => {
   const elementsPerPage = 5;
 
-  const operatorRegistrationInputNumber = JSON.stringify({
-    function: inputFnName,
-    target: VAULT_ADDRESS,
-    qty: parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER,
-  });
-  const operatorRegistrationInputStr = JSON.stringify({
-    function: inputFnName,
-    target: VAULT_ADDRESS,
-    qty: (parseFloat(OPERATOR_REGISTRATION_AR_FEE) * U_DIVIDER).toString(),
-  });
+  const scriptId = (findTag(scriptTx, 'scriptTransaction') as string) ?? scriptTx.node.id;
+  const scriptName = findTag(scriptTx, 'scriptName') as string;
+  const scriptCurator = findTag(scriptTx, 'scriptCurator') as string;
+  const isStableDiffusion = findTag(scriptTx, 'outputConfiguration') as string;
 
-  const registrationTags = [
-    ...DEFAULT_TAGS,
-    {
-      name: TAG_NAMES.operationName,
-      values: [REGISTER_OPERATION],
-    },
-    {
-      name: TAG_NAMES.scriptCurator,
-      values: [findTag(scriptTx, 'sequencerOwner')],
-    },
-    {
-      name: TAG_NAMES.scriptName,
-      values: [findTag(scriptTx, 'scriptName')],
-    },
-    { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
-    {
-      name: TAG_NAMES.input,
-      values: [operatorRegistrationInputNumber, operatorRegistrationInputStr],
-    },
-  ];
-  const queryResult = await client.query({
-    query: FIND_BY_TAGS,
-    variables: { tags: registrationTags, first: elementsPerPage },
-  });
+  const { variables } = getOperatorQueryForScript(
+    scriptId,
+    scriptName,
+    scriptCurator,
+    elementsPerPage,
+  );
 
-  if (queryResult.data.transactions.edges.length === 0) {
+  const queryResult = await findByTags(variables.tags, variables.first, variables.after);
+
+  if (queryResult.transactions.edges.length === 0) {
     filtered.splice(
       filtered.findIndex((el) => el.node.id === scriptTx.node.id),
       1,
     );
   } else {
     let hasAtLeastOneValid = false;
-    for (const registration of queryResult.data.transactions.edges) {
+    for (const registration of queryResult.transactions.edges) {
       const opFee = findTag(registration, 'operatorFee') as string;
-      const scriptName = findTag(registration, 'scriptName') as string;
-      const scriptCurator = findTag(registration, 'scriptCurator') as string;
       const registrationOwner =
         (findTag(registration, 'sequencerOwner') as string) ?? registration.node.owner.address;
 
@@ -208,6 +446,7 @@ export const checkHasOperators = async (
           registrationOwner,
           scriptName,
           scriptCurator,
+          !!isStableDiffusion && isStableDiffusion === 'stable-diffusion',
         )
       ) {
         filtered.push(scriptTx);
@@ -220,3 +459,53 @@ export const checkHasOperators = async (
     }
   }
 };
+
+const findByTags = async (tags: ITagFilter[], first: number, after?: string) => {
+  const { data }: {data: IContractQueryResult} = await client.query({
+    query: FIND_BY_TAGS,
+    variables: {
+      tags,
+      first,
+      after,
+    }
+  });
+
+  return data;
+};
+
+const getById = async (txid: string) => {
+  const {data}: {data: IQueryResult} = await client.query({
+    query: QUERY_TX_BY_ID,
+    variables: {
+      id: txid,
+    }
+  });
+
+  return data.transactions.edges[0];
+};
+
+export const checkOpResponses = async (el: IContractEdge, filtered: IEdge[]) => {
+  const opFee = findTag(el, 'operatorFee') as string;
+  const scriptName = findTag(el, 'scriptName') as string;
+  const scriptCurator = findTag(el, 'scriptCurator') as string;
+  const registrationOwner = (findTag(el, 'sequencerOwner') as string) ?? el.node.owner.address;
+  const scriptTx = await getById(findTag(el, 'scriptTransaction') as string);
+  const isStableDiffusion = findTag(scriptTx, 'outputConfiguration') as string;
+
+  if (
+    !(await isValidRegistration(
+      el.node.id,
+      opFee,
+      registrationOwner,
+      scriptName,
+      scriptCurator,
+      !!isStableDiffusion && isStableDiffusion === 'stable-diffusion',
+    ))
+  ) {
+    filtered.splice(
+      filtered.findIndex((existing) => el.node.id === existing.node.id),
+      1,
+    );
+  }
+};
+
