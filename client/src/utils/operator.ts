@@ -192,8 +192,8 @@ const queryCheckUserPayment = async (
     },
   ];
 
-  const { data: result}: {data: IQueryResult} = await client.query({
-    query: FIND_BY_TAGS, 
+  const { data: result }: { data: IQueryResult } = await client.query({
+    query: FIND_BY_TAGS,
     variables: { tags, first: 4 },
   });
 
@@ -264,7 +264,7 @@ const checkLastRequests = async (
     N_PREVIOUS_BLOCKS,
   );
 
-  const { data }: {data: IQueryResult} = await client.query({
+  const { data }: { data: IQueryResult } = await client.query({
     query,
     variables,
   });
@@ -336,7 +336,7 @@ const checkLastRequests = async (
 interface ITagFilter {
   name: string;
   values: string[];
-};
+}
 
 const hasOperatorAnswered = async (request: IEdge | IContractEdge, opAddress: string) => {
   const responseTags: ITagFilter[] = [
@@ -348,12 +348,12 @@ const hasOperatorAnswered = async (request: IEdge | IContractEdge, opAddress: st
     { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
   ];
 
-  const { data }= await client.query({
+  const { data } = await client.query({
     query: QUERY_TX_WITH_OWNERS,
     variables: {
       tags: responseTags,
-      owners: [ opAddress],
-    }
+      owners: [opAddress],
+    },
   });
 
   if (data.transactions.edges.length === 0) {
@@ -461,24 +461,24 @@ export const checkHasOperators = async (
 };
 
 const findByTags = async (tags: ITagFilter[], first: number, after?: string) => {
-  const { data }: {data: IContractQueryResult} = await client.query({
+  const { data }: { data: IContractQueryResult } = await client.query({
     query: FIND_BY_TAGS,
     variables: {
       tags,
       first,
       after,
-    }
+    },
   });
 
   return data;
 };
 
 const getById = async (txid: string) => {
-  const {data}: {data: IQueryResult} = await client.query({
+  const { data }: { data: IQueryResult } = await client.query({
     query: QUERY_TX_BY_ID,
     variables: {
       id: txid,
-    }
+    },
   });
 
   return data.transactions.edges[0];
@@ -508,4 +508,3 @@ export const checkOpResponses = async (el: IContractEdge, filtered: IEdge[]) => 
     );
   }
 };
-
