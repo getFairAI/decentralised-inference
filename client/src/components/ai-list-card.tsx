@@ -24,7 +24,7 @@ import {
   TAG_NAMES,
   secondInMS,
 } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge } from '@/interfaces/arweave';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { findTag } from '@/utils/common';
 import { ApolloError, useLazyQuery } from '@apollo/client';
@@ -47,7 +47,7 @@ const AiListCard = ({
   index,
   loading,
 }: {
-  model: IEdge;
+  model: IContractEdge;
   index: number;
   loading: boolean;
   error?: ApolloError;

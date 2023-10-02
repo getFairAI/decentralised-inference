@@ -16,7 +16,6 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   Box,
   Button,
@@ -27,93 +26,25 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-
-import { useContext, useEffect, useRef, useState } from 'react';
-
-import { IEdge } from '@/interfaces/arweave';
-import { FIND_BY_TAGS } from '@/queries/graphql';
-import useOnScreen from '@/hooks/useOnScreen';
-import { DEFAULT_TAGS, MODEL_CREATION_PAYMENT_TAGS, TAG_NAMES } from '@/constants';
+import { useRef, useState } from 'react';
 import Featured from '@/components/featured';
 import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
-import FilterContext from '@/context/filter';
-import { commonUpdateQuery, findTag, findTagsWithKeyword, isFakeDeleted } from '@/utils/common';
+import useModels from '@/hooks/useModels';
 
 export default function Home() {
-  const [hasNextPage, setHasNextPage] = useState(false);
   const [hightlightTop, setHighLightTop] = useState(false);
-  const [txs, setTxs] = useState<IEdge[]>([]);
-  const [featuredTxs, setFeaturedTxs] = useState<IEdge[]>([]);
   const target = useRef<HTMLDivElement>(null);
-  const isOnScreen = useOnScreen(target);
-  const filterValue = useContext(FilterContext);
   const theme = useTheme();
-  const elementsPerPage = 5;
-  const featuredElements = 3;
 
-  const { data, loading, error, fetchMore, networkStatus } = useQuery(FIND_BY_TAGS, {
-    variables: {
-      tags: [...DEFAULT_TAGS, ...MODEL_CREATION_PAYMENT_TAGS],
-      first: elementsPerPage,
-    },
-  });
-
+  const {
+    txs,
+    loading,
+    featuredTxs,
+    error
+  } = useModels(target);
   const handleHighlight = (value: boolean) => setHighLightTop(value);
-
-  useEffect(() => {
-    if (isOnScreen && hasNextPage) {
-      (async () => {
-        await fetchMore({
-          variables: {
-            after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
-          },
-          updateQuery: commonUpdateQuery,
-        });
-      })();
-    }
-  }, [isOnScreen, txs]);
-
-  useEffect(() => {
-    if (data && networkStatus === NetworkStatus.ready) {
-      (async () => {
-        const filtered: IEdge[] = [];
-        for (const el of data.transactions.edges) {
-          const modelId = findTag(el, 'modelTransaction') as string;
-          const modelOwner = findTag(el, 'sequencerOwner') as string;
-
-          if (!modelOwner || !modelId) {
-            // ignore
-          } else if (!(await isFakeDeleted(modelId, modelOwner, 'model'))) {
-            filtered.push(el);
-          } else {
-            // ignore
-          }
-        }
-        setHasNextPage(data.transactions.pageInfo.hasNextPage);
-        setTxs(filtered);
-        if (featuredTxs.length === 0) {
-          setFeaturedTxs(filtered.slice(0, featuredElements));
-        }
-      })();
-    }
-  }, [data]);
-
-  useEffect(() => {
-    if (data) {
-      const filtered: IEdge[] = data.transactions.edges.filter(
-        (el: IEdge) =>
-          filterValue.trim() === '' ||
-          findTagsWithKeyword(
-            el,
-            [TAG_NAMES.modelName, TAG_NAMES.description, TAG_NAMES.category],
-            filterValue,
-          ),
-      );
-      setTxs(filtered);
-    }
-  }, [filterValue]);
 
   return (
     <>
