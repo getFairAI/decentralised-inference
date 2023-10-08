@@ -51,6 +51,7 @@ import {
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { enqueueSnackbar } from 'notistack';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { findTag } from '@/utils/common';
 import MessageDetail from './message-detail';
 import FairSDKWeb from 'fair-protocol-sdk/web';
@@ -157,17 +158,32 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
   const showTradeOnBazar = useMemo(
     () =>
       message.type === 'response' &&
-      message.tags.find((tag) => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value ===
+      message.tags.find((tag) => tag.name === FairSDKWeb.utils.TAG_NAMES.contractSrc)?.value ===
         FairSDKWeb.utils.ATOMIC_ASSET_CONTRACT_SOURCE_ID,
     [message],
   );
-  const showRareweaveOnBazar = useMemo(
+  const showTradeOnRareweave = useMemo(
     () =>
       message.type === 'response' &&
-      message.tags.find((tag) => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value ===
+      message.tags.find((tag) => tag.name === FairSDKWeb.utils.TAG_NAMES.contractSrc)?.value ===
         FairSDKWeb.utils.RAREWEAVE_CONTRACT_ID,
     [message],
   );
+  const handleDownload = useCallback(() => {
+    const a = document.createElement('a');
+    if (message.msg instanceof File) {
+      a.href = URL.createObjectURL(message.msg as File);
+      a.download = `${message.id}.${message.contentType?.split('/')[1]}`;
+    } else {
+      const file = new Blob([ message.msg ], {type: 'text/plain'});
+      a.href = URL.createObjectURL(file);
+      a.download = `${message.id}.txt`;
+    }
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, [message]);
 
   return (
     <Box display={'flex'} gap={'8px'} width={'100%'}>
@@ -196,18 +212,23 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
             </Typography>
           </Box>
         )}
-        <Box display={'flex'} alignItems='center'>
+        <Box display={'flex'} alignItems='center' gap={'8px'}>
           {showTradeOnBazar && (
             <Button variant='outlined' onClick={handleBazarTradeClick}>
               Trade on Bazar
             </Button>
           )}
-          {showRareweaveOnBazar && (
+          {showTradeOnRareweave && (
             <Button variant='outlined' onClick={handleRareweaveTradeClick}>
               Trade on Rareweave
             </Button>
           )}
-          <IconButton onClick={handleClick}>
+          {message.type === 'response' && (
+            <IconButton onClick={handleDownload} sx={{ padding: '8px 0px' }} disableRipple>
+              <FileDownloadOutlinedIcon fontSize='large' />
+            </IconButton>
+          )}
+          <IconButton onClick={handleClick} sx={{ padding: '8px 0px' }} disableRipple>
             <MoreHorizIcon fontSize='large' />
           </IconButton>
           <Menu
