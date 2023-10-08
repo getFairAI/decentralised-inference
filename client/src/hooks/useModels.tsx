@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import { TAG_NAMES } from '@/constants';
 import FilterContext from '@/context/filter';
 import { IContractEdge } from '@/interfaces/arweave';
@@ -18,8 +36,8 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
 
   const elementsPerPage = 5;
   const defaultFeaturedElements = 3;
-  const query = FairSDKWeb.utils.getModelsQuery(elementsPerPage);
-  const { data, loading, error, fetchMore, networkStatus } = useQuery(gql(query.query), { variables: query.variables });
+  const queryObject = FairSDKWeb.utils.getModelsQuery(elementsPerPage);
+  const { data, loading, error, fetchMore, networkStatus } = useQuery(gql(queryObject.query), { variables: queryObject.variables });
 
   const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
 

@@ -18,14 +18,11 @@
 
 import {
   TAG_NAMES,
-  OPERATOR_REGISTRATION_PAYMENT_TAGS,
-  DEFAULT_TAGS,
   IS_TO_CHOOSE_MODEL_AUTOMATICALLY,
 } from '@/constants';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
-import { FIND_BY_TAGS } from '@/queries/graphql';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
-import { useQuery, NetworkStatus } from '@apollo/client';
+import { useQuery, NetworkStatus, gql } from '@apollo/client';
 import {
   Box,
   Button,
@@ -49,14 +46,14 @@ import {
 import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { checkOpResponses } from '@/utils/operator';
+import FairSDKWeb from 'fair-protocol-sdk/web';
 
 const OperatorSelected = ({
   operatorsData,
   scriptTx,
   selectedIdx,
 }: {
-  operatorsData: IEdge[];
+  operatorsData: IContractEdge[];
   scriptTx?: IEdge | IContractEdge;
   selectedIdx: number;
 }) => {
@@ -252,32 +249,19 @@ const ChooseOperator = ({
   scriptTx?: IEdge | IContractEdge;
   setGlobalLoading?: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const [operatorsData, setOperatorsData] = useState<IEdge[]>([]);
+  const [operatorsData, setOperatorsData] = useState<IContractEdge[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [filterValue, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
   const [filtering, setFiltering] = useState(false);
-  const elementsPerPage = 5;
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  const tags = [
-    ...DEFAULT_TAGS,
-    {
-      name: TAG_NAMES.scriptCurator,
-      values: [findTag(scriptTx as IEdge, 'sequencerOwner')],
-    },
-    {
-      name: TAG_NAMES.scriptName,
-      values: [findTag(scriptTx as IEdge, 'scriptName')],
-    },
-    {
-      name: TAG_NAMES.scriptTransaction,
-      values: [findTag(scriptTx as IEdge, 'scriptTransaction')],
-    },
-    ...OPERATOR_REGISTRATION_PAYMENT_TAGS,
-  ];
+  const scriptId = findTag(scriptTx as IEdge, 'scriptTransaction') as string;
+  const scriptName  = findTag(scriptTx as IEdge, 'scriptName');
+  const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner');
 
+  const queryObject = FairSDKWeb.utils.getOperatorQueryForScript(scriptId, scriptName, scriptCurator);
   const {
     data: queryData,
     loading,
@@ -285,16 +269,14 @@ const ChooseOperator = ({
     networkStatus,
     refetch,
     fetchMore,
-  } = useQuery(FIND_BY_TAGS, {
-    variables: { tags, first: elementsPerPage },
+  } = useQuery(gql(queryObject.query), {
+    variables: queryObject.variables,
     skip: !scriptTx,
   });
 
   const showLoading = useMemo(() => loading || filtering, [loading, filtering]);
 
-  const handleRetry = useCallback(() => {
-    refetch({ tags });
-  }, [refetch]);
+  const handleRetry = useCallback(() => refetch(), [refetch]);
 
   const handleSelected = useCallback(
     (index: number) => {
@@ -307,7 +289,7 @@ const ChooseOperator = ({
     [setSelectedIdx],
   );
 
-  const checkSingleOperator = (filtered: IEdge[]) => {
+  const checkSingleOperator = (filtered: IContractEdge[]) => {
     if (
       (filtered.length === 1 || (IS_TO_CHOOSE_MODEL_AUTOMATICALLY && filtered.length > 1)) &&
       !!setShowOperators
@@ -350,11 +332,7 @@ const ChooseOperator = ({
     if (queryData && networkStatus === NetworkStatus.ready) {
       // use immediately invoked function to be able to call async operations in useEffect
       (async () => {
-        const filtered: IEdge[] = [];
-        for (const el of queryData.transactions.edges) {
-          filtered.push(el);
-          await checkOpResponses(el, filtered);
-        }
+        const filtered: IContractEdge[] = await FairSDKWeb.utils.operatorsFilter(queryData.transactions.edges);
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setOperatorsData(filtered);
         checkSingleOperator(filtered);

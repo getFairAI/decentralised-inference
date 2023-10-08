@@ -25,6 +25,7 @@ import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
 import Transaction from 'arweave/web/lib/transaction';
 import { connectToU, getUBalance, parseUBalance } from '@/utils/u';
 import { connectToUCM } from '@/utils/ucm';
+import FairSDKWeb from 'fair-protocol-sdk/web';
 
 const arweaveApp = 'arweave.app';
 const arConnect = 'arconnect';
@@ -113,6 +114,7 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
     // connect wallet to contract
     connectToU();
     connectToUCM();
+    await FairSDKWeb.connectWallet();
     await asyncUpdateUBalance(dispatch, addr, 0);
 
     // only load wallet adderss after fetching first balances
@@ -144,6 +146,7 @@ const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
     // connect wallet to contract
     connectToU();
     connectToUCM();
+    await FairSDKWeb.connectWallet();
     await asyncUpdateUBalance(dispatch, addr, 0);
 
     // only load wallet adderss after fetching first balances
