@@ -33,11 +33,12 @@ export interface PstState {
   claims: string[];
 }
 
-export const getContractByTxId = (txId: string) => warp.contract(txId).setEvaluationOptions({
-  unsafeClient: 'skip',
-  allowBigInt: true,
-  internalWrites: true,
-});
+export const getContractByTxId = (txId: string) =>
+  warp.contract(txId).setEvaluationOptions({
+    unsafeClient: 'skip',
+    allowBigInt: true,
+    internalWrites: true,
+  });
 
 export const connect = (contract: Contract<unknown>) => contract.connect('use_wallet');
 

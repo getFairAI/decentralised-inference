@@ -175,11 +175,11 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
       a.href = URL.createObjectURL(message.msg as File);
       a.download = `${message.id}.${message.contentType?.split('/')[1]}`;
     } else {
-      const file = new Blob([ message.msg ], {type: 'text/plain'});
+      const file = new Blob([message.msg], { type: 'text/plain' });
       a.href = URL.createObjectURL(file);
       a.download = `${message.id}.txt`;
     }
-    
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
