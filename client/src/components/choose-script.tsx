@@ -16,21 +16,11 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  TAG_NAMES,
-  SCRIPT_CREATION_PAYMENT,
-  U_CONTRACT_ID,
-  VAULT_ADDRESS,
-  SCRIPT_CREATION_FEE,
-  U_DIVIDER,
-  DEFAULT_TAGS,
-  IS_TO_CHOOSE_MODEL_AUTOMATICALLY,
-} from '@/constants';
+import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
-import { FIND_BY_TAGS } from '@/queries/graphql';
-import { findTag, findTagsWithKeyword, isFakeDeleted } from '@/utils/common';
-import { NetworkStatus, useQuery } from '@apollo/client';
+import { findTag, findTagsWithKeyword } from '@/utils/common';
+import { NetworkStatus, gql, useQuery } from '@apollo/client';
 import {
   DialogActions,
   Button,
@@ -53,9 +43,8 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
-import { checkHasOperators } from '@/utils/operator';
 import { Timeout } from 'react-number-format/types/types';
-import { filterByUniqueScriptTxId, filterPreviousVersions } from '@/utils/script';
+import FairSDKWeb from 'fair-protocol-sdk/web';
 
 const ChooseScript = ({
   setShowScripts,
@@ -76,56 +65,24 @@ const ChooseScript = ({
   const { state }: { state: ModelNavigationState } = useLocation();
   const { currentAddress } = useContext(WalletContext);
   const navigate = useNavigate();
-  const elementsPerPage = 5;
 
-  const scriptPaymentInputStr = JSON.stringify({
-    function: 'transfer',
-    target: VAULT_ADDRESS,
-    qty: (parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER).toString(),
-  });
-
-  const scriptPaymentInputNumber = JSON.stringify({
-    function: 'transfer',
-    target: VAULT_ADDRESS,
-    qty: parseFloat(SCRIPT_CREATION_FEE) * U_DIVIDER,
-  });
-
-  const tags = [
-    ...DEFAULT_TAGS,
-    {
-      name: TAG_NAMES.operationName,
-      values: [SCRIPT_CREATION_PAYMENT],
-    },
-    {
-      name: TAG_NAMES.modelCreator,
-      values: [state.modelCreator],
-    },
-    {
-      name: TAG_NAMES.modelName,
-      values: [state.modelName],
-    },
-    {
-      name: TAG_NAMES.modelTransaction,
-      values: [state.modelTransaction],
-    },
-    { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
-    { name: TAG_NAMES.input, values: [scriptPaymentInputStr, scriptPaymentInputNumber] },
-  ];
-
+  const queryObject = FairSDKWeb.utils.getScriptQueryForModel(
+    state.modelTransaction,
+    state.modelName,
+    state.modelCreator,
+  );
   const {
     data: queryData,
     loading,
     error,
-    networkStatus,
     refetch,
     fetchMore,
-  } = useQuery(FIND_BY_TAGS, {
-    variables: { tags, first: elementsPerPage },
-  });
+    networkStatus,
+  } = useQuery(gql(queryObject.query), { variables: queryObject.variables });
 
   const showLoading = useMemo(() => loading || filtering, [loading, filtering]);
 
-  const handleRetry = useCallback(() => refetch({ tags }), [refetch, tags]);
+  const handleRetry = useCallback(() => refetch(), [refetch]);
 
   const timeoutSeconds = 500;
 
@@ -156,22 +113,7 @@ const ChooseScript = ({
     }
     if (queryData && networkStatus === NetworkStatus.ready) {
       (async () => {
-        const uniqueScripts = filterByUniqueScriptTxId<IContractEdge[]>(
-          queryData.transactions.edges,
-        );
-        const filteredScritps = filterPreviousVersions<IContractEdge[]>(
-          uniqueScripts as IContractEdge[],
-        );
-        const filtered: IContractEdge[] = [];
-        for (const el of filteredScritps) {
-          const scriptId = findTag(el, 'scriptTransaction') as string;
-          const scriptOwner = findTag(el, 'sequencerOwner') as string;
-          if (await isFakeDeleted(scriptId, scriptOwner, 'script')) {
-            // if fake deleted ignore
-          } else {
-            await checkHasOperators(el, filtered);
-          }
-        }
+        const filtered = await FairSDKWeb.utils.scriptsFilter(queryData.transactions.edges);
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setScriptsData(filtered);
 

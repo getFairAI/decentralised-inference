@@ -1,11 +1,18 @@
 import { Box, Typography, useMediaQuery } from '@mui/material';
 import { useState } from 'react';
 import AiCard from './ai-card';
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge } from '@/interfaces/arweave';
 import '@/styles/ui.css';
 import { ApolloError } from '@apollo/client';
 
-const Featured = ({ data, loading }: { data: IEdge[]; loading: boolean; error?: ApolloError }) => {
+const Featured = ({
+  data,
+  loading,
+}: {
+  data: IContractEdge[];
+  loading: boolean;
+  error?: ApolloError;
+}) => {
   const [filterSelected, setFilterChanged] = useState(0);
   const filters = ['All', 'Text', 'Document'];
   const smallScreen = useMediaQuery('(max-width:1600px)');

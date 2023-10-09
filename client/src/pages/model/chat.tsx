@@ -31,7 +31,7 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { NetworkStatus, useLazyQuery } from '@apollo/client';
+import { NetworkStatus } from '@apollo/client';
 import {
   ChangeEvent,
   RefObject,
@@ -43,60 +43,37 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  PROTOCOL_VERSION,
-  TAG_NAMES,
-  PROTOCOL_NAME,
-  INFERENCE_PAYMENT,
-  N_PREVIOUS_BLOCKS,
-  SCRIPT_INFERENCE_RESPONSE,
-  SCRIPT_INFERENCE_REQUEST,
-  secondInMS,
-  textContentType,
-  OPERATOR_PERCENTAGE_FEE,
-  MARKETPLACE_PERCENTAGE_FEE,
-  CREATOR_PERCENTAGE_FEE,
-  CURATOR_PERCENTAGE_FEE,
-  VAULT_ADDRESS,
-  MAX_MESSAGE_SIZE,
-  DEFAULT_TAGS,
-  TX_ORIGIN,
-  ATOMIC_ASSET_CONTRACT_SOURCE_ID,
-  UDL_ID,
-} from '@/constants';
-import {
-  QUERY_CHAT_REQUESTS,
-  QUERY_CHAT_REQUESTS_POLLING,
-  QUERY_CHAT_RESPONSES,
-  QUERY_CHAT_RESPONSES_POLLING,
-} from '@/queries/graphql';
+import { TAG_NAMES, N_PREVIOUS_BLOCKS, textContentType, MAX_MESSAGE_SIZE } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { commonUpdateQuery, findTag, parseCost, printSize } from '@/utils/common';
+import { findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
-import useOnScreen from '@/hooks/useOnScreen';
 import Conversations from '@/components/conversations';
 import useScroll from '@/hooks/useScroll';
-import { IMessage, IConfiguration } from '@/interfaces/common';
+import { IMessage } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatBubble from '@/components/chat-bubble';
 import DebounceIconButton from '@/components/debounce-icon-button';
-import { parseUBalance, sendU } from '@/utils/u';
+import { parseUBalance } from '@/utils/u';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Configuration from '@/components/configuration';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
 import { WarpFactory } from 'warp-contracts';
 import { DeployPlugin } from 'warp-contracts-plugin-deploy';
+import useRequests from '@/hooks/useRequests';
+import useResponses from '@/hooks/useResponses';
+import FairSDKWeb from 'fair-protocol-sdk/web';
 
 const warp = WarpFactory.forMainnet().use(new DeployPlugin());
+const errorMsg = 'An Error Occurred. Please try again later.';
 
 const InputField = ({
   file,
@@ -313,9 +290,6 @@ const Chat = () => {
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
   const target = useRef<HTMLDivElement>(null);
-  const isOnScreen = useOnScreen(target);
-  const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
-  const [hasResponseNextPage, setHasResponseNextPage] = useState(false);
   const [isFirstPage, setIsFirstPage] = useState(true);
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
   const [lastEl, setLastEl] = useState<Element | undefined>(undefined);
@@ -328,6 +302,7 @@ const Chat = () => {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
+  const [requestIds] = useState<string[]>([]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const assetNamesRef = useRef<HTMLTextAreaElement>(null);
@@ -336,43 +311,45 @@ const Chat = () => {
   const nImagesRef = useRef<number>(0);
   const customTagsRef = useRef<{ name: string; value: string }[]>([]);
   const keepConfigRef = useRef<HTMLInputElement>(null);
+  const generateAssetsRef = useRef<'fair-protocol' | 'rareweave' | 'none'>('fair-protocol');
+  const royaltyRef = useRef<HTMLInputElement>(null);
 
   const isStableDiffusion = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
     [state],
   );
 
-  const [
-    getChatRequests,
-    {
-      data: requestsData,
-      loading: requestsLoading,
-      error: requestError,
-      networkStatus: requestNetworkStatus,
-      fetchMore: requestFetchMore,
-    },
-  ] = useLazyQuery(QUERY_CHAT_REQUESTS);
-  const [
-    getChatResponses,
-    {
-      data: responsesData,
-      error: responseError,
-      loading: responsesLoading,
-      networkStatus: responseNetworkStatus,
-      fetchMore: responsesFetchMore,
-    },
-  ] = useLazyQuery(QUERY_CHAT_RESPONSES);
+  const [requestParams, setRequestParams] = useState({
+    target,
+    userAddr,
+    scriptName: state.scriptName,
+    scriptCurator: state.scriptCurator,
+    scriptOperator: state.scriptOperator,
+    conversationId: currentConversationId,
+    first: elementsPerPage,
+  });
+  const [responseParams, setResponseParams] = useState({
+    target,
+    userAddr,
+    reqIds: requestIds,
+    scriptName: state.scriptName,
+    scriptCurator: state.scriptCurator,
+    scriptOperators: [state.scriptOperator],
+    conversationId: currentConversationId,
+    lastRequestId: '',
+    first: elementsPerPage,
+  });
 
-  const [pollRequests, { data: requestsPollingData, stopPolling: stopRequestPolling }] =
-    useLazyQuery(QUERY_CHAT_REQUESTS_POLLING, {
-      fetchPolicy: 'no-cache',
-      nextFetchPolicy: 'no-cache',
-    });
-  const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] =
-    useLazyQuery(QUERY_CHAT_RESPONSES_POLLING, {
-      fetchPolicy: 'no-cache',
-      nextFetchPolicy: 'no-cache',
-    });
+  const { requestsData, requestError, requestsLoading, requestNetworkStatus, requestsPollingData } =
+    useRequests(requestParams);
+
+  const {
+    responsesData,
+    responseError,
+    responsesLoading,
+    responseNetworkStatus,
+    responsesPollingData,
+  } = useResponses(responseParams);
 
   const showLoading = useMemo(
     () => messagesLoading || requestsLoading || responsesLoading,
@@ -380,6 +357,10 @@ const Chat = () => {
   );
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
+
+  useEffect(() => {
+    (async () => FairSDKWeb.use('script', state.fullState))();
+  }, [state]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -398,35 +379,17 @@ const Chat = () => {
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      const tagsResponses = [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
-        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
-        // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: TAG_NAMES.scriptUser, values: [userAddr] },
-        {
-          name: TAG_NAMES.requestTransaction,
-          values: requestsData.transactions.edges.map((el: IEdge) => el.node.id),
-        }, // slice from end to get latest requests
-      ];
-      const owners = Array.from(
+      //
+      const reqIds = requestsData.transactions.edges.map((el: IEdge) => el.node.id);
+      const scriptOperators = Array.from(
         new Set(requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator'))),
       );
-      getChatResponses({
-        variables: {
-          first: elementsPerPage,
-          after:
-            previousResponses.length > 0
-              ? previousResponses[previousResponses.length - 1].cursor
-              : undefined,
-          tagsResponses,
-          owners,
-        },
-        notifyOnNetworkStatusChange: true,
+      setResponseParams({
+        ...responseParams,
+        scriptOperators,
+        reqIds,
+        lastRequestId: reqIds[reqIds.length - 1],
       });
-
-      setHasRequestNextPage(requestsData?.transactions?.pageInfo?.hasNextPage);
     }
   }, [requestsData]);
 
@@ -437,25 +400,9 @@ const Chat = () => {
           !previousResponses.find((current: IEdge) => current.node.id === previous.node.id),
       );
       setPreviousResponses([...previousResponses, ...newResponses]);
-      setHasResponseNextPage(responsesData?.transactions?.pageInfo?.hasNextPage || false);
       (async () => reqData([...previousResponses, ...newResponses]))();
     }
   }, [responsesData]);
-
-  useEffect(() => {
-    if (isOnScreen && hasRequestNextPage) {
-      if (!requestsData) return;
-      requestFetchMore({
-        variables: {
-          after:
-            requestsData.transactions.edges.length > 0
-              ? requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor
-              : undefined,
-        },
-        updateQuery: commonUpdateQuery,
-      });
-    }
-  }, [isOnScreen, hasRequestNextPage]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -465,119 +412,11 @@ const Chat = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (responsesData && hasResponseNextPage) {
-      responsesFetchMore({
-        variables: {
-          after:
-            responsesData.transactions.edges.length > 0
-              ? responsesData.transactions.edges[responsesData.transactions.edges.length - 1].cursor
-              : undefined,
-        },
-        updateQuery: commonUpdateQuery,
-      });
-    }
-  }, [responsesData, hasResponseNextPage]);
-
-  useEffect(() => {
     // start polling only on latest messages
     if (!isTopHalf || isFirstPage) {
       scrollToBottom();
     } else {
       scrollToLast();
-    }
-    if (messages && requestsData && !messagesLoading && isFirstPage) {
-      setIsFirstPage(false);
-      stopRequestPolling();
-
-      const tagsRequests = [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
-        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
-      ];
-
-      pollRequests({
-        variables: {
-          first: elementsPerPage,
-          tagsRequests,
-          address: userAddr,
-        },
-        pollInterval: 5000,
-      });
-      stopResponsePolling();
-      const tagsResponses = [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
-        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
-        // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: TAG_NAMES.scriptUser, values: [userAddr] },
-        {
-          name: TAG_NAMES.requestTransaction,
-          values: messages
-            .filter((el) => el.type === 'request')
-            .map((el) => el.id)
-            .slice(-1), // last request
-        }, // slice from end to get latest requests
-      ];
-      const owners = Array.from(
-        new Set(
-          requestsData.transactions.edges
-            .filter((el: IEdge) =>
-              messages
-                .filter((el) => el.type === 'request')
-                .slice(-1)
-                .find((msg) => msg.id === el.node.id),
-            )
-            .map((el: IEdge) => findTag(el, 'scriptOperator')),
-        ),
-      );
-
-      pollResponses({
-        variables: {
-          tagsResponses,
-          owners,
-        },
-        pollInterval: 5000,
-      });
-    } else if (messages && requestsData && !messagesLoading) {
-      // restart responses polling on new messages
-      stopResponsePolling();
-      const tagsResponses = [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
-        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
-        // { name: 'Conversation-Identifier', values: [currentConversationId] },
-        { name: TAG_NAMES.scriptUser, values: [userAddr] },
-        {
-          name: TAG_NAMES.requestTransaction,
-          values: messages
-            .filter((el) => el.type === 'request')
-            .map((el) => el.id)
-            .slice(-1), // last request
-        }, // slice from end to get latest requests
-      ];
-      const owners = Array.from(
-        new Set(
-          requestsData.transactions.edges
-            .filter((el: IEdge) =>
-              messages
-                .filter((el) => el.type === 'request')
-                .slice(-1)
-                .find((msg) => msg.id === el.node.id),
-            )
-            .map((el: IEdge) => findTag(el, 'scriptOperator')),
-        ),
-      );
-
-      pollResponses({
-        variables: {
-          tagsResponses,
-          owners,
-        },
-        pollInterval: 5000,
-      });
     }
   }, [messages]);
 
@@ -585,37 +424,26 @@ const Chat = () => {
     if (currentConversationId) {
       setMessagesLoading(true);
       setPreviousResponses([]); // clear previous responses
+      setIsWaitingResponse(false);
       setIsFirstPage(true);
-      // get messages for current conversation
-
-      const tagsRequests = [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
-        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
-        { name: TAG_NAMES.conversationIdentifier, values: [`${currentConversationId}`] },
-      ];
-
-      getChatRequests({
-        variables: {
-          first: elementsPerPage,
-          tagsRequests,
-          address: userAddr,
-          after: null,
-        },
-        notifyOnNetworkStatusChange: true,
+      setRequestParams({
+        ...requestParams,
+        conversationId: currentConversationId,
       });
     }
   }, [currentConversationId]);
 
   useEffect(() => {
-    if (!responsesPollingData || !responsesData || messagesLoading) return;
+    if (!responsesPollingData || !responsesData || messagesLoading) {
+      return;
+    }
 
     const responses = responsesPollingData?.transactions?.edges || [];
-    const currentRespones = responsesData.transactions.edges;
+    const currentRespones = previousResponses;
     const newValidResponses = responses.filter(
       (res: IEdge) => !currentRespones.find((el: IEdge) => el.node.id === res.node.id),
     );
+    setPreviousResponses([...currentRespones, ...newValidResponses]);
     (async () => {
       if (newValidResponses.length > 0) {
         await asyncMap(newValidResponses);
@@ -623,7 +451,7 @@ const Chat = () => {
         await emptyPolling();
       }
     })();
-  }, [responsesPollingData]);
+  }, [responsesData, messagesLoading, responsesPollingData]);
 
   useEffect(() => {
     if (!requestsPollingData || !requestsData || messagesLoading) return;
@@ -744,164 +572,6 @@ const Chat = () => {
     }
   };
 
-  const getUploadTags = (contentType: string, configuration: IConfiguration, fileName?: string) => {
-    const tags = [];
-    tags.push({ name: TAG_NAMES.protocolName, value: PROTOCOL_NAME });
-    tags.push({ name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION });
-    tags.push({ name: TAG_NAMES.scriptName, value: state.scriptName });
-    tags.push({ name: TAG_NAMES.scriptCurator, value: state.scriptCurator });
-    tags.push({ name: TAG_NAMES.scriptTransaction, value: state.scriptTransaction });
-    tags.push({ name: TAG_NAMES.scriptOperator, value: address });
-    tags.push({ name: TAG_NAMES.operationName, value: SCRIPT_INFERENCE_REQUEST });
-    tags.push({ name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` });
-    if (fileName) {
-      tags.push({ name: TAG_NAMES.fileName, value: fileName });
-    }
-    const tempDate = Date.now() / secondInMS;
-    tags.push({ name: TAG_NAMES.unixTime, value: tempDate.toString() });
-    tags.push({ name: TAG_NAMES.contentType, value: contentType });
-    tags.push({ name: TAG_NAMES.txOrigin, value: TX_ORIGIN });
-
-    addConfigTags(tags, configuration);
-
-    // add atomic asset tags
-    const manifest = {
-      evaluationOptions: {
-        sourceType: 'redstone-sequencer',
-        allowBigInt: true,
-        internalWrites: true,
-        unsafeClient: 'skip',
-        useConstructor: false,
-      },
-    };
-    const initState = {
-      firstOwner: userAddr,
-      canEvolve: false,
-      balances: {
-        [userAddr]: 1,
-      },
-      name: 'Fair Protocol Prompt Atomic Asset',
-      ticker: 'FPPAA',
-    };
-
-    tags.push({ name: TAG_NAMES.appName, value: 'SmartWeaveContract' });
-    tags.push({ name: TAG_NAMES.appVersion, value: '0.3.0' });
-    tags.push({ name: TAG_NAMES.contractSrc, value: ATOMIC_ASSET_CONTRACT_SOURCE_ID }); // use contract source here
-
-    tags.push({
-      name: TAG_NAMES.contractManifest,
-      value: JSON.stringify(manifest),
-    });
-    tags.push({
-      name: TAG_NAMES.initState,
-      value: JSON.stringify(initState),
-    });
-
-    tags.push({ name: TAG_NAMES.license, value: UDL_ID });
-    tags.push({ name: TAG_NAMES.derivation, value: 'Allowed-With-License-Passthrough' });
-    tags.push({ name: TAG_NAMES.commercialUse, value: 'Allowed' });
-
-    return tags;
-  };
-
-  const addConfigTags = (tags: ITag[], configuration: IConfiguration) => {
-    if (configuration.assetNames && configuration.assetNames.length > 0) {
-      tags.push({ name: TAG_NAMES.assetNames, value: JSON.stringify(configuration.assetNames) });
-    }
-
-    if (configuration.negativePrompt) {
-      tags.push({ name: TAG_NAMES.negativePrompt, value: configuration.negativePrompt });
-    }
-
-    if (configuration.description) {
-      tags.push({ name: TAG_NAMES.description, value: configuration.description });
-    }
-
-    if (configuration.customTags && configuration.customTags?.length > 0) {
-      tags.push({
-        name: TAG_NAMES.userCustomTags,
-        value: JSON.stringify(configuration.customTags),
-      });
-    }
-
-    if (configuration.nImages && configuration.nImages > 0) {
-      tags.push({ name: TAG_NAMES.nImages, value: configuration.nImages.toString() });
-    }
-  };
-
-  const handlePayment = async (
-    bundlrId: string,
-    inferenceFee: string,
-    contentType: string,
-    configuration: IConfiguration,
-  ) => {
-    const parsedUFee = parseFloat(inferenceFee);
-    try {
-      const paymentTags = [
-        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
-        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
-        { name: TAG_NAMES.operationName, value: INFERENCE_PAYMENT },
-        { name: TAG_NAMES.scriptName, value: state.scriptName },
-        { name: TAG_NAMES.scriptCurator, value: state.scriptCurator },
-        { name: TAG_NAMES.scriptTransaction, value: state.scriptTransaction },
-        { name: TAG_NAMES.scriptOperator, value: address as string },
-        { name: TAG_NAMES.modelCreator, value: state.modelCreator },
-        { name: TAG_NAMES.conversationIdentifier, value: `${currentConversationId}` },
-        { name: TAG_NAMES.inferenceTransaction, value: bundlrId },
-        { name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() },
-        { name: TAG_NAMES.contentType, value: contentType },
-        { name: TAG_NAMES.txOrigin, value: TX_ORIGIN },
-      ];
-
-      //
-      addConfigTags(paymentTags, configuration);
-
-      let adjustedInferenceFee = parsedUFee;
-      const nImages = configuration.nImages;
-      if (isStableDiffusion && nImages && nImages > 0) {
-        // calculate fee for n-images
-        adjustedInferenceFee = parsedUFee * nImages;
-      } else if (isStableDiffusion) {
-        // default n images is 4 if not specified
-        const defaultNImages = 4;
-        adjustedInferenceFee = parsedUFee * defaultNImages;
-      } else {
-        // no need to change inference fee
-      }
-
-      const operatorFeeShare = adjustedInferenceFee * OPERATOR_PERCENTAGE_FEE;
-      const marketPlaceFeeShare = adjustedInferenceFee * MARKETPLACE_PERCENTAGE_FEE;
-      const creatorFeeShare = adjustedInferenceFee * CREATOR_PERCENTAGE_FEE;
-      const curatorFeeShare = adjustedInferenceFee * CURATOR_PERCENTAGE_FEE;
-
-      // pay operator
-      await sendU(address as string, parseInt(operatorFeeShare.toString(), 10), paymentTags);
-      // pay curator
-      await sendU(state.scriptCurator, parseInt(curatorFeeShare.toString(), 10), paymentTags);
-      // pay model creator
-      await sendU(state.modelCreator, parseInt(creatorFeeShare.toString(), 10), paymentTags);
-      // pay marketplace
-      await sendU(VAULT_ADDRESS, parseInt(marketPlaceFeeShare.toString(), 10), paymentTags);
-
-      // update balance after payments
-      await updateUBalance();
-      const nDigits = 4;
-      const usdFee = (await parseCost(parseUBalance(adjustedInferenceFee.toString()))).toFixed(
-        nDigits,
-      );
-      enqueueSnackbar(
-        <Typography>{`Paid Inference costs: ${usdFee}$ (${parseUBalance(
-          adjustedInferenceFee.toString(),
-        )} $U)`}</Typography>,
-        {
-          variant: 'success',
-        },
-      );
-    } catch (error) {
-      enqueueSnackbar('An Error Occurred', { variant: 'error' });
-    }
-  };
-
   const clearConfigInputs = () => {
     if (assetNamesRef?.current) {
       assetNamesRef.current.value = '';
@@ -918,9 +588,16 @@ const Chat = () => {
     if (nImagesRef.current) {
       nImagesRef.current = 4;
     }
+    if (royaltyRef?.current) {
+      royaltyRef.current.value = '';
+    }
+    if (generateAssetsRef?.current) {
+      generateAssetsRef.current = 'fair-protocol';
+    }
   };
 
   const getConfigValues = () => {
+    const generateAssets = generateAssetsRef?.current;
     const assetNames = assetNamesRef?.current?.value
       ? assetNamesRef.current.value.split(';').map((el) => el.trim())
       : undefined;
@@ -928,13 +605,16 @@ const Chat = () => {
     const description = descriptionRef?.current?.value;
     const customTags = customTagsRef?.current;
     const nImages = nImagesRef?.current;
+    const royalty = royaltyRef?.current?.value;
 
     return {
+      generateAssets,
       assetNames,
       negativePrompt,
       description,
       customTags,
       nImages,
+      royalty,
     };
   };
 
@@ -980,6 +660,13 @@ const Chat = () => {
       tags,
     });
     setMessages(temp);
+    setResponseParams({
+      ...responseParams,
+      conversationId: currentConversationId,
+      lastRequestId: txid,
+      reqIds: [],
+      scriptOperators: [address as string],
+    });
   };
 
   const handleSendFile = async () => {
@@ -998,7 +685,16 @@ const Chat = () => {
 
     try {
       const configuration = getConfigValues();
-      const tags: ITag[] = getUploadTags(content.name, configuration, contentType);
+      const tags: ITag[] = FairSDKWeb.utils.getUploadTags(
+        FairSDKWeb.script,
+        address as string,
+        userAddr,
+        currentConversationId,
+        contentType,
+        configuration,
+        content.name,
+      );
+
       // upload with dispatch
       const data = await content.arrayBuffer(); // it's safe to convert to arrayBuffer bc max size is 100kb
       const tx = await arweave.createTransaction({ data });
@@ -1007,14 +703,37 @@ const Chat = () => {
       const { id: txid } = await dispatchTx(tx);
 
       if (!txid) {
-        enqueueSnackbar('An Error Occurred', { variant: 'error' });
+        enqueueSnackbar(errorMsg, { variant: 'error' });
         return;
       }
       await updateMessages(txid, content, contentType, tags);
       await warp.register(txid, 'node2');
-      await handlePayment(txid, state.fee, contentType, configuration);
+      const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
+        txid,
+        state.fee,
+        contentType,
+        FairSDKWeb.script,
+        currentConversationId,
+        state.modelCreator,
+        address as string,
+        configuration,
+      );
+      // update balance after payments
+      await updateUBalance();
+      enqueueSnackbar(
+        <Typography>{`Paid Inference costs: ${totalUsdCost}$ (${totalUCost} $U)`}</Typography>,
+        {
+          variant: 'success',
+        },
+      );
     } catch (error) {
-      enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
+      if (error instanceof Object) {
+        enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
+      } else if (error instanceof String) {
+        enqueueSnackbar(error, { variant: 'error' });
+      } else {
+        enqueueSnackbar(errorMsg, { variant: 'error' });
+      }
     }
   };
 
@@ -1033,7 +752,14 @@ const Chat = () => {
 
     try {
       const configuration = getConfigValues();
-      const tags: ITag[] = getUploadTags(contentType, configuration);
+      const tags: ITag[] = FairSDKWeb.utils.getUploadTags(
+        FairSDKWeb.script,
+        address as string,
+        userAddr,
+        currentConversationId,
+        contentType,
+        configuration,
+      );
 
       // upload with dispatch
       const tx = await arweave.createTransaction({ data: newMessage });
@@ -1041,14 +767,37 @@ const Chat = () => {
 
       const { id: txid } = await dispatchTx(tx);
       if (!txid) {
-        enqueueSnackbar('An Error Occurred.', { variant: 'error' });
+        enqueueSnackbar(errorMsg, { variant: 'error' });
         return;
       }
       await updateMessages(txid, newMessage, contentType, tags);
       await warp.register(txid, 'node2');
-      await handlePayment(txid, state.fee, contentType, configuration);
+      const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
+        txid,
+        state.fee,
+        contentType,
+        FairSDKWeb.script,
+        currentConversationId,
+        state.modelCreator,
+        address as string,
+        configuration,
+      );
+      // update balance after payments
+      await updateUBalance();
+      enqueueSnackbar(
+        <Typography>{`Paid Inference costs: ${totalUsdCost}$ (${totalUCost} $U)`}</Typography>,
+        {
+          variant: 'success',
+        },
+      );
     } catch (error) {
-      enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
+      if (error instanceof Object) {
+        enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
+      } else if (error instanceof String) {
+        enqueueSnackbar(error, { variant: 'error' });
+      } else {
+        enqueueSnackbar(errorMsg, { variant: 'error' });
+      }
     }
   };
 
@@ -1259,6 +1008,8 @@ const Chat = () => {
             descriptionRef={descriptionRef}
             nImagesRef={nImagesRef}
             customTagsRef={customTagsRef}
+            generateAssetsRef={generateAssetsRef}
+            royaltyRef={royaltyRef}
             handleClose={handleAdvancedClose}
           />
         </Box>
@@ -1385,6 +1136,7 @@ const Chat = () => {
                 </Box>
               </Paper>
             </Box>
+
             <Box
               id={'chat-input'}
               sx={{

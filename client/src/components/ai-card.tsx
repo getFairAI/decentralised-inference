@@ -18,7 +18,7 @@
 
 import { Box, Icon, Tooltip, Typography, useTheme } from '@mui/material';
 import { FiCard, FiCardActionArea, FiCardContent, FicardMedia } from './full-image-card';
-import { IEdge } from '@/interfaces/arweave';
+import { IContractEdge } from '@/interfaces/arweave';
 import { toSvg } from 'jdenticon';
 import { useNavigate } from 'react-router-dom';
 import { MouseEvent, useEffect, useMemo } from 'react';
@@ -31,6 +31,7 @@ import {
   TAG_NAMES,
   NET_ARWEAVE_URL,
   DEFAULT_TAGS,
+  secondInMS,
 } from '@/constants';
 import { ModelNavigationState } from '@/interfaces/router';
 
@@ -39,7 +40,7 @@ const AiCard = ({
   loading,
   useModel = false,
 }: {
-  model: IEdge;
+  model: IContractEdge;
   loading: boolean;
   useModel?: boolean;
 }) => {
@@ -50,10 +51,9 @@ const AiCard = ({
 
   const imgUrl = useMemo(() => {
     if (data) {
-      const avatarTxId =
-        data.transactions.edges && data.transactions.edges[0]
-          ? data.transactions.edges[0].node.id
-          : undefined;
+      const avatarTxId = data?.transactions?.edges[0]
+        ? data.transactions.edges[0].node.id
+        : undefined;
       if (avatarTxId) {
         return `${NET_ARWEAVE_URL}/${avatarTxId}`;
       }
@@ -86,13 +86,11 @@ const AiCard = ({
   }, []);
 
   const getTimePassed = () => {
-    const timestamp = findTag(model, 'unixTime') || model.node.block?.timestamp;
+    const timestamp = findTag(model, 'unixTime');
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
-    const dateA = Number.isInteger(timestamp)
-      ? (timestamp as number) * 1000
-      : parseInt(timestamp as string, 10) * 1000;
+    const dateA = parseInt(timestamp, 10) * secondInMS;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;

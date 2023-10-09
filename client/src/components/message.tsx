@@ -45,6 +45,7 @@ import {
   DEFAULT_TAGS,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
+  RAREWEAVE_ASSET_LIST_LINK,
   TAG_NAMES,
 } from '@/constants';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
@@ -52,6 +53,7 @@ import { enqueueSnackbar } from 'notistack';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { findTag } from '@/utils/common';
 import MessageDetail from './message-detail';
+import FairSDKWeb from 'fair-protocol-sdk/web';
 
 const MessageHeader = ({ message }: { message: IMessage }) => {
   const { state } = useLocation();
@@ -146,7 +148,26 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
     })();
   }, [state]);
 
-  const handleTradeClick = useCallback(() => setOpenWithId(message.id, true), [message]);
+  const handleBazarTradeClick = useCallback(() => setOpenWithId(message.id, true), [message]);
+  const handleRareweaveTradeClick = useCallback(
+    () => window.open(`${RAREWEAVE_ASSET_LIST_LINK}/${message.id}`, '_blank'),
+    [message],
+  );
+
+  const showTradeOnBazar = useMemo(
+    () =>
+      message.type === 'response' &&
+      message.tags.find((tag) => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value ===
+        FairSDKWeb.utils.ATOMIC_ASSET_CONTRACT_SOURCE_ID,
+    [message],
+  );
+  const showRareweaveOnBazar = useMemo(
+    () =>
+      message.type === 'response' &&
+      message.tags.find((tag) => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value ===
+        FairSDKWeb.utils.RAREWEAVE_CONTRACT_ID,
+    [message],
+  );
 
   return (
     <Box display={'flex'} gap={'8px'} width={'100%'}>
@@ -176,9 +197,14 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
           </Box>
         )}
         <Box display={'flex'} alignItems='center'>
-          {message.type === 'response' && (
-            <Button variant='outlined' onClick={handleTradeClick}>
+          {showTradeOnBazar && (
+            <Button variant='outlined' onClick={handleBazarTradeClick}>
               Trade on Bazar
+            </Button>
+          )}
+          {showRareweaveOnBazar && (
+            <Button variant='outlined' onClick={handleRareweaveTradeClick}>
+              Trade on Rareweave
             </Button>
           )}
           <IconButton onClick={handleClick}>

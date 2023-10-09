@@ -5,7 +5,7 @@ import { RefObject, useEffect, useRef, useState } from 'react';
  * @param ref Element Ref
  * @returns {boolean} Returns a boolean indicating wether the current element ref is on screen or not
  */
-const useOnScreen = (ref: RefObject<HTMLElement>) => {
+const useOnScreen = (ref?: RefObject<HTMLElement>) => {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const [isOnScreen, setIsOnScreen] = useState(false);
 
@@ -25,7 +25,11 @@ const useOnScreen = (ref: RefObject<HTMLElement>) => {
    * to the current provided `ref`
    */
   useEffect(() => {
-    observerRef.current?.observe(ref.current as HTMLElement);
+    if (ref?.current) {
+      observerRef.current?.observe(ref.current);
+    } else {
+      // ignore
+    }
 
     // provide a cleanup funciton to unsubscribe observer when component unmounts
     return () => observerRef.current?.disconnect();

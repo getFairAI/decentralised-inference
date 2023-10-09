@@ -34,6 +34,7 @@
     "bignumber.js": "^9.1.1",
     "bundlr-custom": "file:../bundlr-network-client-0.11.6.tgz",
     "dayjs": "1.11.7",
+    "fair-protocol-sdk": "https://arweave.net/P7y0f_hwmgkva-dsWFQq6kN7ANSgD8iYjvc30Xe0VMI",
     "filereader-stream": "2.0.0",
     "graphql": "16.6.0",
     "jdenticon": "3.2.0",

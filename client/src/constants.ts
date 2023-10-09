@@ -274,6 +274,7 @@ const maxKb = 100;
 export const MAX_MESSAGE_SIZE = kb * maxKb;
 
 export const BAZAR_ASSETS_LINK = 'https://bazar.ar-io.dev/#/asset/';
+export const RAREWEAVE_ASSET_LIST_LINK = 'https://rareweave.store/nft';
 
 export const CREATE_WALLET_LINK = 'https://docs.arweave.org/info/wallets/arweave-wallet';
 export const BUY_AR_LINK = 'https://www.coinbase.com/how-to-buy/arweave';

@@ -22,7 +22,10 @@ import {
   Box,
   Checkbox,
   Divider,
+  FormControl,
   FormControlLabel,
+  FormGroup,
+  FormLabel,
   IconButton,
   Slider,
   TextField,
@@ -44,6 +47,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { parseUBalance } from '@/utils/u';
 import { enqueueSnackbar } from 'notistack';
+import { NumberFormatValues, NumericFormat } from 'react-number-format';
 
 const CustomTag = ({
   name,
@@ -120,7 +124,7 @@ const StableDiffusionConfigurations = ({
     if (negativePromptRef.current) {
       negativePromptRef.current.value = '';
     }
-    nImagesRef.current = 0;
+    nImagesRef.current = 4;
     return null;
   }
 
@@ -181,6 +185,8 @@ const Configuration = ({
   descriptionRef,
   nImagesRef,
   customTagsRef,
+  generateAssetsRef,
+  royaltyRef,
   handleClose,
 }: {
   negativePromptRef: RefObject<HTMLTextAreaElement>;
@@ -189,13 +195,17 @@ const Configuration = ({
   descriptionRef: RefObject<HTMLTextAreaElement>;
   nImagesRef: MutableRefObject<number>;
   customTagsRef: MutableRefObject<{ name: string; value: string }[]>;
+  generateAssetsRef: MutableRefObject<'fair-protocol' | 'rareweave' | 'none'>;
+  royaltyRef: RefObject<HTMLInputElement>;
   handleClose: () => void;
 }) => {
+  const maxPercentage = 100;
   const theme = useTheme();
   const { state } = useLocation();
   const { address } = useParams();
   const [isAssetNamesDirty, setIsAssetNamesDirty] = useState(false);
   const [customTags, setCustomTags] = useState<{ name: string; value: string }[]>([]);
+  const [generateAsset, setGenerateAsset] = useState('fair-protocol');
 
   const nameRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLTextAreaElement>(null);
@@ -248,6 +258,26 @@ const Configuration = ({
       customTagsRef.current = customTags;
     }
   }, [customTags]);
+
+  const handleChooseFair = useCallback(() => {
+    setGenerateAsset('fair-protocol');
+    generateAssetsRef.current = 'fair-protocol';
+  }, [setGenerateAsset]);
+
+  const handleChooseRareweave = useCallback(() => {
+    setGenerateAsset('rareweave');
+    generateAssetsRef.current = 'rareweave';
+  }, [setGenerateAsset]);
+
+  const handleChooseNone = useCallback(() => {
+    setGenerateAsset('none');
+    generateAssetsRef.current = 'none';
+  }, [setGenerateAsset]);
+
+  const isAllowedRoyalty = useCallback(
+    (val: NumberFormatValues) => !val.floatValue || val?.floatValue <= maxPercentage,
+    [],
+  );
 
   return (
     <Box
@@ -312,6 +342,56 @@ const Configuration = ({
           <Typography variant='h4'>Transaction Configurations</Typography>
         </Divider>
       </Box>
+      <FormControl sx={{ m: 3 }} component='fieldset' variant='standard'>
+        <FormLabel component='legend'>Atomic Asset</FormLabel>
+        <FormGroup>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={generateAsset === 'fair-protocol'}
+                onChange={handleChooseFair}
+                name='Fair Protocol Atomic Asset'
+              />
+            }
+            label='Fair Protocol Atomic Asset'
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={generateAsset === 'rareweave'}
+                onChange={handleChooseRareweave}
+                name='Rareweave Asset'
+              />
+            }
+            label='Rareweave Asset'
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={generateAsset === 'none'}
+                onChange={handleChooseNone}
+                name='Do not Generate Asset'
+              />
+            }
+            label='Do not Generate Asset'
+          />
+        </FormGroup>
+      </FormControl>
+      {generateAsset === 'rareweave' && (
+        <NumericFormat
+          customInput={TextField}
+          allowNegative={false}
+          decimalScale={0}
+          inputRef={royaltyRef} // send input ref, so we can focus on input when error appear
+          defaultValue={0}
+          maxLength={3}
+          max={100}
+          label='Royalty (%)'
+          placeholder='Royalty'
+          isAllowed={isAllowedRoyalty}
+        />
+      )}
+
       <TextField
         inputRef={assetNamesRef}
         label={'Atomic Asset Name(s)'}

@@ -17,20 +17,12 @@
  */
 
 import Logo from '@/components/logo';
-import {
-  BUY_AR_LINK,
-  CREATE_WALLET_LINK,
-  DEFAULT_TAGS,
-  MODEL_CREATION_PAYMENT_TAGS,
-  TAG_NAMES,
-  U_CONTRACT_ID,
-  U_LOGO_SRC,
-} from '@/constants';
+import { BUY_AR_LINK, CREATE_WALLET_LINK, TAG_NAMES, U_CONTRACT_ID, U_LOGO_SRC } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { WalletContext } from '@/context/wallet';
-import { IEdge, IQueryResult } from '@/interfaces/arweave';
-import { FIND_BY_TAGS, QUERY_TXS_BY_RECIPIENT, QUERY_TX_WITH } from '@/queries/graphql';
-import { commonUpdateQuery, displayShortTxOrAddr, findTag, isFakeDeleted } from '@/utils/common';
+import { IEdge } from '@/interfaces/arweave';
+import { QUERY_TXS_BY_RECIPIENT, QUERY_TX_WITH } from '@/queries/graphql';
+import { displayShortTxOrAddr, findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';
 import {
   Box,
@@ -59,6 +51,7 @@ import { swapArToU } from '@/utils/u';
 import { useSnackbar } from 'notistack';
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
 import AiCard from '@/components/ai-card';
+import useModels from '@/hooks/useModels';
 
 type EdgeWithStatus = IEdge & { status: string };
 
@@ -469,59 +462,8 @@ const WalletNoFundsContent = () => {
 };
 
 const SinginWithFunds = () => {
-  const elementsPerPage = 4;
-
-  const [featuredTxs, setFeaturedTxs] = useState<IEdge[]>([]);
-
-  const { data, loading, fetchMore } = useQuery(FIND_BY_TAGS, {
-    variables: {
-      tags: [...DEFAULT_TAGS, ...MODEL_CREATION_PAYMENT_TAGS],
-      first: elementsPerPage,
-    },
-  });
-
-  const filterTxs = async (txsData: IQueryResult) => {
-    const filtered: IEdge[] = [];
-    for (const el of txsData.transactions.edges) {
-      const modelId = findTag(el, 'modelTransaction') as string;
-      const modelOwner = findTag(el, 'sequencerOwner') as string;
-
-      if (!modelOwner || !modelId) {
-        // ignore
-      } else if (!(await isFakeDeleted(modelId, modelOwner, 'model'))) {
-        filtered.push(el);
-      } else {
-        // ignore
-      }
-    }
-    if (featuredTxs.length === 0) {
-      setFeaturedTxs(filtered.slice(0, elementsPerPage));
-    } else {
-      // ignore
-    }
-  };
-
-  useEffect(() => {
-    if (data?.transactions?.pageInfo.hasNextPage) {
-      (async () => {
-        await fetchMore({
-          variables: {
-            after:
-              data.transactions.edges.length > 0
-                ? data.transactions.edges[data.transactions.edges.length - 1].cursor
-                : undefined,
-          },
-          updateQuery: commonUpdateQuery,
-        });
-      })();
-    } else if (data) {
-      (async () => {
-        await filterTxs(data);
-      })();
-    } else {
-      // ignore
-    }
-  }, [data]);
+  const singinFeatureElements = 4;
+  const { featuredTxs, loading } = useModels(undefined, singinFeatureElements);
 
   return (
     <>
