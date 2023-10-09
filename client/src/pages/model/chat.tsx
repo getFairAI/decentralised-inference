@@ -74,6 +74,7 @@ import FairSDKWeb from 'fair-protocol-sdk/web';
 
 const warp = WarpFactory.forMainnet().use(new DeployPlugin());
 const errorMsg = 'An Error Occurred. Please try again later.';
+const DEFAULT_N_IMAGES = 4;
 
 const InputField = ({
   file,
@@ -308,7 +309,7 @@ const Chat = () => {
   const assetNamesRef = useRef<HTMLTextAreaElement>(null);
   const negativePromptRef = useRef<HTMLTextAreaElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const nImagesRef = useRef<number>(0);
+  const nImagesRef = useRef<number>(DEFAULT_N_IMAGES);
   const customTagsRef = useRef<{ name: string; value: string }[]>([]);
   const keepConfigRef = useRef<HTMLInputElement>(null);
   const generateAssetsRef = useRef<'fair-protocol' | 'rareweave' | 'none'>('fair-protocol');
@@ -539,8 +540,7 @@ const Chat = () => {
         setIsWaitingResponse(responses.length < parseInt(nImages, 10));
         setResponseTimeout(false);
       } else if (isStableDiffusion) {
-        const defaultNImages = 4;
-        setIsWaitingResponse(responses.length < defaultNImages);
+        setIsWaitingResponse(responses.length < DEFAULT_N_IMAGES);
         setResponseTimeout(false);
       } else {
         setIsWaitingResponse(responses.length < 1);
