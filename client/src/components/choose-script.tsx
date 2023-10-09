@@ -16,10 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  TAG_NAMES,
-  IS_TO_CHOOSE_MODEL_AUTOMATICALLY,
-} from '@/constants';
+import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
@@ -69,8 +66,19 @@ const ChooseScript = ({
   const { currentAddress } = useContext(WalletContext);
   const navigate = useNavigate();
 
-  const queryObject = FairSDKWeb.utils.getScriptQueryForModel(state.modelTransaction, state.modelName, state.modelCreator);
-  const { data: queryData, loading, error, refetch, fetchMore, networkStatus } = useQuery(gql(queryObject.query), { variables: queryObject.variables });
+  const queryObject = FairSDKWeb.utils.getScriptQueryForModel(
+    state.modelTransaction,
+    state.modelName,
+    state.modelCreator,
+  );
+  const {
+    data: queryData,
+    loading,
+    error,
+    refetch,
+    fetchMore,
+    networkStatus,
+  } = useQuery(gql(queryObject.query), { variables: queryObject.variables });
 
   const showLoading = useMemo(() => loading || filtering, [loading, filtering]);
 

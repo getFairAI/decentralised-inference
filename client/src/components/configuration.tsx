@@ -205,7 +205,7 @@ const Configuration = ({
   const { address } = useParams();
   const [isAssetNamesDirty, setIsAssetNamesDirty] = useState(false);
   const [customTags, setCustomTags] = useState<{ name: string; value: string }[]>([]);
-  const [ generateAsset, setGenerateAsset ] = useState('fair-protocol');
+  const [generateAsset, setGenerateAsset] = useState('fair-protocol');
 
   const nameRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLTextAreaElement>(null);
@@ -262,17 +262,17 @@ const Configuration = ({
   const handleChooseFair = useCallback(() => {
     setGenerateAsset('fair-protocol');
     generateAssetsRef.current = 'fair-protocol';
-  }, [ setGenerateAsset ]);
+  }, [setGenerateAsset]);
 
   const handleChooseRareweave = useCallback(() => {
     setGenerateAsset('rareweave');
     generateAssetsRef.current = 'rareweave';
-  }, [ setGenerateAsset ]);
+  }, [setGenerateAsset]);
 
   const handleChooseNone = useCallback(() => {
     setGenerateAsset('none');
     generateAssetsRef.current = 'none';
-  }, [ setGenerateAsset ]);
+  }, [setGenerateAsset]);
 
   const isAllowedRoyalty = useCallback(
     (val: NumberFormatValues) => !val.floatValue || val?.floatValue <= maxPercentage,
@@ -347,37 +347,51 @@ const Configuration = ({
         <FormGroup>
           <FormControlLabel
             control={
-              <Checkbox checked={generateAsset === 'fair-protocol'} onChange={handleChooseFair} name='Fair Protocol Atomic Asset' />
+              <Checkbox
+                checked={generateAsset === 'fair-protocol'}
+                onChange={handleChooseFair}
+                name='Fair Protocol Atomic Asset'
+              />
             }
             label='Fair Protocol Atomic Asset'
           />
           <FormControlLabel
             control={
-              <Checkbox checked={generateAsset === 'rareweave'} onChange={handleChooseRareweave} name='Rareweave Asset' />
+              <Checkbox
+                checked={generateAsset === 'rareweave'}
+                onChange={handleChooseRareweave}
+                name='Rareweave Asset'
+              />
             }
             label='Rareweave Asset'
           />
           <FormControlLabel
             control={
-              <Checkbox checked={generateAsset === 'none'} onChange={handleChooseNone} name='Do not Generate Asset' />
+              <Checkbox
+                checked={generateAsset === 'none'}
+                onChange={handleChooseNone}
+                name='Do not Generate Asset'
+              />
             }
             label='Do not Generate Asset'
           />
         </FormGroup>
       </FormControl>
-      {generateAsset === 'rareweave' && <NumericFormat
-        customInput={TextField}
-        allowNegative={false}
-        decimalScale={0}
-        inputRef={royaltyRef} // send input ref, so we can focus on input when error appear
-        defaultValue={0}
-        maxLength={3}
-        max={100}
-        label='Royalty (%)'
-        placeholder='Royalty'
-        isAllowed={isAllowedRoyalty}
-      />}
-      
+      {generateAsset === 'rareweave' && (
+        <NumericFormat
+          customInput={TextField}
+          allowNegative={false}
+          decimalScale={0}
+          inputRef={royaltyRef} // send input ref, so we can focus on input when error appear
+          defaultValue={0}
+          maxLength={3}
+          max={100}
+          label='Royalty (%)'
+          placeholder='Royalty'
+          isAllowed={isAllowedRoyalty}
+        />
+      )}
+
       <TextField
         inputRef={assetNamesRef}
         label={'Atomic Asset Name(s)'}

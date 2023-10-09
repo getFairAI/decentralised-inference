@@ -22,9 +22,37 @@ import { RefObject, useEffect, useState } from 'react';
 import useOnScreen from './useOnScreen';
 import { commonUpdateQuery } from '@/utils/common';
 
-const useResponses = ({ target, reqIds, userAddr, scriptName, scriptCurator, scriptOperators, conversationId, lastRequestId, first }:  { target: RefObject<HTMLDivElement>, reqIds: string[], userAddr: string; scriptName: string; scriptCurator: string; scriptOperators: string[]; conversationId: number; lastRequestId?: string, first?: number }) => {
-  const [ hasResponsesNextPage, setHasResponsesNextPage ] = useState(false);
-  const { query: responsesQuery } = FairSDKWeb.utils.getResponsesQuery(reqIds, userAddr, scriptName, scriptCurator, scriptOperators, conversationId, first);
+const useResponses = ({
+  target,
+  reqIds,
+  userAddr,
+  scriptName,
+  scriptCurator,
+  scriptOperators,
+  conversationId,
+  lastRequestId,
+  first,
+}: {
+  target: RefObject<HTMLDivElement>;
+  reqIds: string[];
+  userAddr: string;
+  scriptName: string;
+  scriptCurator: string;
+  scriptOperators: string[];
+  conversationId: number;
+  lastRequestId?: string;
+  first?: number;
+}) => {
+  const [hasResponsesNextPage, setHasResponsesNextPage] = useState(false);
+  const { query: responsesQuery } = FairSDKWeb.utils.getResponsesQuery(
+    reqIds,
+    userAddr,
+    scriptName,
+    scriptCurator,
+    scriptOperators,
+    conversationId,
+    first,
+  );
   const isOnScreen = useOnScreen(target);
   const [
     getChatResponses,
@@ -44,18 +72,42 @@ const useResponses = ({ target, reqIds, userAddr, scriptName, scriptCurator, scr
     });
 
   useEffect(() => {
-    const { variables: queryParams } = FairSDKWeb.utils.getResponsesQuery(reqIds, userAddr, scriptName, scriptCurator, scriptOperators, conversationId, first);
+    const { variables: queryParams } = FairSDKWeb.utils.getResponsesQuery(
+      reqIds,
+      userAddr,
+      scriptName,
+      scriptCurator,
+      scriptOperators,
+      conversationId,
+      first,
+    );
     if (reqIds.length > 0) {
       getChatResponses({ variables: queryParams });
     }
 
     if (lastRequestId) {
       stopResponsePolling();
-      const pollReqIds = [ lastRequestId ];
-      const { variables: pollQueryParams } = FairSDKWeb.utils.getResponsesQuery(pollReqIds, userAddr, scriptName, scriptCurator, scriptOperators, conversationId);
-      pollResponses({ variables: { ...pollQueryParams, }, pollInterval: 10000 });
+      const pollReqIds = [lastRequestId];
+      const { variables: pollQueryParams } = FairSDKWeb.utils.getResponsesQuery(
+        pollReqIds,
+        userAddr,
+        scriptName,
+        scriptCurator,
+        scriptOperators,
+        conversationId,
+      );
+      pollResponses({ variables: { ...pollQueryParams }, pollInterval: 10000 });
     }
-  }, [ reqIds, userAddr, scriptName, scriptCurator, scriptOperators, lastRequestId, conversationId, first ]);
+  }, [
+    reqIds,
+    userAddr,
+    scriptName,
+    scriptCurator,
+    scriptOperators,
+    lastRequestId,
+    conversationId,
+    first,
+  ]);
 
   useEffect(() => {
     if (responsesData && hasResponsesNextPage) {
@@ -75,7 +127,7 @@ const useResponses = ({ target, reqIds, userAddr, scriptName, scriptCurator, scr
     if (responsesData && responseNetworkStatus === NetworkStatus.ready) {
       setHasResponsesNextPage(responsesData.transactions.pageInfo.hasNextPage);
     }
-  }, [ responsesData, responseNetworkStatus, setHasResponsesNextPage ]);
+  }, [responsesData, responseNetworkStatus, setHasResponsesNextPage]);
 
   return {
     responsesData,

@@ -29,15 +29,18 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
   const [hasNextPage, setHasNextPage] = useState(false);
   const [txs, setTxs] = useState<IContractEdge[]>([]);
   const [featuredTxs, setFeaturedTxs] = useState<IContractEdge[]>([]);
-  const [ validTxs, setValidTxs ] = useState<IContractEdge[]>([]);
-  const [ filtering, setFiltering ] = useState(false);
-  
+  const [validTxs, setValidTxs] = useState<IContractEdge[]>([]);
+  const [filtering, setFiltering] = useState(false);
+
   const filterValue = useContext(FilterContext);
+  const isOnScreen = useOnScreen(target);
 
   const elementsPerPage = 5;
   const defaultFeaturedElements = 3;
   const queryObject = FairSDKWeb.utils.getModelsQuery(elementsPerPage);
-  const { data, loading, error, fetchMore, networkStatus } = useQuery(gql(queryObject.query), { variables: queryObject.variables });
+  const { data, loading, error, fetchMore, networkStatus } = useQuery(gql(queryObject.query), {
+    variables: queryObject.variables,
+  });
 
   const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
 
@@ -50,7 +53,7 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
         setTxs(filtered);
         setValidTxs(filtered);
         if (featuredTxs.length === 0) {
-          setFeaturedTxs(filtered.slice(0, featuredElements || defaultFeaturedElements));
+          setFeaturedTxs(filtered.slice(0, featuredElements ?? defaultFeaturedElements));
         }
         setFiltering(false);
       })();
@@ -74,37 +77,26 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
     }
   }, [filterValue]);
 
-  if (target) {
-    const isOnScreen = useOnScreen(target);
+  useEffect(() => {
+    if (isOnScreen && hasNextPage) {
+      (async () => {
+        await fetchMore({
+          variables: {
+            after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
+          },
+          updateQuery: commonUpdateQuery,
+        });
+      })();
+    }
+  }, [isOnScreen, txs]);
 
-    useEffect(() => {
-      if (isOnScreen && hasNextPage) {
-        (async () => {
-          await fetchMore({
-            variables: {
-              after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
-            },
-            updateQuery: commonUpdateQuery,
-          });
-        })();
-      }
-    }, [isOnScreen, txs]);
-
-    return {
-      txs,
-      loading: loadingOrFiltering,
-      isOnScreen,
-      featuredTxs,
-      error,
-    };
-  } else {
-    return {
-      txs,
-      loading: loadingOrFiltering,
-      featuredTxs,
-      error,
-    };
-  }
+  return {
+    loading: loadingOrFiltering,
+    txs,
+    isOnScreen,
+    featuredTxs,
+    error,
+  };
 };
 
 export default useModels;

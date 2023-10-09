@@ -31,6 +31,7 @@ import {
   TAG_NAMES,
   NET_ARWEAVE_URL,
   DEFAULT_TAGS,
+  secondInMS,
 } from '@/constants';
 import { ModelNavigationState } from '@/interfaces/router';
 
@@ -50,10 +51,9 @@ const AiCard = ({
 
   const imgUrl = useMemo(() => {
     if (data) {
-      const avatarTxId =
-        data.transactions.edges && data.transactions.edges[0]
-          ? data.transactions.edges[0].node.id
-          : undefined;
+      const avatarTxId = data?.transactions?.edges[0]
+        ? data.transactions.edges[0].node.id
+        : undefined;
       if (avatarTxId) {
         return `${NET_ARWEAVE_URL}/${avatarTxId}`;
       }
@@ -90,7 +90,7 @@ const AiCard = ({
     if (!timestamp) return 'Pending';
     const currentTimestamp = Date.now();
 
-    const dateA = parseInt(timestamp, 10) * 1000;
+    const dateA = parseInt(timestamp, 10) * secondInMS;
     const dateB = currentTimestamp;
 
     const timeDiff = dateB - dateA;

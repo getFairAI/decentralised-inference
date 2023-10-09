@@ -17,13 +17,7 @@
  */
 
 import Logo from '@/components/logo';
-import {
-  BUY_AR_LINK,
-  CREATE_WALLET_LINK,
-  TAG_NAMES,
-  U_CONTRACT_ID,
-  U_LOGO_SRC,
-} from '@/constants';
+import { BUY_AR_LINK, CREATE_WALLET_LINK, TAG_NAMES, U_CONTRACT_ID, U_LOGO_SRC } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';

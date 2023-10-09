@@ -38,12 +38,7 @@ export default function Home() {
   const target = useRef<HTMLDivElement>(null);
   const theme = useTheme();
 
-  const {
-    txs,
-    loading,
-    featuredTxs,
-    error
-  } = useModels(target);
+  const { txs, loading, featuredTxs, error } = useModels(target);
   const handleHighlight = (value: boolean) => setHighLightTop(value);
 
   return (

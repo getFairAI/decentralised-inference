@@ -43,12 +43,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  TAG_NAMES,
-  N_PREVIOUS_BLOCKS,
-  textContentType,
-  MAX_MESSAGE_SIZE,
-} from '@/constants';
+import { TAG_NAMES, N_PREVIOUS_BLOCKS, textContentType, MAX_MESSAGE_SIZE } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
@@ -78,6 +73,7 @@ import useResponses from '@/hooks/useResponses';
 import FairSDKWeb from 'fair-protocol-sdk/web';
 
 const warp = WarpFactory.forMainnet().use(new DeployPlugin());
+const errorMsg = 'An Error Occurred. Please try again later.';
 
 const InputField = ({
   file,
@@ -306,7 +302,7 @@ const Chat = () => {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
-  const [ requestIds, ] = useState<string[]>([]);
+  const [requestIds] = useState<string[]>([]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const assetNamesRef = useRef<HTMLTextAreaElement>(null);
@@ -323,7 +319,7 @@ const Chat = () => {
     [state],
   );
 
-  const [ requestParams, setRequestParams ] = useState({
+  const [requestParams, setRequestParams] = useState({
     target,
     userAddr,
     scriptName: state.scriptName,
@@ -332,22 +328,28 @@ const Chat = () => {
     conversationId: currentConversationId,
     first: elementsPerPage,
   });
-  const [ responseParams, setResponseParams ] = useState({
+  const [responseParams, setResponseParams] = useState({
     target,
-    reqIds: requestIds,
     userAddr,
+    reqIds: requestIds,
     scriptName: state.scriptName,
     scriptCurator: state.scriptCurator,
-    scriptOperators: [ state.scriptOperator ],
+    scriptOperators: [state.scriptOperator],
     conversationId: currentConversationId,
     lastRequestId: '',
     first: elementsPerPage,
   });
 
-  const { requestsData, requestError, requestsLoading, requestNetworkStatus, requestsPollingData } = useRequests(requestParams);
+  const { requestsData, requestError, requestsLoading, requestNetworkStatus, requestsPollingData } =
+    useRequests(requestParams);
 
-  const { responsesData, responseError, responsesLoading, responseNetworkStatus, responsesPollingData } = useResponses(responseParams);
-  
+  const {
+    responsesData,
+    responseError,
+    responsesLoading,
+    responseNetworkStatus,
+    responsesPollingData,
+  } = useResponses(responseParams);
 
   const showLoading = useMemo(
     () => messagesLoading || requestsLoading || responsesLoading,
@@ -357,8 +359,8 @@ const Chat = () => {
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
 
   useEffect(() => {
-    (async () => await FairSDKWeb.use('script', state.fullState))();
-  }, [ state ]);
+    (async () => FairSDKWeb.use('script', state.fullState))();
+  }, [state]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -406,7 +408,7 @@ const Chat = () => {
     if (messages.length > 0) {
       const msgElements = document.querySelectorAll('.message-container');
       setLastEl(msgElements.item(0));
-    } 
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -449,7 +451,7 @@ const Chat = () => {
         await emptyPolling();
       }
     })();
-  }, [ responsesData, messagesLoading, responsesPollingData ]);
+  }, [responsesData, messagesLoading, responsesPollingData]);
 
   useEffect(() => {
     if (!requestsPollingData || !requestsData || messagesLoading) return;
@@ -663,7 +665,7 @@ const Chat = () => {
       conversationId: currentConversationId,
       lastRequestId: txid,
       reqIds: [],
-      scriptOperators: [ address as string ],
+      scriptOperators: [address as string],
     });
   };
 
@@ -683,7 +685,15 @@ const Chat = () => {
 
     try {
       const configuration = getConfigValues();
-      const tags: ITag[] = FairSDKWeb.utils.getUploadTags(FairSDKWeb.script, address as string, userAddr, currentConversationId, contentType, configuration, content.name);
+      const tags: ITag[] = FairSDKWeb.utils.getUploadTags(
+        FairSDKWeb.script,
+        address as string,
+        userAddr,
+        currentConversationId,
+        contentType,
+        configuration,
+        content.name,
+      );
 
       // upload with dispatch
       const data = await content.arrayBuffer(); // it's safe to convert to arrayBuffer bc max size is 100kb
@@ -693,15 +703,21 @@ const Chat = () => {
       const { id: txid } = await dispatchTx(tx);
 
       if (!txid) {
-        enqueueSnackbar('An Error Occurred', { variant: 'error' });
+        enqueueSnackbar(errorMsg, { variant: 'error' });
         return;
       }
       await updateMessages(txid, content, contentType, tags);
       await warp.register(txid, 'node2');
-      const {
-        totalUCost,
-        totalUsdCost
-      } = await FairSDKWeb.utils.handlePayment(txid, state.fee, contentType, FairSDKWeb.script, currentConversationId, state.modelCreator, address as string, configuration);
+      const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
+        txid,
+        state.fee,
+        contentType,
+        FairSDKWeb.script,
+        currentConversationId,
+        state.modelCreator,
+        address as string,
+        configuration,
+      );
       // update balance after payments
       await updateUBalance();
       enqueueSnackbar(
@@ -711,12 +727,12 @@ const Chat = () => {
         },
       );
     } catch (error) {
-      if (error instanceof Object){
+      if (error instanceof Object) {
         enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
-      } else if (error  instanceof String) {
+      } else if (error instanceof String) {
         enqueueSnackbar(error, { variant: 'error' });
       } else {
-        enqueueSnackbar('An Error Occurred', { variant: 'error' });
+        enqueueSnackbar(errorMsg, { variant: 'error' });
       }
     }
   };
@@ -736,7 +752,14 @@ const Chat = () => {
 
     try {
       const configuration = getConfigValues();
-      const tags: ITag[] = FairSDKWeb.utils.getUploadTags(FairSDKWeb.script, address as string, userAddr, currentConversationId, contentType, configuration);
+      const tags: ITag[] = FairSDKWeb.utils.getUploadTags(
+        FairSDKWeb.script,
+        address as string,
+        userAddr,
+        currentConversationId,
+        contentType,
+        configuration,
+      );
 
       // upload with dispatch
       const tx = await arweave.createTransaction({ data: newMessage });
@@ -744,16 +767,21 @@ const Chat = () => {
 
       const { id: txid } = await dispatchTx(tx);
       if (!txid) {
-        enqueueSnackbar('An Error Occurred.', { variant: 'error' });
+        enqueueSnackbar(errorMsg, { variant: 'error' });
         return;
       }
       await updateMessages(txid, newMessage, contentType, tags);
       await warp.register(txid, 'node2');
-      /* await handlePayment(txid, state.fee, contentType, configuration); */
-      const {
-        totalUCost,
-        totalUsdCost
-      } = await FairSDKWeb.utils.handlePayment(txid, state.fee, contentType, FairSDKWeb.script, currentConversationId, state.modelCreator, address as string, configuration);
+      const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
+        txid,
+        state.fee,
+        contentType,
+        FairSDKWeb.script,
+        currentConversationId,
+        state.modelCreator,
+        address as string,
+        configuration,
+      );
       // update balance after payments
       await updateUBalance();
       enqueueSnackbar(
@@ -763,12 +791,12 @@ const Chat = () => {
         },
       );
     } catch (error) {
-      if (error instanceof Object){
+      if (error instanceof Object) {
         enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
-      } else if (error  instanceof String) {
+      } else if (error instanceof String) {
         enqueueSnackbar(error, { variant: 'error' });
       } else {
-        enqueueSnackbar('An Error Occurred', { variant: 'error' });
+        enqueueSnackbar(errorMsg, { variant: 'error' });
       }
     }
   };
@@ -1108,7 +1136,7 @@ const Chat = () => {
                 </Box>
               </Paper>
             </Box>
-            
+
             <Box
               id={'chat-input'}
               sx={{

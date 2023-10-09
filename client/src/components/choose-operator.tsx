@@ -16,10 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  TAG_NAMES,
-  IS_TO_CHOOSE_MODEL_AUTOMATICALLY,
-} from '@/constants';
+import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY } from '@/constants';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { useQuery, NetworkStatus, gql } from '@apollo/client';
@@ -258,10 +255,14 @@ const ChooseOperator = ({
   const navigate = useNavigate();
 
   const scriptId = findTag(scriptTx as IEdge, 'scriptTransaction') as string;
-  const scriptName  = findTag(scriptTx as IEdge, 'scriptName');
+  const scriptName = findTag(scriptTx as IEdge, 'scriptName');
   const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner');
 
-  const queryObject = FairSDKWeb.utils.getOperatorQueryForScript(scriptId, scriptName, scriptCurator);
+  const queryObject = FairSDKWeb.utils.getOperatorQueryForScript(
+    scriptId,
+    scriptName,
+    scriptCurator,
+  );
   const {
     data: queryData,
     loading,
@@ -296,7 +297,6 @@ const ChooseOperator = ({
     ) {
       const opOwner =
         (findTag(filtered[0], 'sequencerOwner') as string) ?? filtered[0].node.owner.address;
-      const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') as string;
       const state = {
         modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
         scriptName: findTag(scriptTx as IEdge, 'scriptName'),
@@ -332,7 +332,9 @@ const ChooseOperator = ({
     if (queryData && networkStatus === NetworkStatus.ready) {
       // use immediately invoked function to be able to call async operations in useEffect
       (async () => {
-        const filtered: IContractEdge[] = await FairSDKWeb.utils.operatorsFilter(queryData.transactions.edges);
+        const filtered: IContractEdge[] = await FairSDKWeb.utils.operatorsFilter(
+          queryData.transactions.edges,
+        );
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setOperatorsData(filtered);
         checkSingleOperator(filtered);

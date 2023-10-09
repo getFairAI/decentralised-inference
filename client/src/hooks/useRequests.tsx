@@ -22,8 +22,24 @@ import { RefObject, useEffect, useState } from 'react';
 import useOnScreen from './useOnScreen';
 import { commonUpdateQuery } from '@/utils/common';
 
-const useRequests = ({ target, userAddr, scriptName, scriptCurator, scriptOperator, conversationId, first }:  { target: RefObject<HTMLDivElement>, userAddr: string; scriptName: string; scriptCurator: string; scriptOperator: string; conversationId: number; first?: number }) => {
-  const [ hasRequestNextPage, setHasRequestNextPage ] = useState(false);
+const useRequests = ({
+  target,
+  userAddr,
+  scriptName,
+  scriptCurator,
+  scriptOperator,
+  conversationId,
+  first,
+}: {
+  target: RefObject<HTMLDivElement>;
+  userAddr: string;
+  scriptName: string;
+  scriptCurator: string;
+  scriptOperator: string;
+  conversationId: number;
+  first?: number;
+}) => {
+  const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
   const { query: requestsQuery } = FairSDKWeb.utils.getRequestsQuery(userAddr);
   const isOnScreen = useOnScreen(target);
   const [
@@ -37,24 +53,32 @@ const useRequests = ({ target, userAddr, scriptName, scriptCurator, scriptOperat
     },
   ] = useLazyQuery(gql(requestsQuery));
 
-  const [
-    pollRequests,
-    { data: requestsPollingData, stopPolling: stopRequestPolling }
-  ] = useLazyQuery(gql(requestsQuery), {
-    fetchPolicy: 'no-cache',
-    nextFetchPolicy: 'no-cache',
-  });
+  const [pollRequests, { data: requestsPollingData, stopPolling: stopRequestPolling }] =
+    useLazyQuery(gql(requestsQuery), {
+      fetchPolicy: 'no-cache',
+      nextFetchPolicy: 'no-cache',
+    });
 
   useEffect(() => {
-    const { variables: queryParams } = FairSDKWeb.utils.getRequestsQuery(userAddr, scriptName, scriptCurator, scriptOperator, conversationId, first);
+    const { variables: queryParams } = FairSDKWeb.utils.getRequestsQuery(
+      userAddr,
+      scriptName,
+      scriptCurator,
+      scriptOperator,
+      conversationId,
+      first,
+    );
     getChatRequests({ variables: queryParams });
     stopRequestPolling();
     pollRequests({ variables: queryParams, pollInterval: 10000 });
-  }, [ userAddr, scriptName, scriptCurator, scriptOperator, conversationId, first ]);
+  }, [userAddr, scriptName, scriptCurator, scriptOperator, conversationId, first]);
 
   useEffect(() => {
     if (isOnScreen && hasRequestNextPage) {
-      if (!requestsData) return;
+      if (!requestsData) {
+        return;
+      }
+
       requestFetchMore({
         variables: {
           after:
@@ -71,7 +95,7 @@ const useRequests = ({ target, userAddr, scriptName, scriptCurator, scriptOperat
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       setHasRequestNextPage(requestsData.transactions.pageInfo.hasNextPage);
     }
-  }, [ requestsData, requestNetworkStatus, setHasRequestNextPage ]);
+  }, [requestsData, requestNetworkStatus, setHasRequestNextPage]);
 
   return {
     requestsData,

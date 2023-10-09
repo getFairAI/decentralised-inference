@@ -149,10 +149,25 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
   }, [state]);
 
   const handleBazarTradeClick = useCallback(() => setOpenWithId(message.id, true), [message]);
-  const handleRareweaveTradeClick = useCallback(() =>  window.open(`${RAREWEAVE_ASSET_LIST_LINK}/${message.id}`, '_blank'), [message]);
+  const handleRareweaveTradeClick = useCallback(
+    () => window.open(`${RAREWEAVE_ASSET_LIST_LINK}/${message.id}`, '_blank'),
+    [message],
+  );
 
-  const showTradeOnBazar = useMemo(() => message.type === 'response' && message.tags.find(tag => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value === FairSDKWeb.utils.ATOMIC_ASSET_CONTRACT_SOURCE_ID, [ message ]);
-  const showRareweaveOnBazar = useMemo(() => message.type === 'response' && message.tags.find(tag => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value === FairSDKWeb.utils.RAREWEAVE_CONTRACT_ID, [ message ]);
+  const showTradeOnBazar = useMemo(
+    () =>
+      message.type === 'response' &&
+      message.tags.find((tag) => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value ===
+        FairSDKWeb.utils.ATOMIC_ASSET_CONTRACT_SOURCE_ID,
+    [message],
+  );
+  const showRareweaveOnBazar = useMemo(
+    () =>
+      message.type === 'response' &&
+      message.tags.find((tag) => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value ===
+        FairSDKWeb.utils.RAREWEAVE_CONTRACT_ID,
+    [message],
+  );
 
   return (
     <Box display={'flex'} gap={'8px'} width={'100%'}>
