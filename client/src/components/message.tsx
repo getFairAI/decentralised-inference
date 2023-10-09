@@ -52,6 +52,7 @@ import { enqueueSnackbar } from 'notistack';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { findTag } from '@/utils/common';
 import MessageDetail from './message-detail';
+import FairSDKWeb from 'fair-protocol-sdk/web';
 
 const MessageHeader = ({ message }: { message: IMessage }) => {
   const { state } = useLocation();
@@ -148,6 +149,8 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
 
   const handleTradeClick = useCallback(() => setOpenWithId(message.id, true), [message]);
 
+  const showTradeOnBazar = useMemo(() => message.type === 'response' && message.tags.find(tag => tag.name === FairSDKWeb.utils.TAG_NAMES.contract)?.value === FairSDKWeb.utils.ATOMIC_ASSET_CONTRACT_SOURCE_ID, [ message ]);
+
   return (
     <Box display={'flex'} gap={'8px'} width={'100%'}>
       {message.type === 'response' && (
@@ -176,7 +179,7 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
           </Box>
         )}
         <Box display={'flex'} alignItems='center'>
-          {message.type === 'response' && (
+          {showTradeOnBazar && (
             <Button variant='outlined' onClick={handleTradeClick}>
               Trade on Bazar
             </Button>
