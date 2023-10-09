@@ -562,7 +562,8 @@ const Chat = () => {
       }
 
       const configuration = getConfigValues();
-      const actualFee = configuration.nImages && isStableDiffusion ? state.fee * configuration.nImages : state.fee;
+      const actualFee =
+        configuration.nImages && isStableDiffusion ? state.fee * configuration.nImages : state.fee;
       if (currentUBalance < parseUBalance(actualFee)) {
         enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
         return false;
