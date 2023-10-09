@@ -552,6 +552,7 @@ const Chat = () => {
   const checkCanSend = (dataSize: number) => {
     try {
       if (!currentConversationId) {
+        enqueueSnackbar('Missing COnversation Id', { variant: 'error' });
         return false;
       }
 
@@ -560,7 +561,10 @@ const Chat = () => {
         return false;
       }
 
-      if (currentUBalance < parseUBalance(state.fee)) {
+      const configuration = getConfigValues();
+      const actualFee =
+        configuration.nImages && isStableDiffusion ? state.fee * configuration.nImages : state.fee;
+      if (currentUBalance < parseUBalance(actualFee)) {
         enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
         return false;
       }
