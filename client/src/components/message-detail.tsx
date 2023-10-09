@@ -36,6 +36,7 @@ import { PstState, connect, getContractByTxId, getState } from '@/utils/pst';
 import Chart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 import { secondInMS } from '@/constants';
+import Close from '@mui/icons-material/Close';
 
 const headerText = {
   fontStyle: 'normal',
@@ -137,19 +138,19 @@ const MessageDetail = ({
             theme.palette.mode === 'dark'
               ? theme.palette.neutral.main
               : theme.palette.background.default,
-          borderRadius: '30px',
         },
       }}
     >
       <DialogTitle display='flex' justifyContent={'flex-end'} alignItems='center' lineHeight={0}>
         <IconButton
-          onClick={handleClose}
           sx={{
-            background: theme.palette.primary.main,
-            '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
+            borderRadius: '8px',
+            background: '#FFF',
+            border: '0.5px solid',
           }}
+          onClick={handleClose}
         >
-          <img src='./close-icon.svg' />
+          <Close />
         </IconButton>
       </DialogTitle>
       <DialogContent
@@ -172,7 +173,7 @@ const MessageDetail = ({
                 textAlign: 'end',
               }}
             >
-              {message.tags.find((el) => el.name === 'Description')?.value ?? 'Not Available'}
+              {message.tags.find((el) => el.name === 'Prompt')?.value ?? 'Not Available'}
             </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
