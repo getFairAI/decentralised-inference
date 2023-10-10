@@ -259,6 +259,8 @@ const Configuration = ({
     }
   }, [customTags]);
 
+  useEffect(() => setGenerateAsset(generateAssetsRef.current), [generateAssetsRef.current]);
+
   const handleChooseFair = useCallback(() => {
     setGenerateAsset('fair-protocol');
     generateAssetsRef.current = 'fair-protocol';

@@ -616,7 +616,8 @@ const Chat = () => {
     const description = descriptionRef?.current?.value;
     const customTags = customTagsRef?.current;
     const nImages = nImagesRef?.current;
-    const royalty = royaltyRef?.current?.value;
+    const radix = 10;
+    const royalty = parseInt(royaltyRef?.current?.value ?? '0', radix);
 
     return {
       generateAssets,
@@ -625,7 +626,11 @@ const Chat = () => {
       description,
       customTags,
       nImages,
-      royalty,
+      ...(royalty && {
+        rareweaveConfig: {
+          royalty: royalty / 100,
+        },
+      }),
     };
   };
 
