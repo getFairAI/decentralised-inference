@@ -17,7 +17,14 @@
  */
 
 import Logo from '@/components/logo';
-import { BUY_AR_LINK, CREATE_WALLET_LINK, TAG_NAMES, U_CONTRACT_ID, U_LOGO_SRC } from '@/constants';
+import {
+  BUY_AR_LINK,
+  BUY_AR_LINK_US,
+  CREATE_WALLET_LINK,
+  TAG_NAMES,
+  U_CONTRACT_ID,
+  U_LOGO_SRC,
+} from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
@@ -273,24 +280,44 @@ const WalletNoFundsContent = () => {
                   ),
                 }}
                 helperText={
-                  <Box display={'flex'} gap={'8px'}>
-                    <Typography
-                      display={'flex'}
-                      gap={'8px'}
-                      alignItems={'center'}
-                      fontWeight={'500'}
-                      color={'primary'}
-                      noWrap
-                    >
-                      <InfoOutlined />
-                      Looking for a way to buy AR?
-                    </Typography>
-                    <Typography alignItems={'center'} color='primary' noWrap>
-                      <a href={BUY_AR_LINK} target='_blank' rel='noreferrer'>
-                        <u>Find out How.</u>
-                      </a>
-                    </Typography>
-                  </Box>
+                  <>
+                    <Box display={'flex'} gap={'8px'}>
+                      <Typography
+                        display={'flex'}
+                        gap={'8px'}
+                        alignItems={'center'}
+                        fontWeight={'500'}
+                        color={'primary'}
+                        noWrap
+                      >
+                        <InfoOutlined />
+                        Looking for a way to buy AR?
+                      </Typography>
+                      <Typography alignItems={'center'} color='primary' noWrap>
+                        <a href={BUY_AR_LINK} target='_blank' rel='noreferrer'>
+                          <u>Find out How.</u>
+                        </a>
+                      </Typography>
+                    </Box>
+                    <Box display={'flex'} gap={'8px'}>
+                      <Typography
+                        display={'flex'}
+                        gap={'8px'}
+                        alignItems={'center'}
+                        fontWeight={'500'}
+                        color={'primary'}
+                        noWrap
+                      >
+                        <InfoOutlined />
+                        Are You in the U.S?
+                      </Typography>
+                      <Typography alignItems={'center'} color='primary' noWrap>
+                        <a href={BUY_AR_LINK_US} target='_blank' rel='noreferrer'>
+                          <u>Check this guide instead.</u>
+                        </a>
+                      </Typography>
+                    </Box>
+                  </>
                 }
               />
               {currentBalance > 0 ? (
@@ -517,9 +544,9 @@ const SignIn = () => {
     >
       {!isConnected && <WalletnotConnectedContent />}
 
-      {isConnected && (currentUBalance <= 0 || isSwap) && <WalletNoFundsContent />}
+      {isConnected && (currentUBalance <= 1 || isSwap) && <WalletNoFundsContent />}
 
-      {!isSwap && isConnected && currentUBalance > 0 && <SinginWithFunds />}
+      {!isSwap && isConnected && currentUBalance > 1 && <SinginWithFunds />}
 
       <IconButton
         sx={{
