@@ -24,13 +24,14 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  FormGroup,
   FormLabel,
   IconButton,
   Slider,
   TextField,
   Typography,
   useTheme,
+  Radio,
+  RadioGroup,
 } from '@mui/material';
 import {
   MutableRefObject,
@@ -261,20 +262,16 @@ const Configuration = ({
 
   useEffect(() => setGenerateAsset(generateAssetsRef.current), [generateAssetsRef.current]);
 
-  const handleChooseFair = useCallback(() => {
-    setGenerateAsset('fair-protocol');
-    generateAssetsRef.current = 'fair-protocol';
-  }, [setGenerateAsset]);
-
-  const handleChooseRareweave = useCallback(() => {
-    setGenerateAsset('rareweave');
-    generateAssetsRef.current = 'rareweave';
-  }, [setGenerateAsset]);
-
-  const handleChooseNone = useCallback(() => {
-    setGenerateAsset('none');
-    generateAssetsRef.current = 'none';
-  }, [setGenerateAsset]);
+  const handleGenerateAssetChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setGenerateAsset((event.target as HTMLInputElement).value);
+      generateAssetsRef.current = (event.target as HTMLInputElement).value as
+        | 'fair-protocol'
+        | 'rareweave'
+        | 'none';
+    },
+    [generateAssetsRef, setGenerateAsset],
+  );
 
   const isAllowedRoyalty = useCallback(
     (val: NumberFormatValues) => !val.floatValue || val?.floatValue <= maxPercentage,
@@ -345,39 +342,20 @@ const Configuration = ({
         </Divider>
       </Box>
       <FormControl sx={{ m: 3 }} component='fieldset' variant='standard'>
-        <FormLabel component='legend'>Atomic Asset</FormLabel>
-        <FormGroup>
+        <FormLabel>Atomic Asset</FormLabel>
+        <RadioGroup value={generateAsset} onChange={handleGenerateAssetChange}>
           <FormControlLabel
-            control={
-              <Checkbox
-                checked={generateAsset === 'fair-protocol'}
-                onChange={handleChooseFair}
-                name='Fair Protocol Atomic Asset'
-              />
-            }
+            control={<Radio />}
+            value={'fair-protocol'}
             label='Fair Protocol Atomic Asset'
           />
           <FormControlLabel
-            control={
-              <Checkbox
-                checked={generateAsset === 'rareweave'}
-                onChange={handleChooseRareweave}
-                name='Rareweave Asset'
-              />
-            }
-            label='Rareweave Asset'
+            control={<Radio />}
+            value={'rareweave'}
+            label='Rareweave Atomic Asset'
           />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={generateAsset === 'none'}
-                onChange={handleChooseNone}
-                name='Do not Generate Asset'
-              />
-            }
-            label='Do not Generate Asset'
-          />
-        </FormGroup>
+          <FormControlLabel control={<Radio />} value={'none'} label='No Atomic Asset' />
+        </RadioGroup>
       </FormControl>
       {generateAsset === 'rareweave' && (
         <NumericFormat
