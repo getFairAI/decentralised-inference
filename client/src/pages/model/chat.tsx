@@ -669,14 +669,16 @@ const Chat = () => {
         variant: 'success',
       },
     );
-    const temp = [...messages];
+    const temp = messages.length > 0 ? [...messages] : [];
+    const currentHeight = (await arweave.blocks.getCurrent()).height;
+
     temp.push({
       msg: content,
       type: 'request',
       timestamp: parseFloat(tags.find((tag) => tag.name === TAG_NAMES.unixTime)?.value as string),
       id: txid,
       cid: currentConversationId,
-      height: (await arweave.blocks.getCurrent()).height,
+      height: currentHeight,
       to: address as string,
       from: userAddr,
       contentType,
