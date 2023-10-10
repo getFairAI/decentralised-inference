@@ -43,7 +43,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import { TAG_NAMES, N_PREVIOUS_BLOCKS, textContentType, MAX_MESSAGE_SIZE } from '@/constants';
+import {
+  TAG_NAMES,
+  N_PREVIOUS_BLOCKS,
+  textContentType,
+  MAX_MESSAGE_SIZE,
+  WARP_ASSETS_EXPLORER,
+  IRYS_TXS_EXPLORER,
+} from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
@@ -638,11 +645,18 @@ const Chat = () => {
     setFile(undefined);
     setIsWaitingResponse(true);
     setResponseTimeout(false);
+    let url;
+    if (tags.find((tag) => tag.name === TAG_NAMES.contractSrc)?.value !== undefined) {
+      url = `${WARP_ASSETS_EXPLORER}/${txid}`;
+    } else {
+      url = `${IRYS_TXS_EXPLORER}/${txid}`;
+    }
+
     enqueueSnackbar(
       <>
         Inference Request
         <br></br>
-        <a href={`https://viewblock.io/arweave/tx/${txid}`} target={'_blank'} rel='noreferrer'>
+        <a href={url} target={'_blank'} rel='noreferrer'>
           <u>View Transaction in Explorer</u>
         </a>
       </>,

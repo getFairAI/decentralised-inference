@@ -43,10 +43,12 @@ import { useLazyQuery } from '@apollo/client';
 import {
   AVATAR_ATTACHMENT,
   DEFAULT_TAGS,
+  IRYS_TXS_EXPLORER,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
   RAREWEAVE_ASSET_LIST_LINK,
   TAG_NAMES,
+  WARP_ASSETS_EXPLORER,
 } from '@/constants';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { enqueueSnackbar } from 'notistack';
@@ -97,7 +99,11 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
 
   const handleViewTx = useCallback(() => {
     setAnchorEl(null);
-    window.open(`https://viewblock.io/arweave/tx/${message.id}`, '_blank');
+    if (message.tags.find((tag) => tag.name === TAG_NAMES.contractSrc)?.value !== undefined) {
+      window.open(`${WARP_ASSETS_EXPLORER}/${message.id}`, '_blank');
+    } else {
+      window.open(`${IRYS_TXS_EXPLORER}/${message.id}`, '_blank');
+    }
   }, [message, window, setAnchorEl]);
 
   const handleViewDetails = useCallback(() => {
