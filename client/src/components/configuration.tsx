@@ -262,13 +262,16 @@ const Configuration = ({
 
   useEffect(() => setGenerateAsset(generateAssetsRef.current), [generateAssetsRef.current]);
 
-  const handleGenerateAssetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setGenerateAsset((event.target as HTMLInputElement).value);
-    generateAssetsRef.current = (event.target as HTMLInputElement).value as
-      | 'fair-protocol'
-      | 'rareweave'
-      | 'none';
-  };
+  const handleGenerateAssetChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setGenerateAsset((event.target as HTMLInputElement).value);
+      generateAssetsRef.current = (event.target as HTMLInputElement).value as
+        | 'fair-protocol'
+        | 'rareweave'
+        | 'none';
+    },
+    [generateAssetsRef, setGenerateAsset],
+  );
 
   const isAllowedRoyalty = useCallback(
     (val: NumberFormatValues) => !val.floatValue || val?.floatValue <= maxPercentage,
