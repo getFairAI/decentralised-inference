@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
+import { defaultDecimalPlaces, U_LOGO_SRC, WARP_ASSETS_EXPLORER } from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { displayShortTxOrAddr, findTag, parseUnixTimestamp } from '@/utils/common';
 import {
@@ -78,7 +78,7 @@ const PendingCard = ({ tx }: { tx: IEdge }) => {
             <span>
               <IconButton
                 size='small'
-                href={`https://viewblock.io/arweave/tx/${payment?.id}`}
+                href={`${WARP_ASSETS_EXPLORER}/${payment?.id}`}
                 target='_blank'
               >
                 <OpenInNewIcon />

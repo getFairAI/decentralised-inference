@@ -278,3 +278,6 @@ export const RAREWEAVE_ASSET_LIST_LINK = 'https://rareweave.store/nft';
 
 export const CREATE_WALLET_LINK = 'https://docs.arweave.org/info/wallets/arweave-wallet';
 export const BUY_AR_LINK = 'https://www.coinbase.com/how-to-buy/arweave';
+
+export const IRYS_TXS_EXPLORER = 'https://explorer.irys.xyz/transactions';
+export const WARP_ASSETS_EXPLORER = 'https://sonar.warp.cc/#/app/contract';
