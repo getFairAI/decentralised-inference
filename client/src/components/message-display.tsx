@@ -73,8 +73,9 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
   if (type === 'image') {
     return (
       <Card
-        raised
         sx={{
+          boxShadow: 'none',
+          backgroundColor: 'transparent',
           width: forDetails ? undefined : '512px',
           height: forDetails ? undefined : '512px',
         }}
@@ -82,9 +83,8 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         <CardMedia
           component="img"
           image={content as string}
-          alt={'alt'}
-          title={'title'}
-          sx={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          title={content as string}
+          sx={{ objectFit: 'contain', width: '100%', height: '100%' }}
         />
       </Card>
     );
