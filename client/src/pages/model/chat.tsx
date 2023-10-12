@@ -407,10 +407,12 @@ const Chat = () => {
         (previous: IEdge) =>
           !previousResponses.find((current: IEdge) => current.node.id === previous.node.id),
       );
-      setPreviousResponses([...previousResponses, ...newResponses]);
-      (async () => reqData([...previousResponses, ...newResponses]))();
+      if (newResponses.length > 0) {
+        setPreviousResponses([...previousResponses, ...newResponses]);
+        (async () => reqData([...previousResponses, ...newResponses]))();
+      }
     }
-  }, [responsesData]);
+  }, [responsesData, previousResponses, responseNetworkStatus]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -451,9 +453,9 @@ const Chat = () => {
     const newValidResponses = responses.filter(
       (res: IEdge) => !currentRespones.find((el: IEdge) => el.node.id === res.node.id),
     );
-    setPreviousResponses([...currentRespones, ...newValidResponses]);
     (async () => {
       if (newValidResponses.length > 0) {
+        setPreviousResponses([...currentRespones, ...newValidResponses]);
         await asyncMap(newValidResponses);
       } else {
         await emptyPolling();
@@ -464,15 +466,15 @@ const Chat = () => {
   useEffect(() => {
     if (!requestsPollingData || !requestsData || messagesLoading) return;
 
-    const requests = requestsPollingData?.transactions?.edges || [];
-    const currentRequests = requestsData.transactions.edges;
+    const requests = requestsPollingData?.transactions?.edges ?? [];
+    const currentRequests = requestsData?.transacations?.edges ?? [];
     const newValidRequests = requests.filter(
-      (res: IEdge) => !currentRequests.find((el: IEdge) => el.node.id === res.node.id),
+      (res: IEdge) => !currentRequests.find((el: IMessage) => el.id === res.node.id),
     );
     if (newValidRequests.length > 0) {
       (async () => asyncMap(newValidRequests))();
     }
-  }, [requestsPollingData]);
+  }, [requestsData, messagesLoading, requestsPollingData]);
 
   const mapTransactionsToMessages = async (el: IEdge) => {
     const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
@@ -839,7 +841,8 @@ const Chat = () => {
 
   const reqData = async (allResponses: IEdge[]) => {
     // slice number of responses = to number of requests
-    const allData = [...requestsData.transactions.edges, ...allResponses];
+    const previousRequest = requestsData?.transactions?.edges ?? [];
+    const allData = [...previousRequest, ...allResponses];
 
     const filteredData = allData.filter((el: IEdge) => {
       const cid = findTag(el, 'conversationIdentifier');
