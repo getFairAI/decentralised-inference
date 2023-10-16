@@ -265,7 +265,7 @@ const Navbar = ({
   const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
   let keyTimeout: Timeout;
   const [usdFee, setUsdFee] = useState(0);
-  const [ tooltip, setTooltip ] = useState('');
+  const [tooltip, setTooltip] = useState('');
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
@@ -286,16 +286,24 @@ const Navbar = ({
     (async () => {
       const uCost = parseUBalance(state?.fee);
       const arPrice = await getArPriceUSD();
-      const isImage = findTag(state.fullState,'output') === 'image';
-      const isStableDiffusion = findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
-      const defaultNImages = isStableDiffusion ? 4 : 1;
+      const isImage = findTag(state.fullState, 'output') === 'image';
+      const isStableDiffusion =
+        findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
+      const defaultNImages = 4;
+      const nImages = isStableDiffusion ? defaultNImages : 1;
 
       if (isStableDiffusion || isImage) {
-        setTooltip(`Cost set by operator for each image: ${(uCost * arPrice).toFixed(4)}$\n Default number of images: ${defaultNImages}`);
+        setTooltip(
+          `Cost set by operator for each image: ${(uCost * arPrice).toFixed(
+            nDigits,
+          )}$\n Default number of images: ${nImages}`,
+        );
       } else {
-        setTooltip(`Cost set by operator for each generation: ${(uCost * arPrice).toFixed(4)}`);
+        setTooltip(
+          `Cost set by operator for each generation: ${(uCost * arPrice).toFixed(nDigits)}`,
+        );
       }
-      setUsdFee(uCost * arPrice * defaultNImages);
+      setUsdFee(uCost * arPrice * nImages);
     })();
   }, [state, parseUBalance, getArPriceUSD]);
 
@@ -383,12 +391,16 @@ const Navbar = ({
                   >
                     Default Cost:
                   </Typography>
-                  <Typography display={'flex'} justifyContent={'space-between'}>
+                  <Typography display={'flex'} justifyContent={spaceBetween}>
                     {usdFee.toFixed(nDigits)}$
                     <Tooltip
-                        title={<Typography variant='caption' sx={{ whiteSpace: 'pre-line'}}>{tooltip}</Typography>}
-                        placement='bottom'
-                      >
+                      title={
+                        <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                          {tooltip}
+                        </Typography>
+                      }
+                      placement='bottom'
+                    >
                       <InfoOutlined />
                     </Tooltip>
                   </Typography>
