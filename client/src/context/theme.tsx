@@ -14,7 +14,7 @@ declare module '@mui/material/styles' {
 }
 
 type themeOptions = 'light' | 'dark';
-interface AppThemeContext {
+interface IAppThemeContext {
   currentTheme: themeOptions;
   toggleTheme: () => void;
 }
@@ -23,7 +23,7 @@ const lightTheme = createTheme({
   typography: {
     fontFamily: satoshiFont,
     h1: {
-      fontSize: '80px',
+      fontSize: '40px',
       fontWeight: '400',
       lineHeight: '106px',
     },
@@ -145,7 +145,7 @@ const darkTheme = createTheme({
   typography: {
     fontFamily: satoshiFont,
     h1: {
-      fontSize: '80px',
+      fontSize: '40px',
       fontWeight: '400',
       lineHeight: '106px',
     },
@@ -221,7 +221,7 @@ const darkTheme = createTheme({
   },
 });
 
-export const AppThemeContext = createContext<AppThemeContext>({
+export const AppThemeContext = createContext<IAppThemeContext>({
   currentTheme: 'light',
   toggleTheme: () => undefined,
 });
@@ -235,13 +235,14 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const theme = useMemo(() => (mode === 'light' ? lightTheme : darkTheme), [mode]);
+  const value = useMemo(() => ({ currentTheme: mode, toggleTheme }), [mode, toggleTheme]);
 
   useEffect(() => {
     setMode('light'); // force light mode for now
   }, [prefersDarkMode]);
 
   return (
-    <AppThemeContext.Provider value={{ currentTheme: mode, toggleTheme }}>
+    <AppThemeContext.Provider value={value}>
       <ThemeProvider theme={theme}>{children}</ThemeProvider>
     </AppThemeContext.Provider>
   );

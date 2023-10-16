@@ -16,14 +16,12 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { NetworkStatus, gql, useLazyQuery } from '@apollo/client';
+import { gql, useLazyQuery } from '@apollo/client';
 import FairSDKWeb from 'fair-protocol-sdk/web';
-import { RefObject, useEffect, useState } from 'react';
-import useOnScreen from './useOnScreen';
+import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
 
 const useResponses = ({
-  target,
   reqIds,
   userAddr,
   scriptName,
@@ -33,7 +31,6 @@ const useResponses = ({
   lastRequestId,
   first,
 }: {
-  target: RefObject<HTMLDivElement>;
   reqIds: string[];
   userAddr: string;
   scriptName: string;
@@ -43,7 +40,6 @@ const useResponses = ({
   lastRequestId?: string;
   first?: number;
 }) => {
-  const [hasResponsesNextPage, setHasResponsesNextPage] = useState(false);
   const { query: responsesQuery } = FairSDKWeb.utils.getResponsesQuery(
     reqIds,
     userAddr,
@@ -53,7 +49,7 @@ const useResponses = ({
     conversationId,
     first,
   );
-  const isOnScreen = useOnScreen(target);
+
   const [
     getChatResponses,
     {
@@ -110,7 +106,7 @@ const useResponses = ({
   ]);
 
   useEffect(() => {
-    if (responsesData && hasResponsesNextPage) {
+    if (responsesData?.transactions?.pageInfo?.hasNextPage) {
       responsesFetchMore({
         variables: {
           after:
@@ -121,13 +117,7 @@ const useResponses = ({
         updateQuery: commonUpdateQuery,
       });
     }
-  }, [isOnScreen, hasResponsesNextPage]);
-
-  useEffect(() => {
-    if (responsesData && responseNetworkStatus === NetworkStatus.ready) {
-      setHasResponsesNextPage(responsesData.transactions.pageInfo.hasNextPage);
-    }
-  }, [responsesData, responseNetworkStatus, setHasResponsesNextPage]);
+  }, [ responsesData ]);
 
   return {
     responsesData,

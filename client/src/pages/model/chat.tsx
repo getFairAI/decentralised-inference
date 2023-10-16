@@ -17,9 +17,11 @@
  */
 
 import {
+  Backdrop,
   Box,
   CircularProgress,
   Drawer,
+  Fab,
   FormControl,
   IconButton,
   InputAdornment,
@@ -27,6 +29,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Zoom,
   useTheme,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
@@ -57,16 +60,15 @@ import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { findTag, printSize } from '@/utils/common';
+import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
-import useScroll from '@/hooks/useScroll';
 import { IMessage } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
-import ChatBubble from '@/components/chat-bubble';
+import ChatContent from '@/components/chat-content';
 import DebounceIconButton from '@/components/debounce-icon-button';
 import { parseUBalance } from '@/utils/u';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -78,6 +80,7 @@ import { DeployPlugin } from 'warp-contracts-plugin-deploy';
 import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
 import FairSDKWeb from 'fair-protocol-sdk/web';
+import useScroll from '@/hooks/useScroll';
 
 const warp = WarpFactory.forMainnet().use(new DeployPlugin());
 const errorMsg = 'An Error Occurred. Please try again later.';
@@ -292,21 +295,20 @@ const Chat = () => {
   const { width: chatWidth } = useComponentDimensions(chatRef);
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
   const { enqueueSnackbar } = useSnackbar();
-  const elementsPerPage = 5;
+  const elementsPerPage = 2;
   const scrollableRef = useRef<HTMLDivElement>(null);
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [responseTimeout, setResponseTimeout] = useState(false);
   const theme = useTheme();
   const target = useRef<HTMLDivElement>(null);
-  const [isFirstPage, setIsFirstPage] = useState(true);
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
-  const [lastEl, setLastEl] = useState<Element | undefined>(undefined);
-  const { isTopHalf } = useScroll(scrollableRef);
+  const [currentEl, setCurrentEl] = useState<{ scrollTop: number, scrollHeight: number} | undefined>(undefined);
+  const { isNearTop } = useScroll(scrollableRef);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState(0);
   const [inputHeight, setInputHeight] = useState(0);
-
+  const { height: scrollableHeight } = useComponentDimensions(scrollableRef);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
@@ -329,6 +331,7 @@ const Chat = () => {
 
   const [requestParams, setRequestParams] = useState({
     target,
+    scrollableRef,
     userAddr,
     scriptName: state.scriptName,
     scriptCurator: state.scriptCurator,
@@ -337,7 +340,6 @@ const Chat = () => {
     first: elementsPerPage,
   });
   const [responseParams, setResponseParams] = useState({
-    target,
     userAddr,
     reqIds: requestIds,
     scriptName: state.scriptName,
@@ -345,26 +347,20 @@ const Chat = () => {
     scriptOperators: [state.scriptOperator],
     conversationId: currentConversationId,
     lastRequestId: '',
-    first: elementsPerPage,
   });
 
-  const { requestsData, requestError, requestsLoading, requestNetworkStatus, requestsPollingData } =
+  const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage, requestFetchMore } =
     useRequests(requestParams);
 
   const {
     responsesData,
     responseError,
-    responsesLoading,
     responseNetworkStatus,
     responsesPollingData,
   } = useResponses(responseParams);
 
-  const showLoading = useMemo(
-    () => messagesLoading || requestsLoading || responsesLoading,
-    [messagesLoading, requestsLoading, responsesLoading],
-  );
-
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
+  const showLoadMore = useMemo(() => isNearTop && hasRequestNextPage && !messagesLoading, [isNearTop, hasRequestNextPage, messagesLoading]);
 
   useEffect(() => {
     (async () => FairSDKWeb.use('script', state.fullState))();
@@ -389,20 +385,32 @@ const Chat = () => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       //
       const reqIds = requestsData.transactions.edges.map((el: IEdge) => el.node.id);
-      const scriptOperators = Array.from(
-        new Set(requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator'))),
-      );
-      setResponseParams({
-        ...responseParams,
-        scriptOperators,
-        reqIds,
-        lastRequestId: reqIds[reqIds.length - 1],
-      });
+     
+      if (reqIds.length > 0) {
+        const scriptOperators = Array.from(
+          new Set(requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator'))),
+        );
+        setResponseParams({
+          ...responseParams,
+          scriptOperators,
+          reqIds,
+        });
+      } else {
+        setResponseParams({
+          ...responseParams,
+          reqIds,
+          lastRequestId: '',
+        });
+        setMessagesLoading(false);
+        setMessages([]);
+      }
     }
-  }, [requestsData]);
+  }, [requestsData, requestNetworkStatus ]);
 
   useEffect(() => {
-    if (responsesData && responseNetworkStatus === NetworkStatus.ready) {
+    // only update messages after getting all responses
+    const hasResponsesNextPage = responsesData?.transactions.pageInfo.hasNextPage;
+    if (responsesData && responseNetworkStatus === NetworkStatus.ready && !hasResponsesNextPage) {
       const newResponses = responsesData.transactions.edges.filter(
         (previous: IEdge) =>
           !previousResponses.find((current: IEdge) => current.node.id === previous.node.id),
@@ -410,41 +418,36 @@ const Chat = () => {
       if (newResponses.length > 0) {
         setPreviousResponses([...previousResponses, ...newResponses]);
         (async () => reqData([...previousResponses, ...newResponses]))();
+      } else {
+        setMessagesLoading(false);
       }
     }
-  }, [responsesData, previousResponses, responseNetworkStatus]);
+  }, [responsesData, responseNetworkStatus ]);
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      const msgElements = document.querySelectorAll('.message-container');
-      setLastEl(msgElements.item(0));
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    // start polling only on latest messages
-    if (!isTopHalf || isFirstPage) {
-      scrollToBottom();
+  useLayoutEffect(() => {
+    if (!currentEl) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      scrollToLast();
+      const heightDif  = (scrollableRef.current?.scrollHeight || currentEl.scrollHeight) - currentEl.scrollHeight;
+      scrollableRef.current?.scroll({ top: heightDif + currentEl.scrollTop, behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [ scrollableHeight, currentEl, messages ]);
 
   useEffect(() => {
     if (currentConversationId) {
-      setMessagesLoading(true);
+      setCurrentEl(undefined);
       setPreviousResponses([]); // clear previous responses
       setIsWaitingResponse(false);
-      setIsFirstPage(true);
       setRequestParams({
         ...requestParams,
         conversationId: currentConversationId,
       });
+      setMessagesLoading(true);
     }
   }, [currentConversationId]);
 
   useEffect(() => {
-    if (!responsesPollingData || !responsesData || messagesLoading) {
+    if (!responsesPollingData || !responsesData) {
       return;
     }
 
@@ -461,20 +464,7 @@ const Chat = () => {
         await emptyPolling();
       }
     })();
-  }, [responsesData, messagesLoading, responsesPollingData]);
-
-  useEffect(() => {
-    if (!requestsPollingData || !requestsData || messagesLoading) return;
-
-    const requests = requestsPollingData?.transactions?.edges ?? [];
-    const currentRequests = requestsData?.transacations?.edges ?? [];
-    const newValidRequests = requests.filter(
-      (res: IEdge) => !currentRequests.find((el: IMessage) => el.id === res.node.id),
-    );
-    if (newValidRequests.length > 0) {
-      (async () => asyncMap(newValidRequests))();
-    }
-  }, [requestsData, messagesLoading, requestsPollingData]);
+  }, [ responsesPollingData ]);
 
   const mapTransactionsToMessages = async (el: IEdge) => {
     const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
@@ -839,6 +829,30 @@ const Chat = () => {
     });
   };
 
+  const checkIsWaitingResponse = (filteredNewMsgs: IMessage[]) => {
+    const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
+    if (lastRequest) {
+      const responses = filteredNewMsgs.filter(
+        (el) =>
+          el.type === 'response' &&
+          el.tags.find((tag) => tag.name === TAG_NAMES.requestTransaction)?.value ===
+            lastRequest.id,
+      );
+      const nImages = lastRequest.tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value;
+      if (nImages && isStableDiffusion) {
+        setIsWaitingResponse(responses.length < parseInt(nImages, 10));
+        setResponseTimeout(false);
+      } else if (isStableDiffusion) {
+        const defaultNImages = 4;
+        setIsWaitingResponse(responses.length < defaultNImages);
+        setResponseTimeout(false);
+      } else {
+        setIsWaitingResponse(responses.length < 1);
+        setResponseTimeout(false);
+      }
+    }
+  };
+
   const reqData = async (allResponses: IEdge[]) => {
     // slice number of responses = to number of requests
     const previousRequest = requestsData?.transactions?.edges ?? [];
@@ -880,28 +894,8 @@ const Chat = () => {
       setMessages(uniqueMsgs);
     }
 
+    checkIsWaitingResponse(filteredNewMsgs);
     // find latest request
-    const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
-    if (lastRequest) {
-      const responses = filteredNewMsgs.filter(
-        (el) =>
-          el.type === 'response' &&
-          el.tags.find((tag) => tag.name === TAG_NAMES.requestTransaction)?.value ===
-            lastRequest.id,
-      );
-      const nImages = lastRequest.tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value;
-      if (nImages && isStableDiffusion) {
-        setIsWaitingResponse(responses.length < parseInt(nImages, 10));
-        setResponseTimeout(false);
-      } else if (isStableDiffusion) {
-        const defaultNImages = 4;
-        setIsWaitingResponse(responses.length < defaultNImages);
-        setResponseTimeout(false);
-      } else {
-        setIsWaitingResponse(responses.length < 1);
-        setResponseTimeout(false);
-      }
-    }
     setMessagesLoading(false);
   };
 
@@ -917,14 +911,6 @@ const Chat = () => {
         setResponseTimeout(false);
       }
     }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const scrollToLast = () => {
-    lastEl?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const onFileLoad = (fr: FileReader, newFile: File) => {
@@ -1009,6 +995,20 @@ const Chat = () => {
     setConfigurationDrawerOpen(false);
     setDrawerOpen(true);
   }, [setConfigurationDrawerOpen, setDrawerOpen]);
+
+  const handleLoadMore = useCallback(() => {
+    requestFetchMore({
+      variables: {
+        after:
+          requestsData.transactions.edges.length > 0
+            ? requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor
+            : undefined,
+      },
+      updateQuery: commonUpdateQuery,
+    });
+    setMessagesLoading(true);
+    setCurrentEl({ scrollTop: scrollableRef.current?.scrollTop as number, scrollHeight: scrollableRef.current?.scrollHeight as number });
+  }, [ requestFetchMore, requestsData ]);
 
   return (
     <>
@@ -1122,6 +1122,7 @@ const Chat = () => {
           <Box
             ref={chatRef}
             sx={{
+              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'flex-end',
@@ -1129,6 +1130,21 @@ const Chat = () => {
               height: '100%',
             }}
           >
+            { messagesLoading && <Backdrop
+              sx={{
+                position: 'absolute',
+                zIndex: (theme) => theme.zIndex.drawer + 1,
+                backdropFilter: 'blur(50px)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              open={true}
+            >
+              <Typography variant='h1' fontWeight={500} color={theme.palette.primary.main}>
+                Loading Messages...
+              </Typography>
+              <CircularProgress color='secondary' size='4rem' />
+            </Backdrop>}
             <Box flexGrow={1}>
               <Paper
                 elevation={1}
@@ -1141,26 +1157,49 @@ const Chat = () => {
                   boxShadow: 'none',
                 }}
               >
+                <Zoom in={showLoadMore} timeout={100} mountOnEnter unmountOnExit>
+                  <Box
+                    zIndex={'100'}
+                    display={'flex'}
+                    justifyContent={'center'}
+                    padding={'8px'}
+                    width={'100%'}
+                    sx={{
+                      position: 'absolute',
+                      top: '40px',
+                      width: chatWidth,
+                    }}
+                  >
+                    <Fab
+                      variant='extended'
+                      size='medium'
+                      color='primary'
+                      aria-label='Load More'
+                      onClick={handleLoadMore}
+                    >
+                      <Typography>Load More</Typography>
+                    </Fab>
+                  </Box>
+                </Zoom>
                 <Box
                   sx={{
-                    overflow: 'auto',
+                    height: '100%',
+                    overflow: messagesLoading ? 'hidden' : 'none',
                     maxHeight: chatMaxHeight,
-                    pt: '150px',
+                    pt: '50px',
                     paddingBottom: `${inputHeight}px`,
                   }}
                   ref={scrollableRef}
                 >
-                  <Box ref={target} sx={{ padding: '8px' }}></Box>
-                  <ChatBubble
+                  <Box ref={target} sx={{ padding: '8px' }} />
+                  <ChatContent
                     messages={messages}
                     showError={showError}
-                    showLoading={showLoading}
                     isWaitingResponse={isWaitingResponse}
                     responseTimeout={responseTimeout}
                     pendingTxs={pendingTxs}
-                    messagesLoading={messagesLoading}
                   />
-                  <Box ref={messagesEndRef} sx={{ padding: '8px' }}></Box>
+                  <Box ref={messagesEndRef} sx={{ padding: '8px' }} />
                 </Box>
               </Paper>
             </Box>

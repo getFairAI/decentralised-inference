@@ -18,11 +18,9 @@
 
 import { IMessage } from '@/interfaces/common';
 import { LoadingContainer } from '@/styles/components';
-import { genLoadingArray } from '@/utils/common';
 import {
   Container,
   Stack,
-  Skeleton,
   Box,
   Card,
   CardContent,
@@ -33,31 +31,25 @@ import {
 import Message from './message';
 import Transaction from 'arweave/node/lib/transaction';
 import { secondInMS } from '@/constants';
+import { useCallback } from 'react';
 
-const ChatBubble = ({
-  showLoading,
+const ChatContent = ({
   showError,
   messages,
   isWaitingResponse,
   responseTimeout,
   pendingTxs,
-  messagesLoading,
 }: {
-  showLoading: boolean;
   showError: boolean;
   messages: IMessage[];
   isWaitingResponse: boolean;
   responseTimeout: boolean;
   pendingTxs: Transaction[];
-  messagesLoading: boolean;
 }) => {
-  const mockElements = 5;
-  const pairDivider = 2; // number to divide by to check if even or odd
   const defaultJustifyContent = 'flex-start';
-  const mockArray = genLoadingArray(mockElements);
   const theme = useTheme();
 
-  const waitingResponseFragment = () => {
+  const waitingResponseFragment = useCallback(() => {
     return (
       <>
         {isWaitingResponse && !responseTimeout && (
@@ -100,9 +92,9 @@ const ChatBubble = ({
         )}
       </>
     );
-  };
+  }, [ isWaitingResponse, responseTimeout ]);
 
-  const showDayDivider = (el: IMessage, index: number) => {
+  const showDayDivider = useCallback((el: IMessage, index: number) => {
     const daysDiffer =
       index < messages.length - 1 &&
       new Date(el.timestamp * secondInMS).getDay() !==
@@ -127,9 +119,9 @@ const ChatBubble = ({
         )}
       </>
     );
-  };
+  }, [ messages ]);
 
-  const showResponseTimeoutFragment = () => {
+  const showResponseTimeoutFragment = useCallback(() => {
     if (responseTimeout && !isWaitingResponse) {
       return (
         <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
@@ -158,89 +150,38 @@ const ChatBubble = ({
     } else {
       return <></>;
     }
-  };
+  }, [ responseTimeout, isWaitingResponse ]);
 
-  const hasNoErrorsFragment = () => {
-    if (messages.length > 0 && !messagesLoading) {
-      return (
-        <>
-          <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
-            {new Date(messages[0].timestamp * secondInMS).toLocaleDateString()}
-          </Divider>
-          {messages.map((el: IMessage, index: number) => (
-            <Container
-              key={el.id}
-              maxWidth={false}
-              sx={{ paddingTop: '16px' }}
-              className='message-container'
-            >
-              <Message message={el} index={index} pendingTxs={pendingTxs} />
-              {showDayDivider(el, index)}
-            </Container>
-          ))}
-          {waitingResponseFragment()}
-          {showResponseTimeoutFragment()}
-        </>
-      );
-    }
 
-    return hasNoMessagesFragment();
-  };
-
-  const hasNoMessagesFragment = () => {
-    return (
-      showLoading && (
-        <Typography alignItems='center' display='flex' flexDirection='column'>
-          Starting a new conversation.
-        </Typography>
-      )
-    );
-  };
-
-  return (
-    <>
-      {showLoading &&
-        mockArray.map((el: number) => {
-          return (
-            <Container key={el} maxWidth={false}>
-              <Stack
-                spacing={4}
-                flexDirection='row'
-                justifyContent={el % pairDivider === 0 ? 'flex-end' : defaultJustifyContent}
-              >
-                <Skeleton animation={'wave'} width={'40%'}>
-                  <Box
-                    display={'flex'}
-                    justifyContent={el % pairDivider === 0 ? 'flex-end' : defaultJustifyContent}
-                    flexDirection='column'
-                    margin='8px'
-                  >
-                    <Box display={'flex'} alignItems='center'>
-                      <Card
-                        elevation={8}
-                        raised={true}
-                        sx={{ width: 'fit-content', paddingBottom: 0 }}
-                      >
-                        <CardContent>
-                          <Typography></Typography>
-                        </CardContent>
-                      </Card>
-                    </Box>
-                  </Box>
-                </Skeleton>
-              </Stack>
-            </Container>
-          );
-        })}
-      {showError ? (
-        <Typography alignItems='center' display='flex' flexDirection='column-reverse'>
-          Could not Fetch Conversation History.
-        </Typography>
-      ) : (
-        hasNoErrorsFragment()
-      )}
-    </>
-  );
+  if (showError) {
+    return <Typography alignItems='center' display='flex' flexDirection='column-reverse' height={'100%'}>
+      Could not Fetch Conversation History.
+    </Typography>;
+  } else if (messages.length > 0) {
+    return (<>  
+      <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
+        {new Date(messages[0].timestamp * secondInMS).toLocaleDateString()}
+      </Divider>
+      {messages.map((el: IMessage, index: number) => (
+        <Container
+          key={el.id}
+          maxWidth={false}
+          sx={{ paddingTop: '16px' }}
+          className='message-container'
+        >
+          <Message message={el} index={index} pendingTxs={pendingTxs} />
+          {showDayDivider(el, index)}
+        </Container>
+      ))}
+      {waitingResponseFragment()}
+      {showResponseTimeoutFragment()}
+    </>);
+  } else {
+    return <Typography alignItems='center' display='flex' flexDirection='column-reverse' height={'100%'}>
+      This is the start of your conversation. Type in your first prompt to get started.
+    </Typography>;
+  }
+  
 };
 
-export default ChatBubble;
+export default ChatContent;
