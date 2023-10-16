@@ -26,14 +26,17 @@ import {
   InputAdornment,
   IconButton,
   useTheme,
+  Card,
+  CardMedia,
 } from '@mui/material';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import DownloadIcon from '@mui/icons-material/Download';
 import '@/styles/main.css';
-import { FiCard, FicardMedia } from './full-image-card';
 
 const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails?: boolean }) => {
   const theme = useTheme();
+  const [content, setContent] = useState<string | File>('');
+  const [type, setType] = useState<string>('');
 
   const handleDownload = useCallback(() => {
     const a = document.createElement('a');
@@ -44,32 +47,50 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
     document.body.removeChild(a);
   }, [message]);
 
-  if (message.contentType?.includes('image')) {
+  useEffect(() => {
+    if (message.contentType?.includes('text') || message.contentType?.includes('json')) {
+      setContent(message.msg as string);
+      setType('text');
+    } else if (message.contentType?.includes('image')) {
+      setContent(`${NET_ARWEAVE_URL}/${message.id}`);
+      setType('image');
+    } else if (message.contentType?.includes('audio')) {
+      const fileUrl = URL.createObjectURL(message.msg as File);
+      setContent(fileUrl);
+      setType('audio');
+    } else {
+      setContent(message.msg as File);
+      setType('file');
+    }
+
+    return () => {
+      if (message.contentType?.includes('audio')) {
+        URL.revokeObjectURL(content as string);
+      }
+    };
+  }, [message]);
+
+  if (type === 'image') {
     return (
-      <FiCard
+      <Card
         sx={{
-          flexGrow: 0,
-          borderRadius: '8px',
+          boxShadow: 'none',
+          backgroundColor: 'transparent',
+          width: forDetails ? undefined : '512px',
+          height: forDetails ? undefined : '512px',
         }}
-        width={forDetails ? undefined : '512px'}
-        height={forDetails ? undefined : '512px'}
       >
-        <FicardMedia
-          src={`${NET_ARWEAVE_URL}/${message.id}`}
-          sx={{
-            background: `url(${NET_ARWEAVE_URL}/${message.id})`,
-            // backgroundPosition: 'center',s
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'contain' /* <------ */,
-            backgroundPosition: 'center',
-          }}
+        <CardMedia
+          component='img'
+          image={content as string}
+          title={content as string}
+          sx={{ objectFit: 'contain', width: '100%', height: '100%' }}
         />
-      </FiCard>
+      </Card>
     );
-  } else if (message.contentType?.includes('audio')) {
-    const fileUrl = URL.createObjectURL(message.msg as File);
-    return <audio controls src={fileUrl}></audio>;
-  } else if (message.contentType?.includes('text') || message.contentType?.includes('json')) {
+  } else if (type === 'audio') {
+    return <audio controls src={content as string}></audio>;
+  } else if (type === 'text') {
     return (
       <Typography
         sx={{
@@ -93,14 +114,14 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         gutterBottom
         component={'pre'}
       >
-        {message.msg as string}
+        {content as string}
       </Typography>
     );
   } else {
     return (
       <FormControl variant='outlined' fullWidth>
         <TextField
-          value={(message.msg as File).name || 'Not Available'}
+          value={(content as File).name || 'Not Available'}
           InputProps={{
             startAdornment: (
               <InputAdornment position='start'>
@@ -110,7 +131,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
               </InputAdornment>
             ),
             endAdornment: (
-              <InputAdornment position='start'>{printSize(message.msg as File)}</InputAdornment>
+              <InputAdornment position='start'>{printSize(content as File)}</InputAdornment>
             ),
             sx: {
               borderWidth: '1px',

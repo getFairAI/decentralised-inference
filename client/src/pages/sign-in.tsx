@@ -36,6 +36,7 @@ import {
   Button,
   Container,
   Divider,
+  FormHelperTextProps,
   IconButton,
   Slider,
   Step,
@@ -279,6 +280,7 @@ const WalletNoFundsContent = () => {
                     <img width='20px' height='20px' src='./arweave-logo-for-light.png' />
                   ),
                 }}
+                FormHelperTextProps={{ component: 'div' } as Partial<FormHelperTextProps>}
                 helperText={
                   <>
                     <Box display={'flex'} gap={'8px'}>
