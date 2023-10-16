@@ -1122,7 +1122,6 @@ const Chat = () => {
           <Box
             ref={chatRef}
             sx={{
-              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'flex-end',
@@ -1137,13 +1136,15 @@ const Chat = () => {
                 backdropFilter: 'blur(50px)',
                 display: 'flex',
                 flexDirection: 'column',
+                left: drawerOpen ? '240px' : '0px',
+                right: configurationDrawerOpen ? '30%' : '0px',
               }}
               open={true}
             >
               <Typography variant='h1' fontWeight={500} color={theme.palette.primary.main}>
                 Loading Messages...
               </Typography>
-              <CircularProgress color='secondary' size='4rem' />
+              <CircularProgress color='secondary' size='6rem' />
             </Backdrop>}
             <Box flexGrow={1}>
               <Paper
@@ -1183,8 +1184,7 @@ const Chat = () => {
                 </Zoom>
                 <Box
                   sx={{
-                    height: '100%',
-                    overflow: messagesLoading ? 'hidden' : 'none',
+                    overflow: messagesLoading ? 'hidden' : 'auto',
                     maxHeight: chatMaxHeight,
                     pt: '50px',
                     paddingBottom: `${inputHeight}px`,
