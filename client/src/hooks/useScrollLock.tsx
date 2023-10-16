@@ -37,7 +37,7 @@ const useScrollLock = (ref: RefObject<HTMLElement>) => {
         ref.current?.removeEventListener('scroll', handleScrollEvent, false);
       }
     };
-  }, [ ref, handleScrollEvent ]);
+  }, [ref, handleScrollEvent]);
 
   return setIsLocked;
 };

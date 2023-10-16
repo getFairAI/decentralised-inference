@@ -36,7 +36,8 @@ const useScroll = (ref: RefObject<HTMLElement>) => {
       const topHalf = target.scrollTop < target.scrollHeight / 2;
       setIsTopHalf(topHalf);
       setIsTop(target.scrollTop === 0);
-      setIsNearTop(target.scrollTop < (target.scrollHeight * 0.1));
+      const topThreshold = 0.1;
+      setIsNearTop(target.scrollTop < target.scrollHeight * topThreshold);
     }
   };
 
@@ -50,9 +51,9 @@ const useScroll = (ref: RefObject<HTMLElement>) => {
         ref.current?.removeEventListener('scroll', handleScrollEvent, false);
       }
     };
-  }, [ ref, handleScrollEvent ]);
+  }, [ref, handleScrollEvent]);
 
-  return { isAtBottom, isTop,  isNearTop, isTopHalf, isScrolled, scrollChanged };
+  return { isAtBottom, isTop, isNearTop, isTopHalf, isScrolled, scrollChanged };
 };
 
 export default useScroll;

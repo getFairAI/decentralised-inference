@@ -117,7 +117,7 @@ const useResponses = ({
         updateQuery: commonUpdateQuery,
       });
     }
-  }, [ responsesData ]);
+  }, [responsesData]);
 
   return {
     responsesData,

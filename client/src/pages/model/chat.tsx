@@ -302,7 +302,9 @@ const Chat = () => {
   const theme = useTheme();
   const target = useRef<HTMLDivElement>(null);
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
-  const [currentEl, setCurrentEl] = useState<{ scrollTop: number, scrollHeight: number} | undefined>(undefined);
+  const [currentEl, setCurrentEl] = useState<
+    { scrollTop: number; scrollHeight: number } | undefined
+  >(undefined);
   const { isNearTop } = useScroll(scrollableRef);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [loading, setLoading] = useState(false);
@@ -352,15 +354,14 @@ const Chat = () => {
   const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage, requestFetchMore } =
     useRequests(requestParams);
 
-  const {
-    responsesData,
-    responseError,
-    responseNetworkStatus,
-    responsesPollingData,
-  } = useResponses(responseParams);
+  const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
+    useResponses(responseParams);
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
-  const showLoadMore = useMemo(() => isNearTop && hasRequestNextPage && !messagesLoading, [isNearTop, hasRequestNextPage, messagesLoading]);
+  const showLoadMore = useMemo(
+    () => isNearTop && hasRequestNextPage && !messagesLoading,
+    [isNearTop, hasRequestNextPage, messagesLoading],
+  );
 
   useEffect(() => {
     (async () => FairSDKWeb.use('script', state.fullState))();
@@ -385,10 +386,12 @@ const Chat = () => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       //
       const reqIds = requestsData.transactions.edges.map((el: IEdge) => el.node.id);
-     
+
       if (reqIds.length > 0) {
         const scriptOperators = Array.from(
-          new Set(requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator'))),
+          new Set(
+            requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator')),
+          ),
         );
         setResponseParams({
           ...responseParams,
@@ -405,7 +408,7 @@ const Chat = () => {
         setMessages([]);
       }
     }
-  }, [requestsData, requestNetworkStatus ]);
+  }, [requestsData, requestNetworkStatus]);
 
   useEffect(() => {
     // only update messages after getting all responses
@@ -422,16 +425,17 @@ const Chat = () => {
         setMessagesLoading(false);
       }
     }
-  }, [responsesData, responseNetworkStatus ]);
+  }, [responsesData, responseNetworkStatus]);
 
   useLayoutEffect(() => {
     if (!currentEl) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      const heightDif  = (scrollableRef.current?.scrollHeight || currentEl.scrollHeight) - currentEl.scrollHeight;
+      const heightDif =
+        (scrollableRef.current?.scrollHeight || currentEl.scrollHeight) - currentEl.scrollHeight;
       scrollableRef.current?.scroll({ top: heightDif + currentEl.scrollTop, behavior: 'smooth' });
     }
-  }, [ scrollableHeight, currentEl, messages ]);
+  }, [scrollableHeight, currentEl, messages]);
 
   useEffect(() => {
     if (currentConversationId) {
@@ -464,7 +468,7 @@ const Chat = () => {
         await emptyPolling();
       }
     })();
-  }, [ responsesPollingData ]);
+  }, [responsesPollingData]);
 
   const mapTransactionsToMessages = async (el: IEdge) => {
     const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
@@ -1007,8 +1011,11 @@ const Chat = () => {
       updateQuery: commonUpdateQuery,
     });
     setMessagesLoading(true);
-    setCurrentEl({ scrollTop: scrollableRef.current?.scrollTop as number, scrollHeight: scrollableRef.current?.scrollHeight as number });
-  }, [ requestFetchMore, requestsData ]);
+    setCurrentEl({
+      scrollTop: scrollableRef.current?.scrollTop as number,
+      scrollHeight: scrollableRef.current?.scrollHeight as number,
+    });
+  }, [requestFetchMore, requestsData]);
 
   return (
     <>
@@ -1129,23 +1136,25 @@ const Chat = () => {
               height: '100%',
             }}
           >
-            { messagesLoading && <Backdrop
-              sx={{
-                position: 'absolute',
-                zIndex: (theme) => theme.zIndex.drawer + 1,
-                backdropFilter: 'blur(50px)',
-                display: 'flex',
-                flexDirection: 'column',
-                left: drawerOpen ? '240px' : '0px',
-                right: configurationDrawerOpen ? '30%' : '0px',
-              }}
-              open={true}
-            >
-              <Typography variant='h1' fontWeight={500} color={theme.palette.primary.main}>
-                Loading Messages...
-              </Typography>
-              <CircularProgress color='secondary' size='6rem' />
-            </Backdrop>}
+            {messagesLoading && (
+              <Backdrop
+                sx={{
+                  position: 'absolute',
+                  zIndex: theme.zIndex.drawer + 1,
+                  backdropFilter: 'blur(50px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  left: drawerOpen ? '240px' : '0px',
+                  right: configurationDrawerOpen ? '30%' : '0px',
+                }}
+                open={true}
+              >
+                <Typography variant='h1' fontWeight={500} color={theme.palette.primary.main}>
+                  Loading Messages...
+                </Typography>
+                <CircularProgress color='secondary' size='6rem' />
+              </Backdrop>
+            )}
             <Box flexGrow={1}>
               <Paper
                 elevation={1}

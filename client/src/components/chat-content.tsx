@@ -92,34 +92,37 @@ const ChatContent = ({
         )}
       </>
     );
-  }, [ isWaitingResponse, responseTimeout ]);
+  }, [isWaitingResponse, responseTimeout]);
 
-  const showDayDivider = useCallback((el: IMessage, index: number) => {
-    const daysDiffer =
-      index < messages.length - 1 &&
-      new Date(el.timestamp * secondInMS).getDay() !==
-        new Date(messages[index + 1].timestamp * secondInMS).getDay();
-    return (
-      <>
-        {daysDiffer && (
-          <Divider textAlign='center'>
-            <Typography
-              sx={{
-                fontStyle: 'normal',
-                fontWeight: 300,
-                fontSize: '20px',
-                lineHeight: '27px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              {new Date(messages[index + 1].timestamp * secondInMS).toLocaleDateString()}
-            </Typography>
-          </Divider>
-        )}
-      </>
-    );
-  }, [ messages ]);
+  const showDayDivider = useCallback(
+    (el: IMessage, index: number) => {
+      const daysDiffer =
+        index < messages.length - 1 &&
+        new Date(el.timestamp * secondInMS).getDay() !==
+          new Date(messages[index + 1].timestamp * secondInMS).getDay();
+      return (
+        <>
+          {daysDiffer && (
+            <Divider textAlign='center'>
+              <Typography
+                sx={{
+                  fontStyle: 'normal',
+                  fontWeight: 300,
+                  fontSize: '20px',
+                  lineHeight: '27px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {new Date(messages[index + 1].timestamp * secondInMS).toLocaleDateString()}
+              </Typography>
+            </Divider>
+          )}
+        </>
+      );
+    },
+    [messages],
+  );
 
   const showResponseTimeoutFragment = useCallback(() => {
     if (responseTimeout && !isWaitingResponse) {
@@ -150,38 +153,42 @@ const ChatContent = ({
     } else {
       return <></>;
     }
-  }, [ responseTimeout, isWaitingResponse ]);
-
+  }, [responseTimeout, isWaitingResponse]);
 
   if (showError) {
-    return <Typography alignItems='center' display='flex' flexDirection='column-reverse' height={'100%'}>
-      Could not Fetch Conversation History.
-    </Typography>;
+    return (
+      <Typography alignItems='center' display='flex' flexDirection='column-reverse' height={'100%'}>
+        Could not Fetch Conversation History.
+      </Typography>
+    );
   } else if (messages.length > 0) {
-    return (<>  
-      <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
-        {new Date(messages[0].timestamp * secondInMS).toLocaleDateString()}
-      </Divider>
-      {messages.map((el: IMessage, index: number) => (
-        <Container
-          key={el.id}
-          maxWidth={false}
-          sx={{ paddingTop: '16px' }}
-          className='message-container'
-        >
-          <Message message={el} index={index} pendingTxs={pendingTxs} />
-          {showDayDivider(el, index)}
-        </Container>
-      ))}
-      {waitingResponseFragment()}
-      {showResponseTimeoutFragment()}
-    </>);
+    return (
+      <>
+        <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
+          {new Date(messages[0].timestamp * secondInMS).toLocaleDateString()}
+        </Divider>
+        {messages.map((el: IMessage, index: number) => (
+          <Container
+            key={el.id}
+            maxWidth={false}
+            sx={{ paddingTop: '16px' }}
+            className='message-container'
+          >
+            <Message message={el} index={index} pendingTxs={pendingTxs} />
+            {showDayDivider(el, index)}
+          </Container>
+        ))}
+        {waitingResponseFragment()}
+        {showResponseTimeoutFragment()}
+      </>
+    );
   } else {
-    return <Typography alignItems='center' display='flex' flexDirection='column-reverse' height={'100%'}>
-      This is the start of your conversation. Type in your first prompt to get started.
-    </Typography>;
+    return (
+      <Typography alignItems='center' display='flex' flexDirection='column-reverse' height={'100%'}>
+        This is the start of your conversation. Type in your first prompt to get started.
+      </Typography>
+    );
   }
-  
 };
 
 export default ChatContent;

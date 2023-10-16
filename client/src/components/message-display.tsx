@@ -35,8 +35,8 @@ import '@/styles/main.css';
 
 const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails?: boolean }) => {
   const theme = useTheme();
-  const [ content, setContent ] = useState<string | File>('');
-  const [ type, setType ] = useState<string>('');
+  const [content, setContent] = useState<string | File>('');
+  const [type, setType] = useState<string>('');
 
   const handleDownload = useCallback(() => {
     const a = document.createElement('a');
@@ -68,7 +68,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         URL.revokeObjectURL(content as string);
       }
     };
-  }, [ message ]);
+  }, [message]);
 
   if (type === 'image') {
     return (
@@ -81,7 +81,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         }}
       >
         <CardMedia
-          component="img"
+          component='img'
           image={content as string}
           title={content as string}
           sx={{ objectFit: 'contain', width: '100%', height: '100%' }}
