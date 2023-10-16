@@ -38,7 +38,6 @@ import {
   InputBase,
   MenuItem,
   Select,
-  TextField,
   Tooltip,
   useTheme,
 } from '@mui/material';
@@ -48,11 +47,11 @@ import { Timeout } from 'react-number-format/types/types';
 import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 import { usePollingEffect } from '@/hooks/usePollingEffect';
 import Logo from './logo';
-import { NumericFormat } from 'react-number-format';
 import { parseUBalance } from '@/utils/u';
-import { getArPriceUSD } from '@/utils/common';
+import { findTag, getArPriceUSD } from '@/utils/common';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
+import { InfoOutlined } from '@mui/icons-material';
 
 const CustomDropDownIcon = () => (
   <Icon
@@ -266,6 +265,7 @@ const Navbar = ({
   const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
   let keyTimeout: Timeout;
   const [usdFee, setUsdFee] = useState(0);
+  const [tooltip, setTooltip] = useState('');
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
@@ -286,8 +286,24 @@ const Navbar = ({
     (async () => {
       const uCost = parseUBalance(state?.fee);
       const arPrice = await getArPriceUSD();
+      const isImage = findTag(state.fullState, 'output') === 'image';
+      const isStableDiffusion =
+        findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
+      const defaultNImages = 4;
+      const nImages = isStableDiffusion ? defaultNImages : 1;
 
-      setUsdFee(uCost * arPrice);
+      if (isStableDiffusion || isImage) {
+        setTooltip(
+          `Cost set by operator for each image: ${(uCost * arPrice).toFixed(
+            nDigits,
+          )}$\n Default number of images: ${nImages}`,
+        );
+      } else {
+        setTooltip(
+          `Cost set by operator for each generation: ${(uCost * arPrice).toFixed(nDigits)}`,
+        );
+      }
+      setUsdFee(uCost * arPrice * nImages);
     })();
   }, [state, parseUBalance, getArPriceUSD]);
 
@@ -363,22 +379,32 @@ const Navbar = ({
           >
             {pathname.includes('chat') ? (
               <>
-                <NumericFormat
-                  label='Cost per Asset'
-                  placeholder='Cost per Asset'
-                  value={usdFee.toFixed(nDigits)}
-                  customInput={TextField}
-                  disabled={true}
-                  InputProps={{
-                    endAdornment: <Typography>$</Typography>,
-                  }}
-                  sx={{
-                    width: '120px',
-                    '& .MuiInputBase-input': {
-                      padding: '10.5px',
-                    },
-                  }}
-                />
+                <Box>
+                  <Typography
+                    sx={{
+                      fontStyle: 'normal',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Default Cost:
+                  </Typography>
+                  <Typography display={'flex'} justifyContent={spaceBetween}>
+                    {usdFee.toFixed(nDigits)}$
+                    <Tooltip
+                      title={
+                        <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                          {tooltip}
+                        </Typography>
+                      }
+                      placement='bottom'
+                    >
+                      <InfoOutlined />
+                    </Tooltip>
+                  </Typography>
+                </Box>
                 <Button
                   sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '12px 16px' }}
                   startIcon={<img src='./chevron-bottom.svg' />}
