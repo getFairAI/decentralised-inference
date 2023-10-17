@@ -23,7 +23,7 @@ import { commonUpdateQuery, findTagsWithKeyword } from '@/utils/common';
 import { useQuery, NetworkStatus, gql } from '@apollo/client';
 import { RefObject, useState, useContext, useEffect, useMemo } from 'react';
 import useOnScreen from './useOnScreen';
-import FairSDKWeb from 'fair-protocol-sdk/web';
+import FairSDKWeb from '@fair-protocol/sdk/web';
 
 const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) => {
   const [hasNextPage, setHasNextPage] = useState(false);

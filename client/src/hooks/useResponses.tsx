@@ -17,7 +17,7 @@
  */
 
 import { gql, useLazyQuery } from '@apollo/client';
-import FairSDKWeb from 'fair-protocol-sdk/web';
+import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
 

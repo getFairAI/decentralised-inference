@@ -79,7 +79,7 @@ import { WarpFactory } from 'warp-contracts';
 import { DeployPlugin } from 'warp-contracts-plugin-deploy';
 import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
-import FairSDKWeb from 'fair-protocol-sdk/web';
+import FairSDKWeb from '@fair-protocol/sdk/web';
 import useScroll from '@/hooks/useScroll';
 
 const warp = WarpFactory.forMainnet().use(new DeployPlugin());

@@ -25,7 +25,7 @@ import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
 import Transaction from 'arweave/web/lib/transaction';
 import { connectToU, getUBalance, parseUBalance } from '@/utils/u';
 import { connectToUCM } from '@/utils/ucm';
-import FairSDKWeb from 'fair-protocol-sdk/web';
+import FairSDKWeb from '@fair-protocol/sdk/web';
 
 const arweaveApp = 'arweave.app';
 const arConnect = 'arconnect';

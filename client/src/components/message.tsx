@@ -56,7 +56,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { findTag } from '@/utils/common';
 import MessageDetail from './message-detail';
-import FairSDKWeb from 'fair-protocol-sdk/web';
+import FairSDKWeb from '@fair-protocol/sdk/web';
 
 const MessageHeader = ({ message }: { message: IMessage }) => {
   const { state } = useLocation();
