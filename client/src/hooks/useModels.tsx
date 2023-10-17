@@ -20,7 +20,7 @@ import { TAG_NAMES } from '@/constants';
 import FilterContext from '@/context/filter';
 import { IContractEdge } from '@/interfaces/arweave';
 import { commonUpdateQuery, findTagsWithKeyword } from '@/utils/common';
-import { useQuery, NetworkStatus, gql } from '@apollo/client';
+import { useQuery, NetworkStatus } from '@apollo/client';
 import { RefObject, useState, useContext, useEffect, useMemo } from 'react';
 import useOnScreen from './useOnScreen';
 import FairSDKWeb from '@fair-protocol/sdk/web';
@@ -38,7 +38,7 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
   const elementsPerPage = 5;
   const defaultFeaturedElements = 3;
   const queryObject = FairSDKWeb.utils.getModelsQuery(elementsPerPage);
-  const { data, loading, error, fetchMore, networkStatus } = useQuery(gql(queryObject.query), {
+  const { data, loading, error, fetchMore, networkStatus } = useQuery(queryObject.query, {
     variables: queryObject.variables,
   });
 

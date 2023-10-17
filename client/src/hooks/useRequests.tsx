@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { NetworkStatus, gql, useLazyQuery } from '@apollo/client';
+import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect, useState } from 'react';
 
@@ -46,7 +46,7 @@ const useRequests = ({
       networkStatus: requestNetworkStatus,
       fetchMore: requestFetchMore,
     },
-  ] = useLazyQuery(gql(requestsQuery));
+  ] = useLazyQuery(requestsQuery);
   useEffect(() => {
     const { variables: queryParams } = FairSDKWeb.utils.getRequestsQuery(
       userAddr,

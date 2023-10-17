@@ -19,7 +19,7 @@
 import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY } from '@/constants';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
-import { useQuery, NetworkStatus, gql } from '@apollo/client';
+import { useQuery, NetworkStatus } from '@apollo/client';
 import {
   Box,
   Button,
@@ -270,7 +270,7 @@ const ChooseOperator = ({
     networkStatus,
     refetch,
     fetchMore,
-  } = useQuery(gql(queryObject.query), {
+  } = useQuery(queryObject.query, {
     variables: queryObject.variables,
     skip: !scriptTx,
   });
