@@ -1149,10 +1149,10 @@ const Chat = () => {
                 }}
                 open={true}
               >
-                <Typography variant='h1' fontWeight={500} color={theme.palette.primary.main}>
+                <Typography variant='h1' fontWeight={500} color={theme.palette.background.default}>
                   Loading Messages...
                 </Typography>
-                <CircularProgress color='secondary' size='6rem' />
+                <CircularProgress sx={{ color: theme.palette.background.default }} size='6rem' />
               </Backdrop>
             )}
             <Box flexGrow={1}>
