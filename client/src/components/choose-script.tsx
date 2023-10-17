@@ -44,7 +44,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
 import { Timeout } from 'react-number-format/types/types';
-import FairSDKWeb from 'fair-protocol-sdk/web';
+import FairSDKWeb from '@fair-protocol/sdk/web';
 
 const ChooseScript = ({
   setShowScripts,
