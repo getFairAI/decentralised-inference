@@ -41,7 +41,7 @@ export const getData = async (txid: string, fileName?: string) => {
     return (await result.blob()).text();
   } else {
     const blob = await result.blob();
-    return new File([blob], fileName ?? blob.name, { type: blob.type });
+    return new File([blob], fileName ?? txid, { type: blob.type });
   }
 };
 
@@ -63,7 +63,8 @@ export const isTxConfirmed = async (txid: string) => {
 
 export const parseWinston = (value?: string) => {
   try {
-    return parseFloat(arweave.ar.winstonToAr(value as string)).toFixed(4);
+    const defaultNDigits = 4;
+    return parseFloat(arweave.ar.winstonToAr(value as string)).toFixed(defaultNDigits);
   } catch (error) {
     return '0';
   }

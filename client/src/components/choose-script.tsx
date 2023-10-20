@@ -20,7 +20,7 @@ import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY } from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
-import { NetworkStatus, gql, useQuery } from '@apollo/client';
+import { NetworkStatus, useQuery } from '@apollo/client';
 import {
   DialogActions,
   Button,
@@ -45,6 +45,31 @@ import BasicTable from './basic-table';
 import { ModelNavigationState } from '@/interfaces/router';
 import { Timeout } from 'react-number-format/types/types';
 import FairSDKWeb from '@fair-protocol/sdk/web';
+
+/* const scriptsFilter = async (data: IContractEdge[]) => {
+  const uniqueScripts = FairSDKWeb.utils.filterByUniqueScriptTxId<IContractEdge[]>(data);
+  const filteredScritps = FairSDKWeb.utils.filterPreviousVersions<IContractEdge[]>(uniqueScripts as IContractEdge[]);
+  const filtered: IContractEdge[] = [];
+  for (const el of filteredScritps) {
+    const scriptId = FairSDKWeb.utils.findTag(el, 'scriptTransaction') as string;
+    const scriptOwner = FairSDKWeb.utils.findTag(el, 'sequencerOwner') as string;
+    const sequencerId = FairSDKWeb.utils.findTag(el, 'sequencerTxId') as string;
+
+    const isValidPayment = await FairSDKWeb.utils.isUTxValid(sequencerId);
+
+    if (!isValidPayment) {
+      // ignore
+    } else if (!scriptOwner || !scriptId) {
+      // ignore
+    } else if (await isFakeDeleted(scriptId, scriptOwner, 'script')) {
+      // if fake deleted ignore
+    } else {
+      filtered.push(el);
+    }
+  }
+
+  return filtered;
+}; */
 
 const ChooseScript = ({
   setShowScripts,
@@ -78,7 +103,7 @@ const ChooseScript = ({
     refetch,
     fetchMore,
     networkStatus,
-  } = useQuery(gql(queryObject.query), { variables: queryObject.variables });
+  } = useQuery(queryObject.query, { variables: queryObject.variables });
 
   const showLoading = useMemo(() => loading || filtering, [loading, filtering]);
 

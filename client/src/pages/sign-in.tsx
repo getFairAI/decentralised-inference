@@ -514,7 +514,7 @@ const SinginWithFunds = () => {
         {featuredTxs.map((el) => (
           <Box key={el.node.id} display={'flex'} flexDirection={'column'} gap={'30px'}>
             <AiCard model={el} key={el.node.id} loading={loading} useModel={true} />
-            <Typography>{findTag(el, 'description')}</Typography>
+            <Typography maxWidth={'317px'}>{findTag(el, 'description')}</Typography>
           </Box>
         ))}
       </Box>

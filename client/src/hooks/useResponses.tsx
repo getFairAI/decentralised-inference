@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { gql, useLazyQuery } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
@@ -59,10 +59,10 @@ const useResponses = ({
       networkStatus: responseNetworkStatus,
       fetchMore: responsesFetchMore,
     },
-  ] = useLazyQuery(gql(responsesQuery));
+  ] = useLazyQuery(responsesQuery);
 
   const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] =
-    useLazyQuery(gql(responsesQuery), {
+    useLazyQuery(responsesQuery, {
       fetchPolicy: 'no-cache',
       nextFetchPolicy: 'no-cache',
     });
