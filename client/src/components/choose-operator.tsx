@@ -336,6 +336,12 @@ const ChooseOperator = ({
           queryData.transactions.edges,
         );
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
+        // sort by fee
+        filtered.sort((a, b) => {
+          const aFee = Number(findTag(a, 'operatorFee'));
+          const bFee = Number(findTag(b, 'operatorFee'));
+          return aFee - bFee;
+        });
         setOperatorsData(filtered);
         checkSingleOperator(filtered);
         setFiltering(false);
