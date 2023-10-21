@@ -37,11 +37,9 @@ import { ModelNavigationState } from '@/interfaces/router';
 
 const AiCard = ({
   model,
-  loading,
   useModel = false,
 }: {
   model: IContractEdge;
-  loading: boolean;
   useModel?: boolean;
 }) => {
   const theme = useTheme();
@@ -137,7 +135,7 @@ const AiCard = ({
       }}
     >
       <FiCardActionArea onClick={handleCardClick}>
-        {!imgUrl || loading || avatarLoading ? (
+        {!imgUrl || avatarLoading ? (
           <Box
             sx={{
               position: 'absolute',
@@ -154,7 +152,7 @@ const AiCard = ({
           />
         ) : (
           <FicardMedia
-            src={imgUrl && !loading && !avatarLoading ? imgUrl : ''}
+            src={imgUrl && !avatarLoading ? imgUrl : ''}
             sx={{
               position: 'absolute',
               top: 0,
@@ -163,7 +161,7 @@ const AiCard = ({
               height: '352px',
               background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 40%, ${
                 theme.palette.background.default
-              } 100%), url(${imgUrl && !loading && !avatarLoading ? imgUrl : ''})`,
+              } 100%), url(${imgUrl && !avatarLoading ? imgUrl : ''})`,
               // backgroundPosition: 'center',s
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'cover' /* <------ */,

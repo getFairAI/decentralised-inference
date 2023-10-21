@@ -492,7 +492,7 @@ const WalletNoFundsContent = () => {
 
 const SinginWithFunds = () => {
   const singinFeatureElements = 4;
-  const { featuredTxs, loading } = useModels(undefined, singinFeatureElements);
+  const { featuredTxs } = useModels(undefined, singinFeatureElements);
 
   return (
     <>
@@ -513,7 +513,7 @@ const SinginWithFunds = () => {
       <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
         {featuredTxs.map((el) => (
           <Box key={el.node.id} display={'flex'} flexDirection={'column'} gap={'30px'}>
-            <AiCard model={el} key={el.node.id} loading={loading} useModel={true} />
+            <AiCard model={el} key={el.node.id} useModel={true} />
             <Typography maxWidth={'317px'}>{findTag(el, 'description')}</Typography>
           </Box>
         ))}
