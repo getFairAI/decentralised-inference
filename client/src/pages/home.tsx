@@ -38,7 +38,7 @@ export default function Home() {
   const target = useRef<HTMLDivElement>(null);
   const theme = useTheme();
 
-  const { txs, loading, featuredTxs, error } = useModels(target);
+  const { txs, featuredTxs } = useModels(target);
   const handleHighlight = (value: boolean) => setHighLightTop(value);
 
   return (
@@ -54,7 +54,7 @@ export default function Home() {
           },
         }}
       >
-        <Featured data={featuredTxs} loading={loading} error={error} />
+        <Featured data={featuredTxs} />
         <Box className={'filter-box'} sx={{ display: 'flex' }}>
           <Box display={'flex'} flexDirection={'column'}>
             <Box display='flex' gap={'50px'} width={'100%'}>
@@ -158,7 +158,7 @@ export default function Home() {
         </Box>
         <Stack spacing={4}>
           {txs.map((el, idx) => (
-            <AiListCard model={el} key={el.node.id} index={idx} loading={loading} error={error} />
+            <AiListCard model={el} key={el.node.id} index={idx} />
           ))}
           <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
         </Stack>

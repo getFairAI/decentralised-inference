@@ -24,6 +24,7 @@ import { useQuery, NetworkStatus } from '@apollo/client';
 import { RefObject, useState, useContext, useEffect, useMemo } from 'react';
 import useOnScreen from './useOnScreen';
 import FairSDKWeb from '@fair-protocol/sdk/web';
+import _ from 'lodash';
 
 const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) => {
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -52,8 +53,9 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
         setHasNextPage(data.transactions.pageInfo.hasNextPage);
         setTxs(filtered);
         setValidTxs(filtered);
-        if (featuredTxs.length === 0) {
-          setFeaturedTxs(filtered.slice(0, featuredElements ?? defaultFeaturedElements));
+        const newFilteredTxs = filtered.slice(0, featuredElements ?? defaultFeaturedElements);
+        if (!_.isEqual(newFilteredTxs, featuredTxs)) {
+          setFeaturedTxs(newFilteredTxs);
         }
         setFiltering(false);
       })();

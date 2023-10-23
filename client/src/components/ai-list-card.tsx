@@ -27,7 +27,7 @@ import {
 import { IContractEdge } from '@/interfaces/arweave';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { findTag } from '@/utils/common';
-import { ApolloError, useLazyQuery } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 import {
   Card,
   CardActionArea,
@@ -42,16 +42,7 @@ import { toSvg } from 'jdenticon';
 import { MouseEvent, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const AiListCard = ({
-  model,
-  index,
-  loading,
-}: {
-  model: IContractEdge;
-  index: number;
-  loading: boolean;
-  error?: ApolloError;
-}) => {
+const AiListCard = ({ model, index }: { model: IContractEdge; index: number }) => {
   const navigate = useNavigate();
   const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
   const theme = useTheme();
@@ -172,7 +163,7 @@ const AiListCard = ({
             textAlign: 'center',
           }}
         />
-        {!imgUrl || loading || avatarLoading ? (
+        {!imgUrl || avatarLoading ? (
           <Box
             sx={{
               position: 'absolute',
@@ -186,13 +177,13 @@ const AiListCard = ({
           />
         ) : (
           <CardMedia
-            src={loading || avatarLoading ? '' : imgUrl}
+            src={avatarLoading ? '' : imgUrl}
             sx={{
               borderRadius: '16px',
               height: '100px',
               width: '100px',
               background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, rgba(1, 1, 1, 0) 188.85%)
-              , url(${loading || avatarLoading ? '' : imgUrl})`,
+              , url(${avatarLoading ? '' : imgUrl})`,
               backgroundPosition: 'center',
               backgroundSize: 'cover',
             }}

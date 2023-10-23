@@ -3,16 +3,8 @@ import { useState } from 'react';
 import AiCard from './ai-card';
 import { IContractEdge } from '@/interfaces/arweave';
 import '@/styles/ui.css';
-import { ApolloError } from '@apollo/client';
 
-const Featured = ({
-  data,
-  loading,
-}: {
-  data: IContractEdge[];
-  loading: boolean;
-  error?: ApolloError;
-}) => {
+const Featured = ({ data }: { data: IContractEdge[] }) => {
   const [filterSelected, setFilterChanged] = useState(0);
   const filters = ['All', 'Text', 'Document'];
   const smallScreen = useMediaQuery('(max-width:1600px)');
@@ -70,7 +62,7 @@ const Featured = ({
           </Box>
           <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
             {data.map((el) => (
-              <AiCard model={el} key={el.node.id} loading={loading} />
+              <AiCard model={el} key={el.node.id} />
             ))}
           </Box>
         </Box>
