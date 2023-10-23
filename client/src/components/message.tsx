@@ -221,7 +221,7 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
         <Box display={'flex'} alignItems='center' gap={'8px'}>
           {showTradeOnBazar && (
             <Button variant='outlined' onClick={handleBazarTradeClick}>
-              Trade on Bazar
+              Trade on BazAR
             </Button>
           )}
           {showTradeOnRareweave && (
