@@ -17,18 +17,24 @@
  */
 
 import {
+  APACHE_ID,
+  CREATIVEML_M_ID,
+  CREATIVEML_PLUSPLUS_M_ID,
   MARKETPLACE_ADDRESS,
+  MIT_ID,
   MODEL_DELETION,
   NET_ARWEAVE_URL,
   SCRIPT_DELETION,
   TAG_NAMES,
+  UDL_ID,
   defaultDecimalPlaces,
   secondInMS,
 } from '@/constants';
-import { IContractEdge, IEdge, ITransactions } from '@/interfaces/arweave';
+import { IContractEdge, IEdge, ITag, ITransactions } from '@/interfaces/arweave';
 import { QUERY_TX_WITH_OWNERS } from '@/queries/graphql';
 import { client } from './apollo';
 import redstone from 'redstone-api';
+import { LicenseForm } from '@/interfaces/common';
 
 export const formatNumbers = (value: string) => {
   try {
@@ -176,4 +182,80 @@ export const getArPriceUSD = async () => {
 export const parseCost = async (cost: number) => {
   const arPrice = await getArPriceUSD();
   return cost * arPrice;
+};
+
+export const addLicenseConfigTags = (tags: ITag[], licenseProps: LicenseForm, license?: string) => {
+  const licenseTags = [];
+  if (!license || license === 'Default') {
+    return;
+  } else if (license === 'Universal Data License (UDL) Default Public Use') {
+    licenseTags.push({ name: TAG_NAMES.license, value: UDL_ID });
+  } else if (license === 'Universal Data License (UDL) Commercial - One Time Payment') {
+    licenseTags.push({ name: TAG_NAMES.license, value: UDL_ID });
+    // other options
+    licenseTags.push({ name: TAG_NAMES.commercialUse, value: 'Allowed' });
+    licenseTags.push({ name: TAG_NAMES.licenseFee, value: `One-Time-${licenseProps.licenseFee}` });
+    licenseTags.push({ name: TAG_NAMES.currency, value: licenseProps.currency as string });
+  } else if (
+    license === 'Universal licenseProps License (UDL) Derivative Works - One Time Payment'
+  ) {
+    licenseTags.push({ name: TAG_NAMES.license, value: UDL_ID });
+    // other options
+    licenseTags.push({ name: TAG_NAMES.derivation, value: 'With-Credit' });
+    licenseTags.push({ name: TAG_NAMES.licenseFee, value: `One-Time-${licenseProps.licenseFee}` });
+    licenseTags.push({ name: TAG_NAMES.currency, value: licenseProps.currency as string });
+  } else if (license === 'Universal licenseProps License (UDL) Custom') {
+    licenseTags.push({ name: TAG_NAMES.license, value: UDL_ID });
+    // other options
+    if (licenseProps.derivations && licenseProps.revenueShare) {
+      licenseTags.push({
+        name: TAG_NAMES.derivation,
+        value: `Allowed-With-RevenueShare-${licenseProps.revenueShare}%`,
+      });
+    } else if (licenseProps.derivations) {
+      licenseTags.push({ name: TAG_NAMES.derivation, value: licenseProps.derivations });
+    } else {
+      // ignore
+    }
+
+    if (licenseProps.commercialUse) {
+      licenseTags.push({ name: TAG_NAMES.commercialUse, value: licenseProps.commercialUse });
+    }
+
+    if (licenseProps.licenseFeeInterval && licenseProps.licenseFee) {
+      licenseTags.push({
+        name: TAG_NAMES.licenseFee,
+        value: `${licenseProps.licenseFeeInterval}-${licenseProps.licenseFee}`,
+      });
+    }
+
+    if (licenseProps.currency) {
+      licenseTags.push({ name: TAG_NAMES.currency, value: licenseProps.currency });
+    }
+
+    if (licenseProps.expires) {
+      licenseTags.push({ name: TAG_NAMES.expires, value: licenseProps.expires.toString() });
+    }
+
+    if (licenseProps.paymentAddress) {
+      licenseTags.push({ name: TAG_NAMES.paymentAddress, value: licenseProps.paymentAddress });
+    }
+
+    if (licenseProps.paymentMode) {
+      licenseTags.push({ name: TAG_NAMES.paymentMode, value: licenseProps.paymentMode });
+    }
+  } else if (license === 'APACHE 2.0') {
+    licenseTags.push({ name: TAG_NAMES.license, value: APACHE_ID });
+  } else if (license === 'MIT') {
+    licenseTags.push({ name: TAG_NAMES.license, value: MIT_ID });
+  } else if (license === 'CreativeML Open RAIL-M') {
+    licenseTags.push({ name: TAG_NAMES.license, value: CREATIVEML_M_ID });
+  } else if (license === 'CreativeML Open RAIL++-M') {
+    licenseTags.push({ name: TAG_NAMES.license, value: CREATIVEML_PLUSPLUS_M_ID });
+  } else {
+    licenseTags.push({ name: TAG_NAMES.license, value: license });
+  }
+
+  const LicenseConfigTag = { name: TAG_NAMES.licenseConfig, value: JSON.stringify(licenseTags) };
+  tags.push(LicenseConfigTag);
 };

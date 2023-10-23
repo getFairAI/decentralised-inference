@@ -49,6 +49,9 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { parseUBalance } from '@/utils/u';
 import { enqueueSnackbar } from 'notistack';
 import { NumberFormatValues, NumericFormat } from 'react-number-format';
+import LicenseConfiguration from './license-configuration';
+import { Control } from 'react-hook-form';
+import { LicenseForm } from '@/interfaces/common';
 
 const CustomTag = ({
   name,
@@ -188,6 +191,8 @@ const Configuration = ({
   customTagsRef,
   generateAssetsRef,
   royaltyRef,
+  licenseRef,
+  licenseControl,
   handleClose,
 }: {
   negativePromptRef: RefObject<HTMLTextAreaElement>;
@@ -198,6 +203,8 @@ const Configuration = ({
   customTagsRef: MutableRefObject<{ name: string; value: string }[]>;
   generateAssetsRef: MutableRefObject<'fair-protocol' | 'rareweave' | 'none'>;
   royaltyRef: RefObject<HTMLInputElement>;
+  licenseRef: RefObject<HTMLInputElement>;
+  licenseControl: Control<LicenseForm, unknown>;
   handleClose: () => void;
 }) => {
   const maxPercentage = 100;
@@ -207,7 +214,6 @@ const Configuration = ({
   const [isAssetNamesDirty, setIsAssetNamesDirty] = useState(false);
   const [customTags, setCustomTags] = useState<{ name: string; value: string }[]>([]);
   const [generateAsset, setGenerateAsset] = useState('fair-protocol');
-
   const nameRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLTextAreaElement>(null);
 
@@ -371,7 +377,6 @@ const Configuration = ({
           isAllowed={isAllowedRoyalty}
         />
       )}
-
       <TextField
         inputRef={assetNamesRef}
         label={'Atomic Asset Name(s)'}
@@ -389,6 +394,7 @@ const Configuration = ({
         maxRows={3}
         fullWidth
       />
+      <LicenseConfiguration licenseControl={licenseControl} licenseRef={licenseRef} />
       <Box>
         <Divider textAlign='left' variant='fullWidth'>
           <Typography variant='h4'>Custom Tags</Typography>
