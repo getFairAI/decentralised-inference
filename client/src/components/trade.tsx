@@ -56,11 +56,35 @@ import { enqueueSnackbar } from 'notistack';
 import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { NumberFormatValues, NumericFormat } from 'react-number-format';
 
-const maxSliderValue = 1000; // max value that slider renders without performance issues (using step 1)
+const maxPercentage = 100;
 const errorStr = 'An Error Occured';
 const flexSpaceBetween = 'space-between';
 
 const steps = ['Create Pair', 'Approve Spending', 'Create Sell Order'];
+const marks = [
+  {
+    value: 0,
+    label: '0%',
+  },
+  {
+    value: 25,
+    label: '25%',
+  },
+  {
+    value: 50,
+    label: '50%',
+  },
+  {
+    value: 75,
+    label: '75%',
+  },
+  {
+    value: maxPercentage,
+    label: '100%',
+  },
+];
+
+const valueLabelFormat = (val: number) => `${val}%`;
 
 const CreateSellOrderStep = ({
   handleNext,
@@ -75,6 +99,7 @@ const CreateSellOrderStep = ({
 }) => {
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
+  const [percentage, setPercentage] = useState(0);
 
   const isContinueDisabled = useMemo(
     () => isProcessing || !price || !quantity,
@@ -91,13 +116,25 @@ const CreateSellOrderStep = ({
   );
 
   const handleQuantityChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => setQuantity(+event.target.value),
-    [setQuantity],
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.value === '') {
+        setQuantity(0);
+        setPercentage(0);
+      } else {
+        setQuantity(Number(event.target.value));
+        const newPercentage = (Number(event.target.value) / currentAllowance) * maxPercentage;
+        setPercentage(Math.round(newPercentage));
+      }
+    },
+    [setQuantity, currentAllowance],
   );
 
   const handleSliderChange = useCallback(
-    (_event: Event, newValue: number | number[]) => setQuantity(newValue as number),
-    [setQuantity],
+    (_event: Event, newValue: number | number[]) => {
+      setQuantity((currentAllowance * (newValue as number)) / maxPercentage);
+      setPercentage(newValue as number);
+    },
+    [setQuantity, currentAllowance],
   );
 
   const handlePriceChange = useCallback(
@@ -114,7 +151,17 @@ const CreateSellOrderStep = ({
           'Please select the amount you wish to list for sale and the desired price. Note that price will refer to the chosen currency'
         }
       </Typography>
-      {currentAllowance > maxSliderValue ? (
+      <Box display={'flex'} gap={'24px'} alignItems={'center'} margin={'0 16px'}>
+        <Slider
+          onChange={handleSliderChange}
+          marks={marks}
+          value={percentage}
+          step={1}
+          min={0}
+          getAriaValueText={valueLabelFormat}
+          valueLabelFormat={valueLabelFormat}
+          valueLabelDisplay='auto'
+        />
         <NumericFormat
           label='Quantity'
           placeholder='Quantity'
@@ -132,30 +179,9 @@ const CreateSellOrderStep = ({
           allowNegative={false}
           isAllowed={isAllowed}
           margin='dense'
-          sx={{
-            width: '50%',
-          }}
+          decimalScale={0}
         />
-      ) : (
-        <Box
-          sx={{
-            marginLeft: '16px',
-          }}
-        >
-          <Typography sx={{ marginBottom: '16px' }} variant='caption'>
-            Amount to Sell
-          </Typography>
-          <Slider
-            onChange={handleSliderChange}
-            disabled={false}
-            marks
-            max={currentAllowance}
-            step={1}
-            min={0}
-            valueLabelDisplay='auto'
-          />
-        </Box>
-      )}
+      </Box>
       <NumericFormat
         label='Price'
         placeholder='Price'
@@ -203,9 +229,8 @@ const AllowStep = ({
   currentAllowance: number;
   isProcessing: boolean;
 }) => {
-  const theme = useTheme();
-
   const [amount, setAmount] = useState(0);
+  const [percentage, setPercentage] = useState(0);
 
   const isContinueDisabled = useMemo(
     () => isProcessing || (currentAllowance <= 0 && amount <= 0),
@@ -213,7 +238,11 @@ const AllowStep = ({
   );
 
   const handleMaxClick = useCallback(() => {
-    setAmount(maxBalance);
+    if (currentAllowance > 0) {
+      return;
+    } else {
+      setAmount(maxBalance);
+    }
   }, [setAmount, maxBalance]);
 
   const isAllowed = useCallback(
@@ -222,13 +251,25 @@ const AllowStep = ({
   );
 
   const handleAmountChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => setAmount(+event.target.value),
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.value === '') {
+        setAmount(0);
+        setPercentage(0);
+      } else {
+        setAmount(Number(event.target.value));
+        const newPercentage = (Number(event.target.value) / maxBalance) * maxPercentage;
+        setPercentage(Math.round(newPercentage));
+      }
+    },
     [setAmount],
   );
 
   const handleSliderChange = useCallback(
-    (_event: Event, newValue: number | number[]) => setAmount(newValue as number),
-    [setAmount],
+    (_event: Event, newValue: number | number[]) => {
+      setAmount((maxBalance * (newValue as number)) / maxPercentage);
+      setPercentage(newValue as number);
+    },
+    [setAmount, maxBalance],
   );
 
   const handleClick = useCallback(() => handleNext(amount), [amount, handleNext]);
@@ -237,7 +278,7 @@ const AllowStep = ({
     <Box display='flex' flexDirection={'column'} gap='16px'>
       <Typography>
         {
-          'You must approve the Bazar contract to claim the desired amount you want to trade. This means that the balance you choose to approve will be locked and inaccessible after this point.'
+          'You must approve the BazAR contract to claim the desired amount you want to trade. This means that the balance you choose to approve will be locked and inaccessible after this point.'
         }
       </Typography>
       <NumericFormat
@@ -252,7 +293,18 @@ const AllowStep = ({
           width: '50%',
         }}
       />
-      {maxBalance > maxSliderValue ? (
+      <Box display={'flex'} gap={'24px'} alignItems={'center'} margin={'0 16px'}>
+        <Slider
+          onChange={handleSliderChange}
+          disabled={currentAllowance > 0}
+          marks={marks}
+          value={percentage}
+          step={1}
+          min={0}
+          getAriaValueText={valueLabelFormat}
+          valueLabelFormat={valueLabelFormat}
+          valueLabelDisplay='auto'
+        />
         <NumericFormat
           label='Amount to Allow'
           placeholder='Amount to Allow'
@@ -272,35 +324,8 @@ const AllowStep = ({
           margin='dense'
           decimalScale={0}
           disabled={currentAllowance > 0}
-          sx={{
-            width: '50%',
-          }}
         />
-      ) : (
-        <Box
-          sx={{
-            marginLeft: '16px',
-          }}
-        >
-          <Typography
-            sx={{ marginBottom: '16px' }}
-            variant='caption'
-            color={currentAllowance > 0 ? theme.palette.text.disabled : theme.palette.text.primary}
-          >
-            Amount to Approve
-          </Typography>
-          <Slider
-            onChange={handleSliderChange}
-            disabled={currentAllowance > 0}
-            marks
-            max={maxBalance}
-            step={1}
-            min={0}
-            valueLabelDisplay='auto'
-          />
-        </Box>
-      )}
-
+      </Box>
       <Box sx={{ mb: 2, display: 'flex', justifyContent: flexSpaceBetween }}>
         <Box>
           <Button
@@ -342,7 +367,7 @@ const CreatePairStep = ({
         {'Before Listing your Asset in '}
         <u>
           <a href='https://bazar.ar-io.dev' target='_blank' rel='noreferrer'>
-            Bazar
+            BazAR
           </a>
         </u>
         {' you need to choose the currency to trade your asset with.'}
@@ -535,7 +560,7 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
   );
 
   return (
-    <Box sx={{ maxWidth: '100%' }}>
+    <Box sx={{ maxWidth: 'maxPercentage%' }}>
       <Stepper activeStep={activeStep} orientation='vertical'>
         {steps.map((step, index) => (
           <Step key={step}>
@@ -581,7 +606,7 @@ const ContentDisplay = ({
   } else if (onSale) {
     return (
       <Box>
-        <Typography>Asset Is Already listed on Bazar</Typography>
+        <Typography>Asset Is Already listed on BazAR</Typography>
         <Button variant='contained' onClick={handleViewInBazar}>
           Check Listing
         </Button>
@@ -656,7 +681,7 @@ const Trade = ({
             lineHeight: '31px',
           }}
         >
-          {'Trade Asset On Bazar'}
+          {'Trade Asset On BazAR'}
         </Typography>
         <IconButton
           onClick={handleClose}
