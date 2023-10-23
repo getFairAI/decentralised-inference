@@ -128,12 +128,6 @@ const CreateSellOrderStep = ({
     [setQuantity, currentAllowance],
   );
 
-  const handleBlur = useCallback(() => {
-    setQuantity(quantity);
-    const percentage = (quantity / currentAllowance) * 100;
-    setPercentage(Math.round(percentage));
-  }, [setQuantity, quantity, currentAllowance]);
-
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
       setQuantity((currentAllowance * (newValue as number)) / 100);
@@ -172,7 +166,6 @@ const CreateSellOrderStep = ({
           placeholder='Quantity'
           value={quantity}
           onChange={handleQuantityChange}
-          onBlur={handleBlur}
           customInput={TextField}
           helperText={
             <Typography sx={{ cursor: 'pointer' }} variant='caption'>
@@ -270,12 +263,6 @@ const AllowStep = ({
     [setAmount],
   );
 
-  const handleBlur = useCallback(() => {
-    setAmount(amount);
-    const percentage = (amount / maxBalance) * 100;
-    setPercentage(Math.round(percentage));
-  }, [setAmount, amount]);
-
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
       setAmount((maxBalance * (newValue as number)) / 100);
@@ -322,7 +309,6 @@ const AllowStep = ({
           placeholder='Amount to Allow'
           value={amount}
           onChange={handleAmountChange}
-          onBlur={handleBlur}
           customInput={TextField}
           helperText={
             <Typography sx={{ cursor: 'pointer' }} variant='caption'>
