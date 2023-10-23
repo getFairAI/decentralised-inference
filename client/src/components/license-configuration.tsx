@@ -84,10 +84,11 @@ const LicenseConfiguration = ({
 }) => {
   const maxPercentage = 100;
   const maxNumberDigits = 4;
-  const commercialOnetimeIdx = 1;
-  const derivationOneTimeidx = 2;
-  const customDerivationIdx = 3;
+  const commercialOnetimeIdx = 2;
+  const derivationOneTimeidx = 3;
+  const customDerivationIdx = 4;
   const licenseOptions = [
+    'Default',
     'Universal Data License (UDL) Default Public Use',
     'Universal Data License (UDL) Commercial - One Time Payment',
     'Universal Data License (UDL) Derivative Works - One Time Payment',

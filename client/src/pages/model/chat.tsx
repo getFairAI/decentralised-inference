@@ -611,6 +611,9 @@ const Chat = () => {
     if (generateAssetsRef?.current) {
       generateAssetsRef.current = 'fair-protocol';
     }
+    if (licenseRef?.current) {
+      licenseRef.current.value = 'Default';
+    }
   };
 
   const getConfigValues = () => {

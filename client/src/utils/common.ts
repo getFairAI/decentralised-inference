@@ -186,7 +186,7 @@ export const parseCost = async (cost: number) => {
 
 export const addLicenseConfigTags = (tags: ITag[], licenseProps: LicenseForm, license?: string) => {
   const licenseTags = [];
-  if (!license) {
+  if (!license || license === 'Default') {
     return;
   } else if (license === 'Universal Data License (UDL) Default Public Use') {
     licenseTags.push({ name: TAG_NAMES.license, value: UDL_ID });
