@@ -42,13 +42,7 @@ import { toSvg } from 'jdenticon';
 import { MouseEvent, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const AiListCard = ({
-  model,
-  index,
-}: {
-  model: IContractEdge;
-  index: number;
-}) => {
+const AiListCard = ({ model, index }: { model: IContractEdge; index: number }) => {
   const navigate = useNavigate();
   const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
   const theme = useTheme();

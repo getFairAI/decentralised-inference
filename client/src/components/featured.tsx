@@ -4,11 +4,7 @@ import AiCard from './ai-card';
 import { IContractEdge } from '@/interfaces/arweave';
 import '@/styles/ui.css';
 
-const Featured = ({
-  data,
-}: {
-  data: IContractEdge[];
-}) => {
+const Featured = ({ data }: { data: IContractEdge[] }) => {
   const [filterSelected, setFilterChanged] = useState(0);
   const filters = ['All', 'Text', 'Document'];
   const smallScreen = useMediaQuery('(max-width:1600px)');

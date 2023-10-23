@@ -35,13 +35,7 @@ import {
 } from '@/constants';
 import { ModelNavigationState } from '@/interfaces/router';
 
-const AiCard = ({
-  model,
-  useModel = false,
-}: {
-  model: IContractEdge;
-  useModel?: boolean;
-}) => {
+const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: boolean }) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
