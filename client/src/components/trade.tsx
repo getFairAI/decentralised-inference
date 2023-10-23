@@ -56,6 +56,7 @@ import { enqueueSnackbar } from 'notistack';
 import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { NumberFormatValues, NumericFormat } from 'react-number-format';
 
+const maxPercentage = 100;
 const errorStr = 'An Error Occured';
 const flexSpaceBetween = 'space-between';
 
@@ -78,7 +79,7 @@ const marks = [
     label: '75%',
   },
   {
-    value: 100,
+    value: maxPercentage,
     label: '100%',
   },
 ];
@@ -121,8 +122,8 @@ const CreateSellOrderStep = ({
         setPercentage(0);
       } else {
         setQuantity(Number(event.target.value));
-        const percentage = (Number(event.target.value) / currentAllowance) * 100;
-        setPercentage(Math.round(percentage));
+        const newPercentage = (Number(event.target.value) / currentAllowance) * maxPercentage;
+        setPercentage(Math.round(newPercentage));
       }
     },
     [setQuantity, currentAllowance],
@@ -130,7 +131,7 @@ const CreateSellOrderStep = ({
 
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
-      setQuantity((currentAllowance * (newValue as number)) / 100);
+      setQuantity((currentAllowance * (newValue as number)) / maxPercentage);
       setPercentage(newValue as number);
     },
     [setQuantity, currentAllowance],
@@ -256,8 +257,8 @@ const AllowStep = ({
         setPercentage(0);
       } else {
         setAmount(Number(event.target.value));
-        const percentage = (Number(event.target.value) / maxBalance) * 100;
-        setPercentage(Math.round(percentage));
+        const newPercentage = (Number(event.target.value) / maxBalance) * maxPercentage;
+        setPercentage(Math.round(newPercentage));
       }
     },
     [setAmount],
@@ -265,7 +266,7 @@ const AllowStep = ({
 
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
-      setAmount((maxBalance * (newValue as number)) / 100);
+      setAmount((maxBalance * (newValue as number)) / maxPercentage);
       setPercentage(newValue as number);
     },
     [setAmount, maxBalance],
@@ -559,7 +560,7 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
   );
 
   return (
-    <Box sx={{ maxWidth: '100%' }}>
+    <Box sx={{ maxWidth: 'maxPercentage%' }}>
       <Stepper activeStep={activeStep} orientation='vertical'>
         {steps.map((step, index) => (
           <Step key={step}>
