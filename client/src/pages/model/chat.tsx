@@ -60,12 +60,12 @@ import { useSnackbar } from 'notistack';
 import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { commonUpdateQuery, findTag, printSize } from '@/utils/common';
+import { addLicenseConfigTags, commonUpdateQuery, findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
-import { IMessage } from '@/interfaces/common';
+import { IMessage, LicenseForm } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatContent from '@/components/chat-content';
@@ -81,6 +81,7 @@ import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import useScroll from '@/hooks/useScroll';
+import { FieldValues, useForm } from 'react-hook-form';
 
 const warp = WarpFactory.forMainnet().use(new DeployPlugin());
 const errorMsg = 'An Error Occurred. Please try again later.';
@@ -325,6 +326,15 @@ const Chat = () => {
   const keepConfigRef = useRef<HTMLInputElement>(null);
   const generateAssetsRef = useRef<'fair-protocol' | 'rareweave' | 'none'>('fair-protocol');
   const royaltyRef = useRef<HTMLInputElement>(null);
+  const licenseRef = useRef<HTMLInputElement>(null);
+  const { control: licenseControl } = useForm<LicenseForm>({
+    defaultValues: {
+      derivations: '',
+      commercialUse: '',
+      licenseFeeInterval: '',
+      paymentMode: '',
+    },
+  } as FieldValues);
 
   const isStableDiffusion = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
@@ -715,7 +725,8 @@ const Chat = () => {
         configuration,
         content.name,
       );
-
+      // add licenseConfig Tags
+      addLicenseConfigTags(tags, licenseControl._formValues, licenseRef.current?.value);
       // upload with dispatch
       const data = await content.arrayBuffer(); // it's safe to convert to arrayBuffer bc max size is 100kb
       const tx = await arweave.createTransaction({ data });
@@ -781,7 +792,8 @@ const Chat = () => {
         contentType,
         configuration,
       );
-
+      // add licenseConfig Tags
+      addLicenseConfigTags(tags, licenseControl._formValues, licenseRef.current?.value);
       // upload with dispatch
       const tx = await arweave.createTransaction({ data: newMessage });
       tags.forEach((tag) => tx.addTag(tag.name, tag.value));
@@ -1045,6 +1057,8 @@ const Chat = () => {
             customTagsRef={customTagsRef}
             generateAssetsRef={generateAssetsRef}
             royaltyRef={royaltyRef}
+            licenseRef={licenseRef}
+            licenseControl={licenseControl}
             handleClose={handleAdvancedClose}
           />
         </Box>
@@ -1212,7 +1226,6 @@ const Chat = () => {
                 </Box>
               </Paper>
             </Box>
-
             <Box
               id={'chat-input'}
               sx={{
