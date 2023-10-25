@@ -18,7 +18,7 @@
 
 import { useState, useEffect, RefObject, useRef } from 'react';
 
-const useComponentDimensions = (ref: RefObject<HTMLElement>) => {
+const useComponentDimensions = (ref?: RefObject<HTMLElement>) => {
   const [componentDimensions, setComponentDimensions] = useState({ width: 0, height: 0 });
   const observerRef = useRef<ResizeObserver>();
 
@@ -30,11 +30,13 @@ const useComponentDimensions = (ref: RefObject<HTMLElement>) => {
   }, []);
 
   useEffect(() => {
-    observerRef.current?.observe(ref.current as HTMLElement);
+    if (ref?.current) {
+      observerRef.current?.observe(ref?.current as HTMLElement);
+    }
 
     // provide a cleanup funciton to unsubscribe observer when component unmounts
     return () => observerRef.current?.disconnect();
-  }, [ref.current]);
+  }, [ref?.current]);
 
   return componentDimensions;
 };

@@ -17,16 +17,18 @@
  */
 
 import { WalletContext } from '@/context/wallet';
-import { ReactElement, useContext, useMemo } from 'react';
+import { ReactElement, useContext, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 const WalletGuard = ({ children }: { children: ReactElement }) => {
   const { currentAddress, currentUBalance } = useContext(WalletContext);
+  const [canUseInference, setCanUseInference] = useState(true);
 
-  const canUseInference = useMemo(
-    () => currentAddress && currentUBalance > 0,
-    [currentAddress, currentUBalance],
-  );
+  useEffect(() => {
+    if (!localStorage.getItem('wallet') && (!currentAddress || !currentUBalance)) {
+      setCanUseInference(false);
+    }
+  }, [currentAddress, currentUBalance]);
 
   if (canUseInference) {
     return children;
