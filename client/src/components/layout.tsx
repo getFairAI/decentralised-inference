@@ -18,12 +18,13 @@
 
 import FilterContext from '@/context/filter';
 import { Box, Container, Typography, useTheme } from '@mui/material';
-import { ReactElement, useContext, useLayoutEffect, useRef, useState } from 'react';
+import { ReactElement, useContext, useEffect, useRef, useState } from 'react';
 import Navbar from './navbar';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
 import { WalletContext } from '@/context/wallet';
 import { Link, useLocation } from 'react-router-dom';
+import useComponentDimensions from '@/hooks/useComponentDimensions';
 
 const WarningMessage = () => {
   const { currentAddress, currentUBalance } = useContext(WalletContext);
@@ -59,8 +60,10 @@ export default function Layout({ children }: { children: ReactElement }) {
   const { width, height } = useWindowDimensions();
   const { isScrolled } = useScroll(scrollableRef);
   const { pathname } = useLocation();
+  const warningRef = useRef<HTMLDivElement>(null);
+  const { height: warningHeight } = useComponentDimensions(warningRef);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight;
     if (currHeaderHeight) {
       setHeaderHeight(`${currHeaderHeight}px`);
@@ -84,9 +87,11 @@ export default function Layout({ children }: { children: ReactElement }) {
         }}
         maxWidth={false}
       >
-        <Box height='100%'>
+        <Box height={`calc(100% - ${warningHeight}px)`}>
           <FilterContext.Provider value={filterValue}>
-            <WarningMessage />
+            <Box ref={warningRef}>
+              <WarningMessage />
+            </Box>
             <main style={{ height: '100%' }} ref={scrollableRef}>
               {children}
             </main>
