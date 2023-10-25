@@ -42,7 +42,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { WalletContext } from '@/context/wallet';
-import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
 import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 import { usePollingEffect } from '@/hooks/usePollingEffect';
@@ -154,10 +153,9 @@ const CurrencyMenu = () => {
 const WalletState = () => {
   const theme = useTheme();
   const { currentAddress, isWalletVouched } = useContext(WalletContext);
+  const navigate = useNavigate();
 
-  const { setOpen: connectWallet } = useContext(ChooseWalletContext);
-
-  const handleConnect = useCallback(() => connectWallet(true), [connectWallet]);
+  const handleConnect = useCallback(() => navigate('sign-in'), [navigate]);
   const { enqueueSnackbar } = useSnackbar();
 
   const handleCopyClick = useCallback(async () => {
@@ -284,26 +282,28 @@ const Navbar = ({
 
   useEffect(() => {
     (async () => {
-      const uCost = parseUBalance(state?.fee);
-      const arPrice = await getArPriceUSD();
-      const isImage = findTag(state.fullState, 'output') === 'image';
-      const isStableDiffusion =
-        findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
-      const defaultNImages = 4;
-      const nImages = isStableDiffusion ? defaultNImages : 1;
-
-      if (isStableDiffusion || isImage) {
-        setTooltip(
-          `Cost set by operator for each image: ${(uCost * arPrice).toFixed(
-            nDigits,
-          )}$\n Default number of images: ${nImages}`,
-        );
-      } else {
-        setTooltip(
-          `Cost set by operator for each generation: ${(uCost * arPrice).toFixed(nDigits)}`,
-        );
+      if (state) {
+        const uCost = parseUBalance(state?.fee);
+        const arPrice = await getArPriceUSD();
+        const isImage = findTag(state.fullState, 'output') === 'image';
+        const isStableDiffusion =
+          findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
+        const defaultNImages = 4;
+        const nImages = isStableDiffusion ? defaultNImages : 1;
+  
+        if (isStableDiffusion || isImage) {
+          setTooltip(
+            `Cost set by operator for each image: ${(uCost * arPrice).toFixed(
+              nDigits,
+            )}$\n Default number of images: ${nImages}`,
+          );
+        } else {
+          setTooltip(
+            `Cost set by operator for each generation: ${(uCost * arPrice).toFixed(nDigits)}`,
+          );
+        }
+        setUsdFee(uCost * arPrice * nImages);
       }
-      setUsdFee(uCost * arPrice * nImages);
     })();
   }, [state, parseUBalance, getArPriceUSD]);
 
