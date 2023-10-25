@@ -290,7 +290,7 @@ const Navbar = ({
           findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
         const defaultNImages = 4;
         const nImages = isStableDiffusion ? defaultNImages : 1;
-  
+
         if (isStableDiffusion || isImage) {
           setTooltip(
             `Cost set by operator for each image: ${(uCost * arPrice).toFixed(

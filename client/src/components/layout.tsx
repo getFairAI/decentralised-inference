@@ -18,7 +18,7 @@
 
 import FilterContext from '@/context/filter';
 import { Box, Container, Typography, useTheme } from '@mui/material';
-import { ReactElement, useContext, useEffect, useRef, useState } from 'react';
+import { ReactElement, useContext, useLayoutEffect, useRef, useState } from 'react';
 import Navbar from './navbar';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
@@ -30,7 +30,7 @@ const WarningMessage = () => {
   const { currentAddress, currentUBalance } = useContext(WalletContext);
   const theme = useTheme();
 
-  if (!currentAddress) {
+  if (!localStorage.getItem('wallet') && !currentAddress) {
     return (
       <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
         Wallet Not Connected, some functionalities will not be available.{' '}
@@ -39,7 +39,7 @@ const WarningMessage = () => {
         </Link>
       </Typography>
     );
-  } else if (currentUBalance <= 0) {
+  } else if (!localStorage.getItem('wallet') && currentUBalance <= 0) {
     return (
       <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
         Insufficient $U balance, some functionalities will not be available.{' '}
@@ -63,7 +63,7 @@ export default function Layout({ children }: { children: ReactElement }) {
   const warningRef = useRef<HTMLDivElement>(null);
   const { height: warningHeight } = useComponentDimensions(warningRef);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight;
     if (currHeaderHeight) {
       setHeaderHeight(`${currHeaderHeight}px`);

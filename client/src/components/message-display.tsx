@@ -100,16 +100,8 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
           lineHeight: '34px',
           display: 'flex',
           alignItems: 'center',
-          color:
-            message.type === 'response'
-              ? theme.palette.secondary.contrastText
-              : theme.palette.terciary.contrastText,
           whiteSpace: 'pre-wrap',
-          overflow: 'hidden' /* Ensures the content is not revealed until the animation */,
-          animation: {
-            typing: '3.5s steps(40, end)',
-            blinkCaret: '.75s step-end infinite',
-          },
+          textAlign: message.type === 'request' ? 'right' : 'left',
         }}
         gutterBottom
         component={'pre'}
