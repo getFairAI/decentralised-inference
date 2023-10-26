@@ -751,7 +751,7 @@ const Chat = () => {
         currentConversationId,
         state.modelCreator,
         address as string,
-        configuration,
+        configuration.nImages,
       );
       // update balance after payments
       await updateUBalance();
@@ -816,7 +816,7 @@ const Chat = () => {
         currentConversationId,
         state.modelCreator,
         address as string,
-        configuration,
+        configuration.nImages,
       );
       // update balance after payments
       await updateUBalance();
