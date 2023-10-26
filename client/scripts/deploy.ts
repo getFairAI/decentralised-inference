@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import Bundlr from 'bundlr-custom/build/esm/node/index';
+import Irys from '@irys/sdk';
 import fs from 'fs';
 
 const main = async () => {
@@ -28,20 +28,20 @@ const main = async () => {
   // the commented out line below to create a new Bundlr object.
   // const bundlr = new Bundlr("http://node1.bundlr.network", "arweave", jwk);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bundlr = new Bundlr('https://node1.bundlr.network', 'arweave', jwk );
+  const irys = new Irys({ url: 'https://node2.bundlr.network', token: 'arweave', key: jwk });
   
   // Get loaded balance in atomic units
-  const atomicBalance = await bundlr.getLoadedBalance();
+  const atomicBalance = await irys.getLoadedBalance();
   console.log(`node balance (atomic units) = ${atomicBalance}`);
   
   // Convert balance to an easier to read format
-  const convertedBalance = bundlr.utils.unitConverter(atomicBalance);
+  const convertedBalance = irys.utils.unitConverter(atomicBalance);
   console.log(`node balance (converted) = ${convertedBalance}`);
   
   // Print your wallet address
-  console.log(`wallet address = ${bundlr.address}`);
+  console.log(`wallet address = ${irys.address}`);
   const dist = './dist/';
-  const response = await bundlr.uploadFolder(dist, {
+  const response = await irys.uploadFolder(dist, {
     indexFile: 'index.html', // optional index file (file the user will load when accessing the manifest)
     batchSize: 50, // number of items to upload at once
     keepDeleted: false   // whether to keep now deleted items from previous uploads
