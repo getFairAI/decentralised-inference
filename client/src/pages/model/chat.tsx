@@ -53,6 +53,7 @@ import {
   MAX_MESSAGE_SIZE,
   WARP_ASSETS_EXPLORER,
   IRYS_TXS_EXPLORER,
+  SCRIPT_INFERENCE_REQUEST,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
@@ -403,6 +404,7 @@ const Chat = () => {
             requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator')),
           ),
         );
+        (async () => reqData(requestsData.transactions.edges))();
         setResponseParams({
           ...responseParams,
           scriptOperators,
@@ -429,7 +431,7 @@ const Chat = () => {
           !previousResponses.find((current: IEdge) => current.node.id === previous.node.id),
       );
       if (newResponses.length > 0) {
-        setPreviousResponses([...previousResponses, ...newResponses]);
+        setPreviousResponses((prev) => [...prev, ...newResponses]);
         (async () => reqData([...previousResponses, ...newResponses]))();
       } else {
         setMessagesLoading(false);
@@ -461,7 +463,7 @@ const Chat = () => {
   }, [currentConversationId]);
 
   useEffect(() => {
-    if (!responsesPollingData || !responsesData) {
+    if (!responsesPollingData) {
       return;
     }
 
@@ -490,7 +492,7 @@ const Chat = () => {
       parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
     const currentHeight = (await arweave.blocks.getCurrent()).height;
-    const isRequest = el.node.owner.address === userAddr;
+    const isRequest = findTag(el, 'operationName') === SCRIPT_INFERENCE_REQUEST;
 
     const msg: IMessage = {
       id: el.node.id,
