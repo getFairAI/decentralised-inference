@@ -759,7 +759,7 @@ const Chat = () => {
         state.modelCreator,
         address as string,
         configuration.nImages,
-        'web'
+        'web',
       );
       // update balance after payments
       await updateUBalance();
@@ -825,7 +825,7 @@ const Chat = () => {
         state.modelCreator,
         address as string,
         configuration.nImages,
-        'web'
+        'web',
       );
       // update balance after payments
       await updateUBalance();
