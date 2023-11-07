@@ -48,6 +48,11 @@ const useRequests = ({
     },
   ] = useLazyQuery(requestsQuery);
   useEffect(() => {
+    if (!userAddr) {
+      // skip fetching while user address is not loaded
+      return;
+    }
+
     const { variables: queryParams } = FairSDKWeb.utils.getRequestsQuery(
       userAddr,
       scriptName,

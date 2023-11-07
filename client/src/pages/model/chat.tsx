@@ -388,10 +388,15 @@ const Chat = () => {
       navigate(0);
     } else if (!localStorage.getItem('wallet') && !userAddr) {
       navigate('/');
+    } else if (userAddr) {
+      setRequestParams((previousParams) => ({
+        ...previousParams,
+        userAddr,
+      }));
     } else {
       // ignore
     }
-  }, [userAddr]);
+  }, [previousAddr, userAddr]);
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
@@ -754,6 +759,7 @@ const Chat = () => {
         state.modelCreator,
         address as string,
         configuration.nImages,
+        'web'
       );
       // update balance after payments
       await updateUBalance();
@@ -819,6 +825,7 @@ const Chat = () => {
         state.modelCreator,
         address as string,
         configuration.nImages,
+        'web'
       );
       // update balance after payments
       await updateUBalance();
