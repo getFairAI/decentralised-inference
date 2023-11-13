@@ -18,11 +18,13 @@
 
 import { Card, CardActionArea, Skeleton } from '@mui/material';
 
-const LoadingCard = () => {
+const ListLoadingCard = () => {
 
   return <Card
       sx={{
         flexGrow: 0,
+        width: '100%',
+        height: '140px',
       }}
       raised={true}
     >
@@ -30,8 +32,8 @@ const LoadingCard = () => {
         <Skeleton
           sx={{
             transform: 'none',
-            width: '317px',
-            height: '352px',
+            width: '100%',
+            height: '140px',
             borderRadius: '8px'
           }}
           animation='wave'
@@ -40,4 +42,4 @@ const LoadingCard = () => {
   </Card>;
 };
 
-export default LoadingCard;
+export default ListLoadingCard;
