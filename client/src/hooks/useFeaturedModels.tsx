@@ -37,9 +37,10 @@ const useFeaturedModels = (featuredElements = defaultFeaturedElements) => {
   const queryObject = FairSDKWeb.utils.getModelsQuery(elementsPerPage);
   const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(queryObject.query, {
     variables: queryObject.variables,
+    notifyOnNetworkStatusChange: true,
   });
 
-  const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
+  const loadingOrFiltering = useMemo(() => filtering || loading, [ filtering, loading ]);
 
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
@@ -55,7 +56,7 @@ const useFeaturedModels = (featuredElements = defaultFeaturedElements) => {
         setFiltering(false);
       })();
     }
-  }, [data, currentPage]);
+  }, [data, networkStatus, currentPage]);
 
   const fetchNext = useCallback(() => {
     if (data && hasNextPage) {
