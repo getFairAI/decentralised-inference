@@ -32,13 +32,14 @@ import '@/styles/ui.css';
 import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import useModels from '@/hooks/useModels';
+import ListLoadingCard from '@/components/list-loading-card';
 
 export default function Home() {
   const [hightlightTop, setHighLightTop] = useState(false);
   const target = useRef<HTMLDivElement>(null);
   const theme = useTheme();
 
-  const { txs, featuredTxs } = useModels(target);
+  const { txs, loading } = useModels(target);
   const handleHighlight = (value: boolean) => setHighLightTop(value);
 
   return (
@@ -54,7 +55,7 @@ export default function Home() {
           },
         }}
       >
-        <Featured data={featuredTxs} />
+        <Featured />
         <Box className={'filter-box'} sx={{ display: 'flex' }}>
           <Box display={'flex'} flexDirection={'column'}>
             <Box display='flex' gap={'50px'} width={'100%'}>
@@ -160,6 +161,13 @@ export default function Home() {
           {txs.map((el, idx) => (
             <AiListCard model={el} key={el.node.id} index={idx} />
           ))}
+          {loading && (
+            <>
+              <ListLoadingCard />
+              <ListLoadingCard />
+              <ListLoadingCard />
+            </>
+          )}
           <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
         </Stack>
       </Container>
