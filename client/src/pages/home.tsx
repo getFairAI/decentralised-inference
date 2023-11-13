@@ -161,13 +161,13 @@ export default function Home() {
           {txs.map((el, idx) => (
             <AiListCard model={el} key={el.node.id} index={idx} />
           ))}
-          {
-            loading && <>
+          {loading && (
+            <>
               <ListLoadingCard />
               <ListLoadingCard />
               <ListLoadingCard />
             </>
-          }
+          )}
           <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
         </Stack>
       </Container>

@@ -40,7 +40,7 @@ const useFeaturedModels = (featuredElements = defaultFeaturedElements) => {
     notifyOnNetworkStatusChange: true,
   });
 
-  const loadingOrFiltering = useMemo(() => filtering || loading, [ filtering, loading ]);
+  const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
 
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
@@ -88,7 +88,7 @@ const useFeaturedModels = (featuredElements = defaultFeaturedElements) => {
         refetch(queryObject.variables);
       }
     },
-    [queryObject, setFiltering, refetch ],
+    [queryObject, setFiltering, refetch],
   );
 
   return {

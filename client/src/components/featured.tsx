@@ -26,60 +26,88 @@ import { ApolloError } from '@apollo/client';
 import LoadingCard from './loading-card';
 
 type fetchWithFilterParam = 'none' | 'text' | 'video' | 'audio' | 'image';
-const filters: fetchWithFilterParam[] = [ 'none', 'text', 'image', 'video', 'audio' ];
+const filters: fetchWithFilterParam[] = ['none', 'text', 'image', 'video', 'audio'];
 
-const CategoryFilter = ({ filterSelected, idx, setFilterChanged, fetchWithFilter }: { filterSelected: number, idx: number, setFilterChanged: Dispatch<SetStateAction<number>>, fetchWithFilter: (filter: fetchWithFilterParam) => void }) => {
-
+const CategoryFilter = ({
+  filterSelected,
+  idx,
+  setFilterChanged,
+  fetchWithFilter,
+}: {
+  filterSelected: number;
+  idx: number;
+  setFilterChanged: Dispatch<SetStateAction<number>>;
+  fetchWithFilter: (filter: fetchWithFilterParam) => void;
+}) => {
   const theme = useTheme();
   const transparent = 0.5;
 
   const handleFilterChange = useCallback(() => {
     setFilterChanged(idx);
     fetchWithFilter(filters[idx]);
-  }, [ idx, setFilterChanged, fetchWithFilter ]);
+  }, [idx, setFilterChanged, fetchWithFilter]);
 
   const labels = ['All', 'Text', 'Image', 'Video', 'Audio'];
 
-  return <Typography
-    style={{
-      fontWeight: filterSelected === idx ? theme.typography.fontWeightBold : theme.typography.fontWeightRegular,
-      fontSize: '20px',
-      lineHeight: '27px',
-      display: 'flex',
-      alignItems: 'center',
-      textAlign: 'center',
-      cursor: 'pointer',
-      opacity: filterSelected === idx ? 1 : transparent,
-      borderRadius: filterSelected === idx ? '20px' : '0px',
-    }}
-    onClick={handleFilterChange}
-  >
-    {labels[idx]}
-  </Typography>;
+  return (
+    <Typography
+      style={{
+        fontWeight:
+          filterSelected === idx
+            ? theme.typography.fontWeightBold
+            : theme.typography.fontWeightRegular,
+        fontSize: '20px',
+        lineHeight: '27px',
+        display: 'flex',
+        alignItems: 'center',
+        textAlign: 'center',
+        cursor: 'pointer',
+        opacity: filterSelected === idx ? 1 : transparent,
+        borderRadius: filterSelected === idx ? '20px' : '0px',
+      }}
+      onClick={handleFilterChange}
+    >
+      {labels[idx]}
+    </Typography>
+  );
 };
 
-const FeaturedRow = ({ models, loading, error }: { models: IContractEdge[], loading: boolean, error?: ApolloError}) => {
+const FeaturedRow = ({
+  models,
+  loading,
+  error,
+}: {
+  models: IContractEdge[];
+  loading: boolean;
+  error?: ApolloError;
+}) => {
   if (error) {
     return <Typography>Could Not Fetch Models</Typography>;
   } else if (loading) {
-    return <>
-      <LoadingCard />
-      <LoadingCard />
-      <LoadingCard />
-    </>;
+    return (
+      <>
+        <LoadingCard />
+        <LoadingCard />
+        <LoadingCard />
+      </>
+    );
   } else if (models && models.length === 0) {
     return <Typography>Could not find models matching filters</Typography>;
   } else {
-    return <>{models.map((el) => (
-      <AiCard model={el} key={el.node.id} />
-    ))}</>;
+    return (
+      <>
+        {models.map((el) => (
+          <AiCard model={el} key={el.node.id} />
+        ))}
+      </>
+    );
   }
 };
 
 const Featured = () => {
   const smallScreen = useMediaQuery('(max-width:1600px)');
   const { featuredTxs, loading, error, fetchWithFilter } = useFeaturedModels();
-  const [ filterSelected, setFilterChanged ] = useState(0);
+  const [filterSelected, setFilterChanged] = useState(0);
 
   return (
     <>
@@ -107,10 +135,18 @@ const Featured = () => {
         </Box>
         <Box display={'flex'} flexDirection={'column'} width={'100%'}>
           <Box className={'filter-box'} justifyContent={'flex-end'}>
-            {filters.map((filter, idx) => <CategoryFilter filterSelected={filterSelected} setFilterChanged={setFilterChanged} fetchWithFilter={fetchWithFilter} idx={idx} key={filter} />)}
+            {filters.map((filter, idx) => (
+              <CategoryFilter
+                filterSelected={filterSelected}
+                setFilterChanged={setFilterChanged}
+                fetchWithFilter={fetchWithFilter}
+                idx={idx}
+                key={filter}
+              />
+            ))}
           </Box>
           <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
-            <FeaturedRow models={featuredTxs} loading={loading} error={error}/>
+            <FeaturedRow models={featuredTxs} loading={loading} error={error} />
           </Box>
         </Box>
       </Box>

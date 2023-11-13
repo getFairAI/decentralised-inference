@@ -19,8 +19,8 @@
 import { Card, CardActionArea, Skeleton } from '@mui/material';
 
 const LoadingCard = () => {
-
-  return <Card
+  return (
+    <Card
       sx={{
         flexGrow: 0,
       }}
@@ -32,12 +32,13 @@ const LoadingCard = () => {
             transform: 'none',
             width: '317px',
             height: '352px',
-            borderRadius: '8px'
+            borderRadius: '8px',
           }}
           animation='wave'
         />
       </CardActionArea>
-  </Card>;
+    </Card>
+  );
 };
 
 export default LoadingCard;
