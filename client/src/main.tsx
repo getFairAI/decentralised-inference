@@ -36,6 +36,15 @@ import ChangeOperator from './pages/model/change-operator';
 import SignIn from './pages/sign-in';
 import WalletGuard from './guards/wallet';
 import Terms from './pages/terms';
+import Plausible from 'plausible-tracker';
+
+const { enableAutoPageviews } = Plausible({
+  hashMode: true,
+  domain: 'fairapp.ar-io.dev',
+});
+
+// Hash changes will also trigger page views
+enableAutoPageviews();
 
 const router = createHashRouter([
   {

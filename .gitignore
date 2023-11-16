@@ -47,11 +47,6 @@ Thumbs.db
 /script-examples/rasa/venv
 /script-examples/rasa/rasa-assistant
 
-# Build files
-*/dist-id.txt
-*/dist-manifest.csv
-*/dist-manifest.json
-
 # Wallets
 /wallet.json
 /Marketplace.json

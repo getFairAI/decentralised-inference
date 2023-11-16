@@ -1,0 +1,30 @@
+{
+"manifest": "arweave/paths",
+"version": "0.1.0",
+"paths": {
+"fair-protocol-outline.svg":{"id":"a7OIrW7dKua3BLq2s4oBvPOZ2uCDUwPIhCzjhb4m6Is"},
+"fair-protocol-face.svg":{"id":"BUXyYLH9fe4lpX10XohRi-ua8u7py_6bXDl2612zku0"},
+"warning-icon.svg":{"id":"6ADBo19iydWwTPLoMkLGwASSFwEZ_OFRd6G_bIuJFzY"},
+"icon-empty-wallet.png":{"id":"7MZ5_m6mPKqj27wAWEckfk3qCEO-uU0vglgodVIl9Wg"},
+"Outline.svg":{"id":"0oWeoR0-uzyuEiFnUufsBSN77S9Y1P89fGDus6iVGU4"},
+"error-icon.svg":{"id":"xZzZ8w3rbx-P2zpUx3lxTDZxOaKEEiVvCNUM-Enic5w"},
+"vouch.svg":{"id":"jLQ6f-dZi84WU0apn_3CaWNJFe_PGkG2dWhdaIVzcFg"},
+"arweave-logo.svg":{"id":"wdFBGEWqFKiDTt5iMUHbVGTK6d3Cs9duGFz8VtesC4U"},
+"arconnect-logo.png":{"id":"VmUVEgmMS04RuhsDdxHCEFux3PQBTrYj_SdjvWv5ggI"},
+"assets/index-c4de1e91.css":{"id":"Vr_Txc-H4BupvCtzXjSGM_uEVXCGuKj5w8YvwL3dQBQ"},
+"arweave-logo-warning.svg":{"id":"6uPLGv9GRLBKxrHU9tzA3wHlT9tOOeLsSJZgg0xcZWk"},
+"icon-empty-wallet.svg":{"id":"FB_r19LRnYFkJSmmYTG4Zuhfd1KwLcNnKTidjgijGVE"},
+"search-icon.svg":{"id":"9S6HcfGizlyZ_K9hY-EtiQv_ViVkP42hwtr4ksBdDfw"},
+"close-icon.svg":{"id":"2nmhWqSQKT73tecA6lJDCp-IfcB5Ifq8Vupp-sTTifY"},
+"fair-protocol-logo.svg":{"id":"uGyn-iCsiqSCbEbXLpFg3hM_M5bFX5qaZXRy4OLqKFM"},
+"fair-protocol-logo-light.svg":{"id":"UpwUFRInw6wPSBW_cRc6nKTMbgF1KcAI7Z1E7k1ZeUw"},
+"triangle.svg":{"id":"iyBZ3gdoHFS42XUPavU-b8dCty_idFQLyj5shqk8kSI"},
+"arweave-small.svg":{"id":"HNcSs29hdj_A2mN3RlOfyx5wS3PrFQQ2JJyipWJdP-o"},
+"thumbs-up.svg":{"id":"sbEye7aKfS2eWnUJTd78zrCWqhE3HDWUozFSskoghN8"},
+"chevron-bottom.svg":{"id":"Px1KkmzPQ1ds_JF3HvVh6q2qIZ1doAi_l3Em69S2GIs"},
+"arweave-logo-for-light.png":{"id":"9-6QQQlGgR7k7WTSrt6o23XN5S3ewtEI7pdZ3V3unyw"},
+"assets/index-ee23bbeb.js":{"id":"EXRhhRlkerOevz8bGKBg2p86UPo2Fg94csFVximHTro"},
+"index.html":{"id":"USG0nfJC9z02HK52YnR6Ko4G82U6su_6KJbWei5eLyw"}
+},
+"index":{"path":"index.html"}
+}
