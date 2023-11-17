@@ -5,25 +5,23 @@ This document provides detailed information about the Fair Platform marketplace 
 **Note**: Tag Values inside `<>` are example values, all other Tag Values are strict.
 
 ## Index
-* [Common Tags](#common-tags)
-* [Save Transaction Tags](#save-transaction)
-* Creator Flow
-  * [Model upload](#model-upload-to-bundlr)
-  * [Model upload payment](#model-upload-payment-to-marketplace)
-  * [Attachment](#attachment)
-* User Flow
-  * [Script fee payment](#script-fee-payment)
-  * [Script inference request](#script-inference-request)
-  * [Script inference payment](#script-inference-payment)
-  * [Conversation Start](#conversation-start)
-* Operator Flow
-  * [Registration](#operator-registration)
-  * [Script Inference response](#script-inference-response)
-  * [Fee Redistribution](#inference-redistribution)
-  * [Cancel Registration](#cancel-registration)
-* Curator Flow
-  * [Script upload](#scripts-upload)
-  * [Script upload payment](#scripts-upload-payment)
+- [Fair Protocol Tags](#fair-protocol-tags)
+  - [Index](#index)
+  - [Common Tags](#common-tags)
+  - [Save Transaction](#save-transaction)
+- [Model upload to Bundlr](#model-upload-to-bundlr)
+  - [Model Upload Payment to marketplace](#model-upload-payment-to-marketplace)
+  - [Attachment](#attachment)
+  - [Operator Registration](#operator-registration)
+  - [Script Fee Payment](#script-fee-payment)
+  - [Script Inference Request](#script-inference-request)
+  - [Script Inference Payment](#script-inference-payment)
+  - [Script Inference Response](#script-inference-response)
+  - [Inference Redistribution](#inference-redistribution)
+  - [Scripts upload](#scripts-upload)
+  - [Scripts upload payment](#scripts-upload-payment)
+  - [Conversation Start](#conversation-start)
+  - [Cancel Registration](#cancel-registration)
 
 ## Common Tags
 This Tags are applied in all the transactions executed in the platform
@@ -92,7 +90,7 @@ Example:
   "Model-Name": "Example Name",
   "Model-Fee": "1000000000000", // winston value
   "Operation-Name": "Model Creation",
-  "Category": "text",
+  "Model-Category": "text",
   "Description?": "Example Description", // Optional
   "Payment-Quantity": "1000000000000",
   "Paymnet-Target": "28x8B6eWAMSXs8MyndatFuUZbJBfpmr7VXe4N1JxTU8"

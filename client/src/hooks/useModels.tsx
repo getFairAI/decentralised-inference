@@ -70,7 +70,7 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
           filterValue.trim() === '' ||
           findTagsWithKeyword(
             el,
-            [TAG_NAMES.modelName, TAG_NAMES.description, TAG_NAMES.category],
+            [TAG_NAMES.modelName, TAG_NAMES.description, TAG_NAMES.modelCategory],
             filterValue,
           ),
       );

@@ -123,7 +123,7 @@ const mockFullState = {
         value: 'description',
       },
       {
-        name: 'Category',
+        name: 'Model-Category',
         value: 'text',
       },
       {

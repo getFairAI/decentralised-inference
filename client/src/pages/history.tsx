@@ -98,7 +98,7 @@ const History = () => {
                         alignContent: 'center',
                       }}
                     >
-                      <Chip label={findTag(edge, 'category')} color='primary' />
+                      <Chip label={findTag(edge, 'modelCategory')} color='primary' />
                       <Box sx={{ display: 'flex', alignContent: 'center' }}>
                         <Typography variant='body1'>11</Typography>
                         <ThumbUpIcon />

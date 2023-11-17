@@ -67,7 +67,7 @@ export const TAG_NAMES = {
   modelUser: 'Model-User',
   operationName: 'Operation-Name',
   notes: 'Notes',
-  category: 'Category',
+  modelCategory: 'Model-Category',
   avatarUrl: 'AvatarUrl',
   description: 'Description',
   operatorName: 'Operator-Name',
