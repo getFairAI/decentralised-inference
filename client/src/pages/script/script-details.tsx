@@ -249,7 +249,7 @@ const DetailsContent = () => {
         </Box>
         <Box>
           <Typography sx={typographyHeaderProps}>Category</Typography>
-          <Typography sx={typographyTextProps}>{findTag(state.fullState, 'category')}</Typography>
+          <Typography sx={typographyTextProps}>{findTag(state.fullState, 'modelCategory')}</Typography>
         </Box>
       </Box>
       <Box display={'flex'} flexDirection={'column'} gap={'16px'} width={'45%'}>

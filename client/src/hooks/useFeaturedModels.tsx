@@ -79,7 +79,7 @@ const useFeaturedModels = (featuredElements = defaultFeaturedElements) => {
       if (filter !== 'none') {
         const cloneVariables = _.cloneDeep(queryObject.variables);
         cloneVariables.tags.push({
-          name: TAG_NAMES.category,
+          name: TAG_NAMES.modelCategory,
           values: [filter],
         });
 

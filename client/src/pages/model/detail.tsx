@@ -186,7 +186,7 @@ const DetailContent = ({
                 textAlign: 'center',
               }}
             >
-              {findTag(state.fullState, 'category')}
+              {findTag(state.fullState, 'modelCategory')}
             </Typography>
           </Box>
         </Box>
