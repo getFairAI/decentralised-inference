@@ -210,8 +210,11 @@ const DetailContent = ({
               {findTag(state.fullState, 'description') ?? 'No Description Available.'}
             </Typography>
             <Box marginTop={'20px'}>
-              <StampsMenu id={findTag(state.fullState,'modelTransaction') ?? ''} type='Model'></StampsMenu>
-            </Box>  
+              <StampsMenu
+                id={findTag(state.fullState, 'modelTransaction') ?? ''}
+                type='Model'
+              ></StampsMenu>
+            </Box>
           </Box>
         </Box>
       </DialogContent>

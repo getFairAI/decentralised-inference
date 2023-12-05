@@ -53,7 +53,6 @@ import { useSnackbar } from 'notistack';
 import { InfoOutlined } from '@mui/icons-material';
 import StampsMenu from '@/components/stamps-menu';
 
-
 const CustomDropDownIcon = () => (
   <Icon
     sx={{

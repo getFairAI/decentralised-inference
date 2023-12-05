@@ -288,11 +288,11 @@ const OperatorRow = ({
         </TableCell>
         <TableCell align='right'>
           <span>
-          {totalStamps}
-            <Tooltip title={`Total: ${totalStamps}, Vouched: ${vouchedStamps}`} placement="top-end">
-             <InfoOutlinedIcon fontSize="small" style={{ fontSize: '14px', marginLeft: '4px' }} />
+            {totalStamps}
+            <Tooltip title={`Total: ${totalStamps}, Vouched: ${vouchedStamps}`} placement='top-end'>
+              <InfoOutlinedIcon fontSize='small' style={{ fontSize: '14px', marginLeft: '4px' }} />
             </Tooltip>
-          </span> 
+          </span>
         </TableCell>
         <TableCell align='right'>
           <Checkbox color='primary' checked={isSelected} onChange={() => setSelected(index)} />

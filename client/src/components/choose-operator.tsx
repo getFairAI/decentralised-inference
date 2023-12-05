@@ -84,8 +84,8 @@ const OperatorSelected = ({
       fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
       scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
       fullState: scriptTx,
-      scriptCurator,
       operatorRegistrationTx: operatorsData[selectedIdx].node.id,
+      scriptCurator,
     };
     if (pathname.includes('chat')) {
       return navigate(pathname.replace(pathname.split('/chat/')[1], opOwner), { state });
@@ -308,9 +308,8 @@ const ChooseOperator = ({
         fee: findTag(filtered[0], 'operatorFee'),
         scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
         fullState: scriptTx,
-        scriptCurator,
         operatorRegistrationTx: filtered[0].node.id,
-
+        scriptCurator,
       };
 
       if (pathname.includes('chat')) {
@@ -356,12 +355,10 @@ const ChooseOperator = ({
     }
   }, [queryData]);
 
-
   useEffect(() => {
-    const transformCountsToObjectMap = (counts: CountResult[]): Map<string, CountResult> => {
-      return new Map(Object.entries(counts));
-    };
-  
+    const transformCountsToObjectMap = (counts: CountResult[]): Map<string, CountResult> =>
+      new Map(Object.entries(counts));
+
     const totalStamps = async (targetTxs: (string | undefined)[]) => {
       try {
         const filteredTxsIds = targetTxs.filter((txId) => txId !== undefined) as string[];
@@ -369,30 +366,27 @@ const ChooseOperator = ({
           warp: WarpFactory.forMainnet(),
           arweave: Arweave.init({}),
           wallet: window.arweaveWallet,
-          dre: 'https://dre-u.warp.cc/contract', 
-          graphql: 'https://arweave.net/graphql' 
+          dre: 'https://dre-u.warp.cc/contract',
+          graphql: 'https://arweave.net/graphql',
         });
-        const counts =  await stampsInstance.counts(filteredTxsIds);
-  
+        const counts = await stampsInstance.counts(filteredTxsIds);
+
         return transformCountsToObjectMap(counts);
-      } catch (error) {
-        console.log('error',JSON.stringify(error));
+      } catch (errorObj) {
         return new Map<string, CountResult>();
       }
-      };
+    };
 
-      const fetchData = async () => {
-        if (operatorsData.length !== 0) {
-          const operatorTxs = operatorsData.map((item) => item.node.id);
-          const stampsMap = await totalStamps(operatorTxs);
-          setTxsCountsMap(stampsMap);
-        }
-      };
-    
-      fetchData();
+    const fetchData = async () => {
+      if (operatorsData.length !== 0) {
+        const operatorTxs = operatorsData.map((item) => item.node.id);
+        const stampsMap = await totalStamps(operatorTxs);
+        setTxsCountsMap(stampsMap);
+      }
+    };
 
-
-  },[operatorsData]);
+    fetchData();
+  }, [operatorsData]);
 
   useEffect(() => {
     if (queryData && filterValue) {

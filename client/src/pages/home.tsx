@@ -160,8 +160,12 @@ export default function Home() {
         <Stack spacing={4}>
           {txs.map((el, idx) => {
             const modelTransactionTag = findTag(el, 'modelTransaction');
-            const totalStamps = modelTransactionTag ? (txsCountsMap.get(modelTransactionTag)?.total || 0) : 0;
-            const vouchedStamps = modelTransactionTag ? (txsCountsMap.get(modelTransactionTag)?.vouched || 0) : 0;
+            const totalStamps = modelTransactionTag
+              ? txsCountsMap.get(modelTransactionTag)?.total || 0
+              : 0;
+            const vouchedStamps = modelTransactionTag
+              ? txsCountsMap.get(modelTransactionTag)?.vouched || 0
+              : 0;
             return (
               <AiListCard
                 model={el}

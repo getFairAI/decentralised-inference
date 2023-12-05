@@ -44,7 +44,17 @@ import { useNavigate } from 'react-router-dom';
 import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
-const AiListCard = ({ model, index, totalStamps, vouchedStamps }: { model: IContractEdge; index: number, totalStamps: number, vouchedStamps: number }) => {
+const AiListCard = ({
+  model,
+  index,
+  totalStamps,
+  vouchedStamps,
+}: {
+  model: IContractEdge;
+  index: number;
+  totalStamps: number;
+  vouchedStamps: number;
+}) => {
   const navigate = useNavigate();
   const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
   const theme = useTheme();
@@ -202,15 +212,18 @@ const AiListCard = ({ model, index, totalStamps, vouchedStamps }: { model: ICont
             gap: '30px',
           }}
         >
-       <Box display="flex" flexDirection="column" alignItems="center">
-        <Typography variant="h3">Stamps</Typography>
-        <Box display="flex" alignItems="center">
-          <Typography variant="h4">{totalStamps}</Typography>
-          <Tooltip title={`Total: ${totalStamps}, Vouched: ${vouchedStamps}`} placement="top-end">
-            <InfoOutlinedIcon fontSize="small" style={{ marginLeft: '4px' }} />
-          </Tooltip>
-        </Box>
-      </Box>
+          <Box display='flex' flexDirection='column' alignItems='center'>
+            <Typography variant='h3'>Stamps</Typography>
+            <Box display='flex' alignItems='center'>
+              <Typography variant='h4'>{totalStamps}</Typography>
+              <Tooltip
+                title={`Total: ${totalStamps}, Vouched: ${vouchedStamps}`}
+                placement='top-end'
+              >
+                <InfoOutlinedIcon fontSize='small' style={{ marginLeft: '4px' }} />
+              </Tooltip>
+            </Box>
+          </Box>
           <Box display={'flex'} flexDirection='column'>
             <Typography variant='h3'>Last updated</Typography>
             <Typography variant='h4'>{getTimePassed()}</Typography>

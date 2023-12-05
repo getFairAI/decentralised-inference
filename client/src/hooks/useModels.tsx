@@ -29,7 +29,6 @@ import Stamps, { CountResult } from '@permaweb/stampjs';
 import { WarpFactory } from 'warp-contracts';
 import Arweave from 'arweave';
 
-
 const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [txs, setTxs] = useState<IContractEdge[]>([]);
@@ -50,9 +49,8 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
 
   const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
 
-  const transformCountsToObjectMap = (counts: CountResult[]): Map<string, CountResult> => {
-    return new Map(Object.entries(counts));
-  };
+  const transformCountsToObjectMap = (counts: CountResult[]): Map<string, CountResult> =>
+    new Map(Object.entries(counts));
 
   const totalStamps = async (targetTxs: (string | undefined)[]) => {
     try {
@@ -61,17 +59,16 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
         warp: WarpFactory.forMainnet(),
         arweave: Arweave.init({}),
         wallet: window.arweaveWallet,
-        dre: 'https://dre-u.warp.cc/contract', 
-        graphql: 'https://arweave.net/graphql' 
+        dre: 'https://dre-u.warp.cc/contract',
+        graphql: 'https://arweave.net/graphql',
       });
-      const counts =  await stampsInstance.counts(filteredTxsIds);
+      const counts = await stampsInstance.counts(filteredTxsIds);
 
       return transformCountsToObjectMap(counts);
-    } catch (error) {
-      console.log('error',JSON.stringify(error));
+    } catch (errorObj) {
       return new Map<string, CountResult>();
     }
-    };
+  };
 
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
