@@ -19,12 +19,15 @@
 import { TAG_NAMES } from '@/constants';
 import FilterContext from '@/context/filter';
 import { IContractEdge } from '@/interfaces/arweave';
-import { commonUpdateQuery, findTagsWithKeyword } from '@/utils/common';
+import { commonUpdateQuery, findTagsWithKeyword, findTag } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
 import { RefObject, useState, useContext, useEffect, useMemo } from 'react';
 import useOnScreen from './useOnScreen';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import _ from 'lodash';
+import Stamps, { CountResult } from '@permaweb/stampjs';
+import { WarpFactory } from 'warp-contracts';
+import Arweave from 'arweave';
 
 const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) => {
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -32,6 +35,7 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
   const [featuredTxs, setFeaturedTxs] = useState<IContractEdge[]>([]);
   const [validTxs, setValidTxs] = useState<IContractEdge[]>([]);
   const [filtering, setFiltering] = useState(false);
+  const [txsCountsMap, setTxsCountsMap] = useState<Map<string, CountResult>>(new Map());
 
   const filterValue = useContext(FilterContext);
   const isOnScreen = useOnScreen(target);
@@ -45,11 +49,35 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
 
   const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
 
+  const transformCountsToObjectMap = (counts: CountResult[]): Map<string, CountResult> =>
+    new Map(Object.entries(counts));
+
+  const totalStamps = async (targetTxs: (string | undefined)[]) => {
+    try {
+      const filteredTxsIds = targetTxs.filter((txId) => txId !== undefined) as string[];
+      const stampsInstance = Stamps.init({
+        warp: WarpFactory.forMainnet(),
+        arweave: Arweave.init({}),
+        wallet: window.arweaveWallet,
+        dre: 'https://dre-u.warp.cc/contract',
+        graphql: 'https://arweave.net/graphql',
+      });
+      const counts = await stampsInstance.counts(filteredTxsIds);
+
+      return transformCountsToObjectMap(counts);
+    } catch (errorObj) {
+      return new Map<string, CountResult>();
+    }
+  };
+
   useEffect(() => {
     if (data && networkStatus === NetworkStatus.ready) {
       (async () => {
         setFiltering(true);
         const filtered = await FairSDKWeb.utils.modelsFilter(data.transactions.edges);
+        const targetTxs = filtered.map((el) => findTag(el, 'modelTransaction'));
+        const mapTxsCountStamps = await totalStamps(targetTxs);
+        setTxsCountsMap(mapTxsCountStamps);
         setHasNextPage(data.transactions.pageInfo.hasNextPage);
         setTxs(filtered);
         setValidTxs(filtered);
@@ -95,6 +123,7 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
   return {
     loading: loadingOrFiltering,
     txs,
+    txsCountsMap,
     isOnScreen,
     featuredTxs,
     error,

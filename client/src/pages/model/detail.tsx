@@ -44,6 +44,7 @@ import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
 import ChooseOperator from '@/components/choose-operator';
 import ChooseScript from '@/components/choose-script';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
+import StampsMenu from '@/components/stamps-menu';
 
 const DetailContent = ({
   showOperators,
@@ -206,8 +207,14 @@ const DetailContent = ({
               Description
             </Typography>
             <Typography>
-              {findTag(state.fullState, 'description') || 'No Description Available.'}
+              {findTag(state.fullState, 'description') ?? 'No Description Available.'}
             </Typography>
+            <Box marginTop={'20px'}>
+              <StampsMenu
+                id={findTag(state.fullState, 'modelTransaction') ?? ''}
+                type='Model'
+              ></StampsMenu>
+            </Box>
           </Box>
         </Box>
       </DialogContent>

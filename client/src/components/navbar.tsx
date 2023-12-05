@@ -51,6 +51,7 @@ import { findTag, getArPriceUSD } from '@/utils/common';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
 import { InfoOutlined } from '@mui/icons-material';
+import StampsMenu from '@/components/stamps-menu';
 
 const CustomDropDownIcon = () => (
   <Icon
@@ -379,6 +380,7 @@ const Navbar = ({
           >
             {pathname.includes('chat') ? (
               <>
+                <StampsMenu id={state.operatorRegistrationTx ?? ''} type='Operator'></StampsMenu>
                 <Box>
                   <Typography
                     sx={{

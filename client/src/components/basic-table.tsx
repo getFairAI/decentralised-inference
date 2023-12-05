@@ -1,3 +1,21 @@
+/*
+ * Fair Protocol, open source decentralised inference marketplace for artificial intelligence.
+ * Copyright (C) 2023 Fair Protocol
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.
+ */
+
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -19,6 +37,7 @@ import { useEffect, useRef } from 'react';
 import useOnScreen from '@/hooks/useOnScreen';
 import { operatorHeaders, scriptHeaders } from '@/constants';
 import ScriptRow from './script-row';
+import { CountResult } from '@permaweb/stampjs';
 
 type fetchMoreFn = <
   TFetchData = unknown,
@@ -39,6 +58,7 @@ type tableType = 'operators' | 'scripts';
 
 const BasicTableContent = ({
   data,
+  txsCountsMap,
   type,
   state,
   loading,
@@ -49,6 +69,7 @@ const BasicTableContent = ({
 }: {
   type: tableType;
   data: IEdge[] | IContractEdge[];
+  txsCountsMap?: Map<string, CountResult>;
   loading: boolean;
   error?: ApolloError;
   state: IEdge;
@@ -129,6 +150,8 @@ const BasicTableContent = ({
             key={row.node.id}
             operatorTx={row}
             state={state}
+            totalStamps={txsCountsMap?.get(row.node.id)?.total || 0}
+            vouchedStamps={txsCountsMap?.get(row.node.id)?.vouched || 0}
             index={idx}
             isSelected={selectedIdx === idx}
             setSelected={handleSelected}
@@ -150,6 +173,7 @@ const BasicTableContent = ({
 export default function BasicTable(props: {
   type: tableType;
   data: IEdge[] | IContractEdge[];
+  txsCountsMap?: Map<string, CountResult>;
   loading: boolean;
   error?: ApolloError;
   state: IEdge;
