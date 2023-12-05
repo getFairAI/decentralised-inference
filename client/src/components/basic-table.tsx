@@ -19,6 +19,7 @@ import { useEffect, useRef } from 'react';
 import useOnScreen from '@/hooks/useOnScreen';
 import { operatorHeaders, scriptHeaders } from '@/constants';
 import ScriptRow from './script-row';
+import { CountResult } from '@permaweb/stampjs';
 
 type fetchMoreFn = <
   TFetchData = unknown,
@@ -39,6 +40,7 @@ type tableType = 'operators' | 'scripts';
 
 const BasicTableContent = ({
   data,
+  txsCountsMap,
   type,
   state,
   loading,
@@ -49,6 +51,7 @@ const BasicTableContent = ({
 }: {
   type: tableType;
   data: IEdge[] | IContractEdge[];
+  txsCountsMap?: Map<string, CountResult>;
   loading: boolean;
   error?: ApolloError;
   state: IEdge;
@@ -129,6 +132,8 @@ const BasicTableContent = ({
             key={row.node.id}
             operatorTx={row}
             state={state}
+            totalStamps={txsCountsMap?.get(row.node.id)?.total || 0}
+            vouchedStamps={txsCountsMap?.get(row.node.id)?.vouched || 0}
             index={idx}
             isSelected={selectedIdx === idx}
             setSelected={handleSelected}
@@ -150,6 +155,7 @@ const BasicTableContent = ({
 export default function BasicTable(props: {
   type: tableType;
   data: IEdge[] | IContractEdge[];
+  txsCountsMap?: Map<string, CountResult>;
   loading: boolean;
   error?: ApolloError;
   state: IEdge;

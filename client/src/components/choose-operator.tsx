@@ -44,6 +44,9 @@ import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
 import FairSDKWeb from '@fair-protocol/sdk/web';
+import Stamps, { CountResult } from '@permaweb/stampjs';
+import { WarpFactory } from 'warp-contracts';
+import Arweave from 'arweave';
 
 const OperatorSelected = ({
   operatorsData,
@@ -82,6 +85,7 @@ const OperatorSelected = ({
       scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
       fullState: scriptTx,
       scriptCurator,
+      operatorRegistrationTx: operatorsData[selectedIdx].node.id,
     };
     if (pathname.includes('chat')) {
       return navigate(pathname.replace(pathname.split('/chat/')[1], opOwner), { state });
@@ -253,6 +257,7 @@ const ChooseOperator = ({
   const [filtering, setFiltering] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const [txsCountsMap, setTxsCountsMap] = useState<Map<string, CountResult>>(new Map());
 
   const scriptId = findTag(scriptTx as IEdge, 'scriptTransaction') as string;
   const scriptName = findTag(scriptTx as IEdge, 'scriptName');
@@ -304,6 +309,8 @@ const ChooseOperator = ({
         scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
         fullState: scriptTx,
         scriptCurator,
+        operatorRegistrationTx: filtered[0].node.id,
+
       };
 
       if (pathname.includes('chat')) {
@@ -349,6 +356,44 @@ const ChooseOperator = ({
     }
   }, [queryData]);
 
+
+  useEffect(() => {
+    const transformCountsToObjectMap = (counts: CountResult[]): Map<string, CountResult> => {
+      return new Map(Object.entries(counts));
+    };
+  
+    const totalStamps = async (targetTxs: (string | undefined)[]) => {
+      try {
+        const filteredTxsIds = targetTxs.filter((txId) => txId !== undefined) as string[];
+        const stampsInstance = Stamps.init({
+          warp: WarpFactory.forMainnet(),
+          arweave: Arweave.init({}),
+          wallet: window.arweaveWallet,
+          dre: 'https://dre-u.warp.cc/contract', 
+          graphql: 'https://arweave.net/graphql' 
+        });
+        const counts =  await stampsInstance.counts(filteredTxsIds);
+  
+        return transformCountsToObjectMap(counts);
+      } catch (error) {
+        console.log('error',JSON.stringify(error));
+        return new Map<string, CountResult>();
+      }
+      };
+
+      const fetchData = async () => {
+        if (operatorsData.length !== 0) {
+          const operatorTxs = operatorsData.map((item) => item.node.id);
+          const stampsMap = await totalStamps(operatorTxs);
+          setTxsCountsMap(stampsMap);
+        }
+      };
+    
+      fetchData();
+
+
+  },[operatorsData]);
+
   useEffect(() => {
     if (queryData && filterValue) {
       setFiltering(true);
@@ -374,6 +419,7 @@ const ChooseOperator = ({
         <BasicTable
           type='operators'
           data={operatorsData}
+          txsCountsMap={txsCountsMap}
           loading={showLoading}
           error={error}
           state={scriptTx as IEdge}

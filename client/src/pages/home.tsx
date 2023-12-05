@@ -33,13 +33,13 @@ import AiListCard from '@/components/ai-list-card';
 import { Outlet } from 'react-router-dom';
 import useModels from '@/hooks/useModels';
 import ListLoadingCard from '@/components/list-loading-card';
+import { findTag } from '@/utils/common';
 
 export default function Home() {
   const [hightlightTop, setHighLightTop] = useState(false);
   const target = useRef<HTMLDivElement>(null);
   const theme = useTheme();
-
-  const { txs, loading } = useModels(target);
+  const { txs, loading, txsCountsMap } = useModels(target);
   const handleHighlight = (value: boolean) => setHighLightTop(value);
 
   return (
@@ -158,9 +158,20 @@ export default function Home() {
           </Box>
         </Box>
         <Stack spacing={4}>
-          {txs.map((el, idx) => (
-            <AiListCard model={el} key={el.node.id} index={idx} />
-          ))}
+          {txs.map((el, idx) => {
+            const modelTransactionTag = findTag(el, 'modelTransaction');
+            const totalStamps = modelTransactionTag ? (txsCountsMap.get(modelTransactionTag)?.total || 0) : 0;
+            const vouchedStamps = modelTransactionTag ? (txsCountsMap.get(modelTransactionTag)?.vouched || 0) : 0;
+            return (
+              <AiListCard
+                model={el}
+                key={el.node.id}
+                index={idx}
+                totalStamps={totalStamps}
+                vouchedStamps={vouchedStamps}
+              />
+            );
+          })}
           {loading && (
             <>
               <ListLoadingCard />

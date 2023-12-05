@@ -38,6 +38,7 @@ import {
   parseUnixTimestamp,
 } from '@/utils/common';
 import { parseUBalance } from '@/utils/u';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 export interface RowData {
   address: string;
@@ -60,12 +61,16 @@ const OperatorRow = ({
   operatorTx,
   state,
   index,
+  totalStamps,
+  vouchedStamps,
   isSelected,
   setSelected,
 }: {
   operatorTx: IEdge | IContractEdge;
   state: IEdge;
   index: number;
+  totalStamps: number;
+  vouchedStamps: number;
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
@@ -281,7 +286,14 @@ const OperatorRow = ({
           </Tooltip>
           {}
         </TableCell>
-        <TableCell align='right'>{row?.stamps}</TableCell>
+        <TableCell align='right'>
+          <span>
+          {totalStamps}
+            <Tooltip title={`Total: ${totalStamps}, Vouched: ${vouchedStamps}`} placement="top-end">
+             <InfoOutlinedIcon fontSize="small" style={{ fontSize: '14px', marginLeft: '4px' }} />
+            </Tooltip>
+          </span> 
+        </TableCell>
         <TableCell align='right'>
           <Checkbox color='primary' checked={isSelected} onChange={() => setSelected(index)} />
         </TableCell>

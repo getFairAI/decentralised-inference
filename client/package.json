@@ -27,6 +27,7 @@
     "@mui/lab": "5.0.0-alpha.120",
     "@mui/material": "5.11.9",
     "@mui/x-date-pickers": "6.2.1",
+    "@permaweb/stampjs": "^0.6.2",
     "@uiw/react-md-editor": "3.20.2",
     "apexcharts": "3.41.0",
     "arweave": "1.11.8",
