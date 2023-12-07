@@ -61,7 +61,7 @@ const maxPercentage = 100;
 const errorStr = 'An Error Occured';
 const flexSpaceBetween = 'space-between';
 
-const steps = [ 'Create Pair', 'Choose Amount', 'Set Price'];
+const steps = ['Create Pair', 'Choose Amount', 'Set Price'];
 const marks = [
   {
     value: 0,
@@ -117,20 +117,19 @@ const CreateSellOrderStep = ({
     [setPrice],
   );
 
-  const handleClick = useCallback(() => handleNext(currentAllowance, price), [currentAllowance, price, handleNext]);
+  const handleClick = useCallback(
+    () => handleNext(currentAllowance, price),
+    [currentAllowance, price, handleNext],
+  );
 
   return (
     <Box display='flex' flexDirection={'column'} gap='16px'>
-      <Typography>
-        {
-          'Please select the desired price.'
-        }
-      </Typography>
+      <Typography>{'Please select the desired price.'}</Typography>
       <Box display={'flex'} gap={'24px'} alignItems={'center'} margin={'0 16px'}>
         <Slider
           marks={marks}
           disabled
-          value={currentAllowance / (maxBalance + currentAllowance) * 100}
+          value={(currentAllowance / (maxBalance + currentAllowance)) * 100}
           step={1}
           min={0}
           getAriaValueText={valueLabelFormat}
@@ -228,7 +227,7 @@ const AllowStep = ({
         setPercentage(Math.round(newPercentage));
       }
     },
-    [setAmount, maxBalance ],
+    [setAmount, maxBalance],
   );
 
   const handleSliderChange = useCallback(
@@ -246,7 +245,7 @@ const AllowStep = ({
       setAmount(currentAllowance);
       setPercentage((currentAllowance / (maxBalance + currentAllowance)) * maxPercentage);
     }
-  }, [ currentAllowance, maxBalance ]);
+  }, [currentAllowance, maxBalance]);
 
   return (
     <Box display='flex' flexDirection={'column'} gap='16px'>
@@ -449,7 +448,7 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
           setIsProcessing(true);
           await allowUCMonAsset(assetId, amount);
           setCurrentAllowance(amount);
-          setMaxBalance((prevValue => prevValue - amount));
+          setMaxBalance((prevValue) => prevValue - amount);
           setIsProcessing(false);
           setActiveStep((prevActiveStep) => prevActiveStep + 1);
         } else {
@@ -550,7 +549,7 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
         <Paper square elevation={0} sx={{ p: 3 }}>
           <Box display='flex' flexDirection={'column'} gap='16px'>
             <Typography>All steps completed - you&apos;re finished</Typography>
-            <Button variant='outlined' onClick={handleViewInBazar} sx={{ width: '40%'}}>
+            <Button variant='outlined' onClick={handleViewInBazar} sx={{ width: '40%' }}>
               Check Listing
             </Button>
           </Box>
@@ -565,38 +564,37 @@ const ContentDisplay = ({
   sold,
   onSale,
   onSaleWithbalance,
-  loading
+  loading,
 }: {
   assetId: string;
   sold: boolean;
   onSale: boolean;
   onSaleWithbalance: boolean;
-  loading: boolean
+  loading: boolean;
 }) => {
-  const [ newListing, setNewListing ] = useState(false);
+  const [newListing, setNewListing] = useState(false);
 
   const handleViewInBazar = useCallback(
     () => window.open(`${BAZAR_ASSETS_LINK}${assetId}`, '_blank'),
     [window, assetId],
   );
 
-  const handleCreateNewListing = useCallback(
-    () => setNewListing(true),
-    [setNewListing],
-  );
-  
+  const handleCreateNewListing = useCallback(() => setNewListing(true), [setNewListing]);
+
   if (loading) {
     return <Typography>Loading...</Typography>;
   } else if (!newListing && onSaleWithbalance) {
-    return <Box display={'flex'} flexDirection={'column'} gap={'16px'} alignContent={'center'}>
-      <Typography>Asset Already has Existing Active Orders.</Typography>
-      <Button variant='contained' onClick={handleViewInBazar}>
-        Check Existing Listing
-      </Button>
-      <Button variant='outlined' onClick={handleCreateNewListing}>
-        Create New Listing
-      </Button>
-    </Box>;
+    return (
+      <Box display={'flex'} flexDirection={'column'} gap={'16px'} alignContent={'center'}>
+        <Typography>Asset Already has Existing Active Orders.</Typography>
+        <Button variant='contained' onClick={handleViewInBazar}>
+          Check Existing Listing
+        </Button>
+        <Button variant='outlined' onClick={handleCreateNewListing}>
+          Create New Listing
+        </Button>
+      </Box>
+    );
   } else if (sold) {
     return (
       <Box display={'flex'} flexDirection={'column'} gap={'16px'} alignContent={'center'}>
@@ -608,7 +606,7 @@ const ContentDisplay = ({
     );
   } else if (onSale) {
     return (
-      <Box  display={'flex'} flexDirection={'column'} gap={'16px'} alignContent={'center'}>
+      <Box display={'flex'} flexDirection={'column'} gap={'16px'} alignContent={'center'}>
         <Typography>Asset Is Already listed on BazAR</Typography>
         <Button variant='contained' onClick={handleViewInBazar}>
           Check Listing
@@ -632,10 +630,10 @@ const Trade = ({
   // components/layout.js
   const theme = useTheme();
   const { currentAddress } = useContext(WalletContext);
-  const [ onSaleWithbalance, setOnSaleWithBalance ] = useState(false);
-  const [ onSale, setOnSale ] = useState(false);
-  const [ sold, setSold ] = useState(false);
-  const [ loading, setLoading ] = useState(false);
+  const [onSaleWithbalance, setOnSaleWithBalance] = useState(false);
+  const [onSale, setOnSale] = useState(false);
+  const [sold, setSold] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleClose = useCallback(() => setOpenWithId('', false), [setOpenWithId]);
 
@@ -707,7 +705,13 @@ const Trade = ({
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        <ContentDisplay assetId={assetId} sold={sold} onSale={onSale} onSaleWithbalance={onSaleWithbalance} loading={loading}/>
+        <ContentDisplay
+          assetId={assetId}
+          sold={sold}
+          onSale={onSale}
+          onSaleWithbalance={onSaleWithbalance}
+          loading={loading}
+        />
       </DialogContent>
     </Dialog>
   );
