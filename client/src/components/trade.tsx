@@ -123,7 +123,7 @@ const CreateSellOrderStep = ({
     <Box display='flex' flexDirection={'column'} gap='16px'>
       <Typography>
         {
-          'Please select the amount you wish to list for sale and the desired price. Note that price will refer to the chosen currency'
+          'Please select the desired price.'
         }
       </Typography>
       <Box display={'flex'} gap={'24px'} alignItems={'center'} margin={'0 16px'}>
