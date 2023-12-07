@@ -28,8 +28,9 @@ import {
   getAssetBalance,
   getAssetBalanceAndAllowed,
   getClaimId,
-  getUserOrdersForAsset,
+  hasAnyActiveOrder,
 } from '@/utils/ucm';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
   Button,
@@ -60,7 +61,7 @@ const maxPercentage = 100;
 const errorStr = 'An Error Occured';
 const flexSpaceBetween = 'space-between';
 
-const steps = ['Create Pair', 'Approve Spending', 'Create Sell Order'];
+const steps = [ 'Create Pair', 'Choose Amount', 'Set Price'];
 const marks = [
   {
     value: 0,
@@ -89,52 +90,26 @@ const valueLabelFormat = (val: number) => `${val}%`;
 const CreateSellOrderStep = ({
   handleNext,
   handleBack,
+  maxBalance,
   currentAllowance,
   isProcessing,
 }: {
   handleNext: (quantity: number, price: number) => void;
   handleBack: () => void;
+  maxBalance: number;
   currentAllowance: number;
   isProcessing: boolean;
 }) => {
-  const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
-  const [percentage, setPercentage] = useState(0);
 
   const isContinueDisabled = useMemo(
-    () => isProcessing || !price || !quantity,
-    [isProcessing, price, quantity],
+    () => isProcessing || !price || !currentAllowance,
+    [isProcessing, price, currentAllowance],
   );
-
-  const handleMaxClick = useCallback(() => {
-    setQuantity(currentAllowance);
-  }, [setQuantity, currentAllowance]);
 
   const isAllowed = useCallback(
     (val: NumberFormatValues) => !val.floatValue || val?.floatValue <= currentAllowance,
     [currentAllowance],
-  );
-
-  const handleQuantityChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      if (event.target.value === '') {
-        setQuantity(0);
-        setPercentage(0);
-      } else {
-        setQuantity(Number(event.target.value));
-        const newPercentage = (Number(event.target.value) / currentAllowance) * maxPercentage;
-        setPercentage(Math.round(newPercentage));
-      }
-    },
-    [setQuantity, currentAllowance],
-  );
-
-  const handleSliderChange = useCallback(
-    (_event: Event, newValue: number | number[]) => {
-      setQuantity((currentAllowance * (newValue as number)) / maxPercentage);
-      setPercentage(newValue as number);
-    },
-    [setQuantity, currentAllowance],
   );
 
   const handlePriceChange = useCallback(
@@ -142,7 +117,7 @@ const CreateSellOrderStep = ({
     [setPrice],
   );
 
-  const handleClick = useCallback(() => handleNext(quantity, price), [quantity, price, handleNext]);
+  const handleClick = useCallback(() => handleNext(currentAllowance, price), [currentAllowance, price, handleNext]);
 
   return (
     <Box display='flex' flexDirection={'column'} gap='16px'>
@@ -153,9 +128,9 @@ const CreateSellOrderStep = ({
       </Typography>
       <Box display={'flex'} gap={'24px'} alignItems={'center'} margin={'0 16px'}>
         <Slider
-          onChange={handleSliderChange}
           marks={marks}
-          value={percentage}
+          disabled
+          value={currentAllowance / (maxBalance + currentAllowance) * 100}
           step={1}
           min={0}
           getAriaValueText={valueLabelFormat}
@@ -165,17 +140,9 @@ const CreateSellOrderStep = ({
         <NumericFormat
           label='Quantity'
           placeholder='Quantity'
-          value={quantity}
-          onChange={handleQuantityChange}
+          value={currentAllowance}
+          disabled
           customInput={TextField}
-          helperText={
-            <Typography sx={{ cursor: 'pointer' }} variant='caption'>
-              <u>Max: {currentAllowance}</u>
-            </Typography>
-          }
-          FormHelperTextProps={{
-            onClick: handleMaxClick,
-          }}
           allowNegative={false}
           isAllowed={isAllowed}
           margin='dense'
@@ -261,7 +228,7 @@ const AllowStep = ({
         setPercentage(Math.round(newPercentage));
       }
     },
-    [setAmount],
+    [setAmount, maxBalance ],
   );
 
   const handleSliderChange = useCallback(
@@ -269,10 +236,17 @@ const AllowStep = ({
       setAmount((maxBalance * (newValue as number)) / maxPercentage);
       setPercentage(newValue as number);
     },
-    [setAmount, maxBalance],
+    [setAmount, currentAllowance],
   );
 
   const handleClick = useCallback(() => handleNext(amount), [amount, handleNext]);
+
+  useEffect(() => {
+    if (currentAllowance > 0) {
+      setAmount(currentAllowance);
+      setPercentage((currentAllowance / (maxBalance + currentAllowance)) * maxPercentage);
+    }
+  }, [ currentAllowance, maxBalance ]);
 
   return (
     <Box display='flex' flexDirection={'column'} gap='16px'>
@@ -313,7 +287,7 @@ const AllowStep = ({
           customInput={TextField}
           helperText={
             <Typography sx={{ cursor: 'pointer' }} variant='caption'>
-              <u>Max: {maxBalance}</u>
+              <u>Max: {maxBalance + currentAllowance}</u>
             </Typography>
           }
           FormHelperTextProps={{
@@ -469,11 +443,13 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
     async (amount: number) => {
       try {
         if (currentAllowance > 0) {
+          // reset old allowance and create new one
           setActiveStep((prevActiveStep) => prevActiveStep + 1);
         } else if (amount > 0) {
           setIsProcessing(true);
           await allowUCMonAsset(assetId, amount);
-          setCurrentAllowance(await getAssetAllowance(assetId, currentAddress));
+          setCurrentAllowance(amount);
+          setMaxBalance((prevValue => prevValue - amount));
           setIsProcessing(false);
           setActiveStep((prevActiveStep) => prevActiveStep + 1);
         } else {
@@ -482,7 +458,7 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
         }
       } catch (error) {
         setIsProcessing(false);
-        enqueueSnackbar(errorStr, { variant: 'error' });
+        enqueueSnackbar((error as Error).message, { variant: 'error' });
       }
     },
     [assetId, currentAllowance, setActiveStep],
@@ -534,6 +510,7 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
             <CreateSellOrderStep
               handleNext={handleCreateOrder}
               handleBack={handleBack}
+              maxBalance={maxBalance}
               currentAllowance={currentAllowance}
               isProcessing={isProcessing}
             />
@@ -571,10 +548,12 @@ const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
       </Stepper>
       {activeStep === steps.length && (
         <Paper square elevation={0} sx={{ p: 3 }}>
-          <Typography>All steps completed - you&apos;re finished</Typography>
-          <Button variant='contained' onClick={handleViewInBazar}>
-            Check Listing
-          </Button>
+          <Box display='flex' flexDirection={'column'} gap='16px'>
+            <Typography>All steps completed - you&apos;re finished</Typography>
+            <Button variant='outlined' onClick={handleViewInBazar} sx={{ width: '40%'}}>
+              Check Listing
+            </Button>
+          </Box>
         </Paper>
       )}
     </Box>
@@ -585,27 +564,51 @@ const ContentDisplay = ({
   assetId,
   sold,
   onSale,
+  onSaleWithbalance,
+  loading
 }: {
   assetId: string;
   sold: boolean;
   onSale: boolean;
+  onSaleWithbalance: boolean;
+  loading: boolean
 }) => {
+  const [ newListing, setNewListing ] = useState(false);
+
   const handleViewInBazar = useCallback(
     () => window.open(`${BAZAR_ASSETS_LINK}${assetId}`, '_blank'),
     [window, assetId],
   );
-  if (sold) {
+
+  const handleCreateNewListing = useCallback(
+    () => setNewListing(true),
+    [setNewListing],
+  );
+  
+  if (loading) {
+    return <Typography>Loading...</Typography>;
+  } else if (!newListing && onSaleWithbalance) {
+    return <Box display={'flex'} flexDirection={'column'} gap={'16px'} alignContent={'center'}>
+      <Typography>Asset Already has Existing Active Orders.</Typography>
+      <Button variant='contained' onClick={handleViewInBazar}>
+        Check Existing Listing
+      </Button>
+      <Button variant='outlined' onClick={handleCreateNewListing}>
+        Create New Listing
+      </Button>
+    </Box>;
+  } else if (sold) {
     return (
-      <>
+      <Box display={'flex'} flexDirection={'column'} gap={'16px'} alignContent={'center'}>
         <Typography>You Do not Own this Asset</Typography>
         <Button variant='contained' onClick={handleViewInBazar}>
           Buy Now
         </Button>
-      </>
+      </Box>
     );
   } else if (onSale) {
     return (
-      <Box>
+      <Box  display={'flex'} flexDirection={'column'} gap={'16px'} alignContent={'center'}>
         <Typography>Asset Is Already listed on BazAR</Typography>
         <Button variant='contained' onClick={handleViewInBazar}>
           Check Listing
@@ -629,25 +632,33 @@ const Trade = ({
   // components/layout.js
   const theme = useTheme();
   const { currentAddress } = useContext(WalletContext);
-  const [onSale, setOnSale] = useState(false);
-  const [sold, setSold] = useState(false);
+  const [ onSaleWithbalance, setOnSaleWithBalance ] = useState(false);
+  const [ onSale, setOnSale ] = useState(false);
+  const [ sold, setSold ] = useState(false);
+  const [ loading, setLoading ] = useState(false);
 
   const handleClose = useCallback(() => setOpenWithId('', false), [setOpenWithId]);
 
   useEffect(() => {
     if (currentAddress && assetId) {
       (async () => {
-        const [balance, hasAllowed] = await getAssetBalanceAndAllowed(assetId, currentAddress);
+        setLoading(true);
+        const [balance, allowance] = await getAssetBalanceAndAllowed(assetId, currentAddress);
+        const hasOrders = await hasAnyActiveOrder(assetId);
 
-        if (balance <= 0) {
-          const orders = await getUserOrdersForAsset(assetId, currentAddress);
-
-          setOnSale(orders.length > 0);
-          setSold(!hasAllowed && orders.length === 0);
+        if (hasOrders && balance >= 0) {
+          setOnSaleWithBalance(true);
+        } else if (hasOrders) {
+          setOnSale(true);
+        } else if (allowance === 0 && balance === 0) {
+          setSold(true);
         } else {
-          setOnSale(false);
           setSold(false);
+          setOnSale(false);
+          setOnSaleWithBalance(false);
+          // ignore
         }
+        setLoading(false);
       })();
     }
   }, [assetId, currentAddress]);
@@ -664,7 +675,7 @@ const Trade = ({
             theme.palette.mode === 'dark'
               ? 'rgba(61, 61, 61, 0.9)'
               : theme.palette.background.default,
-          borderRadius: '30px',
+          borderRadius: '8px',
         },
       }}
     >
@@ -684,17 +695,19 @@ const Trade = ({
           {'Trade Asset On BazAR'}
         </Typography>
         <IconButton
+          size='small'
           onClick={handleClose}
           sx={{
-            background: theme.palette.primary.main,
-            '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
+            border: '0.5px solid',
+            borderRadius: '8px',
+            '&:hover': { opacity: 0.8 },
           }}
         >
-          <img src='./close-icon.svg' />
+          <CloseIcon />
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        <ContentDisplay assetId={assetId} sold={sold} onSale={onSale} />
+        <ContentDisplay assetId={assetId} sold={sold} onSale={onSale} onSaleWithbalance={onSaleWithbalance} loading={loading}/>
       </DialogContent>
     </Dialog>
   );

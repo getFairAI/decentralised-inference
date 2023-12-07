@@ -302,7 +302,7 @@ export const existsOrder = async (
   assetAddr: string,
   qty: number,
   transaction: string,
-  currencyAssetAddr = UCM_CONTRACT_ID,
+  currencyAssetAddr = U_CONTRACT_ID,
 ) => {
   const { cachedValue } = await contract.readState();
 
@@ -326,6 +326,34 @@ export const existsOrder = async (
 
   return exists;
 };
+
+export const hasAnyActiveOrder = async (
+  assetAddr: string,
+  currencyAssetAddr = U_CONTRACT_ID,
+) => {
+  const { cachedValue } = await contract.readState();
+
+  const matchingPairs = (cachedValue as UCMState).state.pairs.filter(
+    (pairObj) => pairObj.pair.includes(assetAddr) && pairObj.pair.includes(currencyAssetAddr),
+  );
+
+  let exists = false;
+  for (const pair of matchingPairs) {
+    // check orders
+    const matchingOrderIdx = pair.orders.filter(
+      (order) =>
+        order.token === assetAddr,
+    );
+    if (matchingOrderIdx.length > 0) {
+      exists = true;
+    } else {
+      // ignore
+    }
+  }
+
+  return exists;
+};
+
 /**
  * Creates a pair in the ucm
  * @param assetAddr the asset address to create a pair with

@@ -374,7 +374,6 @@ const Conversations = ({
             id={'addConversation'}
             onClick={handleAddConversation}
             sx={{
-              marginLeft: '20px',
               width: 'fit-content',
               borderRadius: '8px',
             }}
