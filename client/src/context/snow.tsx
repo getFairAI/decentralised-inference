@@ -28,7 +28,7 @@ export const SnowContext = createContext<SnowContext>({
 });
 
 export const SnowProvider = ({ children }: { children: ReactNode }) => {
-  const [ snowInstance, setSnowInstance ] = useState<Snowflakes | undefined>(undefined);
+  const [snowInstance, setSnowInstance] = useState<Snowflakes | undefined>(undefined);
 
   useEffect(() => {
     const snowApi = new Snowflakes({
@@ -41,21 +41,20 @@ export const SnowProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       snowApi?.destroy();
     };
-  }, [ ]);
+  }, []);
 
-  const toggleSnow = useCallback((value: boolean) => {
-    if (value) {
-      snowInstance?.start();
-      snowInstance?.show();
-    } else {
-      snowInstance?.hide();
-      snowInstance?.stop();
-    }
-  }, [ snowInstance ]);
-
-  return (
-    <SnowContext.Provider value={{ toggleSnow }}>
-      {children}
-    </SnowContext.Provider>
+  const toggleSnow = useCallback(
+    (value: boolean) => {
+      if (value) {
+        snowInstance?.start();
+        snowInstance?.show();
+      } else {
+        snowInstance?.hide();
+        snowInstance?.stop();
+      }
+    },
+    [snowInstance],
   );
+
+  return <SnowContext.Provider value={{ toggleSnow }}>{children}</SnowContext.Provider>;
 };

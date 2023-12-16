@@ -46,9 +46,7 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
           <WalletProvider>
             <ChooseWalletProvider>
               <TradeProvider>
-                <SnowProvider>
-                  {children}
-                </SnowProvider>
+                <SnowProvider>{children}</SnowProvider>
               </TradeProvider>
             </ChooseWalletProvider>
           </WalletProvider>
