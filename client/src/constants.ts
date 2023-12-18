@@ -178,9 +178,6 @@ export const AVATAR_ATTACHMENT = 'avatar';
 export const NOTES_ATTACHMENT = 'notes';
 
 // misc
-export const DEV_BUNDLR_URL = 'https://devnet.bundlr.network/';
-export const NODE1_BUNDLR_URL = 'https://node1.bundlr.network';
-export const NODE2_BUNDLR_URL = 'https://node2.bundlr.network/';
 
 export const DEV_ARWEAVE_URL = 'https://arweave.dev';
 export const NET_ARWEAVE_URL = 'https://arweave.net';

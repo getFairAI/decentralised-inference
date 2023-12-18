@@ -28,7 +28,7 @@ const main = async () => {
   // the commented out line below to create a new Bundlr object.
   // const bundlr = new Bundlr("http://node1.bundlr.network", "arweave", jwk);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const irys = new Irys({ url: 'https://node2.bundlr.network', token: 'arweave', key: jwk });
+  const irys = new Irys({ url: 'https://up.arweave.net', token: 'arweave', key: jwk });
   
   // Get loaded balance in atomic units
   const atomicBalance = await irys.getLoadedBalance();
