@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { ReactNode, createContext, useCallback, useEffect, useState } from 'react';
+import { ReactNode, createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import Snowflakes from 'magic-snowflakes';
 
 export interface SnowContext {
@@ -55,6 +55,7 @@ export const SnowProvider = ({ children }: { children: ReactNode }) => {
     },
     [snowInstance],
   );
+  const value = useMemo(() => ({ toggleSnow }), [toggleSnow]);
 
-  return <SnowContext.Provider value={{ toggleSnow }}>{children}</SnowContext.Provider>;
+  return <SnowContext.Provider value={value}>{children}</SnowContext.Provider>;
 };

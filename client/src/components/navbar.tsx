@@ -103,7 +103,7 @@ const SnowSwitch = styled(Switch)(() => ({
   '& .MuiSwitch-track': {
     opacity: 1,
     backgroundColor: '#aab4be',
-    borderRadius: 20 / 2,
+    borderRadius: 10,
   },
 }));
 
@@ -367,9 +367,12 @@ const Navbar = ({
     toggleSnow(true); // snow on by default
   }, []);
 
-  const handleToggleSnow = (_: ChangeEvent<HTMLInputElement>, checked: boolean) => {
-    toggleSnow(checked);
-  };
+  const handleToggleSnow = useCallback(
+    (_: ChangeEvent<HTMLInputElement>, checked: boolean) => {
+      toggleSnow(checked);
+    },
+    [toggleSnow],
+  );
 
   return (
     <>
