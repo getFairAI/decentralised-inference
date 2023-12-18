@@ -20,7 +20,7 @@ import { U_CONTRACT_ID, U_DIVIDER } from '@/constants';
 import { ITag } from '@/interfaces/arweave';
 import { WarpFactory } from 'warp-contracts';
 
-const warp = WarpFactory.forMainnet();
+export const warp = WarpFactory.forMainnet();
 
 const contract = warp.contract(U_CONTRACT_ID).setEvaluationOptions({
   remoteStateSyncSource: 'https://dre-u.warp.cc/contract',

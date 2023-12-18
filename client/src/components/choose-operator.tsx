@@ -44,9 +44,7 @@ import BasicTable from './basic-table';
 import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
 import FairSDKWeb from '@fair-protocol/sdk/web';
-import Stamps, { CountResult } from '@permaweb/stampjs';
-import { WarpFactory } from 'warp-contracts';
-import Arweave from 'arweave';
+import { CountResult } from '@permaweb/stampjs';
 
 const OperatorSelected = ({
   operatorsData,
@@ -258,6 +256,7 @@ const ChooseOperator = ({
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [txsCountsMap, setTxsCountsMap] = useState<Map<string, CountResult>>(new Map());
+  const { countStamps } = useContext(WalletContext);
 
   const scriptId = findTag(scriptTx as IEdge, 'scriptTransaction') as string;
   const scriptName = findTag(scriptTx as IEdge, 'scriptName');
@@ -342,51 +341,38 @@ const ChooseOperator = ({
           queryData.transactions.edges,
         );
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
-        // sort by fee
-        filtered.sort((a, b) => {
-          const aFee = Number(findTag(a, 'operatorFee'));
-          const bFee = Number(findTag(b, 'operatorFee'));
-          return aFee - bFee;
-        });
-        setOperatorsData(filtered);
-        checkSingleOperator(filtered);
-        setFiltering(false);
+        // sort by stamps
+        
+        if (filtered.length > 0) {
+          const filteredTxsIds = filtered.map((item) => item.node.id);
+          const stampsByOperator = await countStamps(filteredTxsIds);
+          // make sure all txs are in the stamps map
+          filteredTxsIds.forEach((tx) => {
+            if (!stampsByOperator[tx]) {
+              stampsByOperator[tx] = { total: 0, vouched: 0 };
+            }
+          });
+
+          const stampsMap = new Map(Object.entries(stampsByOperator));
+          
+          const sortedByStamps = Array.from(new Map(Object.entries(stampsByOperator))) // create a<rray from the stamps map => [ [txId, { total: 0, vouched: 0 }], ... ]
+            .sort(([, aValue], [, bValue]) => bValue.total - aValue.total) // sort by total stamps
+            .map(([key]) => filtered.find((el) => el.node.id === key)!) // map back to transactions
+            .filter((el) => el !== undefined); // filter out undefined values
+
+          setOperatorsData(sortedByStamps);
+          setTxsCountsMap(stampsMap);
+          checkSingleOperator(sortedByStamps);
+          setFiltering(false);
+        } else if (setGlobalLoading) {
+          setFiltering(false);
+          setGlobalLoading(false);
+          setOperatorsData([]);
+        }
       })();
     }
   }, [queryData]);
 
-  useEffect(() => {
-    const transformCountsToObjectMap = (counts: CountResult[]): Map<string, CountResult> =>
-      new Map(Object.entries(counts));
-
-    const totalStamps = async (targetTxs: (string | undefined)[]) => {
-      try {
-        const filteredTxsIds = targetTxs.filter((txId) => txId !== undefined) as string[];
-        const stampsInstance = Stamps.init({
-          warp: WarpFactory.forMainnet(),
-          arweave: Arweave.init({}),
-          wallet: window.arweaveWallet,
-          dre: 'https://dre-u.warp.cc/contract',
-          graphql: 'https://arweave.net/graphql',
-        });
-        const counts = await stampsInstance.counts(filteredTxsIds);
-
-        return transformCountsToObjectMap(counts);
-      } catch (errorObj) {
-        return new Map<string, CountResult>();
-      }
-    };
-
-    const fetchData = async () => {
-      if (operatorsData.length !== 0) {
-        const operatorTxs = operatorsData.map((item) => item.node.id);
-        const stampsMap = await totalStamps(operatorTxs);
-        setTxsCountsMap(stampsMap);
-      }
-    };
-
-    fetchData();
-  }, [operatorsData]);
 
   useEffect(() => {
     if (queryData && filterValue) {
