@@ -342,7 +342,7 @@ const ChooseOperator = ({
         );
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         // sort by stamps
-        
+
         if (filtered.length > 0) {
           const filteredTxsIds = filtered.map((item) => item.node.id);
           const stampsByOperator = await countStamps(filteredTxsIds);
@@ -354,7 +354,7 @@ const ChooseOperator = ({
           });
 
           const stampsMap = new Map(Object.entries(stampsByOperator));
-          
+
           const sortedByStamps = Array.from(new Map(Object.entries(stampsByOperator))) // create a<rray from the stamps map => [ [txId, { total: 0, vouched: 0 }], ... ]
             .sort(([, aValue], [, bValue]) => bValue.total - aValue.total) // sort by total stamps
             .map(([key]) => filtered.find((el) => el.node.id === key)!) // map back to transactions
@@ -372,7 +372,6 @@ const ChooseOperator = ({
       })();
     }
   }, [queryData]);
-
 
   useEffect(() => {
     if (queryData && filterValue) {

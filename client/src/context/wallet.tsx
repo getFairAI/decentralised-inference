@@ -87,7 +87,8 @@ interface IWalletContext {
 
 const createActions = (dispatch: Dispatch<WalletAction>, state: IWalletContext) => {
   return {
-    countStamps: async (txids: string[]) => state.stampInstance.counts(txids) as unknown as StampsCount,
+    countStamps: async (txids: string[]) =>
+      state.stampInstance.counts(txids) as unknown as StampsCount,
     arConnectAvailable: async () => dispatch({ type: 'arconnect_available' }),
     walletDisconnect: async () => asyncDisconnectWallet(dispatch, state.walletInstance),
     arConnect: async () => asyncArConnectWallet(dispatch),
@@ -133,8 +134,8 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
       warp,
       arweave,
       wallet: window.arweaveWallet,
-      dre: 'https://dre-u.warp.cc/contract', 
-      graphql: 'https://arweave.net/graphql' 
+      dre: 'https://dre-u.warp.cc/contract',
+      graphql: 'https://arweave.net/graphql',
     });
     dispatch({ type: 'stamp_instance_set', stampInstance });
   } catch (error) {
@@ -174,8 +175,8 @@ const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
       warp,
       arweave,
       wallet: window.arweaveWallet,
-      dre: 'https://dre-u.warp.cc/contract', 
-      graphql: 'https://arweave.net/graphql' 
+      dre: 'https://dre-u.warp.cc/contract',
+      graphql: 'https://arweave.net/graphql',
     });
     dispatch({ type: 'stamp_instance_set', stampInstance });
   } catch (error) {
