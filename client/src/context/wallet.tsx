@@ -23,10 +23,14 @@ import _ from 'lodash';
 import { isVouched } from '@/utils/vouch';
 import { DispatchResult } from 'arweave-wallet-connector/lib/Arweave';
 import Transaction from 'arweave/web/lib/transaction';
-import { connectToU, getUBalance, parseUBalance } from '@/utils/u';
+import { warp, connectToU, getUBalance, parseUBalance } from '@/utils/u';
 import { connectToUCM } from '@/utils/ucm';
 import FairSDKWeb from '@fair-protocol/sdk/web';
+import StampJS, { StampJS as StampInstance, CountResult } from '@permaweb/stampjs';
 
+interface StampsCount {
+  [txid: string]: CountResult;
+}
 const arweaveApp = 'arweave.app';
 const arConnect = 'arconnect';
 
@@ -52,6 +56,7 @@ type WalletPermissionsChangedAction = {
   permissions: PermissionType[];
 };
 type WalletVouchedAction = { type: 'wallet_vouched'; isWalletVouched: boolean };
+type StampInstanceSetAction = { type: 'stamp_instance_set'; stampInstance: StampInstance };
 type WalletAction =
   | ArConnectAvailableAction
   | WalletConnectedAction
@@ -60,16 +65,19 @@ type WalletAction =
   | WalletBalanceUpdatedAction
   | WalletUBalanceUpdatedAction
   | WalletPermissionsChangedAction
-  | WalletVouchedAction;
+  | WalletVouchedAction
+  | StampInstanceSetAction;
 
 interface IWalletContext {
   isArConnectAvailable: boolean;
   walletInstance: typeof wallet.namespaces.arweaveWallet | typeof window.arweaveWallet;
+  stampInstance: StampInstance;
   currentAddress: string;
   currentPermissions: PermissionType[];
   currentBalance: number;
   currentUBalance: number;
   isWalletVouched: boolean;
+  countStamps: (txids: string[]) => Promise<StampsCount>;
   connectWallet: (walletInstance: 'arweave.app' | 'arconnect') => Promise<void>;
   updateBalance: () => Promise<void>;
   updateUBalance: () => Promise<void>;
@@ -79,6 +87,8 @@ interface IWalletContext {
 
 const createActions = (dispatch: Dispatch<WalletAction>, state: IWalletContext) => {
   return {
+    countStamps: async (txids: string[]) =>
+      state.stampInstance.counts(txids) as unknown as StampsCount,
     arConnectAvailable: async () => dispatch({ type: 'arconnect_available' }),
     walletDisconnect: async () => asyncDisconnectWallet(dispatch, state.walletInstance),
     arConnect: async () => asyncArConnectWallet(dispatch),
@@ -119,6 +129,15 @@ const asyncArConnectWallet = async (dispatch: Dispatch<WalletAction>) => {
 
     // only load wallet adderss after fetching first balances
     dispatch({ type: 'wallet_address_updated', address: addr });
+
+    const stampInstance = StampJS.init({
+      warp,
+      arweave,
+      wallet: window.arweaveWallet,
+      dre: 'https://dre-u.warp.cc/contract',
+      graphql: 'https://arweave.net/graphql',
+    });
+    dispatch({ type: 'stamp_instance_set', stampInstance });
   } catch (error) {
     // manually remove arconnect overlay
     const overlays: NodeListOf<HTMLDivElement> = document.querySelectorAll(
@@ -151,6 +170,15 @@ const asyncArweaveAppConnect = async (dispatch: Dispatch<WalletAction>) => {
 
     // only load wallet adderss after fetching first balances
     dispatch({ type: 'wallet_address_updated', address: addr });
+
+    const stampInstance = StampJS.init({
+      warp,
+      arweave,
+      wallet: window.arweaveWallet,
+      dre: 'https://dre-u.warp.cc/contract',
+      graphql: 'https://arweave.net/graphql',
+    });
+    dispatch({ type: 'stamp_instance_set', stampInstance });
   } catch (error) {
     dispatch({ type: 'wallet_disconnect' });
     localStorage.removeItem('wallet');
@@ -263,6 +291,12 @@ const walletReducer = (state: IWalletContext, action?: WalletAction) => {
         isWalletVouched: action.isWalletVouched,
       };
     }
+    case 'stamp_instance_set': {
+      return {
+        ...state,
+        stampInstance: action.stampInstance,
+      };
+    }
     default:
       return state;
   }
@@ -286,6 +320,8 @@ const initialState: IWalletContext = {
   currentUBalance: 0,
   isWalletVouched: false,
   walletInstance: wallet.namespaces.arweaveWallet,
+  stampInstance: {} as StampInstance,
+  countStamps: async () => ({} as StampsCount),
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   connectWallet: async () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -309,6 +345,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const value: IWalletContext = useMemo(
     () => ({
       ...state,
+      countStamps: actions.countStamps,
       connectWallet: (walletInstance: 'arweave.app' | 'arconnect') =>
         walletInstance === arConnect ? actions.arConnect() : actions.arweaveAppConnect(),
       updateBalance: actions.updateBalance,

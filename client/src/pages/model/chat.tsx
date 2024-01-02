@@ -76,15 +76,12 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Configuration from '@/components/configuration';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
-import { WarpFactory } from 'warp-contracts';
-import { DeployPlugin } from 'warp-contracts-plugin-deploy';
 import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import useScroll from '@/hooks/useScroll';
 import { FieldValues, useForm } from 'react-hook-form';
 
-const warp = WarpFactory.forMainnet().use(new DeployPlugin());
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 4;
 
@@ -749,7 +746,7 @@ const Chat = () => {
         return;
       }
       await updateMessages(txid, content, contentType, tags);
-      await warp.register(txid, 'node2');
+      /* await warp.register(txid, 'node2'); */ // remove registering with bundlr
       const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
         txid,
         state.fee,
@@ -815,7 +812,7 @@ const Chat = () => {
         return;
       }
       await updateMessages(txid, newMessage, contentType, tags);
-      await warp.register(txid, 'node2');
+      /* await warp.register(txid, 'node2'); */
       const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
         txid,
         state.fee,

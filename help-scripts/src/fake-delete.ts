@@ -24,7 +24,6 @@ import fs from 'node:fs';
 import NodeBundlr from "@bundlr-network/client";
 
 const MARKETPLACE_ADDRESS = 'RQFarhgXPXYkgRM0Lzv088MllseKQWEdnEiRUggteIo';
-export const NODE2_BUNDLR_URL = 'https://node2.bundlr.network/';
 
 interface Tag {
   name: string;
@@ -78,7 +77,7 @@ const getById = gql`
   }
 `;
 
-const bundlr = new NodeBundlr(NODE2_BUNDLR_URL, 'arweave', JWK);
+const bundlr = new NodeBundlr('https://up.arweave.net', 'arweave', JWK);
 
 const operationNameTag = 'Operation-Name';
 
