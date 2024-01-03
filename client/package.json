@@ -37,7 +37,6 @@
     "filereader-stream": "2.0.0",
     "jdenticon": "3.2.0",
     "lodash": "4.17.21",
-    "magic-snowflakes": "^6.2.1",
     "notistack": "3.0.1",
     "plausible-tracker": "^0.3.8",
     "react": "18.2.0",
