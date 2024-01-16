@@ -174,13 +174,13 @@ export const isFakeDeleted = async (txid: string, owner: string, type: 'script' 
   return data.transactions.edges.length > 0;
 };
 
-export const getArPriceUSD = async () => {
-  const price = await redstone.getPrice('AR');
+export const getUPriceUSD = async () => {
+  const price = await redstone.getPrice('U');
   return price.value;
 };
 
 export const parseCost = async (cost: number) => {
-  const arPrice = await getArPriceUSD();
+  const arPrice = await getUPriceUSD();
   return cost * arPrice;
 };
 

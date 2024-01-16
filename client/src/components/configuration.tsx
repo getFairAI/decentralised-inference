@@ -17,7 +17,7 @@
  */
 
 import { U_LOGO_SRC } from '@/constants';
-import { displayShortTxOrAddr, findTag, getArPriceUSD } from '@/utils/common';
+import { displayShortTxOrAddr, findTag, getUPriceUSD } from '@/utils/common';
 import {
   Box,
   Checkbox,
@@ -99,10 +99,10 @@ const StableDiffusionConfigurations = ({
 
   useEffect(() => {
     (async () => {
-      const arPrice = await getArPriceUSD();
+      const arPrice = await getUPriceUSD();
       setCurrentArPrice(arPrice);
     })();
-  }, [getArPriceUSD, setCurrentArPrice]);
+  }, [getUPriceUSD, setCurrentArPrice]);
 
   useEffect(() => {
     const defaultImages = 4;
