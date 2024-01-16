@@ -730,6 +730,7 @@ const Chat = () => {
         currentConversationId,
         contentType,
         configuration,
+        'web',
         content.name,
       );
       // add licenseConfig Tags
@@ -799,6 +800,7 @@ const Chat = () => {
         currentConversationId,
         contentType,
         configuration,
+        'web'
       );
       // add licenseConfig Tags
       addLicenseConfigTags(tags, licenseControl._formValues, licenseRef.current?.value);
