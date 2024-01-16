@@ -20,15 +20,14 @@ import Logo from '@/components/logo';
 import {
   BUY_AR_LINK,
   BUY_AR_LINK_US,
+  BUY_U_LINK,
   CREATE_WALLET_LINK,
-  TAG_NAMES,
-  U_CONTRACT_ID,
   U_LOGO_SRC,
 } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
-import { QUERY_TXS_BY_RECIPIENT, QUERY_TX_WITH } from '@/queries/graphql';
+import { QUERY_TXS_BY_RECIPIENT } from '@/queries/graphql';
 import { displayShortTxOrAddr, findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';
 import {
@@ -38,7 +37,6 @@ import {
   Divider,
   FormHelperTextProps,
   IconButton,
-  Slider,
   Step,
   StepContent,
   StepLabel,
@@ -53,11 +51,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Close, InfoOutlined } from '@mui/icons-material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import arweave, { isTxConfirmed } from '@/utils/arweave';
-import { LoadingButton } from '@mui/lab';
-import { swapArToU } from '@/utils/u';
-import { useSnackbar } from 'notistack';
-import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
+import { isTxConfirmed } from '@/utils/arweave';
 import AiCard from '@/components/ai-card';
 import useModels from '@/hooks/useModels';
 
@@ -112,73 +106,20 @@ const WalletNoFundsContent = () => {
   const theme = useTheme();
   const { currentAddress, currentBalance, currentUBalance } = useContext(WalletContext);
   const [lastTx, setLastTx] = useState<EdgeWithStatus | null>(null);
-  const [lastMintTx, setLastMintTx] = useState<EdgeWithStatus | null>(null);
   const [activeStep, setActiveStep] = useState(0);
-  const [percentageAmount, setPercentageAmount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
-  const [currentHeight, setCurrentHeight] = useState(0);
   const navigate = useNavigate();
-
-  const minPercentage = 0;
-  const stepPercentage = 1;
-  const maxPercentage = 100;
-
-  useEffect(() => {
-    (async () => {
-      const height = (await arweave.blocks.getCurrent()).height;
-      setCurrentHeight(height);
-    })();
-  }, []);
 
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
 
-  const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
   const handleSkip = useCallback(() => navigate('/'), [navigate]);
-
-  const handleSliderChange = useCallback(
-    (_event: Event, newValue: number | number[]) => setPercentageAmount(newValue as number),
-    [percentageAmount],
-  );
 
   const { data: receivedData } = useQuery(QUERY_TXS_BY_RECIPIENT, {
     variables: {
       recipients: [currentAddress],
       first: 1,
     },
-  });
-
-  const { data: mintData, refetch } = useQuery(QUERY_TX_WITH, {
-    variables: {
-      tags: [
-        {
-          name: TAG_NAMES.appName,
-          values: ['SmartWeaveAction'],
-        },
-        {
-          name: TAG_NAMES.appVersion,
-          values: ['0.3.0'],
-        },
-        {
-          name: TAG_NAMES.contract,
-          values: [U_CONTRACT_ID],
-        },
-        {
-          name: TAG_NAMES.input,
-          values: [JSON.stringify({ function: 'mint' })],
-        },
-      ],
-      address: currentAddress,
-      blockFilter: {
-        min: currentHeight - 100,
-      },
-    },
-    skip: !currentAddress || !currentHeight,
   });
 
   useEffect(() => {
@@ -194,61 +135,6 @@ const WalletNoFundsContent = () => {
       })();
     }
   }, [receivedData]);
-
-  useEffect(() => {
-    if (mintData) {
-      const latestMintTx = mintData.transactions.edges[0];
-
-      if (!latestMintTx) {
-        return;
-      }
-
-      (async () => {
-        const confirmed = await isTxConfirmed(latestMintTx.node.id);
-        setLastMintTx({ ...latestMintTx, status: confirmed ? 'confirmed' : 'pending' });
-      })();
-    }
-  }, [mintData]);
-
-  const handleSwap = useCallback(async () => {
-    const amount = currentBalance * (percentageAmount / maxPercentage);
-    const winstonAmount = arweave.ar.arToWinston(amount.toString());
-    try {
-      const res = await swapArToU(winstonAmount);
-
-      enqueueSnackbar(
-        <>
-          Swapped {amount} AR to $U tokens
-          <br></br>
-          <a href={`https://viewblock.io/arweave/tx/${res}`} target={'_blank'} rel='noreferrer'>
-            <u> View Transaction in Explorer</u>
-          </a>
-        </>,
-        { variant: 'success' },
-      );
-      setLastMintTx({
-        node: {
-          id: res as string,
-          tags: [],
-          owner: { address: currentAddress, key: '' },
-          data: { size: 0, type: null },
-          signature: '',
-          block: { height: 0, id: '', timestamp: 0, previous: '' },
-          fee: { ar: amount.toString(), winston: winstonAmount },
-          quantity: { ar: '0', winston: '0' },
-          recipient: '',
-        },
-        status: 'pending',
-      });
-      setPercentageAmount(0);
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    } catch (error) {
-      setLoading(false);
-      enqueueSnackbar(`Error: ${error}`, { variant: 'error' });
-    }
-  }, [percentageAmount, currentBalance, enqueueSnackbar, refetch, setLoading]);
-
-  const isPending = useMemo(() => !!lastMintTx && lastMintTx?.status !== 'confirmed', [lastMintTx]);
 
   return (
     <>
@@ -283,7 +169,7 @@ const WalletNoFundsContent = () => {
                 FormHelperTextProps={{ component: 'div' } as Partial<FormHelperTextProps>}
                 helperText={
                   <>
-                    <Box display={'flex'} gap={'8px'}>
+                    <Box display={'flex'} gap={'8px'} mt={'8px'}>
                       <Typography
                         display={'flex'}
                         gap={'8px'}
@@ -367,124 +253,61 @@ const WalletNoFundsContent = () => {
             <Typography fontWeight={'700'}>Check $U Balance</Typography>
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
-            <Box sx={{ width: '100%', display: 'flex', gap: '32px', flexDirection: 'column' }}>
-              <Box sx={{ display: 'flex', gap: '16px' }}>
-                <NumericFormat
-                  label='Available $u Balance'
-                  placeholder='Available $u Balance'
-                  value={currentUBalance}
-                  thousandSeparator={true}
-                  customInput={TextField}
-                  variant='outlined'
-                  allowNegative={false}
-                  disabled={true}
-                  sx={{
-                    width: '85%',
-                  }}
-                  InputProps={{
-                    endAdornment: <img width='20px' height='20px' src={U_LOGO_SRC} />,
-                  }}
-                />
-                {currentUBalance > 0 ? (
-                  <CheckCircleOutlineIcon color='success' fontSize='large' sx={{ mt: '8px' }} />
-                ) : (
-                  <InfoOutlinedIcon color='warning' fontSize='large' sx={{ mt: '8px' }} />
-                )}
-              </Box>
-              <Box>
-                <Typography>Percentage of AR Balance to Swap to $U</Typography>
-                <Slider
-                  sx={{
-                    width: '100%',
-                  }}
-                  value={percentageAmount}
-                  onChange={handleSliderChange}
-                  max={maxPercentage}
-                  min={minPercentage}
-                  step={stepPercentage}
-                  marks={true}
-                  valueLabelDisplay='auto'
-                />
-                <Typography sx={{ cursor: 'pointer' }} variant='caption'>
-                  <u>Max: {currentBalance}</u>
-                </Typography>
-              </Box>
-              {lastMintTx && (
-                <Box mt={'16px'}>
-                  <Divider textAlign='left'>
-                    <Typography>Last Pending Transaction</Typography>
-                  </Divider>
-                  <Box display={'flex'} justifyContent={'space-between'} mt={'16px'}>
-                    <Box sx={{ display: 'flex', fontWeight: 500, gap: '8px' }}>
-                      <Typography>ID:</Typography>
-                      <Typography>
-                        <u>{displayShortTxOrAddr(lastMintTx.node.id)}</u>
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', fontWeight: 500, gap: '8px' }}>
-                      <Typography>Status:</Typography>
+            <Box display={'flex'} width={'100%'} justifyContent={'space-between'}>
+              <NumericFormat
+                label='Available $U Balance'
+                placeholder='Available $U Balance'
+                value={currentUBalance}
+                thousandSeparator={true}
+                customInput={TextField}
+                variant='outlined'
+                allowNegative={false}
+                disabled={true}
+                sx={{
+                  width: '85%',
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <img width='20px' height='20px' src={U_LOGO_SRC} />
+                  ),
+                }}
+                FormHelperTextProps={{ component: 'div' } as Partial<FormHelperTextProps>}
+                helperText={
+                  <>
+                    <Box display={'flex'} gap={'8px'} mt={'8px'}>
                       <Typography
-                        color={
-                          lastMintTx.status === 'confirmed'
-                            ? theme.palette.success.main
-                            : theme.palette.warning.main
-                        }
+                        display={'flex'}
+                        gap={'8px'}
+                        alignItems={'center'}
+                        fontWeight={'500'}
+                        color={'primary'}
+                        noWrap
                       >
-                        {lastMintTx.status}
+                        <InfoOutlined />
+                        Looking for a way to get U?
+                      </Typography>
+                      <Typography alignItems={'center'} color='primary' noWrap>
+                        <a href={BUY_U_LINK} target='_blank' rel='noreferrer'>
+                          <u>Learn How.</u>
+                        </a>
                       </Typography>
                     </Box>
-                  </Box>
-                </Box>
+                  </>
+                }
+              />
+              {currentUBalance > 0 ? (
+                <CheckCircleOutlineIcon color='success' fontSize='large' sx={{ mt: '8px' }} />
+              ) : (
+                <InfoOutlinedIcon color='warning' fontSize='large' sx={{ mt: '8px' }} />
               )}
-              <Box display={'flex'} justifyContent={'space-between'} width={'100%'} gap={'16px'}>
-                <Button variant='outlined' onClick={handleBack}>
-                  <Typography>Back</Typography>
-                </Button>
-                <Box>
-                  <LoadingButton
-                    variant='contained'
-                    loading={loading || isPending}
-                    loadingPosition='end'
-                    onClick={handleSwap}
-                    endIcon={<SwapHorizOutlinedIcon />}
-                  >
-                    <Typography>Swap AR to $U</Typography>
-                  </LoadingButton>
-                </Box>
-              </Box>
             </Box>
-          </StepContent>
-        </Step>
-        {activeStep === 2 && (
-          <Box
-            display={'flex'}
-            flexDirection={'column'}
-            gap={'8px'}
-            justifyContent={'center'}
-            p={2}
-          >
-            <Typography fontWeight={'500'}>All Done!</Typography>
-            <Typography>
-              Your Transaction is being processed by the network. This proccess is expected to take
-              about 15 min and your $U funds will not be available until then.
-            </Typography>
-            <Typography>
-              You can track the process{' '}
-              <a
-                href={`https://viewblock.io/arweave/tx/${lastMintTx?.node.id}`}
-                target='_blank'
-                rel='noreferrer'
-              >
-                <u>here</u>
-              </a>
-            </Typography>
             <Box display={'flex'} justifyContent={'flex-end'} mt={'16px'}>
               <Button sx={{ mt: 1, mr: 1 }} variant='outlined' onClick={handleSkip}>
                 Explore marketplace
               </Button>
             </Box>
-          </Box>
-        )}
+          </StepContent>
+        </Step>
       </Stepper>
     </>
   );
