@@ -47,7 +47,7 @@ import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
 import { usePollingEffect } from '@/hooks/usePollingEffect';
 import Logo from './logo';
 import { parseUBalance } from '@/utils/u';
-import { findTag, getArPriceUSD } from '@/utils/common';
+import { findTag, getUPriceUSD } from '@/utils/common';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
 import { InfoOutlined } from '@mui/icons-material';
@@ -285,7 +285,7 @@ const Navbar = ({
     (async () => {
       if (state) {
         const uCost = parseUBalance(state?.fee);
-        const arPrice = await getArPriceUSD();
+        const uPrice = await getUPriceUSD();
         const isImage = findTag(state.fullState, 'output') === 'image';
         const isStableDiffusion =
           findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
@@ -294,19 +294,19 @@ const Navbar = ({
 
         if (isStableDiffusion || isImage) {
           setTooltip(
-            `Cost set by operator for each image: ${(uCost * arPrice).toFixed(
+            `Cost set by operator for each image: ${(uCost * uPrice).toFixed(
               nDigits,
             )}$\n Default number of images: ${nImages}`,
           );
         } else {
           setTooltip(
-            `Cost set by operator for each generation: ${(uCost * arPrice).toFixed(nDigits)}`,
+            `Cost set by operator for each generation: ${(uCost * uPrice).toFixed(nDigits)}`,
           );
         }
-        setUsdFee(uCost * arPrice * nImages);
+        setUsdFee(uCost * uPrice * nImages);
       }
     })();
-  }, [state, parseUBalance, getArPriceUSD]);
+  }, [state, parseUBalance, getUPriceUSD]);
 
   return (
     <>
