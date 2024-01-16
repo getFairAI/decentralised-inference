@@ -267,9 +267,7 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                 }}
                 InputProps={{
-                  endAdornment: (
-                    <img width='20px' height='20px' src={U_LOGO_SRC} />
-                  ),
+                  endAdornment: <img width='20px' height='20px' src={U_LOGO_SRC} />,
                 }}
                 FormHelperTextProps={{ component: 'div' } as Partial<FormHelperTextProps>}
                 helperText={

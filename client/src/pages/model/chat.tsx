@@ -800,7 +800,7 @@ const Chat = () => {
         currentConversationId,
         contentType,
         configuration,
-        'web'
+        'web',
       );
       // add licenseConfig Tags
       addLicenseConfigTags(tags, licenseControl._formValues, licenseRef.current?.value);
