@@ -28,6 +28,7 @@ import { StyledMaterialDesignContent } from './styles/components';
 import { ReactElement } from 'react';
 import { ChooseWalletProvider } from './context/choose-wallet';
 import { TradeProvider } from './context/trade';
+import { UserFeedbackProvider } from './context/user-feedback';
 
 const BaseRoot = ({ children }: { children: ReactElement }) => {
   return (
@@ -44,7 +45,11 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
           <CssBaseline />
           <WalletProvider>
             <ChooseWalletProvider>
-              <TradeProvider>{children}</TradeProvider>
+              <UserFeedbackProvider>
+                <TradeProvider>
+                  {children}
+                </TradeProvider>
+              </UserFeedbackProvider>
             </ChooseWalletProvider>
           </WalletProvider>
         </SnackbarProvider>
