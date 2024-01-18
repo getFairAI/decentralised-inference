@@ -83,6 +83,8 @@ import useScroll from '@/hooks/useScroll';
 import { FieldValues, useForm } from 'react-hook-form';
 import useOperatorBusy from '@/hooks/useOperatorBusy';
 import { InfoOutlined } from '@mui/icons-material';
+import { UserFeedbackContext } from '@/context/user-feedback';
+import useRatingFeedback from '@/hooks/useRatingFeedback';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 4;
@@ -118,6 +120,9 @@ const InputField = ({
 }) => {
   const theme = useTheme();
   const { state } = useLocation();
+  const { setOpen: setOpenRating } = useContext(UserFeedbackContext);
+  const { currentAddress: userAddr } = useContext(WalletContext);
+  const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr);
 
   const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
   const allowText = useMemo(
@@ -159,7 +164,14 @@ const InputField = ({
     }
 
     setIsSending(false);
-  }, [handleSendFile, handleSendText, file, isSending]);
+    // if user is active and has not submitted feedback, show feedback
+    if (showFeedback) {
+      setTimeout(() => {
+        setOpenRating(true);
+        setShowFeedback(false);
+      }, 2000);
+    }
+  }, [handleSendFile, handleSendText, setOpenRating, file, isSending, showFeedback]);
 
   // avoid send duplicated messages and show the new line if it's only the Enter key
   const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {

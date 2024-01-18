@@ -117,6 +117,8 @@ export const TAG_NAMES = {
   paymentAddress: 'Payment-Address',
   paymentMode: 'Payment-Mode',
   licenseConfig: 'License-Config',
+  userRatingScore: 'User-Rating-Score',
+  userRatingComment: 'User-Rating-Comment',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';
@@ -176,6 +178,8 @@ export const VOTE_FOR_OPERATOR = 'Vote For Operator';
 export const AVATAR_ATTACHMENT = 'avatar';
 
 export const NOTES_ATTACHMENT = 'notes';
+
+export const USER_FEEDBACK = 'Marketplace User Rating Feedback';
 
 // misc
 
