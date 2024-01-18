@@ -121,9 +121,7 @@ const InputField = ({
   const theme = useTheme();
   const { state } = useLocation();
   const { setOpen: setOpenRating } = useContext(UserFeedbackContext);
-  const {
-    currentAddress: userAddr,
-  } = useContext(WalletContext);
+  const { currentAddress: userAddr } = useContext(WalletContext);
   const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr);
 
   const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
@@ -173,7 +171,7 @@ const InputField = ({
         setShowFeedback(false);
       }, 2000);
     }
-  }, [handleSendFile, handleSendText, setOpenRating, file, isSending, showFeedback ]);
+  }, [handleSendFile, handleSendText, setOpenRating, file, isSending, showFeedback]);
 
   // avoid send duplicated messages and show the new line if it's only the Enter key
   const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {

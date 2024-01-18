@@ -53,11 +53,14 @@ const labels: { [index: string]: string } = {
 
 const getLabelText = (value: number) => `${value} Star${value !== 1 ? 's' : ''}, ${labels[value]}`;
 
-const FeedbackForm = ({ setHasSubmitted }: { setHasSubmitted: Dispatch<SetStateAction<boolean>>}) => {
-  const [ value, setValue] = useState<number | null>(2);
-  const [ comment, setComment] = useState<string>('');
-  const [ hover, setHover] = useState(-1);
-  
+const FeedbackForm = ({
+  setHasSubmitted,
+}: {
+  setHasSubmitted: Dispatch<SetStateAction<boolean>>;
+}) => {
+  const [value, setValue] = useState<number | null>(2);
+  const [comment, setComment] = useState<string>('');
+  const [hover, setHover] = useState(-1);
 
   const { dispatchTx } = useContext(WalletContext);
 
@@ -66,7 +69,7 @@ const FeedbackForm = ({ setHasSubmitted }: { setHasSubmitted: Dispatch<SetStateA
     if (!value) {
       return;
     }
-  
+
     // dispatch feedback tx
     const tx = await arweave.createTransaction({ data: 'Fair Protocol Active User Feedback' });
     tx.addTag(TAG_NAMES.protocolName, PROTOCOL_NAME);
@@ -80,69 +83,82 @@ const FeedbackForm = ({ setHasSubmitted }: { setHasSubmitted: Dispatch<SetStateA
     await dispatchTx(tx);
 
     setHasSubmitted(true);
-  }, [ dispatchTx, arweave, value, comment ]);
+  }, [dispatchTx, arweave, value, comment]);
 
-  return <>
-    <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-      <Typography fontWeight={500} fontSize={'18px'}>How would you rate our App?</Typography>
-      <Box
-        width={'100%'} 
+  return (
+    <>
+      <DialogContent
+        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+      >
+        <Typography fontWeight={500} fontSize={'18px'}>
+          How would you rate our App?
+        </Typography>
+        <Box
+          width={'100%'}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Rating
+            name='hover-feedback'
+            value={value}
+            precision={0.5}
+            getLabelText={getLabelText}
+            onChange={(_, newValue) => {
+              setValue(newValue);
+            }}
+            onChangeActive={(_, newHover) => {
+              setHover(newHover);
+            }}
+            size='large'
+            emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize='inherit' />}
+          />
+          {value !== null && (
+            <Box sx={{ ml: 2 }}>
+              <Typography>{labels[hover !== -1 ? hover : value]}</Typography>
+            </Box>
+          )}
+        </Box>
+        <Box
+          width={'100%'}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <Typography fontWeight={500} fontSize={'18px'}>
+            What can we do better?
+          </Typography>
+          <TextField
+            sx={{ width: '85%' }}
+            variant='outlined'
+            multiline
+            margin='dense'
+            value={comment}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setComment(event.target.value);
+            }}
+          />
+        </Box>
+      </DialogContent>
+      <DialogActions
         sx={{
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
+          gap: '30px',
+          paddingBottom: '20px',
         }}
       >
-        <Rating
-          name='hover-feedback'
-          value={value}
-          precision={0.5}
-          getLabelText={getLabelText}
-          onChange={(_, newValue) => {
-            setValue(newValue);
-          }}
-          onChangeActive={(_, newHover) => {
-            setHover(newHover);
-          }}
-          size='large'
-          emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize='inherit' />}
-        />
-        {value !== null && (
-          <Box sx={{ ml: 2 }}><Typography>{labels[hover !== -1 ? hover : value]}</Typography></Box>
-        )}
-      </Box>
-      <Box width={'100%'} sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '8px',
-      }}>
-        <Typography fontWeight={500} fontSize={'18px'}>What can we do better?</Typography>
-        <TextField
-          sx={{ width: '85%' }}
-          variant='outlined'
-          multiline
-          margin='dense'
-          value={comment}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            setComment(event.target.value);
-          }}
-        />
-      </Box>
-    </DialogContent>
-    <DialogActions
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '30px',
-        paddingBottom: '20px',
-      }}
-    >
-      <Button variant='outlined' onClick={handleSubmit} sx={{ width: 'fit-content' }}>
-        <Typography>Submit</Typography>
-      </Button>
-    </DialogActions>
-  </>;
+        <Button variant='outlined' onClick={handleSubmit} sx={{ width: 'fit-content' }}>
+          <Typography>Submit</Typography>
+        </Button>
+      </DialogActions>
+    </>
+  );
 };
 const UserFeedback = ({
   open,
@@ -156,7 +172,7 @@ const UserFeedback = ({
     setOpen(false);
     localStorage.setItem('ignoreFeedback', 'true');
   }, [setOpen]);
-  const [ hasSubmitted, setHasSubmitted ] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
     if (hasSubmitted && open) {
@@ -165,8 +181,7 @@ const UserFeedback = ({
         handleClose();
       }, 3000);
     }
-  }
-  , [hasSubmitted, open, handleClose]);
+  }, [hasSubmitted, open, handleClose]);
 
   return (
     <Dialog
@@ -186,30 +201,36 @@ const UserFeedback = ({
     >
       <DialogTitle
         display='flex'
-        justifyContent={'space-between' }
+        justifyContent={'space-between'}
         alignItems='center'
         lineHeight={0}
       >
-        <Typography fontWeight={600} fontSize={'20px'}>{'While you are waiting, help us improving the App!'}</Typography>
+        <Typography fontWeight={600} fontSize={'20px'}>
+          {'While you are waiting, help us improving the App!'}
+        </Typography>
         <IconButton
           sx={{
             borderRadius: '8px',
-           /*  background: '#FFF', */
+            /*  background: '#FFF', */
             border: 'none',
           }}
           size='medium'
           onClick={handleClose}
         >
-          <CloseIcon fontSize='inherit'/>
+          <CloseIcon fontSize='inherit' />
         </IconButton>
       </DialogTitle>
-      {!hasSubmitted && <FeedbackForm setHasSubmitted={setHasSubmitted}/>}
-      {hasSubmitted && <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-        <Typography fontSize={'18px'}>Thank you for your feedback!</Typography>
-        <Icon fontSize='large' sx={{ display: 'flex' }}>
-          <Mood fontSize='large' color='success'/>
-        </Icon>
-      </DialogContent>}
+      {!hasSubmitted && <FeedbackForm setHasSubmitted={setHasSubmitted} />}
+      {hasSubmitted && (
+        <DialogContent
+          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+        >
+          <Typography fontSize={'18px'}>Thank you for your feedback!</Typography>
+          <Icon fontSize='large' sx={{ display: 'flex' }}>
+            <Mood fontSize='large' color='success' />
+          </Icon>
+        </DialogContent>
+      )}
     </Dialog>
   );
 };

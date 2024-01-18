@@ -23,25 +23,20 @@ import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect, useState } from 'react';
 
 const useRatingFeedback = (userAddr: string) => {
-  const [ isActiveUser, setIsActiveUser ] = useState(false);
-  const [ showFeedback, setShowFeedback ] = useState(false);
+  const [isActiveUser, setIsActiveUser] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
-  const { query: requestsQuery, variables: requestVars } = FairSDKWeb.utils.getRequestsQuery(userAddr);
-  const {
-    data: requestsData,
-    networkStatus: requestNetworkStatus,
-  } = useQuery(requestsQuery, { variables: requestVars });
+  const { query: requestsQuery, variables: requestVars } =
+    FairSDKWeb.utils.getRequestsQuery(userAddr);
+  const { data: requestsData, networkStatus: requestNetworkStatus } = useQuery(requestsQuery, {
+    variables: requestVars,
+  });
 
-  const {
-    data: feedbackData
-  } = useQuery(QUERY_TX_WITH, {
+  const { data: feedbackData } = useQuery(QUERY_TX_WITH, {
     variables: {
-      tags: [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [ USER_FEEDBACK ] },
-      ],
+      tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] }],
       address: userAddr,
-    }
+    },
   });
 
   useEffect(() => {
@@ -54,9 +49,11 @@ const useRatingFeedback = (userAddr: string) => {
     if (feedbackData) {
       const hasIgnoredFeedback = localStorage.getItem('ignoreFeedback');
       // show feedback if user has not ignored it, has not previously given feedback and is active user (has made more than 5 requests)
-      setShowFeedback(hasIgnoredFeedback === null && feedbackData.transactions.edges.length === 0 && isActiveUser);
+      setShowFeedback(
+        hasIgnoredFeedback === null && feedbackData.transactions.edges.length === 0 && isActiveUser,
+      );
     }
-  }, [ feedbackData, isActiveUser]);
+  }, [feedbackData, isActiveUser]);
 
   return { showFeedback, setShowFeedback };
 };
