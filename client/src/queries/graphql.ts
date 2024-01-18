@@ -107,7 +107,13 @@ export const GET_TX = gql`
 
 export const FIND_BY_TAGS = gql`
   query FIND_BY_TAGS($tags: [TagFilter!], $first: Int!, $after: String, $maxBlockHeight: Int) {
-    transactions(tags: $tags, first: $first, after: $after, sort: HEIGHT_DESC, block: { max: $maxBlockHeight }) {
+    transactions(
+      tags: $tags
+      first: $first
+      after: $after
+      sort: HEIGHT_DESC
+      block: { max: $maxBlockHeight }
+    ) {
       pageInfo {
         hasNextPage
       }

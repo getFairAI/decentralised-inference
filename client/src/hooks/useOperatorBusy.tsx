@@ -16,7 +16,12 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { DEFAULT_TAGS, SCRIPT_INFERENCE_REQUEST, SCRIPT_INFERENCE_RESPONSE, TAG_NAMES } from '@/constants';
+import {
+  DEFAULT_TAGS,
+  SCRIPT_INFERENCE_REQUEST,
+  SCRIPT_INFERENCE_RESPONSE,
+  TAG_NAMES,
+} from '@/constants';
 import { IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS, QUERY_CHAT_RESPONSES } from '@/queries/graphql';
 import { findTag } from '@/utils/common';
@@ -24,12 +29,12 @@ import { useLazyQuery, useQuery } from '@apollo/client';
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
 
-const useOperatorBusy= (operatorAddr: string, currentUser: string) => {
-  const [ isOperatorBusy, setIsOperatorBusy ] = useState(false);
-  const [ necessaryResponses, setNecesaryResponses ] = useState(0);
+const useOperatorBusy = (operatorAddr: string, currentUser: string) => {
+  const [isOperatorBusy, setIsOperatorBusy] = useState(false);
+  const [necessaryResponses, setNecesaryResponses] = useState(0);
   // query last 100 requests for operator
-  
-  const{
+
+  const {
     data: requestsData,
     previousData: requestsPreviousData,
     startPolling: startPollingRequests,
@@ -39,38 +44,48 @@ const useOperatorBusy= (operatorAddr: string, currentUser: string) => {
       tags: [
         ...DEFAULT_TAGS,
         { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
-        { name: TAG_NAMES.scriptOperator, values: [ operatorAddr ] }
+        { name: TAG_NAMES.scriptOperator, values: [operatorAddr] },
       ],
-      first: 100
+      first: 100,
     },
     fetchPolicy: 'no-cache',
     nextFetchPolicy: 'no-cache',
   });
 
-  const [ getOperatorResponses, {
-    data: operatorResponsesData,
-   }
-  ] = useLazyQuery(QUERY_CHAT_RESPONSES);
+  const [getOperatorResponses, { data: operatorResponsesData }] =
+    useLazyQuery(QUERY_CHAT_RESPONSES);
 
   useEffect(() => {
     startPollingRequests(10000);
 
     return () => stopPollingRequests();
-  }, [ startPollingRequests, stopPollingRequests ]);
+  }, [startPollingRequests, stopPollingRequests]);
 
   useEffect(() => {
     // filter out requests that are confirmed and not owned by current user
-    if (requestsData && requestsData.transactions.edges.length > 0 && !_.isEqual(requestsData.transactions.edges, requestsPreviousData?.transactions?.edges)) {
+    if (
+      requestsData &&
+      requestsData.transactions.edges.length > 0 &&
+      !_.isEqual(requestsData.transactions.edges, requestsPreviousData?.transactions?.edges)
+    ) {
       const txs = requestsData.transactions.edges;
       const { requestIds, nRequested } = txs
-        .filter((request: IEdge) => request.node.block === null && request.node.owner.address !== currentUser)
-        .reduce((acc: { requestIds: string[], nRequested: number }, request: IEdge) => {
-          acc.requestIds.push(request.node.id);
-          const nResponses = Number(findTag(request, 'nImages')) ?? 1;
-          acc.nRequested += nResponses;
+        .filter(
+          (request: IEdge) =>
+            request.node.block === null && request.node.owner.address !== currentUser,
+        )
+        .reduce(
+          (acc: { requestIds: string[]; nRequested: number }, request: IEdge) => {
+            acc.requestIds.push(request.node.id);
+            const nResponses = findTag(request, 'nImages')
+              ? Number(findTag(request, 'nImages'))
+              : 1;
+            acc.nRequested += nResponses;
 
-          return acc;
-        }, { requestIds: [], nRequested: 0 });
+            return acc;
+          },
+          { requestIds: [], nRequested: 0 },
+        );
 
       setNecesaryResponses(nRequested);
       if (nRequested > 0) {
@@ -78,17 +93,17 @@ const useOperatorBusy= (operatorAddr: string, currentUser: string) => {
           variables: {
             tagsResponses: [
               ...DEFAULT_TAGS,
-              { name: TAG_NAMES.operationName, values: [ SCRIPT_INFERENCE_RESPONSE ] },
+              { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
               { name: TAG_NAMES.requestTransaction, values: requestIds },
             ],
-            operators: [ operatorAddr ],
-            first: nRequested
+            operators: [operatorAddr],
+            first: nRequested,
           },
-          fetchPolicy: 'no-cache'
+          fetchPolicy: 'no-cache',
         });
       }
     }
-  }, [ requestsData, requestsPreviousData, getOperatorResponses, operatorAddr, currentUser ]);
+  }, [requestsData, requestsPreviousData, getOperatorResponses, operatorAddr, currentUser]);
 
   useEffect(() => {
     if (operatorResponsesData && operatorResponsesData.transactions.edges.length > 0) {
@@ -96,7 +111,7 @@ const useOperatorBusy= (operatorAddr: string, currentUser: string) => {
 
       setIsOperatorBusy(txs.length < necessaryResponses);
     }
-  }, [ operatorResponsesData, necessaryResponses ]);
+  }, [operatorResponsesData, necessaryResponses]);
 
   return isOperatorBusy;
 };

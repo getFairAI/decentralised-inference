@@ -1255,10 +1255,15 @@ const Chat = () => {
                 paddingLeft: '8px',
               }}
             >
-              {showOperatorBusy && <Box sx={{ display: 'flex', gap: '8px' }}>
-                <InfoOutlined color='warning' />
-                <Typography color={theme.palette.warning.main}>Operator is currently working on other requests. Waiting time may be increased...</Typography>
-              </Box>}
+              {showOperatorBusy && (
+                <Box sx={{ display: 'flex', gap: '8px' }}>
+                  <InfoOutlined color='warning' />
+                  <Typography color={theme.palette.warning.main}>
+                    Operator is currently working on other requests. Waiting time may be
+                    increased...
+                  </Typography>
+                </Box>
+              )}
               <InputField
                 file={file}
                 loading={loading}
