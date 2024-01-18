@@ -61,7 +61,11 @@ const useRequests = ({
       conversationId,
       first,
     );
-    getChatRequests({ variables: queryParams });
+    getChatRequests({
+      variables: queryParams,
+      fetchPolicy: 'network-only',
+      nextFetchPolicy: 'network-only',
+    });
   }, [userAddr, scriptName, scriptCurator, scriptOperator, conversationId, first]);
 
   useEffect(() => {

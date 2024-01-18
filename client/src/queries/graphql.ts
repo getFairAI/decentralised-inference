@@ -106,8 +106,14 @@ export const GET_TX = gql`
 `;
 
 export const FIND_BY_TAGS = gql`
-  query FIND_BY_TAGS($tags: [TagFilter!], $first: Int!, $after: String) {
-    transactions(tags: $tags, first: $first, after: $after, sort: HEIGHT_DESC) {
+  query FIND_BY_TAGS($tags: [TagFilter!], $first: Int!, $after: String, $maxBlockHeight: Int) {
+    transactions(
+      tags: $tags
+      first: $first
+      after: $after
+      sort: HEIGHT_DESC
+      block: { max: $maxBlockHeight }
+    ) {
       pageInfo {
         hasNextPage
       }
@@ -121,6 +127,9 @@ export const FIND_BY_TAGS = gql`
           }
           owner {
             address
+          }
+          block {
+            height
           }
         }
       }
