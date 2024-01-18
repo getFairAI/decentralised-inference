@@ -81,6 +81,8 @@ import useResponses from '@/hooks/useResponses';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import useScroll from '@/hooks/useScroll';
 import { FieldValues, useForm } from 'react-hook-form';
+import useOperatorBusy from '@/hooks/useOperatorBusy';
+import { InfoOutlined } from '@mui/icons-material';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 4;
@@ -364,6 +366,8 @@ const Chat = () => {
 
   const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
     useResponses(responseParams);
+
+  const showOperatorBusy = useOperatorBusy(address as string, userAddr);
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
   const showLoadMore = useMemo(
@@ -1251,6 +1255,10 @@ const Chat = () => {
                 paddingLeft: '8px',
               }}
             >
+              {showOperatorBusy && <Box sx={{ display: 'flex', gap: '8px' }}>
+                <InfoOutlined color='warning' />
+                <Typography color={theme.palette.warning.main}>Operator is currently working on other requests. Waiting time may be increased...</Typography>
+              </Box>}
               <InputField
                 file={file}
                 loading={loading}

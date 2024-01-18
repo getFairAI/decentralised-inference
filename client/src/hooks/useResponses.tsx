@@ -63,8 +63,8 @@ const useResponses = ({
 
   const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] =
     useLazyQuery(responsesQuery, {
-      fetchPolicy: 'no-cache',
-      nextFetchPolicy: 'no-cache',
+      fetchPolicy: 'network-only',
+      nextFetchPolicy: 'network-only',
     });
 
   useEffect(() => {
