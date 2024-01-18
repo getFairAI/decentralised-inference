@@ -198,6 +198,8 @@ const MessageHeader = ({ message }: { message: IMessage }) => {
     const hashtags = 'fairprotocol,ai,arweave';
 
     a.classList.add('twitter-share-button');
+    // add plausibe event class
+    a.classList.add('plausible-event-name=Twitter+Inference+Share');
 
     a.target = '_blank';
     a.onclick = () => window.open(`https://twitter.com/intent/tweet?url=${NET_ARWEAVE_URL}/${message.id}&text=${text}&hashtags=${hashtags}`, '_blank', 'location=yes,height=570,width=520,scrollbars=yes,status=yes');
