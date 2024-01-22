@@ -37,7 +37,15 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
 import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
@@ -45,25 +53,36 @@ import ChooseOperator from '@/components/choose-operator';
 import ChooseScript from '@/components/choose-script';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import StampsMenu from '@/components/stamps-menu';
+import { Close } from '@mui/icons-material';
+import { WalletContext } from '@/context/wallet';
+import { ChooseWalletContext } from '@/context/choose-wallet';
 
 const DetailContent = ({
   showOperators,
   showScripts,
+  showWalletWarning,
   imgUrl,
   setShowOperators,
+  setShowWalletWarning,
   setShowScripts,
   setFiltering,
 }: {
   showOperators: boolean;
   showScripts: boolean;
+  showWalletWarning: boolean;
   imgUrl: string;
   setShowOperators: Dispatch<SetStateAction<boolean>>;
   setShowScripts: Dispatch<SetStateAction<boolean>>;
+  setShowWalletWarning: Dispatch<SetStateAction<boolean>>;
   setFiltering: Dispatch<SetStateAction<boolean>>;
 }) => {
   const { state }: { state: ModelNavigationState } = useLocation();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const [scriptTx, setScriptTx] = useState<IEdge | IContractEdge | undefined>(undefined);
+  const { currentAddress } = useContext(WalletContext);
+  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
 
   const handleScriptChosen = useCallback(
     (tx: IEdge | IContractEdge) => {
@@ -73,10 +92,15 @@ const DetailContent = ({
     [setShowOperators, setScriptTx],
   );
 
-  const handleUseOperator = useCallback(() => {
-    setShowScripts(true);
-    setFiltering(true);
-  }, [setShowScripts]);
+  const handleUseModel = useCallback(() => {
+    if (!currentAddress) {
+      setShowWalletWarning(true);
+    } else {
+      setShowWalletWarning(false);
+      setShowScripts(true);
+      setFiltering(true);
+    }
+  }, [setShowScripts, setFiltering, setShowWalletWarning, currentAddress]);
 
   useEffect(() => {
     if (searchParams) {
@@ -88,6 +112,38 @@ const DetailContent = ({
       });
     }
   }, [searchParams, setShowScripts, setFiltering]);
+
+  useEffect(() => {
+    if (showWalletWarning && currentAddress) {
+      setShowWalletWarning(false);
+    }
+  }, [showWalletWarning, currentAddress]);
+
+  const handleConnectClick = useCallback(() => setChooseWalletOpen(true), [setChooseWalletOpen]);
+
+  const handleOnboardingClick = useCallback(() => navigate('/sign-in'), [navigate]);
+
+  if (showWalletWarning) {
+    return (
+      <>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center', padding: '0 32px' }}>
+          <Typography fontSize={'1.2rem'}>
+            {
+              "Hey there! To use this awesome feature, you'll need to have an Arweave wallet. Don't worry, it's super easy to set up and we're here to guide you through the process. Are you ready to get started?"
+            }
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ padding: '16px 32px 16px 16px', gap: '16px' }}>
+          <Button variant='outlined' onClick={handleConnectClick}>
+            <Typography>Connect</Typography>
+          </Button>
+          <Button variant='contained' onClick={handleOnboardingClick}>
+            <Typography>Start Onboarding</Typography>
+          </Button>
+        </DialogActions>
+      </>
+    );
+  }
 
   if (showOperators) {
     return (
@@ -232,10 +288,9 @@ const DetailContent = ({
             display: 'flex',
             alignItems: 'center',
             textAlign: 'center',
-            borderRadius: '30px',
           }}
           variant='contained'
-          onClick={handleUseOperator}
+          onClick={handleUseModel}
           data-testid='choose-script-button'
         >
           <Box display='flex'>
@@ -257,6 +312,7 @@ const Detail = () => {
   const navigate = useNavigate();
   const [showOperators, setShowOperators] = useState(false);
   const [showScripts, setShowScripts] = useState(false);
+  const [showWalletWarning, setShowWalletWarning] = useState(false);
   const [filtering, setFiltering] = useState(false);
   const theme = useTheme();
 
@@ -283,8 +339,8 @@ const Detail = () => {
     <>
       <Dialog
         open={true}
-        maxWidth={'lg'}
-        fullWidth
+        maxWidth={showWalletWarning ? 'sm' : 'lg'}
+        fullWidth={!showWalletWarning}
         sx={{
           '& .MuiPaper-root': {
             background:
@@ -303,22 +359,18 @@ const Detail = () => {
           lineHeight={0}
         >
           {(showOperators || showScripts) && <Typography>{state.modelName}</Typography>}
-          <IconButton
-            onClick={handleClose}
-            sx={{
-              background: theme.palette.primary.main,
-              '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
-            }}
-          >
-            <img src='./close-icon.svg' />
+          <IconButton onClick={handleClose} size='small'>
+            <Close />
           </IconButton>
         </DialogTitle>
         <DetailContent
           showOperators={showOperators}
           showScripts={showScripts}
+          showWalletWarning={showWalletWarning}
           imgUrl={imgUrl}
           setShowScripts={setShowScripts}
           setShowOperators={setShowOperators}
+          setShowWalletWarning={setShowWalletWarning}
           setFiltering={setFiltering}
         />
       </Dialog>
