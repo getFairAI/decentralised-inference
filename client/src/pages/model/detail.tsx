@@ -37,7 +37,15 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { Dispatch, SetStateAction, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { toSvg } from 'jdenticon';
 import { findTag } from '@/utils/common';
 import { ModelNavigationState, RouteLoaderResult } from '@/interfaces/router';
@@ -75,7 +83,6 @@ const DetailContent = ({
   const [scriptTx, setScriptTx] = useState<IEdge | IContractEdge | undefined>(undefined);
   const { currentAddress } = useContext(WalletContext);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
-  
 
   const handleScriptChosen = useCallback(
     (tx: IEdge | IContractEdge) => {
@@ -93,7 +100,7 @@ const DetailContent = ({
       setShowScripts(true);
       setFiltering(true);
     }
-  }, [ setShowScripts, setFiltering, setShowWalletWarning, currentAddress ]);
+  }, [setShowScripts, setFiltering, setShowWalletWarning, currentAddress]);
 
   useEffect(() => {
     if (searchParams) {
@@ -110,28 +117,32 @@ const DetailContent = ({
     if (showWalletWarning && currentAddress) {
       setShowWalletWarning(false);
     }
-  }, [ showWalletWarning, currentAddress]);
-  
+  }, [showWalletWarning, currentAddress]);
+
   const handleConnectClick = useCallback(() => setChooseWalletOpen(true), [setChooseWalletOpen]);
 
   const handleOnboardingClick = useCallback(() => navigate('/sign-in'), [navigate]);
 
   if (showWalletWarning) {
-    return (<>
-      <DialogContent sx={{ display: 'flex', justifyContent: 'center', padding: '0 32px' }}>
-        <Typography fontSize={'1.2rem'}>{
-          'Hey there! To use this awesome feature, you\'ll need to have an Arweave wallet. Don\'t worry, it\'s super easy to set up and we\'re here to guide you through the process. Are you ready to get started?'
-        }</Typography>
-      </DialogContent>
-      <DialogActions sx={{ padding: '16px 32px 16px 16px', gap: '16px' }}>
-        <Button variant='outlined' onClick={handleConnectClick}>
-          <Typography>Connect</Typography>
-        </Button>
-        <Button variant='contained' onClick={handleOnboardingClick}>
-          <Typography>Start Onboarding</Typography>
-        </Button>
-      </DialogActions>
-    </>);
+    return (
+      <>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center', padding: '0 32px' }}>
+          <Typography fontSize={'1.2rem'}>
+            {
+              "Hey there! To use this awesome feature, you'll need to have an Arweave wallet. Don't worry, it's super easy to set up and we're here to guide you through the process. Are you ready to get started?"
+            }
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ padding: '16px 32px 16px 16px', gap: '16px' }}>
+          <Button variant='outlined' onClick={handleConnectClick}>
+            <Typography>Connect</Typography>
+          </Button>
+          <Button variant='contained' onClick={handleOnboardingClick}>
+            <Typography>Start Onboarding</Typography>
+          </Button>
+        </DialogActions>
+      </>
+    );
   }
 
   if (showOperators) {
@@ -163,7 +174,7 @@ const DetailContent = ({
           gap: '48px',
           justifyContent: 'space-evenly',
         }}
-      > 
+      >
         <Box
           sx={{
             borderRadius: '23px',
@@ -301,7 +312,7 @@ const Detail = () => {
   const navigate = useNavigate();
   const [showOperators, setShowOperators] = useState(false);
   const [showScripts, setShowScripts] = useState(false);
-  const [ showWalletWarning, setShowWalletWarning ] = useState(false);
+  const [showWalletWarning, setShowWalletWarning] = useState(false);
   const [filtering, setFiltering] = useState(false);
   const theme = useTheme();
 
@@ -328,7 +339,7 @@ const Detail = () => {
     <>
       <Dialog
         open={true}
-        maxWidth={showWalletWarning ? 'sm' : 'lg'} 
+        maxWidth={showWalletWarning ? 'sm' : 'lg'}
         fullWidth={!showWalletWarning}
         sx={{
           '& .MuiPaper-root': {
@@ -348,10 +359,7 @@ const Detail = () => {
           lineHeight={0}
         >
           {(showOperators || showScripts) && <Typography>{state.modelName}</Typography>}
-          <IconButton
-            onClick={handleClose}
-            size='small'
-          >
+          <IconButton onClick={handleClose} size='small'>
             <Close />
           </IconButton>
         </DialogTitle>

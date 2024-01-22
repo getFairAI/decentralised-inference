@@ -350,16 +350,8 @@ const Configuration = ({
       <FormControl sx={{ m: 3 }} component='fieldset' variant='standard'>
         <FormLabel>{'Arweave Asset (NFT) Options'}</FormLabel>
         <RadioGroup value={generateAsset} onChange={handleGenerateAssetChange}>
-          <FormControlLabel
-            control={<Radio />}
-            value={'fair-protocol'}
-            label='Fair Protocol NFT'
-          />
-          <FormControlLabel
-            control={<Radio />}
-            value={'rareweave'}
-            label='Rareweave NFT'
-          />
+          <FormControlLabel control={<Radio />} value={'fair-protocol'} label='Fair Protocol NFT' />
+          <FormControlLabel control={<Radio />} value={'rareweave'} label='Rareweave NFT' />
           <FormControlLabel control={<Radio />} value={'none'} label='Do Not Mint' />
         </RadioGroup>
       </FormControl>
