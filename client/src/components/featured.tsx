@@ -126,11 +126,11 @@ const Featured = () => {
               lineHeight: '41px',
             }}
           >
-            Choose your AI Model to start using.
+            Choose your AI model to start using.
           </Typography>
           <Typography variant='h4'>
             Browse available AI models and choose what suits your task best. Fair Protocol brings
-            Decentralized AI Computation at low cost with benefits for all participants.
+            decentralised AI computation at low cost with benefits for all participants.
           </Typography>
         </Box>
         <Box display={'flex'} flexDirection={'column'} width={'100%'}>
