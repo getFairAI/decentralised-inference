@@ -45,6 +45,7 @@ import ChooseOperator from '@/components/choose-operator';
 import ChooseScript from '@/components/choose-script';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import StampsMenu from '@/components/stamps-menu';
+import { Close } from '@mui/icons-material';
 
 const DetailContent = ({
   showOperators,
@@ -118,7 +119,7 @@ const DetailContent = ({
           gap: '48px',
           justifyContent: 'space-evenly',
         }}
-      >
+      > 
         <Box
           sx={{
             borderRadius: '23px',
@@ -232,7 +233,6 @@ const DetailContent = ({
             display: 'flex',
             alignItems: 'center',
             textAlign: 'center',
-            borderRadius: '30px',
           }}
           variant='contained'
           onClick={handleUseOperator}
@@ -305,12 +305,9 @@ const Detail = () => {
           {(showOperators || showScripts) && <Typography>{state.modelName}</Typography>}
           <IconButton
             onClick={handleClose}
-            sx={{
-              background: theme.palette.primary.main,
-              '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
-            }}
+            size='small'
           >
-            <img src='./close-icon.svg' />
+            <Close />
           </IconButton>
         </DialogTitle>
         <DetailContent
