@@ -66,7 +66,7 @@ import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
-import { IMessage, LicenseForm } from '@/interfaces/common';
+import { IConfiguration, IMessage } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatContent from '@/components/chat-content';
@@ -80,7 +80,7 @@ import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import useScroll from '@/hooks/useScroll';
-import { FieldValues, useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import useOperatorBusy from '@/hooks/useOperatorBusy';
 import { InfoOutlined } from '@mui/icons-material';
 import { UserFeedbackContext } from '@/context/user-feedback';
@@ -330,23 +330,49 @@ const Chat = () => {
   const [requestIds] = useState<string[]>([]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const assetNamesRef = useRef<HTMLTextAreaElement>(null);
-  const negativePromptRef = useRef<HTMLTextAreaElement>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
-  const nImagesRef = useRef<number>(DEFAULT_N_IMAGES);
-  const customTagsRef = useRef<{ name: string; value: string }[]>([]);
-  const keepConfigRef = useRef<HTMLInputElement>(null);
-  const generateAssetsRef = useRef<'fair-protocol' | 'rareweave' | 'none'>('fair-protocol');
-  const royaltyRef = useRef<HTMLInputElement>(null);
-  const licenseRef = useRef<HTMLInputElement>(null);
-  const { control: licenseControl } = useForm<LicenseForm>({
-    defaultValues: {
+  const defaultConfigvalues: IConfiguration = {
+    assetNames: '',
+    generateAssets: 'fair-protocol',
+    negativePrompt: '',
+    description: '',
+    customTags: [],
+    nImages: DEFAULT_N_IMAGES,
+    rareweaveConfig: {
+      royalty: 0,
+    },
+    license: 'Default',
+    licenseConfig: {
       derivations: '',
       commercialUse: '',
       licenseFeeInterval: '',
+      currency: '$U',
       paymentMode: '',
     },
-  } as FieldValues);
+  };
+  const {
+    control: configControl,
+    setValue: setConfigValue,
+    reset: configReset,
+  } = useForm<IConfiguration>({
+    defaultValues: defaultConfigvalues,
+  });
+
+  const currentConfig = useWatch({ control: configControl });
+
+  useEffect(() => {
+    const previousConfig = localStorage.getItem(`config#${state.scriptTransaction}`);
+    if (previousConfig) {
+      configReset(JSON.parse(previousConfig), { keepDefaultValues: true });
+    }
+  }, [state]);
+
+  useEffect(() => {
+    if (!_.isEqual(currentConfig, defaultConfigvalues)) {
+      localStorage.setItem(`config#${state.scriptTransaction}`, JSON.stringify(currentConfig));
+    } else {
+      localStorage.removeItem(`config#${state.scriptTransaction}`);
+    }
+  }, [currentConfig]);
 
   const isStableDiffusion = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
@@ -593,10 +619,8 @@ const Chat = () => {
         enqueueSnackbar('Message Too Long', { variant: 'error' });
         return false;
       }
-
-      const configuration = getConfigValues();
       const actualFee =
-        configuration.nImages && isStableDiffusion ? state.fee * configuration.nImages : state.fee;
+        currentConfig.nImages && isStableDiffusion ? state.fee * currentConfig.nImages : state.fee;
       if (currentUBalance < parseUBalance(actualFee)) {
         enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
         return false;
@@ -609,44 +633,13 @@ const Chat = () => {
     }
   };
 
-  const clearConfigInputs = () => {
-    if (assetNamesRef?.current) {
-      assetNamesRef.current.value = '';
-    }
-    if (negativePromptRef?.current) {
-      negativePromptRef.current.value = '';
-    }
-    if (descriptionRef?.current) {
-      descriptionRef.current.value = '';
-    }
-    if (customTagsRef?.current) {
-      customTagsRef.current = [];
-    }
-    if (nImagesRef.current) {
-      nImagesRef.current = 4;
-    }
-    if (royaltyRef?.current) {
-      royaltyRef.current.value = '';
-    }
-    if (generateAssetsRef?.current) {
-      generateAssetsRef.current = 'fair-protocol';
-    }
-    if (licenseRef?.current) {
-      licenseRef.current.value = 'Default';
-    }
-  };
-
-  const getConfigValues = () => {
-    const generateAssets = generateAssetsRef?.current;
-    const assetNames = assetNamesRef?.current?.value
-      ? assetNamesRef.current.value.split(';').map((el) => el.trim())
+  const getConfigValues = useCallback(() => {
+    const { generateAssets, description, negativePrompt, nImages } = currentConfig;
+    const assetNames = currentConfig.assetNames
+      ? currentConfig.assetNames.split(';').map((el) => el.trim())
       : undefined;
-    const negativePrompt = negativePromptRef?.current?.value;
-    const description = descriptionRef?.current?.value;
-    const customTags = customTagsRef?.current;
-    const nImages = nImagesRef?.current;
-    const radix = 10;
-    const royalty = parseInt(royaltyRef?.current?.value ?? '0', radix);
+    const customTags = (currentConfig.customTags as { name: string; value: string }[]) ?? [];
+    const royalty = currentConfig.rareweaveConfig?.royalty;
 
     return {
       generateAssets,
@@ -661,7 +654,7 @@ const Chat = () => {
         },
       }),
     };
-  };
+  }, [currentConfig]);
 
   const updateMessages = async (
     txid: string,
@@ -672,9 +665,6 @@ const Chat = () => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
-    }
-    if (!keepConfigRef.current?.checked) {
-      clearConfigInputs();
     }
     setFile(undefined);
     setIsWaitingResponse(true);
@@ -738,19 +728,20 @@ const Chat = () => {
     const content = file;
 
     try {
-      const configuration = getConfigValues();
       const tags: ITag[] = FairSDKWeb.utils.getUploadTags(
         FairSDKWeb.script,
         address as string,
         userAddr,
         currentConversationId,
         contentType,
-        configuration,
+        getConfigValues(),
         'web',
         content.name,
       );
       // add licenseConfig Tags
-      addLicenseConfigTags(tags, licenseControl._formValues, licenseRef.current?.value);
+      if (currentConfig.licenseConfig) {
+        addLicenseConfigTags(tags, currentConfig.licenseConfig, currentConfig.license);
+      }
       // upload with dispatch
       const data = await content.arrayBuffer(); // it's safe to convert to arrayBuffer bc max size is 100kb
       const tx = await arweave.createTransaction({ data });
@@ -772,7 +763,7 @@ const Chat = () => {
         currentConversationId,
         state.modelCreator,
         address as string,
-        configuration.nImages,
+        currentConfig.nImages,
         'web',
       );
       // update balance after payments
@@ -808,18 +799,19 @@ const Chat = () => {
     const contentType = textContentType;
 
     try {
-      const configuration = getConfigValues();
       const tags: ITag[] = FairSDKWeb.utils.getUploadTags(
         FairSDKWeb.script,
         address as string,
         userAddr,
         currentConversationId,
         contentType,
-        configuration,
+        getConfigValues(),
         'web',
       );
       // add licenseConfig Tags
-      addLicenseConfigTags(tags, licenseControl._formValues, licenseRef.current?.value);
+      if (currentConfig.licenseConfig) {
+        addLicenseConfigTags(tags, currentConfig.licenseConfig, currentConfig.license);
+      }
       // upload with dispatch
       const tx = await arweave.createTransaction({ data: newMessage });
       tags.forEach((tag) => tx.addTag(tag.name, tag.value));
@@ -839,7 +831,7 @@ const Chat = () => {
         currentConversationId,
         state.modelCreator,
         address as string,
-        configuration.nImages,
+        currentConfig.nImages,
         'web',
       );
       // update balance after payments
@@ -1074,18 +1066,18 @@ const Chat = () => {
           elevation: 24,
         }}
       >
-        <Box sx={{ height: '100%', display: 'flex' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
+              paddingTop: '16px',
+            },
+          }}
+        >
           <Configuration
-            assetNamesRef={assetNamesRef}
-            negativePromptRef={negativePromptRef}
-            keepConfigRef={keepConfigRef}
-            descriptionRef={descriptionRef}
-            nImagesRef={nImagesRef}
-            customTagsRef={customTagsRef}
-            generateAssetsRef={generateAssetsRef}
-            royaltyRef={royaltyRef}
-            licenseRef={licenseRef}
-            licenseControl={licenseControl}
+            control={configControl}
+            setConfigValue={setConfigValue}
+            reset={configReset}
             handleClose={handleAdvancedClose}
           />
         </Box>

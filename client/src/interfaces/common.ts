@@ -32,30 +32,37 @@ export interface IMessage {
   tags: ITag[];
 }
 
-export interface IConfiguration {
-  assetNames?: string[];
+export interface IConfiguration extends FieldValues {
+  generateAssets?: 'fair-protocol' | 'rareweave' | 'none';
+  assetNames?: string;
   negativePrompt?: string;
   description?: string;
   customTags?: { name: string; value: string }[];
   nImages?: number;
+  rareweaveConfig?: {
+    royalty: number;
+  };
+  license: string;
+  licenseConfig: LicenseForm;
 }
 
 export type voteForOptions = 'model' | 'script' | 'operator';
 
 type derivationOptions =
+  | ''
   | 'With-Credit'
   | 'With-Indication'
   | 'With-License-Passthrough'
   | 'With-Revenue-Share';
-type licenseFeeIntervalOptions = 'One-Time' | 'Monthly' | 'Yearly' | 'Weekly' | 'Daily';
-export interface LicenseForm extends FieldValues {
+type licenseFeeIntervalOptions = '' | 'One-Time' | 'Monthly' | 'Yearly' | 'Weekly' | 'Daily';
+export interface LicenseForm {
   derivations?: derivationOptions;
   revenueShare?: number;
-  commercialUse?: 'Allowed' | 'Allowed-With-Credit';
+  commercialUse?: '' | 'Allowed' | 'Allowed-With-Credit';
   licenseFeeInterval?: licenseFeeIntervalOptions;
   licenseFee?: number;
   currency?: 'AR' | '$U';
   expires?: number;
   paymentAddress?: string;
-  paymentMode?: 'Random-Distribution' | 'Global-Distribution';
+  paymentMode?: '' | 'Random-Distribution' | 'Global-Distribution';
 }

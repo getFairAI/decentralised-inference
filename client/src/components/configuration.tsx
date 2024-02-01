@@ -20,7 +20,6 @@ import { U_LOGO_SRC } from '@/constants';
 import { displayShortTxOrAddr, findTag, getUPriceUSD } from '@/utils/common';
 import {
   Box,
-  Checkbox,
   Divider,
   FormControl,
   FormControlLabel,
@@ -32,16 +31,9 @@ import {
   useTheme,
   Radio,
   RadioGroup,
+  Button,
 } from '@mui/material';
-import {
-  MutableRefObject,
-  RefObject,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -50,8 +42,14 @@ import { parseUBalance } from '@/utils/u';
 import { enqueueSnackbar } from 'notistack';
 import { NumberFormatValues, NumericFormat } from 'react-number-format';
 import LicenseConfiguration from './license-configuration';
-import { Control } from 'react-hook-form';
-import { LicenseForm } from '@/interfaces/common';
+import {
+  Control,
+  FieldValues,
+  UseFormReset,
+  UseFormSetValue,
+  useController,
+} from 'react-hook-form';
+import { IConfiguration } from '@/interfaces/common';
 
 const CustomTag = ({
   name,
@@ -79,13 +77,14 @@ const CustomTag = ({
 };
 
 const StableDiffusionConfigurations = ({
-  negativePromptRef,
-  nImagesRef,
+  control,
+  setValue,
 }: {
-  negativePromptRef: RefObject<HTMLTextAreaElement>;
-  nImagesRef: MutableRefObject<number>;
+  control: Control<IConfiguration, unknown>;
+  setValue: UseFormSetValue<IConfiguration>;
 }) => {
   const nDigits = 4;
+  const defaultImages = 4;
   const { state } = useLocation();
 
   const [cost, setCost] = useState(0);
@@ -95,7 +94,9 @@ const StableDiffusionConfigurations = ({
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
     [state],
   );
-  const sliderValue = useMemo(() => nImagesRef.current, [nImagesRef.current]);
+
+  const { field: negativePromptField } = useController({ control, name: 'negativePrompt' });
+  const { field: nImagesField } = useController({ control, name: 'nImages' });
 
   useEffect(() => {
     (async () => {
@@ -105,7 +106,6 @@ const StableDiffusionConfigurations = ({
   }, [getUPriceUSD, setCurrentArPrice]);
 
   useEffect(() => {
-    const defaultImages = 4;
     const fee = state?.fee ? parseUBalance(state?.fee) : 0;
     setCost(fee * defaultImages);
     setUsdCost(currentArPrice * fee * defaultImages);
@@ -113,22 +113,20 @@ const StableDiffusionConfigurations = ({
 
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
-      if (nImagesRef.current !== newValue) {
-        nImagesRef.current = newValue as number;
-        const fee = state?.fee ? parseUBalance(state?.fee) : 0;
-        setCost(fee * (newValue as number));
-        setUsdCost(currentArPrice * fee * (newValue as number));
-      }
+      nImagesField.onChange(_event);
+      const fee = state?.fee ? parseUBalance(state?.fee) : 0;
+      setCost(fee * (newValue as number));
+      setUsdCost(currentArPrice * fee * (newValue as number));
     },
-    [nImagesRef, state, currentArPrice, setCost, setUsdCost, parseUBalance],
+    [nImagesField, state, currentArPrice, setCost, setUsdCost, parseUBalance],
   );
 
   if (!showOutputConfiguration) {
     // force negative prompt and nImages to be null
-    if (negativePromptRef.current) {
-      negativePromptRef.current.value = '';
+    if (negativePromptField.value) {
+      setValue('negativePrompt', '');
     }
-    nImagesRef.current = 4;
+    setValue('nImages', 1);
     return null;
   }
 
@@ -141,7 +139,10 @@ const StableDiffusionConfigurations = ({
       </Box>
       <TextField
         label={'Negative Prompt'}
-        inputRef={negativePromptRef}
+        onChange={negativePromptField.onChange} // send value to hook form
+        onBlur={negativePromptField.onBlur} // notify when input is touched/blur
+        value={negativePromptField.value}
+        inputRef={negativePromptField.ref} // send input ref, so we can focus on input when error appear
         multiline
         minRows={3}
         maxRows={5}
@@ -156,7 +157,7 @@ const StableDiffusionConfigurations = ({
           Number of Images To Generate
         </Typography>
         <Slider
-          value={sliderValue}
+          value={nImagesField.value}
           onChange={handleSliderChange}
           defaultValue={4}
           disabled={false}
@@ -183,61 +184,45 @@ const StableDiffusionConfigurations = ({
 };
 
 const Configuration = ({
-  negativePromptRef,
-  assetNamesRef,
-  keepConfigRef,
-  descriptionRef,
-  nImagesRef,
-  customTagsRef,
-  generateAssetsRef,
-  royaltyRef,
-  licenseRef,
-  licenseControl,
+  control,
+  setConfigValue,
+  reset,
   handleClose,
 }: {
-  negativePromptRef: RefObject<HTMLTextAreaElement>;
-  assetNamesRef: RefObject<HTMLTextAreaElement>;
-  keepConfigRef: RefObject<HTMLInputElement>;
-  descriptionRef: RefObject<HTMLTextAreaElement>;
-  nImagesRef: MutableRefObject<number>;
-  customTagsRef: MutableRefObject<{ name: string; value: string }[]>;
-  generateAssetsRef: MutableRefObject<'fair-protocol' | 'rareweave' | 'none'>;
-  royaltyRef: RefObject<HTMLInputElement>;
-  licenseRef: RefObject<HTMLInputElement>;
-  licenseControl: Control<LicenseForm, unknown>;
+  control: Control<IConfiguration, unknown>;
+  setConfigValue: UseFormSetValue<IConfiguration>;
+  reset: UseFormReset<IConfiguration>;
   handleClose: () => void;
 }) => {
   const maxPercentage = 100;
   const theme = useTheme();
   const { state } = useLocation();
   const { address } = useParams();
-  const [isAssetNamesDirty, setIsAssetNamesDirty] = useState(false);
   const [customTags, setCustomTags] = useState<{ name: string; value: string }[]>([]);
-  const [generateAsset, setGenerateAsset] = useState('fair-protocol');
   const nameRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLTextAreaElement>(null);
+
+  const {
+    field: assetNamesField,
+    fieldState: { isDirty: isAssetNamesDirty },
+  } = useController({ control, name: 'assetNames' });
+  const { field: generateAssetsField } = useController({ control, name: 'generateAssets' });
+  const { field: descriptionField } = useController({ control, name: 'description' });
+  const { field: royaltyField } = useController({ control, name: 'rareweaveConfig.royalty' });
 
   const fee = useMemo(() => (state?.fee ? parseUBalance(state?.fee) : 0), [state?.fee]);
 
   const checkAssetNamesValidity = useCallback(() => {
-    const assetNames = assetNamesRef?.current?.value;
+    const assetNames = assetNamesField.value;
     if (assetNames) {
       const assetNamesArray = assetNames.split(';');
       return assetNamesArray.every((assetName) => assetName.length > 0);
     } else {
       return true;
     }
-  }, [assetNamesRef?.current?.value]);
+  }, [assetNamesField.value]);
 
-  const hasAssetNameError = useMemo(
-    () => !checkAssetNamesValidity(),
-    [assetNamesRef?.current?.value],
-  );
-
-  const handleAssetNamesBlur = useCallback(
-    () => setIsAssetNamesDirty(true),
-    [setIsAssetNamesDirty],
-  );
+  const hasAssetNameError = useMemo(() => !checkAssetNamesValidity(), [assetNamesField.value]);
 
   const handleAdd = useCallback(() => {
     if (nameRef?.current?.value && valueRef?.current?.value) {
@@ -261,28 +246,15 @@ const Configuration = ({
   );
 
   useEffect(() => {
-    if (customTagsRef.current) {
-      customTagsRef.current = customTags;
-    }
+    setConfigValue('customTags', customTags);
   }, [customTags]);
-
-  useEffect(() => setGenerateAsset(generateAssetsRef.current), [generateAssetsRef.current]);
-
-  const handleGenerateAssetChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setGenerateAsset((event.target as HTMLInputElement).value);
-      generateAssetsRef.current = (event.target as HTMLInputElement).value as
-        | 'fair-protocol'
-        | 'rareweave'
-        | 'none';
-    },
-    [generateAssetsRef, setGenerateAsset],
-  );
 
   const isAllowedRoyalty = useCallback(
     (val: NumberFormatValues) => !val.floatValue || val?.floatValue <= maxPercentage,
     [],
   );
+
+  const handleResetClick = useCallback(() => reset(), [reset]);
 
   return (
     <Box
@@ -295,7 +267,7 @@ const Configuration = ({
         lineHeight: '16px',
         width: '100%',
         background: theme.palette.background.default,
-        padding: '16px',
+        padding: '0px 16px 16px 16px',
         flexDirection: 'column',
         gap: '16px',
       }}
@@ -338,10 +310,7 @@ const Configuration = ({
           }}
         />
       </Box>
-      <StableDiffusionConfigurations
-        negativePromptRef={negativePromptRef}
-        nImagesRef={nImagesRef}
-      />
+      <StableDiffusionConfigurations control={control} setValue={setConfigValue} />
       <Box>
         <Divider textAlign='left' variant='fullWidth'>
           <Typography variant='h4'>Transaction Configurations</Typography>
@@ -349,18 +318,18 @@ const Configuration = ({
       </Box>
       <FormControl sx={{ m: 3 }} component='fieldset' variant='standard'>
         <FormLabel>{'Arweave Asset (NFT) Options'}</FormLabel>
-        <RadioGroup value={generateAsset} onChange={handleGenerateAssetChange}>
+        <RadioGroup value={generateAssetsField.value} onChange={generateAssetsField.onChange}>
           <FormControlLabel control={<Radio />} value={'fair-protocol'} label='Fair Protocol NFT' />
           <FormControlLabel control={<Radio />} value={'rareweave'} label='Rareweave NFT' />
           <FormControlLabel control={<Radio />} value={'none'} label='Do Not Mint' />
         </RadioGroup>
       </FormControl>
-      {generateAsset === 'rareweave' && (
+      {generateAssetsField.value === 'rareweave' && (
         <NumericFormat
           customInput={TextField}
           allowNegative={false}
           decimalScale={0}
-          inputRef={royaltyRef} // send input ref, so we can focus on input when error appear
+          inputRef={royaltyField.ref} // send input ref, so we can focus on input when error appear
           defaultValue={0}
           maxLength={3}
           max={100}
@@ -370,23 +339,28 @@ const Configuration = ({
         />
       )}
       <TextField
-        inputRef={assetNamesRef}
+        value={assetNamesField.value}
+        onChange={assetNamesField.onChange}
+        inputRef={assetNamesField.ref}
         label={'Atomic Asset Name(s)'}
         multiline
         minRows={1}
         maxRows={3}
         error={isAssetNamesDirty && hasAssetNameError}
-        onBlur={handleAssetNamesBlur}
+        onBlur={assetNamesField.onBlur}
       />
       <TextField
         label={'Description'}
-        inputRef={descriptionRef}
+        value={descriptionField.value}
+        onChange={descriptionField.onChange}
+        inputRef={descriptionField.ref}
+        onBlur={descriptionField.onBlur}
         multiline
         minRows={1}
         maxRows={3}
         fullWidth
       />
-      <LicenseConfiguration licenseControl={licenseControl} licenseRef={licenseRef} />
+      <LicenseConfiguration configControl={control as unknown as Control<FieldValues>} />
       <Box>
         <Divider textAlign='left' variant='fullWidth'>
           <Typography variant='h4'>Custom Tags</Typography>
@@ -402,10 +376,9 @@ const Configuration = ({
       {customTags.map(({ name, value }) => (
         <CustomTag key={name} name={name} value={value} handleRemove={handleRemove} />
       ))}
-      <FormControlLabel
-        control={<Checkbox inputRef={keepConfigRef} />}
-        label='Keep Configuration Between Prompts'
-      />
+      <Button variant='outlined' onClick={handleResetClick}>
+        <Typography>Reset</Typography>
+      </Button>
     </Box>
   );
 };
