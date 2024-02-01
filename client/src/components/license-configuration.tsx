@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { useWatch, Control } from 'react-hook-form';
+import { useWatch, Control, useController, FieldValues } from 'react-hook-form';
 import {
   Box,
   Autocomplete,
@@ -27,17 +27,16 @@ import {
 import NumericControl from './numeric-control';
 import SelectControl from './select-control';
 import TextControl from './text-control';
-import { useState, useMemo, useCallback, RefObject, SyntheticEvent } from 'react';
+import { useMemo, useCallback } from 'react';
 import { NumberFormatValues } from 'react-number-format';
-import { LicenseForm } from '@/interfaces/common';
 
 const LicenseField = ({
   show,
-  licenseControl,
+  configControl,
   isAllowed,
 }: {
   show: boolean;
-  licenseControl: Control<LicenseForm, unknown>;
+  configControl: Control<FieldValues>;
   isAllowed: (val: NumberFormatValues) => boolean;
 }) => {
   if (!show) {
@@ -46,14 +45,14 @@ const LicenseField = ({
     return (
       <Box display={'flex'} gap={'16px'}>
         <NumericControl
-          name='licenseFee'
-          control={licenseControl}
+          name='licenseConfig.licenseFee'
+          control={configControl}
           mat={{ label: 'License Fee', placeholder: 'License Fee', sx: { flexGrow: 1 } }}
           isAllowed={isAllowed}
         />
         <SelectControl
-          name='currency'
-          control={licenseControl}
+          name='licenseConfig.currency'
+          control={configControl}
           mat={{ label: 'Currency', placeholder: 'Currency' }}
           defaultValue={'$U'}
         >
@@ -76,12 +75,12 @@ const getLicenseGroup = (idx: number) => {
 };
 
 const LicenseConfiguration = ({
-  licenseRef,
-  licenseControl,
+  configControl,
 }: {
-  licenseRef: RefObject<HTMLInputElement>;
-  licenseControl: Control<LicenseForm, unknown>;
+  configControl: Control<FieldValues>;
 }) => {
+
+  const { field: licenseField } = useController({ name: 'license', control: configControl });
   const maxPercentage = 100;
   const maxNumberDigits = 4;
   const commercialOnetimeIdx = 2;
@@ -103,7 +102,7 @@ const LicenseConfiguration = ({
     group: getLicenseGroup(idx),
   }));
 
-  const [inputValue, setInputValue] = useState('');
+  const inputValue = useWatch({ control: configControl, name: 'license' });
   const showLicenseConfig = useMemo(
     () => inputValue === licenseOptions[customDerivationIdx],
     [inputValue],
@@ -126,30 +125,38 @@ const LicenseConfiguration = ({
     [],
   );
 
-  const derivationsValue = useWatch({ control: licenseControl, name: 'derivations' });
+  const derivationsValue = useWatch({ control: configControl, name: 'licenseConfig.derivations' });
 
   const showRevenueShare = useMemo(
     () => derivationsValue === 'With-Revenue-Share',
     [derivationsValue],
   );
 
-  const handleAutocompleteChange = useCallback(
-    (_event: SyntheticEvent<Element, Event>, newValue: string | null) =>
-      setInputValue(newValue ?? ''),
-    [setInputValue],
-  );
-
   const handleRenderInput = useCallback(
     (params: AutocompleteRenderInputParams) => (
       <TextField
         {...params}
-        inputRef={licenseRef}
+        value={licenseField.value}
+        onBlur={licenseField.onBlur}
+        inputRef={licenseField.ref}
         label='License'
         placeholder='Choose A license or add your own'
       />
     ),
-    [licenseRef],
+    [licenseField],
   );
+
+  const handleAutocompleteChange = useCallback(
+    (_event: unknown, newValue: string) =>
+      licenseField.onChange(newValue),
+    [licenseField ]
+  );
+
+  const handleOnClose = useCallback((_event: React.SyntheticEvent, reason: string) => {
+    if (reason === 'remove-option') {
+      licenseField.onChange('');
+    }
+  }, [ licenseField ]);
 
   return (
     <Box gap='16px' display={'flex'} flexDirection={'column'}>
@@ -160,14 +167,15 @@ const LicenseConfiguration = ({
         getOptionLabel={(option) => (option as unknown as { label: string }).label}
         renderInput={handleRenderInput}
         onInputChange={handleAutocompleteChange}
+        onClose={handleOnClose}
       />
-      <LicenseField show={showLicenseFee} licenseControl={licenseControl} isAllowed={isAllowed} />
+      <LicenseField show={showLicenseFee} configControl={configControl} isAllowed={isAllowed} />
       {showLicenseConfig && (
         <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
           <Box display={'flex'} gap={'16px'}>
             <SelectControl
-              name='derivations'
-              control={licenseControl}
+              name='licenseConfig.derivations'
+              control={configControl}
               mat={{ label: 'Derivations', placeholder: 'Derivations' }}
             >
               <MenuItem value=''>Default</MenuItem>
@@ -178,8 +186,8 @@ const LicenseConfiguration = ({
             </SelectControl>
             {showRevenueShare && (
               <NumericControl
-                name='revenueShare'
-                control={licenseControl}
+                name='licenseConfig.revenueShare'
+                control={configControl}
                 mat={{
                   label: 'Revenue Share (%)',
                   placeholder: 'Revenue Share',
@@ -192,8 +200,8 @@ const LicenseConfiguration = ({
 
           <Box display={'flex'} alignItems={'center'} justifyContent={'space-between'} gap={'16px'}>
             <SelectControl
-              name='licenseFeeInterval'
-              control={licenseControl}
+              name='licenseConfig.licenseFeeInterval'
+              control={configControl}
               mat={{
                 label: 'License Fee Payment Interval',
                 placeholder: 'License Fee Payment Interval',
@@ -207,12 +215,12 @@ const LicenseConfiguration = ({
               <MenuItem value='Yearly'>Yearly</MenuItem>
               <MenuItem value='One-Time'>One-Time</MenuItem>
             </SelectControl>
-            <LicenseField show={true} licenseControl={licenseControl} isAllowed={isAllowed} />
+            <LicenseField show={true} configControl={configControl} isAllowed={isAllowed} />
           </Box>
           <Box display={'flex'} width={'100%'} gap={'16px'}>
             <SelectControl
-              name='commercialUse'
-              control={licenseControl}
+              name='licenseConfig.commercialUse'
+              control={configControl}
               mat={{
                 label: 'Commercial Use',
                 placeholder: 'Commercial Use',
@@ -224,8 +232,8 @@ const LicenseConfiguration = ({
               <MenuItem value='Allowed-With-Credit'>Allowed With Credit</MenuItem>
             </SelectControl>
             <NumericControl
-              name='expires'
-              control={licenseControl}
+              name='licenseConfig.expires'
+              control={configControl}
               mat={{ label: 'Expires (Years)', sx: { width: '40%', flexGrow: 0 } }}
               isAllowed={isAllowed}
             />
@@ -233,13 +241,13 @@ const LicenseConfiguration = ({
 
           <Box display={'flex'} gap={'16px'} width={'100%'}>
             <TextControl
-              name='paymentAddress'
-              control={licenseControl}
+              name='licenseConfig.paymentAddress'
+              control={configControl}
               mat={{ label: 'Payment Address', sx: { flexGrow: 1 } }}
             />
             <SelectControl
-              name='paymentMode'
-              control={licenseControl}
+              name='licenseConfig.paymentMode'
+              control={configControl}
               mat={{
                 label: 'Payment Mode',
                 placeholder: 'Payment Mode',
