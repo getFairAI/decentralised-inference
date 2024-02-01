@@ -322,7 +322,7 @@ const Chat = () => {
   const { isNearTop } = useScroll(scrollableRef);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [loading, setLoading] = useState(false);
-  const [inputWidth, setInputWidth] = useState(0);
+  const [inputWidth, setInputWidth] = useState('');
   const [inputHeight, setInputHeight] = useState(0);
   const { height: scrollableHeight } = useComponentDimensions(scrollableRef);
   const [drawerOpen, setDrawerOpen] = useState(true);
@@ -1049,7 +1049,7 @@ const Chat = () => {
   );
 
   useLayoutEffect(() => {
-    setInputWidth(chatWidth);
+    setInputWidth(`calc(${chatWidth}px - 16px)`);
   }, [chatWidth]);
 
   useLayoutEffect(() => {
@@ -1263,7 +1263,7 @@ const Chat = () => {
                     sx={{
                       position: 'absolute',
                       top: '40px',
-                      width: chatWidth,
+                      width: inputWidth,
                     }}
                   >
                     <Fab
@@ -1309,7 +1309,7 @@ const Chat = () => {
                 position: 'absolute',
                 margin: '8px 0px',
                 width: inputWidth,
-                paddingRight: '24px',
+                paddingRight: '8px',
                 paddingLeft: '8px',
               }}
             >
