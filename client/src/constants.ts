@@ -119,6 +119,8 @@ export const TAG_NAMES = {
   licenseConfig: 'License-Config',
   userRatingScore: 'User-Rating-Score',
   userRatingComment: 'User-Rating-Comment',
+  generateAssets: 'Generate-Assets',
+  rareweaveConfig: 'Rareweave-Config',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';

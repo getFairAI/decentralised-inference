@@ -42,8 +42,8 @@ export interface IConfiguration extends FieldValues {
   rareweaveConfig?: {
     royalty: number;
   };
-  license: string;
-  licenseConfig: LicenseForm;
+  license?: string;
+  licenseConfig?: LicenseForm;
 }
 
 export type voteForOptions = 'model' | 'script' | 'operator';
