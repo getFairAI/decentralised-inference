@@ -338,7 +338,7 @@ const Chat = () => {
     customTags: [],
     nImages: DEFAULT_N_IMAGES,
     rareweaveConfig: {
-      royalty: 0
+      royalty: 0,
     },
     license: 'Default',
     licenseConfig: {
@@ -347,9 +347,13 @@ const Chat = () => {
       licenseFeeInterval: '',
       currency: '$U',
       paymentMode: '',
-    }
+    },
   };
-  const { control: configControl, setValue: setConfigValue, reset: configReset } = useForm<IConfiguration>({
+  const {
+    control: configControl,
+    setValue: setConfigValue,
+    reset: configReset,
+  } = useForm<IConfiguration>({
     defaultValues: defaultConfigvalues,
   });
 
@@ -360,7 +364,7 @@ const Chat = () => {
     if (previousConfig) {
       configReset(JSON.parse(previousConfig), { keepDefaultValues: true });
     }
-  }, [ state ]);
+  }, [state]);
 
   useEffect(() => {
     if (!_.isEqual(currentConfig, defaultConfigvalues)) {
@@ -615,7 +619,8 @@ const Chat = () => {
         enqueueSnackbar('Message Too Long', { variant: 'error' });
         return false;
       }
-      const actualFee = currentConfig.nImages && isStableDiffusion ? state.fee * currentConfig.nImages : state.fee;
+      const actualFee =
+        currentConfig.nImages && isStableDiffusion ? state.fee * currentConfig.nImages : state.fee;
       if (currentUBalance < parseUBalance(actualFee)) {
         enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
         return false;
@@ -629,14 +634,11 @@ const Chat = () => {
   };
 
   const getConfigValues = useCallback(() => {
-    const generateAssets = currentConfig.generateAssets;
+    const { generateAssets, description, negativePrompt, nImages } = currentConfig;
     const assetNames = currentConfig.assetNames
       ? currentConfig.assetNames.split(';').map((el) => el.trim())
       : undefined;
-    const negativePrompt = currentConfig.negativePrompt;
-    const description = currentConfig.description;
-    const customTags = currentConfig.customTags ?? [];
-    const nImages = currentConfig.nImages;
+    const customTags = (currentConfig.customTags as { name: string; value: string }[]) ?? [];
     const royalty = currentConfig.rareweaveConfig?.royalty;
 
     return {
@@ -652,7 +654,7 @@ const Chat = () => {
         },
       }),
     };
-  }, [ currentConfig ]);
+  }, [currentConfig]);
 
   const updateMessages = async (
     txid: string,
@@ -732,8 +734,7 @@ const Chat = () => {
         userAddr,
         currentConversationId,
         contentType,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getConfigValues() as any,
+        getConfigValues(),
         'web',
         content.name,
       );
@@ -804,8 +805,7 @@ const Chat = () => {
         userAddr,
         currentConversationId,
         contentType,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getConfigValues() as any,
+        getConfigValues(),
         'web',
       );
       // add licenseConfig Tags
@@ -1066,12 +1066,14 @@ const Chat = () => {
           elevation: 24,
         }}
       >
-        <Box sx={{
-          display: 'flex',
-          '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
-            paddingTop: '16px',
-          }
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
+              paddingTop: '16px',
+            },
+          }}
+        >
           <Configuration
             control={configControl}
             setConfigValue={setConfigValue}

@@ -33,13 +33,7 @@ import {
   RadioGroup,
   Button,
 } from '@mui/material';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -48,7 +42,13 @@ import { parseUBalance } from '@/utils/u';
 import { enqueueSnackbar } from 'notistack';
 import { NumberFormatValues, NumericFormat } from 'react-number-format';
 import LicenseConfiguration from './license-configuration';
-import { Control, FieldValues, UseFormReset, UseFormSetValue, useController } from 'react-hook-form';
+import {
+  Control,
+  FieldValues,
+  UseFormReset,
+  UseFormSetValue,
+  useController,
+} from 'react-hook-form';
 import { IConfiguration } from '@/interfaces/common';
 
 const CustomTag = ({
@@ -97,7 +97,6 @@ const StableDiffusionConfigurations = ({
 
   const { field: negativePromptField } = useController({ control, name: 'negativePrompt' });
   const { field: nImagesField } = useController({ control, name: 'nImages' });
-
 
   useEffect(() => {
     (async () => {
@@ -203,7 +202,10 @@ const Configuration = ({
   const nameRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLTextAreaElement>(null);
 
-  const { field: assetNamesField, fieldState: { isDirty: isAssetNamesDirty } } = useController({ control, name: 'assetNames' });
+  const {
+    field: assetNamesField,
+    fieldState: { isDirty: isAssetNamesDirty },
+  } = useController({ control, name: 'assetNames' });
   const { field: generateAssetsField } = useController({ control, name: 'generateAssets' });
   const { field: descriptionField } = useController({ control, name: 'description' });
   const { field: royaltyField } = useController({ control, name: 'rareweaveConfig.royalty' });
@@ -218,12 +220,9 @@ const Configuration = ({
     } else {
       return true;
     }
-  }, [ assetNamesField.value ]);
+  }, [assetNamesField.value]);
 
-  const hasAssetNameError = useMemo(
-    () => !checkAssetNamesValidity(),
-    [ assetNamesField.value ],
-  );
+  const hasAssetNameError = useMemo(() => !checkAssetNamesValidity(), [assetNamesField.value]);
 
   const handleAdd = useCallback(() => {
     if (nameRef?.current?.value && valueRef?.current?.value) {
@@ -255,7 +254,7 @@ const Configuration = ({
     [],
   );
 
-  const handleResetClick = useCallback(() => reset(), [ reset ]);
+  const handleResetClick = useCallback(() => reset(), [reset]);
 
   return (
     <Box
@@ -311,7 +310,7 @@ const Configuration = ({
           }}
         />
       </Box>
-      <StableDiffusionConfigurations control={control} setValue={setConfigValue}/>
+      <StableDiffusionConfigurations control={control} setValue={setConfigValue} />
       <Box>
         <Divider textAlign='left' variant='fullWidth'>
           <Typography variant='h4'>Transaction Configurations</Typography>

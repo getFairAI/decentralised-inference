@@ -48,12 +48,13 @@ export interface IConfiguration extends FieldValues {
 
 export type voteForOptions = 'model' | 'script' | 'operator';
 
-type derivationOptions = ''
+type derivationOptions =
+  | ''
   | 'With-Credit'
   | 'With-Indication'
   | 'With-License-Passthrough'
   | 'With-Revenue-Share';
-type licenseFeeIntervalOptions = ''| 'One-Time' | 'Monthly' | 'Yearly' | 'Weekly' | 'Daily';
+type licenseFeeIntervalOptions = '' | 'One-Time' | 'Monthly' | 'Yearly' | 'Weekly' | 'Daily';
 export interface LicenseForm {
   derivations?: derivationOptions;
   revenueShare?: number;

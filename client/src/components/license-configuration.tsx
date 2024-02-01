@@ -74,12 +74,7 @@ const getLicenseGroup = (idx: number) => {
   }
 };
 
-const LicenseConfiguration = ({
-  configControl,
-}: {
-  configControl: Control<FieldValues>;
-}) => {
-
+const LicenseConfiguration = ({ configControl }: { configControl: Control<FieldValues> }) => {
   const { field: licenseField } = useController({ name: 'license', control: configControl });
   const maxPercentage = 100;
   const maxNumberDigits = 4;
@@ -147,16 +142,18 @@ const LicenseConfiguration = ({
   );
 
   const handleAutocompleteChange = useCallback(
-    (_event: unknown, newValue: string) =>
-      licenseField.onChange(newValue),
-    [licenseField ]
+    (_event: unknown, newValue: string) => licenseField.onChange(newValue),
+    [licenseField],
   );
 
-  const handleOnClose = useCallback((_event: React.SyntheticEvent, reason: string) => {
-    if (reason === 'remove-option') {
-      licenseField.onChange('');
-    }
-  }, [ licenseField ]);
+  const handleOnClose = useCallback(
+    (_event: React.SyntheticEvent, reason: string) => {
+      if (reason === 'remove-option') {
+        licenseField.onChange('');
+      }
+    },
+    [licenseField],
+  );
 
   return (
     <Box gap='16px' display={'flex'} flexDirection={'column'}>
