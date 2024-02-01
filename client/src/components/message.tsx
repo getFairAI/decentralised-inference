@@ -60,7 +60,13 @@ import FairSDKWeb from '@fair-protocol/sdk/web';
 import XIcon from '@mui/icons-material/X';
 import { ITag } from '@/interfaces/arweave';
 
-const MessageHeader = ({ message, copySettings }: { message: IMessage, copySettings: (tags: ITag[]) => void }) => {
+const MessageHeader = ({
+  message,
+  copySettings,
+}: {
+  message: IMessage;
+  copySettings: (tags: ITag[]) => void;
+}) => {
   const { state } = useLocation();
   const theme = useTheme();
 
@@ -218,7 +224,7 @@ const MessageHeader = ({ message, copySettings }: { message: IMessage, copySetti
   const handleCopySettings = useCallback(async () => {
     setAnchorEl(null);
     copySettings(message.tags);
-  }, [ message, setAnchorEl, copySettings ]);
+  }, [message, setAnchorEl, copySettings]);
 
   return (
     <Box display={'flex'} gap={'8px'} width={'100%'}>
@@ -287,7 +293,10 @@ const MessageHeader = ({ message, copySettings }: { message: IMessage, copySetti
             }}
           >
             <MenuItem onClick={handleCopy}>Copy Content</MenuItem>
-            {message.type === 'request' && <MenuItem onClick={handleCopySettings}>Copy Settings</MenuItem>} {/* only copy settings from prompts */}
+            {message.type === 'request' && (
+              <MenuItem onClick={handleCopySettings}>Copy Settings</MenuItem>
+            )}{' '}
+            {/* only copy settings from prompts */}
             <MenuItem onClick={handleViewTx}>View Transaction</MenuItem>
             <MenuItem onClick={handleViewDetails}>View Details</MenuItem>
           </Menu>
@@ -349,7 +358,7 @@ const Message = ({
                 alignItems: message.type === 'response' ? 'center' : 'flex-end',
               }}
             >
-              <MessageHeader message={message} copySettings={copySettings}/>
+              <MessageHeader message={message} copySettings={copySettings} />
               <MessageDisplay message={message} />
               <MessageFooter message={message} index={index} />
             </CardContent>

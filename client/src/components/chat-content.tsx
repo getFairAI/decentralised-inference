@@ -177,7 +177,12 @@ const ChatContent = ({
             sx={{ paddingTop: '16px' }}
             className='message-container'
           >
-            <Message message={el} index={index} pendingTxs={pendingTxs} copySettings={copySettings} />
+            <Message
+              message={el}
+              index={index}
+              pendingTxs={pendingTxs}
+              copySettings={copySettings}
+            />
             {showDayDivider(el, index)}
           </Container>
         ))}
