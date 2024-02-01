@@ -88,6 +88,7 @@ import useRatingFeedback from '@/hooks/useRatingFeedback';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 4;
+const RADIX = 10;
 
 const InputField = ({
   file,
@@ -632,6 +633,58 @@ const Chat = () => {
       return false;
     }
   };
+
+  const copySettings = useCallback(
+    (promptTags: ITag[]) => {
+      const settingsTags = [
+        TAG_NAMES.generateAssets,
+        TAG_NAMES.assetNames,
+        TAG_NAMES.negativePrompt,
+        TAG_NAMES.description,
+        TAG_NAMES.userCustomTags,
+        TAG_NAMES.nImages,
+        TAG_NAMES.rareweaveConfig,
+      ];
+      const tags = promptTags.filter((tag) => settingsTags.includes(tag.name));
+      const configuration: IConfiguration = {};
+
+      tags.reduce((acc, tag) => {
+        switch (tag.name) {
+          case TAG_NAMES.generateAssets:
+            acc.generateAssets = tag.value as 'fair-protocol' | 'rareweave' | 'none';
+            break;
+          case TAG_NAMES.assetNames:
+            acc.assetNames = JSON.parse(tag.value);
+            break;
+          case TAG_NAMES.negativePrompt:
+            acc.negativePrompt = tag.value;
+            break;
+          case TAG_NAMES.description:
+            acc.description = tag.value;
+            break;
+          case TAG_NAMES.userCustomTags:
+            acc.customTags = JSON.parse(tag.value);
+            break;
+          case TAG_NAMES.nImages:
+            acc.nImages = parseInt(tag.value, RADIX);
+            break;
+          case TAG_NAMES.rareweaveConfig:
+            acc.rareweaveConfig = JSON.parse(tag.value);
+            break;
+          case TAG_NAMES.licenseConfig:
+            acc.licenseConfig = JSON.parse(tag.value);
+            acc.license = JSON.parse(tag.value).license;
+            break;
+          default:
+            break;
+        }
+        return acc;
+      }, configuration);
+
+      configReset(configuration, { keepDefaultValues: true });
+    },
+    [configReset],
+  );
 
   const getConfigValues = useCallback(() => {
     const { generateAssets, description, negativePrompt, nImages } = currentConfig;
@@ -1240,6 +1293,7 @@ const Chat = () => {
                     isWaitingResponse={isWaitingResponse}
                     responseTimeout={responseTimeout}
                     pendingTxs={pendingTxs}
+                    copySettings={copySettings}
                   />
                   <Box ref={messagesEndRef} sx={{ padding: '8px' }} />
                 </Box>

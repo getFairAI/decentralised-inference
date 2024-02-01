@@ -32,6 +32,7 @@ import Message from './message';
 import Transaction from 'arweave/node/lib/transaction';
 import { secondInMS } from '@/constants';
 import { useCallback } from 'react';
+import { ITag } from '@/interfaces/arweave';
 
 const ChatContent = ({
   showError,
@@ -39,12 +40,14 @@ const ChatContent = ({
   isWaitingResponse,
   responseTimeout,
   pendingTxs,
+  copySettings,
 }: {
   showError: boolean;
   messages: IMessage[];
   isWaitingResponse: boolean;
   responseTimeout: boolean;
   pendingTxs: Transaction[];
+  copySettings: (tags: ITag[]) => void;
 }) => {
   const defaultJustifyContent = 'flex-start';
   const theme = useTheme();
@@ -174,7 +177,12 @@ const ChatContent = ({
             sx={{ paddingTop: '16px' }}
             className='message-container'
           >
-            <Message message={el} index={index} pendingTxs={pendingTxs} />
+            <Message
+              message={el}
+              index={index}
+              pendingTxs={pendingTxs}
+              copySettings={copySettings}
+            />
             {showDayDivider(el, index)}
           </Container>
         ))}
