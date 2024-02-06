@@ -25,7 +25,7 @@ const useScroll = (ref: RefObject<HTMLElement>) => {
   const [isTopHalf, setIsTopHalf] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [scrollChanged, setScrollChanged] = useState(false);
-  const [ scrollHeight, setScrollHeight ] = useState(0);
+  const [scrollHeight, setScrollHeight] = useState(0);
 
   const handleScrollEvent = (e: Event) => {
     if (e?.currentTarget) {

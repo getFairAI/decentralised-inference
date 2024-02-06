@@ -213,18 +213,20 @@ const InputField = ({
                   </IconButton>
                 </InputAdornment>
               ),
-              endAdornment: <>
-                <InputAdornment position='start'>{printSize(file)}</InputAdornment>
-                <DebounceIconButton
-                  onClick={handleSendClick}
-                  sx={{
-                    color: theme.palette.neutral.contrastText,
-                  }}
-                  disabled={sendDisabled}
-                >
-                  <SendIcon />
-                </DebounceIconButton>
-              </>,
+              endAdornment: (
+                <>
+                  <InputAdornment position='start'>{printSize(file)}</InputAdornment>
+                  <DebounceIconButton
+                    onClick={handleSendClick}
+                    sx={{
+                      color: theme.palette.neutral.contrastText,
+                    }}
+                    disabled={sendDisabled}
+                  >
+                    <SendIcon />
+                  </DebounceIconButton>
+                </>
+              ),
               sx: {
                 background: theme.palette.background.default,
                 fontStyle: 'normal',
@@ -274,12 +276,15 @@ const InputField = ({
                   title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}
                 >
                   <span>
-                    <IconButton
-                      component='label'
-                      disabled={uploadDisabled}
-                    >
+                    <IconButton component='label' disabled={uploadDisabled}>
                       <AttachFileIcon />
-                      <input type='file' hidden multiple={false} onChange={handleFileUpload}  onBlur={handleFileBlur} />
+                      <input
+                        type='file'
+                        hidden
+                        multiple={false}
+                        onChange={handleFileUpload}
+                        onBlur={handleFileBlur}
+                      />
                     </IconButton>
                   </span>
                 </Tooltip>
@@ -386,22 +391,23 @@ const Chat = () => {
   /**
    * If there is a save element (currentEl) scroll to it to mantain user in same place after load more
    */
-  useEffect(() => currentEl?.scrollIntoView({ behavior: 'smooth'}), [currentEl, scrollHeight]);
+  useEffect(() => currentEl?.scrollIntoView({ behavior: 'smooth' }), [currentEl, scrollHeight]);
 
   useEffect(() => {
     const previousConfig = localStorage.getItem(`config#${state.scriptTransaction}`);
-    const useStableDiffusionConfig = findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
+    const useStableDiffusionConfig =
+      findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
     if (previousConfig) {
       configReset(JSON.parse(previousConfig), { keepDefaultValues: true });
     } else if (useStableDiffusionConfig) {
       const nonSDconfig = {
         ...defaultConfigvalues,
         nImages: undefined,
-        negativePrompt:undefined,
+        negativePrompt: undefined,
       };
       configReset(nonSDconfig, { keepDefaultValues: true });
     }
-  }, [state, configReset ]);
+  }, [state, configReset]);
 
   useEffect(() => {
     if (!_.isEqual(currentConfig, defaultConfigvalues)) {
@@ -411,7 +417,6 @@ const Chat = () => {
     }
   }, [currentConfig]);
 
-  
   const [requestParams, setRequestParams] = useState({
     target,
     scrollableRef,
@@ -513,7 +518,6 @@ const Chat = () => {
           await reqData([...previousResponses, ...newResponses]);
           setMessagesLoading(false);
         })();
-
       } else {
         setMessagesLoading(false);
       }
@@ -525,7 +529,7 @@ const Chat = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else {
       currentEl.scrollIntoView({ behavior: 'smooth' });
-     /*  const heightDif =
+      /*  const heightDif =
         (scrollableRef.current?.scrollHeight || currentEl.scrollHeight) - currentEl.scrollHeight;
       scrollableRef.current?.scroll({ top: heightDif + currentEl.scrollTop, behavior: 'smooth' }); */
       // do not scroll
@@ -613,8 +617,10 @@ const Chat = () => {
         : uniqueMsgs.push(msg),
     );
     if (!_.isEqual(messages, uniqueMsgs)) {
-      setMessages((prev) =>  {
-        const uniqueNewMsgs = _.uniqBy([ ...prev, ...uniqueMsgs ], 'id').filter((el) => el.cid === currentConversationId);
+      setMessages((prev) => {
+        const uniqueNewMsgs = _.uniqBy([...prev, ...uniqueMsgs], 'id').filter(
+          (el) => el.cid === currentConversationId,
+        );
         sortMessages(uniqueNewMsgs);
 
         return uniqueNewMsgs;
@@ -979,7 +985,7 @@ const Chat = () => {
   const reqData = async (allResponses?: IEdge[]) => {
     // slice number of responses = to number of requests
     const previousRequest = requestsData?.transactions?.edges ?? [];
-    let allData = [ ...previousRequest ];
+    let allData = [...previousRequest];
     if (allResponses && allResponses.length > 0) {
       allData = allData.concat(allResponses);
     }
@@ -1002,8 +1008,10 @@ const Chat = () => {
 
     const allnewMessages = [...temp, ...messages];
 
-    setMessages((prev) =>  {
-      const uniqueNewMsgs = _.uniqBy([ ...prev, ...allnewMessages ], 'id').filter((el) => el.cid === currentConversationId);
+    setMessages((prev) => {
+      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
+        (el) => el.cid === currentConversationId,
+      );
       sortMessages(uniqueNewMsgs);
 
       checkIsWaitingResponse(uniqueNewMsgs);
