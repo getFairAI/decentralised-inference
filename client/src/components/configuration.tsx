@@ -78,10 +78,8 @@ const CustomTag = ({
 
 const StableDiffusionConfigurations = ({
   control,
-  setValue,
 }: {
   control: Control<IConfiguration, unknown>;
-  setValue: UseFormSetValue<IConfiguration>;
 }) => {
   const nDigits = 4;
   const defaultImages = 4;
@@ -122,11 +120,6 @@ const StableDiffusionConfigurations = ({
   );
 
   if (!showOutputConfiguration) {
-    // force negative prompt and nImages to be null
-    if (negativePromptField.value) {
-      setValue('negativePrompt', '');
-    }
-    setValue('nImages', 1);
     return null;
   }
 
@@ -310,7 +303,7 @@ const Configuration = ({
           }}
         />
       </Box>
-      <StableDiffusionConfigurations control={control} setValue={setConfigValue} />
+      <StableDiffusionConfigurations control={control} />
       <Box>
         <Divider textAlign='left' variant='fullWidth'>
           <Typography variant='h4'>Transaction Configurations</Typography>
