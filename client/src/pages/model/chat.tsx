@@ -406,6 +406,8 @@ const Chat = () => {
         negativePrompt: undefined,
       };
       configReset(nonSDconfig, { keepDefaultValues: true });
+    } else {
+      // ignore
     }
   }, [state, configReset]);
 
@@ -529,10 +531,6 @@ const Chat = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else {
       currentEl.scrollIntoView({ behavior: 'smooth' });
-      /*  const heightDif =
-        (scrollableRef.current?.scrollHeight || currentEl.scrollHeight) - currentEl.scrollHeight;
-      scrollableRef.current?.scroll({ top: heightDif + currentEl.scrollTop, behavior: 'smooth' }); */
-      // do not scroll
     }
   }, [scrollableHeight, currentEl, messages]);
 
@@ -570,7 +568,7 @@ const Chat = () => {
   }, [responsesPollingData]);
 
   const mapTransactionsToMessages = async (el: IEdge) => {
-    const msgIdx = messages.findIndex((msg) => msg.id === el.node.id);
+    const msgIdx = messages.findIndex((m) => m.id === el.node.id);
 
     const contentType = findTag(el, 'contentType');
     const data =
