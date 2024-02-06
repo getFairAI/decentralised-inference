@@ -102,7 +102,6 @@ const InputField = ({
   handleSendText,
   handleRemoveFile,
   handleMessageChange,
-  handleUploadClick,
   handleFileUpload,
 }: {
   file?: File;
@@ -116,7 +115,6 @@ const InputField = ({
   handleSendText: () => Promise<void>;
   handleRemoveFile: () => void;
   handleMessageChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleUploadClick: () => void;
   handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => void;
 }) => {
   const theme = useTheme();
@@ -191,6 +189,12 @@ const InputField = ({
     }
   };
 
+  const handleFileBlur = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.value === '') {
+      handleRemoveFile();
+    }
+  }, []);
+
   if (loading || file) {
     return (
       <FormControl variant='outlined' fullWidth>
@@ -198,6 +202,9 @@ const InputField = ({
           <TextField
             value={file?.name}
             disabled={disabled}
+            multiline
+            minRows={1}
+            maxRows={3}
             InputProps={{
               startAdornment: (
                 <InputAdornment position='start'>
@@ -206,11 +213,29 @@ const InputField = ({
                   </IconButton>
                 </InputAdornment>
               ),
-              endAdornment: <InputAdornment position='start'>{printSize(file)}</InputAdornment>,
+              endAdornment: (
+                <>
+                  <InputAdornment position='start'>{printSize(file)}</InputAdornment>
+                  <DebounceIconButton
+                    onClick={handleSendClick}
+                    sx={{
+                      color: theme.palette.neutral.contrastText,
+                    }}
+                    disabled={sendDisabled}
+                  >
+                    <SendIcon />
+                  </DebounceIconButton>
+                </>
+              ),
               sx: {
-                borderWidth: '1px',
-                borderColor: theme.palette.text.primary,
-                borderRadius: '23px',
+                background: theme.palette.background.default,
+                fontStyle: 'normal',
+                fontWeight: 400,
+                fontSize: '20px',
+                lineHeight: '16px',
+                width: '100%',
+                marginTop: '10px',
+                borderRadius: '8px',
               },
               readOnly: true,
             }}
@@ -251,13 +276,15 @@ const InputField = ({
                   title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}
                 >
                   <span>
-                    <IconButton
-                      component='label'
-                      disabled={uploadDisabled}
-                      onClick={handleUploadClick}
-                    >
+                    <IconButton component='label' disabled={uploadDisabled}>
                       <AttachFileIcon />
-                      <input type='file' hidden multiple={false} onInput={handleFileUpload} />
+                      <input
+                        type='file'
+                        hidden
+                        multiple={false}
+                        onChange={handleFileUpload}
+                        onBlur={handleFileBlur}
+                      />
                     </IconButton>
                   </span>
                 </Tooltip>
@@ -299,7 +326,6 @@ const Chat = () => {
   } = useContext(WalletContext);
   const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [polledMessages, setPolledMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
   const [pendingTxs] = useState<Transaction[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
@@ -316,13 +342,11 @@ const Chat = () => {
   const theme = useTheme();
   const target = useRef<HTMLDivElement>(null);
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
-  const [currentEl, setCurrentEl] = useState<
-    { scrollTop: number; scrollHeight: number } | undefined
-  >(undefined);
-  const { isNearTop } = useScroll(scrollableRef);
+  const [currentEl, setCurrentEl] = useState<HTMLDivElement | undefined>(undefined);
+  const { isNearTop, scrollHeight } = useScroll(scrollableRef);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [loading, setLoading] = useState(false);
-  const [inputWidth, setInputWidth] = useState(0);
+  const [inputWidth, setInputWidth] = useState('');
   const [inputHeight, setInputHeight] = useState(0);
   const { height: scrollableHeight } = useComponentDimensions(scrollableRef);
   const [drawerOpen, setDrawerOpen] = useState(true);
@@ -331,6 +355,10 @@ const Chat = () => {
   const [requestIds] = useState<string[]>([]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const isStableDiffusion = useMemo(
+    () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
+    [state],
+  );
   const defaultConfigvalues: IConfiguration = {
     assetNames: '',
     generateAssets: 'fair-protocol',
@@ -360,12 +388,28 @@ const Chat = () => {
 
   const currentConfig = useWatch({ control: configControl });
 
+  /**
+   * If there is a save element (currentEl) scroll to it to mantain user in same place after load more
+   */
+  useEffect(() => currentEl?.scrollIntoView({ behavior: 'smooth' }), [currentEl, scrollHeight]);
+
   useEffect(() => {
     const previousConfig = localStorage.getItem(`config#${state.scriptTransaction}`);
+    const useStableDiffusionConfig =
+      findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
     if (previousConfig) {
       configReset(JSON.parse(previousConfig), { keepDefaultValues: true });
+    } else if (useStableDiffusionConfig) {
+      const nonSDconfig = {
+        ...defaultConfigvalues,
+        nImages: undefined,
+        negativePrompt: undefined,
+      };
+      configReset(nonSDconfig, { keepDefaultValues: true });
+    } else {
+      // ignore
     }
-  }, [state]);
+  }, [state, configReset]);
 
   useEffect(() => {
     if (!_.isEqual(currentConfig, defaultConfigvalues)) {
@@ -374,11 +418,6 @@ const Chat = () => {
       localStorage.removeItem(`config#${state.scriptTransaction}`);
     }
   }, [currentConfig]);
-
-  const isStableDiffusion = useMemo(
-    () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
-    [state],
-  );
 
   const [requestParams, setRequestParams] = useState({
     target,
@@ -449,7 +488,7 @@ const Chat = () => {
             requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator')),
           ),
         );
-        (async () => reqData(requestsData.transactions.edges))();
+        (async () => reqData())();
         setResponseParams({
           ...responseParams,
           scriptOperators,
@@ -477,7 +516,10 @@ const Chat = () => {
       );
       if (newResponses.length > 0) {
         setPreviousResponses((prev) => [...prev, ...newResponses]);
-        (async () => reqData([...previousResponses, ...newResponses]))();
+        (async () => {
+          await reqData([...previousResponses, ...newResponses]);
+          setMessagesLoading(false);
+        })();
       } else {
         setMessagesLoading(false);
       }
@@ -488,9 +530,7 @@ const Chat = () => {
     if (!currentEl) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      const heightDif =
-        (scrollableRef.current?.scrollHeight || currentEl.scrollHeight) - currentEl.scrollHeight;
-      scrollableRef.current?.scroll({ top: heightDif + currentEl.scrollTop, behavior: 'smooth' });
+      currentEl.scrollIntoView({ behavior: 'smooth' });
     }
   }, [scrollableHeight, currentEl, messages]);
 
@@ -528,11 +568,11 @@ const Chat = () => {
   }, [responsesPollingData]);
 
   const mapTransactionsToMessages = async (el: IEdge) => {
-    const msgIdx = polledMessages.findIndex((msg) => msg.id === el.node.id);
+    const msgIdx = messages.findIndex((m) => m.id === el.node.id);
 
     const contentType = findTag(el, 'contentType');
     const data =
-      msgIdx <= 0 ? await getData(el.node.id, findTag(el, 'fileName')) : polledMessages[msgIdx].msg;
+      msgIdx <= 0 ? await getData(el.node.id, findTag(el, 'fileName')) : messages[msgIdx].msg;
     const timestamp =
       parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
@@ -559,22 +599,13 @@ const Chat = () => {
     const temp: IMessage[] = [];
     await Promise.all(newData.map(async (el) => temp.push(await mapTransactionsToMessages(el))));
 
-    if (!_.isEqual(temp, polledMessages)) {
-      // only add new polled messages
-      setPolledMessages([
-        ...polledMessages,
-        ...temp.filter((tmp) => !polledMessages.find((el) => el.id === tmp.id)),
-      ]);
-    }
-
-    const uniqueNewMessages = [...polledMessages, ...temp].filter(
+    const uniqueNewMessages = [...messages, ...temp].filter(
       (el) => !messages.find((msg) => msg.id === el.id),
     );
-    const newMessages = [...messages, ...uniqueNewMessages];
 
-    sortMessages(newMessages);
+    sortMessages(uniqueNewMessages);
 
-    const filteredNewMsgs = newMessages.filter((el) => el.cid === currentConversationId);
+    const filteredNewMsgs = uniqueNewMessages.filter((el) => el.cid === currentConversationId);
     const uniqueMsgs: IMessage[] = [];
 
     // filter registratiosn for same model (only keep latest one per operator)
@@ -584,7 +615,14 @@ const Chat = () => {
         : uniqueMsgs.push(msg),
     );
     if (!_.isEqual(messages, uniqueMsgs)) {
-      setMessages(uniqueMsgs);
+      setMessages((prev) => {
+        const uniqueNewMsgs = _.uniqBy([...prev, ...uniqueMsgs], 'id').filter(
+          (el) => el.cid === currentConversationId,
+        );
+        sortMessages(uniqueNewMsgs);
+
+        return uniqueNewMsgs;
+      });
     }
     // find latest request
     const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
@@ -609,17 +647,18 @@ const Chat = () => {
     }
   };
 
-  const checkCanSend = (dataSize: number) => {
+  const checkCanSend = (dataSize: number, isFile = false) => {
     try {
       if (!currentConversationId) {
         enqueueSnackbar('Missing COnversation Id', { variant: 'error' });
         return false;
       }
 
-      if (dataSize > MAX_MESSAGE_SIZE) {
+      if (!isFile && dataSize > MAX_MESSAGE_SIZE) {
         enqueueSnackbar('Message Too Long', { variant: 'error' });
         return false;
       }
+
       const actualFee =
         currentConfig.nImages && isStableDiffusion ? state.fee * currentConfig.nImages : state.fee;
       if (currentUBalance < parseUBalance(actualFee)) {
@@ -773,7 +812,7 @@ const Chat = () => {
 
     const dataSize = file.size;
 
-    if (!checkCanSend(dataSize)) {
+    if (!checkCanSend(dataSize, true)) {
       return;
     }
 
@@ -807,7 +846,7 @@ const Chat = () => {
         return;
       }
       await updateMessages(txid, content, contentType, tags);
-      /* await warp.register(txid, 'node2'); */ // remove registering with bundlr
+      /* await warp.register(txid, 'arweave'); */
       const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
         txid,
         state.fee,
@@ -875,7 +914,7 @@ const Chat = () => {
         return;
       }
       await updateMessages(txid, newMessage, contentType, tags);
-      /* await warp.register(txid, 'node2'); */
+      /* await warp.register(txid, 'arweave'); */
       const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
         txid,
         state.fee,
@@ -941,10 +980,13 @@ const Chat = () => {
     }
   };
 
-  const reqData = async (allResponses: IEdge[]) => {
+  const reqData = async (allResponses?: IEdge[]) => {
     // slice number of responses = to number of requests
     const previousRequest = requestsData?.transactions?.edges ?? [];
-    const allData = [...previousRequest, ...allResponses];
+    let allData = [...previousRequest];
+    if (allResponses && allResponses.length > 0) {
+      allData = allData.concat(allResponses);
+    }
 
     const filteredData = allData.filter((el: IEdge) => {
       const cid = findTag(el, 'conversationIdentifier');
@@ -962,29 +1004,17 @@ const Chat = () => {
       filteredData.map(async (el: IEdge) => temp.push(await mapTransactionsToMessages(el))),
     );
 
-    const uniquePolledMessages = polledMessages.filter(
-      (el) => !messages.find((msg) => msg.id === el.id) && !temp.find((msg) => msg.id === el.id),
-    );
-    const newMessages = [...temp, ...uniquePolledMessages];
-    sortMessages(newMessages);
+    const allnewMessages = [...temp, ...messages];
 
-    const filteredNewMsgs = newMessages.filter((el) => el.cid === currentConversationId);
-    // remove duplicates
-    const uniqueMsgs: IMessage[] = [];
+    setMessages((prev) => {
+      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
+        (el) => el.cid === currentConversationId,
+      );
+      sortMessages(uniqueNewMsgs);
 
-    // filter registratiosn for same model (only keep latest one per operator)
-    filteredNewMsgs.forEach((msg: IMessage) =>
-      uniqueMsgs.filter((unique) => unique.id === msg.id).length > 0
-        ? undefined
-        : uniqueMsgs.push(msg),
-    );
-    if (!_.isEqual(uniqueMsgs, messages)) {
-      setMessages(uniqueMsgs);
-    }
-
-    checkIsWaitingResponse(filteredNewMsgs);
-    // find latest request
-    setMessagesLoading(false);
+      checkIsWaitingResponse(uniqueNewMsgs);
+      return uniqueNewMsgs;
+    });
   };
 
   const emptyPolling = async () => {
@@ -1026,6 +1056,7 @@ const Chat = () => {
         const newFile = event.target.files[0];
         const fr = new FileReader();
         setFile(newFile);
+        setLoading(true);
         fr.addEventListener('load', onFileLoad(fr, newFile));
         fr.addEventListener('error', onFileError(fr, newFile));
         fr.readAsArrayBuffer(newFile);
@@ -1037,8 +1068,6 @@ const Chat = () => {
     [file, setFile, setLoading, onFileError, onFileLoad],
   );
 
-  const handleUploadClick = useCallback(() => setLoading(true), [setLoading]);
-
   const handleRemoveFile = useCallback(() => {
     setFile(undefined);
   }, [setFile]);
@@ -1049,7 +1078,7 @@ const Chat = () => {
   );
 
   useLayoutEffect(() => {
-    setInputWidth(chatWidth);
+    setInputWidth(`calc(${chatWidth}px - 16px)`);
   }, [chatWidth]);
 
   useLayoutEffect(() => {
@@ -1095,10 +1124,9 @@ const Chat = () => {
       updateQuery: commonUpdateQuery,
     });
     setMessagesLoading(true);
-    setCurrentEl({
-      scrollTop: scrollableRef.current?.scrollTop as number,
-      scrollHeight: scrollableRef.current?.scrollHeight as number,
-    });
+    const oldestMessage = document.querySelectorAll('.message-container')[0]; // first message on html is the oldest
+
+    setCurrentEl(oldestMessage as HTMLDivElement);
   }, [requestFetchMore, requestsData]);
 
   return (
@@ -1263,7 +1291,7 @@ const Chat = () => {
                     sx={{
                       position: 'absolute',
                       top: '40px',
-                      width: chatWidth,
+                      width: inputWidth,
                     }}
                   >
                     <Fab
@@ -1309,7 +1337,7 @@ const Chat = () => {
                 position: 'absolute',
                 margin: '8px 0px',
                 width: inputWidth,
-                paddingRight: '24px',
+                paddingRight: '8px',
                 paddingLeft: '8px',
               }}
             >
@@ -1331,7 +1359,6 @@ const Chat = () => {
                 inputRef={inputRef}
                 handleAdvanced={handleAdvanced}
                 handleFileUpload={handleFileUpload}
-                handleUploadClick={handleUploadClick}
                 handleRemoveFile={handleRemoveFile}
                 handleSendFile={handleSendFile}
                 handleSendText={handleSendText}

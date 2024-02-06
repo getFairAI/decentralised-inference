@@ -126,9 +126,14 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
               <InputAdornment position='start'>{printSize(content as File)}</InputAdornment>
             ),
             sx: {
-              borderWidth: '1px',
-              borderColor: theme.palette.text.primary,
-              borderRadius: '23px',
+              background: theme.palette.background.default,
+              fontStyle: 'normal',
+              fontWeight: 400,
+              fontSize: '20px',
+              lineHeight: '16px',
+              width: '100%',
+              marginTop: '10px',
+              borderRadius: '8px',
             },
             readOnly: true,
           }}
