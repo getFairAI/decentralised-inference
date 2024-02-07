@@ -58,6 +58,8 @@ import useModels from '@/hooks/useModels';
 
 type EdgeWithStatus = IEdge & { status: string };
 
+const justifyContent = 'space-between';
+
 const WalletnotConnectedContent = () => {
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const handleClick = useCallback(() => setChooseWalletOpen(true), [setChooseWalletOpen]);
@@ -110,13 +112,15 @@ const WalletNoFundsContent = () => {
   const [activeStep, setActiveStep] = useState(1);
   const navigate = useNavigate();
 
-  const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
-  
-  const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
+  const handleNext = useCallback(
+    () => setActiveStep((prevActiveStep) => prevActiveStep + 1),
+    [setActiveStep],
+  );
+
+  const handleBack = useCallback(
+    () => setActiveStep((prevActiveStep) => prevActiveStep - 1),
+    [setActiveStep],
+  );
 
   const handleSkip = useCallback(() => navigate('/'), [navigate]);
 
@@ -153,7 +157,7 @@ const WalletNoFundsContent = () => {
             <Typography fontWeight={'700'}>Top Up AR Balance</Typography>
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
-            <Box display={'flex'} width={'100%'} justifyContent={'space-between'} mt={'16px'}>
+            <Box display={'flex'} width={'100%'} justifyContent={justifyContent} mt={'16px'}>
               <NumericFormat
                 label='Available AR Balance'
                 placeholder='Available AR Balance'
@@ -224,7 +228,7 @@ const WalletNoFundsContent = () => {
                 <Divider textAlign='left'>
                   <Typography>Last Pending Transaction</Typography>
                 </Divider>
-                <Box display={'flex'} justifyContent={'space-between'} mt={'16px'}>
+                <Box display={'flex'} justifyContent={justifyContent} mt={'16px'}>
                   <Box sx={{ display: 'flex', fontWeight: 500, gap: '8px' }}>
                     <Typography>ID:</Typography>
                     <Typography>
@@ -258,7 +262,7 @@ const WalletNoFundsContent = () => {
             <Typography fontWeight={'700'}>Top Up $U Balance</Typography>
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
-            <Box display={'flex'} width={'100%'} justifyContent={'space-between'} mt={'16px'}>
+            <Box display={'flex'} width={'100%'} justifyContent={justifyContent} mt={'16px'}>
               <NumericFormat
                 label='Available $U Balance'
                 placeholder='Available $U Balance'
@@ -304,11 +308,11 @@ const WalletNoFundsContent = () => {
                 <InfoOutlinedIcon color='warning' fontSize='large' sx={{ mt: '8px' }} />
               )}
             </Box>
-            <Box display={'flex'} justifyContent={'space-between'} mt={'48px'}>
+            <Box display={'flex'} justifyContent={justifyContent} mt={'48px'}>
               <Button sx={{ mt: 1, mr: 1 }} onClick={handleBack} variant='outlined'>
                 Top Up AR
               </Button>
-              <Button sx={{ mt: 1, mr: 1 }} variant='contained'onClick={handleSkip}>
+              <Button sx={{ mt: 1, mr: 1 }} variant='contained' onClick={handleSkip}>
                 Explore marketplace
               </Button>
             </Box>

@@ -388,17 +388,16 @@ const Chat = () => {
 
   const currentConfig = useWatch({ control: configControl });
 
-  useEffect(() => console.log(messages), [messages]);
   /**
    * If there is a save element (currentEl) scroll to it to mantain user in same place after load more
    */
   useEffect(() => {
-    if(currentEl) {
+    if (currentEl) {
       currentEl?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
     } else {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [ scrollHeight, currentEl, messagesEndRef ]);
+  }, [scrollHeight, currentEl, messagesEndRef]);
 
   useEffect(() => {
     const previousConfig = localStorage.getItem(`config#${state.scriptTransaction}`);
@@ -608,8 +607,10 @@ const Chat = () => {
         return false;
       }
     });
-    
-    await Promise.all(filteredData.map(async (el) => temp.push(await mapTransactionsToMessages(el))));
+
+    await Promise.all(
+      filteredData.map(async (el) => temp.push(await mapTransactionsToMessages(el))),
+    );
 
     const allnewMessages = [...temp, ...messages];
     setMessages((prev) => {
@@ -1151,7 +1152,7 @@ const Chat = () => {
               top: headerHeight,
               height: '100%',
               border: 'none',
-              position: 'static'
+              position: 'static',
             },
           }}
         >

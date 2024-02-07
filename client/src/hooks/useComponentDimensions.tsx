@@ -19,7 +19,11 @@
 import { useState, useEffect, RefObject, useRef } from 'react';
 
 const useComponentDimensions = (ref?: RefObject<HTMLElement>) => {
-  const [componentDimensions, setComponentDimensions] = useState({ width: 0, height: 0, scrollHeight: 0 });
+  const [componentDimensions, setComponentDimensions] = useState({
+    width: 0,
+    height: 0,
+    scrollHeight: 0,
+  });
   const observerRef = useRef<ResizeObserver>();
 
   useEffect(() => {
