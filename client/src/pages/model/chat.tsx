@@ -1149,8 +1149,9 @@ const Chat = () => {
               width: '240px',
               boxSizing: 'border-box',
               top: headerHeight,
-              height: `calc(100% - ${headerHeight})`,
+              height: '100%',
               border: 'none',
+              position: 'static'
             },
           }}
         >

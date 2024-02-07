@@ -296,3 +296,5 @@ export const BUY_AR_LINK_US = 'https://ar-io.dev/TOrDCeHz8sb6EAPR2cms2a-vXodOKeM
 
 export const IRYS_TXS_EXPLORER = 'https://explorer.irys.xyz/transactions';
 export const WARP_ASSETS_EXPLORER = 'https://sonar.warp.cc/#/app/contract';
+
+export const MIN_U_BALANCE = 1;
