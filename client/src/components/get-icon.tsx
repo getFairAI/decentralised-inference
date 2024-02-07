@@ -20,10 +20,10 @@ import { GitHub, Article, Settings, Twitter, Logout } from '@mui/icons-material'
 import { SvgIcon, useTheme } from '@mui/material';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import GavelIcon from '@mui/icons-material/Gavel';
+import PaymentIcon from '@mui/icons-material/Payment';
 
 type Props = {
   input: string;
@@ -39,8 +39,8 @@ const GetIcon = ({ input }: Props): JSX.Element => {
       return <DashboardIcon></DashboardIcon>;
     case 'Bundlr Settings':
       return <Settings></Settings>;
-    case 'U Swap':
-      return <SwapHorizIcon></SwapHorizIcon>;
+    case 'Top Up':
+      return <PaymentIcon></PaymentIcon>;
     case 'Whitepaper':
       return <Article></Article>;
     case 'Github':
