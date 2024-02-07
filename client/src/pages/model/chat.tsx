@@ -343,12 +343,12 @@ const Chat = () => {
   const target = useRef<HTMLDivElement>(null);
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
   const [currentEl, setCurrentEl] = useState<HTMLDivElement | undefined>(undefined);
-  const { isNearTop, scrollHeight } = useScroll(scrollableRef);
+  const { isNearTop } = useScroll(scrollableRef);
+  const { scrollHeight } = useComponentDimensions(scrollableRef);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState('');
   const [inputHeight, setInputHeight] = useState(0);
-  const { height: scrollableHeight } = useComponentDimensions(scrollableRef);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
@@ -391,7 +391,13 @@ const Chat = () => {
   /**
    * If there is a save element (currentEl) scroll to it to mantain user in same place after load more
    */
-  useEffect(() => currentEl?.scrollIntoView({ behavior: 'smooth' }), [currentEl, scrollHeight]);
+  useEffect(() => {
+    if (currentEl) {
+      currentEl?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [scrollHeight, currentEl, messagesEndRef]);
 
   useEffect(() => {
     const previousConfig = localStorage.getItem(`config#${state.scriptTransaction}`);
@@ -526,16 +532,9 @@ const Chat = () => {
     }
   }, [responsesData, responseNetworkStatus]);
 
-  useLayoutEffect(() => {
-    if (!currentEl) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      currentEl.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [scrollableHeight, currentEl, messages]);
-
   useEffect(() => {
     if (currentConversationId) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       setCurrentEl(undefined);
       setPreviousResponses([]); // clear previous responses
       setIsWaitingResponse(false);
@@ -597,54 +596,32 @@ const Chat = () => {
 
   const asyncMap = async (newData: IEdge[]) => {
     const temp: IMessage[] = [];
-    await Promise.all(newData.map(async (el) => temp.push(await mapTransactionsToMessages(el))));
 
-    const uniqueNewMessages = [...messages, ...temp].filter(
-      (el) => !messages.find((msg) => msg.id === el.id),
-    );
-
-    sortMessages(uniqueNewMessages);
-
-    const filteredNewMsgs = uniqueNewMessages.filter((el) => el.cid === currentConversationId);
-    const uniqueMsgs: IMessage[] = [];
-
-    // filter registratiosn for same model (only keep latest one per operator)
-    filteredNewMsgs.forEach((msg: IMessage) =>
-      uniqueMsgs.filter((unique) => unique.id === msg.id).length > 0
-        ? undefined
-        : uniqueMsgs.push(msg),
-    );
-    if (!_.isEqual(messages, uniqueMsgs)) {
-      setMessages((prev) => {
-        const uniqueNewMsgs = _.uniqBy([...prev, ...uniqueMsgs], 'id').filter(
-          (el) => el.cid === currentConversationId,
-        );
-        sortMessages(uniqueNewMsgs);
-
-        return uniqueNewMsgs;
-      });
-    }
-    // find latest request
-    const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
-    if (lastRequest) {
-      const responses = filteredNewMsgs.filter(
-        (el) =>
-          el.type === 'response' &&
-          el.tags.find((tag) => tag.name === TAG_NAMES.requestTransaction)?.value ===
-            lastRequest.id,
-      );
-      const nImages = lastRequest.tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value;
-      if (nImages && isStableDiffusion) {
-        setIsWaitingResponse(responses.length < parseInt(nImages, 10));
-        setResponseTimeout(false);
-      } else if (isStableDiffusion) {
-        setIsWaitingResponse(responses.length < DEFAULT_N_IMAGES);
-        setResponseTimeout(false);
+    const filteredData = newData.filter((el: IEdge) => {
+      const cid = findTag(el, 'conversationIdentifier');
+      if (cid && cid.split('-').length > 1) {
+        return parseInt(cid.split('-')[1], 10) === currentConversationId;
+      } else if (cid) {
+        return parseInt(cid, 10) === currentConversationId;
       } else {
-        setIsWaitingResponse(responses.length < 1);
-        setResponseTimeout(false);
+        return false;
       }
-    }
+    });
+
+    await Promise.all(
+      filteredData.map(async (el) => temp.push(await mapTransactionsToMessages(el))),
+    );
+
+    const allnewMessages = [...temp, ...messages];
+    setMessages((prev) => {
+      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
+        (el) => el.cid === currentConversationId,
+      );
+      sortMessages(uniqueNewMsgs);
+
+      checkIsWaitingResponse(uniqueNewMsgs);
+      return uniqueNewMsgs;
+    });
   };
 
   const checkCanSend = (dataSize: number, isFile = false) => {
@@ -970,8 +947,7 @@ const Chat = () => {
         setIsWaitingResponse(responses.length < parseInt(nImages, 10));
         setResponseTimeout(false);
       } else if (isStableDiffusion) {
-        const defaultNImages = 4;
-        setIsWaitingResponse(responses.length < defaultNImages);
+        setIsWaitingResponse(responses.length < DEFAULT_N_IMAGES);
         setResponseTimeout(false);
       } else {
         setIsWaitingResponse(responses.length < 1);
@@ -981,7 +957,6 @@ const Chat = () => {
   };
 
   const reqData = async (allResponses?: IEdge[]) => {
-    // slice number of responses = to number of requests
     const previousRequest = requestsData?.transactions?.edges ?? [];
     let allData = [...previousRequest];
     if (allResponses && allResponses.length > 0) {
@@ -1175,8 +1150,9 @@ const Chat = () => {
               width: '240px',
               boxSizing: 'border-box',
               top: headerHeight,
-              height: `calc(100% - ${headerHeight})`,
+              height: '100%',
               border: 'none',
+              position: 'static',
             },
           }}
         >
@@ -1323,7 +1299,7 @@ const Chat = () => {
                     pendingTxs={pendingTxs}
                     copySettings={copySettings}
                   />
-                  <Box ref={messagesEndRef} sx={{ padding: '8px' }} />
+                  <Box ref={messagesEndRef} sx={{ padding: '1px' }} />
                 </Box>
               </Paper>
             </Box>

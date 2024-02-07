@@ -22,6 +22,7 @@ import {
   BUY_AR_LINK_US,
   BUY_U_LINK,
   CREATE_WALLET_LINK,
+  MIN_U_BALANCE,
   U_LOGO_SRC,
 } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
@@ -56,6 +57,8 @@ import AiCard from '@/components/ai-card';
 import useModels from '@/hooks/useModels';
 
 type EdgeWithStatus = IEdge & { status: string };
+
+const justifyContent = 'space-between';
 
 const WalletnotConnectedContent = () => {
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
@@ -106,12 +109,18 @@ const WalletNoFundsContent = () => {
   const theme = useTheme();
   const { currentAddress, currentBalance, currentUBalance } = useContext(WalletContext);
   const [lastTx, setLastTx] = useState<EdgeWithStatus | null>(null);
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(1);
   const navigate = useNavigate();
 
-  const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
+  const handleNext = useCallback(
+    () => setActiveStep((prevActiveStep) => prevActiveStep + 1),
+    [setActiveStep],
+  );
+
+  const handleBack = useCallback(
+    () => setActiveStep((prevActiveStep) => prevActiveStep - 1),
+    [setActiveStep],
+  );
 
   const handleSkip = useCallback(() => navigate('/'), [navigate]);
 
@@ -145,10 +154,10 @@ const WalletNoFundsContent = () => {
       >
         <Step sx={{ width: '100%' }}>
           <StepLabel>
-            <Typography fontWeight={'700'}>Check AR Balance</Typography>
+            <Typography fontWeight={'700'}>Top Up AR Balance</Typography>
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
-            <Box display={'flex'} width={'100%'} justifyContent={'space-between'}>
+            <Box display={'flex'} width={'100%'} justifyContent={justifyContent} mt={'16px'}>
               <NumericFormat
                 label='Available AR Balance'
                 placeholder='Available AR Balance'
@@ -219,7 +228,7 @@ const WalletNoFundsContent = () => {
                 <Divider textAlign='left'>
                   <Typography>Last Pending Transaction</Typography>
                 </Divider>
-                <Box display={'flex'} justifyContent={'space-between'} mt={'16px'}>
+                <Box display={'flex'} justifyContent={justifyContent} mt={'16px'}>
                   <Box sx={{ display: 'flex', fontWeight: 500, gap: '8px' }}>
                     <Typography>ID:</Typography>
                     <Typography>
@@ -241,19 +250,19 @@ const WalletNoFundsContent = () => {
                 </Box>
               </Box>
             )}
-            <Box display={'flex'} justifyContent={'flex-end'} mt={'16px'}>
-              <Button variant='contained' onClick={handleNext}>
-                Next
+            <Box display={'flex'} justifyContent={'flex-end'} mt={'48px'}>
+              <Button variant='contained' onClick={handleNext} sx={{ mt: 1, mr: 1 }}>
+                Top Up $U
               </Button>
             </Box>
           </StepContent>
         </Step>
         <Step>
           <StepLabel>
-            <Typography fontWeight={'700'}>Check $U Balance</Typography>
+            <Typography fontWeight={'700'}>Top Up $U Balance</Typography>
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
-            <Box display={'flex'} width={'100%'} justifyContent={'space-between'}>
+            <Box display={'flex'} width={'100%'} justifyContent={justifyContent} mt={'16px'}>
               <NumericFormat
                 label='Available $U Balance'
                 placeholder='Available $U Balance'
@@ -282,7 +291,7 @@ const WalletNoFundsContent = () => {
                         noWrap
                       >
                         <InfoOutlined />
-                        Looking for a way to get U?
+                        Looking for a way to get $U?
                       </Typography>
                       <Typography alignItems={'center'} color='primary' noWrap>
                         <a href={BUY_U_LINK} target='_blank' rel='noreferrer'>
@@ -293,14 +302,17 @@ const WalletNoFundsContent = () => {
                   </>
                 }
               />
-              {currentUBalance > 0 ? (
+              {currentUBalance >= MIN_U_BALANCE ? (
                 <CheckCircleOutlineIcon color='success' fontSize='large' sx={{ mt: '8px' }} />
               ) : (
                 <InfoOutlinedIcon color='warning' fontSize='large' sx={{ mt: '8px' }} />
               )}
             </Box>
-            <Box display={'flex'} justifyContent={'flex-end'} mt={'16px'}>
-              <Button sx={{ mt: 1, mr: 1 }} variant='outlined' onClick={handleSkip}>
+            <Box display={'flex'} justifyContent={justifyContent} mt={'48px'}>
+              <Button sx={{ mt: 1, mr: 1 }} onClick={handleBack} variant='outlined'>
+                Top Up AR
+              </Button>
+              <Button sx={{ mt: 1, mr: 1 }} variant='contained' onClick={handleSkip}>
                 Explore marketplace
               </Button>
             </Box>
@@ -367,9 +379,9 @@ const SignIn = () => {
     >
       {!isConnected && <WalletnotConnectedContent />}
 
-      {isConnected && (currentUBalance <= 1 || isSwap) && <WalletNoFundsContent />}
+      {isConnected && (currentUBalance < MIN_U_BALANCE || isSwap) && <WalletNoFundsContent />}
 
-      {!isSwap && isConnected && currentUBalance > 1 && <SinginWithFunds />}
+      {!isSwap && isConnected && currentUBalance >= MIN_U_BALANCE && <SinginWithFunds />}
 
       <IconButton
         sx={{

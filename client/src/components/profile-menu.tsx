@@ -31,7 +31,7 @@ import { useState, useContext, MouseEvent, useCallback, Dispatch } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const changeWallet = 'Change Wallet';
-const uSwap = 'U Swap';
+const uSwap = 'Top Up';
 const viewPayments = 'View Payments';
 const viewTerms = 'Terms And Conditions';
 const options = [

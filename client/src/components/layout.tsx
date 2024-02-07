@@ -25,6 +25,7 @@ import useScroll from '@/hooks/useScroll';
 import { WalletContext } from '@/context/wallet';
 import { Link, useLocation } from 'react-router-dom';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
+import { MIN_U_BALANCE } from '@/constants';
 
 const WarningMessage = () => {
   const { currentAddress, currentUBalance } = useContext(WalletContext);
@@ -39,12 +40,12 @@ const WarningMessage = () => {
         </Link>
       </Typography>
     );
-  } else if (!localStorage.getItem('wallet') && currentUBalance <= 0) {
+  } else if (currentAddress && currentUBalance < MIN_U_BALANCE) {
     return (
-      <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
-        Insufficient $U balance, some functionalities will not be available.{' '}
-        <Link to={'/sign-in'}>
-          <u>Click here to Get $U</u>
+      <Typography padding={'2px 32px'} sx={{ background: theme.palette.warning.main }}>
+        Looks Like you are running low on $U balance,{' '}
+        <Link to={'/swap'}>
+          <u>Click here to Top Up $U</u>
         </Link>
       </Typography>
     );
