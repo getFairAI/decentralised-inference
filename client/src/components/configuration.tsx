@@ -32,6 +32,10 @@ import {
   Radio,
   RadioGroup,
   Button,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
@@ -88,6 +92,8 @@ const StableDiffusionConfigurations = ({
   const [cost, setCost] = useState(0);
   const [usdCost, setUsdCost] = useState(0);
   const [currentArPrice, setCurrentArPrice] = useState(0);
+  const [ showCustomAspectRatio, setShowCustomAspectRatio ] = useState(false);
+
   const showOutputConfiguration = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
     [state],
@@ -95,6 +101,8 @@ const StableDiffusionConfigurations = ({
 
   const { field: negativePromptField } = useController({ control, name: 'negativePrompt' });
   const { field: nImagesField } = useController({ control, name: 'nImages' });
+  const { field: widthField } = useController({ control, name: 'width' });
+  const { field: heightField } = useController({ control, name: 'height' });
 
   useEffect(() => {
     (async () => {
@@ -119,6 +127,38 @@ const StableDiffusionConfigurations = ({
     [nImagesField, state, currentArPrice, setCost, setUsdCost, parseUBalance],
   );
 
+  const handleAspectRatioChange = useCallback(
+    (event: SelectChangeEvent) => {
+      switch (event.target.value) {
+        case 'Portrait':
+          setShowCustomAspectRatio(false);
+          widthField.onChange('768');
+          heightField.onChange('1152');
+          break;
+        case 'Landscape':
+          setShowCustomAspectRatio(false);
+          widthField.onChange('1152');
+          heightField.onChange('768');
+          break;
+        case 'Square':
+          setShowCustomAspectRatio(false);
+          widthField.onChange('1024');
+          heightField.onChange('1024');
+          break;
+        case 'Custom':
+          setShowCustomAspectRatio(true);
+          break;
+        default:
+          setShowCustomAspectRatio(false);
+          widthField.onChange('');
+          heightField.onChange('');
+          break;
+      }
+    },
+    [nImagesField, state, currentArPrice, setCost, setUsdCost, parseUBalance],
+  );
+
+
   if (!showOutputConfiguration) {
     return null;
   }
@@ -141,6 +181,38 @@ const StableDiffusionConfigurations = ({
         maxRows={5}
         fullWidth
       />
+      <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
+        <FormControl fullWidth margin='none'>
+          <InputLabel>{'Aspect Ratio'}</InputLabel>
+          <Select
+            label={'Aspect Ratio'}
+            onChange={handleAspectRatioChange}
+            defaultValue='Default'
+          >
+            <MenuItem value={'Default'}>{'Default'}</MenuItem>
+            <MenuItem value={'Portrait'}>{'Portrait (768x1152)'}</MenuItem>
+            <MenuItem value={'Landscape'}>{'Landscape (1152x768)'}</MenuItem>
+            <MenuItem value={'Square'}>{'Square (1024x1024)'}</MenuItem>
+            <MenuItem value={'Custom'}>{'Custom'}</MenuItem>
+          </Select>
+        </FormControl>
+        {showCustomAspectRatio && <Box display={'flex'} gap={'8px'}>
+          <TextField
+            label={'Width'}
+            onChange={widthField.onChange} // send value to hook form
+            onBlur={widthField.onBlur} // notify when input is touched/blur
+            value={widthField.value}
+            inputRef={widthField.ref} // send input ref, so we can focus on input when error appear
+          />
+          <TextField
+            label={'Height'}
+            onChange={heightField.onChange} // send value to hook form
+            onBlur={heightField.onBlur} // notify when input is touched/blur
+            value={heightField.value}
+            inputRef={heightField.ref} // send input ref, so we can focus on input when error appear
+          />
+        </Box>}
+      </Box>
       <Box
         sx={{
           marginLeft: '16px',
