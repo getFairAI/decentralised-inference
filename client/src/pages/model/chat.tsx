@@ -365,6 +365,8 @@ const Chat = () => {
     negativePrompt: '',
     description: '',
     customTags: [],
+    width: 0,
+    height: 0,
     nImages: DEFAULT_N_IMAGES,
     rareweaveConfig: {
       royalty: 0,
@@ -709,6 +711,8 @@ const Chat = () => {
       : undefined;
     const customTags = (currentConfig.customTags as { name: string; value: string }[]) ?? [];
     const royalty = currentConfig.rareweaveConfig?.royalty;
+    const width = currentConfig.width;
+    const height = currentConfig.height;
 
     return {
       generateAssets,
@@ -717,6 +721,8 @@ const Chat = () => {
       description,
       customTags,
       nImages,
+      width,
+      height,
       ...(royalty && {
         rareweaveConfig: {
           royalty: royalty / 100,

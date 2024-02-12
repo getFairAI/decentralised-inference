@@ -36,6 +36,7 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
+  InputAdornment,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
@@ -132,26 +133,26 @@ const StableDiffusionConfigurations = ({
       switch (event.target.value) {
         case 'Portrait':
           setShowCustomAspectRatio(false);
-          widthField.onChange('768');
-          heightField.onChange('1152');
+          widthField.onChange(768);
+          heightField.onChange(1152);
           break;
         case 'Landscape':
           setShowCustomAspectRatio(false);
-          widthField.onChange('1152');
-          heightField.onChange('768');
+          widthField.onChange(1152);
+          heightField.onChange(768);
           break;
         case 'Square':
           setShowCustomAspectRatio(false);
-          widthField.onChange('1024');
-          heightField.onChange('1024');
+          widthField.onChange(1024);
+          heightField.onChange(1024);
           break;
         case 'Custom':
           setShowCustomAspectRatio(true);
           break;
         default:
           setShowCustomAspectRatio(false);
-          widthField.onChange('');
-          heightField.onChange('');
+          widthField.onChange(0);
+          heightField.onChange(0);
           break;
       }
     },
@@ -197,19 +198,37 @@ const StableDiffusionConfigurations = ({
           </Select>
         </FormControl>
         {showCustomAspectRatio && <Box display={'flex'} gap={'8px'}>
-          <TextField
+          <NumericFormat
             label={'Width'}
+            customInput={TextField}
+            allowNegative={false}
+            decimalScale={0}
             onChange={widthField.onChange} // send value to hook form
             onBlur={widthField.onBlur} // notify when input is touched/blur
             value={widthField.value}
             inputRef={widthField.ref} // send input ref, so we can focus on input when error appear
+            defaultValue={0}
+            maxLength={4}
+            type='text'
+            InputProps={{
+              endAdornment: <InputAdornment position="end">px</InputAdornment>,
+            }}
           />
-          <TextField
+          <NumericFormat
             label={'Height'}
+            customInput={TextField}
+            allowNegative={false}
+            decimalScale={0}
             onChange={heightField.onChange} // send value to hook form
             onBlur={heightField.onBlur} // notify when input is touched/blur
             value={heightField.value}
             inputRef={heightField.ref} // send input ref, so we can focus on input when error appear
+            defaultValue={0}
+            maxLength={4}
+            type='text'
+            InputProps={{
+              endAdornment: <InputAdornment position="end">px</InputAdornment>,
+            }}
           />
         </Box>}
       </Box>
