@@ -186,7 +186,6 @@ const UserFeedback = ({
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
       maxWidth={'sm'}
       fullWidth
       sx={{
