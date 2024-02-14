@@ -58,7 +58,7 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
     }
   }, [data]);
 
-  const owner = useMemo(() => findTag(model, 'sequencerOwner'), [model]);
+  const owner = useMemo(() => findTag(model, 'sequencerOwner') ?? model.node.owner.address, [model]);
 
   useEffect(() => {
     const modelId = findTag(model, 'modelTransaction');

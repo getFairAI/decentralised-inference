@@ -163,7 +163,8 @@ const ChooseScript = ({
             findTagsWithKeyword(el, [TAG_NAMES.scriptName], filterValue) ||
             (findTag(el, 'sequencerOwner') as string)
               .toLowerCase()
-              .includes(filterValue.toLowerCase().trim()),
+              .includes(filterValue.toLowerCase().trim()) ||
+            el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
         ),
       );
       setFiltering(false);

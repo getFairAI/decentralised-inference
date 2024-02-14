@@ -77,7 +77,7 @@ const OperatorRow = ({
   const nDigits = 4;
   const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
 
-  const scriptCurator = useMemo(() => findTag(state, 'sequencerOwner') as string, [state]);
+  const scriptCurator = useMemo(() => findTag(state, 'sequencerOwner') as string ?? state.node.owner.address, [state]);
   const scriptName = useMemo(() => findTag(state, 'scriptName') as string, [state]);
   const scriptTransaction = useMemo(() => findTag(state, 'scriptTransaction') as string, [state]);
   const [usdFee, setUsdFee] = useState(0);

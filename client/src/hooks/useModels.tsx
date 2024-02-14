@@ -112,13 +112,13 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
       (async () => {
         await fetchMore({
           variables: {
-            after: txs.length > 0 ? txs[txs.length - 1].cursor : undefined,
+            after: data.transactions.edges.length > 0 ? data.transactions.edges[data.transactions.edges.length - 1].cursor : undefined,
           },
           updateQuery: commonUpdateQuery,
         });
       })();
     }
-  }, [isOnScreen, txs]);
+  }, [isOnScreen, data]);
 
   return {
     loading: loadingOrFiltering,
