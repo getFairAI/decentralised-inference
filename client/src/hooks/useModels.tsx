@@ -118,7 +118,7 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
         });
       })();
     }
-  }, [isOnScreen, data]);
+  }, [ isOnScreen, data, hasNextPage ]);
 
   return {
     loading: loadingOrFiltering,
