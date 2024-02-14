@@ -36,6 +36,7 @@ import ChangeOperator from './pages/model/change-operator';
 import SignIn from './pages/sign-in';
 import WalletGuard from './guards/wallet';
 import Terms from './pages/terms';
+import TermsAgreement from './guards/terms-agreement';
 
 const router = createHashRouter([
   {
@@ -74,7 +75,9 @@ const router = createHashRouter([
         element: (
           <BlockOperatorGuard>
             <WalletGuard>
-              <Chat />
+              <TermsAgreement>
+                <Chat />
+              </TermsAgreement>
             </WalletGuard>
           </BlockOperatorGuard>
         ),
