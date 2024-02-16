@@ -133,21 +133,18 @@ const StableDiffusionConfigurations = ({
       switch (event.target.value) {
         case 'Portrait':
           setShowCustomAspectRatio(false);
-          widthField.onChange(768);
-          heightField.onChange(1152);
+          widthField.onChange(960);
+          heightField.onChange(1280);
           break;
         case 'Landscape':
           setShowCustomAspectRatio(false);
-          widthField.onChange(1152);
-          heightField.onChange(768);
+          widthField.onChange(1280);
+          heightField.onChange(720);
           break;
         case 'Square':
           setShowCustomAspectRatio(false);
           widthField.onChange(1024);
           heightField.onChange(1024);
-          break;
-        case 'Custom':
-          setShowCustomAspectRatio(true);
           break;
         default:
           setShowCustomAspectRatio(false);
@@ -191,10 +188,9 @@ const StableDiffusionConfigurations = ({
             defaultValue='Default'
           >
             <MenuItem value={'Default'}>{'Default'}</MenuItem>
-            <MenuItem value={'Portrait'}>{'Portrait (768x1152)'}</MenuItem>
-            <MenuItem value={'Landscape'}>{'Landscape (1152x768)'}</MenuItem>
-            <MenuItem value={'Square'}>{'Square (1024x1024)'}</MenuItem>
-            <MenuItem value={'Custom'}>{'Custom'}</MenuItem>
+            <MenuItem value={'Portrait'}>{'Portrait (3:4)'}</MenuItem>
+            <MenuItem value={'Landscape'}>{'Landscape (16:9)'}</MenuItem>
+            <MenuItem value={'Square'}>{'Square (1:1)'}</MenuItem>
           </Select>
         </FormControl>
         {showCustomAspectRatio && <Box display={'flex'} gap={'8px'}>
