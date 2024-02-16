@@ -260,7 +260,8 @@ const ChooseOperator = ({
 
   const scriptId = findTag(scriptTx as IEdge, 'scriptTransaction') as string;
   const scriptName = findTag(scriptTx as IEdge, 'scriptName');
-  const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') ?? scriptTx?.node.owner.address;
+  const scriptCurator =
+    findTag(scriptTx as IEdge, 'sequencerOwner') ?? scriptTx?.node.owner.address;
 
   const queryObject = FairSDKWeb.utils.getOperatorQueryForScript(
     scriptId,

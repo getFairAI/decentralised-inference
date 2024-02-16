@@ -16,7 +16,13 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES, TERMS_AGREEMENT, TERMS_VERSION } from '@/constants';
+import {
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
+  TAG_NAMES,
+  TERMS_AGREEMENT,
+  TERMS_VERSION,
+} from '@/constants';
 import { WalletContext } from '@/context/wallet';
 import { QUERY_TX_WITH } from '@/queries/graphql';
 import arweave from '@/utils/arweave';
@@ -37,7 +43,7 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
   const { currentAddress, dispatchTx } = useContext(WalletContext);
   const theme = useTheme();
   const navigate = useNavigate();
-  const [ showDialog, setShowDialog ] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
   const { data } = useQuery(QUERY_TX_WITH, {
     variables: {
@@ -46,7 +52,7 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
         { name: TAG_NAMES.protocolName, values: ['Fair Protocol'] },
         { name: TAG_NAMES.operationName, values: [TERMS_AGREEMENT] },
         { name: TAG_NAMES.termsVersion, values: [TERMS_VERSION] },
-      ]
+      ],
     },
     skip: !currentAddress,
   });
@@ -60,12 +66,12 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
     } else {
       // ignore while loading
     }
-  }, [ data, setShowDialog ]);
+  }, [data, setShowDialog]);
 
   const handleAgreeClick = useCallback(async () => {
     const tags = [
-      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME},
-      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION},
+      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
       { name: TAG_NAMES.operationName, value: TERMS_AGREEMENT },
       { name: TAG_NAMES.termsVersion, value: TERMS_VERSION },
     ];
@@ -75,9 +81,9 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
 
     await dispatchTx(tx);
     setShowDialog(false);
-  }, [ setShowDialog]);
+  }, [setShowDialog]);
 
-  const handleBackClick = useCallback(() => navigate('/'), [ navigate ]);
+  const handleBackClick = useCallback(() => navigate('/'), [navigate]);
 
   return (
     <>
@@ -107,23 +113,19 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
         <DialogContent>
           <Typography>
             {'By clicking "Accept And Continue" you agree to our '}
-            <Link to={'/terms'} target="_blank" rel="noopener noreferrer">
+            <Link to={'/terms'} target='_blank' rel='noopener noreferrer'>
               <u>terms and conditions</u>
             </Link>
             {'.'}
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ display: 'flex', justifyContent: 'space-between', padding: '24px 24px 24px 24px' }}>
-          <Button
-            onClick={handleBackClick}
-            variant='outlined'
-          >
+        <DialogActions
+          sx={{ display: 'flex', justifyContent: 'space-between', padding: '24px 24px 24px 24px' }}
+        >
+          <Button onClick={handleBackClick} variant='outlined'>
             Decline
           </Button>
-          <Button
-            onClick={handleAgreeClick}
-            variant='contained'
-          >
+          <Button onClick={handleAgreeClick} variant='contained'>
             Accept And Continue
           </Button>
         </DialogActions>

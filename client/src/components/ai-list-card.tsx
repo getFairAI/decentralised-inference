@@ -95,7 +95,10 @@ const AiListCard = ({
     }
   }, [data]);
 
-  const owner = useMemo(() => findTag(model, 'sequencerOwner') ?? model.node.owner.address, [model]);
+  const owner = useMemo(
+    () => findTag(model, 'sequencerOwner') ?? model.node.owner.address,
+    [model],
+  );
 
   const getTimePassed = () => {
     const timestamp = findTag(model, 'unixTime') as string;

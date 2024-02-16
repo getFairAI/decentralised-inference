@@ -25,10 +25,9 @@ const CustomIframe = styled('iframe')(() => ({
   border: 'none',
 }));
 
-
 const Terms = () => {
   const theme = useTheme();
-  const [ isReady, setIsReady ] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   const backgroundColor = theme.palette.background.default;
   const styles = `.c41 {
@@ -47,19 +46,15 @@ const Terms = () => {
       const iframeDoc = iframe.contentDocument;
       if (iframeDoc) {
         const style = iframeDoc.createElement('style');
-        style.type = 'text/css';
+        style.setAttribute('type', 'text/css');
         style.innerHTML = styles;
         iframeDoc.head.appendChild(style);
         setIsReady(true);
       }
     }
-  }, [ setIsReady]);
+  }, [setIsReady]);
 
-  return <CustomIframe
-    src='./Terms.html'
-    hidden={!isReady}
-    onLoad={onIframeLoaded}
-  />;
+  return <CustomIframe src='./Terms.html' hidden={!isReady} onLoad={onIframeLoaded} />;
 };
 
 export default Terms;
