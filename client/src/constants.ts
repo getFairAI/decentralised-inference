@@ -121,6 +121,7 @@ export const TAG_NAMES = {
   userRatingComment: 'User-Rating-Comment',
   generateAssets: 'Generate-Assets',
   rareweaveConfig: 'Rareweave-Config',
+  termsVersion: 'Terms-Version',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';
@@ -182,6 +183,10 @@ export const AVATAR_ATTACHMENT = 'avatar';
 export const NOTES_ATTACHMENT = 'notes';
 
 export const USER_FEEDBACK = 'Marketplace User Rating Feedback';
+
+export const TERMS_AGREEMENT = 'Terms Agreement';
+
+export const TERMS_VERSION = '0.1';
 
 // misc
 

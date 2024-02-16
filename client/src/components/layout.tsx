@@ -90,9 +90,11 @@ export default function Layout({ children }: { children: ReactElement }) {
       >
         <Box height={`calc(100% - ${warningHeight}px)`}>
           <FilterContext.Provider value={filterValue}>
-            <Box ref={warningRef}>
-              <WarningMessage />
-            </Box>
+            {pathname !== '/terms' && (
+              <Box ref={warningRef}>
+                <WarningMessage />
+              </Box>
+            )}
             <main style={{ height: '100%' }} ref={scrollableRef}>
               {children}
             </main>

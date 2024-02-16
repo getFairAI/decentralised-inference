@@ -41,7 +41,43 @@ const main = async () => {
   // Print your wallet address
   console.log(`wallet address = ${irys.address}`);
   const dist = './dist/';
+
+  let forks = '';
+  try {
+    const previousManifestMeta = fs.readFileSync('./dist-id.txt', 'utf-8');
+    const { id } = JSON.parse(previousManifestMeta);
+    forks = id;
+  } catch (err) {
+    // ignore
+  }
+  
+
+
+  const tags = [
+    { name: 'Title', value: 'Fair Protocol Marketplace' },
+    { name: 'Description', value: 'Building the leading global decentralised marketplace for open-source AI' },
+    { name: 'Published', value: String(Date.now()) },
+    { name: 'Page-Code', value: 'fair-protocol-marketplace' },
+    { name: 'Group-Id', value: 'fair-protocol-marketplace' },
+    { name: 'App-Name', value: 'SmartWeaveContract' },
+    { name: 'App-Version', value: '0.3.0' },
+    { name: 'Contract-Src', value: 'h9v17KHV4SXwdW2-JHU6a23f6R0YtbXZJJht8LfP8QM'},
+    { name: 'Logo', value: 'i4Hmf2yh-_TCA9-ypKeiEHhrIJlkhPyvZ_n4SOyj6BI'}, // logo txid
+    {
+      name: 'Init-State', value: JSON.stringify({
+        balances: { [`${irys.address}`]: 1 },
+        name: 'Fair Protocol Marketplace',
+        ticker: 'FPM',
+      })
+    },
+  ];
+
+  if (forks) {
+    tags.splice(4, 0, { name: 'Forks', value: forks });
+  }
+
   const response = await irys.uploadFolder(dist, {
+    manifestTags: tags, // tags to apply to the manifest
     indexFile: 'index.html', // optional index file (file the user will load when accessing the manifest)
     batchSize: 50, // number of items to upload at once
     keepDeleted: false   // whether to keep now deleted items from previous uploads
