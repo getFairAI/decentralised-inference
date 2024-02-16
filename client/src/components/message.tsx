@@ -354,7 +354,6 @@ const Message = ({
                 gap: '16px',
                 display: 'flex',
                 flexDirection: 'column',
-
                 alignItems: message.type === 'response' ? 'center' : 'flex-end',
               }}
             >
