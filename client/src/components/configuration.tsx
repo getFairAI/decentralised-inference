@@ -32,6 +32,11 @@ import {
   Radio,
   RadioGroup,
   Button,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  InputAdornment,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
@@ -83,11 +88,18 @@ const StableDiffusionConfigurations = ({
 }) => {
   const nDigits = 4;
   const defaultImages = 4;
+  const portraitWidth = 960;
+  const portraitHeight = 1280;
+  const landscapeWidth = 1280;
+  const landscapeHeight = 720;
+  const squareWidth = 1024;
   const { state } = useLocation();
 
   const [cost, setCost] = useState(0);
   const [usdCost, setUsdCost] = useState(0);
   const [currentArPrice, setCurrentArPrice] = useState(0);
+  const [showCustomAspectRatio, setShowCustomAspectRatio] = useState(false);
+
   const showOutputConfiguration = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
     [state],
@@ -95,6 +107,8 @@ const StableDiffusionConfigurations = ({
 
   const { field: negativePromptField } = useController({ control, name: 'negativePrompt' });
   const { field: nImagesField } = useController({ control, name: 'nImages' });
+  const { field: widthField } = useController({ control, name: 'width' });
+  const { field: heightField } = useController({ control, name: 'height' });
 
   useEffect(() => {
     (async () => {
@@ -115,6 +129,34 @@ const StableDiffusionConfigurations = ({
       const fee = state?.fee ? parseUBalance(state?.fee) : 0;
       setCost(fee * (newValue as number));
       setUsdCost(currentArPrice * fee * (newValue as number));
+    },
+    [nImagesField, state, currentArPrice, setCost, setUsdCost, parseUBalance],
+  );
+
+  const handleAspectRatioChange = useCallback(
+    (event: SelectChangeEvent) => {
+      switch (event.target.value) {
+        case 'Portrait':
+          setShowCustomAspectRatio(false);
+          widthField.onChange(portraitWidth);
+          heightField.onChange(portraitHeight);
+          break;
+        case 'Landscape':
+          setShowCustomAspectRatio(false);
+          widthField.onChange(landscapeWidth);
+          heightField.onChange(landscapeHeight);
+          break;
+        case 'Square':
+          setShowCustomAspectRatio(false);
+          widthField.onChange(squareWidth);
+          heightField.onChange(squareWidth);
+          break;
+        default:
+          setShowCustomAspectRatio(false);
+          widthField.onChange(0);
+          heightField.onChange(0);
+          break;
+      }
     },
     [nImagesField, state, currentArPrice, setCost, setUsdCost, parseUBalance],
   );
@@ -141,6 +183,53 @@ const StableDiffusionConfigurations = ({
         maxRows={5}
         fullWidth
       />
+      <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
+        <FormControl fullWidth margin='none'>
+          <InputLabel>{'Aspect Ratio'}</InputLabel>
+          <Select label={'Aspect Ratio'} onChange={handleAspectRatioChange} defaultValue='Default'>
+            <MenuItem value={'Default'}>{'Default'}</MenuItem>
+            <MenuItem value={'Portrait'}>{'Portrait (3:4)'}</MenuItem>
+            <MenuItem value={'Landscape'}>{'Landscape (16:9)'}</MenuItem>
+            <MenuItem value={'Square'}>{'Square (1:1)'}</MenuItem>
+          </Select>
+        </FormControl>
+        {showCustomAspectRatio && (
+          <Box display={'flex'} gap={'8px'}>
+            <NumericFormat
+              label={'Width'}
+              customInput={TextField}
+              allowNegative={false}
+              decimalScale={0}
+              onChange={widthField.onChange} // send value to hook form
+              onBlur={widthField.onBlur} // notify when input is touched/blur
+              value={widthField.value}
+              inputRef={widthField.ref} // send input ref, so we can focus on input when error appear
+              defaultValue={0}
+              maxLength={4}
+              type='text'
+              InputProps={{
+                endAdornment: <InputAdornment position='end'>px</InputAdornment>,
+              }}
+            />
+            <NumericFormat
+              label={'Height'}
+              customInput={TextField}
+              allowNegative={false}
+              decimalScale={0}
+              onChange={heightField.onChange} // send value to hook form
+              onBlur={heightField.onBlur} // notify when input is touched/blur
+              value={heightField.value}
+              inputRef={heightField.ref} // send input ref, so we can focus on input when error appear
+              defaultValue={0}
+              maxLength={4}
+              type='text'
+              InputProps={{
+                endAdornment: <InputAdornment position='end'>px</InputAdornment>,
+              }}
+            />
+          </Box>
+        )}
+      </Box>
       <Box
         sx={{
           marginLeft: '16px',

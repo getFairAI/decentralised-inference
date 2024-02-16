@@ -49,7 +49,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
 
   useEffect(() => {
     if (message.contentType?.includes('text') || message.contentType?.includes('json')) {
-      setContent(message.msg as string);
+      setContent((message.msg as string).trim());
       setType('text');
     } else if (message.contentType?.includes('image')) {
       setContent(`${NET_ARWEAVE_URL}/${message.id}`);
@@ -96,8 +96,8 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         sx={{
           fontStyle: 'normal',
           fontWeight: 400,
-          fontSize: '25px',
-          lineHeight: '34px',
+          fontSize: message.type === 'request' ? '25px' : '18px',
+          lineHeight: message.type === 'request' ? '34px' : '25px',
           display: 'flex',
           alignItems: 'center',
           whiteSpace: 'pre-wrap',

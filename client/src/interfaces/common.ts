@@ -39,6 +39,8 @@ export interface IConfiguration extends FieldValues {
   description?: string;
   customTags?: { name: string; value: string }[];
   nImages?: number;
+  width?: number;
+  height?: number;
   rareweaveConfig?: {
     royalty: number;
   };

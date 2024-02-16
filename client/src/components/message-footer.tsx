@@ -80,8 +80,8 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
             sx={{
               fontStyle: 'normal',
               fontWeight: 300,
-              fontSize: '20px',
-              lineHeight: '27px',
+              fontSize: '16px',
+              lineHeight: '20px',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -101,8 +101,8 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
             sx={{
               fontStyle: 'normal',
               fontWeight: 700,
-              fontSize: '20px',
-              lineHeight: '27px',
+              fontSize: '16px',
+              lineHeight: '20px',
               display: 'flex',
               alignItems: 'center',
             }}
