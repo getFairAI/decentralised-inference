@@ -88,12 +88,17 @@ const StableDiffusionConfigurations = ({
 }) => {
   const nDigits = 4;
   const defaultImages = 4;
+  const portraitWidth = 960;
+  const portraitHeight = 1280;
+  const landscapeWidth = 1280;
+  const landscapeHeight = 720;
+  const squareWidth = 1024;
   const { state } = useLocation();
 
   const [cost, setCost] = useState(0);
   const [usdCost, setUsdCost] = useState(0);
   const [currentArPrice, setCurrentArPrice] = useState(0);
-  const [ showCustomAspectRatio, setShowCustomAspectRatio ] = useState(false);
+  const [showCustomAspectRatio, setShowCustomAspectRatio] = useState(false);
 
   const showOutputConfiguration = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
@@ -133,18 +138,18 @@ const StableDiffusionConfigurations = ({
       switch (event.target.value) {
         case 'Portrait':
           setShowCustomAspectRatio(false);
-          widthField.onChange(960);
-          heightField.onChange(1280);
+          widthField.onChange(portraitWidth);
+          heightField.onChange(portraitHeight);
           break;
         case 'Landscape':
           setShowCustomAspectRatio(false);
-          widthField.onChange(1280);
-          heightField.onChange(720);
+          widthField.onChange(landscapeWidth);
+          heightField.onChange(landscapeHeight);
           break;
         case 'Square':
           setShowCustomAspectRatio(false);
-          widthField.onChange(1024);
-          heightField.onChange(1024);
+          widthField.onChange(squareWidth);
+          heightField.onChange(squareWidth);
           break;
         default:
           setShowCustomAspectRatio(false);
@@ -155,7 +160,6 @@ const StableDiffusionConfigurations = ({
     },
     [nImagesField, state, currentArPrice, setCost, setUsdCost, parseUBalance],
   );
-
 
   if (!showOutputConfiguration) {
     return null;
@@ -182,51 +186,49 @@ const StableDiffusionConfigurations = ({
       <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
         <FormControl fullWidth margin='none'>
           <InputLabel>{'Aspect Ratio'}</InputLabel>
-          <Select
-            label={'Aspect Ratio'}
-            onChange={handleAspectRatioChange}
-            defaultValue='Default'
-          >
+          <Select label={'Aspect Ratio'} onChange={handleAspectRatioChange} defaultValue='Default'>
             <MenuItem value={'Default'}>{'Default'}</MenuItem>
             <MenuItem value={'Portrait'}>{'Portrait (3:4)'}</MenuItem>
             <MenuItem value={'Landscape'}>{'Landscape (16:9)'}</MenuItem>
             <MenuItem value={'Square'}>{'Square (1:1)'}</MenuItem>
           </Select>
         </FormControl>
-        {showCustomAspectRatio && <Box display={'flex'} gap={'8px'}>
-          <NumericFormat
-            label={'Width'}
-            customInput={TextField}
-            allowNegative={false}
-            decimalScale={0}
-            onChange={widthField.onChange} // send value to hook form
-            onBlur={widthField.onBlur} // notify when input is touched/blur
-            value={widthField.value}
-            inputRef={widthField.ref} // send input ref, so we can focus on input when error appear
-            defaultValue={0}
-            maxLength={4}
-            type='text'
-            InputProps={{
-              endAdornment: <InputAdornment position="end">px</InputAdornment>,
-            }}
-          />
-          <NumericFormat
-            label={'Height'}
-            customInput={TextField}
-            allowNegative={false}
-            decimalScale={0}
-            onChange={heightField.onChange} // send value to hook form
-            onBlur={heightField.onBlur} // notify when input is touched/blur
-            value={heightField.value}
-            inputRef={heightField.ref} // send input ref, so we can focus on input when error appear
-            defaultValue={0}
-            maxLength={4}
-            type='text'
-            InputProps={{
-              endAdornment: <InputAdornment position="end">px</InputAdornment>,
-            }}
-          />
-        </Box>}
+        {showCustomAspectRatio && (
+          <Box display={'flex'} gap={'8px'}>
+            <NumericFormat
+              label={'Width'}
+              customInput={TextField}
+              allowNegative={false}
+              decimalScale={0}
+              onChange={widthField.onChange} // send value to hook form
+              onBlur={widthField.onBlur} // notify when input is touched/blur
+              value={widthField.value}
+              inputRef={widthField.ref} // send input ref, so we can focus on input when error appear
+              defaultValue={0}
+              maxLength={4}
+              type='text'
+              InputProps={{
+                endAdornment: <InputAdornment position='end'>px</InputAdornment>,
+              }}
+            />
+            <NumericFormat
+              label={'Height'}
+              customInput={TextField}
+              allowNegative={false}
+              decimalScale={0}
+              onChange={heightField.onChange} // send value to hook form
+              onBlur={heightField.onBlur} // notify when input is touched/blur
+              value={heightField.value}
+              inputRef={heightField.ref} // send input ref, so we can focus on input when error appear
+              defaultValue={0}
+              maxLength={4}
+              type='text'
+              InputProps={{
+                endAdornment: <InputAdornment position='end'>px</InputAdornment>,
+              }}
+            />
+          </Box>
+        )}
       </Box>
       <Box
         sx={{

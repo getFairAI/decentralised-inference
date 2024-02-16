@@ -711,8 +711,7 @@ const Chat = () => {
       : undefined;
     const customTags = (currentConfig.customTags as { name: string; value: string }[]) ?? [];
     const royalty = currentConfig.rareweaveConfig?.royalty;
-    const width = currentConfig.width;
-    const height = currentConfig.height;
+    const { width: configWidth, height: configHeight } = currentConfig;
 
     return {
       generateAssets,
@@ -721,8 +720,8 @@ const Chat = () => {
       description,
       customTags,
       nImages,
-      width,
-      height,
+      width: configWidth,
+      height: configHeight,
       ...(royalty && {
         rareweaveConfig: {
           royalty: royalty / 100,
