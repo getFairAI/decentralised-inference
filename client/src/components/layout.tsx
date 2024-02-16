@@ -18,7 +18,15 @@
 
 import FilterContext from '@/context/filter';
 import { Box, Container, IconButton, Typography, useTheme } from '@mui/material';
-import { ReactElement, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  ReactElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import Navbar from './navbar';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
@@ -29,45 +37,57 @@ import { MIN_U_BALANCE } from '@/constants';
 import CloseIcon from '@mui/icons-material/Close';
 
 const WarningMessage = () => {
-  const [ showWarning, setShowWarning ] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, currentUBalance } = useContext(WalletContext);
   const theme = useTheme();
 
   const handleClose = useCallback(() => {
     setShowWarning(false);
     localStorage.setItem('warningClosed', 'true');
-  }, [ setShowWarning ]);
+  }, [setShowWarning]);
 
   useEffect(() => setShowWarning(localStorage.getItem('warningClosed') !== 'true'), []);
 
-  if ( !localStorage.getItem('wallet') && !currentAddress) {
-    return (<>
-      <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
-        Wallet Not Connected, some functionalities will not be available.{' '}
-        <Link to={'/sign-in'}>
-          <u>Start Onboarding</u>
-        </Link>
-      </Typography>
-    </>);
+  if (!localStorage.getItem('wallet') && !currentAddress) {
+    return (
+      <>
+        <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
+          Wallet Not Connected, some functionalities will not be available.{' '}
+          <Link to={'/sign-in'}>
+            <u>Start Onboarding</u>
+          </Link>
+        </Typography>
+      </>
+    );
   } else if (showWarning && currentAddress && currentUBalance < MIN_U_BALANCE) {
-    return (<Box sx={{ background: theme.palette.warning.main, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} padding={'2px 16px 2px 32px'}>
-      <Typography >
-        Looks Like you are running low on $U balance,{' '}
-        <Link to={'/swap'}>
-          <u>Click here to Top Up</u>
-        </Link>
-      </Typography>
-      <IconButton
+    return (
+      <Box
         sx={{
-          border: 'none',
-          padding: '2px',
+          background: theme.palette.warning.main,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
-        size='medium'
-        onClick={handleClose}
+        padding={'2px 16px 2px 32px'}
       >
-        <CloseIcon fontSize='inherit' />
-      </IconButton>
-    </Box>);
+        <Typography>
+          Looks Like you are running low on $U balance,{' '}
+          <Link to={'/swap'}>
+            <u>Click here to Top Up</u>
+          </Link>
+        </Typography>
+        <IconButton
+          sx={{
+            border: 'none',
+            padding: '2px',
+          }}
+          size='medium'
+          onClick={handleClose}
+        >
+          <CloseIcon fontSize='inherit' />
+        </IconButton>
+      </Box>
+    );
   } else {
     return <></>;
   }
