@@ -153,7 +153,12 @@ const FeedbackForm = ({
           paddingBottom: '20px',
         }}
       >
-        <Button variant='outlined' onClick={handleSubmit} sx={{ width: 'fit-content' }}>
+        <Button
+          variant='outlined'
+          onClick={handleSubmit}
+          sx={{ width: 'fit-content' }}
+          className='plausible-event-name=User+FeedBack+Submit'
+        >
           <Typography>Submit</Typography>
         </Button>
       </DialogActions>
@@ -215,6 +220,7 @@ const UserFeedback = ({
           }}
           size='medium'
           onClick={handleClose}
+          className='plausible-event-name=User+FeedBack+Close'
         >
           <CloseIcon fontSize='inherit' />
         </IconButton>

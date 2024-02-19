@@ -208,7 +208,11 @@ const InputField = ({
             InputProps={{
               startAdornment: (
                 <InputAdornment position='start'>
-                  <IconButton aria-label='Remove' onClick={handleRemoveFile}>
+                  <IconButton
+                    aria-label='Remove'
+                    onClick={handleRemoveFile}
+                    className='plausible-event-name=Remove+File+Click'
+                  >
                     <ClearIcon />
                   </IconButton>
                 </InputAdornment>
@@ -222,6 +226,7 @@ const InputField = ({
                       color: theme.palette.neutral.contrastText,
                     }}
                     disabled={sendDisabled}
+                    className='plausible-event-name=Send+File+Click'
                   >
                     <SendIcon />
                   </DebounceIconButton>
@@ -267,7 +272,11 @@ const InputField = ({
               <>
                 <Tooltip title={'Advanced Input configuration'}>
                   <span>
-                    <IconButton component='label' onClick={handleAdvanced}>
+                    <IconButton
+                      component='label'
+                      onClick={handleAdvanced}
+                      className='plausible-event-name=Open+Configuration+Click'
+                    >
                       <SettingsIcon />
                     </IconButton>
                   </span>
@@ -276,7 +285,11 @@ const InputField = ({
                   title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}
                 >
                   <span>
-                    <IconButton component='label' disabled={uploadDisabled}>
+                    <IconButton
+                      component='label'
+                      disabled={uploadDisabled}
+                      className='plausible-event-name=Upload+File+Click'
+                    >
                       <AttachFileIcon />
                       <input
                         type='file'
@@ -295,6 +308,7 @@ const InputField = ({
                     color: theme.palette.neutral.contrastText,
                   }}
                   disabled={sendDisabled}
+                  className='plausible-event-name=Send+Text+Click'
                 >
                   <SendIcon />
                 </DebounceIconButton>
@@ -1215,7 +1229,11 @@ const Chat = () => {
               }}
             >
               <Box>
-                <IconButton onClick={handleShowConversations} disableRipple={true}>
+                <IconButton
+                  onClick={handleShowConversations}
+                  disableRipple={true}
+                  className='plausible-event-name=Show+Conversations+Click'
+                >
                   <ChevronRightIcon />
                 </IconButton>
               </Box>

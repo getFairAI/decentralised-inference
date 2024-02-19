@@ -98,6 +98,7 @@ const ConversationElement = ({
           borderColor: theme.palette.text.primary,
         },
       }}
+      className='plausible-event-name=Change+Conversation+Click'
     >
       <Typography
         sx={{
@@ -377,6 +378,7 @@ const Conversations = ({
               width: 'fit-content',
               borderRadius: '8px',
             }}
+            className='plausible-event-name=Add+Conversation+Click'
           >
             <AddIcon />
           </DebounceIconButton>
@@ -407,7 +409,12 @@ const Conversations = ({
           <Box sx={{ paddingBottom: '8px' }} ref={conversationsTarget}></Box>
         </List>
         <Box flexGrow={1}></Box>
-        <Button variant='outlined' sx={{ mb: '8px', borderWidth: '0.5px' }} onClick={toggleDrawer}>
+        <Button
+          variant='outlined'
+          sx={{ mb: '8px', borderWidth: '0.5px' }}
+          onClick={toggleDrawer}
+          className='plausible-event-name=Hide+Conversation+Click'
+        >
           <Typography>Hide</Typography>
         </Button>
       </Box>

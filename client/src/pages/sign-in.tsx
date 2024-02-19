@@ -80,7 +80,11 @@ const WalletnotConnectedContent = () => {
           First, Lets get connected!
         </Typography>
       </Box>
-      <Button sx={{ borderRadius: '8px', gap: '10px', background: '#FFF' }} onClick={handleClick}>
+      <Button
+        sx={{ borderRadius: '8px', gap: '10px', background: '#FFF' }}
+        onClick={handleClick}
+        className='plausible-event-name=Onboarding+Connect+Wallet+Click'
+      >
         <Typography
           sx={{ color: '#1F1F26' }}
           fontWeight={700}
@@ -96,7 +100,12 @@ const WalletnotConnectedContent = () => {
           Don&apos;t have a wallet yet?
         </Typography>
         <Typography display={'flex'} gap={'8px'} alignItems={'center'} noWrap>
-          <a href={CREATE_WALLET_LINK} target='_blank' rel='noreferrer'>
+          <a
+            href={CREATE_WALLET_LINK}
+            target='_blank'
+            rel='noreferrer'
+            className='plausible-event-name=Wallet+Create+Learn+Click'
+          >
             <u>Learn how to create one.</u>
           </a>
         </Typography>
@@ -251,7 +260,12 @@ const WalletNoFundsContent = () => {
               </Box>
             )}
             <Box display={'flex'} justifyContent={'flex-end'} mt={'48px'}>
-              <Button variant='contained' onClick={handleNext} sx={{ mt: 1, mr: 1 }}>
+              <Button
+                variant='contained'
+                onClick={handleNext}
+                sx={{ mt: 1, mr: 1 }}
+                className='plausible-event-name=Onboarding+Top+Up+U+Click'
+              >
                 Top Up $U
               </Button>
             </Box>
@@ -309,10 +323,20 @@ const WalletNoFundsContent = () => {
               )}
             </Box>
             <Box display={'flex'} justifyContent={justifyContent} mt={'48px'}>
-              <Button sx={{ mt: 1, mr: 1 }} onClick={handleBack} variant='outlined'>
+              <Button
+                sx={{ mt: 1, mr: 1 }}
+                onClick={handleBack}
+                variant='outlined'
+                className='plausible-event-name=Onboarding+Top+Up+AR+Click'
+              >
                 Top Up AR
               </Button>
-              <Button sx={{ mt: 1, mr: 1 }} variant='contained' onClick={handleSkip}>
+              <Button
+                sx={{ mt: 1, mr: 1 }}
+                variant='contained'
+                onClick={handleSkip}
+                className='plausible-event-name=Explore+Marketplace'
+              >
                 Explore marketplace
               </Button>
             </Box>
@@ -393,6 +417,7 @@ const SignIn = () => {
           border: '0.5px solid',
         }}
         onClick={handleSkip}
+        className='plausible-event-name=Close+Onboarding+Click'
       >
         <Close />
       </IconButton>

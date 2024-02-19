@@ -53,7 +53,7 @@ const WarningMessage = () => {
       <>
         <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
           Wallet Not Connected, some functionalities will not be available.{' '}
-          <Link to={'/sign-in'}>
+          <Link to={'/sign-in'} className='plausible-event-name=Onboarding+Click'>
             <u>Start Onboarding</u>
           </Link>
         </Typography>
@@ -72,7 +72,7 @@ const WarningMessage = () => {
       >
         <Typography>
           Looks Like you are running low on $U balance,{' '}
-          <Link to={'/swap'}>
+          <Link to={'/swap'} className='plausible-event-name=Top+Up+Click'>
             <u>Click here to Top Up</u>
           </Link>
         </Typography>
@@ -83,6 +83,7 @@ const WarningMessage = () => {
           }}
           size='medium'
           onClick={handleClose}
+          className='plausible-event-name=Top+Up+Warning+Close'
         >
           <CloseIcon fontSize='inherit' />
         </IconButton>

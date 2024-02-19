@@ -196,6 +196,7 @@ const ChooseScript = ({
           }}
           variant='contained'
           onClick={() => setShowScripts(false)}
+          className='plausible-event-name=Scripts+Back+Click'
         >
           <Box display='flex'>
             <Icon sx={{ rotate: '90deg' }}>
@@ -277,6 +278,7 @@ const ChooseScript = ({
                 },
               )
             }
+            className='plausible-event-name=Scripts+View+Details+Click'
           >
             <Typography
               sx={{
@@ -297,6 +299,7 @@ const ChooseScript = ({
             variant='contained'
             onClick={() => handleScriptChosen(scriptsData[selectedIdx])}
             disabled={!currentAddress}
+            className='plausible-event-name=Scripts+Use+Click'
           >
             <Typography
               sx={{

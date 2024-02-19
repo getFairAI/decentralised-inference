@@ -39,7 +39,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { toSvg } from 'jdenticon';
-import { MouseEvent, useEffect, useMemo } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -99,6 +99,8 @@ const AiListCard = ({
     () => findTag(model, 'sequencerOwner') ?? model.node.owner.address,
     [model],
   );
+  const modelId = useMemo(() => findTag(model, 'modelTransaction'), [model]);
+  const modelName = useMemo(() => findTag(model, 'modelName'), [model]);
 
   const getTimePassed = () => {
     const timestamp = findTag(model, 'unixTime') as string;
@@ -127,19 +129,21 @@ const AiListCard = ({
     }
   };
 
-  const handleCardClick = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    const modelId = findTag(model, 'modelTransaction');
-    if (!modelId) return;
-    navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
-      state: {
-        modelName: findTag(model, 'modelName'),
-        modelCreator: owner,
-        modelTransaction: modelId,
-        fullState: model,
-      },
-    });
-  };
+  const handleCardClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      if (!modelId) return;
+      navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
+        state: {
+          modelName: findTag(model, 'modelName'),
+          modelCreator: owner,
+          modelTransaction: modelId,
+          fullState: model,
+        },
+      });
+    },
+    [modelId],
+  );
 
   return (
     <Card
@@ -164,6 +168,7 @@ const AiListCard = ({
           gap: '30px',
         }}
         onClick={handleCardClick}
+        className={`plausible-event-name=List+Model+Click plausible-event-transaction=${modelId}+${modelName}`}
       >
         <CardHeader
           title={index + 1}

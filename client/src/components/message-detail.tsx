@@ -149,6 +149,7 @@ const MessageDetail = ({
             border: '0.5px solid',
           }}
           onClick={handleClose}
+          className='plausible-event-name=Message+Detail+Close'
         >
           <Close />
         </IconButton>
@@ -212,7 +213,12 @@ const MessageDetail = ({
         </Box>
       </DialogContent>
       <DialogActions sx={{ display: 'flex', justifyContent: 'center' }}>
-        <Button onClick={toggleShowMore}>{showMore ? 'Show Less' : 'Show More'}</Button>
+        <Button
+          onClick={toggleShowMore}
+          className='plausible-event-name=Message+Detail+Show+More+Click'
+        >
+          {showMore ? 'Show Less' : 'Show More'}
+        </Button>
       </DialogActions>
     </Dialog>
   );

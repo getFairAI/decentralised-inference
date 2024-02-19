@@ -113,7 +113,12 @@ const BasicTableContent = ({
               {type === 'operators'
                 ? 'Could not Fetch Registered Operators for this Model.'
                 : 'Could not Fetch Scripts for this Model.'}
-              <Button sx={{ width: 'fit-content' }} endIcon={<ReplayIcon />} onClick={retry}>
+              <Button
+                sx={{ width: 'fit-content' }}
+                endIcon={<ReplayIcon />}
+                onClick={retry}
+                className={`plausible-event-name=Retry+Click plausible-event-type=${type}`}
+              >
                 Retry
               </Button>
             </Typography>

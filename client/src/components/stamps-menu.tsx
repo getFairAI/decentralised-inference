@@ -142,7 +142,12 @@ const StampsMenu: React.FC<StampsMenuProps> = (targetTx: StampsMenuProps) => {
         }
       >
         <span>
-          <LoadingButton variant='contained' loading={isSending} onClick={handleStampClick}>
+          <LoadingButton
+            variant='contained'
+            loading={isSending}
+            onClick={handleStampClick}
+            className={`plausible-event-name=Stamp+Click plausible-event-type=${targetTx.type}`}
+          >
             Stamp {targetTx.type} ({totalStamps})
           </LoadingButton>
         </span>

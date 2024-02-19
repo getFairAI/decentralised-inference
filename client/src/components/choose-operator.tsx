@@ -103,7 +103,12 @@ const OperatorSelected = ({
         padding: '24px',
       }}
     >
-      <Button sx={{ borderRadius: '7px' }} variant='outlined' onClick={handleHistoryClick}>
+      <Button
+        sx={{ borderRadius: '7px' }}
+        variant='outlined'
+        onClick={handleHistoryClick}
+        className='plausible-event-name=Operator+View+History+Click'
+      >
         <Typography
           sx={{
             fontStyle: 'normal',
@@ -123,6 +128,7 @@ const OperatorSelected = ({
         variant='contained'
         onClick={handleUseOperatorClick}
         disabled={!currentAddress}
+        className='plausible-event-name=Operator+Use+Click'
       >
         <Typography
           sx={{
@@ -195,6 +201,7 @@ const ChooseOperatorHeader = ({
           }}
           variant='contained'
           onClick={handleBackClick}
+          className='plausible-event-name=Operator+Back+Click'
         >
           <Box display='flex'>
             <Icon sx={{ rotate: '90deg' }}>

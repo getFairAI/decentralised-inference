@@ -68,6 +68,7 @@ export default function Home() {
                   opacity: !hightlightTop ? 1 : 0.5,
                 }}
                 onClick={() => handleHighlight(false)}
+                className='plausible-event-name=Trending+Filter+Click'
               >
                 Trending
               </Typography>
@@ -80,6 +81,7 @@ export default function Home() {
                   opacity: hightlightTop ? 1 : 0.5,
                 }}
                 onClick={() => handleHighlight(true)}
+                className='plausible-event-name=Top+Filter+Click'
               >
                 Top
               </Typography>
@@ -117,7 +119,7 @@ export default function Home() {
               }}
               value={'24h'}
             >
-              <MenuItem value={'24h'}>
+              <MenuItem value={'24h'} className='plausible-event-name=24+Hours+Filter+Click'>
                 <Typography
                   sx={{
                     fontStyle: 'normal',
@@ -131,7 +133,7 @@ export default function Home() {
                   24H
                 </Typography>
               </MenuItem>
-              <MenuItem value={'week'}>
+              <MenuItem value={'week'} className='plausible-event-name=Week+Filter+Click'>
                 <Typography>1 Week</Typography>
               </MenuItem>
             </Select>
@@ -142,6 +144,7 @@ export default function Home() {
                 textTransform: 'none',
                 background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
               }}
+              className='plausible-event-name=View+All+Click'
             >
               <Typography
                 sx={{

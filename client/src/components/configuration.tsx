@@ -74,7 +74,7 @@ const CustomTag = ({
         <Typography sx={{ fontWeight: 700 }}>:</Typography>
         <Typography sx={{ marginLeft: '8px' }}>{value}</Typography>
       </Box>
-      <IconButton onClick={handleClick}>
+      <IconButton onClick={handleClick} className='plausible-event-name=Custom+Tag+Removed'>
         <RemoveIcon />
       </IconButton>
     </Box>
@@ -182,15 +182,36 @@ const StableDiffusionConfigurations = ({
         minRows={3}
         maxRows={5}
         fullWidth
+        className='plausible-event-name=Negative+Prompt+Changed'
       />
       <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
         <FormControl fullWidth margin='none'>
           <InputLabel>{'Aspect Ratio'}</InputLabel>
           <Select label={'Aspect Ratio'} onChange={handleAspectRatioChange} defaultValue='Default'>
-            <MenuItem value={'Default'}>{'Default'}</MenuItem>
-            <MenuItem value={'Portrait'}>{'Portrait (3:4)'}</MenuItem>
-            <MenuItem value={'Landscape'}>{'Landscape (16:9)'}</MenuItem>
-            <MenuItem value={'Square'}>{'Square (1:1)'}</MenuItem>
+            <MenuItem
+              value={'Default'}
+              className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Default'
+            >
+              {'Default'}
+            </MenuItem>
+            <MenuItem
+              value={'Portrait'}
+              className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Portrait'
+            >
+              {'Portrait (3:4)'}
+            </MenuItem>
+            <MenuItem
+              value={'Landscape'}
+              className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Landscape'
+            >
+              {'Landscape (16:9)'}
+            </MenuItem>
+            <MenuItem
+              value={'Square'}
+              className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Square'
+            >
+              {'Square (1:1)'}
+            </MenuItem>
           </Select>
         </FormControl>
         {showCustomAspectRatio && (
@@ -248,6 +269,7 @@ const StableDiffusionConfigurations = ({
           step={1}
           min={1}
           valueLabelDisplay='auto'
+          className='plausible-event-name=Number+of+Images+Changed'
         />
         <Box display={'flex'} gap={'8px'}>
           <Typography variant='caption'>
@@ -355,7 +377,7 @@ const Configuration = ({
       }}
     >
       <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-        <IconButton onClick={handleClose}>
+        <IconButton onClick={handleClose} className='plausible-event-name=Close+Configuration'>
           <CloseIcon />
         </IconButton>
         <Typography sx={{ fontWeight: 700, fontSize: '23px', lineHeight: '31px' }}>
@@ -430,6 +452,7 @@ const Configuration = ({
         maxRows={3}
         error={isAssetNamesDirty && hasAssetNameError}
         onBlur={assetNamesField.onBlur}
+        className='plausible-event-name=Atomic+Asset+Name+Changed'
       />
       <TextField
         label={'Description'}
@@ -441,6 +464,7 @@ const Configuration = ({
         minRows={1}
         maxRows={3}
         fullWidth
+        className='plausible-event-name=Description+Changed'
       />
       <LicenseConfiguration configControl={control as unknown as Control<FieldValues>} />
       <Box>
@@ -451,7 +475,7 @@ const Configuration = ({
       <Box display={'flex'} gap={'36px'} justifyContent={'space-between'}>
         <TextField inputRef={nameRef} label={'Tag Name'} />
         <TextField inputRef={valueRef} label={'Tag Value'} multiline minRows={1} maxRows={5} />
-        <IconButton onClick={handleAdd}>
+        <IconButton onClick={handleAdd} className='plausible-event-name=Custom+Tag+Added'>
           <AddIcon />
         </IconButton>
       </Box>
