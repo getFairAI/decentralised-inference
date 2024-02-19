@@ -62,8 +62,8 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
     () => findTag(model, 'sequencerOwner') ?? model.node.owner.address,
     [model],
   );
-  const modelId = useMemo(() => findTag(model, 'modelTransaction'), [ model ]);
-  const modelName = useMemo(() => findTag(model, 'modelName'), [ model ]);
+  const modelId = useMemo(() => findTag(model, 'modelTransaction'), [model]);
+  const modelName = useMemo(() => findTag(model, 'modelName'), [model]);
 
   useEffect(() => {
     const modelId = findTag(model, 'modelTransaction');
@@ -110,22 +110,25 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
     }
   };
 
-  const handleCardClick = useCallback((event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (!modelId) return;
-    localStorage.setItem('hasSignedIn', 'true');
-    const url = useModel
-      ? `/model/${encodeURIComponent(modelId)}/detail?useModel=true`
-      : `/model/${encodeURIComponent(modelId)}/detail`;
-    navigate(url, {
-      state: {
-        modelName: findTag(model, 'modelName'),
-        modelCreator: owner,
-        modelTransaction: modelId,
-        fullState: model,
-      },
-    } as { state: ModelNavigationState });
-  }, [ modelId ]);
+  const handleCardClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      if (!modelId) return;
+      localStorage.setItem('hasSignedIn', 'true');
+      const url = useModel
+        ? `/model/${encodeURIComponent(modelId)}/detail?useModel=true`
+        : `/model/${encodeURIComponent(modelId)}/detail`;
+      navigate(url, {
+        state: {
+          modelName: findTag(model, 'modelName'),
+          modelCreator: owner,
+          modelTransaction: modelId,
+          fullState: model,
+        },
+      } as { state: ModelNavigationState });
+    },
+    [modelId],
+  );
 
   return (
     <FiCard
@@ -133,7 +136,10 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
         flexGrow: 0,
       }}
     >
-      <FiCardActionArea onClick={handleCardClick} className={`plausible-event-name=Featured+Model+Click plausible-event-transaction=${modelId}+${modelName}`}>
+      <FiCardActionArea
+        onClick={handleCardClick}
+        className={`plausible-event-name=Featured+Model+Click plausible-event-transaction=${modelId}+${modelName}`}
+      >
         {!imgUrl || avatarLoading ? (
           <Box
             sx={{

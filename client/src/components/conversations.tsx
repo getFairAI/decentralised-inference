@@ -409,7 +409,12 @@ const Conversations = ({
           <Box sx={{ paddingBottom: '8px' }} ref={conversationsTarget}></Box>
         </List>
         <Box flexGrow={1}></Box>
-        <Button variant='outlined' sx={{ mb: '8px', borderWidth: '0.5px' }} onClick={toggleDrawer} className='plausible-event-name=Hide+Conversation+Click'>
+        <Button
+          variant='outlined'
+          sx={{ mb: '8px', borderWidth: '0.5px' }}
+          onClick={toggleDrawer}
+          className='plausible-event-name=Hide+Conversation+Click'
+        >
           <Typography>Hide</Typography>
         </Button>
       </Box>

@@ -255,18 +255,31 @@ const MessageHeader = ({
         )}
         <Box display={'flex'} alignItems='center' gap={'8px'}>
           {showTradeOnBazar && (
-            <Button variant='outlined' onClick={handleBazarTradeClick} className='plausible-event-name=Trade+Bazar+Click'>
+            <Button
+              variant='outlined'
+              onClick={handleBazarTradeClick}
+              className='plausible-event-name=Trade+Bazar+Click'
+            >
               Trade on BazAR
             </Button>
           )}
           {showTradeOnRareweave && (
-            <Button variant='outlined' onClick={handleRareweaveTradeClick} className='plausible-event-name=Trade+Rareweave+Click'>
+            <Button
+              variant='outlined'
+              onClick={handleRareweaveTradeClick}
+              className='plausible-event-name=Trade+Rareweave+Click'
+            >
               Trade on Rareweave
             </Button>
           )}
           {message.type === 'response' && (
             <>
-              <IconButton onClick={handleDownload} sx={{ padding: '8px 0px' }} disableRipple className='plausible-event-name=Message+Download+Click'>
+              <IconButton
+                onClick={handleDownload}
+                sx={{ padding: '8px 0px' }}
+                disableRipple
+                className='plausible-event-name=Message+Download+Click'
+              >
                 <FileDownloadOutlinedIcon fontSize='large' />
               </IconButton>
               <IconButton onClick={handleXClick}>
@@ -292,13 +305,33 @@ const MessageHeader = ({
               horizontal: 'left',
             }}
           >
-            <MenuItem onClick={handleCopy} className='plausible-event-name=Message+Copy+Content+Click'>Copy Content</MenuItem>
+            <MenuItem
+              onClick={handleCopy}
+              className='plausible-event-name=Message+Copy+Content+Click'
+            >
+              Copy Content
+            </MenuItem>
             {message.type === 'request' && (
-              <MenuItem onClick={handleCopySettings} className='plausible-event-name=Message+Copy+Settings+Click'>Copy Settings</MenuItem>
+              <MenuItem
+                onClick={handleCopySettings}
+                className='plausible-event-name=Message+Copy+Settings+Click'
+              >
+                Copy Settings
+              </MenuItem>
             )}{' '}
             {/* only copy settings from prompts */}
-            <MenuItem onClick={handleViewTx} className='plausible-event-name=View+Transaction+Click'>View Transaction</MenuItem>
-            <MenuItem onClick={handleViewDetails} className='plausible-event-name=View+Details+Click'>View Details</MenuItem>
+            <MenuItem
+              onClick={handleViewTx}
+              className='plausible-event-name=View+Transaction+Click'
+            >
+              View Transaction
+            </MenuItem>
+            <MenuItem
+              onClick={handleViewDetails}
+              className='plausible-event-name=View+Details+Click'
+            >
+              View Details
+            </MenuItem>
           </Menu>
         </Box>
         <MessageDetail open={dialogOpen} setOpen={setDialogOpen} message={message} />

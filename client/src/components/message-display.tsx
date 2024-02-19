@@ -117,7 +117,11 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
           InputProps={{
             startAdornment: (
               <InputAdornment position='start'>
-                <IconButton aria-label='download' onClick={handleDownload} className='plausible-event-name=Message+Detail+Download+Click'>
+                <IconButton
+                  aria-label='download'
+                  onClick={handleDownload}
+                  className='plausible-event-name=Message+Detail+Download+Click'
+                >
                   <DownloadIcon />
                 </IconButton>
               </InputAdornment>

@@ -99,8 +99,8 @@ const AiListCard = ({
     () => findTag(model, 'sequencerOwner') ?? model.node.owner.address,
     [model],
   );
-  const modelId = useMemo(() => findTag(model, 'modelTransaction'), [ model ]);
-  const modelName = useMemo(() => findTag(model, 'modelName'), [ model ]);
+  const modelId = useMemo(() => findTag(model, 'modelTransaction'), [model]);
+  const modelName = useMemo(() => findTag(model, 'modelName'), [model]);
 
   const getTimePassed = () => {
     const timestamp = findTag(model, 'unixTime') as string;
@@ -129,18 +129,21 @@ const AiListCard = ({
     }
   };
 
-  const handleCardClick = useCallback((event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (!modelId) return;
-    navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
-      state: {
-        modelName: findTag(model, 'modelName'),
-        modelCreator: owner,
-        modelTransaction: modelId,
-        fullState: model,
-      },
-    });
-  }, [ modelId]);
+  const handleCardClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      if (!modelId) return;
+      navigate(`/model/${encodeURIComponent(modelId)}/detail`, {
+        state: {
+          modelName: findTag(model, 'modelName'),
+          modelCreator: owner,
+          modelTransaction: modelId,
+          fullState: model,
+        },
+      });
+    },
+    [modelId],
+  );
 
   return (
     <Card

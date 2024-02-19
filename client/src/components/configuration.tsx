@@ -188,10 +188,30 @@ const StableDiffusionConfigurations = ({
         <FormControl fullWidth margin='none'>
           <InputLabel>{'Aspect Ratio'}</InputLabel>
           <Select label={'Aspect Ratio'} onChange={handleAspectRatioChange} defaultValue='Default'>
-            <MenuItem value={'Default'} className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Default'>{'Default'}</MenuItem>
-            <MenuItem value={'Portrait'} className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Portrait'>{'Portrait (3:4)'}</MenuItem>
-            <MenuItem value={'Landscape'} className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Landscape'>{'Landscape (16:9)'}</MenuItem>
-            <MenuItem value={'Square'} className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Square'>{'Square (1:1)'}</MenuItem>
+            <MenuItem
+              value={'Default'}
+              className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Default'
+            >
+              {'Default'}
+            </MenuItem>
+            <MenuItem
+              value={'Portrait'}
+              className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Portrait'
+            >
+              {'Portrait (3:4)'}
+            </MenuItem>
+            <MenuItem
+              value={'Landscape'}
+              className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Landscape'
+            >
+              {'Landscape (16:9)'}
+            </MenuItem>
+            <MenuItem
+              value={'Square'}
+              className='plausible-event-name=Aspect+Ratio+Changed plausibe-event-value=Square'
+            >
+              {'Square (1:1)'}
+            </MenuItem>
           </Select>
         </FormControl>
         {showCustomAspectRatio && (

@@ -134,10 +134,18 @@ const DetailContent = ({
           </Typography>
         </DialogContent>
         <DialogActions sx={{ padding: '16px 32px 16px 16px', gap: '16px' }}>
-          <Button variant='outlined' onClick={handleConnectClick} className='plausible-event-name=Model+Connect+Wallet'>
+          <Button
+            variant='outlined'
+            onClick={handleConnectClick}
+            className='plausible-event-name=Model+Connect+Wallet'
+          >
             <Typography>Connect</Typography>
           </Button>
-          <Button variant='contained' onClick={handleOnboardingClick} className='plausible-event-name=Onboarding+Click'>
+          <Button
+            variant='contained'
+            onClick={handleOnboardingClick}
+            className='plausible-event-name=Onboarding+Click'
+          >
             <Typography>Start Onboarding</Typography>
           </Button>
         </DialogActions>
@@ -360,7 +368,11 @@ const Detail = () => {
           lineHeight={0}
         >
           {(showOperators || showScripts) && <Typography>{state.modelName}</Typography>}
-          <IconButton onClick={handleClose} size='small' className='plausible-event-name=Close+Model+Click'>
+          <IconButton
+            onClick={handleClose}
+            size='small'
+            className='plausible-event-name=Close+Model+Click'
+          >
             <Close />
           </IconButton>
         </DialogTitle>

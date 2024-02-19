@@ -239,7 +239,12 @@ const WalletState = () => {
           )}
           <Tooltip title='Copy Address'>
             <Typography sx={{ lineHeight: '20.25px', fontSize: '15px' }}>
-              <IconButton onClick={handleCopyClick} sx={{ padding: 0 }} size='small' className='plausible-event-name=Copy+Wallet+Click'>
+              <IconButton
+                onClick={handleCopyClick}
+                sx={{ padding: 0 }}
+                size='small'
+                className='plausible-event-name=Copy+Wallet+Click'
+              >
                 <CopyIcon fontSize='inherit' />
               </IconButton>
             </Typography>

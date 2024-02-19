@@ -103,7 +103,12 @@ const OperatorSelected = ({
         padding: '24px',
       }}
     >
-      <Button sx={{ borderRadius: '7px' }} variant='outlined' onClick={handleHistoryClick} className='plausible-event-name=Operator+View+History+Click'>
+      <Button
+        sx={{ borderRadius: '7px' }}
+        variant='outlined'
+        onClick={handleHistoryClick}
+        className='plausible-event-name=Operator+View+History+Click'
+      >
         <Typography
           sx={{
             fontStyle: 'normal',
