@@ -157,7 +157,7 @@ const FeedbackForm = ({
           variant='outlined'
           onClick={handleSubmit}
           sx={{ width: 'fit-content' }}
-          className='plausible-event-name=User-FeedBack-Submit'
+          className='plausible-event-name=User+FeedBack+Submit'
         >
           <Typography>Submit</Typography>
         </Button>
@@ -220,7 +220,7 @@ const UserFeedback = ({
           }}
           size='medium'
           onClick={handleClose}
-          className='plausible-event-name=User-FeedBack-Close'
+          className='plausible-event-name=User+FeedBack+Close'
         >
           <CloseIcon fontSize='inherit' />
         </IconButton>

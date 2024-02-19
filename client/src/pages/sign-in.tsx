@@ -104,7 +104,7 @@ const WalletnotConnectedContent = () => {
             href={CREATE_WALLET_LINK}
             target='_blank'
             rel='noreferrer'
-            className='plausible-event-name=Walle+Create+Learn+Click'
+            className='plausible-event-name=Wallet+Create+Learn+Click'
           >
             <u>Learn how to create one.</u>
           </a>
