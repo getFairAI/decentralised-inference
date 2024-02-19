@@ -141,7 +141,7 @@ const Payments = () => {
       ) : (
         <>
           <Box paddingLeft={'8px'}>
-            <Button onClick={refreshClick} endIcon={<RefreshIcon />} variant='outlined'>
+            <Button onClick={refreshClick} endIcon={<RefreshIcon />} variant='outlined' className='plausible-event-name=Payments+Refresh+Click'>
               <Typography>Refresh</Typography>
             </Button>
           </Box>

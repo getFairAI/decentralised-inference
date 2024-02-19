@@ -21,7 +21,7 @@ import { FiCard, FiCardActionArea, FiCardContent, FicardMedia } from './full-ima
 import { IContractEdge } from '@/interfaces/arweave';
 import { toSvg } from 'jdenticon';
 import { useNavigate } from 'react-router-dom';
-import { MouseEvent, useEffect, useMemo } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo } from 'react';
 import { displayShortTxOrAddr, findTag } from '@/utils/common';
 import { useLazyQuery } from '@apollo/client';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
@@ -62,6 +62,8 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
     () => findTag(model, 'sequencerOwner') ?? model.node.owner.address,
     [model],
   );
+  const modelId = useMemo(() => findTag(model, 'modelTransaction'), [ model ]);
+  const modelName = useMemo(() => findTag(model, 'modelName'), [ model ]);
 
   useEffect(() => {
     const modelId = findTag(model, 'modelTransaction');
@@ -108,9 +110,8 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
     }
   };
 
-  const handleCardClick = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleCardClick = useCallback((event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    const modelId = findTag(model, 'modelTransaction');
     if (!modelId) return;
     localStorage.setItem('hasSignedIn', 'true');
     const url = useModel
@@ -124,7 +125,7 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
         fullState: model,
       },
     } as { state: ModelNavigationState });
-  };
+  }, [ modelId ]);
 
   return (
     <FiCard
@@ -132,7 +133,7 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
         flexGrow: 0,
       }}
     >
-      <FiCardActionArea onClick={handleCardClick}>
+      <FiCardActionArea onClick={handleCardClick} className={`plausible-event-name=Featured+Model+Click plausible-event-transaction=${modelId}+${modelName}`}>
         {!imgUrl || avatarLoading ? (
           <Box
             sx={{

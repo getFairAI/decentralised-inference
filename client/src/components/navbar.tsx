@@ -187,6 +187,7 @@ const WalletState = () => {
             paddingBottom: '11px',
           }}
           onClick={handleConnect}
+          className='plausible-event-name=Navbar+Connect+Wallet'
         >
           <Typography sx={{ lineHeight: '18.9px', fontSize: '14px' }}>Connect</Typography>
         </Button>
@@ -238,7 +239,7 @@ const WalletState = () => {
           )}
           <Tooltip title='Copy Address'>
             <Typography sx={{ lineHeight: '20.25px', fontSize: '15px' }}>
-              <IconButton onClick={handleCopyClick} sx={{ padding: 0 }} size='small'>
+              <IconButton onClick={handleCopyClick} sx={{ padding: 0 }} size='small' className='plausible-event-name=Copy+Wallet+Click'>
                 <CopyIcon fontSize='inherit' />
               </IconButton>
             </Typography>
@@ -415,6 +416,7 @@ const Navbar = ({
                       state: { ...state.fullState, ...state },
                     })
                   }
+                  className='plausible-event-name=Change+Operator+Click'
                 >
                   <Typography
                     noWrap

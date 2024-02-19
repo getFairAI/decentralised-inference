@@ -59,6 +59,7 @@ const ChangeOperator = () => {
             background: theme.palette.primary.main,
             '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
           }}
+          className='plausible-event-name=Change+Operator+Close'
         >
           <img src='./close-icon.svg' />
         </IconButton>

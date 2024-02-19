@@ -122,10 +122,10 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
         <DialogActions
           sx={{ display: 'flex', justifyContent: 'space-between', padding: '24px 24px 24px 24px' }}
         >
-          <Button onClick={handleBackClick} variant='outlined'>
+          <Button onClick={handleBackClick} variant='outlined' className='plausible-event-name=Terms+Decline+Click'>
             Decline
           </Button>
-          <Button onClick={handleAgreeClick} variant='contained'>
+          <Button onClick={handleAgreeClick} variant='contained' className='plausible-event-name=Terms+Accept+Click'>
             Accept And Continue
           </Button>
         </DialogActions>
