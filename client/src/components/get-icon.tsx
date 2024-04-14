@@ -21,7 +21,6 @@ import { SvgIcon, useTheme } from '@mui/material';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import PaymentsIcon from '@mui/icons-material/Payments';
 import GavelIcon from '@mui/icons-material/Gavel';
 import PaymentIcon from '@mui/icons-material/Payment';
 
@@ -65,8 +64,6 @@ const GetIcon = ({ input }: Props): JSX.Element => {
       return <GavelIcon></GavelIcon>;
     case 'Change Wallet':
       return <SyncAltIcon></SyncAltIcon>;
-    case 'View Payments':
-      return <PaymentsIcon />;
     default:
       return <Logout></Logout>;
   }

@@ -16,10 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY } from '@/constants';
-import { IContractEdge, IEdge } from '@/interfaces/arweave';
-import { findTag, findTagsWithKeyword } from '@/utils/common';
-import { useQuery, NetworkStatus } from '@apollo/client';
+import { findTag } from '@/utils/common';
 import {
   Box,
   Button,
@@ -41,56 +38,53 @@ import {
   useState,
 } from 'react';
 import BasicTable from './basic-table';
-import { WalletContext } from '@/context/wallet';
 import { useLocation, useNavigate } from 'react-router-dom';
-import FairSDKWeb from '@fair-protocol/sdk/web';
-import { CountResult } from '@permaweb/stampjs';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { findByIdQuery, findByTagsQuery, findAvailableOperators } from '@fairai/evm-sdk';
+import { ApolloQueryResult, NetworkStatus, QueryResult } from '@apollo/client';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 
 const OperatorSelected = ({
   operatorsData,
-  scriptTx,
   selectedIdx,
 }: {
-  operatorsData: IContractEdge[];
-  scriptTx?: IEdge | IContractEdge;
+  operatorsData: { tx: findByTagsQuery['transactions']['edges'][0], evmWallet: `0x${string}`, arweaveWallet: string, operatorFee: number }[];
   selectedIdx: number;
 }) => {
-  const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { currentAddress } = useContext(WalletContext);
+  const { state, pathname } = useLocation();
+  const { currentAddress } = useContext(EVMWalletContext);
 
   const handleHistoryClick = useCallback(() => {
-    const opAddress =
-      (findTag(operatorsData[selectedIdx], 'sequencerOwner') as string) ??
-      operatorsData[selectedIdx].node.owner.address;
-    navigate(`/operators/details/${opAddress}`, {
+    const op = operatorsData[selectedIdx];
+    navigate(`/operators/details/${op.arweaveWallet}`, {
       state: {
-        operatorName: findTag(operatorsData[selectedIdx], 'operatorName'),
+        operatorName: findTag(op.tx, 'operatorName'),
         fullState: operatorsData[selectedIdx],
       },
     });
-  }, [navigate, scriptTx, operatorsData, selectedIdx]);
+  }, [navigate, operatorsData, selectedIdx]);
 
   const handleUseOperatorClick = useCallback(() => {
-    const opOwner =
-      (findTag(operatorsData[selectedIdx], 'sequencerOwner') as string) ??
-      operatorsData[selectedIdx].node.owner.address;
-    const scriptCurator = findTag(scriptTx as IEdge, 'sequencerOwner') as string;
-    const state = {
+    const scriptTx = state.fullState;
+    const opOwner = operatorsData[selectedIdx].arweaveWallet;
+    const scriptCurator = scriptTx.node.owner.address;
+    const newState = {
       modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
       scriptName: findTag(scriptTx as IEdge, 'scriptName'),
-      fee: findTag(operatorsData[selectedIdx], 'operatorFee'),
-      scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
+      operatorEvmWallet: operatorsData[selectedIdx].evmWallet,
+      fee: operatorsData[selectedIdx].operatorFee,
+      scriptTransaction: scriptTx.node.id,
       fullState: scriptTx,
-      operatorRegistrationTx: operatorsData[selectedIdx].node.id,
+      operatorRegistrationTx: operatorsData[selectedIdx].tx,
       scriptCurator,
     };
     if (pathname.includes('chat')) {
-      return navigate(pathname.replace(pathname.split('/chat/')[1], opOwner), { state });
+      return navigate(pathname.replace(pathname.split('/chat/')[1], opOwner), { state: newState });
     } else {
-      return navigate(`/chat/${opOwner}`, { state });
+      return navigate(`/chat/${opOwner}`, { state: newState });
     }
-  }, [navigate, scriptTx, operatorsData, selectedIdx, pathname]);
+  }, [navigate, state, operatorsData, selectedIdx, pathname]);
 
   return (
     <Box
@@ -249,47 +243,23 @@ const ChooseOperatorHeader = ({
 const ChooseOperator = ({
   setShowOperators,
   scriptTx,
-  setGlobalLoading,
+  setGlobalLoading
 }: {
   setShowOperators?: Dispatch<SetStateAction<boolean>>;
-  scriptTx?: IEdge | IContractEdge;
+  scriptTx: IEdge | IContractEdge
   setGlobalLoading?: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const [operatorsData, setOperatorsData] = useState<IContractEdge[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [filterValue, setFilterValue] = useState('');
+  const [operatorsData, setOperatorsData] = useState<{ tx: findByTagsQuery['transactions']['edges'][0], evmWallet: `0x${string}`, arweaveWallet: string, operatorFee: number }[]>([]);
+  const [hasNextPage] = useState(false);
+  const [, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
-  const [filtering, setFiltering] = useState(false);
-  const { pathname } = useLocation();
+  const [filtering ] = useState(false);
   const navigate = useNavigate();
-  const [txsCountsMap, setTxsCountsMap] = useState<Map<string, CountResult>>(new Map());
-  const { countStamps } = useContext(WalletContext);
+  const [txsCountsMap, setTxsCountsMap] = useState<Record<string, number>>({});
+  const { countStamps } = useContext(EVMWalletContext);
+  const { state } = useLocation();
 
-  const scriptId = findTag(scriptTx as IEdge, 'scriptTransaction') as string;
-  const scriptName = findTag(scriptTx as IEdge, 'scriptName');
-  const scriptCurator =
-    findTag(scriptTx as IEdge, 'sequencerOwner') ?? scriptTx?.node.owner.address;
-
-  const queryObject = FairSDKWeb.utils.getOperatorQueryForScript(
-    scriptId,
-    scriptName,
-    scriptCurator,
-  );
-  const {
-    data: queryData,
-    loading,
-    error,
-    networkStatus,
-    refetch,
-    fetchMore,
-  } = useQuery(queryObject.query, {
-    variables: queryObject.variables,
-    skip: !scriptTx,
-  });
-
-  const showLoading = useMemo(() => loading || filtering, [loading, filtering]);
-
-  const handleRetry = useCallback(() => refetch(), [refetch]);
+  const showLoading = useMemo(() => filtering, [ filtering]);
 
   const handleSelected = useCallback(
     (index: number) => {
@@ -302,102 +272,39 @@ const ChooseOperator = ({
     [setSelectedIdx],
   );
 
-  const checkSingleOperator = (filtered: IContractEdge[]) => {
-    if (
-      (filtered.length === 1 || (IS_TO_CHOOSE_MODEL_AUTOMATICALLY && filtered.length > 1)) &&
-      !!setShowOperators
-    ) {
-      const opOwner =
-        (findTag(filtered[0], 'sequencerOwner') as string) ?? filtered[0].node.owner.address;
-      const state = {
-        modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
-        scriptName: findTag(scriptTx as IEdge, 'scriptName'),
-        fee: findTag(filtered[0], 'operatorFee'),
-        scriptTransaction: findTag(scriptTx as IEdge, 'scriptTransaction'),
-        fullState: scriptTx,
-        operatorRegistrationTx: filtered[0].node.id,
-        scriptCurator,
-      };
-
-      if (pathname.includes('chat')) {
-        navigate(pathname.replace(pathname.split('/chat/')[1], opOwner), { state });
-      } else {
-        navigate(`/chat/${opOwner}`, { state });
-      }
-      setShowOperators(false);
-    } else if (setGlobalLoading) {
-      setGlobalLoading(false);
-    } else {
-      // ignore
-    }
-  };
-
-  /**
-   * @description Effect that runs on query data changes;
-   * it is responsible to set the nextPage status and to update current loaded transactionsm
-   * filtering correct payments and repeated operators
-   */
   useEffect(() => {
-    if (networkStatus === NetworkStatus.loading) {
-      setFiltering(true);
-    }
-    // check has paid correct registration fee
-    if (queryData && networkStatus === NetworkStatus.ready) {
-      // use immediately invoked function to be able to call async operations in useEffect
+    if (scriptTx) {
       (async () => {
-        const filtered: IContractEdge[] = await FairSDKWeb.utils.operatorsFilter(
-          queryData.transactions.edges,
-        );
-        setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
-        // sort by stamps
-
-        if (filtered.length > 0) {
-          const filteredTxsIds = filtered.map((item) => item.node.id);
-          const stampsByOperator = await countStamps(filteredTxsIds);
-          // make sure all txs are in the stamps map
-          filteredTxsIds.forEach((tx) => {
-            if (!stampsByOperator[tx]) {
-              stampsByOperator[tx] = { total: 0, vouched: 0 };
+        const scriptWrapper = { transactions: { edges: [ scriptTx ] }};
+        const results = await findAvailableOperators(scriptWrapper as unknown as findByIdQuery);
+        setTxsCountsMap(await countStamps(results.map(r => r.tx.node.id)));
+        if (results.length > 0 && !!results[0]) {
+          setOperatorsData(results); 
+          const scriptCurator = scriptTx.node.owner.address;
+          navigate(`/chat/${results[0].arweaveWallet}`, {
+            state: {
+              ...state,
+              modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
+              scriptName: findTag(scriptTx as IEdge, 'scriptName'),
+              operatorEvmWallet: results[0].evmWallet,
+              fee: results[0].operatorFee,
+              scriptTransaction: scriptTx.node.id,
+              fullState: scriptTx,
+              operatorRegistrationTx: results[0].tx,
+              scriptCurator,
             }
           });
-
-          const stampsMap = new Map(Object.entries(stampsByOperator));
-
-          const sortedByStamps = Array.from(new Map(Object.entries(stampsByOperator))) // create a<rray from the stamps map => [ [txId, { total: 0, vouched: 0 }], ... ]
-            .sort(([, aValue], [, bValue]) => bValue.total - aValue.total) // sort by total stamps
-            .map(([key]) => filtered.find((el) => el.node.id === key)!) // map back to transactions
-            .filter((el) => el !== undefined); // filter out undefined values
-
-          setOperatorsData(sortedByStamps);
-          setTxsCountsMap(stampsMap);
-          checkSingleOperator(sortedByStamps);
-          setFiltering(false);
         } else if (setGlobalLoading) {
-          setFiltering(false);
           setGlobalLoading(false);
-          setOperatorsData([]);
         }
       })();
     }
-  }, [queryData]);
+  }, [ state ]);
 
-  useEffect(() => {
-    if (queryData && filterValue) {
-      setFiltering(true);
-      setOperatorsData(
-        queryData.transactions.edges.filter(
-          (el: IEdge) =>
-            findTagsWithKeyword(el, [TAG_NAMES.operatorName], filterValue) ||
-            el.node.owner.address.toLowerCase().includes(filterValue.toLowerCase().trim()),
-        ),
-      );
-      setFiltering(false);
-    } else if (queryData) {
-      setOperatorsData(queryData.transactions.edges);
-    } else {
-      // do nothing
-    }
-  }, [filterValue]);
+  const handleRetry = () => ({});
+  const fetchMore: QueryResult<findByTagsQuery>['fetchMore'] =
+    async <TFetchData=findByTagsQuery>() =>
+      ({ data: { transactions: { edges: [], pageInfo: { hasNextPage: false } } }, loading: false, networkStatus: {} as NetworkStatus }) as ApolloQueryResult<TFetchData>;
 
   return (
     <>
@@ -408,11 +315,9 @@ const ChooseOperator = ({
           data={operatorsData}
           txsCountsMap={txsCountsMap}
           loading={showLoading}
-          error={error}
-          state={scriptTx as IEdge}
           retry={handleRetry}
-          hasNextPage={hasNextPage}
           fetchMore={fetchMore}
+          hasNextPage={hasNextPage}
           selectedIdx={selectedIdx}
           handleSelected={handleSelected}
         ></BasicTable>
@@ -420,7 +325,6 @@ const ChooseOperator = ({
       {selectedIdx >= 0 && (
         <OperatorSelected
           operatorsData={operatorsData}
-          scriptTx={scriptTx}
           selectedIdx={selectedIdx}
         />
       )}

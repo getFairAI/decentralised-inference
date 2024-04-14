@@ -16,29 +16,17 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  DEFAULT_TAGS,
-  INFERENCE_PAYMENT,
-  SCRIPT_INFERENCE_RESPONSE,
-  TAG_NAMES,
-  U_CONTRACT_ID,
-} from '@/constants';
-import { IContractEdge, IEdge } from '@/interfaces/arweave';
-import { FIND_BY_TAGS, QUERY_RESPONSES_BY_OPERATOR } from '@/queries/graphql';
-import { useLazyQuery, useQuery } from '@apollo/client';
 import { Checkbox, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import {
-  commonUpdateQuery,
   displayShortTxOrAddr,
   findTag,
-  parseCost,
   parseUnixTimestamp,
 } from '@/utils/common';
-import { parseUBalance } from '@/utils/u';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { findByTagsQuery } from '@fairai/evm-sdk';
+import { useLocation } from 'react-router-dom';
 
 export interface RowData {
   address: string;
@@ -59,186 +47,46 @@ export interface RowData {
  */
 const OperatorRow = ({
   operatorTx,
-  state,
   index,
   totalStamps,
-  vouchedStamps,
   isSelected,
   setSelected,
 }: {
-  operatorTx: IEdge | IContractEdge;
-  state: IEdge;
+  operatorTx: { tx: findByTagsQuery['transactions']['edges'][0], evmWallet: `0x${string}`, arweaveWallet: string, operatorFee: number };
   index: number;
   totalStamps: number;
-  vouchedStamps: number;
   isSelected: boolean;
   setSelected: (index: number) => void;
 }) => {
-  const nDigits = 4;
+  const { state } = useLocation();
   const [row, setRow] = useState<Partial<RowData> | undefined>(undefined);
 
   const scriptCurator = useMemo(
-    () => (findTag(state, 'sequencerOwner') as string) ?? state.node.owner.address,
+    () => state?.scriptCreator || 'No Curator',
     [state],
   );
-  const scriptName = useMemo(() => findTag(state, 'scriptName') as string, [state]);
-  const scriptTransaction = useMemo(() => findTag(state, 'scriptTransaction') as string, [state]);
-  const [usdFee, setUsdFee] = useState(0);
-
-  const input = useMemo(() => {
-    const qty = parseFloat(findTag(operatorTx, 'operatorFee') as string);
-    const address =
-      (findTag(operatorTx, 'sequencerOwner') as string) ?? operatorTx.node.owner.address;
-
-    const requestPaymentsInputNumber = JSON.stringify({
-      function: 'transfer',
-      target: address,
-      qty,
-    });
-    const requestPaymentsInputStr = JSON.stringify({
-      function: 'transfer',
-      target: address,
-      qty: qty.toString(),
-    });
-
-    return [requestPaymentsInputNumber, requestPaymentsInputStr];
-  }, [operatorTx]);
-
-  const requestTags = [
-    ...DEFAULT_TAGS,
-    {
-      name: TAG_NAMES.scriptCurator,
-      values: [scriptCurator],
-    },
-    {
-      name: TAG_NAMES.scriptName,
-      values: [scriptName],
-    },
-    {
-      name: TAG_NAMES.operationName,
-      values: [INFERENCE_PAYMENT],
-    },
-    { name: TAG_NAMES.contract, values: [U_CONTRACT_ID] },
-    { name: TAG_NAMES.input, values: input },
-  ];
-  const { data, /* loading, error,  */ fetchMore } = useQuery(FIND_BY_TAGS, {
-    skip: !scriptCurator && !scriptName && !input,
-    variables: {
-      first: 10,
-      tags: requestTags,
-    },
-  });
-
-  const [getOpResponses, opResponses] = useLazyQuery(QUERY_RESPONSES_BY_OPERATOR);
-
+  const scriptName = useMemo(() => state?.scriptName, [state]);
+  const scriptTransaction = useMemo(() => state?.scriptTransaction, [state]);
   /**
    * @description Effect that runs on `operatorTx` changes; it will create an easier to read object
    * with the necessary props for the row (except availability)
    */
   useEffect(() => {
-    const address =
-      (findTag(operatorTx, 'sequencerOwner') as string) ?? operatorTx.node.owner.address;
-    const stamps = 0;
-    const fee = findTag(operatorTx, 'operatorFee');
-    const registrationTimestamp = findTag(operatorTx, 'unixTime');
-    const operatorName = findTag(operatorTx, 'operatorName') || 'No Name';
+    const registrationTimestamp = findTag(operatorTx.tx, 'unixTime');
+    const operatorName = findTag(operatorTx.tx, 'operatorName') || 'No Name';
 
     setRow({
-      address,
-      stamps,
-      fee,
+      address: operatorTx.evmWallet,
+      stamps: totalStamps,
+      fee: operatorTx.operatorFee.toString(),
       registrationTimestamp,
       scriptTransaction,
       scriptName,
       scriptCurator,
       operatorName,
+      availability: 100,
     });
   }, [operatorTx]);
-
-  /**
-   * @description Effect that runs when data from `QUERY_REEQUEST_FOR_OPERATOR` changes;
-   * It is responsible to fetch more data while `hasNextPage` is true, otherwise it will
-   * execute `getOpResponses` to fetch the responses for all the received requests
-   */
-  useEffect(() => {
-    if (data && data.transactions && data.transactions.pageInfo.hasNextPage) {
-      fetchMore({
-        variables: {
-          after: data.transactions.edges[data.transactions.edges.length - 1].cursor,
-        },
-        updateQuery: commonUpdateQuery,
-      });
-    } else if (data && data.transactions) {
-      const inferenceReqIds = (data.transactions.edges as IEdge[]).map((req) => {
-        return findTag(req, 'inferenceTransaction');
-      });
-
-      const owner = findTag(operatorTx, 'sequencerOwner') ?? operatorTx.node.owner.address;
-
-      const responseTags = [
-        ...DEFAULT_TAGS,
-        {
-          name: TAG_NAMES.scriptCurator,
-          values: [scriptCurator],
-        },
-        {
-          name: TAG_NAMES.scriptName,
-          values: [scriptName],
-        },
-        {
-          name: TAG_NAMES.operationName,
-          values: [SCRIPT_INFERENCE_RESPONSE],
-        },
-        {
-          name: TAG_NAMES.requestTransaction,
-          values: inferenceReqIds,
-        },
-      ];
-      getOpResponses({
-        variables: {
-          first: 10,
-          tags: responseTags,
-          owner,
-        },
-      });
-    }
-  }, [data]);
-
-  /**
-   * @description Effect that runs when data from `QUERY_RESPONSES_BY_OPERATOR` changes;
-   * It is responsible to fetch more responses while `hasNextPage` is true, otherwise it will
-   * calculate operator availability (requests/ responses) and execute `getPaidFee` to check if there
-   * is a payment transaction with the correct value for each response
-   */
-  useEffect(() => {
-    if (
-      opResponses.data &&
-      opResponses.data.transactions &&
-      opResponses.data.transactions.pageInfo.hasNextPage
-    ) {
-      opResponses.fetchMore({
-        variables: {
-          after:
-            opResponses.data.transactions.edges[opResponses.data.transactions.edges.length - 1]
-              .cursor,
-        },
-        updateQuery: commonUpdateQuery,
-      });
-    } else if (opResponses.data) {
-      const reqs = data.transactions.edges;
-      const responses = opResponses.data.transactions.edges;
-      const availability = (reqs.length / responses.length) * 100;
-      setRow({ ...row, availability });
-    }
-  }, [opResponses.data]);
-
-  useEffect(() => {
-    (async () => {
-      const uBalance = parseUBalance(row?.fee ?? '0');
-      const price = await parseCost(uBalance);
-      setUsdFee(price);
-    })();
-  }, [row?.fee]);
 
   return (
     <>
@@ -263,7 +111,7 @@ const OperatorRow = ({
           {parseUnixTimestamp(row?.registrationTimestamp as string)}
         </TableCell>
         <TableCell align='right'>
-          {parseUBalance(row?.fee ?? '0')}/{usdFee.toPrecision(nDigits)}
+          {row?.fee}
         </TableCell>
         <TableCell align='right'>
           <Tooltip
@@ -291,10 +139,7 @@ const OperatorRow = ({
         </TableCell>
         <TableCell align='right'>
           <span>
-            {totalStamps}
-            <Tooltip title={`Total: ${totalStamps}, Vouched: ${vouchedStamps}`} placement='top-end'>
-              <InfoOutlinedIcon fontSize='small' style={{ fontSize: '14px', marginLeft: '4px' }} />
-            </Tooltip>
+            {row?.stamps}
           </span>
         </TableCell>
         <TableCell align='right'>

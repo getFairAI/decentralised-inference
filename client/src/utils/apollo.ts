@@ -16,17 +16,14 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { DEV_ARWEAVE_URL, NET_ARWEAVE_URL } from '../constants';
-import { ITag, ITransactions } from '../interfaces/arweave';
+import { NET_ARWEAVE_URL } from '../constants';
+import { ITransactions } from '../interfaces/arweave';
 import {
   ApolloClient,
   ApolloLink,
-  ApolloQueryResult,
-  FetchMoreQueryOptions,
   from,
   HttpLink,
   InMemoryCache,
-  OperationVariables,
   split,
 } from '@apollo/client';
 
@@ -49,11 +46,13 @@ const mapLink = new ApolloLink((operation, forward) =>
   }),
 );
 
+const irysUrl = 'https://arweave.mainnet.irys.xyz/graphql';
+
 export const client = new ApolloClient({
   // uri: 'http://localhost:1984/graphql',
   cache: new InMemoryCache(),
   link: split(
-    () => true, // default to arweave net
+    (operation) => !operation.getContext().clientName  || operation.getContext().clientName === 'arweave', // by default use arweave
     from([
       // chainRequestLink,
       mapLink,
@@ -62,7 +61,7 @@ export const client = new ApolloClient({
     from([
       // chainRequestLink,
       mapLink,
-      new HttpLink({ uri: DEV_ARWEAVE_URL + '/graphql' }),
+      new HttpLink({ uri: irysUrl }),
     ]),
   ),
   defaultOptions: {
@@ -76,18 +75,3 @@ export const client = new ApolloClient({
     },
   },
 });
-
-export type fetchMoreFn = <
-  TFetchData = unknown,
-  TFetchVars extends OperationVariables = { tags: ITag[]; first: number },
->(
-  fetchMoreOptions: FetchMoreQueryOptions<TFetchVars, TFetchData> & {
-    updateQuery?: (
-      previousQueryResult: TFetchData,
-      options: {
-        fetchMoreResult: TFetchData;
-        variables: TFetchVars;
-      },
-    ) => TFetchData;
-  },
-) => Promise<ApolloQueryResult<TFetchData | undefined>>;

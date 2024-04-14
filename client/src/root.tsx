@@ -21,7 +21,6 @@ import { CssBaseline } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import { Outlet } from 'react-router-dom';
 import Layout from './components/layout';
-import { WalletProvider } from './context/wallet';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
 import { StyledMaterialDesignContent } from './styles/components';
@@ -29,6 +28,7 @@ import { ReactElement } from 'react';
 import { ChooseWalletProvider } from './context/choose-wallet';
 import { TradeProvider } from './context/trade';
 import { UserFeedbackProvider } from './context/user-feedback';
+import { EVMWalletProvider } from './context/evm-wallet';
 
 const BaseRoot = ({ children }: { children: ReactElement }) => {
   return (
@@ -43,13 +43,15 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
           }}
         >
           <CssBaseline />
-          <WalletProvider>
-            <ChooseWalletProvider>
-              <UserFeedbackProvider>
-                <TradeProvider>{children}</TradeProvider>
+          <EVMWalletProvider>
+              <ChooseWalletProvider>
+                <UserFeedbackProvider>
+                  <TradeProvider>
+                    {children}
+                </TradeProvider>
               </UserFeedbackProvider>
             </ChooseWalletProvider>
-          </WalletProvider>
+          </EVMWalletProvider>
         </SnackbarProvider>
       </AppThemeProvider>
     </ApolloProvider>

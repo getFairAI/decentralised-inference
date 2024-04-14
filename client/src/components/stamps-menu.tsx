@@ -23,8 +23,8 @@ import { useSnackbar } from 'notistack';
 import LoadingButton from '@mui/lab/LoadingButton';
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
-import { WalletContext } from '@/context/wallet';
 import { useState, useEffect, useRef, useContext, useCallback } from 'react';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const FONT_SIZE = 12;
 
@@ -53,7 +53,7 @@ const StampsMenu: React.FC<StampsMenuProps> = (targetTx: StampsMenuProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const [isSending, setIsSending] = useState(false);
 
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress } = useContext(EVMWalletContext);
   const tooltipText =
     'When users "STAMP" the content, the STAMP Protocol gives creators and sponsors $STAMP Tokens every day.';
 

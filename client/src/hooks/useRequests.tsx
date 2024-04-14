@@ -16,27 +16,44 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { NetworkStatus, useLazyQuery } from '@apollo/client';
-import FairSDKWeb from '@fair-protocol/sdk/web';
+import { TAG_NAMES } from '@/constants';
+import { commonUpdateQuery } from '@/utils/common';
+import { NetworkStatus, gql, useLazyQuery } from '@apollo/client';
 import { useEffect, useState } from 'react';
 
 const useRequests = ({
   userAddr,
-  scriptName,
-  scriptCurator,
-  scriptOperator,
+  scriptTransaction,
   conversationId,
   first,
 }: {
   userAddr: string;
-  scriptName: string;
-  scriptCurator: string;
-  scriptOperator: string;
+  scriptTransaction: string;
   conversationId: number;
   first?: number;
 }) => {
   const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
-  const { query: requestsQuery } = FairSDKWeb.utils.getRequestsQuery(userAddr);
+  const irysQuery = gql`
+    query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String)  {
+      transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
+        edges {
+          node {
+            id
+            tags {
+              name
+              value
+            }
+            address
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
+  `;
+
   const [
     getChatRequests,
     {
@@ -46,27 +63,31 @@ const useRequests = ({
       networkStatus: requestNetworkStatus,
       fetchMore: requestFetchMore,
     },
-  ] = useLazyQuery(requestsQuery);
+  ] = useLazyQuery(irysQuery);
   useEffect(() => {
     if (!userAddr) {
       // skip fetching while user address is not loaded
       return;
     }
-
-    const { variables: queryParams } = FairSDKWeb.utils.getRequestsQuery(
-      userAddr,
-      scriptName,
-      scriptCurator,
-      scriptOperator,
-      conversationId,
-      first,
-    );
     getChatRequests({
-      variables: queryParams,
+      variables: {
+        tags: [
+          { name: TAG_NAMES.protocolName, values: ['FairAI'] },
+          { name: TAG_NAMES.protocolVersion, values: ['2.0-test'] },
+          { name: TAG_NAMES.operationName, values: ['Inference Request'] },
+          { name: TAG_NAMES.scriptTransaction, values: [scriptTransaction] },
+          { name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] },
+        ],
+        owners: [ userAddr ],
+        first: 10
+      },
+      context: {
+        clientName: 'irys'
+      },
       fetchPolicy: 'network-only',
       nextFetchPolicy: 'network-only',
     });
-  }, [userAddr, scriptName, scriptCurator, scriptOperator, conversationId, first]);
+  }, [userAddr, conversationId, first]);
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
@@ -74,13 +95,23 @@ const useRequests = ({
     }
   }, [requestsData, requestNetworkStatus, setHasRequestNextPage]);
 
+
+  const fetchMore = () => {
+    requestFetchMore({
+      variables: {
+        after: requestsData.transactions.pageInfo.endCursor,
+      },
+      updateQuery: commonUpdateQuery,
+    });
+  };
+
   return {
     requestsData,
     requestsLoading,
     requestError,
     requestNetworkStatus,
     hasRequestNextPage,
-    requestFetchMore,
+    fetchMore,
   };
 };
 

@@ -17,7 +17,7 @@
  */
 
 import { U_LOGO_SRC } from '@/constants';
-import { displayShortTxOrAddr, findTag, getUPriceUSD } from '@/utils/common';
+import { displayShortTxOrAddr, findTag } from '@/utils/common';
 import {
   Box,
   Divider,
@@ -87,7 +87,7 @@ const StableDiffusionConfigurations = ({
   control: Control<IConfiguration, unknown>;
 }) => {
   const nDigits = 4;
-  const defaultImages = 4;
+  const defaultImages = 1;
   const portraitWidth = 960;
   const portraitHeight = 1280;
   const landscapeWidth = 1280;
@@ -95,9 +95,7 @@ const StableDiffusionConfigurations = ({
   const squareWidth = 1024;
   const { state } = useLocation();
 
-  const [cost, setCost] = useState(0);
   const [usdCost, setUsdCost] = useState(0);
-  const [currentArPrice, setCurrentArPrice] = useState(0);
   const [showCustomAspectRatio, setShowCustomAspectRatio] = useState(false);
 
   const showOutputConfiguration = useMemo(
@@ -105,32 +103,23 @@ const StableDiffusionConfigurations = ({
     [state],
   );
 
+  const fee = useMemo(() => state.fee, [ state ]);
+
   const { field: negativePromptField } = useController({ control, name: 'negativePrompt' });
   const { field: nImagesField } = useController({ control, name: 'nImages' });
   const { field: widthField } = useController({ control, name: 'width' });
   const { field: heightField } = useController({ control, name: 'height' });
 
   useEffect(() => {
-    (async () => {
-      const arPrice = await getUPriceUSD();
-      setCurrentArPrice(arPrice);
-    })();
-  }, [getUPriceUSD, setCurrentArPrice]);
-
-  useEffect(() => {
-    const fee = state?.fee ? parseUBalance(state?.fee) : 0;
-    setCost(fee * defaultImages);
-    setUsdCost(currentArPrice * fee * defaultImages);
-  }, [currentArPrice, state]);
+    setUsdCost(fee * defaultImages);
+  }, [ fee ]);
 
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
       nImagesField.onChange(_event);
-      const fee = state?.fee ? parseUBalance(state?.fee) : 0;
-      setCost(fee * (newValue as number));
-      setUsdCost(currentArPrice * fee * (newValue as number));
+      setUsdCost(fee * (newValue as number));
     },
-    [nImagesField, state, currentArPrice, setCost, setUsdCost, parseUBalance],
+    [nImagesField, fee, setUsdCost],
   );
 
   const handleAspectRatioChange = useCallback(
@@ -158,7 +147,7 @@ const StableDiffusionConfigurations = ({
           break;
       }
     },
-    [nImagesField, state, currentArPrice, setCost, setUsdCost, parseUBalance],
+    [],
   );
 
   if (!showOutputConfiguration) {
@@ -271,15 +260,9 @@ const StableDiffusionConfigurations = ({
           valueLabelDisplay='auto'
           className='plausible-event-name=Number+of+Images+Changed'
         />
-        <Box display={'flex'} gap={'8px'}>
-          <Typography variant='caption'>
-            Estimated Total Cost: {cost.toPrecision(nDigits)}
-          </Typography>
-          <img width='17px' height='17px' src={U_LOGO_SRC} />
-        </Box>
         <Box display={'flex'}>
           <Typography sx={{ marginBottom: '16px' }} variant='caption'>
-            Estimated Total USD Cost: ${usdCost.toPrecision(nDigits)}
+            Estimated Total Cost: {usdCost.toPrecision(nDigits)} USDC
           </Typography>
         </Box>
       </Box>

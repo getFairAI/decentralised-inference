@@ -17,7 +17,7 @@
  */
 
 import { BAZAR_ASSETS_LINK, U_CONTRACT_ID, U_LOGO_SRC } from '@/constants';
-import { WalletContext } from '@/context/wallet';
+import { EVMWalletContext } from '@/context/evm-wallet';
 import { displayShortTxOrAddr } from '@/utils/common';
 import {
   allowUCMonAsset,
@@ -390,7 +390,7 @@ const CreatePairStep = ({
 };
 
 const VerticalLinearStepper = ({ assetId }: { assetId: string }) => {
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress } = useContext(EVMWalletContext);
 
   const [activeStep, setActiveStep] = useState(0);
   const [maxBalance, setMaxBalance] = useState(0);
@@ -629,7 +629,7 @@ const Trade = ({
 }) => {
   // components/layout.js
   const theme = useTheme();
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress } = useContext(EVMWalletContext);
   const [onSaleWithbalance, setOnSaleWithBalance] = useState(false);
   const [onSale, setOnSale] = useState(false);
   const [sold, setSold] = useState(false);

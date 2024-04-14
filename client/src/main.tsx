@@ -29,7 +29,6 @@ import Chat from '@/pages/model/chat';
 import History from '@/pages/history';
 import BlockOperatorGuard from '@/guards/block-operator';
 import ErrorDisplay from '@/pages/error-display';
-import Payments from '@/pages/payments';
 import { getScriptAttachments } from './pages/script/script';
 import ScriptDetails from './pages/script/script-details';
 import ChangeOperator from './pages/model/change-operator';
@@ -91,10 +90,6 @@ const router = createHashRouter([
       {
         path: 'history',
         element: <History />,
-      },
-      {
-        path: 'payments',
-        element: <Payments />,
       },
       {
         path: 'sign-in',

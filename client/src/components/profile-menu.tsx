@@ -23,12 +23,12 @@ import { Tooltip, Typography } from '@mui/material';
 import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK, DISCORD_LINK, STUDIO_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import { WalletContext } from '@/context/wallet';
 import GetIcon from './get-icon';
 import Box from '@mui/material/Box';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { useState, useContext, MouseEvent, useCallback, Dispatch } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const changeWallet = 'Change Wallet';
 const uSwap = 'Top Up';
@@ -44,7 +44,6 @@ const options = [
   'Twitter',
   viewTerms,
   changeWallet,
-  'Disconnect',
 ];
 const disableableOptions = [changeWallet, 'Disconnect', uSwap, viewPayments];
 
@@ -57,7 +56,6 @@ const Option = ({
   option: string;
   setAnchorEl: Dispatch<React.SetStateAction<HTMLElement | null>>;
 }) => {
-  const { disconnectWallet } = useContext(WalletContext);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const navigate = useNavigate();
 
@@ -85,10 +83,6 @@ const Option = ({
         case changeWallet:
           setAnchorEl(null);
           setChooseWalletOpen(true);
-          return;
-        case 'Disconnect':
-          await disconnectWallet();
-          setAnchorEl(null);
           return;
         case uSwap:
           setAnchorEl(null);
@@ -119,7 +113,7 @@ export default function ProfileMenu() {
   const itemHeight = 4.5;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress } = useContext(EVMWalletContext);
 
   const handleClick = useCallback((event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);

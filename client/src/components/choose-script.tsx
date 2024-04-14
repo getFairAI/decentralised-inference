@@ -16,8 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY } from '@/constants';
-import { WalletContext } from '@/context/wallet';
+import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY, SCRIPT_CREATION, SCRIPT_DELETION, MARKETPLACE_ADDRESS } from '@/constants';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';
@@ -42,9 +41,11 @@ import {
 } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BasicTable from './basic-table';
-import { ModelNavigationState } from '@/interfaces/router';
 import { Timeout } from 'react-number-format/types/types';
-import FairSDKWeb from '@fair-protocol/sdk/web';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { findByTagsAndOwnersDocument, findByTagsDocument, findByTagsQuery } from '@fairai/evm-sdk';
+import { client } from '@/utils/apollo';
+import { ModelNavigationState } from '@/interfaces/router';
 
 /* const scriptsFilter = async (data: IContractEdge[]) => {
   const uniqueScripts = FairSDKWeb.utils.filterByUniqueScriptTxId<IContractEdge[]>(data);
@@ -87,15 +88,10 @@ const ChooseScript = ({
   const [filterValue, setFilterValue] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(-1);
   const [filtering, setFiltering] = useState(false);
-  const { state }: { state: ModelNavigationState } = useLocation();
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress } = useContext(EVMWalletContext);
+  const { state } : { state: ModelNavigationState } = useLocation();
   const navigate = useNavigate();
 
-  const queryObject = FairSDKWeb.utils.getScriptQueryForModel(
-    state.modelTransaction,
-    state.modelName,
-    state.modelCreator,
-  );
   const {
     data: queryData,
     loading,
@@ -103,7 +99,18 @@ const ChooseScript = ({
     refetch,
     fetchMore,
     networkStatus,
-  } = useQuery(queryObject.query, { variables: queryObject.variables });
+  } = useQuery(findByTagsDocument, {
+    variables: {
+      tags: [
+        { name: TAG_NAMES.protocolName, values: [ 'FairAi', 'Fair Protocol' ]}, // keep Fair Protocol in tags to keep retrocompatibility
+        { name: TAG_NAMES.protocolVersion, values: [ '1.0', '2.0-test' ]},
+        { name: TAG_NAMES.operationName, values: [ SCRIPT_CREATION ]},
+        { name: TAG_NAMES.modelTransaction, values: [ state.modelTransaction ]},
+      ],
+      first: 10,
+    },
+    /* skip: !model, */
+  });
 
   const showLoading = useMemo(() => loading || filtering, [loading, filtering]);
 
@@ -138,7 +145,56 @@ const ChooseScript = ({
     }
     if (queryData && networkStatus === NetworkStatus.ready) {
       (async () => {
-        const filtered = await FairSDKWeb.utils.scriptsFilter(queryData.transactions.edges);
+        // uniqueTxIds
+        // previousVersions
+        const txs = [ ...queryData.transactions.edges ]; // mutable copy of txs
+        // sort txs by timestamp
+        /* txs.sort((a, b) => {
+          const aTimestamp = parseInt(findTag(a, 'unixTime') as string, 10);
+          const bTimestamp = parseInt(findTag(b, 'unixTime') as string, 10);
+      
+          if (aTimestamp === bTimestamp) {
+            return 1;
+          }
+          return bTimestamp - aTimestamp;
+        }); */
+
+        const filtered = txs.reduce((acc, el) => {
+          acc.push(el);
+          // find previousVersionsTag
+          const previousVersions= findTag(el, 'previousVersions');
+          if (previousVersions) {
+            const versionsArray: string[] = JSON.parse(previousVersions);
+            // remove previous versions from accumulator array
+            const newAcc = acc.filter(el => !versionsArray.includes(el.node.id));
+            return newAcc;
+          }
+
+          return acc;
+        }, [] as findByTagsQuery['transactions']['edges']);
+
+        const filteredCopy = [ ...filtered ];
+        for (const tx of filteredCopy) {
+          const deleteTags = [
+            { name: TAG_NAMES.operationName, values: [ SCRIPT_DELETION ] },
+            { name: TAG_NAMES.scriptTransaction, values: [ tx.node.id ] },
+          ];
+        
+          const owners = [ MARKETPLACE_ADDRESS, tx.node.owner.address ];
+        
+          const data = await client.query({
+            query: findByTagsAndOwnersDocument,
+            variables: {
+              tags: deleteTags, first: filteredCopy.length ,owners,
+            }
+          });
+        
+          if (data.data.transactions.edges.length > 0) {
+            // remove scripts with cancellations
+            filtered.splice(filtered.findIndex(el => el.node.id === tx.node.id), 1);
+          }
+        }
+
         setHasNextPage(queryData.transactions.pageInfo.hasNextPage);
         setScriptsData(filtered);
 
@@ -159,7 +215,7 @@ const ChooseScript = ({
       setFiltering(true);
       setScriptsData(
         queryData.transactions.edges.filter(
-          (el: IEdge) =>
+          (el) =>
             findTagsWithKeyword(el, [TAG_NAMES.scriptName], filterValue) ||
             (findTag(el, 'sequencerOwner') as string)
               .toLowerCase()
@@ -243,7 +299,6 @@ const ChooseScript = ({
           data={scriptsData}
           loading={showLoading}
           error={error}
-          state={state.fullState}
           retry={handleRetry}
           hasNextPage={hasNextPage}
           fetchMore={fetchMore}

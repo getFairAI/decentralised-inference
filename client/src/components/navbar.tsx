@@ -20,7 +20,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import {
   ChangeEvent,
@@ -41,17 +41,14 @@ import {
   Tooltip,
   useTheme,
 } from '@mui/material';
-import { WalletContext } from '@/context/wallet';
 import { Timeout } from 'react-number-format/types/types';
-import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
-import { usePollingEffect } from '@/hooks/usePollingEffect';
+import { defaultDecimalPlaces } from '@/constants';
 import Logo from './logo';
-import { parseUBalance } from '@/utils/u';
-import { findTag, getUPriceUSD } from '@/utils/common';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
 import { InfoOutlined } from '@mui/icons-material';
-import StampsMenu from '@/components/stamps-menu';
+/* import StampsMenu from '@/components/stamps-menu'; */
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const CustomDropDownIcon = () => (
   <Icon
@@ -66,14 +63,13 @@ const CustomDropDownIcon = () => (
 );
 
 const CurrencyMenu = () => {
-  const pollingTimeout = 10000;
   const spaceBetween = 'space-between';
 
-  const [selected, setSelected] = useState<'AR' | 'U'>('U');
-  const { currentAddress, currentBalance, currentUBalance, updateBalance, updateUBalance } =
-    useContext(WalletContext);
+  const [selected, setSelected] = useState<'ETH' | 'USDC'>('USDC');
+  const { ethBalance, usdcBalance, /* updateBalance, updateUSDCBalance  */} =
+    useContext(EVMWalletContext);
 
-  const pollingFn = () => {
+  /* const pollingFn = () => {
     if (selected === 'AR') {
       return updateBalance();
     } else {
@@ -85,28 +81,28 @@ const CurrencyMenu = () => {
     pollingFn,
     [currentAddress, selected],
     pollingTimeout,
-  );
+  ); */
 
-  const handleArClick = useCallback(() => {
-    stopPolling();
-    setSelected('AR');
-    startPolling();
-  }, [setSelected, startPolling, stopPolling]);
+  const handleETHClick = useCallback(() => {
+    // stopPolling();
+    setSelected('ETH');
+    // startPolling();
+  }, [setSelected, /* startPolling, stopPolling */]);
 
-  const handleUClick = useCallback(() => {
-    stopPolling();
-    setSelected('U');
-    startPolling();
-  }, [setSelected, startPolling, stopPolling]);
+  const handleUSDCClick = useCallback(() => {
+    // stopPolling();
+    setSelected('USDC');
+    // startPolling();
+  }, [setSelected, /* startPolling, stopPolling */]);
 
-  useEffect(() => {
+ /*  useEffect(() => {
     if (!currentAddress) {
       stopPolling();
     } else {
       // if address changes, restart polling
       startPolling();
     }
-  }, [currentAddress]);
+  }, [currentAddress]); */
 
   return (
     <>
@@ -127,24 +123,24 @@ const CurrencyMenu = () => {
         value={selected}
       >
         <MenuItem
-          value={'AR'}
-          onClick={handleArClick}
-          sx={{ display: 'flex', justifyContent: spaceBetween }}
-        >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}>
-            {currentBalance.toFixed(defaultDecimalPlaces)}
-          </Typography>
-          <img width='20px' height='20px' src='./arweave-logo-for-light.png' />
-        </MenuItem>
-        <MenuItem
-          value={'U'}
-          onClick={handleUClick}
+          value={'ETH'}
+          onClick={handleETHClick}
           sx={{ display: 'flex', justifyContent: spaceBetween }}
         >
           <Typography sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}>
-            {currentUBalance.toFixed(defaultDecimalPlaces)}
+            {ethBalance.toFixed(defaultDecimalPlaces)}
           </Typography>
-          <img width='20px' height='20px' src={U_LOGO_SRC} />
+          <img width='20px' height='20px' src='./eth-logo.svg' />
+        </MenuItem>
+        <MenuItem
+          value={'USDC'}
+          onClick={handleUSDCClick}
+          sx={{ display: 'flex', justifyContent: spaceBetween }}
+        >
+          <Typography sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}>
+            {usdcBalance.toFixed(defaultDecimalPlaces)}
+          </Typography>
+          <img width='20px' height='20px' src={'./usdc-logo.svg'} />
         </MenuItem>
       </Select>
     </>
@@ -153,7 +149,7 @@ const CurrencyMenu = () => {
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, isWalletVouched } = useContext(WalletContext);
+  const { currentAddress } = useContext(EVMWalletContext);
   const navigate = useNavigate();
 
   const handleConnect = useCallback(() => navigate('sign-in'), [navigate]);
@@ -229,14 +225,9 @@ const WalletState = () => {
             <Typography
               sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px' }}
             >
-              {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
+              {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
             </Typography>
           </Tooltip>
-          {isWalletVouched && (
-            <Tooltip title={'Wallet is Vouched'}>
-              <img src='./vouch.svg' width={'15px'} height={'15px'} />
-            </Tooltip>
-          )}
           <Tooltip title='Copy Address'>
             <Typography sx={{ lineHeight: '20.25px', fontSize: '15px' }}>
               <IconButton
@@ -263,7 +254,8 @@ const Navbar = ({
   setFilterValue: Dispatch<SetStateAction<string>>;
   isScrolled: boolean;
 }) => {
-  const { pathname, state } = useLocation();
+  const { address } = useParams();
+  const { state, pathname } = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
   const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
@@ -288,31 +280,17 @@ const Navbar = ({
   const nDigits = 4;
 
   useEffect(() => {
-    (async () => {
-      if (state) {
-        const uCost = parseUBalance(state?.fee);
-        const uPrice = await getUPriceUSD();
-        const isImage = findTag(state.fullState, 'output') === 'image';
-        const isStableDiffusion =
-          findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
-        const defaultNImages = 4;
-        const nImages = isStableDiffusion ? defaultNImages : 1;
+    if (state && state.fee) {
+      setTooltip(
+        `Cost set by operator for each generation: ${(state.fee).toFixed(nDigits)} USDC`,
+      );
+      setUsdFee(state.fee);
+    }
+  }, [ state ]);
 
-        if (isStableDiffusion || isImage) {
-          setTooltip(
-            `Cost set by operator for each image: ${(uCost * uPrice).toFixed(
-              nDigits,
-            )}$\n Default number of images: ${nImages}`,
-          );
-        } else {
-          setTooltip(
-            `Cost set by operator for each generation: ${(uCost * uPrice).toFixed(nDigits)}`,
-          );
-        }
-        setUsdFee(uCost * uPrice * nImages);
-      }
-    })();
-  }, [state, parseUBalance, getUPriceUSD]);
+  useEffect(() => {
+    console.log(address);
+  }, [ address ]);
 
   return (
     <>
@@ -386,7 +364,7 @@ const Navbar = ({
           >
             {pathname.includes('chat') ? (
               <>
-                <StampsMenu id={state.operatorRegistrationTx ?? ''} type='Operator'></StampsMenu>
+                {/* <StampsMenu id={address ?? ''} type='Operator'></StampsMenu> */}
                 <Box>
                   <Typography
                     sx={{
@@ -417,9 +395,7 @@ const Navbar = ({
                   sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '12px 16px' }}
                   startIcon={<img src='./chevron-bottom.svg' />}
                   onClick={() =>
-                    navigate(`${pathname}/change-operator`, {
-                      state: { ...state.fullState, ...state },
-                    })
+                    navigate(`${pathname}/change-operator`)
                   }
                   className='plausible-event-name=Change+Operator+Click'
                 >

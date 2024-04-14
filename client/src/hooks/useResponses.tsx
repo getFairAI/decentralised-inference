@@ -26,7 +26,6 @@ const useResponses = ({
   userAddr,
   scriptName,
   scriptCurator,
-  scriptOperators,
   conversationId,
   lastRequestId,
   first,
@@ -35,7 +34,6 @@ const useResponses = ({
   userAddr: string;
   scriptName: string;
   scriptCurator: string;
-  scriptOperators: string[];
   conversationId: number;
   lastRequestId?: string;
   first?: number;
@@ -45,7 +43,7 @@ const useResponses = ({
     userAddr,
     scriptName,
     scriptCurator,
-    scriptOperators,
+    [],
     conversationId,
     first,
   );
@@ -73,10 +71,12 @@ const useResponses = ({
       userAddr,
       scriptName,
       scriptCurator,
-      scriptOperators,
+      [],
       conversationId,
       first,
     );
+    queryParams.tags.find(tag => tag.name === 'Protocol-Name')?.values.push('FairAI');
+    queryParams.tags.find(tag => tag.name === 'Protocol-Version')?.values.push('2.0-test');
     if (reqIds.length > 0) {
       getChatResponses({ variables: queryParams });
     }
@@ -89,9 +89,11 @@ const useResponses = ({
         userAddr,
         scriptName,
         scriptCurator,
-        scriptOperators,
+        [],
         conversationId,
       );
+      queryParams.tags.find(tag => tag.name === 'Protocol-Name')?.values.push('FairAI');
+      queryParams.tags.find(tag => tag.name === 'Protocol-Version')?.values.push('2.0-test');
       pollResponses({ variables: { ...pollQueryParams }, pollInterval: 10000 });
     }
   }, [
@@ -99,7 +101,6 @@ const useResponses = ({
     userAddr,
     scriptName,
     scriptCurator,
-    scriptOperators,
     lastRequestId,
     conversationId,
     first,

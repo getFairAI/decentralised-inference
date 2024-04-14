@@ -17,16 +17,12 @@
  */
 
 import {
-  PROTOCOL_NAME,
-  PROTOCOL_VERSION,
   TAG_NAMES,
   TERMS_AGREEMENT,
   TERMS_VERSION,
 } from '@/constants';
-import { WalletContext } from '@/context/wallet';
-import { QUERY_TX_WITH } from '@/queries/graphql';
-import arweave from '@/utils/arweave';
-import { useQuery } from '@apollo/client';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { Query } from '@irys/query';
 import {
   Button,
   Dialog,
@@ -40,46 +36,39 @@ import { ReactElement, useCallback, useContext, useEffect, useState } from 'reac
 import { Link, useNavigate } from 'react-router-dom';
 
 const TermsAgreement = ({ children }: { children: ReactElement }) => {
-  const { currentAddress, dispatchTx } = useContext(WalletContext);
+  const { currentAddress, postOnArweave } = useContext(EVMWalletContext);
   const theme = useTheme();
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
 
-  const { data } = useQuery(QUERY_TX_WITH, {
-    variables: {
-      address: currentAddress,
-      tags: [
-        { name: TAG_NAMES.protocolName, values: ['Fair Protocol'] },
-        { name: TAG_NAMES.operationName, values: [TERMS_AGREEMENT] },
-        { name: TAG_NAMES.termsVersion, values: [TERMS_VERSION] },
-      ],
-    },
-    skip: !currentAddress,
-  });
-
   useEffect(() => {
-    if (data?.transactions?.edges && data.transactions.edges.length > 0) {
-      // Terms agreement already signed
-      setShowDialog(false);
-    } else if (data?.transactions?.edges && data.transactions.edges.length === 0) {
-      setShowDialog(true);
-    } else {
-      // ignore while loading
+    if (currentAddress) {
+      (async () => {
+        const irysQuery = new Query();
+        const [ result ] = await irysQuery.search('irys:transactions').tags([
+          { name: TAG_NAMES.protocolName, values: ['FairAI', 'Fair Protocol'] },
+          { name: TAG_NAMES.operationName, values: [TERMS_AGREEMENT] },
+          { name: TAG_NAMES.termsVersion, values: [TERMS_VERSION] },
+        ]).from([ currentAddress ]).limit(1);
+  
+        if (result) {
+          setShowDialog(false);
+        } else {
+          setShowDialog(true);
+        }
+      })();
     }
-  }, [data, setShowDialog]);
+  }, [ currentAddress ]);
 
   const handleAgreeClick = useCallback(async () => {
     const tags = [
-      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
-      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+      { name: TAG_NAMES.protocolName, value: 'FairAI' },
+      { name: TAG_NAMES.protocolVersion, value: '2.0-test' },
       { name: TAG_NAMES.operationName, value: TERMS_AGREEMENT },
       { name: TAG_NAMES.termsVersion, value: TERMS_VERSION },
     ];
 
-    const tx = await arweave.createTransaction({ data: TERMS_AGREEMENT });
-    tags.forEach((tag) => tx.addTag(tag.name, tag.value));
-
-    await dispatchTx(tx);
+    await postOnArweave(TERMS_AGREEMENT, tags);
     setShowDialog(false);
   }, [setShowDialog]);
 

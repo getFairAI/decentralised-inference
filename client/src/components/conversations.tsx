@@ -17,22 +17,14 @@
  */
 
 import {
-  PROTOCOL_NAME,
-  PROTOCOL_VERSION,
-  CONVERSATION_START,
   textContentType,
   DEFAULT_TAGS,
   TAG_NAMES,
-  secondInMS,
   SCRIPT_INFERENCE_REQUEST,
 } from '@/constants';
-import useOnScreen from '@/hooks/useOnScreen';
-import { IEdge } from '@/interfaces/arweave';
-import { ScriptNavigationState } from '@/interfaces/router';
-import { QUERY_CONVERSATIONS, QUERY_CONVERSATIONS_TX_ID } from '@/queries/graphql';
-import arweave, { getTextData } from '@/utils/arweave';
-import { commonUpdateQuery, findTag } from '@/utils/common';
-import { useQuery, useLazyQuery } from '@apollo/client';
+import { QUERY_CONVERSATIONS_TX_ID } from '@/queries/graphql';
+import { getTextData } from '@/utils/arweave';
+import { useLazyQuery } from '@apollo/client';
 import {
   Paper,
   Box,
@@ -53,15 +45,16 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 import AddIcon from '@mui/icons-material/Add';
-import { WalletContext } from '@/context/wallet';
 import { LoadingContainer } from '@/styles/components';
 import DebounceIconButton from './debounce-icon-button';
 import { Timeout } from 'react-number-format/types/types';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { Query } from '@irys/query';
+import { useLocation } from 'react-router-dom';
 
 const ConversationElement = ({
   cid,
@@ -120,67 +113,33 @@ const ConversationElement = ({
 const Conversations = ({
   currentConversationId,
   setCurrentConversationId,
-  state,
   userAddr,
   drawerOpen,
   setDrawerOpen,
 }: {
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
-  state: ScriptNavigationState;
   userAddr: string;
   drawerOpen: boolean;
   setDrawerOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const [hasConversationNextPage, setHasConversationNextPage] = useState(false);
   const [conversationIds, setConversationIds] = useState<number[]>([]);
   const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
   const [filterConversations, setFilterConversations] = useState('');
-  const conversationsTarget = useRef<HTMLDivElement>(null);
-  const isConversationOnScreen = useOnScreen(conversationsTarget);
+  const [ conversationsLoading, setConversationsLoading ] = useState(false);
+  /* const conversationsTarget = useRef<HTMLDivElement>(null); */
+  /* const isConversationOnScreen = useOnScreen(conversationsTarget); */
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const { dispatchTx } = useContext(WalletContext);
+  const { startConversation, currentAddress } = useContext(EVMWalletContext);
+  const { state } = useLocation();
   const [getConversationHistory] = useLazyQuery(QUERY_CONVERSATIONS_TX_ID);
   const { height } = useWindowDimensions();
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
 
-  const {
-    data: conversationsData,
-    loading: conversationsLoading,
-    fetchMore: conversationsFetchMore,
-  } = useQuery(QUERY_CONVERSATIONS, {
-    variables: {
-      address: userAddr,
-      tags: [
-        ...DEFAULT_TAGS,
-        {
-          name: TAG_NAMES.operationName,
-          values: [CONVERSATION_START],
-        },
-        {
-          name: TAG_NAMES.scriptTransaction,
-          values: [state.scriptTransaction],
-        },
-        { name: TAG_NAMES.scriptName, values: [state.scriptName] },
-        { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
-      ],
-    },
-    skip: !userAddr || !state,
-  });
-
   const createNewConversation = async (id: number) => {
     try {
-      const tx = await arweave.createTransaction({ data: 'Conversation Start' });
-      tx.addTag(TAG_NAMES.protocolName, PROTOCOL_NAME);
-      tx.addTag(TAG_NAMES.protocolVersion, PROTOCOL_VERSION);
-      tx.addTag(TAG_NAMES.operationName, CONVERSATION_START);
-      tx.addTag(TAG_NAMES.scriptName, state.scriptName);
-      tx.addTag(TAG_NAMES.scriptCurator, state.scriptCurator);
-      tx.addTag(TAG_NAMES.scriptTransaction, state.scriptTransaction);
-      tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
-      tx.addTag(TAG_NAMES.conversationIdentifier, `${id}`);
-      await dispatchTx(tx);
+      await startConversation(state.scriptTransaction, id.toString());
 
       setConversationIds([id, ...conversationIds]);
       setFilteredConversationIds([id, ...conversationIds]);
@@ -191,40 +150,45 @@ const Conversations = ({
   };
 
   useEffect(() => {
-    if (conversationsData && conversationsData.transactions.edges.length > 0) {
-      setHasConversationNextPage(conversationsData.transactions.pageInfo.hasNextPage);
-      const cids: number[] = conversationsData.transactions.edges.map((el: IEdge) =>
-        parseFloat(findTag(el, 'conversationIdentifier') as string),
-      );
-
-      const sorted = [...cids].sort((a, b) => b - a);
-      setConversationIds(Array.from(new Set(sorted)));
-      setFilteredConversationIds(Array.from(new Set(sorted)));
-      setCurrentConversationId(Array.from(new Set(sorted))[0]);
-    } else if (conversationsData && conversationsData.transactions.edges.length === 0) {
-      setHasConversationNextPage(false);
-      // no conversations yet, create new
-      (async () => {
-        await createNewConversation(1);
-        setCurrentConversationId(1);
-      })();
-    } else {
-      // do nothing
-    }
-  }, [conversationsData]);
-
-  useEffect(() => {
-    if (isConversationOnScreen && hasConversationNextPage) {
-      const conversations = conversationsData.transactions.edges;
-      conversationsFetchMore({
-        variables: {
-          after:
-            conversations.length > 0 ? conversations[conversations.length - 1].cursor : undefined,
-        },
-        updateQuery: commonUpdateQuery,
-      });
-    }
-  }, [isConversationOnScreen, hasConversationNextPage, conversationsData]);
+    (async () => {
+      if (currentAddress) {
+        setConversationsLoading(true);
+        const irysQquery = new Query();
+        const results = await irysQquery.search('irys:transactions').tags([
+          {
+            name: 'Protocol-Name',
+            values: ['FairAI'],
+          },
+          {
+            name: 'Protocol-Version',
+            values: ['2.0-test'],
+          },
+          {
+            name: 'Operation-Name',
+            values: ['Conversation Start'],
+          },
+          {
+            name: 'Script-Transaction',
+            values: [ state.scriptTransaction ],
+          },
+        ]).from([currentAddress]);
+  
+        if (results.length === 0) {
+           // no conversations yet, create new
+          await createNewConversation(1);
+          setCurrentConversationId(1);
+          setConversationIds([1]);
+          setFilteredConversationIds([1]);
+        } else {
+          const cids = results.map((el) => parseFloat(el.tags.find(tag => tag.name === 'Conversation-Identifier')?.value as string));
+          setConversationIds(cids);
+          setFilteredConversationIds(cids);
+          setCurrentConversationId(cids[cids.length - 1]);
+        }
+        setConversationsLoading(false);
+      }
+    })();
+  }, [ currentAddress ]);
 
   useEffect(() => {
     (async () => {
@@ -259,7 +223,7 @@ const Conversations = ({
                     values: [state.scriptTransaction],
                   },
                   { name: TAG_NAMES.scriptName, values: [state.scriptName] },
-                  { name: TAG_NAMES.scriptCurator, values: [state.scriptCurator] },
+                  { name: TAG_NAMES.scriptCurator, values: [state.scriptCreator] },
                 ],
               },
             });
@@ -406,7 +370,7 @@ const Conversations = ({
               setCurrentConversationId={setCurrentConversationId}
             />
           ))}
-          <Box sx={{ paddingBottom: '8px' }} ref={conversationsTarget}></Box>
+          <Box sx={{ paddingBottom: '8px' }}></Box>
         </List>
         <Box flexGrow={1}></Box>
         <Button

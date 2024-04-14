@@ -24,7 +24,6 @@ import {
   SCRIPT_CREATION_PAYMENT,
   U_CONTRACT_ID,
 } from '@/constants';
-import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { FIND_BY_TAGS } from '@/queries/graphql';
 import { useQuery } from '@apollo/client';
@@ -58,6 +57,7 @@ import PendingCard from './pending-card';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import useScroll from '@/hooks/useScroll';
 import { useNavigate } from 'react-router-dom';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const Content = ({
   scrollableRef,
@@ -67,7 +67,7 @@ const Content = ({
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
   const elementsPerPage = 10;
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress } = useContext(EVMWalletContext);
   const theme = useTheme();
   const { isAtBottom } = useScroll(scrollableRef);
   const navigate = useNavigate();
@@ -106,7 +106,6 @@ const Content = ({
 
   const handleViewAll = () => {
     setOpen(false);
-    navigate('/payments');
   };
 
   return (
