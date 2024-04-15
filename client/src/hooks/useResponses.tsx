@@ -20,6 +20,7 @@ import { useLazyQuery } from '@apollo/client';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
+import { PROTOCOL_NAME, PROTOCOL_VERSION } from '@/constants';
 
 const useResponses = ({
   reqIds,
@@ -75,8 +76,8 @@ const useResponses = ({
       conversationId,
       first,
     );
-    queryParams.tags.find(tag => tag.name === 'Protocol-Name')?.values.push('FairAI');
-    queryParams.tags.find(tag => tag.name === 'Protocol-Version')?.values.push('2.0-test');
+    queryParams.tags.find(tag => tag.name === 'Protocol-Name')?.values.push(PROTOCOL_NAME);
+    queryParams.tags.find(tag => tag.name === 'Protocol-Version')?.values.push(PROTOCOL_VERSION);
     if (reqIds.length > 0) {
       getChatResponses({ variables: queryParams });
     }
@@ -92,8 +93,8 @@ const useResponses = ({
         [],
         conversationId,
       );
-      queryParams.tags.find(tag => tag.name === 'Protocol-Name')?.values.push('FairAI');
-      queryParams.tags.find(tag => tag.name === 'Protocol-Version')?.values.push('2.0-test');
+      queryParams.tags.find(tag => tag.name === 'Protocol-Name')?.values.push(PROTOCOL_NAME);
+      queryParams.tags.find(tag => tag.name === 'Protocol-Version')?.values.push(PROTOCOL_VERSION);
       pollResponses({ variables: { ...pollQueryParams }, pollInterval: 10000 });
     }
   }, [

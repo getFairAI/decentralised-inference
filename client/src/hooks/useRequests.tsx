@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { TAG_NAMES } from '@/constants';
+import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
 import { commonUpdateQuery } from '@/utils/common';
 import { NetworkStatus, gql, useLazyQuery } from '@apollo/client';
 import { useEffect, useState } from 'react';
@@ -72,8 +72,8 @@ const useRequests = ({
     getChatRequests({
       variables: {
         tags: [
-          { name: TAG_NAMES.protocolName, values: ['FairAI'] },
-          { name: TAG_NAMES.protocolVersion, values: ['2.0-test'] },
+          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
+          { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
           { name: TAG_NAMES.operationName, values: ['Inference Request'] },
           { name: TAG_NAMES.scriptTransaction, values: [scriptTransaction] },
           { name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] },

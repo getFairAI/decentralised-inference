@@ -17,6 +17,8 @@
  */
 
 import {
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
   TAG_NAMES,
   TERMS_AGREEMENT,
   TERMS_VERSION,
@@ -46,7 +48,7 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
       (async () => {
         const irysQuery = new Query();
         const [ result ] = await irysQuery.search('irys:transactions').tags([
-          { name: TAG_NAMES.protocolName, values: ['FairAI', 'Fair Protocol'] },
+          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME, 'Fair Protocol'] },
           { name: TAG_NAMES.operationName, values: [TERMS_AGREEMENT] },
           { name: TAG_NAMES.termsVersion, values: [TERMS_VERSION] },
         ]).from([ currentAddress ]).limit(1);
@@ -62,8 +64,8 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
 
   const handleAgreeClick = useCallback(async () => {
     const tags = [
-      { name: TAG_NAMES.protocolName, value: 'FairAI' },
-      { name: TAG_NAMES.protocolVersion, value: '2.0-test' },
+      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
       { name: TAG_NAMES.operationName, value: TERMS_AGREEMENT },
       { name: TAG_NAMES.termsVersion, value: TERMS_VERSION },
     ];

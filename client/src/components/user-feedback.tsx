@@ -72,8 +72,8 @@ const FeedbackForm = ({
 
     // dispatch feedback tx
     const tags = [
-      { name: TAG_NAMES.protocolName, value: 'FairAI' },
-      { name: TAG_NAMES.protocolVersion, value: '2.0-test' },
+      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
       { name: TAG_NAMES.operationName, value: USER_FEEDBACK },
       { name: TAG_NAMES.userRatingScore, value: value.toString() },
     ];

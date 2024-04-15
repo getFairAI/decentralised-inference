@@ -21,6 +21,8 @@ import {
   DEFAULT_TAGS,
   TAG_NAMES,
   SCRIPT_INFERENCE_REQUEST,
+  PROTOCOL_VERSION,
+  PROTOCOL_NAME,
 } from '@/constants';
 import { QUERY_CONVERSATIONS_TX_ID } from '@/queries/graphql';
 import { getTextData } from '@/utils/arweave';
@@ -157,11 +159,11 @@ const Conversations = ({
         const results = await irysQquery.search('irys:transactions').tags([
           {
             name: 'Protocol-Name',
-            values: ['FairAI'],
+            values: [PROTOCOL_NAME],
           },
           {
             name: 'Protocol-Version',
-            values: ['2.0-test'],
+            values: [PROTOCOL_VERSION],
           },
           {
             name: 'Operation-Name',

@@ -102,8 +102,8 @@ const ChooseScript = ({
   } = useQuery(findByTagsDocument, {
     variables: {
       tags: [
-        { name: TAG_NAMES.protocolName, values: [ 'FairAi', 'Fair Protocol' ]}, // keep Fair Protocol in tags to keep retrocompatibility
-        { name: TAG_NAMES.protocolVersion, values: [ '1.0', '2.0-test' ]},
+        { name: TAG_NAMES.protocolName, values: [ PROTOCOL_NAME, 'Fair Protocol' ]}, // keep Fair Protocol in tags to keep retrocompatibility
+        { name: TAG_NAMES.protocolVersion, values: [ '1.0', PROTOCOL_VERSION ]},
         { name: TAG_NAMES.operationName, values: [ SCRIPT_CREATION ]},
         { name: TAG_NAMES.modelTransaction, values: [ state.modelTransaction ]},
       ],
