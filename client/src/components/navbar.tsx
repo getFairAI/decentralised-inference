@@ -20,7 +20,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import {
   ChangeEvent,
@@ -49,6 +49,7 @@ import { useSnackbar } from 'notistack';
 import { InfoOutlined } from '@mui/icons-material';
 /* import StampsMenu from '@/components/stamps-menu'; */
 import { EVMWalletContext } from '@/context/evm-wallet';
+import StampsMenu from './stamps-menu';
 
 const CustomDropDownIcon = () => (
   <Icon
@@ -254,6 +255,7 @@ const Navbar = ({
   setFilterValue: Dispatch<SetStateAction<string>>;
   isScrolled: boolean;
 }) => {
+  const { address: operatorAddress } = useParams();
   const { state, pathname } = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -359,7 +361,7 @@ const Navbar = ({
           >
             {pathname.includes('chat') ? (
               <>
-                {/* <StampsMenu id={address ?? ''} type='Operator'></StampsMenu> */}
+                <StampsMenu id={operatorAddress ?? ''} type='Operator'></StampsMenu>
                 <Box>
                   <Typography
                     sx={{

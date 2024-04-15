@@ -16,15 +16,14 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import Stamps, { StampJS } from '@permaweb/stampjs';
-import { WarpFactory } from 'warp-contracts';
-import Arweave from 'arweave';
 import { useSnackbar } from 'notistack';
 import LoadingButton from '@mui/lab/LoadingButton';
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
-import { useState, useEffect, useRef, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { EVMWalletContext } from '@/context/evm-wallet';
+import { postOnArweave } from '@fairai/evm-sdk';
+import { Query } from '@irys/query';
 
 const FONT_SIZE = 12;
 
@@ -48,47 +47,39 @@ const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
 const StampsMenu: React.FC<StampsMenuProps> = (targetTx: StampsMenuProps) => {
   const [isStamped, setIsStamped] = useState(false);
   const [totalStamps, setTotalStamps] = useState(0);
-  const [vouchedStamps, setVouchedStamps] = useState(0);
-  const stampsRef = useRef<StampJS | null>(null);
   const { enqueueSnackbar } = useSnackbar();
   const [isSending, setIsSending] = useState(false);
 
-  const { currentAddress } = useContext(EVMWalletContext);
+  const { currentAddress, countStamps } = useContext(EVMWalletContext);
   const tooltipText =
     'When users "STAMP" the content, the STAMP Protocol gives creators and sponsors $STAMP Tokens every day.';
 
   useEffect(() => {
-    const initializeStamps = async () => {
-      try {
-        const walletInstance = window.arweaveWallet;
-
-        const stampsInstance = Stamps.init({
-          warp: WarpFactory.forMainnet(),
-          arweave: Arweave.init({}),
-          wallet: walletInstance,
-          dre: 'https://dre-u.warp.cc/contract',
-          graphql: 'https://arweave.net/graphql',
-        });
-
-        stampsRef.current = stampsInstance;
-
-        if (currentAddress !== '') {
-          const stamped = await stampsRef.current.hasStamped(targetTx.id);
-          setIsStamped(stamped);
-        }
-        const { total, vouched } = await stampsRef.current.count(targetTx.id);
-        setTotalStamps(total);
-        setVouchedStamps(vouched);
-      } catch (error) {
-        if (error instanceof Error) {
-          enqueueSnackbar(error.message, { variant: 'error' });
-        } else {
-          enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
+    (async () => {
+      if (targetTx.id) {
+        try {
+          const countMap = await countStamps([ targetTx.id ]);
+          const irys = new Query();
+  
+          if (currentAddress !== '') {
+            const [ hasStamped ] = await irys.search('irys:transactions').tags([
+              { name: 'Protocol-Name', values: ['Stamp'] },
+              { name: 'Data-Source', values: [targetTx.id] },
+            ]).from([ currentAddress ]).limit(1);
+  
+            setIsStamped(!!hasStamped);
+          }
+  
+          setTotalStamps(countMap ? countMap[targetTx.id] : 0);
+        } catch (error) {
+          if (error instanceof Error) {
+            enqueueSnackbar(error.message, { variant: 'error' });
+          } else {
+            enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
+          }
         }
       }
-    };
-
-    initializeStamps();
+    })();
   }, [targetTx.id, currentAddress]);
 
   const handleStampClick = useCallback(async () => {
@@ -106,13 +97,14 @@ const StampsMenu: React.FC<StampsMenuProps> = (targetTx: StampsMenuProps) => {
       return;
     }
 
-    if (stampsRef.current && !isStamped) {
+    if (!isStamped) {
       try {
         setIsSending(true);
-        await stampsRef.current.stamp(targetTx.id);
-        const { total, vouched } = await stampsRef.current.count(targetTx.id);
-        setTotalStamps(total);
-        setVouchedStamps(vouched);
+        await postOnArweave('Stamp', [
+          { name: 'Protocol-Name', value: 'Stamp' },
+          { name: 'Data-Source', value: targetTx.id },
+        ]);
+        setTotalStamps((count) => count + 1);
         setIsStamped(true);
         setIsSending(false);
         enqueueSnackbar(`The ${targetTx.type.toLocaleLowerCase()} has been stamped sucessffully!`, {
@@ -127,14 +119,15 @@ const StampsMenu: React.FC<StampsMenuProps> = (targetTx: StampsMenuProps) => {
         setIsSending(false);
       }
     }
-  }, [isSending, isStamped, stampsRef.current, currentAddress]);
+  }, [isSending, isStamped, currentAddress]);
+
   return (
     <>
       <HtmlTooltip
         title={
           <div>
             <div>
-              Total: {totalStamps} Vouched: {vouchedStamps}
+              Total: {totalStamps}
             </div>
             <br></br>
             <div>{tooltipText}</div>

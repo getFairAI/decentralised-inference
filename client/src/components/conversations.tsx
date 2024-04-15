@@ -182,7 +182,7 @@ const Conversations = ({
           setConversationIds([1]);
           setFilteredConversationIds([1]);
         } else {
-          const cids = results.map((el) => parseFloat(el.tags.find(tag => tag.name === 'Conversation-Identifier')?.value as string));
+          const cids = Array.from(new Set(results.map((el) => parseFloat(el.tags.find(tag => tag.name === 'Conversation-Identifier')?.value as string))));
           setConversationIds(cids);
           setFilteredConversationIds(cids);
           setCurrentConversationId(cids[cids.length - 1]);
