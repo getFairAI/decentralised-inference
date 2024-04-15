@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY, SCRIPT_CREATION, SCRIPT_DELETION, MARKETPLACE_ADDRESS } from '@/constants';
+import { TAG_NAMES, IS_TO_CHOOSE_MODEL_AUTOMATICALLY, SCRIPT_CREATION, SCRIPT_DELETION, MARKETPLACE_ADDRESS, PROTOCOL_NAME, PROTOCOL_VERSION } from '@/constants';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { findTag, findTagsWithKeyword } from '@/utils/common';
 import { NetworkStatus, useQuery } from '@apollo/client';

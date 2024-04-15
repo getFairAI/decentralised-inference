@@ -62,8 +62,8 @@ const useResponses = ({
 
   const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] =
     useLazyQuery(responsesQuery, {
-      fetchPolicy: 'network-only',
-      nextFetchPolicy: 'network-only',
+      fetchPolicy:'network-only',
+      nextFetchPolicy:'network-only',
     });
 
   useEffect(() => {
@@ -76,10 +76,11 @@ const useResponses = ({
       conversationId,
       first,
     );
-    queryParams.tags.find(tag => tag.name === 'Protocol-Name')?.values.push(PROTOCOL_NAME);
-    queryParams.tags.find(tag => tag.name === 'Protocol-Version')?.values.push(PROTOCOL_VERSION);
+    queryParams.tags.splice(queryParams.tags.findIndex(tag => tag.name === 'Protocol-Name'), 1, { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] });
+    queryParams.tags.splice(queryParams.tags.findIndex(tag => tag.name === 'Protocol-Version'), 1, { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] });
+
     if (reqIds.length > 0) {
-      getChatResponses({ variables: queryParams });
+      getChatResponses({ variables: queryParams, fetchPolicy: 'network-only', nextFetchPolicy: 'network-only' });
     }
 
     if (lastRequestId) {
@@ -93,9 +94,9 @@ const useResponses = ({
         [],
         conversationId,
       );
-      queryParams.tags.find(tag => tag.name === 'Protocol-Name')?.values.push(PROTOCOL_NAME);
-      queryParams.tags.find(tag => tag.name === 'Protocol-Version')?.values.push(PROTOCOL_VERSION);
-      pollResponses({ variables: { ...pollQueryParams }, pollInterval: 10000 });
+      queryParams.tags.splice(queryParams.tags.findIndex(tag => tag.name === 'Protocol-Name'), 1, { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] });
+      queryParams.tags.splice(queryParams.tags.findIndex(tag => tag.name === 'Protocol-Version'), 1, { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] });
+      pollResponses({ variables: { ...pollQueryParams }, pollInterval: 10000, });
     }
   }, [
     reqIds,

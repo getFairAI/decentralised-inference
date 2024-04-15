@@ -331,7 +331,8 @@ const Chat = () => {
   const {
     currentAddress: userAddr,
     usdcBalance,
-    prompt
+    prompt,
+    updateUsdcBalance
   } = useContext(EVMWalletContext);
   const { state } = useLocation();
   const previousAddr = usePrevious<string>(userAddr);
@@ -807,6 +808,7 @@ const Chat = () => {
       }, currentConversationId);
       // update balance after payments
       updateMessages(arweaveTxId, file, file.type);
+      updateUsdcBalance(usdcBalance - state.fee);
       enqueueSnackbar(
         <Typography>{'Request Successfull'}</Typography>,
         {
@@ -841,6 +843,7 @@ const Chat = () => {
       }, currentConversationId);
       // update balance after payments
       updateMessages(arweaveTxId, newMessage, 'text/plain');
+      updateUsdcBalance(usdcBalance - state.fee);
       enqueueSnackbar(
         <Typography>{'Request Successfull'}</Typography>,
         {

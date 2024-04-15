@@ -18,9 +18,9 @@
 
 import 'viem/window';
 import { createContext, Dispatch, ReactNode, useEffect, useMemo, useReducer, useState } from 'react';
-import { EIP1193Provider } from 'viem';
+import { EIP1193Provider, hexToBigInt, Log } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { getConnectedAddress, getEthBalance, getUsdcBalance, setProvider, countStamps, switchChain, getCurrentChain, startConversation, setIrys, postOnArweave, prompt } from '@fairai/evm-sdk';
+import { getConnectedAddress, getEthBalance, getUsdcBalance, setProvider, countStamps, switchChain, getCurrentChain, startConversation, setIrys, postOnArweave, prompt, subscribe } from '@fairai/evm-sdk';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useEvmProviders } from '@/hooks/useEvmProviders';
 import { EIP6963ProviderDetail } from '@/interfaces/evm';
@@ -32,6 +32,11 @@ type WalletConnectedAction = {
   usdcBalance: number;
 };
 
+type UpdateUSDCBalanceAction = {
+  type: 'update_usdc_balance';
+  newBalance: number;
+};
+
 type UpdateProvidersAction = {
   type: 'update_providers';
   providers: EIP6963ProviderDetail[];
@@ -41,7 +46,7 @@ type WalletDisconnectedAction = {
   type: 'wallet_disconnected';
 };
 
-type EVMWalletAction = WalletConnectedAction | WalletDisconnectedAction | UpdateProvidersAction;
+type EVMWalletAction = WalletConnectedAction | WalletDisconnectedAction | UpdateProvidersAction | UpdateUSDCBalanceAction;
 
 interface EVMWalletState {
   currentAddress: string;
@@ -56,6 +61,7 @@ interface IEVMWalletContext extends EVMWalletState {
   prompt: (data: string | File, scriptTx: string, operator: { evmWallet: `0x${string}`, operatorFee: number }, cid?: number) => Promise<{ arweaveTxId: string, evmTxId: string }>;
   postOnArweave: (text: string, tags: {name: string, value: string}[]) => Promise<string>;
   countStamps: (txids: string[]) => Promise<Record<string, number>>;
+  updateUsdcBalance: (newBalance: number) => void;
 }
 
 const walletReducer = (state: EVMWalletState, action: EVMWalletAction) => {
@@ -82,6 +88,11 @@ const walletReducer = (state: EVMWalletState, action: EVMWalletAction) => {
       return {
         ...state,
         providers: action.providers,
+      };
+    case 'update_usdc_balance':
+      return {
+        ...state,
+        usdcBalance: action.newBalance,
       };
     default:
       return state;
@@ -117,8 +128,6 @@ export const EVMWalletContext = createContext<IEVMWalletContext>({} as IEVMWalle
 export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(walletReducer, initialState);
   const [ currentProvider, setCurrentProvider ] = useState<EIP1193Provider | null>(null);
-
-  
   const providers = useEvmProviders();
   const { localStorageValue: previousProvider } = useLocalStorage('evmProvider');
   
@@ -134,6 +143,7 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       
       return asyncEvmWalletconnect(dispatch, provider);
     },
+    updateUsdcBalance: (newBalance: number) => dispatch({ type: 'update_usdc_balance', newBalance }),
   } as IEVMWalletContext), [state, dispatch]);
 
   useEffect(() => {
@@ -158,6 +168,24 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       (async () => asyncEvmWalletconnect(dispatch, previousConnectedProvider.provider))();
     }
   }, [ previousProvider, providers ]);
+
+  const handleUsdcReceived = (log: Log[]) => {
+    const latest = log.pop();
+
+    if (latest) {
+      const { data } = latest;
+      const received = Number(hexToBigInt(data));
+      dispatch({ type: 'update_usdc_balance', newBalance: state.usdcBalance + received });
+    }
+  };
+
+  useEffect(() => {
+    if (state.currentAddress) {
+      const unwatch = subscribe(state.currentAddress  as `0x${string}`, handleUsdcReceived);
+
+      return () => unwatch();
+    }
+  }, [ state ]);
 
   return <EVMWalletContext.Provider value={value}>{children}</EVMWalletContext.Provider>;
 };

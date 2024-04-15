@@ -35,7 +35,7 @@ import StarIcon from '@mui/icons-material/Star';
 import CloseIcon from '@mui/icons-material/Close';
 import { Mood } from '@mui/icons-material';
 import arweave from '@/utils/arweave';
-import { TAG_NAMES, USER_FEEDBACK, secondInMS } from '@/constants';
+import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES, USER_FEEDBACK, secondInMS } from '@/constants';
 import { EVMWalletContext } from '@/context/evm-wallet';
 
 const labels: { [index: string]: string } = {

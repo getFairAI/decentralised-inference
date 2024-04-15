@@ -20,7 +20,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import {
   ChangeEvent,
@@ -254,7 +254,6 @@ const Navbar = ({
   setFilterValue: Dispatch<SetStateAction<string>>;
   isScrolled: boolean;
 }) => {
-  const { address } = useParams();
   const { state, pathname } = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -287,10 +286,6 @@ const Navbar = ({
       setUsdFee(state.fee);
     }
   }, [ state ]);
-
-  useEffect(() => {
-    console.log(address);
-  }, [ address ]);
 
   return (
     <>

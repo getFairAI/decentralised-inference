@@ -18,9 +18,8 @@
 
 import Logo from '@/components/logo';
 import {
-  BUY_AR_LINK,
-  BUY_AR_LINK_US,
-  BUY_U_LINK,
+  BUY_ARB_LINK,
+  BUY_USDC_LINK,
   CREATE_WALLET_LINK,
   MIN_U_BALANCE,
 } from '@/constants';
@@ -196,29 +195,11 @@ const WalletNoFundsContent = () => {
                         noWrap
                       >
                         <InfoOutlined />
-                        Looking for a way to buy ETH?
+                        Looking for a way to buy ETH on Arbitrum?
                       </Typography>
                       <Typography alignItems={'center'} color='primary' noWrap>
-                        <a href={BUY_AR_LINK} target='_blank' rel='noreferrer'>
+                        <a href={BUY_ARB_LINK} target='_blank' rel='noreferrer'>
                           <u>Find out How.</u>
-                        </a>
-                      </Typography>
-                    </Box>
-                    <Box display={'flex'} gap={'8px'}>
-                      <Typography
-                        display={'flex'}
-                        gap={'8px'}
-                        alignItems={'center'}
-                        fontWeight={'500'}
-                        color={'primary'}
-                        noWrap
-                      >
-                        <InfoOutlined />
-                        Are You in the U.S?
-                      </Typography>
-                      <Typography alignItems={'center'} color='primary' noWrap>
-                        <a href={BUY_AR_LINK_US} target='_blank' rel='noreferrer'>
-                          <u>Check this guide instead.</u>
                         </a>
                       </Typography>
                     </Box>
@@ -307,7 +288,7 @@ const WalletNoFundsContent = () => {
                         Looking for a way to get USDC?
                       </Typography>
                       <Typography alignItems={'center'} color='primary' noWrap>
-                        <a href={BUY_U_LINK} target='_blank' rel='noreferrer'>
+                        <a href={BUY_USDC_LINK} target='_blank' rel='noreferrer'>
                           <u>Learn How.</u>
                         </a>
                       </Typography>

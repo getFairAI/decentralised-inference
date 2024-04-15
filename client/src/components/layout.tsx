@@ -71,7 +71,7 @@ const WarningMessage = () => {
         padding={'2px 16px 2px 32px'}
       >
         <Typography>
-          Looks Like you are running low on $U balance,{' '}
+          Looks Like you are running low on your USDC balance,{' '}
           <Link to={'/swap'} className='plausible-event-name=Top+Up+Click'>
             <u>Click here to Top Up</u>
           </Link>
