@@ -153,7 +153,7 @@ const DetailContent = ({
     );
   }
 
-  if (showOperators) {
+  if (showOperators && scriptTx) {
     return (
       <ChooseOperator
         setShowOperators={setShowOperators}

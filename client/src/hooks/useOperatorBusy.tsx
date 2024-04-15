@@ -17,7 +17,8 @@
  */
 
 import {
-  DEFAULT_TAGS,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
   SCRIPT_INFERENCE_RESPONSE,
   TAG_NAMES,
 } from '@/constants';
@@ -52,7 +53,8 @@ const useOperatorBusy = (operatorAddr: string) => {
     getOperatorResponses({
       variables: {
         tagsResponses: [
-          ...DEFAULT_TAGS,
+          { name: TAG_NAMES.protocolName, values: [ PROTOCOL_NAME ]},
+          { name: TAG_NAMES.protocolVersion, values: [ PROTOCOL_VERSION ]},
           { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
           { name: TAG_NAMES.requestTransaction, values: [arweaveRequest] },
         ],

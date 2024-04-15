@@ -20,7 +20,7 @@ import { useLazyQuery } from '@apollo/client';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
-import { PROTOCOL_NAME, PROTOCOL_VERSION } from '@/constants';
+import { PROTOCOL_NAME, PROTOCOL_VERSION, SCRIPT_INFERENCE_RESPONSE } from '@/constants';
 
 const useResponses = ({
   reqIds,
@@ -67,36 +67,32 @@ const useResponses = ({
     });
 
   useEffect(() => {
-    const { variables: queryParams } = FairSDKWeb.utils.getResponsesQuery(
-      reqIds,
-      userAddr,
-      scriptName,
-      scriptCurator,
-      [],
-      conversationId,
-      first,
-    );
-    queryParams.tags.splice(queryParams.tags.findIndex(tag => tag.name === 'Protocol-Name'), 1, { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] });
-    queryParams.tags.splice(queryParams.tags.findIndex(tag => tag.name === 'Protocol-Version'), 1, { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] });
-
+    const variables = {
+      tags: [
+        { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] },
+        { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] },
+        { name: 'Operation-Name', values: [ SCRIPT_INFERENCE_RESPONSE ] },
+        { name: 'Request-Transaction', values: reqIds },
+      ],
+      first: 10,
+    };
     if (reqIds.length > 0) {
-      getChatResponses({ variables: queryParams, fetchPolicy: 'network-only', nextFetchPolicy: 'network-only' });
+      getChatResponses({ variables, fetchPolicy: 'network-only', nextFetchPolicy: 'network-only' });
     }
 
     if (lastRequestId) {
       stopResponsePolling();
       const pollReqIds = [lastRequestId];
-      const { variables: pollQueryParams } = FairSDKWeb.utils.getResponsesQuery(
-        pollReqIds,
-        userAddr,
-        scriptName,
-        scriptCurator,
-        [],
-        conversationId,
-      );
-      queryParams.tags.splice(queryParams.tags.findIndex(tag => tag.name === 'Protocol-Name'), 1, { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] });
-      queryParams.tags.splice(queryParams.tags.findIndex(tag => tag.name === 'Protocol-Version'), 1, { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] });
-      pollResponses({ variables: { ...pollQueryParams }, pollInterval: 10000, });
+      const variables = {
+        tags: [
+          { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] },
+          { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] },
+          { name: 'Operation-Name', values: [ SCRIPT_INFERENCE_RESPONSE ] },
+          { name: 'Request-Transaction', values: pollReqIds },
+        ],
+        first: 10,
+      };
+      pollResponses({ variables, pollInterval: 10000, });
     }
   }, [
     reqIds,
