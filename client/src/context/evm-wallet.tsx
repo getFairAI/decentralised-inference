@@ -20,7 +20,7 @@ import 'viem/window';
 import { createContext, Dispatch, ReactNode, useEffect, useMemo, useReducer, useState } from 'react';
 import { EIP1193Provider, hexToBigInt, Log } from 'viem';
 import { arbitrum } from 'viem/chains';
-import { getConnectedAddress, getEthBalance, getUsdcBalance, setProvider, countStamps, switchChain, getCurrentChain, startConversation, setIrys, postOnArweave, prompt, subscribe } from '@fairai/evm-sdk';
+import { getConnectedAddress, getEthBalance, getUsdcBalance, setProvider, countStamps, switchChain, getCurrentChainId, startConversation, setIrys, postOnArweave, prompt, subscribe } from '@fairai/evm-sdk';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useEvmProviders } from '@/hooks/useEvmProviders';
 import { EIP6963ProviderDetail } from '@/interfaces/evm';
@@ -46,13 +46,19 @@ type WalletDisconnectedAction = {
   type: 'wallet_disconnected';
 };
 
-type EVMWalletAction = WalletConnectedAction | WalletDisconnectedAction | UpdateProvidersAction | UpdateUSDCBalanceAction;
+type SetWalletWrongChainAction = {
+  type: 'wallet_wrong_chain';
+  isWrongChain: boolean;
+}
+
+type EVMWalletAction = WalletConnectedAction | WalletDisconnectedAction | UpdateProvidersAction | UpdateUSDCBalanceAction | SetWalletWrongChainAction;
 
 interface EVMWalletState {
   currentAddress: string;
   ethBalance: number;
   usdcBalance: number;
   providers: EIP6963ProviderDetail[];
+  isWrongChain: boolean;
 }
 
 interface IEVMWalletContext extends EVMWalletState {
@@ -62,6 +68,8 @@ interface IEVMWalletContext extends EVMWalletState {
   postOnArweave: (text: string, tags: {name: string, value: string}[]) => Promise<string>;
   countStamps: (txids: string[]) => Promise<Record<string, number>>;
   updateUsdcBalance: (newBalance: number) => void;
+  switchChain: () => void;
+  disconnect: () => void;
 }
 
 const walletReducer = (state: EVMWalletState, action: EVMWalletAction) => {
@@ -76,6 +84,7 @@ const walletReducer = (state: EVMWalletState, action: EVMWalletAction) => {
         currentAddress: action.address,  
         ethBalance: action.ethBalance,
         usdcBalance: action.usdcBalance,
+        isWrongChain: false,
       };
     case 'wallet_disconnected':
       return {
@@ -94,6 +103,14 @@ const walletReducer = (state: EVMWalletState, action: EVMWalletAction) => {
         ...state,
         usdcBalance: action.newBalance,
       };
+    case 'wallet_wrong_chain':
+      return {
+        ...state,
+        currentAddress: '',  
+        ethBalance: 0,
+        usdcBalance: 0,
+        isWrongChain: action.isWrongChain,
+      };
     default:
       return state;
   }
@@ -103,23 +120,38 @@ const initialState: EVMWalletState = {
   currentAddress: '',
   ethBalance: 0,
   usdcBalance: 0,
-  providers: []
+  providers: [],
+  isWrongChain: false,
 };
 
 
 const asyncEvmWalletconnect = async (dispatch: Dispatch<EVMWalletAction>, provider: EIP1193Provider) => {
   try {
     await setProvider(provider);
-    await setIrys(window?.ethereum as EIP1193Provider);
-    if (getCurrentChain() !== arbitrum) {
+    await setIrys(provider);
+    if (await getCurrentChainId() !== arbitrum.id) {
       switchChain(arbitrum);
+      // subscribe to chain switched event
+    } else {
+      const address = getConnectedAddress();
+      const ethBalance = await getEthBalance();
+      const usdcBalance = await getUsdcBalance();
+      dispatch({ type: 'wallet_connected', address, ethBalance, usdcBalance });
     }
+  } catch (error) {
+    console.error('Error connecting wallet', error);
+  }
+};
+
+const handleChainChanged = async (dispatch: Dispatch<EVMWalletAction>) => {
+  if (await getCurrentChainId() !== arbitrum.id) {
+    // 
+    dispatch({ type: 'wallet_wrong_chain', isWrongChain: true });
+  } else {
     const address = getConnectedAddress();
     const ethBalance = await getEthBalance();
     const usdcBalance = await getUsdcBalance();
     dispatch({ type: 'wallet_connected', address, ethBalance, usdcBalance });
-  } catch (error) {
-    console.error('Error connecting wallet', error);
   }
 };
 
@@ -138,21 +170,25 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
     startConversation,
     postOnArweave,
     prompt,
+    switchChain: () => switchChain(arbitrum),
     connect: async (provider: EIP1193Provider) => {
       setCurrentProvider(provider);
       
       return asyncEvmWalletconnect(dispatch, provider);
     },
     updateUsdcBalance: (newBalance: number) => dispatch({ type: 'update_usdc_balance', newBalance }),
-  } as IEVMWalletContext), [state, dispatch]);
+    disconnect: () => dispatch({ type: 'wallet_disconnected' }),
+  } as IEVMWalletContext), [state, currentProvider, dispatch]);
 
   useEffect(() => {
     if (currentProvider) {
       // subscribe to wallet changes
       currentProvider.on('accountsChanged', async () => asyncEvmWalletconnect(dispatch, currentProvider));
+      currentProvider.on('chainChanged', async () => handleChainChanged(dispatch));
       currentProvider.on('disconnect', () => dispatch({ type: 'wallet_disconnected' }));
 
       return () => {
+        currentProvider.on('chainChanged', async () => handleChainChanged(dispatch));
         currentProvider.removeListener('accountsChanged', async () => asyncEvmWalletconnect(dispatch, currentProvider));
         currentProvider.removeListener('disconnect', () => dispatch({ type: 'wallet_disconnected' }));
       };

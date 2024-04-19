@@ -156,7 +156,7 @@ export const MODEL_FEE_PAYMENT = 'Model Fee Payment';
 
 export const MODEL_FEE_PAYMENT_SAVE = 'Model Fee Payment Save';
 
-export const SCRIPT_INFERENCE_REQUEST = 'Script Inference Request';
+export const SCRIPT_INFERENCE_REQUEST = 'Inference Request';
 
 export const INFERENCE_PAYMENT = 'Inference Payment';
 

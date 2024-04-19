@@ -140,6 +140,7 @@ const StampsMenu: React.FC<StampsMenuProps> = (targetTx: StampsMenuProps) => {
             loading={isSending}
             onClick={handleStampClick}
             className={`plausible-event-name=Stamp+Click plausible-event-type=${targetTx.type}`}
+            sx={{ padding: '9px 16px' }}
           >
             Stamp {targetTx.type} ({totalStamps})
           </LoadingButton>

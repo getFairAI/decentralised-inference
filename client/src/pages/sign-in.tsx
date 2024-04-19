@@ -89,7 +89,7 @@ const WalletnotConnectedContent = () => {
           fontSize={'18px'}
           lineHeight={'24.3px'}
         >
-          Connect Wallet
+          Connect To the Arbitrum Network
         </Typography>
       </Button>
       <Box display={'flex'} gap={'8px'}>

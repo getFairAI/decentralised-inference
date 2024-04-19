@@ -34,24 +34,19 @@ import {
 import {
   Button,
   Icon,
-  IconButton,
   InputBase,
-  MenuItem,
-  Select,
   Tooltip,
   useTheme,
 } from '@mui/material';
 import { Timeout } from 'react-number-format/types/types';
-import { defaultDecimalPlaces } from '@/constants';
 import Logo from './logo';
-import CopyIcon from '@mui/icons-material/ContentCopy';
-import { useSnackbar } from 'notistack';
+/* import { useSnackbar } from 'notistack'; */
 import { InfoOutlined } from '@mui/icons-material';
 /* import StampsMenu from '@/components/stamps-menu'; */
 import { EVMWalletContext } from '@/context/evm-wallet';
 import StampsMenu from './stamps-menu';
 
-const CustomDropDownIcon = () => (
+/* const CustomDropDownIcon = () => (
   <Icon
     sx={{
       pointerEvents: 'none',
@@ -61,16 +56,16 @@ const CustomDropDownIcon = () => (
   >
     <img src='./chevron-bottom.svg' />
   </Icon>
-);
+); */
 
-const CurrencyMenu = () => {
+/* const CurrencyMenu = () => {
   const spaceBetween = 'space-between';
 
   const [selected, setSelected] = useState<'ETH' | 'USDC'>('USDC');
-  const { ethBalance, usdcBalance, /* updateBalance, updateUSDCBalance  */} =
+  const { ethBalance, usdcBalance, updateBalance, updateUSDCBalance } =
     useContext(EVMWalletContext);
 
-  /* const pollingFn = () => {
+  // const pollingFn = () => {
     if (selected === 'AR') {
       return updateBalance();
     } else {
@@ -82,28 +77,27 @@ const CurrencyMenu = () => {
     pollingFn,
     [currentAddress, selected],
     pollingTimeout,
-  ); */
-
+  ); 
   const handleETHClick = useCallback(() => {
     // stopPolling();
     setSelected('ETH');
     // startPolling();
-  }, [setSelected, /* startPolling, stopPolling */]);
+  }, [setSelected, startPolling, stopPolling ]);
 
   const handleUSDCClick = useCallback(() => {
     // stopPolling();
     setSelected('USDC');
     // startPolling();
-  }, [setSelected, /* startPolling, stopPolling */]);
+  }, [setSelected, startPolling, stopPolling ]);
 
- /*  useEffect(() => {
+  useEffect(() => {
     if (!currentAddress) {
       stopPolling();
     } else {
       // if address changes, restart polling
       startPolling();
     }
-  }, [currentAddress]); */
+  }, [currentAddress]);
 
   return (
     <>
@@ -146,26 +140,27 @@ const CurrencyMenu = () => {
       </Select>
     </>
   );
-};
+}; */
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress } = useContext(EVMWalletContext);
+  const { currentAddress, isWrongChain, switchChain } = useContext(EVMWalletContext);
   const navigate = useNavigate();
 
   const handleConnect = useCallback(() => navigate('sign-in'), [navigate]);
-  const { enqueueSnackbar } = useSnackbar();
+  const handleSwitchChain = useCallback(() => switchChain(), [switchChain]);
+  /* const { enqueueSnackbar } = useSnackbar(); */
 
-  const handleCopyClick = useCallback(async () => {
+  /* const handleCopyClick = useCallback(async () => {
     if (currentAddress) {
       await navigator.clipboard.writeText(currentAddress);
       enqueueSnackbar('Address Copied to clipboard', { variant: 'info' });
     } else {
       // do nothing
     }
-  }, [currentAddress, navigator]);
+  }, [currentAddress, navigator]); */
 
-  if (!currentAddress || currentAddress === '') {
+  if (!isWrongChain &&( !currentAddress || currentAddress === '')) {
     return (
       <>
         <Button
@@ -186,11 +181,39 @@ const WalletState = () => {
           onClick={handleConnect}
           className='plausible-event-name=Navbar+Connect+Wallet'
         >
-          <Typography sx={{ lineHeight: '18.9px', fontSize: '14px' }}>Connect</Typography>
+          <Typography sx={{ lineHeight: '18.9px', fontSize: '14px', display: 'flex', gap: '8px' }}><img src='./arbitrum-logo.svg' width={'20px'} height={'20px'}/>Connect</Typography>
         </Button>
         <ProfileMenu />
       </>
     );
+  }
+
+  if (isWrongChain) {
+    return <>
+      <Button
+        variant='outlined'
+        sx={{
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '17px',
+          border: 'solid',
+          borderColor: theme.palette.error.main,
+          borderWidth: '0.5px',
+          paddingTop: '9.5px',
+          paddingBottom: '11px',
+          ':hover': {
+            borderColor: theme.palette.error.main,
+          }
+        }}
+        onClick={handleSwitchChain}
+        className='plausible-event-name=Navbar+Connect+Wallet'
+      >
+        <Typography sx={{ lineHeight: '20.25px', fontSize: '15px', fontWeight: 700, color: theme.palette.error.main }}>Invalid Network</Typography>
+      </Button>
+    </>;
   }
 
   return (
@@ -209,40 +232,29 @@ const WalletState = () => {
           borderWidth: '0.5px',
         }}
       >
-        <Box display={'flex'}>
-          <CurrencyMenu />
+        <Box display={'flex'} padding={'6px 6px 6px 12px'}>
+          {/* <CurrencyMenu /> */}
+          <img width='25px' height='25px' src='./arbitrum-logo.svg' />
         </Box>
         <Box
           sx={{
-            background: theme.palette.secondary.contrastText,
+            /* background: theme.palette.secondary.contrastText, */
             borderRadius: '8px',
-            padding: '7px 20px 7px 20px',
+            padding: '6px 8px 6px 0px',
             alignItems: 'center',
+            justifyContent: 'center',
           }}
           display={'flex'}
-          gap={'8px'}
         >
-          <Tooltip title={currentAddress} placement={'left-start'}>
+          <Tooltip title={currentAddress} placement={'bottom-start'}>
             <Typography
-              sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px' }}
+              sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px', fontWeight: 700 }}
             >
               {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
             </Typography>
           </Tooltip>
-          <Tooltip title='Copy Address'>
-            <Typography sx={{ lineHeight: '20.25px', fontSize: '15px' }}>
-              <IconButton
-                onClick={handleCopyClick}
-                sx={{ padding: 0 }}
-                size='small'
-                className='plausible-event-name=Copy+Wallet+Click'
-              >
-                <CopyIcon fontSize='inherit' />
-              </IconButton>
-            </Typography>
-          </Tooltip>
+          <ProfileMenu />
         </Box>
-        <ProfileMenu />
       </Box>
     </>
   );
@@ -374,7 +386,7 @@ const Navbar = ({
                   >
                     Default Cost:
                   </Typography>
-                  <Typography display={'flex'} justifyContent={spaceBetween}>
+                  <Typography display={'flex'} justifyContent={spaceBetween} gap={'4px'}>
                     {usdFee.toFixed(nDigits)}$
                     <Tooltip
                       title={
@@ -389,7 +401,7 @@ const Navbar = ({
                   </Typography>
                 </Box>
                 <Button
-                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '12px 16px' }}
+                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '11px 16px' }}
                   startIcon={<img src='./chevron-bottom.svg' />}
                   onClick={() =>
                     navigate(`${pathname}/change-operator`)
