@@ -59,7 +59,6 @@ import MessageDetail from './message-detail';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import XIcon from '@mui/icons-material/X';
 import { ITag } from '@/interfaces/arweave';
-import { sendUSDC } from '@fairai/evm-sdk';
 
 const MessageHeader = ({
   message,
@@ -227,19 +226,8 @@ const MessageHeader = ({
     copySettings(message.tags);
   }, [message, setAnchorEl, copySettings]);
 
-  const handlePay = useCallback(async () => {
-    const nImages = message.tags.find((tag) => tag.name === 'nImages')?.value ?? 1;
-    const operatorWallet = state.operatorEvmWallet;
-    const operatorFee =  state.fee;
-
-    await sendUSDC(operatorWallet, operatorFee * Number(nImages), message.id);
-  }, [ state, message, sendUSDC ]);
-
   return (
     <Box display={'flex'} gap={'8px'} width={'100%'}>
-      {message.type === 'request' && (
-        <Button onClick={handlePay}>Pay</Button>
-      )}
       {message.type === 'response' && (
         <Avatar variant='rounded' src={imgUrl} sx={{ width: 56, height: 56 }} />
       )}
