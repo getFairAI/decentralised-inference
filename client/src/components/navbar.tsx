@@ -40,125 +40,25 @@ import {
 } from '@mui/material';
 import { Timeout } from 'react-number-format/types/types';
 import Logo from './logo';
-/* import { useSnackbar } from 'notistack'; */
 import { InfoOutlined } from '@mui/icons-material';
-/* import StampsMenu from '@/components/stamps-menu'; */
 import { EVMWalletContext } from '@/context/evm-wallet';
 import StampsMenu from './stamps-menu';
-
-/* const CustomDropDownIcon = () => (
-  <Icon
-    sx={{
-      pointerEvents: 'none',
-      position: 'absolute',
-      right: '7px',
-    }}
-  >
-    <img src='./chevron-bottom.svg' />
-  </Icon>
-); */
-
-/* const CurrencyMenu = () => {
-  const spaceBetween = 'space-between';
-
-  const [selected, setSelected] = useState<'ETH' | 'USDC'>('USDC');
-  const { ethBalance, usdcBalance, updateBalance, updateUSDCBalance } =
-    useContext(EVMWalletContext);
-
-  // const pollingFn = () => {
-    if (selected === 'AR') {
-      return updateBalance();
-    } else {
-      return updateUBalance();
-    }
-  };
-
-  const [startPolling, stopPolling] = usePollingEffect(
-    pollingFn,
-    [currentAddress, selected],
-    pollingTimeout,
-  ); 
-  const handleETHClick = useCallback(() => {
-    // stopPolling();
-    setSelected('ETH');
-    // startPolling();
-  }, [setSelected, startPolling, stopPolling ]);
-
-  const handleUSDCClick = useCallback(() => {
-    // stopPolling();
-    setSelected('USDC');
-    // startPolling();
-  }, [setSelected, startPolling, stopPolling ]);
-
-  useEffect(() => {
-    if (!currentAddress) {
-      stopPolling();
-    } else {
-      // if address changes, restart polling
-      startPolling();
-    }
-  }, [currentAddress]);
-
-  return (
-    <>
-      <Select
-        sx={{
-          '& .MuiInputBase-input': {
-            display: 'flex',
-            alignItems: 'center',
-            border: 'none',
-            textTransform: 'none',
-            padding: 0,
-          },
-          '& .MuiOutlinedInput-notchedOutline': {
-            border: 'none',
-          },
-        }}
-        IconComponent={CustomDropDownIcon}
-        value={selected}
-      >
-        <MenuItem
-          value={'ETH'}
-          onClick={handleETHClick}
-          sx={{ display: 'flex', justifyContent: spaceBetween }}
-        >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}>
-            {ethBalance.toFixed(defaultDecimalPlaces)}
-          </Typography>
-          <img width='20px' height='20px' src='./eth-logo.svg' />
-        </MenuItem>
-        <MenuItem
-          value={'USDC'}
-          onClick={handleUSDCClick}
-          sx={{ display: 'flex', justifyContent: spaceBetween }}
-        >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}>
-            {usdcBalance.toFixed(defaultDecimalPlaces)}
-          </Typography>
-          <img width='20px' height='20px' src={'./usdc-logo.svg'} />
-        </MenuItem>
-      </Select>
-    </>
-  );
-}; */
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, isWrongChain, switchChain } = useContext(EVMWalletContext);
+  const { currentAddress, isWrongChain, switchChain, connect } = useContext(EVMWalletContext);
+  const { localStorageValue: hasOnboarded } = useLocalStorage('hasOnboarded');
   const navigate = useNavigate();
 
-  const handleConnect = useCallback(() => navigate('sign-in'), [navigate]);
-  const handleSwitchChain = useCallback(() => switchChain(), [switchChain]);
-  /* const { enqueueSnackbar } = useSnackbar(); */
-
-  /* const handleCopyClick = useCallback(async () => {
-    if (currentAddress) {
-      await navigator.clipboard.writeText(currentAddress);
-      enqueueSnackbar('Address Copied to clipboard', { variant: 'info' });
+  const handleConnect = useCallback(async () => {
+    if (!hasOnboarded) {
+      navigate('sign-in');
     } else {
-      // do nothing
+      await connect();
     }
-  }, [currentAddress, navigator]); */
+  }, [hasOnboarded, navigate]);
+  const handleSwitchChain = useCallback(() => switchChain(), [switchChain]);
 
   if (!isWrongChain &&( !currentAddress || currentAddress === '')) {
     return (
@@ -233,7 +133,6 @@ const WalletState = () => {
         }}
       >
         <Box display={'flex'} padding={'6px 6px 6px 12px'}>
-          {/* <CurrencyMenu /> */}
           <img width='25px' height='25px' src='./arbitrum-logo.svg' />
         </Box>
         <Box

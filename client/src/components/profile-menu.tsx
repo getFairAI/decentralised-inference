@@ -241,10 +241,10 @@ export default function ProfileMenu() {
                         flexDirection: 'row-reverse',
                         justifyContent: 'space-between',
                       },
-                      '&.MuiCardHeader-avatar': {
-                        marginRight: '0 !important',
+                      '& .MuiCardHeader-avatar': {
+                        marginRight: 0,
                       },
-                      '.MuiCardHeader-content': {
+                      '& .MuiCardHeader-content': {
                         display: 'flex',
                         flexDirection: 'column-reverse',
                       }

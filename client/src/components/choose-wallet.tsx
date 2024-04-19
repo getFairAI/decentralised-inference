@@ -40,10 +40,12 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 const ProviderElement = ({ provider, setOpen }: { provider: EIP6963ProviderDetail, setOpen: Dispatch<SetStateAction<boolean>> }) => {
   const { connect } = useContext(EVMWalletContext);
   const { updateStorageValue } = useLocalStorage('evmProvider');
+  const { updateStorageValue: updateHasOnboarded } = useLocalStorage('hasOnboarded');
 
   const handleEvmConnect = useCallback(async () => {
     await connect(provider.provider as EIP1193Provider);
     updateStorageValue(provider.info.name);
+    updateHasOnboarded('true');
     setOpen(false);
   }, [ connect ]);
 

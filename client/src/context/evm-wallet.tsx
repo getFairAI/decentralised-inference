@@ -62,7 +62,7 @@ interface EVMWalletState {
 }
 
 interface IEVMWalletContext extends EVMWalletState {
-  connect: (provider: EIP1193Provider) => Promise<void>;
+  connect: (provider?: EIP1193Provider) => Promise<void>;
   startConversation: (txid: string, cid: string) => Promise<void>;
   prompt: (data: string | File, scriptTx: string, operator: { evmWallet: `0x${string}`, operatorFee: number }, cid?: number) => Promise<{ arweaveTxId: string, evmTxId: string }>;
   postOnArweave: (text: string, tags: {name: string, value: string}[]) => Promise<string>;
@@ -92,6 +92,7 @@ const walletReducer = (state: EVMWalletState, action: EVMWalletAction) => {
         currentAddress: '',  
         ethBalance: 0,
         usdcBalance: 0,
+        isWrongChain: false,
       };
     case 'update_providers':
       return {
@@ -163,6 +164,29 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   const providers = useEvmProviders();
   const { localStorageValue: previousProvider } = useLocalStorage('evmProvider');
   
+  const handleConnect = async (provider?: EIP1193Provider) => {
+    if (provider) {
+      setCurrentProvider(provider);
+      await asyncEvmWalletconnect(dispatch, provider);
+    } else {
+      // connect to the previous provider
+      const previousConnectedProvider = providers.find(provider => provider.info.name === previousProvider);
+      if (previousConnectedProvider) {
+        setCurrentProvider(previousConnectedProvider.provider);
+        await asyncEvmWalletconnect(dispatch, previousConnectedProvider.provider);
+      }
+    }
+  };
+
+  const handleAccountChanged = async (accounts: string[]) => {
+    if (accounts.length === 0) {
+      dispatch({ type: 'wallet_disconnected' });
+    } else if (accounts[0] !== state.currentAddress) {
+      await asyncEvmWalletconnect(dispatch, currentProvider as EIP1193Provider);
+    } else {
+      // wallet already connected ignore
+    }
+  };
   // update the connect function with async method
   const value = useMemo(() => ({
     ...state,
@@ -171,11 +195,7 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
     postOnArweave,
     prompt,
     switchChain: () => switchChain(arbitrum),
-    connect: async (provider: EIP1193Provider) => {
-      setCurrentProvider(provider);
-      
-      return asyncEvmWalletconnect(dispatch, provider);
-    },
+    connect: handleConnect,
     updateUsdcBalance: (newBalance: number) => dispatch({ type: 'update_usdc_balance', newBalance }),
     disconnect: () => dispatch({ type: 'wallet_disconnected' }),
   } as IEVMWalletContext), [state, currentProvider, dispatch]);
@@ -183,26 +203,19 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (currentProvider) {
       // subscribe to wallet changes
-      currentProvider.on('accountsChanged', async () => asyncEvmWalletconnect(dispatch, currentProvider));
+      currentProvider.on('accountsChanged', handleAccountChanged);
       currentProvider.on('chainChanged', async () => handleChainChanged(dispatch));
-      currentProvider.on('disconnect', () => dispatch({ type: 'wallet_disconnected' }));
 
       return () => {
-        currentProvider.on('chainChanged', async () => handleChainChanged(dispatch));
-        currentProvider.removeListener('accountsChanged', async () => asyncEvmWalletconnect(dispatch, currentProvider));
-        currentProvider.removeListener('disconnect', () => dispatch({ type: 'wallet_disconnected' }));
+        currentProvider.removeListener('chainChanged', async () => handleChainChanged(dispatch));
+        currentProvider.removeListener('accountsChanged', handleAccountChanged);
       };
     }
   }, [ currentProvider ]);
 
   useEffect(() => {
     dispatch({ type: 'update_providers', providers });
-    const previousConnectedProvider = providers.find(provider => provider.info.name === previousProvider);
-    if (previousConnectedProvider) {
-      // if it has previously connected to a provider and that provider is available, connect to it
-      setCurrentProvider(previousConnectedProvider.provider);
-      (async () => asyncEvmWalletconnect(dispatch, previousConnectedProvider.provider))();
-    }
+    (async () => await handleConnect())();
   }, [ previousProvider, providers ]);
 
   const handleUsdcReceived = (log: Log[]) => {
