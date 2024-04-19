@@ -53,6 +53,18 @@ type SetWalletWrongChainAction = {
 
 type EVMWalletAction = WalletConnectedAction | WalletDisconnectedAction | UpdateProvidersAction | UpdateUSDCBalanceAction | SetWalletWrongChainAction;
 
+interface Configuration {
+  assetNames?: string[];
+  customTags?: { name: string; value: string }[];
+  negativePrompt?: string;
+  nImages?: number;
+  title?: string;
+  description?: string;
+  width?: number;
+  height?: number;
+  requestCaller?: string;
+}
+
 interface EVMWalletState {
   currentAddress: string;
   ethBalance: number;
@@ -64,7 +76,7 @@ interface EVMWalletState {
 interface IEVMWalletContext extends EVMWalletState {
   connect: (provider?: EIP1193Provider) => Promise<void>;
   startConversation: (txid: string, cid: string) => Promise<void>;
-  prompt: (data: string | File, scriptTx: string, operator: { evmWallet: `0x${string}`, operatorFee: number }, cid?: number) => Promise<{ arweaveTxId: string, evmTxId: string }>;
+  prompt: (data: string | File, scriptTx: string, operator: { evmWallet: `0x${string}`, operatorFee: number }, cid?: number, config?: Configuration) => Promise<{ arweaveTxId: string, evmTxId: string }>;
   postOnArweave: (text: string, tags: {name: string, value: string}[]) => Promise<string>;
   countStamps: (txids: string[]) => Promise<Record<string, number>>;
   updateUsdcBalance: (newBalance: number) => void;
@@ -162,7 +174,7 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(walletReducer, initialState);
   const [ currentProvider, setCurrentProvider ] = useState<EIP1193Provider | null>(null);
   const providers = useEvmProviders();
-  const { localStorageValue: previousProvider } = useLocalStorage('evmProvider');
+  const { localStorageValue: previousProvider, updateStorageValue: setPreviousProvider } = useLocalStorage('evmProvider');
   
   const handleConnect = async (provider?: EIP1193Provider) => {
     if (provider) {
@@ -181,6 +193,7 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   const handleAccountChanged = async (accounts: string[]) => {
     if (accounts.length === 0) {
       dispatch({ type: 'wallet_disconnected' });
+      setPreviousProvider('');
     } else if (accounts[0] !== state.currentAddress) {
       await asyncEvmWalletconnect(dispatch, currentProvider as EIP1193Provider);
     } else {
@@ -197,7 +210,10 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
     switchChain: () => switchChain(arbitrum),
     connect: handleConnect,
     updateUsdcBalance: (newBalance: number) => dispatch({ type: 'update_usdc_balance', newBalance }),
-    disconnect: () => dispatch({ type: 'wallet_disconnected' }),
+    disconnect: () => {
+      dispatch({ type: 'wallet_disconnected' });
+      setPreviousProvider('');
+    },
   } as IEVMWalletContext), [state, currentProvider, dispatch]);
 
   useEffect(() => {

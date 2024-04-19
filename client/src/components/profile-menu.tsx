@@ -28,6 +28,7 @@ import { ChevronRight } from '@mui/icons-material';
 import { STUDIO_LINK, GITHUB_LINK, DISCORD_LINK, TWITTER_LINK, WHITEPAPER_LINK } from '@/constants';
 import { useNavigate } from 'react-router-dom';
 import GetIcon from './get-icon';
+import { ChooseWalletContext } from '@/context/choose-wallet';
 
 const Option = ({
   option,
@@ -39,8 +40,9 @@ const Option = ({
   setLinksOpen?: Dispatch<SetStateAction<boolean>>;
 }) => {
   const navigate = useNavigate();
+  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
 
-  const showIcons = ['Twitter', 'Github', 'Discord', 'Whitepaper', 'Terms And Conditions', 'Studio', 'Top Up'];
+  const showIcons = ['Twitter', 'Github', 'Discord', 'Whitepaper', 'Terms And Conditions', 'Studio', 'Top Up', 'Change Wallet'];
 
   const handleOptionClick = useCallback(() => {
     (async () => {
@@ -89,6 +91,10 @@ const Option = ({
           if (setLinksOpen) {
             setLinksOpen(true);
           }
+          setOpen(false);
+          return;
+        case 'Change Wallet':
+          setChooseWalletOpen(true);
           setOpen(false);
           return;
         default:
@@ -280,6 +286,7 @@ export default function ProfileMenu() {
                     <Option option='Links' setOpen={setOpen} setLinksOpen={setLinksOpen} />
                     <Option option='Studio' setOpen={setOpen} />
                     <Option option='Top Up' setOpen={setOpen} />
+                    <Option option='Change Wallet' setOpen={setOpen} />
                     <Option option='Terms And Conditions' setOpen={setOpen} />
                   </MenuList>
                 </Card>

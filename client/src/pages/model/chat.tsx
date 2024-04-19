@@ -711,7 +711,7 @@ const Chat = () => {
     [configReset],
   );
 
-  /* const getConfigValues = useCallback(() => {
+  const getConfigValues = useCallback(() => {
     const { generateAssets, description, negativePrompt, nImages } = currentConfig;
     const assetNames = currentConfig.assetNames
       ? currentConfig.assetNames.split(';').map((el) => el.trim())
@@ -735,7 +735,7 @@ const Chat = () => {
         },
       }),
     };
-  }, [currentConfig]); */
+  }, [currentConfig]);
 
   const updateMessages = async (
     txid: string,
@@ -802,10 +802,11 @@ const Chat = () => {
     }
 
     try {
+      const config = getConfigValues();
       const { arweaveTxId }  = await prompt(newMessage, state.scriptTransaction, {
         evmWallet: state.operatorEvmWallet,
         operatorFee: state.fee,
-      }, currentConversationId);
+      }, currentConversationId, config);
       // update balance after payments
       updateMessages(arweaveTxId, file, file.type);
       updateUsdcBalance(usdcBalance - state.fee);
@@ -837,10 +838,11 @@ const Chat = () => {
     }
 
     try {
+      const config = getConfigValues();
       const { arweaveTxId } = await prompt(newMessage, state.scriptTransaction, {
         evmWallet: state.operatorEvmWallet,
         operatorFee: state.fee,
-      }, currentConversationId);
+      }, currentConversationId, config);
       // update balance after payments
       updateMessages(arweaveTxId, newMessage, 'text/plain');
       updateUsdcBalance(usdcBalance - state.fee);

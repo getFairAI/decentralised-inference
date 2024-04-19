@@ -39,7 +39,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const ProviderElement = ({ provider, setOpen }: { provider: EIP6963ProviderDetail, setOpen: Dispatch<SetStateAction<boolean>> }) => {
   const { connect } = useContext(EVMWalletContext);
-  const { updateStorageValue } = useLocalStorage('evmProvider');
+  const { localStorageValue: currentProviderValue, updateStorageValue } = useLocalStorage('evmProvider');
   const { updateStorageValue: updateHasOnboarded } = useLocalStorage('hasOnboarded');
 
   const handleEvmConnect = useCallback(async () => {
@@ -56,11 +56,11 @@ const ProviderElement = ({ provider, setOpen }: { provider: EIP6963ProviderDetai
         aria-label='connect'
         variant='contained'
         onClick={handleEvmConnect}
-        disabled={false}
+        disabled={currentProviderValue === provider.info.name}
         endIcon={<PowerIcon />}
         className='plausible-event-name=EVM+Connected'
       >
-        <Typography>Connect</Typography>
+        <Typography>{currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}</Typography>
       </Button>
     }
   >
