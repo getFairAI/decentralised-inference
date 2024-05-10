@@ -23,20 +23,19 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  FormLabel,
   IconButton,
   Slider,
   TextField,
   Typography,
   useTheme,
-  Radio,
-  RadioGroup,
   Button,
   InputLabel,
   Select,
   MenuItem,
   SelectChangeEvent,
   InputAdornment,
+  Checkbox,
+  Tooltip,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
@@ -45,7 +44,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { parseUBalance } from '@/utils/u';
 import { enqueueSnackbar } from 'notistack';
-import { NumberFormatValues, NumericFormat } from 'react-number-format';
+import { NumericFormat } from 'react-number-format';
 import LicenseConfiguration from './license-configuration';
 import {
   Control,
@@ -55,6 +54,8 @@ import {
   useController,
 } from 'react-hook-form';
 import { IConfiguration } from '@/interfaces/common';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import SelectControl from './select-control';
 
 const CustomTag = ({
   name,
@@ -281,7 +282,6 @@ const Configuration = ({
   reset: UseFormReset<IConfiguration>;
   handleClose: () => void;
 }) => {
-  const maxPercentage = 100;
   const theme = useTheme();
   const { state } = useLocation();
   const { address } = useParams();
@@ -293,9 +293,8 @@ const Configuration = ({
     field: assetNamesField,
     fieldState: { isDirty: isAssetNamesDirty },
   } = useController({ control, name: 'assetNames' });
-  const { field: generateAssetsField } = useController({ control, name: 'generateAssets' });
   const { field: descriptionField } = useController({ control, name: 'description' });
-  const { field: royaltyField } = useController({ control, name: 'rareweaveConfig.royalty' });
+  const { field: privateModeField } = useController({ control, name: 'privateMode' });
 
   const fee = useMemo(() => (state?.fee ? parseUBalance(state?.fee) : 0), [state?.fee]);
 
@@ -335,11 +334,6 @@ const Configuration = ({
   useEffect(() => {
     setConfigValue('customTags', customTags);
   }, [customTags]);
-
-  const isAllowedRoyalty = useCallback(
-    (val: NumberFormatValues) => !val.floatValue || val?.floatValue <= maxPercentage,
-    [],
-  );
 
   const handleResetClick = useCallback(() => reset(), [reset]);
 
@@ -403,28 +397,34 @@ const Configuration = ({
           <Typography variant='h4'>Transaction Configurations</Typography>
         </Divider>
       </Box>
-      <FormControl sx={{ m: 3 }} component='fieldset' variant='standard'>
-        <FormLabel>{'Arweave Asset (NFT) Options'}</FormLabel>
-        <RadioGroup value={generateAssetsField.value} onChange={generateAssetsField.onChange}>
-          <FormControlLabel control={<Radio />} value={'fair-protocol'} label='Fair Protocol NFT' />
-          <FormControlLabel control={<Radio />} value={'rareweave'} label='Rareweave NFT' />
-          <FormControlLabel control={<Radio />} value={'none'} label='Do Not Mint' />
-        </RadioGroup>
-      </FormControl>
-      {generateAssetsField.value === 'rareweave' && (
-        <NumericFormat
-          customInput={TextField}
-          allowNegative={false}
-          decimalScale={0}
-          inputRef={royaltyField.ref} // send input ref, so we can focus on input when error appear
-          defaultValue={0}
-          maxLength={3}
-          max={100}
-          label='Royalty (%)'
-          placeholder='Royalty'
-          isAllowed={isAllowedRoyalty}
+      <FormControl component='fieldset' variant='standard'>
+        <FormControlLabel
+          control={<Checkbox ref={privateModeField.ref} value={privateModeField.value} onChange={privateModeField.onChange} />}
+          label={<Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Private Mode
+            <Tooltip
+              title={
+                <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                  {'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'}
+                </Typography>
+              }
+              placement='bottom'
+            >
+              <InfoOutlined fontSize='small' />
+            </Tooltip>
+          </Typography>}
         />
-      )}
+      </FormControl>
+      <SelectControl
+        name='generateAssets'
+        control={control}
+        mat={{ label: 'Arweave Asset (NFT) Options', placeholder: 'Arweave Asset (NFT) Options' }}
+        defaultValue={'none'}
+      >
+        <MenuItem value='none'>Do not mint</MenuItem>
+        <MenuItem value='fair-protocol'>Fair Protocol NFT</MenuItem>
+        <MenuItem value='rareweave'>Rareweave NFT</MenuItem>
+      </SelectControl>
       <TextField
         value={assetNamesField.value}
         onChange={assetNamesField.onChange}

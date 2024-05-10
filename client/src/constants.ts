@@ -303,5 +303,6 @@ export const BUY_ARB_LINK = 'https://www.kraken.com/learn/buy-arbitrum-arb';
 
 export const IRYS_TXS_EXPLORER = 'https://explorer.irys.xyz/transactions';
 export const WARP_ASSETS_EXPLORER = 'https://sonar.warp.cc/#/app/contract';
+export const VIEWBLOCK_TXS_EXPLORER = 'https://viewblock.io/arweave/tx';
 
 export const MIN_U_BALANCE = 1;

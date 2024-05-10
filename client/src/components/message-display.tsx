@@ -28,14 +28,20 @@ import {
   useTheme,
   Card,
   CardMedia,
+  Button,
+  Box,
 } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import DownloadIcon from '@mui/icons-material/Download';
 import '@/styles/main.css';
+import { EthEncryptedData } from '@metamask/eth-sig-util';
+import { LockOutlined } from '@mui/icons-material';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails?: boolean }) => {
   const theme = useTheme();
-  const [content, setContent] = useState<string | File>('');
+  const { decrypt } = useContext(EVMWalletContext);
+  const [content, setContent] = useState<string | File | EthEncryptedData>('');
   const [type, setType] = useState<string>('');
 
   const handleDownload = useCallback(() => {
@@ -49,8 +55,19 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
 
   useEffect(() => {
     if (message.contentType?.includes('text') || message.contentType?.includes('json')) {
-      setContent((message.msg as string).trim());
-      setType('text');
+      try {
+        const data = JSON.parse(message.msg as string);
+        if (data['ciphertext'] && data['ephemPublicKey'] && data['nonce'] && data['version']) {
+          setContent(data as EthEncryptedData);
+          setType('encrypted');
+        } else {
+          setContent(JSON.stringify(data, null, 2));
+          setType('text');
+        }
+      } catch (err) {
+        setContent((message.msg as string).trim());
+        setType('text');
+      }
     } else if (message.contentType?.includes('image')) {
       setContent(`${NET_ARWEAVE_URL}/${message.id}`);
       setType('image');
@@ -69,6 +86,20 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
       }
     };
   }, [message]);
+
+  const handleDecrypt = useCallback(async () => {
+    if (message?.msg && type === 'encrypted') {
+      const decrypted = await decrypt(message.msg as `0x${string}`);
+      try {
+        atob(decrypted);
+        setContent(`data:image/png;base64,${decrypted}`);
+        setType('image');
+      } catch (err) {   
+        setContent(decrypted || 'Failed to decrypt');
+        setType('text');
+      }
+    }
+  }, [ message, type ]);
 
   if (type === 'image') {
     return (
@@ -109,6 +140,33 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         {content as string}
       </Typography>
     );
+  } else if (type === 'encrypted') {
+    return (<Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+    }}>
+      <Typography
+        sx={{
+          fontStyle: 'normal',
+          fontWeight: 400,
+          fontSize: '25px',
+          lineHeight: '34px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}
+        gutterBottom
+      >
+        <LockOutlined />
+        {'This content is encrypted.'}
+      </Typography>
+      <Button variant='outlined' onClick={handleDecrypt}>
+        Decrypt
+      </Button>
+    </Box>);
   } else {
     return (
       <FormControl variant='outlined' fullWidth>

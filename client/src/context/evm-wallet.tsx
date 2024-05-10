@@ -18,12 +18,12 @@
 
 import 'viem/window';
 import { createContext, Dispatch, ReactNode, useEffect, useMemo, useReducer, useState } from 'react';
-import { EIP1193Provider, hexToBigInt, Log } from 'viem';
+import { hexToBigInt, Log } from 'viem';
 import { arbitrum } from 'viem/chains';
 import { getConnectedAddress, getEthBalance, getUsdcBalance, setProvider, countStamps, switchChain, getCurrentChainId, startConversation, setIrys, postOnArweave, prompt, subscribe } from '@fairai/evm-sdk';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useEvmProviders } from '@/hooks/useEvmProviders';
-import { EIP6963ProviderDetail } from '@/interfaces/evm';
+import { EIP6963ProviderDetail, ExtendedEIP1193Provider } from '@/interfaces/evm';
 
 type WalletConnectedAction = {
   type: 'wallet_connected';
@@ -63,6 +63,7 @@ interface Configuration {
   width?: number;
   height?: number;
   requestCaller?: string;
+  privateMode?: boolean;
 }
 
 interface EVMWalletState {
@@ -74,7 +75,7 @@ interface EVMWalletState {
 }
 
 interface IEVMWalletContext extends EVMWalletState {
-  connect: (provider?: EIP1193Provider) => Promise<void>;
+  connect: (provider?: ExtendedEIP1193Provider) => Promise<void>;
   startConversation: (txid: string, cid: string) => Promise<void>;
   prompt: (data: string | File, scriptTx: string, operator: { evmWallet: `0x${string}`, operatorFee: number }, cid?: number, config?: Configuration) => Promise<{ arweaveTxId: string, evmTxId: string }>;
   postOnArweave: (text: string, tags: {name: string, value: string}[]) => Promise<string>;
@@ -82,6 +83,8 @@ interface IEVMWalletContext extends EVMWalletState {
   updateUsdcBalance: (newBalance: number) => void;
   switchChain: () => void;
   disconnect: () => void;
+  getPubKey: () => Promise<string>;
+  decrypt: (data: `0x${string}`) => Promise<string>;
 }
 
 const walletReducer = (state: EVMWalletState, action: EVMWalletAction) => {
@@ -138,7 +141,7 @@ const initialState: EVMWalletState = {
 };
 
 
-const asyncEvmWalletconnect = async (dispatch: Dispatch<EVMWalletAction>, provider: EIP1193Provider) => {
+const asyncEvmWalletconnect = async (dispatch: Dispatch<EVMWalletAction>, provider: ExtendedEIP1193Provider) => {
   try {
     await setProvider(provider);
     await setIrys(provider);
@@ -172,11 +175,11 @@ export const EVMWalletContext = createContext<IEVMWalletContext>({} as IEVMWalle
 
 export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(walletReducer, initialState);
-  const [ currentProvider, setCurrentProvider ] = useState<EIP1193Provider | null>(null);
+  const [ currentProvider, setCurrentProvider ] = useState<ExtendedEIP1193Provider | null>(null);
   const providers = useEvmProviders();
   const { localStorageValue: previousProvider, updateStorageValue: setPreviousProvider } = useLocalStorage('evmProvider');
   
-  const handleConnect = async (provider?: EIP1193Provider) => {
+  const handleConnect = async (provider?: ExtendedEIP1193Provider) => {
     if (provider) {
       setCurrentProvider(provider);
       await asyncEvmWalletconnect(dispatch, provider);
@@ -195,11 +198,22 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'wallet_disconnected' });
       setPreviousProvider('');
     } else if (accounts[0] !== state.currentAddress) {
-      await asyncEvmWalletconnect(dispatch, currentProvider as EIP1193Provider);
+      await asyncEvmWalletconnect(dispatch, currentProvider as ExtendedEIP1193Provider);
     } else {
       // wallet already connected ignore
     }
   };
+
+  const getPubKey = async () => {
+    if (currentProvider && state.currentAddress) {
+      const pubKey = await currentProvider.request({ method: 'eth_getEncryptionPublicKey', params: [ state.currentAddress ] });
+
+      return pubKey;
+    } else {
+      return '';
+    }
+  };
+
   // update the connect function with async method
   const value = useMemo(() => ({
     ...state,
@@ -213,6 +227,18 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
     disconnect: () => {
       dispatch({ type: 'wallet_disconnected' });
       setPreviousProvider('');
+    },
+    getPubKey,
+    decrypt: async (data: `0x${string}`) => {
+      const result = await currentProvider?.request({ method: 'eth_decrypt', params: [ data, state.currentAddress ] });
+
+      try {
+        const parsed = JSON.parse(result ?? '');
+
+        return parsed.data;
+      } catch (err) {
+        return undefined;
+      }
     },
   } as IEVMWalletContext), [state, currentProvider, dispatch]);
 

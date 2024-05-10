@@ -287,6 +287,7 @@ const ChooseOperator = ({
               modelCreator: findTag(scriptTx as IEdge, 'modelCreator'),
               scriptName: findTag(scriptTx as IEdge, 'scriptName'),
               operatorEvmWallet: results[0].evmWallet,
+              operatorPubKey: results[0].evmPublicKey,
               fee: results[0].operatorFee,
               scriptTransaction: scriptTx.node.id,
               fullState: scriptTx,
