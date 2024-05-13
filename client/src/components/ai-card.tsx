@@ -21,9 +21,9 @@ import { FiCard, FiCardActionArea, FiCardContent, FicardMedia } from './full-ima
 import { IContractEdge } from '@/interfaces/arweave';
 import { toSvg } from 'jdenticon';
 import { useNavigate } from 'react-router-dom';
-import { MouseEvent, useCallback, useEffect, useMemo } from 'react';
+import { MouseEvent, useCallback, useMemo } from 'react';
 import { displayShortTxOrAddr, findTag } from '@/utils/common';
-import { useLazyQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import {
   AVATAR_ATTACHMENT,
@@ -39,7 +39,18 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
   const theme = useTheme();
   const navigate = useNavigate();
 
-  const [getAvatar, { data, loading: avatarLoading }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
+  const { data, loading: avatarLoading } = useQuery(GET_LATEST_MODEL_ATTACHMENTS, {
+    variables: {
+      tags: [
+        ...DEFAULT_TAGS, // allow avatars from previous versions
+        { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
+        { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
+        { name: TAG_NAMES.modelTransaction, values: [ model.node.id ] },
+      ],
+      owner: model.node.owner.address,
+    },
+    skip: !model.node.id || !model.node.owner.address,
+  });
 
   const imgUrl = useMemo(() => {
     if (data) {
@@ -64,24 +75,6 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
   );
   const modelId = useMemo(() => model.node.id, [model]);
   const modelName = useMemo(() => findTag(model, 'modelName'), [model]);
-
-  useEffect(() => {
-    const modelId = model.node.id;
-    const attachmentAvatarTags = [
-      ...DEFAULT_TAGS, // allow avatars from previous versions
-      { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
-      { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-      { name: TAG_NAMES.modelTransaction, values: [modelId] },
-    ];
-
-    getAvatar({
-      variables: {
-        tags: attachmentAvatarTags,
-        owner,
-      },
-      fetchPolicy: 'no-cache',
-    });
-  }, []);
 
   const getTimePassed = () => {
     const timestamp = findTag(model, 'unixTime');
