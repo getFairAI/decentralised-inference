@@ -273,13 +273,13 @@ const Navbar = ({
               pathname === '/' && currentAddress && (<>
                 <Link to='/browse'>
                   <Typography
-                    textTransform={'uppercase'} lineHeight={1.3}
+                    textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}
                   >
                     Browse Requests
                   </Typography>
                 </Link>
                 <Link to='/request' style={{ border: `0.5px solid ${theme.palette.terciary.main}`, borderRadius: '8px'  }}>
-                  <Typography padding={'9.5px 15px'} textTransform={'uppercase'} lineHeight={1.3}>Request a Solution</Typography>
+                  <Typography padding={'9.5px 15px'} textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}>Request a Solution</Typography>
                 </Link>
               </>)
             }
