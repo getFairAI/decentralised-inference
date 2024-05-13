@@ -95,7 +95,6 @@ const ChooseWallet = ({
             theme.palette.mode === 'dark'
               ? 'rgba(61, 61, 61, 0.9)'
               : theme.palette.background.default,
-          borderRadius: '30px',
         },
       }}
     >

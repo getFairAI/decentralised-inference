@@ -189,6 +189,8 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       if (previousConnectedProvider) {
         setCurrentProvider(previousConnectedProvider.provider);
         await asyncEvmWalletconnect(dispatch, previousConnectedProvider.provider);
+      } else {
+        throw new Error('No previous provider found');
       }
     }
   };
@@ -257,7 +259,11 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     dispatch({ type: 'update_providers', providers });
-    (async () => await handleConnect())();
+    (async () => {
+      if (previousProvider) {
+        await handleConnect();
+      }
+    })();
   }, [ previousProvider, providers ]);
 
   const handleUsdcReceived = (log: Log[]) => {

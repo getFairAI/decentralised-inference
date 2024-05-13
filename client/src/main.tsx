@@ -36,6 +36,8 @@ import SignIn from './pages/sign-in';
 import WalletGuard from './guards/wallet';
 import Terms from './pages/terms';
 import TermsAgreement from './guards/terms-agreement';
+import RequestSolution from './pages/request-solution';
+import BrowseRequests from './pages/browse-requests';
 
 const router = createHashRouter([
   {
@@ -102,6 +104,16 @@ const router = createHashRouter([
       {
         path: 'terms',
         element: <Terms />,
+      },
+      {
+        path: 'browse',
+        element: <BrowseRequests />,
+      },
+      {
+        path: 'request',
+        element: <WalletGuard>
+          <RequestSolution />
+        </WalletGuard>,
       },
     ],
   },

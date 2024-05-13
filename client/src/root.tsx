@@ -19,7 +19,7 @@
 import { ApolloProvider } from '@apollo/client';
 import { CssBaseline } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Layout from './components/layout';
 import { client } from './utils/apollo';
 import { AppThemeProvider } from './context/theme';
@@ -59,6 +59,17 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
 };
 
 export const Root = () => {
+
+  const { pathname } = useLocation();
+
+  if (pathname === '/request') {
+    return (
+      <BaseRoot>
+        <Outlet />
+      </BaseRoot>
+    );
+  }
+
   return (
     <BaseRoot>
       <Layout>

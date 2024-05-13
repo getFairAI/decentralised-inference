@@ -24,13 +24,13 @@ import { Navigate } from 'react-router-dom';
 const WalletGuard = ({ children }: { children: ReactElement }) => {
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const [canUseInference, setCanUseInference] = useState(true);
-  const evmProvider = useLocalStorage('evmProvider');
+  const { localStorageValue: evmProvider } = useLocalStorage('evmProvider');
 
   useEffect(() => {
     if (!evmProvider && (!currentAddress || !usdcBalance)) {
       setCanUseInference(false);
     }
-  }, [currentAddress, usdcBalance]);
+  }, [ evmProvider, currentAddress, usdcBalance]);
 
   if (canUseInference) {
     return children;

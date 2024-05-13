@@ -185,7 +185,6 @@ const DetailContent = ({
       >
         <Box
           sx={{
-            borderRadius: '23px',
             width: '317px',
             height: '352px',
             background: `url(${imgUrl ? imgUrl : ''})`,
@@ -356,7 +355,7 @@ const Detail = () => {
               theme.palette.mode === 'dark'
                 ? theme.palette.neutral.main
                 : theme.palette.background.default,
-            borderRadius: '30px',
+            borderRadius: '8px',
           },
           display: filtering ? 'none' : 'block',
         }}
@@ -371,6 +370,9 @@ const Detail = () => {
           <IconButton
             onClick={handleClose}
             size='small'
+            sx={{
+              borderRadius: '10px'
+            }}
             className='plausible-event-name=Close+Model+Click'
           >
             <Close />

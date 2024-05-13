@@ -28,7 +28,15 @@ export default defineConfig({
 			protocolImports: true,
 		}),
   ],
-  optimizeDeps: {disabled: false},
+  optimizeDeps: {
+    disabled: false,
+    include: [
+      '@emotion/react', 
+      '@emotion/styled', 
+      '@mui/material/Tooltip',
+      '@mui/material/Unstable_Grid2',
+    ],
+  },
   build: {
     commonjsOptions: { include: [] }
   },

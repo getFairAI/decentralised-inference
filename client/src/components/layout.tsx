@@ -130,7 +130,7 @@ export default function Layout({ children }: { children: ReactElement }) {
       >
         <Box height={`calc(100% - ${warningHeight}px)`}>
           <FilterContext.Provider value={filterValue}>
-            {pathname !== '/terms' && (
+            {(pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse') && (
               <Box ref={warningRef}>
                 <WarningMessage />
               </Box>

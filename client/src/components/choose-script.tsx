@@ -248,7 +248,6 @@ const ChooseScript = ({
             display: 'flex',
             alignItems: 'flex-start',
             textAlign: 'left',
-            borderRadius: '30px',
           }}
           variant='contained'
           onClick={() => setShowScripts(false)}
@@ -265,7 +264,6 @@ const ChooseScript = ({
           sx={{
             background: 'transparent',
             border: '2px solid',
-            borderRadius: '30px',
             margin: '0 20px',
             display: 'flex',
             justifyContent: 'space-between',
@@ -310,7 +308,6 @@ const ChooseScript = ({
         <Box
           sx={{
             background: 'transparent', // `linear-gradient(180deg, transparent 10%, ${theme.palette.primary.main} 140%)`,
-            borderRadius: '7px',
             justifyContent: 'center',
             display: 'flex',
             gap: '32px',
@@ -318,7 +315,6 @@ const ChooseScript = ({
           }}
         >
           <Button
-            sx={{ borderRadius: '7px' }}
             variant='outlined'
             onClick={() =>
               navigate(
@@ -350,7 +346,6 @@ const ChooseScript = ({
             </Typography>
           </Button>
           <Button
-            sx={{ borderRadius: '7px' }}
             variant='contained'
             onClick={() => handleScriptChosen(scriptsData[selectedIdx])}
             disabled={!currentAddress}
