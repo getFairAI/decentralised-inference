@@ -81,6 +81,7 @@ import { UserFeedbackContext } from '@/context/user-feedback';
 import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
+import { encryptSafely } from '@metamask/eth-sig-util';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -332,7 +333,8 @@ const Chat = () => {
     currentAddress: userAddr,
     usdcBalance,
     prompt,
-    updateUsdcBalance
+    updateUsdcBalance,
+    getPubKey,
   } = useContext(EVMWalletContext);
   const { state } = useLocation();
   const previousAddr = usePrevious<string>(userAddr);
@@ -364,6 +366,7 @@ const Chat = () => {
   const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
   const [requestIds] = useState<string[]>([]);
+  const [ currentPubKey, setCurrentPubKey ] = useState('');
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -373,7 +376,7 @@ const Chat = () => {
   );
   const defaultConfigvalues: IConfiguration = {
     assetNames: '',
-    generateAssets: 'fair-protocol',
+    generateAssets: 'none',
     negativePrompt: '',
     description: '',
     customTags: [],
@@ -391,6 +394,7 @@ const Chat = () => {
       currency: '$U',
       paymentMode: '',
     },
+    privateMode: false,
   };
   const {
     control: configControl,
@@ -471,6 +475,20 @@ const Chat = () => {
     () => isNearTop && hasRequestNextPage && !messagesLoading,
     [isNearTop, hasRequestNextPage, messagesLoading],
   );
+
+  useEffect(() => {
+    const pubKey = localStorage.getItem(`pubKeyFor:${userAddr}`);
+    
+    if (!pubKey) {
+      (async () => {
+        const key = await getPubKey();
+        localStorage.setItem(`pubKeyFor:${userAddr}`, key);
+        setCurrentPubKey(key);
+      })();
+    } else {
+      setCurrentPubKey(pubKey);
+    }
+  }, [ userAddr, setCurrentPubKey ]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -712,7 +730,7 @@ const Chat = () => {
   );
 
   const getConfigValues = useCallback(() => {
-    const { generateAssets, description, negativePrompt, nImages } = currentConfig;
+    const { generateAssets, description, negativePrompt, nImages, privateMode } = currentConfig;
     const assetNames = currentConfig.assetNames
       ? currentConfig.assetNames.split(';').map((el) => el.trim())
       : undefined;
@@ -734,8 +752,11 @@ const Chat = () => {
           royalty: royalty / 100,
         },
       }),
+      privateMode,
+      userPubKey: currentPubKey,
+      encDataForOperator: ''
     };
-  }, [currentConfig]);
+  }, [ currentConfig, currentPubKey ]);
 
   const updateMessages = async (
     txid: string,
@@ -839,7 +860,23 @@ const Chat = () => {
 
     try {
       const config = getConfigValues();
-      const { arweaveTxId } = await prompt(newMessage, state.scriptTransaction, {
+      let dataToUpload = newMessage;
+      if (config.privateMode) {
+        const encrypted = encryptSafely({
+          data: newMessage,
+          publicKey: currentPubKey,
+          version: 'x25519-xsalsa20-poly1305'
+        });
+        dataToUpload = JSON.stringify(encrypted);
+        const encForOperator = encryptSafely({
+          data: newMessage,
+          publicKey: state.operatorPubKey,
+          version: 'x25519-xsalsa20-poly1305'
+        });
+        config.encDataForOperator = JSON.stringify(encForOperator);
+      }
+
+      const { arweaveTxId } = await prompt(dataToUpload, state.scriptTransaction, {
         evmWallet: state.operatorEvmWallet,
         operatorFee: state.fee,
       }, currentConversationId, config);

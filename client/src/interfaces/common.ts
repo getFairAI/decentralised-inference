@@ -46,6 +46,7 @@ export interface IConfiguration extends FieldValues {
   };
   license?: string;
   licenseConfig?: LicenseForm;
+  privateMode?: boolean;
 }
 
 export type voteForOptions = 'model' | 'script' | 'operator';

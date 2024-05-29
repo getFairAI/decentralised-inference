@@ -48,6 +48,7 @@ import {
   NET_ARWEAVE_URL,
   RAREWEAVE_ASSET_LIST_LINK,
   TAG_NAMES,
+  VIEWBLOCK_TXS_EXPLORER,
   WARP_ASSETS_EXPLORER,
 } from '@/constants';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
@@ -107,8 +108,10 @@ const MessageHeader = ({
 
   const handleViewTx = useCallback(() => {
     setAnchorEl(null);
-    if (message.tags.find((tag) => tag.name === TAG_NAMES.contractSrc)?.value !== undefined) {
+    if (message.type === 'response' && message.tags.find((tag) => tag.name === TAG_NAMES.contractSrc)?.value !== undefined) {
       window.open(`${WARP_ASSETS_EXPLORER}/${message.id}`, '_blank');
+    } else if (message.type === 'response') {
+      window.open(`${VIEWBLOCK_TXS_EXPLORER}/${message.id}`, '_blank');
     } else {
       window.open(`${IRYS_TXS_EXPLORER}/${message.id}`, '_blank');
     }
