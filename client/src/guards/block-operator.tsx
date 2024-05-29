@@ -27,7 +27,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { ReactElement, useCallback, useContext } from 'react';
+import { ReactElement, useCallback, useContext, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
@@ -38,10 +38,12 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
 
   const handleGoBack = useCallback(() => navigate(-1), [navigate]);
 
+  const operatorEvmWallet = useMemo(() => state?.operatorEvmWallet ?? '', [state]);
+
   return (
     <>
       <Dialog
-        open={state.operatorEvmWallet === currentAddress}
+        open={operatorEvmWallet === currentAddress}
         maxWidth={'md'}
         fullWidth
         sx={{

@@ -18,6 +18,7 @@
 
 import ChooseOperator from '@/components/choose-operator';
 import { IContractEdge } from '@/interfaces/arweave';
+import Close from '@mui/icons-material/Close';
 import { Dialog, DialogTitle, Typography, IconButton, useTheme } from '@mui/material';
 import { useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -42,28 +43,24 @@ const ChangeOperator = () => {
             theme.palette.mode === 'dark'
               ? theme.palette.neutral.main
               : theme.palette.background.default,
-          borderRadius: '30px',
         },
       }}
     >
       <DialogTitle
-        display='flex'
-        justifyContent={'space-between'}
-        alignItems='center'
-        lineHeight={0}
-      >
-        <Typography>{state.modelName}</Typography>
-        <IconButton
-          onClick={handleClose}
-          sx={{
-            background: theme.palette.primary.main,
-            '&:hover': { background: theme.palette.primary.main, opacity: 0.8 },
-          }}
-          className='plausible-event-name=Change+Operator+Close'
+          display='flex'
+          justifyContent={'space-between'}
+          alignItems='center'
+          lineHeight={0}
         >
-          <img src='./close-icon.svg' />
-        </IconButton>
-      </DialogTitle>
+          <Typography>{state.modelName}</Typography>
+          <IconButton
+            onClick={handleClose}
+            size='small'
+            className='plausible-event-name=Change+Operator+Close'
+          >
+            <Close />
+          </IconButton>
+        </DialogTitle>
       <ChooseOperator scriptTx={scriptTx} />
     </Dialog>
   );

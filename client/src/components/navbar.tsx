@@ -38,16 +38,18 @@ import {
   Tooltip,
   useTheme,
 } from '@mui/material';
-import { Timeout } from 'react-number-format/types/types';
 import Logo from './logo';
 import { InfoOutlined } from '@mui/icons-material';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import StampsMenu from './stamps-menu';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { ChooseWalletContext } from '@/context/choose-wallet';
+import { Timeout } from 'react-number-format/types/types';
 
 const WalletState = () => {
   const theme = useTheme();
   const { currentAddress, isWrongChain, switchChain, connect } = useContext(EVMWalletContext);
+  const { setOpen: chooseWalletOpen } = useContext(ChooseWalletContext);
   const { localStorageValue: hasOnboarded } = useLocalStorage('hasOnboarded');
   const navigate = useNavigate();
 
@@ -55,7 +57,13 @@ const WalletState = () => {
     if (!hasOnboarded) {
       navigate('sign-in');
     } else {
-      await connect();
+      try {
+        await connect();
+        
+      } catch (err) {
+        // open choose Wallet
+        chooseWalletOpen(true);
+      }
     }
   }, [hasOnboarded, navigate]);
   const handleSwitchChain = useCallback(() => switchChain(), [switchChain]);
@@ -75,13 +83,12 @@ const WalletState = () => {
             border: 'solid',
             borderColor: theme.palette.terciary.main,
             borderWidth: '0.5px',
-            paddingTop: '11px',
-            paddingBottom: '11px',
+            padding: '10px 15px',
           }}
           onClick={handleConnect}
           className='plausible-event-name=Navbar+Connect+Wallet'
         >
-          <Typography sx={{ lineHeight: '18.9px', fontSize: '14px', display: 'flex', gap: '8px' }}><img src='./arbitrum-logo.svg' width={'20px'} height={'20px'}/>Connect</Typography>
+          <Typography sx={{ lineHeight: '1.3', fontSize: '16px', display: 'flex', gap: '8px' }}><img src='./arbitrum-logo.svg' width={'20px'} height={'20px'}/>Connect</Typography>
         </Button>
         <ProfileMenu />
       </>
@@ -102,8 +109,7 @@ const WalletState = () => {
           border: 'solid',
           borderColor: theme.palette.error.main,
           borderWidth: '0.5px',
-          paddingTop: '9.5px',
-          paddingBottom: '11px',
+          padding: '10px 15px',
           ':hover': {
             borderColor: theme.palette.error.main,
           }
@@ -111,7 +117,7 @@ const WalletState = () => {
         onClick={handleSwitchChain}
         className='plausible-event-name=Navbar+Connect+Wallet'
       >
-        <Typography sx={{ lineHeight: '20.25px', fontSize: '15px', fontWeight: 700, color: theme.palette.error.main }}>Invalid Network</Typography>
+        <Typography sx={{ lineHeight: '1.3', fontSize: '16px', fontWeight: 700, color: theme.palette.error.main }}>Invalid Network</Typography>
       </Button>
     </>;
   }
@@ -125,7 +131,6 @@ const WalletState = () => {
           flexDirection: 'row',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 0,
           gap: '17px',
           border: 'solid',
           borderColor: theme.palette.terciary.main,
@@ -167,6 +172,7 @@ const Navbar = ({
   isScrolled: boolean;
 }) => {
   const { address: operatorAddress } = useParams();
+  const { currentAddress } = useContext(EVMWalletContext);
   const { state, pathname } = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -221,7 +227,7 @@ const Navbar = ({
               EARLY
             </Typography>
           </Box>
-          <Box sx={{ flexGrow: 1 }} display={{ sm: 'none', lg: 'flex' }}>
+          <Box sx={{ flexGrow: 1, gap: '16px', marginLeft: '16px' }} display={{ sm: 'none', lg: 'flex' }}>
             {' '}
             {/* hide searchbar on small screens */}
             {pathname && pathname === '/' && (
@@ -262,11 +268,27 @@ const Navbar = ({
               </>
             )}
           </Box>
+          <Box sx={{ gap: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center',  margin: '0px 16px', flexGrow: 1}}>
+            {
+              pathname === '/' && currentAddress && (<>
+                <Link to='/browse'>
+                  <Typography
+                    textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}
+                  >
+                    Browse Requests
+                  </Typography>
+                </Link>
+                <Link to='/request' style={{ border: `0.5px solid ${theme.palette.terciary.main}`, borderRadius: '8px'  }}>
+                  <Typography padding={'9.5px 15px'} textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}>Request a Solution</Typography>
+                </Link>
+              </>)
+            }
+          </Box>
           <Box
             className={'navbar-right-content'}
             sx={{
               justifyContent: { sm: 'flex-end', md: 'center' },
-              gap: { sm: '16px', md: '34px' },
+              gap: { sm: '16px', md: '16px' },
               flexGrow: { sm: 1, md: 0 },
             }}
           >
@@ -300,10 +322,10 @@ const Navbar = ({
                   </Typography>
                 </Box>
                 <Button
-                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '11px 16px' }}
+                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '13px 16px', borderColor: theme.palette.terciary.main }}
                   startIcon={<img src='./chevron-bottom.svg' />}
                   onClick={() =>
-                    navigate(`${pathname}/change-operator`)
+                    navigate(`${pathname}/change-operator`, { state })
                   }
                   className='plausible-event-name=Change+Operator+Click'
                 >

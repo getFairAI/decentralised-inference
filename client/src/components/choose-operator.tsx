@@ -90,7 +90,6 @@ const OperatorSelected = ({
     <Box
       sx={{
         background: 'transparent',
-        borderRadius: '7px',
         justifyContent: 'center',
         display: 'flex',
         gap: '32px',
@@ -98,7 +97,6 @@ const OperatorSelected = ({
       }}
     >
       <Button
-        sx={{ borderRadius: '7px' }}
         variant='outlined'
         onClick={handleHistoryClick}
         className='plausible-event-name=Operator+View+History+Click'
@@ -118,7 +116,6 @@ const OperatorSelected = ({
         </Typography>
       </Button>
       <Button
-        sx={{ borderRadius: '7px' }}
         variant='contained'
         onClick={handleUseOperatorClick}
         disabled={!currentAddress}
@@ -191,7 +188,6 @@ const ChooseOperatorHeader = ({
             display: 'flex',
             alignItems: 'flex-start',
             textAlign: 'left',
-            borderRadius: '30px',
           }}
           variant='contained'
           onClick={handleBackClick}
@@ -209,7 +205,6 @@ const ChooseOperatorHeader = ({
         sx={{
           background: 'transparent',
           border: '2px solid',
-          borderRadius: '30px',
           margin: '0 20px',
           display: 'flex',
           justifyContent: 'space-between',

@@ -125,6 +125,7 @@ export const TAG_NAMES = {
   generateAssets: 'Generate-Assets',
   rareweaveConfig: 'Rareweave-Config',
   termsVersion: 'Terms-Version',
+  keywords: 'Keywords',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';
