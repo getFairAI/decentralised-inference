@@ -16,20 +16,20 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
+import { INFERENCE_REQUEST, PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
 import { commonUpdateQuery } from '@/utils/common';
 import { NetworkStatus, gql, useLazyQuery } from '@apollo/client';
 import { useEffect, useState } from 'react';
 
 const useRequests = ({
   userAddr,
-  scriptTransaction,
+  solutionTx,
   conversationId,
   first,
 }: {
   userAddr: string;
-  scriptTransaction: string;
-  conversationId: number;
+  solutionTx?: string;
+  conversationId?: number;
   first?: number;
 }) => {
   const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
@@ -69,17 +69,24 @@ const useRequests = ({
       // skip fetching while user address is not loaded
       return;
     }
+    const tags = [
+      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
+      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+      { name: TAG_NAMES.operationName, values: [ INFERENCE_REQUEST] },
+    ];
+    if (solutionTx) {
+      tags.push({ name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
+    }
+
+    if (conversationId) {
+      tags.push({ name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
+    }
+  
     getChatRequests({
       variables: {
-        tags: [
-          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-          { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-          { name: TAG_NAMES.operationName, values: ['Inference Request'] },
-          { name: TAG_NAMES.scriptTransaction, values: [scriptTransaction] },
-          { name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] },
-        ],
+        tags,
         owners: [ userAddr ],
-        first: 10
+        first: first ?? 10
       },
       context: {
         clientName: 'irys'

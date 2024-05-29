@@ -19,7 +19,6 @@
 import {
   Stack,
   Box,
-  Tooltip,
   Card,
   CardContent,
   useTheme,
@@ -31,8 +30,6 @@ import {
   MenuItem,
 } from '@mui/material';
 import { IMessage } from '@/interfaces/common';
-import Transaction from 'arweave/node/lib/transaction';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import MessageFooter from './message-footer';
 import MessageDisplay from './message-display';
 import { TradeContext } from '@/context/trade';
@@ -132,8 +129,8 @@ const MessageHeader = ({
       return `${NET_ARWEAVE_URL}/${avatarTxId}`;
     } else {
       const imgSize = 100;
-      const scriptId = state?.scriptTransaction;
-      const img = toSvg(scriptId, imgSize);
+      const solutionId = state?.solution.node.id;
+      const img = toSvg(solutionId, imgSize);
       const svg = new Blob([img], { type: 'image/svg+xml' });
       return URL.createObjectURL(svg);
     }
@@ -141,26 +138,26 @@ const MessageHeader = ({
 
   useEffect(() => {
     (async () => {
-      const currentScriptTx = state?.scriptTransaction;
-      let firstScriptVersionTx;
+      const currentSoludionId = state?.solution.node.id;
+      let firstSolutionVersionId;
       try {
-        firstScriptVersionTx = (
-          JSON.parse(findTag(state?.fullState, 'previousVersions') as string) as string[]
+        firstSolutionVersionId = (
+          JSON.parse(findTag(state?.solution, 'previousVersions') as string) as string[]
         )[0];
       } catch (err) {
-        firstScriptVersionTx = state?.scriptTransaction;
+        firstSolutionVersionId = state?.solution.node.id;
       }
       const attachmentAvatarTags = [
         ...DEFAULT_TAGS, // filter from previous app versions as well
         { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
         { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-        { name: TAG_NAMES.scriptTransaction, values: [firstScriptVersionTx, currentScriptTx] },
+        { name: TAG_NAMES.solutionTransaction, values: [firstSolutionVersionId, currentSoludionId] },
       ];
 
       await getAvatar({
         variables: {
           tags: attachmentAvatarTags,
-          owner: state?.scriptCurator,
+          owner: state.solution.node.owner.address,
         },
       });
     })();
@@ -243,7 +240,7 @@ const MessageHeader = ({
                 fontWeight: 400,
               }}
             >
-              {state.scriptName}
+              {findTag(state.solution, 'solutionName')}
             </Typography>
             <Typography
               sx={{
@@ -252,7 +249,7 @@ const MessageHeader = ({
                 color: theme.palette.neutral.main,
               }}
             >
-              {state.scriptTransaction}
+              {state.solution.node.id}
             </Typography>
           </Box>
         )}
@@ -346,12 +343,10 @@ const MessageHeader = ({
 const Message = ({
   message,
   index,
-  pendingTxs,
   copySettings,
 }: {
   message: IMessage;
   index: number;
-  pendingTxs: Transaction[];
   copySettings: (tags: ITag[]) => void;
 }) => {
   const theme = useTheme();
@@ -364,14 +359,6 @@ const Message = ({
           alignItems='center'
           justifyContent={message.type === 'response' ? 'flex-start' : 'flex-end'}
         >
-          {!!pendingTxs.find((pending) => message.id === pending.id) && (
-            <Tooltip
-              title='This transaction is still not confirmed by the network'
-              sx={{ margin: '8px' }}
-            >
-              <PendingActionsIcon />
-            </Tooltip>
-          )}
           <Card
             elevation={8}
             raised={true}

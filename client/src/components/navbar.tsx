@@ -20,7 +20,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import {
   ChangeEvent,
@@ -28,8 +28,6 @@ import {
   SetStateAction,
   useCallback,
   useContext,
-  useEffect,
-  useState,
 } from 'react';
 import {
   Button,
@@ -39,9 +37,7 @@ import {
   useTheme,
 } from '@mui/material';
 import Logo from './logo';
-import { InfoOutlined } from '@mui/icons-material';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import StampsMenu from './stamps-menu';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { Timeout } from 'react-number-format/types/types';
@@ -171,16 +167,12 @@ const Navbar = ({
   setFilterValue: Dispatch<SetStateAction<string>>;
   isScrolled: boolean;
 }) => {
-  const { address: operatorAddress } = useParams();
   const { currentAddress } = useContext(EVMWalletContext);
-  const { state, pathname } = useLocation();
-  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const theme = useTheme();
   const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
   const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
   let keyTimeout: Timeout;
-  const [usdFee, setUsdFee] = useState(0);
-  const [tooltip, setTooltip] = useState('');
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     clearTimeout(keyTimeout);
     keyTimeout = setTimeout(() => {
@@ -195,16 +187,6 @@ const Navbar = ({
     ...(!isScrolled && { boxShadow: 'none' }),
   };
   const spaceBetween = 'space-between';
-  const nDigits = 4;
-
-  useEffect(() => {
-    if (state && state.fee) {
-      setTooltip(
-        `Cost set by operator for each generation: ${(state.fee).toFixed(nDigits)} USDC`,
-      );
-      setUsdFee(state.fee);
-    }
-  }, [ state ]);
 
   return (
     <>
@@ -292,59 +274,7 @@ const Navbar = ({
               flexGrow: { sm: 1, md: 0 },
             }}
           >
-            {pathname.includes('chat') ? (
-              <>
-                <StampsMenu id={operatorAddress ?? ''} type='Operator'></StampsMenu>
-                <Box>
-                  <Typography
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                    }}
-                  >
-                    Default Cost:
-                  </Typography>
-                  <Typography display={'flex'} justifyContent={spaceBetween} gap={'4px'}>
-                    {usdFee.toFixed(nDigits)}$
-                    <Tooltip
-                      title={
-                        <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
-                          {tooltip}
-                        </Typography>
-                      }
-                      placement='bottom'
-                    >
-                      <InfoOutlined />
-                    </Tooltip>
-                  </Typography>
-                </Box>
-                <Button
-                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '13px 16px', borderColor: theme.palette.terciary.main }}
-                  startIcon={<img src='./chevron-bottom.svg' />}
-                  onClick={() =>
-                    navigate(`${pathname}/change-operator`, { state })
-                  }
-                  className='plausible-event-name=Change+Operator+Click'
-                >
-                  <Typography
-                    noWrap
-                    sx={{
-                      lineHeight: '18.9px',
-                    }}
-                  >
-                    Change Operator
-                  </Typography>
-                </Button>
-                <WalletState />
-              </>
-            ) : (
-              <>
-                <WalletState />
-              </>
-            )}
+            <WalletState />
           </Box>
         </Toolbar>
       </AppBar>

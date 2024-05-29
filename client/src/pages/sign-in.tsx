@@ -26,7 +26,7 @@ import {
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_TXS_BY_RECIPIENT } from '@/queries/graphql';
-import { displayShortTxOrAddr, findTag } from '@/utils/common';
+import { displayShortTxOrAddr } from '@/utils/common';
 import { useQuery } from '@apollo/client';
 import {
   Box,
@@ -50,9 +50,10 @@ import { Close, InfoOutlined } from '@mui/icons-material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { isTxConfirmed } from '@/utils/arweave';
-import AiCard from '@/components/ai-card';
-import useModels from '@/hooks/useModels';
 import { EVMWalletContext } from '@/context/evm-wallet';
+import useSolutions from '@/hooks/useSolutions';
+import useOperators from '@/hooks/useOperators';
+import Solution from '@/components/solution';
 
 type EdgeWithStatus = IEdge & { status: string };
 
@@ -329,7 +330,11 @@ const WalletNoFundsContent = () => {
 
 const SinginWithFunds = () => {
   const singinFeatureElements = 4;
-  const { featuredTxs } = useModels(undefined, singinFeatureElements);
+  const {
+    txs,
+  } = useSolutions(undefined, singinFeatureElements);
+
+  const { validTxs: operatorsData } = useOperators(txs);
 
   return (
     <>
@@ -348,10 +353,9 @@ const SinginWithFunds = () => {
         </Typography>
       </Box>
       <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
-        {featuredTxs.map((el) => (
-          <Box key={el.node.id} display={'flex'} flexDirection={'column'} gap={'30px'}>
-            <AiCard model={el} key={el.node.id} useModel={true} />
-            <Typography maxWidth={'317px'}>{findTag(el, 'description')}</Typography>
+        {txs.map((tx) => (
+          <Box key={tx.node.id} display={'flex'} flexDirection={'column'} gap={'30px'}>
+            <Solution tx={tx} operatorsData={operatorsData.filter(el => el.solutionId === tx.node.id)} onSignIn={true} />
           </Box>
         ))}
       </Box>

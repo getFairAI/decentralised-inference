@@ -20,19 +20,14 @@ import {
   APACHE_ID,
   CREATIVEML_M_ID,
   CREATIVEML_PLUSPLUS_M_ID,
-  MARKETPLACE_ADDRESS,
   MIT_ID,
-  MODEL_DELETION,
   NET_ARWEAVE_URL,
-  SCRIPT_DELETION,
   TAG_NAMES,
   UDL_ID,
   defaultDecimalPlaces,
   secondInMS,
 } from '@/constants';
 import { IContractEdge, IEdge, ITag, ITransactions } from '@/interfaces/arweave';
-import { QUERY_TX_WITH_OWNERS } from '@/queries/graphql';
-import { client } from './apollo';
 import redstone from 'redstone-api';
 import { LicenseForm } from '@/interfaces/common';
 
@@ -154,25 +149,6 @@ const secondSliceStart = -2;
 
 export const displayShortTxOrAddr = (addrOrTx: string) =>
   `${addrOrTx.slice(start, firstSliceEnd)}...${addrOrTx.slice(secondSliceStart)}`;
-
-export const isFakeDeleted = async (txid: string, owner: string, type: 'script' | 'model') => {
-  const deleteTags = [];
-
-  if (type === 'model') {
-    deleteTags.push({ name: TAG_NAMES.operationName, values: [MODEL_DELETION] });
-    deleteTags.push({ name: TAG_NAMES.modelTransaction, values: [txid] });
-  } else {
-    deleteTags.push({ name: TAG_NAMES.operationName, values: [SCRIPT_DELETION] });
-    deleteTags.push({ name: TAG_NAMES.scriptTransaction, values: [txid] });
-  }
-
-  const { data } = await client.query({
-    query: QUERY_TX_WITH_OWNERS,
-    variables: { tags: deleteTags, owners: [MARKETPLACE_ADDRESS, owner] },
-  });
-
-  return data.transactions.edges.length > 0;
-};
 
 export const getUPriceUSD = async () => {
   const price = await redstone.getPrice('U');

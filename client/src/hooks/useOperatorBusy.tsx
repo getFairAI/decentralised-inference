@@ -19,7 +19,7 @@
 import {
   PROTOCOL_NAME,
   PROTOCOL_VERSION,
-  SCRIPT_INFERENCE_RESPONSE,
+  INFERENCE_RESPONSE,
   TAG_NAMES,
 } from '@/constants';
 import { EVMWalletContext } from '@/context/evm-wallet';
@@ -55,7 +55,7 @@ const useOperatorBusy = (operatorAddr: string) => {
         tagsResponses: [
           { name: TAG_NAMES.protocolName, values: [ PROTOCOL_NAME ]},
           { name: TAG_NAMES.protocolVersion, values: [ PROTOCOL_VERSION ]},
-          { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
+          { name: TAG_NAMES.operationName, values: [INFERENCE_RESPONSE] },
           { name: TAG_NAMES.requestTransaction, values: [arweaveRequest] },
         ],
         operators: [operatorAddr],

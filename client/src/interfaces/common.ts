@@ -18,6 +18,7 @@
 
 import { FieldValues } from 'react-hook-form';
 import { ITag } from './arweave';
+import { findByTagsQuery } from '@fairai/evm-sdk';
 
 export interface IMessage {
   id: string;
@@ -47,6 +48,7 @@ export interface IConfiguration extends FieldValues {
   license?: string;
   licenseConfig?: LicenseForm;
   privateMode?: boolean;
+  modelName?: string;
 }
 
 export type voteForOptions = 'model' | 'script' | 'operator';
@@ -69,3 +71,12 @@ export interface LicenseForm {
   paymentAddress?: string;
   paymentMode?: '' | 'Random-Distribution' | 'Global-Distribution';
 }
+
+export interface OperatorData {
+  tx: findByTagsQuery['transactions']['edges'][0];
+  evmWallet: `0x${string}`;
+  evmPublicKey: string;
+  arweaveWallet: string;
+  operatorFee: number;
+  solutionId: string;
+};

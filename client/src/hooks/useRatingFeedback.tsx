@@ -16,28 +16,59 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { DEFAULT_TAGS, TAG_NAMES, USER_FEEDBACK } from '@/constants';
-import { QUERY_TX_WITH } from '@/queries/graphql';
-import { NetworkStatus, useQuery } from '@apollo/client';
-import FairSDKWeb from '@fair-protocol/sdk/web';
+import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES, USER_FEEDBACK } from '@/constants';
+import { NetworkStatus, gql, useQuery } from '@apollo/client';
 import { useEffect, useState } from 'react';
+import useRequests from './useRequests';
+
+const irysQuery = gql`
+query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String)  {
+  transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
+    edges {
+      node {
+        id
+        tags {
+          name
+          value
+        }
+        address
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+`;
 
 const useRatingFeedback = (userAddr: string) => {
   const [isActiveUser, setIsActiveUser] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
-  const { query: requestsQuery, variables: requestVars } =
-    FairSDKWeb.utils.getRequestsQuery(userAddr);
-  const { data: requestsData, networkStatus: requestNetworkStatus } = useQuery(requestsQuery, {
-    variables: requestVars,
-    skip: !userAddr,
+  const { requestsData, requestNetworkStatus } = useRequests({
+    userAddr,
   });
 
-  const { data: feedbackData } = useQuery(QUERY_TX_WITH, {
+  const { data: feedbackData } = useQuery(irysQuery, {
     variables: {
-      tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] }],
-      address: userAddr,
+      tags: [
+        {
+          name: TAG_NAMES.protocolName,
+          values: [PROTOCOL_NAME],
+        },
+        {
+          name: TAG_NAMES.protocolVersion,
+          values: [PROTOCOL_VERSION],
+        },
+        { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] }],
+      owners: [userAddr],
     },
+    context: {
+      clientName: 'irys'
+    },
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'network-only',
     skip: !userAddr,
   });
 

@@ -77,7 +77,7 @@ interface EVMWalletState {
 interface IEVMWalletContext extends EVMWalletState {
   connect: (provider?: ExtendedEIP1193Provider) => Promise<void>;
   startConversation: (txid: string, cid: string) => Promise<void>;
-  prompt: (data: string | File, scriptTx: string, operator: { evmWallet: `0x${string}`, operatorFee: number }, cid?: number, config?: Configuration) => Promise<{ arweaveTxId: string, evmTxId: string }>;
+  prompt: (data: string | File, solutionTx: string, operator: { arweaveWallet: string, evmWallet: `0x${string}`, operatorFee: number }, cid?: number, config?: Configuration) => Promise<{ arweaveTxId: string, evmTxId: string }>;
   postOnArweave: (text: string, tags: {name: string, value: string}[]) => Promise<string>;
   countStamps: (txids: string[]) => Promise<Record<string, number>>;
   updateUsdcBalance: (newBalance: number) => void;
