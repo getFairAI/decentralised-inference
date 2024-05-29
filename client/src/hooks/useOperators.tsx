@@ -18,13 +18,14 @@
 
 import { PROTOCOL_NAME, REGISTER_OPERATION, TAG_NAMES, MARKETPLACE_EVM_ADDRESS, REGISTRATION_USDC_FEE, PROTOCOL_VERSION } from '@/constants';
 import { useQuery, NetworkStatus } from '@apollo/client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useContext } from 'react';
 import _ from 'lodash';
 import Stamps, { CountResult } from '@permaweb/stampjs';
 import { WarpFactory } from 'warp-contracts';
 import Arweave from 'arweave';
 import { findByTagsQuery, findByTagsAndOwnersDocument, findByTagsDocument, getLinkedEvmWallet, validateDistributionFees, getUsdcSentLogs, decodeTxMemo } from '@fairai/evm-sdk';
 import { OperatorData } from '@/interfaces/common';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const validateRegistration = async (operatorEvmAddress: `0x${string}`, registrationTx: string, timestamp: number) => {
   const blockRange = 2500;
@@ -51,6 +52,8 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
   const owners = useMemo(() => txs.map(tx => tx.node.owner.address), [ txs ]);
   const solutionIds = useMemo(() => solutions.map(solution => solution.node.id), [ solutions ]);
 
+  const { currentAddress } = useContext(EVMWalletContext);
+
   const elementsPerPage = 100;
 
   const {
@@ -70,7 +73,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
       ],
       first: elementsPerPage,
     },
-    skip: !solutionIds,
+    skip: !solutionIds || !currentAddress, // skip if no address as well because the operators validation require a evm connection
   });
 
   const { data: cancellationData } = useQuery(findByTagsDocument, {

@@ -4,6 +4,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import eslint from 'vite-plugin-eslint';
 import svgr from 'vite-plugin-svgr';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import commonjs from '@rollup/plugin-commonjs';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,6 +14,7 @@ export default defineConfig({
     tsconfigPaths(),
     eslint(),
     svgr(),
+    commonjs(),
     nodePolyfills({
 			// To exclude specific polyfills, add them to this list.
 			exclude: [
@@ -33,8 +35,7 @@ export default defineConfig({
     include: [
       '@emotion/react', 
       '@emotion/styled', 
-      '@mui/material/Tooltip',
-      '@mui/material/Unstable_Grid2',
+      '@mui/material',
     ],
   },
   build: {

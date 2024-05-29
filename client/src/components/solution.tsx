@@ -64,7 +64,7 @@ const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transa
     setHasOperators(operatorsData.length > 0);
     setNumOperators(operatorsData.length);
     if (operatorsData.length > 0) {
-      setAvgFee((operatorsData.reduce((acc, el) => acc + el.operatorFee, 0) / operatorsData.length ?? 0));
+      setAvgFee((operatorsData.reduce((acc, el) => acc + el.operatorFee, 0) / operatorsData.length));
     } else {
       // ignore
     }
