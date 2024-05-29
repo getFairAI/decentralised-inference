@@ -368,27 +368,6 @@ export const QUERY_CANCELLED_OPERATORS = gql`
   }
 `;
 
-export const QUERY_FEE_PAYMENT = gql`
-  query QUERY_SCRIPT_FEE_PAYMENT($owner: String!, $tags: [TagFilter!], $recipient: String!) {
-    transactions(first: 1, owners: [$owner], recipients: [$recipient], tags: $tags) {
-      edges {
-        node {
-          id
-          tags {
-            name
-            value
-          }
-          recipient
-          quantity {
-            winston
-            ar
-          }
-        }
-      }
-    }
-  }
-`;
-
 export const QUERY_OPERATOR_REGISTRATION_PAYMENT = gql`
   query QUERY_OPERATOR_REGISTRATION_PAYMENT(
     $owner: String!

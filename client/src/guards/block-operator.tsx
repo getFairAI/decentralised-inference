@@ -38,7 +38,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
 
   const handleGoBack = useCallback(() => navigate(-1), [navigate]);
 
-  const operatorEvmWallet = useMemo(() => state?.operatorEvmWallet ?? '', [state]);
+  const operatorEvmWallet = useMemo(() => state?.defaultOperator?.evmWallet ?? '', [state]);
 
   return (
     <>

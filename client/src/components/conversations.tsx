@@ -18,9 +18,8 @@
 
 import {
   textContentType,
-  DEFAULT_TAGS,
   TAG_NAMES,
-  SCRIPT_INFERENCE_REQUEST,
+  INFERENCE_REQUEST,
   PROTOCOL_VERSION,
   PROTOCOL_NAME,
 } from '@/constants';
@@ -141,7 +140,7 @@ const Conversations = ({
 
   const createNewConversation = async (id: number) => {
     try {
-      await startConversation(state.scriptTransaction, id.toString());
+      await startConversation(state.solution.node.id, id.toString());
 
       setConversationIds([id, ...conversationIds]);
       setFilteredConversationIds([id, ...conversationIds]);
@@ -158,20 +157,20 @@ const Conversations = ({
         const irysQquery = new Query();
         const results = await irysQquery.search('irys:transactions').tags([
           {
-            name: 'Protocol-Name',
+            name: TAG_NAMES.protocolName,
             values: [PROTOCOL_NAME],
           },
           {
-            name: 'Protocol-Version',
+            name: TAG_NAMES.protocolVersion,
             values: [PROTOCOL_VERSION],
           },
           {
-            name: 'Operation-Name',
+            name: TAG_NAMES.operationName,
             values: ['Conversation Start'],
           },
           {
-            name: 'Script-Transaction',
-            values: [ state.scriptTransaction ],
+            name: TAG_NAMES.solutionTransaction,
+            values: [ state.solution.node.id ],
           },
         ]).from([currentAddress]);
   
@@ -207,10 +206,17 @@ const Conversations = ({
                 address: userAddr,
                 first: 100,
                 tags: [
-                  ...DEFAULT_TAGS,
+                  {
+                    name: TAG_NAMES.protocolName,
+                    values: [PROTOCOL_NAME],
+                  },
+                  {
+                    name: TAG_NAMES.protocolVersion,
+                    values: [PROTOCOL_VERSION],
+                  },
                   {
                     name: TAG_NAMES.operationName,
-                    values: [SCRIPT_INFERENCE_REQUEST],
+                    values: [INFERENCE_REQUEST],
                   },
                   {
                     name: TAG_NAMES.contentType,
@@ -221,11 +227,9 @@ const Conversations = ({
                     values: [el.toString()],
                   },
                   {
-                    name: TAG_NAMES.scriptTransaction,
-                    values: [state.scriptTransaction],
+                    name: TAG_NAMES.solutionTransaction,
+                    values: [state.solution.node.id],
                   },
-                  { name: TAG_NAMES.scriptName, values: [state.scriptName] },
-                  { name: TAG_NAMES.scriptCurator, values: [state.scriptCreator] },
                 ],
               },
             });

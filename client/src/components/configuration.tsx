@@ -37,12 +37,11 @@ import {
   Checkbox,
   Tooltip,
 } from '@mui/material';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import { parseUBalance } from '@/utils/u';
 import { enqueueSnackbar } from 'notistack';
 import { NumericFormat } from 'react-number-format';
 import LicenseConfiguration from './license-configuration';
@@ -53,9 +52,10 @@ import {
   UseFormSetValue,
   useController,
 } from 'react-hook-form';
-import { IConfiguration } from '@/interfaces/common';
+import { IConfiguration, OperatorData } from '@/interfaces/common';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SelectControl from './select-control';
+import { findByTagsQuery } from '@fairai/evm-sdk';
 
 const CustomTag = ({
   name,
@@ -84,8 +84,10 @@ const CustomTag = ({
 
 const StableDiffusionConfigurations = ({
   control,
+  fee
 }: {
   control: Control<IConfiguration, unknown>;
+  fee: number;
 }) => {
   const nDigits = 4;
   const defaultImages = 1;
@@ -94,17 +96,19 @@ const StableDiffusionConfigurations = ({
   const landscapeWidth = 1280;
   const landscapeHeight = 720;
   const squareWidth = 1024;
-  const { state } = useLocation();
+  const { state }: { state: {
+    defaultOperator?: OperatorData;
+    solution: findByTagsQuery['transactions']['edges'][0];
+    availableOperators: OperatorData[];
+  }} = useLocation();
 
   const [usdCost, setUsdCost] = useState(0);
   const [showCustomAspectRatio, setShowCustomAspectRatio] = useState(false);
 
   const showOutputConfiguration = useMemo(
-    () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
+    () => findTag(state.solution, 'outputConfiguration') === 'stable-diffusion',
     [state],
   );
-
-  const fee = useMemo(() => state.fee, [ state ]);
 
   const { field: negativePromptField } = useController({ control, name: 'negativePrompt' });
   const { field: nImagesField } = useController({ control, name: 'nImages' });
@@ -273,18 +277,25 @@ const StableDiffusionConfigurations = ({
 
 const Configuration = ({
   control,
+  currentOperator,
+  setCurrentOperator,
   setConfigValue,
   reset,
   handleClose,
 }: {
   control: Control<IConfiguration, unknown>;
+  currentOperator?: OperatorData;
+  setCurrentOperator: Dispatch<SetStateAction<OperatorData | undefined>>;
   setConfigValue: UseFormSetValue<IConfiguration>;
   reset: UseFormReset<IConfiguration>;
   handleClose: () => void;
 }) => {
   const theme = useTheme();
-  const { state } = useLocation();
-  const { address } = useParams();
+  const { state }: { state: {
+    defaultOperator?: OperatorData;
+    solution: findByTagsQuery['transactions']['edges'][0];
+    availableOperators: OperatorData[];
+  }} = useLocation();
   const [customTags, setCustomTags] = useState<{ name: string; value: string }[]>([]);
   const nameRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLTextAreaElement>(null);
@@ -296,7 +307,13 @@ const Configuration = ({
   const { field: descriptionField } = useController({ control, name: 'description' });
   const { field: privateModeField } = useController({ control, name: 'privateMode' });
 
-  const fee = useMemo(() => (state?.fee ? parseUBalance(state?.fee) : 0), [state?.fee]);
+  const availableModels = useMemo(() => JSON.parse(state.solution.node.tags.find(tag => tag.name === 'Supported-Models')?.value ?? '[]'), [ state ]);
+
+  useEffect(() => {
+    if (availableModels.length > 0) {
+      setConfigValue('modelName', availableModels[0].name);
+    }
+  }, [availableModels]);
 
   const checkAssetNamesValidity = useCallback(() => {
     const assetNames = assetNamesField.value;
@@ -337,6 +354,17 @@ const Configuration = ({
 
   const handleResetClick = useCallback(() => reset(), [reset]);
 
+  const handleOperatorChange = useCallback((event: SelectChangeEvent) => {
+    const operator = state.availableOperators.find((operator) => operator.evmWallet === event.target.value);
+    if (operator) {
+      setCurrentOperator(operator);
+    } else {
+      // ifgnore
+    }
+  }, [state, setCurrentOperator ]);
+
+  useEffect(() => console.log(currentOperator), [ currentOperator]);
+
   return (
     <Box
       sx={{
@@ -358,26 +386,35 @@ const Configuration = ({
           <CloseIcon />
         </IconButton>
         <Typography sx={{ fontWeight: 700, fontSize: '23px', lineHeight: '31px' }}>
-          {'Advanced Options'}
+          {'Configuration'}
         </Typography>
       </Box>
 
       <Box display={'flex'} gap={'36px'} justifyContent={'space-between'}>
+        <FormControl fullWidth margin='none'>
+          <InputLabel>{'Solution Operator'}</InputLabel>
+          <Select
+            label={'Solution Operator'}
+            onChange={handleOperatorChange}
+            defaultValue={currentOperator?.evmWallet ?? ''}
+            renderValue={(value) => <Typography>{displayShortTxOrAddr(value as string)}</Typography>}
+          >
+            {
+              state.availableOperators.map((operator: OperatorData) => (
+                <MenuItem key={operator.evmWallet} value={operator.evmWallet} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                  <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
+                  <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                    <Typography>{operator.operatorFee}</Typography>
+                    <img width='20px' height='20px' src='./usdc-logo.svg' />
+                  </Box>
+                </MenuItem>
+              ))
+            }
+          </Select>
+        </FormControl>
         <TextField
           disabled={true}
-          value={address ? displayShortTxOrAddr(address) : ''}
-          label='Script Operator'
-          sx={{
-            '& .MuiInputBase-input': {
-              display: 'flex',
-              gap: '24px',
-              justifyContent: 'space-between',
-            },
-          }}
-        />
-        <TextField
-          disabled={true}
-          value={fee}
+          value={currentOperator?.operatorFee ?? 0}
           label='Fee'
           sx={{
             '& .MuiInputBase-input': {
@@ -391,7 +428,23 @@ const Configuration = ({
           }}
         />
       </Box>
-      <StableDiffusionConfigurations control={control} />
+      <Box>
+        <SelectControl
+          name={'modelName'}
+          control={control}
+          mat={{ placeholder: 'Model to Use' }}
+        >
+          {
+            availableModels.map((model: { name: string; url: string}) => (
+              <MenuItem key={model.url} value={model.name} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                <Typography>{model.name}</Typography>
+              </MenuItem>
+            ))
+          }
+        </SelectControl>
+        {/* <img src='./arweave-logo-for-light.png' height={'18px'} width={'18px'}/> */}
+      </Box>
+      <StableDiffusionConfigurations control={control} fee={currentOperator?.operatorFee ?? 0}/>
       <Box>
         <Divider textAlign='left' variant='fullWidth'>
           <Typography variant='h4'>Transaction Configurations</Typography>

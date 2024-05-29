@@ -18,29 +18,26 @@
 
 import {
   Box,
-  Button,
-  Container,
-  MenuItem,
-  Select,
-  Stack,
-  Typography,
-  useTheme,
+  Container, Grid,  Typography,
 } from '@mui/material';
-import { useRef, useState } from 'react';
-import Featured from '@/components/featured';
 import '@/styles/ui.css';
-import AiListCard from '@/components/ai-list-card';
-import { Outlet } from 'react-router-dom';
-import useModels from '@/hooks/useModels';
-import ListLoadingCard from '@/components/list-loading-card';
-import { findTag } from '@/utils/common';
+import useSolutions from '@/hooks/useSolutions';
+import LoadingCard from '@/components/loading-card';
+import { useRef } from 'react';
+import useOperators from '@/hooks/useOperators';
+import { genLoadingArray } from '@/utils/common';
+import Solution from '@/components/solution';
 
 export default function Home() {
-  const [hightlightTop, setHighLightTop] = useState(false);
   const target = useRef<HTMLDivElement>(null);
-  const theme = useTheme();
-  const { txs, loading, txsCountsMap } = useModels(target);
-  const handleHighlight = (value: boolean) => setHighLightTop(value);
+  const {
+    loading,
+    txs,
+    error,
+  } = useSolutions(target);
+
+  const { validTxs: operatorsData } = useOperators(txs);
+  const loadingTiles = genLoadingArray(10);
 
   return (
     <>
@@ -48,148 +45,25 @@ export default function Home() {
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-around',
-          alignContent: 'space-around',
+          justifyContent: 'center',
+          alignContent: 'center',
           '@media all': {
             maxWidth: '100%',
           },
+          mt: '36px'
         }}
       >
-        <Featured />
-        <Box className={'filter-box'} sx={{ display: 'flex' }}>
-          <Box display={'flex'} flexDirection={'column'}>
-            <Box display='flex' gap={'50px'} width={'100%'}>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  fontSize: '30px',
-                  fontHeight: '41px',
-                  opacity: !hightlightTop ? 1 : 0.5,
-                }}
-                onClick={() => handleHighlight(false)}
-                className='plausible-event-name=Trending+Filter+Click'
-              >
-                Trending
-              </Typography>
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  fontSize: '30px',
-                  fontHeight: '41px',
-                  opacity: hightlightTop ? 1 : 0.5,
-                }}
-                onClick={() => handleHighlight(true)}
-                className='plausible-event-name=Top+Filter+Click'
-              >
-                Top
-              </Typography>
-              <Box flexGrow={1} />
-            </Box>
-            <Box display={'flex'} position='relative'>
-              <Box
-                height={'6px'}
-                position='absolute'
-                sx={{
-                  width: hightlightTop ? '55px' : '119px',
-                  left: hightlightTop ? '166px' : 0,
-                  background: theme.palette.primary.main,
-                  borderRadius: '8px',
-                }}
-              />
-            </Box>
-          </Box>
-          <Box flexGrow={1} />
-          <Box display='flex' gap={'50px'}>
-            <Select
-              sx={{
-                border: '2px solid transparent',
-                textTransform: 'none',
-                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderWidth: '0 !important', // force borderWidth 0 on focus
-                },
-                '& .MuiSelect-select': {
-                  padding: '0px 15px',
-                },
-                '& .MuiSelect-icon': {
-                  color: theme.palette.primary.main,
-                },
-              }}
-              value={'24h'}
-            >
-              <MenuItem value={'24h'} className='plausible-event-name=24+Hours+Filter+Click'>
-                <Typography
-                  sx={{
-                    fontStyle: 'normal',
-                    fontWeight: 600,
-                    fontSize: '20px',
-                    lineHeight: '27px',
-                    textAlign: 'center',
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  24H
-                </Typography>
-              </MenuItem>
-              <MenuItem value={'week'} className='plausible-event-name=Week+Filter+Click'>
-                <Typography>1 Week</Typography>
-              </MenuItem>
-            </Select>
-            <Button
-              sx={{
-                border: '2px solid transparent',
-                padding: '5px 15px',
-                textTransform: 'none',
-                background: `linear-gradient(${theme.palette.background.default}, ${theme.palette.background.default}) padding-box,linear-gradient(170.66deg, ${theme.palette.primary.main} -38.15%, ${theme.palette.primary.main} 30.33%, rgba(84, 81, 228, 0) 93.33%) border-box`,
-              }}
-              className='plausible-event-name=View+All+Click'
-            >
-              <Typography
-                sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 600,
-                  fontSize: '20px',
-                  lineHeight: '27px',
-                  textAlign: 'center',
-                }}
-              >
-                View All
-              </Typography>
-            </Button>
-          </Box>
-        </Box>
-        <Stack spacing={4}>
-          {txs.map((el, idx) => {
-            const modelTransactionTag = findTag(el, 'modelTransaction');
-            const totalStamps = modelTransactionTag
-              ? txsCountsMap.get(modelTransactionTag)?.total || 0
-              : 0;
-            const vouchedStamps = modelTransactionTag
-              ? txsCountsMap.get(modelTransactionTag)?.vouched || 0
-              : 0;
-            return (
-              <AiListCard
-                model={el}
-                key={el.node.id}
-                index={idx}
-                totalStamps={totalStamps}
-                vouchedStamps={vouchedStamps}
-              />
-            );
-          })}
-          {loading && (
-            <>
-              <ListLoadingCard />
-              <ListLoadingCard />
-              <ListLoadingCard />
-            </>
-          )}
-          <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
-        </Stack>
+        {error && <Typography>Error: {error.message}</Typography>}
+        <Grid container spacing={10} display={'flex'} justifyContent={'flex-start'}>
+          {loading && loadingTiles.map(el => <Grid item key={el}> <LoadingCard /></Grid>)}
+          {txs.map((tx) => (
+            <Grid item key={tx.node.id}>
+              <Solution tx={tx} operatorsData={operatorsData.filter(el => el.solutionId === tx.node.id)}/>
+            </Grid>
+          ))}
+        </Grid>
+        <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
       </Container>
-      <Outlet />
     </>
   );
-}
+};

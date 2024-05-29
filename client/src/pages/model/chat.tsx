@@ -33,7 +33,7 @@ import {
   useTheme,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { NetworkStatus } from '@apollo/client';
 import {
   ChangeEvent,
@@ -50,10 +50,9 @@ import {
   TAG_NAMES,
   N_PREVIOUS_BLOCKS,
   MAX_MESSAGE_SIZE,
-  SCRIPT_INFERENCE_REQUEST,
+  INFERENCE_REQUEST,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
-import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
@@ -62,7 +61,7 @@ import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
-import { IConfiguration, IMessage } from '@/interfaces/common';
+import { IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatContent from '@/components/chat-content';
@@ -82,6 +81,7 @@ import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { encryptSafely } from '@metamask/eth-sig-util';
+import { findByTagsQuery } from '@fairai/evm-sdk';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -120,12 +120,12 @@ const InputField = ({
   const { currentAddress: userAddr } = useContext(EVMWalletContext);
   const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr);
 
-  const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
+  const allowFiles = useMemo(() => findTag(state.solution, 'allowFiles') === 'true', [state]);
   const allowText = useMemo(
     () =>
-      !findTag(state.fullState, 'allowText')
+      !findTag(state.solution, 'allowText')
         ? true
-        : findTag(state.fullState, 'allowText') === 'true',
+        : findTag(state.solution, 'allowText') === 'true',
     [state],
   );
 
@@ -280,7 +280,7 @@ const InputField = ({
                   </span>
                 </Tooltip>
                 <Tooltip
-                  title={!allowFiles ? 'Script does not support Uploading files' : 'File Loaded'}
+                  title={!allowFiles ? 'Solution does not support Uploading files' : 'File Loaded'}
                 >
                   <span>
                     <IconButton
@@ -327,7 +327,6 @@ const InputField = ({
 
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
-  const { address } = useParams();
   const navigate = useNavigate();
   const {
     currentAddress: userAddr,
@@ -336,11 +335,14 @@ const Chat = () => {
     updateUsdcBalance,
     getPubKey,
   } = useContext(EVMWalletContext);
-  const { state } = useLocation();
+  const { state }: { state: {
+    defaultOperator?: OperatorData;
+    solution: findByTagsQuery['transactions']['edges'][0];
+    availableOperators: OperatorData[];
+  }} = useLocation();
   const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
-  const [pendingTxs] = useState<Transaction[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -362,16 +364,17 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState('');
   const [inputHeight, setInputHeight] = useState(0);
-  const [drawerOpen, setDrawerOpen] = useState(true);
-  const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(true);
   const [headerHeight, setHeaderHeight] = useState('64px');
   const [requestIds] = useState<string[]>([]);
   const [ currentPubKey, setCurrentPubKey ] = useState('');
+  const [ currentOperator, setCurrentOperator ] = useState(state.defaultOperator);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const isStableDiffusion = useMemo(
-    () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
+    () => findTag(state.solution, 'outputConfiguration') === 'stable-diffusion',
     [state],
   );
   const defaultConfigvalues: IConfiguration = {
@@ -395,6 +398,7 @@ const Chat = () => {
       paymentMode: '',
     },
     privateMode: false,
+    modelName: ''
   };
   const {
     control: configControl,
@@ -418,9 +422,9 @@ const Chat = () => {
   }, [scrollHeight, currentEl, messagesEndRef]);
 
   useEffect(() => {
-    const previousConfig = localStorage.getItem(`config#${state.scriptTransaction}`);
+    const previousConfig = localStorage.getItem(`config#${state.solution.node.id}`);
     const useStableDiffusionConfig =
-      findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
+      findTag(state.solution, 'outputConfiguration') === 'stable-diffusion';
     if (previousConfig) {
       configReset(JSON.parse(previousConfig), { keepDefaultValues: true });
     } else if (useStableDiffusionConfig) {
@@ -437,9 +441,9 @@ const Chat = () => {
 
   useEffect(() => {
     if (!_.isEqual(currentConfig, defaultConfigvalues)) {
-      localStorage.setItem(`config#${state.scriptTransaction}`, JSON.stringify(currentConfig));
+      localStorage.setItem(`config#${state.solution.node.id}`, JSON.stringify(currentConfig));
     } else {
-      localStorage.removeItem(`config#${state.scriptTransaction}`);
+      localStorage.removeItem(`config#${state.solution.node.id}`);
     }
   }, [currentConfig]);
 
@@ -447,17 +451,13 @@ const Chat = () => {
     target,
     scrollableRef,
     userAddr,
-    scriptName: state.scriptName,
-    scriptCurator: state.scriptCurator,
-    scriptTransaction: state.scriptTransaction,
+    solutionTx: state.solution.node.id,
     conversationId: currentConversationId,
     first: elementsPerPage,
   });
   const [responseParams, setResponseParams] = useState({
     userAddr,
     reqIds: requestIds,
-    scriptName: state.scriptName,
-    scriptCurator: state.scriptCurator,
     conversationId: currentConversationId,
     lastRequestId: '',
   });
@@ -468,7 +468,7 @@ const Chat = () => {
   const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
     useResponses(responseParams);
 
-  const showOperatorBusy = useOperatorBusy(address as string);
+  const showOperatorBusy = useOperatorBusy(currentOperator?.arweaveWallet as string ?? '');
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
   const showLoadMore = useMemo(
@@ -498,7 +498,7 @@ const Chat = () => {
   useEffect(() => {
     if (previousAddr && previousAddr !== userAddr) {
       navigate(0);
-    } else if (!localStorage.getItem('wallet') && !userAddr) {
+    } else if (!localStorage.getItem('evmProvider') && !userAddr) {
       navigate('/');
     } else if (userAddr) {
       setRequestParams((previousParams) => ({
@@ -516,11 +516,6 @@ const Chat = () => {
       const reqIds = requestsData.transactions.edges.map((el: IEdge) => el.node.id);
 
       if (reqIds.length > 0) {
-        /* const scriptOperators = Array.from(
-          new Set(
-            requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator')),
-          ),
-        ); */
         (async () => reqData())();
         setResponseParams({
           ...responseParams,
@@ -603,7 +598,7 @@ const Chat = () => {
       parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
     const currentHeight = (await arweave.blocks.getCurrent()).height;
-    const isRequest = findTag(el, 'operationName') === SCRIPT_INFERENCE_REQUEST;
+    const isRequest = findTag(el, 'operationName') === INFERENCE_REQUEST;
 
     const msg: IMessage = {
       id: el.node.id,
@@ -611,7 +606,7 @@ const Chat = () => {
       type: isRequest ? 'request' : 'response',
       cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid, 10),
       height: el.node.block ? el.node.block.height : currentHeight,
-      to: isRequest ? (findTag(el, 'scriptOperator') as string) : userAddr,
+      to: isRequest ? (findTag(el, 'solutionOperator') as string) : userAddr,
       from: isRequest ? userAddr : el.node.address,
       tags: el.node.tags,
       contentType,
@@ -653,6 +648,11 @@ const Chat = () => {
 
   const checkCanSend = (dataSize: number, isFile = false) => {
     try {
+      if (!currentOperator) {
+        enqueueSnackbar('Missing Operator', { variant: 'error' });
+        return false;
+      }
+
       if (!currentConversationId) {
         enqueueSnackbar('Missing Conversation Id', { variant: 'error' });
         return false;
@@ -664,7 +664,7 @@ const Chat = () => {
       }
 
       const actualFee =
-        currentConfig.nImages && isStableDiffusion ? state.fee * currentConfig.nImages : state.fee;
+        currentConfig.nImages && isStableDiffusion ? currentOperator.operatorFee * currentConfig.nImages : currentOperator.operatorFee;
       if (usdcBalance < actualFee) {
         enqueueSnackbar('Not Enough USDC to pay Operator', { variant: 'error' });
         return false;
@@ -730,7 +730,7 @@ const Chat = () => {
   );
 
   const getConfigValues = useCallback(() => {
-    const { generateAssets, description, negativePrompt, nImages, privateMode } = currentConfig;
+    const { generateAssets, description, negativePrompt, nImages, privateMode, modelName } = currentConfig;
     const assetNames = currentConfig.assetNames
       ? currentConfig.assetNames.split(';').map((el) => el.trim())
       : undefined;
@@ -745,6 +745,7 @@ const Chat = () => {
       description,
       customTags,
       nImages,
+      modelName,
       width: configWidth,
       height: configHeight,
       ...(royalty && {
@@ -754,7 +755,7 @@ const Chat = () => {
       }),
       privateMode,
       userPubKey: currentPubKey,
-      encDataForOperator: ''
+      encDataForOperator: '',
     };
   }, [ currentConfig, currentPubKey ]);
 
@@ -797,7 +798,7 @@ const Chat = () => {
       id: txid,
       cid: currentConversationId,
       height: currentHeight,
-      to: address as string,
+      to: currentOperator?.arweaveWallet ?? '',
       from: userAddr,
       contentType,
       tags,
@@ -824,13 +825,20 @@ const Chat = () => {
 
     try {
       const config = getConfigValues();
-      const { arweaveTxId }  = await prompt(newMessage, state.scriptTransaction, {
-        evmWallet: state.operatorEvmWallet,
-        operatorFee: state.fee,
+
+      if (!config.modelName) {
+        enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
+        return;
+      }
+  
+      const { arweaveTxId }  = await prompt(newMessage, state.solution.node.id, {
+        arweaveWallet: currentOperator?.arweaveWallet ?? '',
+        evmWallet: currentOperator?.evmWallet ?? '' as `0x${string}`,
+        operatorFee: currentOperator?.operatorFee ?? 0,
       }, currentConversationId, config);
       // update balance after payments
       updateMessages(arweaveTxId, file, file.type);
-      updateUsdcBalance(usdcBalance - state.fee);
+      updateUsdcBalance(usdcBalance - (currentOperator?.operatorFee ?? 0));
       enqueueSnackbar(
         <Typography>{'Request Successfull'}</Typography>,
         {
@@ -860,6 +868,12 @@ const Chat = () => {
 
     try {
       const config = getConfigValues();
+
+      if (!config.modelName) {
+        enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
+        return;
+      }
+
       let dataToUpload = newMessage;
       if (config.privateMode) {
         const encrypted = encryptSafely({
@@ -870,19 +884,20 @@ const Chat = () => {
         dataToUpload = JSON.stringify(encrypted);
         const encForOperator = encryptSafely({
           data: newMessage,
-          publicKey: state.operatorPubKey,
+          publicKey: currentOperator?.evmPublicKey ?? '',
           version: 'x25519-xsalsa20-poly1305'
         });
         config.encDataForOperator = JSON.stringify(encForOperator);
       }
 
-      const { arweaveTxId } = await prompt(dataToUpload, state.scriptTransaction, {
-        evmWallet: state.operatorEvmWallet,
-        operatorFee: state.fee,
+      const { arweaveTxId } = await prompt(dataToUpload, state.solution.node.id, {
+        arweaveWallet: currentOperator?.arweaveWallet ?? '',
+        evmWallet: currentOperator?.evmWallet ?? '' as `0x${string}`,
+        operatorFee: currentOperator?.operatorFee ?? 0,
       }, currentConversationId, config);
       // update balance after payments
       updateMessages(arweaveTxId, newMessage, 'text/plain');
-      updateUsdcBalance(usdcBalance - state.fee);
+      updateUsdcBalance(usdcBalance - (currentOperator?.operatorFee ?? 0));
       enqueueSnackbar(
         <Typography>{'Request Successfull'}</Typography>,
         {
@@ -1105,6 +1120,8 @@ const Chat = () => {
             setConfigValue={setConfigValue}
             reset={configReset}
             handleClose={handleAdvancedClose}
+            currentOperator={currentOperator}
+            setCurrentOperator={setCurrentOperator}
           />
         </Box>
       </Drawer>
@@ -1269,7 +1286,6 @@ const Chat = () => {
                     showError={showError}
                     isWaitingResponse={isWaitingResponse}
                     responseTimeout={responseTimeout}
-                    pendingTxs={pendingTxs}
                     copySettings={copySettings}
                   />
                   <Box ref={messagesEndRef} sx={{ padding: '1px' }} />

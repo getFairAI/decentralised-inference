@@ -20,21 +20,17 @@ import { useLazyQuery } from '@apollo/client';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
-import { PROTOCOL_NAME, PROTOCOL_VERSION, SCRIPT_INFERENCE_RESPONSE } from '@/constants';
+import { PROTOCOL_NAME, PROTOCOL_VERSION, INFERENCE_RESPONSE } from '@/constants';
 
 const useResponses = ({
   reqIds,
   userAddr,
-  scriptName,
-  scriptCurator,
   conversationId,
   lastRequestId,
   first,
 }: {
   reqIds: string[];
   userAddr: string;
-  scriptName: string;
-  scriptCurator: string;
   conversationId: number;
   lastRequestId?: string;
   first?: number;
@@ -42,8 +38,8 @@ const useResponses = ({
   const { query: responsesQuery } = FairSDKWeb.utils.getResponsesQuery(
     reqIds,
     userAddr,
-    scriptName,
-    scriptCurator,
+    undefined,
+    undefined,
     [],
     conversationId,
     first,
@@ -71,7 +67,7 @@ const useResponses = ({
       tags: [
         { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] },
         { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] },
-        { name: 'Operation-Name', values: [ SCRIPT_INFERENCE_RESPONSE ] },
+        { name: 'Operation-Name', values: [INFERENCE_RESPONSE ] },
         { name: 'Request-Transaction', values: reqIds },
       ],
       first: 10,
@@ -87,7 +83,7 @@ const useResponses = ({
         tags: [
           { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] },
           { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] },
-          { name: 'Operation-Name', values: [ SCRIPT_INFERENCE_RESPONSE ] },
+          { name: 'Operation-Name', values: [ INFERENCE_RESPONSE ] },
           { name: 'Request-Transaction', values: pollReqIds },
         ],
         first: 10,
@@ -97,8 +93,6 @@ const useResponses = ({
   }, [
     reqIds,
     userAddr,
-    scriptName,
-    scriptCurator,
     lastRequestId,
     conversationId,
     first,

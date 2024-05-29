@@ -32,7 +32,6 @@ const LoadingCard = () => {
             transform: 'none',
             width: '317px',
             height: '352px',
-            borderRadius: '8px',
           }}
           animation='wave'
         />

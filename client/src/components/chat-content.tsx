@@ -29,7 +29,6 @@ import {
   Divider,
 } from '@mui/material';
 import Message from './message';
-import Transaction from 'arweave/node/lib/transaction';
 import { secondInMS } from '@/constants';
 import { useCallback } from 'react';
 import { ITag } from '@/interfaces/arweave';
@@ -39,14 +38,12 @@ const ChatContent = ({
   messages,
   isWaitingResponse,
   responseTimeout,
-  pendingTxs,
   copySettings,
 }: {
   showError: boolean;
   messages: IMessage[];
   isWaitingResponse: boolean;
   responseTimeout: boolean;
-  pendingTxs: Transaction[];
   copySettings: (tags: ITag[]) => void;
 }) => {
   const defaultJustifyContent = 'flex-start';
@@ -179,7 +176,6 @@ const ChatContent = ({
             <Message
               message={el}
               index={index}
-              pendingTxs={pendingTxs}
               copySettings={copySettings}
             />
             {showDayDivider(el, index)}

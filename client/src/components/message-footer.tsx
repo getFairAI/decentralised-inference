@@ -22,6 +22,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import useTimeInterval from '@/hooks/useTimeInterval';
 import { secondInMS } from '@/constants';
+import { findTag } from '@/utils/common';
 
 const MessageFooter = ({ message, index }: { message: IMessage; index: number }) => {
   const { state } = useLocation();
@@ -107,7 +108,7 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
               alignItems: 'center',
             }}
           >
-            {message.type === 'response' ? state.scriptName : 'You'}
+            {message.type === 'response' ? findTag(state.solution, 'solutionName') : 'You'}
           </Typography>
         </Box>
       </Box>
