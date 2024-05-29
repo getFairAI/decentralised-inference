@@ -35,9 +35,12 @@ export const CREATIVEML_M_ID = 'mR-ehDm3Gok5deOEGcskeNOxmDLp2h52KHZdSI1I3YI';
 export const MIT_ID = '5nreaPQMmB6mTx_q1be49wjF_LIdAlXKEv81wEHNeek';
 export const ATOMIC_ASSET_CONTRACT_SOURCE_ID = 'h9v17KHV4SXwdW2-JHU6a23f6R0YtbXZJJht8LfP8QM';
 
-export const PROTOCOL_NAME = 'Fair Protocol';
+export const OLD_PROTOCOL_NAME = 'Fair Protocol';
 export const PREVIOUS_VERSIONS = ['0.1', '0.3'];
-export const PROTOCOL_VERSION = '1.0';
+export const OLD_PROTOCOL_VERSION = '1.0';
+
+export const PROTOCOL_NAME = 'FairAI';
+export const PROTOCOL_VERSION = '2.0';
 
 export const MARKETPLACE_FEE = '0.5'; // u
 export const SCRIPT_CREATION_FEE = '0.5'; // u
@@ -153,7 +156,7 @@ export const MODEL_FEE_PAYMENT = 'Model Fee Payment';
 
 export const MODEL_FEE_PAYMENT_SAVE = 'Model Fee Payment Save';
 
-export const SCRIPT_INFERENCE_REQUEST = 'Script Inference Request';
+export const SCRIPT_INFERENCE_REQUEST = 'Inference Request';
 
 export const INFERENCE_PAYMENT = 'Inference Payment';
 
@@ -197,8 +200,8 @@ export const N_PREVIOUS_BLOCKS = 7;
 export const MIN_CONFIRMATIONS = 7;
 
 export const DEFAULT_TAGS = [
-  { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-  { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+  { name: TAG_NAMES.protocolName, values: [OLD_PROTOCOL_NAME] },
+  { name: TAG_NAMES.protocolVersion, values: [OLD_PROTOCOL_VERSION] },
 ];
 
 // add smartWeaveContract tags so atomic tokens can be picked up
@@ -295,9 +298,8 @@ export const BAZAR_ASSETS_LINK = 'https://bazar.ar-io.dev/#/asset/';
 export const RAREWEAVE_ASSET_LIST_LINK = 'https://rareweave.store/nft';
 
 export const CREATE_WALLET_LINK = 'https://docs.arweave.org/info/wallets/arweave-wallet';
-export const BUY_U_LINK = 'https://app.permaswap.network/AR-U';
-export const BUY_AR_LINK = 'https://arwiki.wiki/#/en/Exchanges';
-export const BUY_AR_LINK_US = 'https://ar-io.dev/TOrDCeHz8sb6EAPR2cms2a-vXodOKeMhgbxY9G1U1OY';
+export const BUY_USDC_LINK = 'https://www.kraken.com/learn/buy-usdc-usdc';
+export const BUY_ARB_LINK = 'https://www.kraken.com/learn/buy-arbitrum-arb';
 
 export const IRYS_TXS_EXPLORER = 'https://explorer.irys.xyz/transactions';
 export const WARP_ASSETS_EXPLORER = 'https://sonar.warp.cc/#/app/contract';

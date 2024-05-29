@@ -16,7 +16,6 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { WalletContext } from '@/context/wallet';
 import {
   Avatar,
   Button,
@@ -31,8 +30,46 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { Dispatch, SetStateAction, useCallback, useContext, useEffect, useRef } from 'react';
+import { Dispatch, SetStateAction, useCallback, useContext } from 'react';
 import PowerIcon from '@mui/icons-material/Power';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { EIP6963ProviderDetail } from '@/interfaces/evm';
+import { EIP1193Provider } from 'viem';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+
+const ProviderElement = ({ provider, setOpen }: { provider: EIP6963ProviderDetail, setOpen: Dispatch<SetStateAction<boolean>> }) => {
+  const { connect } = useContext(EVMWalletContext);
+  const { localStorageValue: currentProviderValue, updateStorageValue } = useLocalStorage('evmProvider');
+  const { updateStorageValue: updateHasOnboarded } = useLocalStorage('hasOnboarded');
+
+  const handleEvmConnect = useCallback(async () => {
+    await connect(provider.provider as EIP1193Provider);
+    updateStorageValue(provider.info.name);
+    updateHasOnboarded('true');
+    setOpen(false);
+  }, [ connect ]);
+
+  return <ListItem
+    key={provider.info.uuid}
+    secondaryAction={
+      <Button
+        aria-label='connect'
+        variant='contained'
+        onClick={handleEvmConnect}
+        disabled={currentProviderValue === provider.info.name}
+        endIcon={<PowerIcon />}
+        className='plausible-event-name=EVM+Connected'
+      >
+        <Typography>{currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}</Typography>
+      </Button>
+    }
+  >
+    <ListItemAvatar>
+      <Avatar src={provider.info.icon} alt='provider.info.name' />
+    </ListItemAvatar>
+    <ListItemText primary={provider.info.name} />
+  </ListItem>;
+};
 
 const ChooseWallet = ({
   open,
@@ -43,21 +80,8 @@ const ChooseWallet = ({
 }) => {
   // components/layout.js
   const theme = useTheme();
-  const { isArConnectAvailable, connectWallet } = useContext(WalletContext);
-
+  const { providers } = useContext(EVMWalletContext);
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
-
-  const handleArConnect = useCallback(() => connectWallet('arconnect'), [connectWallet]);
-  const handleArweaveApp = useCallback(() => connectWallet('arweave.app'), [connectWallet]);
-
-  const prevWalletValue = useRef<string | null>(localStorage.getItem('wallet'));
-
-  useEffect(() => {
-    if (prevWalletValue.current !== localStorage.getItem('wallet')) {
-      prevWalletValue.current = localStorage.getItem('wallet');
-      setOpen(false);
-    }
-  }, [localStorage.length]); // run this code when the value of count changes
 
   return (
     <Dialog
@@ -88,44 +112,7 @@ const ChooseWallet = ({
       </DialogTitle>
       <DialogContent>
         <List>
-          <ListItem
-            secondaryAction={
-              <Button
-                aria-label='connect'
-                variant='contained'
-                onClick={handleArConnect}
-                disabled={!isArConnectAvailable || localStorage.getItem('wallet') === 'arconnect'}
-                endIcon={<PowerIcon />}
-                className='plausible-event-name=ArConnect+Connected'
-              >
-                <Typography>Connect</Typography>
-              </Button>
-            }
-          >
-            <ListItemAvatar>
-              <Avatar src='./arconnect-logo.png' />
-            </ListItemAvatar>
-            <ListItemText primary='ArConnect' />
-          </ListItem>
-          <ListItem
-            secondaryAction={
-              <Button
-                aria-label='connect'
-                variant='contained'
-                onClick={handleArweaveApp}
-                disabled={localStorage.getItem('wallet') === 'arweave.app'}
-                endIcon={<PowerIcon />}
-                className='plausible-event-name=ArweaveApp+Connected'
-              >
-                <Typography fontStyle={'bold'}>Connect</Typography>
-              </Button>
-            }
-          >
-            <ListItemAvatar>
-              <Avatar src='./arweave-logo-for-light.png' />
-            </ListItemAvatar>
-            <ListItemText primary='Arweave.app' />
-          </ListItem>
+          { providers.map((provider) => <ProviderElement provider={provider} key={provider.info.uuid} setOpen={setOpen} />) }
         </List>
       </DialogContent>
       <DialogActions

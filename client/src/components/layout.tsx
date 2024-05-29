@@ -30,15 +30,15 @@ import {
 import Navbar from './navbar';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
-import { WalletContext } from '@/context/wallet';
 import { Link, useLocation } from 'react-router-dom';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
 import { MIN_U_BALANCE } from '@/constants';
 import CloseIcon from '@mui/icons-material/Close';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const WarningMessage = () => {
   const [showWarning, setShowWarning] = useState(false);
-  const { currentAddress, currentUBalance } = useContext(WalletContext);
+  const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const theme = useTheme();
 
   const handleClose = useCallback(() => {
@@ -48,7 +48,7 @@ const WarningMessage = () => {
 
   useEffect(() => setShowWarning(localStorage.getItem('warningClosed') !== 'true'), []);
 
-  if (!localStorage.getItem('wallet') && !currentAddress) {
+  if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
       <>
         <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
@@ -59,7 +59,7 @@ const WarningMessage = () => {
         </Typography>
       </>
     );
-  } else if (showWarning && currentAddress && currentUBalance < MIN_U_BALANCE) {
+  } else if (showWarning && currentAddress && usdcBalance < MIN_U_BALANCE) {
     return (
       <Box
         sx={{
@@ -71,7 +71,7 @@ const WarningMessage = () => {
         padding={'2px 16px 2px 32px'}
       >
         <Typography>
-          Looks Like you are running low on $U balance,{' '}
+          Looks Like you are running low on your USDC balance,{' '}
           <Link to={'/swap'} className='plausible-event-name=Top+Up+Click'>
             <u>Click here to Top Up</u>
           </Link>

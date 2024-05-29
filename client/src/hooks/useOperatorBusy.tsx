@@ -17,99 +17,79 @@
  */
 
 import {
-  DEFAULT_TAGS,
-  SCRIPT_INFERENCE_REQUEST,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
   SCRIPT_INFERENCE_RESPONSE,
   TAG_NAMES,
 } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
-import { FIND_BY_TAGS, QUERY_CHAT_RESPONSES } from '@/queries/graphql';
-import { findTag } from '@/utils/common';
-import { useLazyQuery, useQuery } from '@apollo/client';
-import _ from 'lodash';
-import { useEffect, useState } from 'react';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { QUERY_CHAT_RESPONSES } from '@/queries/graphql';
+import { useLazyQuery } from '@apollo/client';
+import { decodeTxMemo, subscribe } from '@fairai/evm-sdk';
+import Query from '@irys/query';
+import { useContext, useEffect, useState } from 'react';
+import { Log } from 'viem';
 
-const useOperatorBusy = (operatorAddr: string, currentUser: string) => {
+const useOperatorBusy = (operatorAddr: string) => {
   const [isOperatorBusy, setIsOperatorBusy] = useState(false);
-  const [necessaryResponses, setNecesaryResponses] = useState(0);
+  const [necessaryResponses, setNecessaryResponses] = useState(0);
+  const { currentAddress } = useContext(EVMWalletContext);
   // query last 100 requests for operator
 
-  const {
-    data: requestsData,
-    previousData: requestsPreviousData,
-    startPolling: startPollingRequests,
-    stopPolling: stopPollingRequests,
-  } = useQuery(FIND_BY_TAGS, {
-    variables: {
-      tags: [
-        ...DEFAULT_TAGS,
-        { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_REQUEST] },
-        { name: TAG_NAMES.scriptOperator, values: [operatorAddr] },
-      ],
-      first: 100,
-    },
-    fetchPolicy: 'no-cache',
-    nextFetchPolicy: 'no-cache',
-  });
-
-  const [getOperatorResponses, { data: operatorResponsesData }] =
+  const [getOperatorResponses, { data: operatorResponsesData, startPolling, stopPolling }] =
     useLazyQuery(QUERY_CHAT_RESPONSES);
 
+  const handleOperatorReceivedPayment = async (log: Log[]) => {
+    setIsOperatorBusy(true);
+
+    const arweaveRequest = await decodeTxMemo(log.pop()?.transactionHash as `0x${string}`);
+
+    const irysQuery = new Query();
+    const [ { tags } ] = await irysQuery.search('irys:transactions').ids([ arweaveRequest ]).limit(1);
+
+    const necessaryResponses = parseFloat(tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value as string) ?? 1;
+    setNecessaryResponses(necessaryResponses);
+
+    getOperatorResponses({
+      variables: {
+        tagsResponses: [
+          { name: TAG_NAMES.protocolName, values: [ PROTOCOL_NAME ]},
+          { name: TAG_NAMES.protocolVersion, values: [ PROTOCOL_VERSION ]},
+          { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
+          { name: TAG_NAMES.requestTransaction, values: [arweaveRequest] },
+        ],
+        operators: [operatorAddr],
+        first: necessaryResponses,
+      },
+      fetchPolicy: 'no-cache',
+    });
+    startPolling(5000);
+  };
+
   useEffect(() => {
-    startPollingRequests(10000);
-
-    return () => stopPollingRequests();
-  }, [startPollingRequests, stopPollingRequests]);
-
-  useEffect(() => {
-    // filter out requests that are confirmed and not owned by current user
-    if (
-      requestsData &&
-      requestsData.transactions.edges.length > 0 &&
-      !_.isEqual(requestsData.transactions.edges, requestsPreviousData?.transactions?.edges)
-    ) {
-      const txs = requestsData.transactions.edges;
-      const { requestIds, nRequested } = txs
-        .filter(
-          (request: IEdge) =>
-            request.node.block === null && request.node.owner.address !== currentUser,
-        )
-        .reduce(
-          (acc: { requestIds: string[]; nRequested: number }, request: IEdge) => {
-            acc.requestIds.push(request.node.id);
-            const nResponses = findTag(request, 'nImages')
-              ? Number(findTag(request, 'nImages'))
-              : 1;
-            acc.nRequested += nResponses;
-
-            return acc;
-          },
-          { requestIds: [], nRequested: 0 },
-        );
-
-      setNecesaryResponses(nRequested);
-      if (nRequested > 0) {
-        getOperatorResponses({
-          variables: {
-            tagsResponses: [
-              ...DEFAULT_TAGS,
-              { name: TAG_NAMES.operationName, values: [SCRIPT_INFERENCE_RESPONSE] },
-              { name: TAG_NAMES.requestTransaction, values: requestIds },
-            ],
-            operators: [operatorAddr],
-            first: nRequested,
-          },
-          fetchPolicy: 'no-cache',
-        });
-      }
+    //
+    let unwatch: () => void;
+    if (currentAddress && operatorAddr) {
+      unwatch = subscribe(operatorAddr as `0x${string}`, handleOperatorReceivedPayment);
     }
-  }, [requestsData, requestsPreviousData, getOperatorResponses, operatorAddr, currentUser]);
+
+    return () => {
+      if (unwatch) {
+        unwatch();
+      }
+    };
+  }, [ operatorAddr, currentAddress ]);
 
   useEffect(() => {
     if (operatorResponsesData && operatorResponsesData.transactions.edges.length > 0) {
       const txs = operatorResponsesData.transactions.edges;
 
-      setIsOperatorBusy(txs.length < necessaryResponses);
+      if (txs.length >= necessaryResponses) {
+        setIsOperatorBusy(false);
+        stopPolling();
+      } else {
+        setIsOperatorBusy(true);
+      }
     }
   }, [operatorResponsesData, necessaryResponses]);
 

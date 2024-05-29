@@ -17,125 +17,185 @@
  */
 
 import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { Tooltip, Typography } from '@mui/material';
-import { GITHUB_LINK, WHITEPAPER_LINK, TWITTER_LINK, DISCORD_LINK, STUDIO_LINK } from '@/constants';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import { WalletContext } from '@/context/wallet';
-import GetIcon from './get-icon';
-import Box from '@mui/material/Box';
-import { ChooseWalletContext } from '@/context/choose-wallet';
-import { useState, useContext, MouseEvent, useCallback, Dispatch } from 'react';
+import { useState, useContext, useRef, SyntheticEvent, KeyboardEvent, useEffect, Dispatch, SetStateAction, useCallback, } from 'react';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { Box, Card, CardContent, CardHeader, ClickAwayListener, Divider, Grow, MenuItem, MenuList, Paper, Popper, Typography } from '@mui/material';
+import OpenInNew from '@mui/icons-material/OpenInNew';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import { ChevronRight } from '@mui/icons-material';
+import { STUDIO_LINK, GITHUB_LINK, DISCORD_LINK, TWITTER_LINK, WHITEPAPER_LINK } from '@/constants';
 import { useNavigate } from 'react-router-dom';
-
-const changeWallet = 'Change Wallet';
-const uSwap = 'Top Up';
-const viewPayments = 'View Payments';
-const viewTerms = 'Terms And Conditions';
-const options = [
-  'Studio',
-  uSwap,
-  viewPayments,
-  'Whitepaper',
-  'Github',
-  'Discord',
-  'Twitter',
-  viewTerms,
-  changeWallet,
-  'Disconnect',
-];
-const disableableOptions = [changeWallet, 'Disconnect', uSwap, viewPayments];
-
-const ITEM_HEIGHT = 64;
+import GetIcon from './get-icon';
+import { ChooseWalletContext } from '@/context/choose-wallet';
 
 const Option = ({
   option,
-  setAnchorEl,
+  setOpen,
+  setLinksOpen
 }: {
   option: string;
-  setAnchorEl: Dispatch<React.SetStateAction<HTMLElement | null>>;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  setLinksOpen?: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const { disconnectWallet } = useContext(WalletContext);
-  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const navigate = useNavigate();
+  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+
+  const showIcons = ['Twitter', 'Github', 'Discord', 'Whitepaper', 'Terms And Conditions', 'Studio', 'Top Up', 'Change Wallet'];
 
   const handleOptionClick = useCallback(() => {
     (async () => {
       switch (option) {
-        case viewPayments:
-          navigate('payments');
-          break;
         case 'Studio':
           window.open(STUDIO_LINK, '_blank');
+          setOpen(false);
           break;
         case 'Github':
           window.open(GITHUB_LINK, '_blank');
+          setOpen(false);
+          if (setLinksOpen) {
+            setLinksOpen(true);
+          }
           break;
         case 'Discord':
           window.open(DISCORD_LINK, '_blank');
+          setOpen(false);
+          if (setLinksOpen) {
+            setLinksOpen(false);
+          }
           break;
         case 'Twitter':
           window.open(TWITTER_LINK, '_blank');
+          setOpen(false);
+          if (setLinksOpen) {
+            setLinksOpen(false);
+          }
           break;
         case 'Whitepaper':
           window.open(WHITEPAPER_LINK, '_blank');
+          setOpen(false);
+          if (setLinksOpen) {
+            setLinksOpen(false);
+          }
           break;
-        case changeWallet:
-          setAnchorEl(null);
-          setChooseWalletOpen(true);
-          return;
-        case 'Disconnect':
-          await disconnectWallet();
-          setAnchorEl(null);
-          return;
-        case uSwap:
-          setAnchorEl(null);
+        case 'Top Up':
+          setOpen(false);
           navigate('/swap');
           return;
-        case viewTerms:
-          setAnchorEl(null);
+        case 'Terms And Conditions':
+          setOpen(false);
           navigate('/terms');
           return;
+        case 'Links':
+          if (setLinksOpen) {
+            setLinksOpen(true);
+          }
+          setOpen(false);
+          return;
+        case 'Change Wallet':
+          setChooseWalletOpen(true);
+          setOpen(false);
+          return;
         default:
-          setAnchorEl(null);
+          setOpen(false);
           return;
       }
     })();
   }, [option]);
 
+  if (showIcons.includes(option)) {
+    return <MenuItem sx={{ borderRadius: '10px', margin: '8px'  }} onClick={handleOptionClick}>
+      <Typography sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}><GetIcon input={option}></GetIcon>{option}</Typography>
+    </MenuItem>;
+  }
+
   return (
-    <MenuItem onClick={handleOptionClick}>
-      <GetIcon input={option}></GetIcon>
-      <Box sx={{ marginLeft: '10px' }}>
-        <Typography>{option}</Typography>
-      </Box>
+    <MenuItem sx={{ borderRadius: '10px', margin: '8px' }} onClick={handleOptionClick}>
+      <Typography sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>{option}<ChevronRight fontSize='inherit'/></Typography>
     </MenuItem>
   );
 };
 
 export default function ProfileMenu() {
-  const itemHeight = 4.5;
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const { currentAddress } = useContext(WalletContext);
+ /*  const [ trasnformPosition, setTransformPosition ] = useState(false); */
+  const [ open, setOpen] = useState(false);
+  const [ linksOpen, setLinksOpen ] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const handleToggle = () => {
+    setOpen((prevOpen) => !prevOpen);
+    setLinksOpen(false);
+  };
+  const { currentAddress, ethBalance, usdcBalance,  disconnect } = useContext(EVMWalletContext);
 
-  const handleClick = useCallback((event: MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  }, []);
+  const handleListKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      setOpen(false);
+      setLinksOpen(false);
+    } else if (event.key === 'Escape') {
+      setOpen(false);
+      setLinksOpen(false);
+    }
+  };
 
-  const handleClose = useCallback(() => {
-    setAnchorEl(null);
-  }, []);
+  // return focus to the button when we transitioned from !open -> open
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    if (prevOpen.current === true && open === false) {
+      anchorRef.current!.focus();
+    }
+
+    prevOpen.current = open;
+  }, [open,]);
+
+  const prevLinksOpen = useRef(linksOpen);
+  useEffect(() => {
+    if (prevLinksOpen.current === true && open === false) {
+      anchorRef.current!.focus();
+    }
+
+    prevLinksOpen.current = open;
+  }, [open,]);
+
+  const handleClose = (event: Event | SyntheticEvent) => {
+    if (
+      anchorRef.current &&
+      anchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  const handleLinksClose = (event: Event | SyntheticEvent) => {
+    if (
+      anchorRef.current &&
+      anchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+
+    setLinksOpen(false);
+  };
 
   const showIcon = () => {
     if (!currentAddress) {
       return <>{open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}</>;
     } else {
-      return <img src='./icon-empty-wallet.png' width={'27px'} height={'27px'} />;
+      return <img src='./chevron-bottom.svg' />;
     }
   };
+
+  const handleDisconnect = useCallback(() => {
+    setOpen(false);
+    disconnect();
+  }, [ setOpen, disconnect ]);
+
+  const handleViewInExplorer = useCallback(() => {
+    window.open(`https://arbiscan.io/address/${currentAddress}`, '_blank');
+  }, [ currentAddress ]);
 
   return (
     <div>
@@ -145,39 +205,131 @@ export default function ProfileMenu() {
         aria-controls={open ? 'long-menu' : undefined}
         aria-expanded={open ? 'true' : undefined}
         aria-haspopup='true'
-        onClick={handleClick}
+        onClick={handleToggle}
+        ref={anchorRef}
+        sx={{
+          /* ...!!currentAddress && { paddingLeft: 0}, */
+        }}
       >
         {showIcon()}
       </IconButton>
-      <Menu
-        id='long-menu'
-        MenuListProps={{
-          'aria-labelledby': 'long-button',
-        }}
-        anchorEl={anchorEl}
+      <Popper
         open={open}
-        onClose={handleClose}
-        PaperProps={{
-          style: {
-            maxHeight: ITEM_HEIGHT * itemHeight,
-            width: '20ch',
-          },
+        anchorEl={anchorRef.current}
+        role={undefined}
+        transition
+        placement='bottom-end'
+        disablePortal
+        sx={{
+          transform: 'translate(-22px, 64px) !important',
         }}
       >
-        {options.map((option) =>
-          disableableOptions.includes(option) && !currentAddress ? (
-            <Tooltip title='This Feature requires a wallet to be connected' key={option}>
-              <span>
-                <MenuItem disabled>
-                  <Typography>{option}</Typography>
-                </MenuItem>
-              </span>
-            </Tooltip>
-          ) : (
-            <Option option={option} key={option} setAnchorEl={setAnchorEl} />
-          ),
+        {({ TransitionProps }) => (
+          <Grow
+            {...TransitionProps}
+          >
+            <Paper>
+              <ClickAwayListener onClickAway={handleClose}>
+                <Card variant='outlined'>
+                  <CardHeader
+                    avatar={<IconButton onClick={handleDisconnect}><PowerSettingsNewIcon /></IconButton>}
+                    subheader={'Connected Account'}
+                    title={
+                      <Typography fontWeight={500} sx={{ textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '2px', cursor: 'pointer' }} onClick={handleViewInExplorer}>
+                        {`${currentAddress.slice(0, 6)}...${currentAddress.slice(-4)}`}
+                        <OpenInNew fontSize='inherit' />
+                      </Typography>
+                    }
+                    sx={{
+                      '&.MuiCardHeader-root': {
+                        display: 'flex',
+                        gap: '24px',
+                        flexDirection: 'row-reverse',
+                        justifyContent: 'space-between',
+                      },
+                      '& .MuiCardHeader-avatar': {
+                        marginRight: 0,
+                      },
+                      '& .MuiCardHeader-content': {
+                        display: 'flex',
+                        flexDirection: 'column-reverse',
+                      }
+                    }}
+                  />
+                  <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 0 }}>
+                    <Box display={'flex'} justifyContent={'space-between'}>
+                      <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                        <img width='20px' height='20px' src='./eth-logo.svg' />
+                        <Typography fontWeight={600}>ETH</Typography>
+                      </Box>
+                      <Typography fontWeight={400}>
+                        {ethBalance.toPrecision(4)}
+                      </Typography>
+                    </Box>
+                    <Box display={'flex'} justifyContent={'space-between'}>
+                      <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                        <img width='20px' height='20px' src='./usdc-logo.svg' />
+                        <Typography fontWeight={600}>USDC</Typography>
+                      </Box>
+                      <Typography fontWeight={400}>
+                        {usdcBalance.toPrecision(4)}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                  <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.05)' }} />
+                  <MenuList
+                    autoFocusItem={open}
+                    id="composition-menu"
+                    aria-labelledby="composition-button"
+                    onKeyDown={handleListKeyDown}
+                  >
+                    <Option option='Links' setOpen={setOpen} setLinksOpen={setLinksOpen} />
+                    <Option option='Studio' setOpen={setOpen} />
+                    <Option option='Top Up' setOpen={setOpen} />
+                    <Option option='Change Wallet' setOpen={setOpen} />
+                    <Option option='Terms And Conditions' setOpen={setOpen} />
+                  </MenuList>
+                </Card>
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
         )}
-      </Menu>
+      </Popper>
+      <Popper
+        open={linksOpen}
+        anchorEl={anchorRef.current}
+        role={undefined}
+        transition
+        placement='bottom-end'
+        disablePortal
+        sx={{
+          transform: 'translate(-22px, 64px) !important',
+        }}
+      >
+        {({ TransitionProps }) => (
+          <Grow
+            {...TransitionProps}
+          >
+            <Paper>
+              <ClickAwayListener onClickAway={handleLinksClose}>
+                <Card variant='outlined'>
+                  <MenuList
+                    autoFocusItem={linksOpen}
+                    id="composition-menu"
+                    aria-labelledby="composition-button"
+                    onKeyDown={handleListKeyDown}
+                  >
+                    <Option option='Twitter' setOpen={setOpen} setLinksOpen={setLinksOpen}/>
+                    <Option option='Github' setOpen={setOpen} setLinksOpen={setLinksOpen} />
+                    <Option option='Discord' setOpen={setOpen} setLinksOpen={setLinksOpen} />
+                    <Option option='Whitepaper' setOpen={setOpen} setLinksOpen={setLinksOpen} />
+                  </MenuList>
+                </Card>
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
     </div>
   );
 }

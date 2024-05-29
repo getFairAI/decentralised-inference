@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { WalletContext } from '@/context/wallet';
+import { EVMWalletContext } from '@/context/evm-wallet';
 import {
   Alert,
   Button,
@@ -28,12 +28,12 @@ import {
   useTheme,
 } from '@mui/material';
 import { ReactElement, useCallback, useContext } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
-  const { address } = useParams();
   const navigate = useNavigate();
-  const { currentAddress } = useContext(WalletContext);
+  const { currentAddress } = useContext(EVMWalletContext);
+  const { state } = useLocation();
   const theme = useTheme();
 
   const handleGoBack = useCallback(() => navigate(-1), [navigate]);
@@ -41,7 +41,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
   return (
     <>
       <Dialog
-        open={address === currentAddress}
+        open={state.operatorEvmWallet === currentAddress}
         maxWidth={'md'}
         fullWidth
         sx={{
@@ -116,7 +116,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
           </Button>
         </DialogActions>
       </Dialog>
-      {address !== currentAddress && children}
+      {state.operatorEvmWallet !== currentAddress && children}
     </>
   );
 };

@@ -21,7 +21,6 @@ import { SvgIcon, useTheme } from '@mui/material';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import PaymentsIcon from '@mui/icons-material/Payments';
 import GavelIcon from '@mui/icons-material/Gavel';
 import PaymentIcon from '@mui/icons-material/Payment';
 
@@ -36,22 +35,23 @@ const GetIcon = ({ input }: Props): JSX.Element => {
 
   switch (input) {
     case 'Studio':
-      return <DashboardIcon></DashboardIcon>;
+      return <DashboardIcon fontSize={'inherit'}></DashboardIcon>;
     case 'Bundlr Settings':
-      return <Settings></Settings>;
+      return <Settings fontSize={'inherit'}></Settings>;
     case 'Top Up':
-      return <PaymentIcon></PaymentIcon>;
+      return <PaymentIcon fontSize={'inherit'}></PaymentIcon>;
     case 'Whitepaper':
-      return <Article></Article>;
+      return <Article fontSize={'inherit'}></Article>;
     case 'Github':
-      return <GitHub></GitHub>;
+      return <GitHub fontSize={'inherit'}></GitHub>;
     case 'Twitter':
-      return <Twitter></Twitter>;
+      return <Twitter fontSize={'inherit'}></Twitter>;
     case 'Discord':
       return (
         <SvgIcon
           component={DiscordIcon}
           inheritViewBox
+          fontSize={'inherit'}
           sx={{
             '.cls-1': {
               fill: theme.palette.text.primary,
@@ -60,15 +60,13 @@ const GetIcon = ({ input }: Props): JSX.Element => {
         />
       );
     case 'Operator Registrations':
-      return <AssignmentIcon></AssignmentIcon>;
+      return <AssignmentIcon fontSize={'inherit'}></AssignmentIcon>;
     case 'Terms And Conditions':
-      return <GavelIcon></GavelIcon>;
+      return <GavelIcon fontSize={'inherit'}></GavelIcon>;
     case 'Change Wallet':
-      return <SyncAltIcon></SyncAltIcon>;
-    case 'View Payments':
-      return <PaymentsIcon />;
+      return <SyncAltIcon fontSize={'inherit'}></SyncAltIcon>;
     default:
-      return <Logout></Logout>;
+      return <Logout fontSize={'inherit'}></Logout>;
   }
 };
 

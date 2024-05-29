@@ -20,13 +20,13 @@ import { useLazyQuery } from '@apollo/client';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
+import { PROTOCOL_NAME, PROTOCOL_VERSION, SCRIPT_INFERENCE_RESPONSE } from '@/constants';
 
 const useResponses = ({
   reqIds,
   userAddr,
   scriptName,
   scriptCurator,
-  scriptOperators,
   conversationId,
   lastRequestId,
   first,
@@ -35,7 +35,6 @@ const useResponses = ({
   userAddr: string;
   scriptName: string;
   scriptCurator: string;
-  scriptOperators: string[];
   conversationId: number;
   lastRequestId?: string;
   first?: number;
@@ -45,7 +44,7 @@ const useResponses = ({
     userAddr,
     scriptName,
     scriptCurator,
-    scriptOperators,
+    [],
     conversationId,
     first,
   );
@@ -63,43 +62,43 @@ const useResponses = ({
 
   const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] =
     useLazyQuery(responsesQuery, {
-      fetchPolicy: 'network-only',
-      nextFetchPolicy: 'network-only',
+      fetchPolicy:'network-only',
+      nextFetchPolicy:'network-only',
     });
 
   useEffect(() => {
-    const { variables: queryParams } = FairSDKWeb.utils.getResponsesQuery(
-      reqIds,
-      userAddr,
-      scriptName,
-      scriptCurator,
-      scriptOperators,
-      conversationId,
-      first,
-    );
+    const variables = {
+      tags: [
+        { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] },
+        { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] },
+        { name: 'Operation-Name', values: [ SCRIPT_INFERENCE_RESPONSE ] },
+        { name: 'Request-Transaction', values: reqIds },
+      ],
+      first: 10,
+    };
     if (reqIds.length > 0) {
-      getChatResponses({ variables: queryParams });
+      getChatResponses({ variables, fetchPolicy: 'network-only', nextFetchPolicy: 'network-only' });
     }
 
     if (lastRequestId) {
       stopResponsePolling();
       const pollReqIds = [lastRequestId];
-      const { variables: pollQueryParams } = FairSDKWeb.utils.getResponsesQuery(
-        pollReqIds,
-        userAddr,
-        scriptName,
-        scriptCurator,
-        scriptOperators,
-        conversationId,
-      );
-      pollResponses({ variables: { ...pollQueryParams }, pollInterval: 10000 });
+      const variables = {
+        tags: [
+          { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] },
+          { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] },
+          { name: 'Operation-Name', values: [ SCRIPT_INFERENCE_RESPONSE ] },
+          { name: 'Request-Transaction', values: pollReqIds },
+        ],
+        first: 10,
+      };
+      pollResponses({ variables, pollInterval: 10000, });
     }
   }, [
     reqIds,
     userAddr,
     scriptName,
     scriptCurator,
-    scriptOperators,
     lastRequestId,
     conversationId,
     first,

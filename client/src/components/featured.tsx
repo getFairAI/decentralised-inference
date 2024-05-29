@@ -21,9 +21,9 @@ import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import AiCard from './ai-card';
 import '@/styles/ui.css';
 import useFeaturedModels from '@/hooks/useFeaturedModels';
-import { IContractEdge } from '@/interfaces/arweave';
 import { ApolloError } from '@apollo/client';
 import LoadingCard from './loading-card';
+import { findByIdQuery } from '@fairai/evm-sdk';
 
 type fetchWithFilterParam = 'none' | 'text' | 'video' | 'audio' | 'image';
 const filters: fetchWithFilterParam[] = ['none', 'text', 'image', 'video', 'audio'];
@@ -77,7 +77,7 @@ const FeaturedRow = ({
   loading,
   error,
 }: {
-  models: IContractEdge[];
+  models: findByIdQuery['transactions']['edges'];
   loading: boolean;
   error?: ApolloError;
 }) => {
@@ -117,23 +117,9 @@ const Featured = () => {
           flexDirection: smallScreen ? 'column' : 'row',
         }}
       >
-        <Box display={'flex'} flexDirection={'column'} width={'40%'} justifyContent={'center'}>
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 300,
-              fontSize: '30px',
-              lineHeight: '41px',
-            }}
-          >
-            Choose your AI model to start using.
-          </Typography>
-          <Typography variant='h4'>
-            Browse available AI models and choose what suits your task best. Fair Protocol brings
-            decentralised AI computation at low cost with benefits for all participants.
-          </Typography>
-        </Box>
+       
         <Box display={'flex'} flexDirection={'column'} width={'100%'}>
+          
           <Box className={'filter-box'} justifyContent={'flex-end'}>
             {filters.map((filter, idx) => (
               <CategoryFilter
@@ -145,7 +131,7 @@ const Featured = () => {
               />
             ))}
           </Box>
-          <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
+          <Box className={'feature-cards-row'} justifyContent={'flex-end'} alignItems={'center'}>
             <FeaturedRow models={featuredTxs} loading={loading} error={error} />
           </Box>
         </Box>

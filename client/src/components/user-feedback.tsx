@@ -16,7 +16,6 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { WalletContext } from '@/context/wallet';
 import {
   Box,
   Button,
@@ -37,6 +36,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Mood } from '@mui/icons-material';
 import arweave from '@/utils/arweave';
 import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES, USER_FEEDBACK, secondInMS } from '@/constants';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const labels: { [index: string]: string } = {
   0.5: 'Useless',
@@ -62,7 +62,7 @@ const FeedbackForm = ({
   const [comment, setComment] = useState<string>('');
   const [hover, setHover] = useState(-1);
 
-  const { dispatchTx } = useContext(WalletContext);
+  const { postOnArweave } = useContext(EVMWalletContext);
 
   const handleSubmit = useCallback(async () => {
     // ignore for now
@@ -71,19 +71,21 @@ const FeedbackForm = ({
     }
 
     // dispatch feedback tx
-    const tx = await arweave.createTransaction({ data: 'Fair Protocol Active User Feedback' });
-    tx.addTag(TAG_NAMES.protocolName, PROTOCOL_NAME);
-    tx.addTag(TAG_NAMES.protocolVersion, PROTOCOL_VERSION);
-    tx.addTag(TAG_NAMES.operationName, USER_FEEDBACK);
-    tx.addTag(TAG_NAMES.userRatingScore, value.toString());
+    const tags = [
+      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+      { name: TAG_NAMES.operationName, value: USER_FEEDBACK },
+      { name: TAG_NAMES.userRatingScore, value: value.toString() },
+    ];
     if (comment) {
-      tx.addTag(TAG_NAMES.userRatingComment, comment);
+      tags.push({ name: TAG_NAMES.userRatingComment, value: comment});
     }
-    tx.addTag(TAG_NAMES.unixTime, (Date.now() / secondInMS).toString());
-    await dispatchTx(tx);
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString()});
+
+    await postOnArweave('Fair Protocol Active User Feedback', tags);
 
     setHasSubmitted(true);
-  }, [dispatchTx, arweave, value, comment]);
+  }, [postOnArweave, arweave, value, comment]);
 
   return (
     <>

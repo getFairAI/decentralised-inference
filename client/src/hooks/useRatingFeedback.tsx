@@ -30,6 +30,7 @@ const useRatingFeedback = (userAddr: string) => {
     FairSDKWeb.utils.getRequestsQuery(userAddr);
   const { data: requestsData, networkStatus: requestNetworkStatus } = useQuery(requestsQuery, {
     variables: requestVars,
+    skip: !userAddr,
   });
 
   const { data: feedbackData } = useQuery(QUERY_TX_WITH, {
@@ -37,6 +38,7 @@ const useRatingFeedback = (userAddr: string) => {
       tags: [...DEFAULT_TAGS, { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] }],
       address: userAddr,
     },
+    skip: !userAddr,
   });
 
   useEffect(() => {

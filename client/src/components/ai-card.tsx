@@ -49,7 +49,7 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
       if (avatarTxId) {
         return `${NET_ARWEAVE_URL}/${avatarTxId}`;
       }
-      const modelId = findTag(model, 'modelTransaction');
+      const modelId = model.node.id;
       const img = toSvg(modelId, 100);
       const svg = new Blob([img], { type: 'image/svg+xml' });
       return URL.createObjectURL(svg);
@@ -59,14 +59,14 @@ const AiCard = ({ model, useModel = false }: { model: IContractEdge; useModel?: 
   }, [data]);
 
   const owner = useMemo(
-    () => findTag(model, 'sequencerOwner') ?? model.node.owner.address,
+    () => model.node.owner.address,
     [model],
   );
-  const modelId = useMemo(() => findTag(model, 'modelTransaction'), [model]);
+  const modelId = useMemo(() => model.node.id, [model]);
   const modelName = useMemo(() => findTag(model, 'modelName'), [model]);
 
   useEffect(() => {
-    const modelId = findTag(model, 'modelTransaction');
+    const modelId = model.node.id;
     const attachmentAvatarTags = [
       ...DEFAULT_TAGS, // allow avatars from previous versions
       { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },

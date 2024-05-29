@@ -49,19 +49,15 @@ import {
 import {
   TAG_NAMES,
   N_PREVIOUS_BLOCKS,
-  textContentType,
   MAX_MESSAGE_SIZE,
-  WARP_ASSETS_EXPLORER,
-  IRYS_TXS_EXPLORER,
   SCRIPT_INFERENCE_REQUEST,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import Transaction from 'arweave/node/lib/transaction';
 import { useSnackbar } from 'notistack';
-import { WalletContext } from '@/context/wallet';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { addLicenseConfigTags, commonUpdateQuery, findTag, printSize } from '@/utils/common';
+import { findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
@@ -71,23 +67,23 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatContent from '@/components/chat-content';
 import DebounceIconButton from '@/components/debounce-icon-button';
-import { parseUBalance } from '@/utils/u';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Configuration from '@/components/configuration';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
 import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
-import FairSDKWeb from '@fair-protocol/sdk/web';
 import useScroll from '@/hooks/useScroll';
 import { useForm, useWatch } from 'react-hook-form';
 import useOperatorBusy from '@/hooks/useOperatorBusy';
 import { InfoOutlined } from '@mui/icons-material';
 import { UserFeedbackContext } from '@/context/user-feedback';
 import useRatingFeedback from '@/hooks/useRatingFeedback';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { Query } from '@irys/query';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
-const DEFAULT_N_IMAGES = 4;
+const DEFAULT_N_IMAGES = 1;
 const RADIX = 10;
 
 const InputField = ({
@@ -120,7 +116,7 @@ const InputField = ({
   const theme = useTheme();
   const { state } = useLocation();
   const { setOpen: setOpenRating } = useContext(UserFeedbackContext);
-  const { currentAddress: userAddr } = useContext(WalletContext);
+  const { currentAddress: userAddr } = useContext(EVMWalletContext);
   const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr);
 
   const allowFiles = useMemo(() => findTag(state.fullState, 'allowFiles') === 'true', [state]);
@@ -131,6 +127,7 @@ const InputField = ({
         : findTag(state.fullState, 'allowText') === 'true',
     [state],
   );
+
   const uploadDisabled = useMemo(
     () => file instanceof File || loading || !allowFiles,
     [file, loading, allowFiles],
@@ -331,13 +328,13 @@ const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const { address } = useParams();
   const navigate = useNavigate();
-  const { state } = useLocation();
   const {
     currentAddress: userAddr,
-    updateUBalance,
-    currentUBalance,
-    dispatchTx,
-  } = useContext(WalletContext);
+    usdcBalance,
+    prompt,
+    updateUsdcBalance
+  } = useContext(EVMWalletContext);
+  const { state } = useLocation();
   const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
@@ -369,6 +366,7 @@ const Chat = () => {
   const [requestIds] = useState<string[]>([]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
   const isStableDiffusion = useMemo(
     () => findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion',
     [state],
@@ -431,7 +429,7 @@ const Chat = () => {
     } else {
       // ignore
     }
-  }, [state, configReset]);
+  }, [ state, configReset]);
 
   useEffect(() => {
     if (!_.isEqual(currentConfig, defaultConfigvalues)) {
@@ -447,7 +445,7 @@ const Chat = () => {
     userAddr,
     scriptName: state.scriptName,
     scriptCurator: state.scriptCurator,
-    scriptOperator: state.scriptOperator,
+    scriptTransaction: state.scriptTransaction,
     conversationId: currentConversationId,
     first: elementsPerPage,
   });
@@ -456,28 +454,23 @@ const Chat = () => {
     reqIds: requestIds,
     scriptName: state.scriptName,
     scriptCurator: state.scriptCurator,
-    scriptOperators: [state.scriptOperator],
     conversationId: currentConversationId,
     lastRequestId: '',
   });
 
-  const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage, requestFetchMore } =
+  const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage, fetchMore } =
     useRequests(requestParams);
 
   const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
     useResponses(responseParams);
 
-  const showOperatorBusy = useOperatorBusy(address as string, userAddr);
+  const showOperatorBusy = useOperatorBusy(address as string);
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
   const showLoadMore = useMemo(
     () => isNearTop && hasRequestNextPage && !messagesLoading,
     [isNearTop, hasRequestNextPage, messagesLoading],
   );
-
-  useEffect(() => {
-    (async () => FairSDKWeb.use('script', state.fullState))();
-  }, [state]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -505,15 +498,15 @@ const Chat = () => {
       const reqIds = requestsData.transactions.edges.map((el: IEdge) => el.node.id);
 
       if (reqIds.length > 0) {
-        const scriptOperators = Array.from(
+        /* const scriptOperators = Array.from(
           new Set(
             requestsData.transactions.edges.map((el: IEdge) => findTag(el, 'scriptOperator')),
           ),
-        );
+        ); */
         (async () => reqData())();
         setResponseParams({
           ...responseParams,
-          scriptOperators,
+          userAddr,
           reqIds,
         });
       } else {
@@ -526,7 +519,7 @@ const Chat = () => {
         setMessages([]);
       }
     }
-  }, [requestsData, requestNetworkStatus]);
+  }, [requestsData, requestNetworkStatus, userAddr ]);
 
   useEffect(() => {
     // only update messages after getting all responses
@@ -601,7 +594,7 @@ const Chat = () => {
       cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid, 10),
       height: el.node.block ? el.node.block.height : currentHeight,
       to: isRequest ? (findTag(el, 'scriptOperator') as string) : userAddr,
-      from: isRequest ? userAddr : el.node.owner.address,
+      from: isRequest ? userAddr : el.node.address,
       tags: el.node.tags,
       contentType,
       timestamp,
@@ -643,7 +636,7 @@ const Chat = () => {
   const checkCanSend = (dataSize: number, isFile = false) => {
     try {
       if (!currentConversationId) {
-        enqueueSnackbar('Missing COnversation Id', { variant: 'error' });
+        enqueueSnackbar('Missing Conversation Id', { variant: 'error' });
         return false;
       }
 
@@ -654,8 +647,8 @@ const Chat = () => {
 
       const actualFee =
         currentConfig.nImages && isStableDiffusion ? state.fee * currentConfig.nImages : state.fee;
-      if (currentUBalance < parseUBalance(actualFee)) {
-        enqueueSnackbar('Not Enough $U tokens to pay Operator', { variant: 'error' });
+      if (usdcBalance < actualFee) {
+        enqueueSnackbar('Not Enough USDC to pay Operator', { variant: 'error' });
         return false;
       }
 
@@ -748,7 +741,6 @@ const Chat = () => {
     txid: string,
     content: string | File,
     contentType: string,
-    tags: ITag[],
   ) => {
     setNewMessage('');
     if (inputRef?.current) {
@@ -757,12 +749,10 @@ const Chat = () => {
     setFile(undefined);
     setIsWaitingResponse(true);
     setResponseTimeout(false);
-    let url;
-    if (tags.find((tag) => tag.name === TAG_NAMES.contractSrc)?.value !== undefined) {
-      url = `${WARP_ASSETS_EXPLORER}/${txid}`;
-    } else {
-      url = `${IRYS_TXS_EXPLORER}/${txid}`;
-    }
+    const irysQuery = new Query();
+
+    const [ { tags } ] = (await irysQuery.search('irys:transactions').ids([txid]).limit(1));
+    const url = `https://gateway.irys.xyz/${txid}`;
 
     enqueueSnackbar(
       <>
@@ -796,8 +786,7 @@ const Chat = () => {
       ...responseParams,
       conversationId: currentConversationId,
       lastRequestId: txid,
-      reqIds: [],
-      scriptOperators: [address as string],
+      reqIds: []
     });
   };
 
@@ -812,52 +801,17 @@ const Chat = () => {
       return;
     }
 
-    const contentType = file.type;
-    const content = file;
-
     try {
-      const tags: ITag[] = FairSDKWeb.utils.getUploadTags(
-        FairSDKWeb.script,
-        address as string,
-        userAddr,
-        currentConversationId,
-        contentType,
-        getConfigValues(),
-        'web',
-        content.name,
-      );
-      // add licenseConfig Tags
-      if (currentConfig.licenseConfig) {
-        addLicenseConfigTags(tags, currentConfig.licenseConfig, currentConfig.license);
-      }
-      // upload with dispatch
-      const data = await content.arrayBuffer(); // it's safe to convert to arrayBuffer bc max size is 100kb
-      const tx = await arweave.createTransaction({ data });
-      tags.forEach((tag) => tx.addTag(tag.name, tag.value));
-
-      const { id: txid } = await dispatchTx(tx);
-
-      if (!txid) {
-        enqueueSnackbar(errorMsg, { variant: 'error' });
-        return;
-      }
-      await updateMessages(txid, content, contentType, tags);
-      /* await warp.register(txid, 'arweave'); */
-      const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
-        txid,
-        state.fee,
-        contentType,
-        FairSDKWeb.script,
-        currentConversationId,
-        state.modelCreator,
-        address as string,
-        currentConfig.nImages,
-        'web',
-      );
+      const config = getConfigValues();
+      const { arweaveTxId }  = await prompt(newMessage, state.scriptTransaction, {
+        evmWallet: state.operatorEvmWallet,
+        operatorFee: state.fee,
+      }, currentConversationId, config);
       // update balance after payments
-      await updateUBalance();
+      updateMessages(arweaveTxId, file, file.type);
+      updateUsdcBalance(usdcBalance - state.fee);
       enqueueSnackbar(
-        <Typography>{`Paid Inference costs: ${totalUsdCost}$ (${totalUCost} $U)`}</Typography>,
+        <Typography>{'Request Successfull'}</Typography>,
         {
           variant: 'success',
         },
@@ -877,55 +831,23 @@ const Chat = () => {
     if (!newMessage) {
       return;
     }
-
     const dataSize = new TextEncoder().encode(newMessage).length;
 
     if (!checkCanSend(dataSize)) {
       return;
     }
 
-    const contentType = textContentType;
-
     try {
-      const tags: ITag[] = FairSDKWeb.utils.getUploadTags(
-        FairSDKWeb.script,
-        address as string,
-        userAddr,
-        currentConversationId,
-        contentType,
-        getConfigValues(),
-        'web',
-      );
-      // add licenseConfig Tags
-      if (currentConfig.licenseConfig) {
-        addLicenseConfigTags(tags, currentConfig.licenseConfig, currentConfig.license);
-      }
-      // upload with dispatch
-      const tx = await arweave.createTransaction({ data: newMessage });
-      tags.forEach((tag) => tx.addTag(tag.name, tag.value));
-
-      const { id: txid } = await dispatchTx(tx);
-      if (!txid) {
-        enqueueSnackbar(errorMsg, { variant: 'error' });
-        return;
-      }
-      await updateMessages(txid, newMessage, contentType, tags);
-      /* await warp.register(txid, 'arweave'); */
-      const { totalUCost, totalUsdCost } = await FairSDKWeb.utils.handlePayment(
-        txid,
-        state.fee,
-        contentType,
-        FairSDKWeb.script,
-        currentConversationId,
-        state.modelCreator,
-        address as string,
-        currentConfig.nImages,
-        'web',
-      );
+      const config = getConfigValues();
+      const { arweaveTxId } = await prompt(newMessage, state.scriptTransaction, {
+        evmWallet: state.operatorEvmWallet,
+        operatorFee: state.fee,
+      }, currentConversationId, config);
       // update balance after payments
-      await updateUBalance();
+      updateMessages(arweaveTxId, newMessage, 'text/plain');
+      updateUsdcBalance(usdcBalance - state.fee);
       enqueueSnackbar(
-        <Typography>{`Paid Inference costs: ${totalUsdCost}$ (${totalUCost} $U)`}</Typography>,
+        <Typography>{'Request Successfull'}</Typography>,
         {
           variant: 'success',
         },
@@ -1108,20 +1030,12 @@ const Chat = () => {
   }, [setConfigurationDrawerOpen, setDrawerOpen]);
 
   const handleLoadMore = useCallback(() => {
-    requestFetchMore({
-      variables: {
-        after:
-          requestsData.transactions.edges.length > 0
-            ? requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor
-            : undefined,
-      },
-      updateQuery: commonUpdateQuery,
-    });
+    fetchMore();
     setMessagesLoading(true);
     const oldestMessage = document.querySelectorAll('.message-container')[0]; // first message on html is the oldest
 
     setCurrentEl(oldestMessage as HTMLDivElement);
-  }, [requestFetchMore, requestsData]);
+  }, [fetchMore, requestsData]);
 
   return (
     <>
@@ -1178,7 +1092,6 @@ const Chat = () => {
           <Conversations
             currentConversationId={currentConversationId}
             setCurrentConversationId={setCurrentConversationId}
-            state={state}
             userAddr={userAddr}
             drawerOpen={drawerOpen}
             setDrawerOpen={setDrawerOpen}

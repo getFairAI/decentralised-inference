@@ -17,7 +17,6 @@
  */
 
 import Layout from '@/components/layout';
-import { WalletProvider } from '@/context/wallet';
 import { Alert, Box, Container, CssBaseline, Typography } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import { Fragment, useEffect, useState } from 'react';
@@ -25,6 +24,7 @@ import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { AppThemeProvider } from '@/context/theme';
 import { StyledMaterialDesignContent } from '@/styles/components';
+import { EVMWalletProvider } from '@/context/evm-wallet';
 
 const notFoundErrorCode = 404;
 const notAuthorizedErrorCode = 401;
@@ -57,7 +57,7 @@ const ErrorDisplay = () => {
             success: StyledMaterialDesignContent,
           }}
         >
-          <WalletProvider>
+          <EVMWalletProvider>
             <CssBaseline />
             <Layout>
               <Container
@@ -89,7 +89,7 @@ const ErrorDisplay = () => {
                 </Box>
               </Container>
             </Layout>
-          </WalletProvider>
+          </EVMWalletProvider>
         </SnackbarProvider>
       </AppThemeProvider>
     </>

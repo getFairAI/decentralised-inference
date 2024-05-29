@@ -2,14 +2,16 @@ import { render, screen } from '@testing-library/react';
 import BasicTable from '@/components/basic-table';
 import { BrowserRouter } from 'react-router-dom';
 import { IEdge } from '@/interfaces/arweave';
-import { ApolloError } from '@apollo/client';
+import { ApolloError, ApolloQueryResult, NetworkStatus, QueryResult } from '@apollo/client';
 import { MockedProvider } from '@apollo/client/testing';
+import { findByTagsQuery } from '@fairai/evm-sdk';
 
 const mocks: IEdge[] = [
   {
     cursor: 'cursor1',
     node: {
       id: 'txid',
+      address: 'mock 1 address',
       owner: {
         address: 'mock 1 address',
         key: 'key',
@@ -58,6 +60,7 @@ const mocks: IEdge[] = [
     cursor: 'cursor1',
     node: {
       id: 'txid2',
+      address: 'mock 1 address',
       owner: {
         address: 'mock 1 address',
         key: 'key',
@@ -153,13 +156,9 @@ const fakeRetry = () => {
   return;
 };
 
-const fakeFetchMore = async () => {
-  return {
-    data: undefined,
-    loading: false,
-    networkStatus: 1,
-  };
-};
+const fakeFetchMore: QueryResult<findByTagsQuery>['fetchMore'] =
+    async <TFetchData=findByTagsQuery>() =>
+      ({ data: { transactions: { edges: [], pageInfo: { hasNextPage: false } } }, loading: false, networkStatus: {} as NetworkStatus }) as ApolloQueryResult<TFetchData>;
 
 const mockError: ApolloError = {
   name: '',

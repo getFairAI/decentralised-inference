@@ -20,7 +20,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import {
   ChangeEvent,
@@ -34,141 +34,33 @@ import {
 import {
   Button,
   Icon,
-  IconButton,
   InputBase,
-  MenuItem,
-  Select,
   Tooltip,
   useTheme,
 } from '@mui/material';
-import { WalletContext } from '@/context/wallet';
 import { Timeout } from 'react-number-format/types/types';
-import { defaultDecimalPlaces, U_LOGO_SRC } from '@/constants';
-import { usePollingEffect } from '@/hooks/usePollingEffect';
 import Logo from './logo';
-import { parseUBalance } from '@/utils/u';
-import { findTag, getUPriceUSD } from '@/utils/common';
-import CopyIcon from '@mui/icons-material/ContentCopy';
-import { useSnackbar } from 'notistack';
 import { InfoOutlined } from '@mui/icons-material';
-import StampsMenu from '@/components/stamps-menu';
-
-const CustomDropDownIcon = () => (
-  <Icon
-    sx={{
-      pointerEvents: 'none',
-      position: 'absolute',
-      right: '7px',
-    }}
-  >
-    <img src='./chevron-bottom.svg' />
-  </Icon>
-);
-
-const CurrencyMenu = () => {
-  const pollingTimeout = 10000;
-  const spaceBetween = 'space-between';
-
-  const [selected, setSelected] = useState<'AR' | 'U'>('U');
-  const { currentAddress, currentBalance, currentUBalance, updateBalance, updateUBalance } =
-    useContext(WalletContext);
-
-  const pollingFn = () => {
-    if (selected === 'AR') {
-      return updateBalance();
-    } else {
-      return updateUBalance();
-    }
-  };
-
-  const [startPolling, stopPolling] = usePollingEffect(
-    pollingFn,
-    [currentAddress, selected],
-    pollingTimeout,
-  );
-
-  const handleArClick = useCallback(() => {
-    stopPolling();
-    setSelected('AR');
-    startPolling();
-  }, [setSelected, startPolling, stopPolling]);
-
-  const handleUClick = useCallback(() => {
-    stopPolling();
-    setSelected('U');
-    startPolling();
-  }, [setSelected, startPolling, stopPolling]);
-
-  useEffect(() => {
-    if (!currentAddress) {
-      stopPolling();
-    } else {
-      // if address changes, restart polling
-      startPolling();
-    }
-  }, [currentAddress]);
-
-  return (
-    <>
-      <Select
-        sx={{
-          '& .MuiInputBase-input': {
-            display: 'flex',
-            alignItems: 'center',
-            border: 'none',
-            textTransform: 'none',
-            padding: 0,
-          },
-          '& .MuiOutlinedInput-notchedOutline': {
-            border: 'none',
-          },
-        }}
-        IconComponent={CustomDropDownIcon}
-        value={selected}
-      >
-        <MenuItem
-          value={'AR'}
-          onClick={handleArClick}
-          sx={{ display: 'flex', justifyContent: spaceBetween }}
-        >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '23px', lineHeight: '1.7' }}>
-            {currentBalance.toFixed(defaultDecimalPlaces)}
-          </Typography>
-          <img width='20px' height='20px' src='./arweave-logo-for-light.png' />
-        </MenuItem>
-        <MenuItem
-          value={'U'}
-          onClick={handleUClick}
-          sx={{ display: 'flex', justifyContent: spaceBetween }}
-        >
-          <Typography sx={{ paddingRight: '6px', paddingLeft: '16px', lineHeight: '1.7' }}>
-            {currentUBalance.toFixed(defaultDecimalPlaces)}
-          </Typography>
-          <img width='20px' height='20px' src={U_LOGO_SRC} />
-        </MenuItem>
-      </Select>
-    </>
-  );
-};
+import { EVMWalletContext } from '@/context/evm-wallet';
+import StampsMenu from './stamps-menu';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const WalletState = () => {
   const theme = useTheme();
-  const { currentAddress, isWalletVouched } = useContext(WalletContext);
+  const { currentAddress, isWrongChain, switchChain, connect } = useContext(EVMWalletContext);
+  const { localStorageValue: hasOnboarded } = useLocalStorage('hasOnboarded');
   const navigate = useNavigate();
 
-  const handleConnect = useCallback(() => navigate('sign-in'), [navigate]);
-  const { enqueueSnackbar } = useSnackbar();
-
-  const handleCopyClick = useCallback(async () => {
-    if (currentAddress) {
-      await navigator.clipboard.writeText(currentAddress);
-      enqueueSnackbar('Address Copied to clipboard', { variant: 'info' });
+  const handleConnect = useCallback(async () => {
+    if (!hasOnboarded) {
+      navigate('sign-in');
     } else {
-      // do nothing
+      await connect();
     }
-  }, [currentAddress, navigator]);
+  }, [hasOnboarded, navigate]);
+  const handleSwitchChain = useCallback(() => switchChain(), [switchChain]);
 
-  if (!currentAddress || currentAddress === '') {
+  if (!isWrongChain &&( !currentAddress || currentAddress === '')) {
     return (
       <>
         <Button
@@ -189,11 +81,39 @@ const WalletState = () => {
           onClick={handleConnect}
           className='plausible-event-name=Navbar+Connect+Wallet'
         >
-          <Typography sx={{ lineHeight: '18.9px', fontSize: '14px' }}>Connect</Typography>
+          <Typography sx={{ lineHeight: '18.9px', fontSize: '14px', display: 'flex', gap: '8px' }}><img src='./arbitrum-logo.svg' width={'20px'} height={'20px'}/>Connect</Typography>
         </Button>
         <ProfileMenu />
       </>
     );
+  }
+
+  if (isWrongChain) {
+    return <>
+      <Button
+        variant='outlined'
+        sx={{
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '17px',
+          border: 'solid',
+          borderColor: theme.palette.error.main,
+          borderWidth: '0.5px',
+          paddingTop: '9.5px',
+          paddingBottom: '11px',
+          ':hover': {
+            borderColor: theme.palette.error.main,
+          }
+        }}
+        onClick={handleSwitchChain}
+        className='plausible-event-name=Navbar+Connect+Wallet'
+      >
+        <Typography sx={{ lineHeight: '20.25px', fontSize: '15px', fontWeight: 700, color: theme.palette.error.main }}>Invalid Network</Typography>
+      </Button>
+    </>;
   }
 
   return (
@@ -212,45 +132,28 @@ const WalletState = () => {
           borderWidth: '0.5px',
         }}
       >
-        <Box display={'flex'}>
-          <CurrencyMenu />
+        <Box display={'flex'} padding={'6px 6px 6px 12px'}>
+          <img width='25px' height='25px' src='./arbitrum-logo.svg' />
         </Box>
         <Box
           sx={{
-            background: theme.palette.secondary.contrastText,
+            /* background: theme.palette.secondary.contrastText, */
             borderRadius: '8px',
-            padding: '7px 20px 7px 20px',
+            padding: '6px 8px 6px 0px',
             alignItems: 'center',
+            justifyContent: 'center',
           }}
           display={'flex'}
-          gap={'8px'}
         >
-          <Tooltip title={currentAddress} placement={'left-start'}>
+          <Tooltip title={currentAddress} placement={'bottom-start'}>
             <Typography
-              sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px' }}
+              sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px', fontWeight: 700 }}
             >
-              {currentAddress.slice(0, 10)}...{currentAddress.slice(-3)}
+              {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
             </Typography>
           </Tooltip>
-          {isWalletVouched && (
-            <Tooltip title={'Wallet is Vouched'}>
-              <img src='./vouch.svg' width={'15px'} height={'15px'} />
-            </Tooltip>
-          )}
-          <Tooltip title='Copy Address'>
-            <Typography sx={{ lineHeight: '20.25px', fontSize: '15px' }}>
-              <IconButton
-                onClick={handleCopyClick}
-                sx={{ padding: 0 }}
-                size='small'
-                className='plausible-event-name=Copy+Wallet+Click'
-              >
-                <CopyIcon fontSize='inherit' />
-              </IconButton>
-            </Typography>
-          </Tooltip>
+          <ProfileMenu />
         </Box>
-        <ProfileMenu />
       </Box>
     </>
   );
@@ -263,7 +166,8 @@ const Navbar = ({
   setFilterValue: Dispatch<SetStateAction<string>>;
   isScrolled: boolean;
 }) => {
-  const { pathname, state } = useLocation();
+  const { address: operatorAddress } = useParams();
+  const { state, pathname } = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
   const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
@@ -288,31 +192,13 @@ const Navbar = ({
   const nDigits = 4;
 
   useEffect(() => {
-    (async () => {
-      if (state) {
-        const uCost = parseUBalance(state?.fee);
-        const uPrice = await getUPriceUSD();
-        const isImage = findTag(state.fullState, 'output') === 'image';
-        const isStableDiffusion =
-          findTag(state.fullState, 'outputConfiguration') === 'stable-diffusion';
-        const defaultNImages = 4;
-        const nImages = isStableDiffusion ? defaultNImages : 1;
-
-        if (isStableDiffusion || isImage) {
-          setTooltip(
-            `Cost set by operator for each image: ${(uCost * uPrice).toFixed(
-              nDigits,
-            )}$\n Default number of images: ${nImages}`,
-          );
-        } else {
-          setTooltip(
-            `Cost set by operator for each generation: ${(uCost * uPrice).toFixed(nDigits)}`,
-          );
-        }
-        setUsdFee(uCost * uPrice * nImages);
-      }
-    })();
-  }, [state, parseUBalance, getUPriceUSD]);
+    if (state && state.fee) {
+      setTooltip(
+        `Cost set by operator for each generation: ${(state.fee).toFixed(nDigits)} USDC`,
+      );
+      setUsdFee(state.fee);
+    }
+  }, [ state ]);
 
   return (
     <>
@@ -386,7 +272,7 @@ const Navbar = ({
           >
             {pathname.includes('chat') ? (
               <>
-                <StampsMenu id={state.operatorRegistrationTx ?? ''} type='Operator'></StampsMenu>
+                <StampsMenu id={operatorAddress ?? ''} type='Operator'></StampsMenu>
                 <Box>
                   <Typography
                     sx={{
@@ -399,7 +285,7 @@ const Navbar = ({
                   >
                     Default Cost:
                   </Typography>
-                  <Typography display={'flex'} justifyContent={spaceBetween}>
+                  <Typography display={'flex'} justifyContent={spaceBetween} gap={'4px'}>
                     {usdFee.toFixed(nDigits)}$
                     <Tooltip
                       title={
@@ -414,12 +300,10 @@ const Navbar = ({
                   </Typography>
                 </Box>
                 <Button
-                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '12px 16px' }}
+                  sx={{ borderRadius: '8px', border: 'solid 0.5px', padding: '11px 16px' }}
                   startIcon={<img src='./chevron-bottom.svg' />}
                   onClick={() =>
-                    navigate(`${pathname}/change-operator`, {
-                      state: { ...state.fullState, ...state },
-                    })
+                    navigate(`${pathname}/change-operator`)
                   }
                   className='plausible-event-name=Change+Operator+Click'
                 >

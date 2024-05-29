@@ -16,19 +16,21 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { WalletContext } from '@/context/wallet';
+import { EVMWalletContext } from '@/context/evm-wallet';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ReactElement, useContext, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 const WalletGuard = ({ children }: { children: ReactElement }) => {
-  const { currentAddress, currentUBalance } = useContext(WalletContext);
+  const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const [canUseInference, setCanUseInference] = useState(true);
+  const evmProvider = useLocalStorage('evmProvider');
 
   useEffect(() => {
-    if (!localStorage.getItem('wallet') && (!currentAddress || !currentUBalance)) {
+    if (!evmProvider && (!currentAddress || !usdcBalance)) {
       setCanUseInference(false);
     }
-  }, [currentAddress, currentUBalance]);
+  }, [currentAddress, usdcBalance]);
 
   if (canUseInference) {
     return children;

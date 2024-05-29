@@ -54,8 +54,8 @@ import ChooseScript from '@/components/choose-script';
 import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import StampsMenu from '@/components/stamps-menu';
 import { Close } from '@mui/icons-material';
-import { WalletContext } from '@/context/wallet';
 import { ChooseWalletContext } from '@/context/choose-wallet';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 const DetailContent = ({
   showOperators,
@@ -79,9 +79,9 @@ const DetailContent = ({
   const { state }: { state: ModelNavigationState } = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { currentAddress } = useContext(EVMWalletContext);
 
   const [scriptTx, setScriptTx] = useState<IEdge | IContractEdge | undefined>(undefined);
-  const { currentAddress } = useContext(WalletContext);
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
 
   const handleScriptChosen = useCallback(
@@ -153,7 +153,7 @@ const DetailContent = ({
     );
   }
 
-  if (showOperators) {
+  if (showOperators && scriptTx) {
     return (
       <ChooseOperator
         setShowOperators={setShowOperators}

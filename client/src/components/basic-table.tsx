@@ -25,34 +25,17 @@ import TableRow from '@mui/material/TableRow';
 import { Box, Button, Skeleton, Tooltip, Typography } from '@mui/material';
 import {
   ApolloError,
-  ApolloQueryResult,
-  FetchMoreQueryOptions,
-  OperationVariables,
+  QueryResult,
 } from '@apollo/client';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { genLoadingArray } from '@/utils/common';
 import OperatorRow from './operator-row';
-import { IContractEdge, IEdge, ITag, ITransactions } from '@/interfaces/arweave';
+import { IContractEdge, IEdge } from '@/interfaces/arweave';
 import { useEffect, useRef } from 'react';
 import useOnScreen from '@/hooks/useOnScreen';
 import { operatorHeaders, scriptHeaders } from '@/constants';
 import ScriptRow from './script-row';
-import { CountResult } from '@permaweb/stampjs';
-
-type fetchMoreFn = <
-  TFetchData = unknown,
-  TFetchVars extends OperationVariables = { tags: ITag[]; first: number },
->(
-  fetchMoreOptions: FetchMoreQueryOptions<TFetchVars, TFetchData> & {
-    updateQuery?: (
-      previousQueryResult: TFetchData,
-      options: {
-        fetchMoreResult: TFetchData;
-        variables: TFetchVars;
-      },
-    ) => TFetchData;
-  },
-) => Promise<ApolloQueryResult<TFetchData | undefined>>;
+import { findByTagsQuery } from '@fairai/evm-sdk';
 
 type tableType = 'operators' | 'scripts';
 
@@ -60,7 +43,6 @@ const BasicTableContent = ({
   data,
   txsCountsMap,
   type,
-  state,
   loading,
   error,
   selectedIdx,
@@ -68,11 +50,10 @@ const BasicTableContent = ({
   retry,
 }: {
   type: tableType;
-  data: IEdge[] | IContractEdge[];
-  txsCountsMap?: Map<string, CountResult>;
+  data: IEdge[] | IContractEdge[] | { tx: findByTagsQuery['transactions']['edges'][0], evmWallet: `0x${string}`, arweaveWallet: string, operatorFee: number }[];
+  txsCountsMap?: Record<string, number>;
   loading: boolean;
   error?: ApolloError;
-  state: IEdge;
   retry: () => void;
   selectedIdx: number;
   handleSelected: (index: number) => void;
@@ -152,19 +133,17 @@ const BasicTableContent = ({
       {data.map((row, idx) =>
         type === 'operators' ? (
           <OperatorRow
-            key={row.node.id}
-            operatorTx={row}
-            state={state}
-            totalStamps={txsCountsMap?.get(row.node.id)?.total || 0}
-            vouchedStamps={txsCountsMap?.get(row.node.id)?.vouched || 0}
+            key={( row as { tx: findByTagsQuery['transactions']['edges'][0], evmWallet: `0x${string}`, arweaveWallet: string, operatorFee: number }).tx.node.id}
+            operatorTx={row as { tx: findByTagsQuery['transactions']['edges'][0], evmWallet: `0x${string}`, arweaveWallet: string, operatorFee: number }}
+            totalStamps={txsCountsMap?.[(row as { tx: findByTagsQuery['transactions']['edges'][0], evmWallet: `0x${string}`, arweaveWallet: string, operatorFee: number }).tx.node.id] || 0}
             index={idx}
             isSelected={selectedIdx === idx}
             setSelected={handleSelected}
           />
         ) : (
           <ScriptRow
-            key={row.node.id}
-            scriptTx={row}
+            key={(row as IEdge).node.id}
+            scriptTx={row as IEdge}
             index={idx}
             isSelected={selectedIdx === idx}
             setSelected={handleSelected}
@@ -177,14 +156,13 @@ const BasicTableContent = ({
 
 export default function BasicTable(props: {
   type: tableType;
-  data: IEdge[] | IContractEdge[];
-  txsCountsMap?: Map<string, CountResult>;
+  data: IEdge[] | IContractEdge[] | { tx: findByTagsQuery['transactions']['edges'][0], evmWallet: `0x${string}`, arweaveWallet: string, operatorFee: number }[];
+  txsCountsMap?: Record<string, number>;
   loading: boolean;
   error?: ApolloError;
-  state: IEdge;
   retry: () => void;
   hasNextPage: boolean;
-  fetchMore: fetchMoreFn;
+  fetchMore: QueryResult<findByTagsQuery>['fetchMore'];
   selectedIdx: number;
   handleSelected: (index: number) => void;
 }) {
@@ -196,9 +174,9 @@ export default function BasicTable(props: {
       (async () =>
         props.fetchMore({
           variables: {
-            after: props.data[props.data.length - 1].cursor,
+            after: (props.data as IEdge[])[props.data.length - 1].cursor,
           },
-          updateQuery: (prev: { transactions: ITransactions }, { fetchMoreResult }) => {
+          updateQuery: (prev: findByTagsQuery, { fetchMoreResult }) => {
             if (!fetchMoreResult) {
               return prev;
             }

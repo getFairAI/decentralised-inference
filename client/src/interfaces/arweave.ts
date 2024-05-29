@@ -59,6 +59,7 @@ export interface INode {
   recipient: string;
   signature: string;
   block: IBlock;
+  address: string;
 }
 
 export interface IEdge {

@@ -16,27 +16,26 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { IContractEdge } from '@/interfaces/arweave';
-import { commonUpdateQuery } from '@/utils/common';
 import { useQuery, NetworkStatus } from '@apollo/client';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import FairSDKWeb from '@fair-protocol/sdk/web';
 import _ from 'lodash';
 import { TAG_NAMES } from '@/constants';
+import { findByIdDocument, findByIdQuery } from '@fairai/evm-sdk';
 type fetchWithFilterParam = 'none' | 'text' | 'video' | 'audio' | 'image';
-const defaultFeaturedElements = 3;
 
-const useFeaturedModels = (featuredElements = defaultFeaturedElements) => {
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [featuredTxs, setFeaturedTxs] = useState<IContractEdge[]>([]);
+const useFeaturedModels = () => {
+  const [featuredTxs, setFeaturedTxs] = useState<findByIdQuery['transactions']['edges']>([]);
   const [filtering, setFiltering] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
 
-  const elementsPerPage = 10;
+  const hardcodedIds = [
+    'k-15FFlgqRbZaoqnz1RyHwCC0NYUdf0YCb5B4smjZP4',
+    'yehWFToOVkPcD4SnFD-LGUi9stIm-kex8YYm2rF3X28',
+    'Pwip-YVna2wMDyuqVKfHPRRovoOxrMbOmkuXty8Z2Yk',
+    'D0ORC_JvuAd5yA51PwyzX-XdSQe_PX_mg83xy4xHYuA',
+  ];
 
-  const queryObject = FairSDKWeb.utils.getModelsQuery(elementsPerPage);
-  const { data, loading, error, networkStatus, refetch, fetchMore } = useQuery(queryObject.query, {
-    variables: queryObject.variables,
+  const { data, loading, error, networkStatus } = useQuery(findByIdDocument, {
+    variables: { ids: hardcodedIds },
     notifyOnNetworkStatusChange: true,
   });
 
@@ -46,56 +45,35 @@ const useFeaturedModels = (featuredElements = defaultFeaturedElements) => {
     if (data && networkStatus === NetworkStatus.ready) {
       (async () => {
         setFiltering(true);
-        const filtered = await FairSDKWeb.utils.modelsFilter(data.transactions.edges);
-        setHasNextPage(data.transactions.pageInfo.hasNextPage);
 
-        const newFilteredTxs = filtered.slice(currentPage, featuredElements);
-        if (!_.isEqual(newFilteredTxs, featuredTxs)) {
-          setFeaturedTxs(newFilteredTxs);
+        if (!_.isEqual(data.transactions.edges, featuredTxs)) {
+          setFeaturedTxs(data.transactions.edges.reverse());
         }
         setFiltering(false);
       })();
     }
-  }, [data, networkStatus, currentPage]);
+  }, [data, networkStatus ]);
 
-  const fetchNext = useCallback(() => {
-    if (data && hasNextPage) {
-      (async () => {
-        const txs = data?.transactions.edges;
-        await fetchMore({
-          variables: {
-            after: txs > 0 ? txs[txs.length - 1].cursor : undefined,
-          },
-          updateQuery: commonUpdateQuery,
-        });
-        setCurrentPage((page) => page + 1);
-      })();
-    }
-  }, [hasNextPage, data]);
 
   const fetchWithFilter = useCallback(
     (filter: fetchWithFilterParam) => {
       setFiltering(true);
       if (filter !== 'none') {
-        const cloneVariables = _.cloneDeep(queryObject.variables);
-        cloneVariables.tags.push({
-          name: TAG_NAMES.modelCategory,
-          values: [filter],
-        });
-
-        refetch(cloneVariables);
+        const txs = data?.transactions.edges;
+        const filtered = txs?.filter((tx) => tx.node.tags.find((tag) => tag.name === TAG_NAMES.modelCategory)?.value === filter);
+        setFeaturedTxs(filtered ?? []);
       } else {
-        refetch(queryObject.variables);
+        setFeaturedTxs(data?.transactions.edges ?? []);
       }
+      setFiltering(false);
     },
-    [queryObject, setFiltering, refetch],
+    [ data, setFeaturedTxs, setFiltering ],
   );
 
   return {
     loading: loadingOrFiltering,
     featuredTxs,
     error,
-    fetchNext,
     fetchWithFilter,
   };
 };

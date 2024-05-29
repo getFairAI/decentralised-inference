@@ -18,15 +18,12 @@
 
 import Logo from '@/components/logo';
 import {
-  BUY_AR_LINK,
-  BUY_AR_LINK_US,
-  BUY_U_LINK,
+  BUY_ARB_LINK,
+  BUY_USDC_LINK,
   CREATE_WALLET_LINK,
   MIN_U_BALANCE,
-  U_LOGO_SRC,
 } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
-import { WalletContext } from '@/context/wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_TXS_BY_RECIPIENT } from '@/queries/graphql';
 import { displayShortTxOrAddr, findTag } from '@/utils/common';
@@ -55,6 +52,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { isTxConfirmed } from '@/utils/arweave';
 import AiCard from '@/components/ai-card';
 import useModels from '@/hooks/useModels';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
 type EdgeWithStatus = IEdge & { status: string };
 
@@ -91,7 +89,7 @@ const WalletnotConnectedContent = () => {
           fontSize={'18px'}
           lineHeight={'24.3px'}
         >
-          Connect Wallet
+          Connect To the Arbitrum Network
         </Typography>
       </Button>
       <Box display={'flex'} gap={'8px'}>
@@ -116,7 +114,7 @@ const WalletnotConnectedContent = () => {
 
 const WalletNoFundsContent = () => {
   const theme = useTheme();
-  const { currentAddress, currentBalance, currentUBalance } = useContext(WalletContext);
+  const { currentAddress, ethBalance, usdcBalance } = useContext(EVMWalletContext);
   const [lastTx, setLastTx] = useState<EdgeWithStatus | null>(null);
   const [activeStep, setActiveStep] = useState(1);
   const navigate = useNavigate();
@@ -163,14 +161,14 @@ const WalletNoFundsContent = () => {
       >
         <Step sx={{ width: '100%' }}>
           <StepLabel>
-            <Typography fontWeight={'700'}>Top Up AR Balance</Typography>
+            <Typography fontWeight={'700'}>Top Up ETH Balance</Typography>
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
             <Box display={'flex'} width={'100%'} justifyContent={justifyContent} mt={'16px'}>
               <NumericFormat
-                label='Available AR Balance'
-                placeholder='Available AR Balance'
-                value={currentBalance}
+                label='Available ETH Balance'
+                placeholder='Available ETH Balance'
+                value={ethBalance}
                 thousandSeparator={true}
                 customInput={TextField}
                 variant='outlined'
@@ -181,7 +179,7 @@ const WalletNoFundsContent = () => {
                 }}
                 InputProps={{
                   endAdornment: (
-                    <img width='20px' height='20px' src='./arweave-logo-for-light.png' />
+                    <img width='20px' height='20px' src='./eth-logo.svg' />
                   ),
                 }}
                 FormHelperTextProps={{ component: 'div' } as Partial<FormHelperTextProps>}
@@ -197,36 +195,18 @@ const WalletNoFundsContent = () => {
                         noWrap
                       >
                         <InfoOutlined />
-                        Looking for a way to buy AR?
+                        Looking for a way to buy ETH on Arbitrum?
                       </Typography>
                       <Typography alignItems={'center'} color='primary' noWrap>
-                        <a href={BUY_AR_LINK} target='_blank' rel='noreferrer'>
+                        <a href={BUY_ARB_LINK} target='_blank' rel='noreferrer'>
                           <u>Find out How.</u>
-                        </a>
-                      </Typography>
-                    </Box>
-                    <Box display={'flex'} gap={'8px'}>
-                      <Typography
-                        display={'flex'}
-                        gap={'8px'}
-                        alignItems={'center'}
-                        fontWeight={'500'}
-                        color={'primary'}
-                        noWrap
-                      >
-                        <InfoOutlined />
-                        Are You in the U.S?
-                      </Typography>
-                      <Typography alignItems={'center'} color='primary' noWrap>
-                        <a href={BUY_AR_LINK_US} target='_blank' rel='noreferrer'>
-                          <u>Check this guide instead.</u>
                         </a>
                       </Typography>
                     </Box>
                   </>
                 }
               />
-              {currentBalance > 0 ? (
+              {ethBalance > 0 ? (
                 <CheckCircleOutlineIcon color='success' fontSize='large' sx={{ mt: '8px' }} />
               ) : (
                 <InfoOutlinedIcon color='warning' fontSize='large' sx={{ mt: '8px' }} />
@@ -266,21 +246,21 @@ const WalletNoFundsContent = () => {
                 sx={{ mt: 1, mr: 1 }}
                 className='plausible-event-name=Onboarding+Top+Up+U+Click'
               >
-                Top Up $U
+                Top Up USDC
               </Button>
             </Box>
           </StepContent>
         </Step>
         <Step>
           <StepLabel>
-            <Typography fontWeight={'700'}>Top Up $U Balance</Typography>
+            <Typography fontWeight={'700'}>Top Up USDC Balance</Typography>
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
             <Box display={'flex'} width={'100%'} justifyContent={justifyContent} mt={'16px'}>
               <NumericFormat
-                label='Available $U Balance'
-                placeholder='Available $U Balance'
-                value={currentUBalance}
+                label='Available USDC Balance'
+                placeholder='Available USDC Balance'
+                value={usdcBalance}
                 thousandSeparator={true}
                 customInput={TextField}
                 variant='outlined'
@@ -290,7 +270,7 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                 }}
                 InputProps={{
-                  endAdornment: <img width='20px' height='20px' src={U_LOGO_SRC} />,
+                  endAdornment: <img width='20px' height='20px' src={'./usdc-logo.svg'} />,
                 }}
                 FormHelperTextProps={{ component: 'div' } as Partial<FormHelperTextProps>}
                 helperText={
@@ -305,10 +285,10 @@ const WalletNoFundsContent = () => {
                         noWrap
                       >
                         <InfoOutlined />
-                        Looking for a way to get $U?
+                        Looking for a way to get USDC?
                       </Typography>
                       <Typography alignItems={'center'} color='primary' noWrap>
-                        <a href={BUY_U_LINK} target='_blank' rel='noreferrer'>
+                        <a href={BUY_USDC_LINK} target='_blank' rel='noreferrer'>
                           <u>Learn How.</u>
                         </a>
                       </Typography>
@@ -316,7 +296,7 @@ const WalletNoFundsContent = () => {
                   </>
                 }
               />
-              {currentUBalance >= MIN_U_BALANCE ? (
+              {usdcBalance >= MIN_U_BALANCE ? (
                 <CheckCircleOutlineIcon color='success' fontSize='large' sx={{ mt: '8px' }} />
               ) : (
                 <InfoOutlinedIcon color='warning' fontSize='large' sx={{ mt: '8px' }} />
@@ -329,7 +309,7 @@ const WalletNoFundsContent = () => {
                 variant='outlined'
                 className='plausible-event-name=Onboarding+Top+Up+AR+Click'
               >
-                Top Up AR
+                Top Up ETH
               </Button>
               <Button
                 sx={{ mt: 1, mr: 1 }}
@@ -381,7 +361,7 @@ const SinginWithFunds = () => {
 
 const SignIn = () => {
   const { pathname } = useLocation();
-  const { currentAddress, currentUBalance } = useContext(WalletContext);
+  const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const isConnected = useMemo(() => !!currentAddress, [currentAddress]);
 
   const navigate = useNavigate();
@@ -403,9 +383,9 @@ const SignIn = () => {
     >
       {!isConnected && <WalletnotConnectedContent />}
 
-      {isConnected && (currentUBalance < MIN_U_BALANCE || isSwap) && <WalletNoFundsContent />}
+      {isConnected && (usdcBalance < MIN_U_BALANCE || isSwap) && <WalletNoFundsContent />}
 
-      {!isSwap && isConnected && currentUBalance >= MIN_U_BALANCE && <SinginWithFunds />}
+      {!isSwap && isConnected && usdcBalance >= MIN_U_BALANCE && <SinginWithFunds />}
 
       <IconButton
         sx={{
