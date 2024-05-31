@@ -662,7 +662,7 @@ const Chat = () => {
       }
 
       if (dataSize > MAX_MESSAGE_SIZE) {
-        enqueueSnackbar('Message Too Long', { variant: 'error' });
+        enqueueSnackbar('Message Too Long. Message must not be bigger than 50kb, or 50000 characters.', { variant: 'error' });
         return false;
       }
 
@@ -760,16 +760,19 @@ const Chat = () => {
           publicKey: currentPubKey,
           version: 'x25519-xsalsa20-poly1305'
         });
-        dataToUpload = JSON.stringify(encrypted);
+        
         const encForOperator = encryptSafely({
           data: fileData,
           publicKey: currentOperator?.evmPublicKey ?? '',
           version: 'x25519-xsalsa20-poly1305'
         });
-        const encDataForOperator = JSON.stringify(encForOperator);
+
+        dataToUpload = JSON.stringify({
+          encData: encrypted,
+          encForOperator
+        });
 
         tags.push({ name: TAG_NAMES.privateMode, value: 'true' });
-        tags.push({ name: TAG_NAMES.encDataForOperator, value: encDataForOperator });
         tags.push({ name: 'User-Public-Key', value: currentPubKey });
       } else {
         dataToUpload = contextFileUrl;
@@ -810,7 +813,6 @@ const Chat = () => {
       }),
       privateMode,
       userPubKey: currentPubKey,
-      encDataForOperator: '',
       contextFileUrl: url,
     };
   }, [ currentConfig, currentPubKey ]);
@@ -892,35 +894,46 @@ const Chat = () => {
         return;
       }
 
+      let dataToUpload: string | { promptHistory?: string, prompt: string } = await file.text();
+      const isText = state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text';
       // only add prompt history on text solutions
-      if (state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text') {
+      if (isText) {
         // if is text solution get history from last response
-        await extractPromptHistory(config);
+        const promptHistory = await extractPromptHistory();
+        const dataSize = new TextEncoder().encode(promptHistory).length;
+
+        if (dataSize > MAX_MESSAGE_SIZE) {
+          enqueueSnackbar('You have reached the conversation limit. Please start a new conversation.', { variant: 'error' });
+          return;
+        }
+
+        dataToUpload = {
+          promptHistory,
+          prompt: dataToUpload,
+        };
       }
-
-      let dataToUpload: File | string = file;
+      
       if (config.privateMode) {
-        const fileData = await file.text();
-
         const encrypted = encryptSafely({
-          data: fileData,
+          data:  isText ? (dataToUpload as { promptHistory?: string, prompt: string }).prompt : dataToUpload,
           publicKey: currentPubKey,
           version: 'x25519-xsalsa20-poly1305'
         });
-        dataToUpload = JSON.stringify(encrypted);
-        // only add prompt history on text solutions
-        const operatorData = config.promptHistory !== '' ? {
-          text: fileData,
-          promptHistory: config.promptHistory,
-        } : fileData;
+
         const encForOperator = encryptSafely({
-          data: operatorData,
+          data: dataToUpload,
           publicKey: currentOperator?.evmPublicKey ?? '',
           version: 'x25519-xsalsa20-poly1305'
         });
-        config.encDataForOperator = JSON.stringify(encForOperator);
-        // remove decrypted prompt history from tags
-        config.promptHistory = undefined;
+
+        dataToUpload = JSON.stringify({
+          encPrompt: encrypted,
+          encForOperator
+        });
+      }
+
+      if (dataToUpload instanceof Object) {
+        dataToUpload = JSON.stringify(dataToUpload);
       }
   
       const { arweaveTxId }  = await prompt(dataToUpload, state.solution.node.id, {
@@ -966,32 +979,47 @@ const Chat = () => {
         return;
       }
 
+      let dataToUpload: string | { promptHistory?: string, prompt: string } = newMessage;
+      const isText = state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text';
       // only add prompt history on text solutions
-      if (state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text') {
+      if (isText) {
         // if is text solution get history from last response
-        await extractPromptHistory(config);
+        const promptHistory = await extractPromptHistory();
+        const dataSize = new TextEncoder().encode(promptHistory).length;
+
+        if (dataSize > MAX_MESSAGE_SIZE) {
+          enqueueSnackbar('You have reached the conversation limit. Please start a new conversation.', { variant: 'error' });
+          return;
+        }
+
+        dataToUpload = {
+          promptHistory,
+          prompt: newMessage,
+        };
       }
 
-      let dataToUpload = newMessage;
+      
       if (config.privateMode) {
         const encrypted = encryptSafely({
-          data: newMessage,
+          data: isText ? (dataToUpload as { promptHistory?: string, prompt: string }).prompt : dataToUpload,
           publicKey: currentPubKey,
           version: 'x25519-xsalsa20-poly1305'
         });
-        dataToUpload = JSON.stringify(encrypted);
-        const operatorData = config.promptHistory !== '' ? {
-          text: newMessage,
-          promptHistory: config.promptHistory,
-        } : newMessage;
+        
         const encForOperator = encryptSafely({
-          data: operatorData,
+          data: dataToUpload,
           publicKey: currentOperator?.evmPublicKey ?? '',
           version: 'x25519-xsalsa20-poly1305'
         });
-        config.encDataForOperator = JSON.stringify(encForOperator);
-        // remove decrypted prompt history from tags
-        config.promptHistory = undefined;
+
+        dataToUpload = JSON.stringify({
+          encPrompt: encrypted,
+          encForOperator
+        });
+      }
+
+      if (dataToUpload instanceof Object) {
+        dataToUpload = JSON.stringify(dataToUpload);
       }
 
       const { arweaveTxId } = await prompt(dataToUpload, state.solution.node.id, {
@@ -1019,21 +1047,23 @@ const Chat = () => {
     }
   };
 
-  const extractPromptHistory = async (config: ConfigurationValues) => {
+  const extractPromptHistory = async () => {
     const lastResponse = messages.findLast((el) => el.type === 'response');
     const isPrivateMode = lastResponse?.tags.find(tag => tag.name === 'Private-Mode')?.value === 'true';
-    const promptHistory = lastResponse?.tags.find(tag => tag.name === 'Prompt-History')?.value;
-    if (isPrivateMode && promptHistory) {
+    let lastMessageData = lastResponse?.msg;
+    if (isPrivateMode && lastMessageData) {
       // if private mode
-      // decrypt the last response
-      const result = await decrypt(promptHistory as `0x${string}`);
-
-      config.promptHistory = result;
-    } else if (promptHistory){
-      config.promptHistory = promptHistory;
+      // decrypt the last response if it has not been decrypted yet
+      lastMessageData = lastResponse?.decData ? lastResponse.decData : await decrypt(lastMessageData as `0x${string}`);
     } else {
       // ignore
     }
+    try {
+      return JSON.parse(lastMessageData as string).promptHistory as string;
+    } catch (error) {
+      // could not get prompt history ignore
+    }
+    return;
   };
 
   const sortMessages = (messages: IMessage[]) => {
@@ -1456,7 +1486,7 @@ const Chat = () => {
                   variant='subtitle1'
                   sx={{ color: theme.palette.error.main, fontWeight: 500, paddingLeft: '20px' }}
                 >
-                  Message Too Long
+                  Message Too Long. Message must not be bigger than 50kb, or 50000 characters.
                 </Typography>
               )}
             </Box>

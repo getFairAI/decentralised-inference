@@ -31,6 +31,7 @@ export interface IMessage {
   from: string;
   to: string;
   tags: ITag[];
+  decData?: string;
 }
 
 export interface IConfiguration extends FieldValues {
@@ -49,7 +50,6 @@ export interface IConfiguration extends FieldValues {
   licenseConfig?: LicenseForm;
   privateMode?: boolean;
   modelName?: string;
-  promptHistory?: string;
   contextFileUrl?: string | File; // URL or File to upload
 }
 
@@ -65,9 +65,7 @@ export interface ConfigurationValues {
   requestCaller?: string;
   privateMode?: boolean;
   userPubKey?: string;
-  encDataForOperator?: string;
   modelName: string;
-  promptHistory?: string;
   contextFileUrl?: string;
 }
 

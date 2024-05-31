@@ -60,6 +60,15 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         if (data['ciphertext'] && data['ephemPublicKey'] && data['nonce'] && data['version']) {
           setContent(data as EthEncryptedData);
           setType('encrypted');
+        } else if (data['response']) {
+          setContent(data['response'] as string);
+          setType('text');
+        } else if (data['prompt']) {
+          setContent(data['prompt'] as string);
+          setType('text');
+        } else if (data['encPrompt']) {
+          setContent(data['encPrompt'] as EthEncryptedData);
+          setType('encrypted');
         } else {
           setContent(JSON.stringify(data, null, 2));
           setType('text');
@@ -88,16 +97,25 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
   }, [message]);
 
   const handleDecrypt = useCallback(async () => {
-    if (message?.msg && type === 'encrypted') {
+    if (message?.msg && type === 'encrypted' && message.contentType?.includes('text')) {
+      const data = JSON.parse(message.msg as string);
+      const decrypted = await decrypt(JSON.stringify(data['encPrompt']) as `0x${string}`);
+      message.decData = decrypted;
+      setContent(decrypted);
+      setType('text');
+    } else if (message?.msg && type === 'encrypted') {
       const decrypted = await decrypt(message.msg as `0x${string}`);
       try {
         atob(decrypted);
         setContent(`data:image/png;base64,${decrypted}`);
         setType('image');
+        message.decData = decrypted;
       } catch (err) {   
         setContent(decrypted || 'Failed to decrypt');
         setType('text');
       }
+    } else {
+      // ignore
     }
   }, [ message, type ]);
 

@@ -258,7 +258,7 @@ export const OPERATOR_REGISTRATION_PAYMENT_TAGS = [
 ];
 
 const kb = 1024;
-const maxKb = 100;
+const maxKb = 50;
 
 export const MAX_MESSAGE_SIZE = kb * maxKb;
 

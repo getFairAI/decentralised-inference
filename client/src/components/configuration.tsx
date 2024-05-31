@@ -57,6 +57,7 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SelectControl from './select-control';
 import { findByTagsQuery } from '@fairai/evm-sdk';
 import ClearIcon from '@mui/icons-material/Clear';
+import TextControl from './text-control';
 
 const CustomTag = ({
   name,
@@ -323,10 +324,11 @@ const TextConfiguration = ({ messages, control, }: { messages: IMessage[], contr
       // ignore,
     }
   }, [ contextFileUrlField ]);
+
   return <>
     <FormControl component='fieldset' variant='standard'>
       <FormControlLabel
-        control={<Checkbox value={contextFileOn} onChange={handleContextFileToggle} disabled={contextFileDisabled} />}
+        control={<Checkbox value={contextFileOn} checked={contextFileOn} onChange={handleContextFileToggle} disabled={contextFileDisabled} />}
         label={<Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           Context File
           <Tooltip
@@ -345,8 +347,10 @@ const TextConfiguration = ({ messages, control, }: { messages: IMessage[], contr
     </FormControl>
     {contextFileOn && <Box display={'flex'} flexDirection={'column'}>
       {(!contextFileUrlField.value || (!(contextFileUrlField.value as File)?.name)) && <>
-        <TextField label={'Context File Url'} placeholder={'https://'} fullWidth disabled/>
-        <Typography variant='caption'>
+        <TextControl mat={{ label: 'Context File Url', placeholder:'https://', fullWidth: true, disabled: contextFileDisabled }} name={'contextFileUrl'} control={control}/>
+      </>}
+      {
+        !contextFileDisabled && <Typography variant='caption' >
           {'Alternatively, '}
           <u>
             <label htmlFor='inputUpload' style={{ cursor: 'pointer' }}>Upload your file</label>
@@ -362,7 +366,7 @@ const TextConfiguration = ({ messages, control, }: { messages: IMessage[], contr
               />
           </u>
         </Typography>
-      </>}
+      }
       {contextFileUrlField.value && (contextFileUrlField.value as File)?.name && <FormControl variant='outlined' fullWidth>
         <TextField
           value={(contextFileUrlField.value as File).name}
