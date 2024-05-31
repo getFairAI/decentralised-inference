@@ -16,7 +16,6 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import FilterContext from '@/context/filter';
 import { Box, Container, IconButton, Typography, useTheme } from '@mui/material';
 import {
   ReactElement,
@@ -95,7 +94,6 @@ const WarningMessage = () => {
 };
 
 export default function Layout({ children }: { children: ReactElement }) {
-  const [filterValue, setFilterValue] = useState('');
   const [headerHeight, setHeaderHeight] = useState('64px');
   const scrollableRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowDimensions();
@@ -117,7 +115,7 @@ export default function Layout({ children }: { children: ReactElement }) {
 
   return (
     <>
-      <Navbar setFilterValue={setFilterValue} isScrolled={isScrolled} />
+      <Navbar isScrolled={isScrolled} />
       <Container
         disableGutters
         sx={{
@@ -129,16 +127,14 @@ export default function Layout({ children }: { children: ReactElement }) {
         maxWidth={false}
       >
         <Box height={`calc(100% - ${warningHeight}px)`}>
-          <FilterContext.Provider value={filterValue}>
-            {pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse' && (
-              <Box ref={warningRef}>
-                <WarningMessage />
-              </Box>
-            )}
-            <main style={{ height: '100%' }} ref={scrollableRef}>
-              {children}
-            </main>
-          </FilterContext.Provider>
+          {(pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse') && (
+            <Box ref={warningRef} id={'warning-box'}>
+              <WarningMessage />
+            </Box>
+          )}
+          <main style={{ height: '100%' }} ref={scrollableRef}>
+            {children}
+          </main>
         </Box>
       </Container>
     </>
