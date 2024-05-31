@@ -54,7 +54,7 @@ export default function Home() {
         }}
       >
         {error && <Typography>Error: {error.message}</Typography>}
-        <Grid container spacing={10} display={'flex'} justifyContent={'flex-start'}>
+        <Grid container spacing={10} display={'flex'} justifyContent={'center'}>
           {loading && loadingTiles.map(el => <Grid item key={el}> <LoadingCard /></Grid>)}
           {txs.map((tx) => (
             <Grid item key={tx.node.id}>

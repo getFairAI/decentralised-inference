@@ -22,18 +22,22 @@ import { findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';
 import { findByTagsQuery, findByTagsAndOwnersDocument } from '@fairai/evm-sdk';
 import { Card, CardActionArea, Box, CardHeader, Typography, CardContent, Tooltip, useTheme } from '@mui/material';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ComputerIcon from '@mui/icons-material/Computer';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
-const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transactions']['edges'][0], operatorsData: OperatorData[], onSignIn?: boolean }) => {
+const Solution = ({ tx, operatorsData }: { tx: findByTagsQuery['transactions']['edges'][0], operatorsData: OperatorData[], onSignIn?: boolean }) => {
 
   const [ hasOperators, setHasOperators ] = useState(false);
   const [ avgFee, setAvgFee ] = useState(0);
   const [ numOperators, setNumOperators ] = useState(0);
   const [ imgUrl, setImgUrl ] = useState('');
   const [ isHovering, setIsHovering ] = useState(false);
+  const mainCardRef = useRef<HTMLDivElement>(null);
+  const [ topOffset, setTopOffset ] = useState(0);
+  const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
 
   const navigate = useNavigate();
   const theme = useTheme();
@@ -50,6 +54,12 @@ const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transa
     },
     skip: !tx.node.id || !tx.node.owner.address
   });
+
+  useEffect(() => {
+    if (mainCardRef.current) {
+      setTopOffset(mainCardRef.current.offsetTop);
+    }
+  }, [ currentAddress, usdcBalance ]);
 
   useEffect(() => {
     if (imageData) {
@@ -113,6 +123,7 @@ const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transa
 
   return <motion.div onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd}>
     <motion.div
+      ref={mainCardRef}
       animate={{ rotateY: isHovering ? -180 : 0 }}
       transition={{
         type: 'spring',
@@ -173,7 +184,7 @@ const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transa
         height: '352px',
         backfaceVisibility: 'hidden',
         position: 'absolute',
-        top: onSignIn ? 'calc(50% - 120px)' : '36px',
+        top: `${topOffset}px`,
       }}
     >
       <Card

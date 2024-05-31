@@ -97,18 +97,18 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
     if (data && networkStatus === NetworkStatus.ready && !_.isEqual(data, previousData)) {
       (async () => {
         const txs = [ ...data.transactions.edges ]; // mutable copy of txs
+        let allPreviousVersionsTxs: string[] = [];
         const filtered = txs.reduce((acc, el) => {
           acc.push(el);
           // find previousVersionsTag
           const previousVersions= findTag(el, 'previousVersions');
           if (previousVersions) {
-            const versionsArray: string[] = JSON.parse(previousVersions);
+            allPreviousVersionsTxs = allPreviousVersionsTxs.concat(...JSON.parse(previousVersions));
             // remove previous versions from accumulator array
-            const newAcc = acc.filter((el) => !versionsArray.includes(el.node.id));
-            return newAcc;
           }
+          const newAcc = acc.filter((el) => !allPreviousVersionsTxs.includes(el.node.id));
 
-          return acc;
+          return newAcc;
         }, [] as findByTagsQuery['transactions']['edges']);
 
         const filteredCopy = [ ...filtered ];

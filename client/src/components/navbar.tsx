@@ -252,14 +252,16 @@ const Navbar = ({
           </Box>
           <Box sx={{ gap: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center',  margin: '0px 16px', flexGrow: 1}}>
             {
+              pathname === '/' && <Link to='/browse'>
+               <Typography
+                 textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}
+               >
+                 Browse Requests
+               </Typography>
+             </Link>
+            }
+            {
               pathname === '/' && currentAddress && (<>
-                <Link to='/browse'>
-                  <Typography
-                    textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}
-                  >
-                    Browse Requests
-                  </Typography>
-                </Link>
                 <Link to='/request' style={{ border: `0.5px solid ${theme.palette.terciary.main}`, borderRadius: '8px'  }}>
                   <Typography padding={'9.5px 15px'} textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}>Request a Solution</Typography>
                 </Link>
