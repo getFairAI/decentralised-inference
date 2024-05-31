@@ -22,13 +22,19 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext } from 'react';
-import { Button, Icon, InputBase, Tooltip, useTheme } from '@mui/material';
+import {
+  useCallback,
+  useContext,
+} from 'react';
+import {
+  Button,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
 import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
-import { Timeout } from 'react-number-format/types/types';
 
 const WalletState = () => {
   const theme = useTheme();
@@ -167,10 +173,8 @@ const WalletState = () => {
 };
 
 const Navbar = ({
-  setFilterValue,
   isScrolled,
 }: {
-  setFilterValue: Dispatch<SetStateAction<string>>;
   isScrolled: boolean;
 }) => {
   const { currentAddress } = useContext(EVMWalletContext);
@@ -178,13 +182,7 @@ const Navbar = ({
   const theme = useTheme();
   const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
   const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
-  let keyTimeout: Timeout;
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(keyTimeout);
-    keyTimeout = setTimeout(() => {
-      setFilterValue(event.target.value);
-    }, 500);
-  };
+  const isGetFair = window.location.hostname.includes('getfair.ai');
 
   const appBarStyle = {
     zIndex,
@@ -220,44 +218,6 @@ const Navbar = ({
             display={{ sm: 'none', lg: 'flex' }}
           >
             {' '}
-            {/* hide searchbar on small screens */}
-            {pathname && pathname === '/' && (
-              <>
-                <Box
-                  sx={{
-                    borderRadius: '8px',
-                    margin: '0 50px',
-                    display: 'flex',
-                    justifyContent: spaceBetween,
-                    padding: '3px 20px 3px 50px',
-                    alignItems: 'center',
-                    border: 'solid',
-                    borderColor: theme.palette.terciary.main,
-                    borderWidth: '0.5px',
-                    width: '100%',
-                  }}
-                >
-                  <InputBase
-                    sx={{
-                      fontStyle: 'normal',
-                      fontWeight: 400,
-                      fontSize: '18px',
-                      lineHeight: '16px',
-                      width: '100%',
-                    }}
-                    onChange={handleChange}
-                    placeholder='Search...'
-                  />
-                  <Icon
-                    sx={{
-                      height: '30px',
-                    }}
-                  >
-                    <img src='./search-icon.svg'></img>
-                  </Icon>
-                </Box>
-              </>
-            )}
           </Box>
           <Box
             sx={{
@@ -300,6 +260,24 @@ const Navbar = ({
                 </Link>
               </>
             )}
+            { isGetFair && pathname === '/' &&
+              <Link
+                to='https://fairapp.ar-io.dev'
+                style={{
+                  border: `0.5px solid ${theme.palette.terciary.main}`,
+                  borderRadius: '8px',
+                }}
+              >
+                <Typography
+                  padding={'9.5px 15px'}
+                  textTransform={'uppercase'}
+                  lineHeight={1.3}
+                  sx={{ textWrap: 'nowrap' }}
+                >
+                  Open On Arweave
+                </Typography>
+              </Link>
+            }
           </Box>
           <Box
             className={'navbar-right-content'}
