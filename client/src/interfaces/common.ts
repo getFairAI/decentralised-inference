@@ -49,6 +49,26 @@ export interface IConfiguration extends FieldValues {
   licenseConfig?: LicenseForm;
   privateMode?: boolean;
   modelName?: string;
+  promptHistory?: string;
+  contextFileUrl?: string | File; // URL or File to upload
+}
+
+export interface ConfigurationValues {
+  assetNames?: string[];
+  customTags?: { name: string; value: string }[];
+  negativePrompt?: string;
+  nImages?: number;
+  title?: string;
+  description?: string;
+  width?: number;
+  height?: number;
+  requestCaller?: string;
+  privateMode?: boolean;
+  userPubKey?: string;
+  encDataForOperator?: string;
+  modelName: string;
+  promptHistory?: string;
+  contextFileUrl?: string;
 }
 
 export type voteForOptions = 'model' | 'script' | 'operator';

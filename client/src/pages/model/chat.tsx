@@ -51,6 +51,8 @@ import {
   N_PREVIOUS_BLOCKS,
   MAX_MESSAGE_SIZE,
   INFERENCE_REQUEST,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { useSnackbar } from 'notistack';
@@ -61,7 +63,7 @@ import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
-import { IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
+import { ConfigurationValues, IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatContent from '@/components/chat-content';
@@ -81,7 +83,7 @@ import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { encryptSafely } from '@metamask/eth-sig-util';
-import { findByTagsQuery } from '@fairai/evm-sdk';
+import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -334,6 +336,7 @@ const Chat = () => {
     prompt,
     updateUsdcBalance,
     getPubKey,
+    decrypt,
   } = useContext(EVMWalletContext);
   const { state }: { state: {
     defaultOperator?: OperatorData;
@@ -646,7 +649,7 @@ const Chat = () => {
     });
   };
 
-  const checkCanSend = (dataSize: number, isFile = false) => {
+  const checkCanSend = (dataSize: number) => {
     try {
       if (!currentOperator) {
         enqueueSnackbar('Missing Operator', { variant: 'error' });
@@ -658,7 +661,7 @@ const Chat = () => {
         return false;
       }
 
-      if (!isFile && dataSize > MAX_MESSAGE_SIZE) {
+      if (dataSize > MAX_MESSAGE_SIZE) {
         enqueueSnackbar('Message Too Long', { variant: 'error' });
         return false;
       }
@@ -729,14 +732,66 @@ const Chat = () => {
     [configReset],
   );
 
-  const getConfigValues = useCallback(() => {
-    const { generateAssets, description, negativePrompt, nImages, privateMode, modelName } = currentConfig;
+  const getConfigValues: () => Promise<ConfigurationValues> = useCallback(async () => {
+    const { generateAssets, description, negativePrompt, nImages, privateMode, modelName, contextFileUrl } = currentConfig;
     const assetNames = currentConfig.assetNames
       ? currentConfig.assetNames.split(';').map((el) => el.trim())
       : undefined;
     const customTags = (currentConfig.customTags as { name: string; value: string }[]) ?? [];
     const royalty = currentConfig.rareweaveConfig?.royalty;
     const { width: configWidth, height: configHeight } = currentConfig;
+
+    let url = '';
+    if (contextFileUrl instanceof File) {
+      // upload file to arweave
+      const tempDate = Date.now() / 1000;
+      const tags = [
+        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+        { name: TAG_NAMES.operationName, value: 'Context-File' },
+        { name: TAG_NAMES.unixTime, value: tempDate.toString() },
+      ];
+      let dataToUpload;
+      if (privateMode) {
+        const fileData = await contextFileUrl.text();
+
+        const encrypted = encryptSafely({
+          data: fileData,
+          publicKey: currentPubKey,
+          version: 'x25519-xsalsa20-poly1305'
+        });
+        dataToUpload = JSON.stringify(encrypted);
+        const encForOperator = encryptSafely({
+          data: fileData,
+          publicKey: currentOperator?.evmPublicKey ?? '',
+          version: 'x25519-xsalsa20-poly1305'
+        });
+        const encDataForOperator = JSON.stringify(encForOperator);
+
+        tags.push({ name: TAG_NAMES.privateMode, value: 'true' });
+        tags.push({ name: TAG_NAMES.encDataForOperator, value: encDataForOperator });
+        tags.push({ name: 'User-Public-Key', value: currentPubKey });
+      } else {
+        dataToUpload = contextFileUrl;
+      }
+      const id = await postOnArweave(dataToUpload, tags);
+      url = `https://arweave.net/${id}`;
+
+      enqueueSnackbar(
+        <>
+          Context File upload Successful
+          <br></br>
+          <a href={url} target={'_blank'} rel='noreferrer'>
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        {
+          variant: 'success',
+        },
+      );
+    } else {
+      url = contextFileUrl as string;
+    }
 
     return {
       generateAssets,
@@ -745,7 +800,7 @@ const Chat = () => {
       description,
       customTags,
       nImages,
-      modelName,
+      modelName: modelName ?? '',
       width: configWidth,
       height: configHeight,
       ...(royalty && {
@@ -756,6 +811,7 @@ const Chat = () => {
       privateMode,
       userPubKey: currentPubKey,
       encDataForOperator: '',
+      contextFileUrl: url,
     };
   }, [ currentConfig, currentPubKey ]);
 
@@ -819,19 +875,55 @@ const Chat = () => {
 
     const dataSize = file.size;
 
-    if (!checkCanSend(dataSize, true)) {
+    if (!checkCanSend(dataSize)) {
+      return;
+    }
+
+    if (!file.type.includes('text')) {
+      enqueueSnackbar('Only text files are supported', { variant: 'error' });
       return;
     }
 
     try {
-      const config = getConfigValues();
+      const config = await getConfigValues();
 
       if (!config.modelName) {
         enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
         return;
       }
+
+      // only add prompt history on text solutions
+      if (state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text') {
+        // if is text solution get history from last response
+        await extractPromptHistory(config);
+      }
+
+      let dataToUpload: File | string = file;
+      if (config.privateMode) {
+        const fileData = await file.text();
+
+        const encrypted = encryptSafely({
+          data: fileData,
+          publicKey: currentPubKey,
+          version: 'x25519-xsalsa20-poly1305'
+        });
+        dataToUpload = JSON.stringify(encrypted);
+        // only add prompt history on text solutions
+        const operatorData = config.promptHistory !== '' ? {
+          text: fileData,
+          promptHistory: config.promptHistory,
+        } : fileData;
+        const encForOperator = encryptSafely({
+          data: operatorData,
+          publicKey: currentOperator?.evmPublicKey ?? '',
+          version: 'x25519-xsalsa20-poly1305'
+        });
+        config.encDataForOperator = JSON.stringify(encForOperator);
+        // remove decrypted prompt history from tags
+        config.promptHistory = undefined;
+      }
   
-      const { arweaveTxId }  = await prompt(newMessage, state.solution.node.id, {
+      const { arweaveTxId }  = await prompt(dataToUpload, state.solution.node.id, {
         arweaveWallet: currentOperator?.arweaveWallet ?? '',
         evmWallet: currentOperator?.evmWallet ?? '' as `0x${string}`,
         operatorFee: currentOperator?.operatorFee ?? 0,
@@ -867,11 +959,17 @@ const Chat = () => {
     }
 
     try {
-      const config = getConfigValues();
+      const config = await getConfigValues();
 
       if (!config.modelName) {
         enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
         return;
+      }
+
+      // only add prompt history on text solutions
+      if (state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text') {
+        // if is text solution get history from last response
+        await extractPromptHistory(config);
       }
 
       let dataToUpload = newMessage;
@@ -882,12 +980,18 @@ const Chat = () => {
           version: 'x25519-xsalsa20-poly1305'
         });
         dataToUpload = JSON.stringify(encrypted);
+        const operatorData = config.promptHistory !== '' ? {
+          text: newMessage,
+          promptHistory: config.promptHistory,
+        } : newMessage;
         const encForOperator = encryptSafely({
-          data: newMessage,
+          data: operatorData,
           publicKey: currentOperator?.evmPublicKey ?? '',
           version: 'x25519-xsalsa20-poly1305'
         });
         config.encDataForOperator = JSON.stringify(encForOperator);
+        // remove decrypted prompt history from tags
+        config.promptHistory = undefined;
       }
 
       const { arweaveTxId } = await prompt(dataToUpload, state.solution.node.id, {
@@ -912,6 +1016,23 @@ const Chat = () => {
       } else {
         enqueueSnackbar(errorMsg, { variant: 'error' });
       }
+    }
+  };
+
+  const extractPromptHistory = async (config: ConfigurationValues) => {
+    const lastResponse = messages.findLast((el) => el.type === 'response');
+    const isPrivateMode = lastResponse?.tags.find(tag => tag.name === 'Private-Mode')?.value === 'true';
+    const promptHistory = lastResponse?.tags.find(tag => tag.name === 'Prompt-History')?.value;
+    if (isPrivateMode && promptHistory) {
+      // if private mode
+      // decrypt the last response
+      const result = await decrypt(promptHistory as `0x${string}`);
+
+      config.promptHistory = result;
+    } else if (promptHistory){
+      config.promptHistory = promptHistory;
+    } else {
+      // ignore
     }
   };
 
@@ -1117,6 +1238,7 @@ const Chat = () => {
         >
           <Configuration
             control={configControl}
+            messages={messages}
             setConfigValue={setConfigValue}
             reset={configReset}
             handleClose={handleAdvancedClose}

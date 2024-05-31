@@ -129,6 +129,8 @@ export const TAG_NAMES = {
   keywords: 'Keywords',
   solutionTransaction: 'Solution-Transaction',
   rewardsEvmAddress: 'Rewards-Evm-Address',
+  privateMode: 'Private-Mode',
+  encDataForOperator: 'Encrypted-Data-For-Operator',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';

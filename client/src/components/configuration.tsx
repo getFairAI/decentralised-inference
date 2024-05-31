@@ -16,8 +16,8 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { U_LOGO_SRC } from '@/constants';
-import { displayShortTxOrAddr, findTag } from '@/utils/common';
+import { MAX_MESSAGE_SIZE, U_LOGO_SRC } from '@/constants';
+import { displayShortTxOrAddr, findTag, printSize } from '@/utils/common';
 import {
   Box,
   Divider,
@@ -37,7 +37,7 @@ import {
   Checkbox,
   Tooltip,
 } from '@mui/material';
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -52,10 +52,11 @@ import {
   UseFormSetValue,
   useController,
 } from 'react-hook-form';
-import { IConfiguration, OperatorData } from '@/interfaces/common';
+import { IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SelectControl from './select-control';
 import { findByTagsQuery } from '@fairai/evm-sdk';
+import ClearIcon from '@mui/icons-material/Clear';
 
 const CustomTag = ({
   name,
@@ -275,9 +276,124 @@ const StableDiffusionConfigurations = ({
   );
 };
 
+const TextConfiguration = ({ messages, control, }: { messages: IMessage[], control: Control<IConfiguration, unknown> }) => {
+  const { field: contextFileUrlField } = useController({ control, name: 'contextFileUrl' });
+  const [ contextFileOn, setContextFileOn ] = useState(false);
+  const [ contextFileDisabled, setContextFileDisabled ] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (messages && messages.length === 0) {
+      // no messages yet, allow contextFile
+      setContextFileDisabled(false);
+    } else if (messages) {
+      // current contextFile 
+      const lastMessage = [ ...messages ].pop();
+      
+      const currentCtxFileUrl = lastMessage?.tags.find(tag => tag.name === 'Context-File-Url')?.value;
+      if (currentCtxFileUrl) {
+        setContextFileOn(true);
+        contextFileUrlField.onChange(currentCtxFileUrl);
+      }
+
+      setContextFileDisabled(true);
+    } else {
+      // ignore
+    }
+  }, [ messages,contextFileUrlField, setContextFileOn, setContextFileDisabled ]);
+
+  const handleContextFileToggle = useCallback(() => {
+    setContextFileOn((prev) => !prev);
+  }, [ setContextFileOn ]);
+
+  const handleUploadContextFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const newFile = event.target.files[0];
+      contextFileUrlField.onChange(newFile);
+    } else {
+      // ignore
+    }
+  }, [ contextFileUrlField ]);
+
+  const handleRemoveFile = useCallback(() => {
+    contextFileUrlField.onChange('');
+    if (inputRef && inputRef.current) {
+      inputRef.current.value = '';
+    } else {
+      // ignore,
+    }
+  }, [ contextFileUrlField ]);
+  return <>
+    <FormControl component='fieldset' variant='standard'>
+      <FormControlLabel
+        control={<Checkbox value={contextFileOn} onChange={handleContextFileToggle} disabled={contextFileDisabled} />}
+        label={<Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          Context File
+          <Tooltip
+            title={
+              <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                {contextFileDisabled ? 'Context File must be Set at the start of the conversation.'
+                  : 'Upload or provide an url for a context file. The context File is used as a database for the model to use when answering.'}
+              </Typography>
+            }
+            placement='bottom'
+          >
+            <InfoOutlined fontSize='small' />
+          </Tooltip>
+        </Typography>}
+      />
+    </FormControl>
+    {contextFileOn && <Box display={'flex'} flexDirection={'column'}>
+      {(!contextFileUrlField.value || (!(contextFileUrlField.value as File)?.name)) && <>
+        <TextField label={'Context File Url'} placeholder={'https://'} fullWidth disabled/>
+        <Typography variant='caption'>
+          {'Alternatively, '}
+          <u>
+            <label htmlFor='inputUpload' style={{ cursor: 'pointer' }}>Upload your file</label>
+              <input
+                ref={inputRef}
+                id={'inputUpload'}
+                type='file'
+                hidden
+                multiple={false}
+                accept='text/*'
+                onChange={handleUploadContextFile}
+                onBlur={handleRemoveFile}
+              />
+          </u>
+        </Typography>
+      </>}
+      {contextFileUrlField.value && (contextFileUrlField.value as File)?.name && <FormControl variant='outlined' fullWidth>
+        <TextField
+          value={(contextFileUrlField.value as File).name}
+          disabled={true}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position='start'>
+                <IconButton
+                  aria-label='Remove'
+                  onClick={handleRemoveFile}
+                  className='plausible-event-name=Remove+Contecxt+File+Click'
+                >
+                  <ClearIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+            endAdornment: <InputAdornment position='start'>{printSize(contextFileUrlField.value as File)}</InputAdornment>,
+            readOnly: true,
+          }}
+          error={(contextFileUrlField.value as File).size > MAX_MESSAGE_SIZE}
+          helperText={(contextFileUrlField.value as File).size > MAX_MESSAGE_SIZE ? 'File size should be less than 100KB' : ''}
+        />
+      </FormControl>}
+    </Box>}
+  </>;
+};
+
 const Configuration = ({
   control,
   currentOperator,
+  messages,
   setCurrentOperator,
   setConfigValue,
   reset,
@@ -285,6 +401,7 @@ const Configuration = ({
 }: {
   control: Control<IConfiguration, unknown>;
   currentOperator?: OperatorData;
+  messages: IMessage[],
   setCurrentOperator: Dispatch<SetStateAction<OperatorData | undefined>>;
   setConfigValue: UseFormSetValue<IConfiguration>;
   reset: UseFormReset<IConfiguration>;
@@ -297,8 +414,14 @@ const Configuration = ({
     availableOperators: OperatorData[];
   }} = useLocation();
   const [customTags, setCustomTags] = useState<{ name: string; value: string }[]>([]);
+  
   const nameRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLTextAreaElement>(null);
+
+  const isTextSolution = useMemo(
+    () => findTag(state.solution, 'output') === 'text',
+    [state],
+  );
 
   const {
     field: assetNamesField,
@@ -306,12 +429,13 @@ const Configuration = ({
   } = useController({ control, name: 'assetNames' });
   const { field: descriptionField } = useController({ control, name: 'description' });
   const { field: privateModeField } = useController({ control, name: 'privateMode' });
+  
 
   const availableModels = useMemo(() => JSON.parse(state.solution.node.tags.find(tag => tag.name === 'Supported-Models')?.value ?? '[]'), [ state ]);
 
   useEffect(() => {
     if (availableModels.length > 0) {
-      setConfigValue('modelName', availableModels[0].name);
+      setConfigValue('modelName', availableModels[0].name, { shouldDirty : true, shouldTouch: true, shouldValidate: true });
     }
   }, [availableModels]);
 
@@ -362,8 +486,6 @@ const Configuration = ({
       // ifgnore
     }
   }, [state, setCurrentOperator ]);
-
-  useEffect(() => console.log(currentOperator), [ currentOperator]);
 
   return (
     <Box
@@ -450,6 +572,7 @@ const Configuration = ({
           <Typography variant='h4'>Transaction Configurations</Typography>
         </Divider>
       </Box>
+      {isTextSolution && <TextConfiguration messages={messages} control={control} />}
       <FormControl component='fieldset' variant='standard'>
         <FormControlLabel
           control={<Checkbox ref={privateModeField.ref} value={privateModeField.value} onChange={privateModeField.onChange} />}
