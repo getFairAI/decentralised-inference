@@ -30,7 +30,7 @@ const WalletGuard = ({ children }: { children: ReactElement }) => {
     if (!evmProvider && (!currentAddress || !usdcBalance)) {
       setCanUseInference(false);
     }
-  }, [ evmProvider, currentAddress, usdcBalance]);
+  }, [evmProvider, currentAddress, usdcBalance]);
 
   if (canUseInference) {
     return children;

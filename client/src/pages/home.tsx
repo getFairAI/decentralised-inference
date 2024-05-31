@@ -16,10 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  Box,
-  Container, Grid,  Typography,
-} from '@mui/material';
+import { Box, Container, Grid, Typography } from '@mui/material';
 import '@/styles/ui.css';
 import useSolutions from '@/hooks/useSolutions';
 import LoadingCard from '@/components/loading-card';
@@ -30,11 +27,7 @@ import Solution from '@/components/solution';
 
 export default function Home() {
   const target = useRef<HTMLDivElement>(null);
-  const {
-    loading,
-    txs,
-    error,
-  } = useSolutions(target);
+  const { loading, txs, error } = useSolutions(target);
 
   const { validTxs: operatorsData } = useOperators(txs);
   const loadingTiles = genLoadingArray(10);
@@ -50,15 +43,24 @@ export default function Home() {
           '@media all': {
             maxWidth: '100%',
           },
-          mt: '36px'
+          mt: '36px',
         }}
       >
         {error && <Typography>Error: {error.message}</Typography>}
         <Grid container spacing={10} display={'flex'} justifyContent={'center'}>
-          {loading && loadingTiles.map(el => <Grid item key={el}> <LoadingCard /></Grid>)}
+          {loading &&
+            loadingTiles.map((el) => (
+              <Grid item key={el}>
+                {' '}
+                <LoadingCard />
+              </Grid>
+            ))}
           {txs.map((tx) => (
             <Grid item key={tx.node.id}>
-              <Solution tx={tx} operatorsData={operatorsData.filter(el => el.solutionId === tx.node.id)}/>
+              <Solution
+                tx={tx}
+                operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
+              />
             </Grid>
           ))}
         </Grid>
@@ -66,4 +68,4 @@ export default function Home() {
       </Container>
     </>
   );
-};
+}

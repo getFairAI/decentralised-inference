@@ -19,9 +19,32 @@
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import { useState, useContext, useRef, SyntheticEvent, KeyboardEvent, useEffect, Dispatch, SetStateAction, useCallback, } from 'react';
+import {
+  useState,
+  useContext,
+  useRef,
+  SyntheticEvent,
+  KeyboardEvent,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+} from 'react';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import { Box, Card, CardContent, CardHeader, ClickAwayListener, Divider, Grow, MenuItem, MenuList, Paper, Popper, Typography } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  ClickAwayListener,
+  Divider,
+  Grow,
+  MenuItem,
+  MenuList,
+  Paper,
+  Popper,
+  Typography,
+} from '@mui/material';
 import OpenInNew from '@mui/icons-material/OpenInNew';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import { ChevronRight } from '@mui/icons-material';
@@ -33,7 +56,7 @@ import { ChooseWalletContext } from '@/context/choose-wallet';
 const Option = ({
   option,
   setOpen,
-  setLinksOpen
+  setLinksOpen,
 }: {
   option: string;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -42,7 +65,16 @@ const Option = ({
   const navigate = useNavigate();
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
 
-  const showIcons = ['Twitter', 'Github', 'Discord', 'Whitepaper', 'Terms And Conditions', 'Studio', 'Top Up', 'Change Wallet'];
+  const showIcons = [
+    'Twitter',
+    'Github',
+    'Discord',
+    'Whitepaper',
+    'Terms And Conditions',
+    'Studio',
+    'Top Up',
+    'Change Wallet',
+  ];
 
   const handleOptionClick = useCallback(() => {
     (async () => {
@@ -105,28 +137,43 @@ const Option = ({
   }, [option]);
 
   if (showIcons.includes(option)) {
-    return <MenuItem sx={{ borderRadius: '10px', margin: '8px'  }} onClick={handleOptionClick}>
-      <Typography sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}><GetIcon input={option}></GetIcon>{option}</Typography>
-    </MenuItem>;
+    return (
+      <MenuItem sx={{ borderRadius: '10px', margin: '8px' }} onClick={handleOptionClick}>
+        <Typography sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <GetIcon input={option}></GetIcon>
+          {option}
+        </Typography>
+      </MenuItem>
+    );
   }
 
   return (
     <MenuItem sx={{ borderRadius: '10px', margin: '8px' }} onClick={handleOptionClick}>
-      <Typography sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>{option}<ChevronRight fontSize='inherit'/></Typography>
+      <Typography
+        sx={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {option}
+        <ChevronRight fontSize='inherit' />
+      </Typography>
     </MenuItem>
   );
 };
 
 export default function ProfileMenu() {
- /*  const [ trasnformPosition, setTransformPosition ] = useState(false); */
-  const [ open, setOpen] = useState(false);
-  const [ linksOpen, setLinksOpen ] = useState(false);
+  /*  const [ trasnformPosition, setTransformPosition ] = useState(false); */
+  const [open, setOpen] = useState(false);
+  const [linksOpen, setLinksOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
     setLinksOpen(false);
   };
-  const { currentAddress, ethBalance, usdcBalance,  disconnect } = useContext(EVMWalletContext);
+  const { currentAddress, ethBalance, usdcBalance, disconnect } = useContext(EVMWalletContext);
 
   const handleListKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Tab') {
@@ -147,7 +194,7 @@ export default function ProfileMenu() {
     }
 
     prevOpen.current = open;
-  }, [open,]);
+  }, [open]);
 
   const prevLinksOpen = useRef(linksOpen);
   useEffect(() => {
@@ -156,13 +203,10 @@ export default function ProfileMenu() {
     }
 
     prevLinksOpen.current = open;
-  }, [open,]);
+  }, [open]);
 
   const handleClose = (event: Event | SyntheticEvent) => {
-    if (
-      anchorRef.current &&
-      anchorRef.current.contains(event.target as HTMLElement)
-    ) {
+    if (anchorRef.current && anchorRef.current.contains(event.target as HTMLElement)) {
       return;
     }
 
@@ -170,10 +214,7 @@ export default function ProfileMenu() {
   };
 
   const handleLinksClose = (event: Event | SyntheticEvent) => {
-    if (
-      anchorRef.current &&
-      anchorRef.current.contains(event.target as HTMLElement)
-    ) {
+    if (anchorRef.current && anchorRef.current.contains(event.target as HTMLElement)) {
       return;
     }
 
@@ -191,11 +232,11 @@ export default function ProfileMenu() {
   const handleDisconnect = useCallback(() => {
     setOpen(false);
     disconnect();
-  }, [ setOpen, disconnect ]);
+  }, [setOpen, disconnect]);
 
   const handleViewInExplorer = useCallback(() => {
     window.open(`https://arbiscan.io/address/${currentAddress}`, '_blank');
-  }, [ currentAddress ]);
+  }, [currentAddress]);
 
   return (
     <div>
@@ -207,9 +248,11 @@ export default function ProfileMenu() {
         aria-haspopup='true'
         onClick={handleToggle}
         ref={anchorRef}
-        sx={{
-          /* ...!!currentAddress && { paddingLeft: 0}, */
-        }}
+        sx={
+          {
+            /* ...!!currentAddress && { paddingLeft: 0}, */
+          }
+        }
       >
         {showIcon()}
       </IconButton>
@@ -225,17 +268,29 @@ export default function ProfileMenu() {
         }}
       >
         {({ TransitionProps }) => (
-          <Grow
-            {...TransitionProps}
-          >
+          <Grow {...TransitionProps}>
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
                 <Card variant='outlined'>
                   <CardHeader
-                    avatar={<IconButton onClick={handleDisconnect}><PowerSettingsNewIcon /></IconButton>}
+                    avatar={
+                      <IconButton onClick={handleDisconnect}>
+                        <PowerSettingsNewIcon />
+                      </IconButton>
+                    }
                     subheader={'Connected Account'}
                     title={
-                      <Typography fontWeight={500} sx={{ textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '2px', cursor: 'pointer' }} onClick={handleViewInExplorer}>
+                      <Typography
+                        fontWeight={500}
+                        sx={{
+                          textDecoration: 'underline',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          cursor: 'pointer',
+                        }}
+                        onClick={handleViewInExplorer}
+                      >
                         {`${currentAddress.slice(0, 6)}...${currentAddress.slice(-4)}`}
                         <OpenInNew fontSize='inherit' />
                       </Typography>
@@ -253,34 +308,32 @@ export default function ProfileMenu() {
                       '& .MuiCardHeader-content': {
                         display: 'flex',
                         flexDirection: 'column-reverse',
-                      }
+                      },
                     }}
                   />
-                  <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 0 }}>
+                  <CardContent
+                    sx={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 0 }}
+                  >
                     <Box display={'flex'} justifyContent={'space-between'}>
                       <Box display={'flex'} alignItems={'center'} gap={'8px'}>
                         <img width='20px' height='20px' src='./eth-logo.svg' />
                         <Typography fontWeight={600}>ETH</Typography>
                       </Box>
-                      <Typography fontWeight={400}>
-                        {ethBalance.toPrecision(4)}
-                      </Typography>
+                      <Typography fontWeight={400}>{ethBalance.toPrecision(4)}</Typography>
                     </Box>
                     <Box display={'flex'} justifyContent={'space-between'}>
                       <Box display={'flex'} alignItems={'center'} gap={'8px'}>
                         <img width='20px' height='20px' src='./usdc-logo.svg' />
                         <Typography fontWeight={600}>USDC</Typography>
                       </Box>
-                      <Typography fontWeight={400}>
-                        {usdcBalance.toPrecision(4)}
-                      </Typography>
+                      <Typography fontWeight={400}>{usdcBalance.toPrecision(4)}</Typography>
                     </Box>
                   </CardContent>
                   <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.05)' }} />
                   <MenuList
                     autoFocusItem={open}
-                    id="composition-menu"
-                    aria-labelledby="composition-button"
+                    id='composition-menu'
+                    aria-labelledby='composition-button'
                     onKeyDown={handleListKeyDown}
                   >
                     <Option option='Links' setOpen={setOpen} setLinksOpen={setLinksOpen} />
@@ -307,19 +360,17 @@ export default function ProfileMenu() {
         }}
       >
         {({ TransitionProps }) => (
-          <Grow
-            {...TransitionProps}
-          >
+          <Grow {...TransitionProps}>
             <Paper>
               <ClickAwayListener onClickAway={handleLinksClose}>
                 <Card variant='outlined'>
                   <MenuList
                     autoFocusItem={linksOpen}
-                    id="composition-menu"
-                    aria-labelledby="composition-button"
+                    id='composition-menu'
+                    aria-labelledby='composition-button'
                     onKeyDown={handleListKeyDown}
                   >
-                    <Option option='Twitter' setOpen={setOpen} setLinksOpen={setLinksOpen}/>
+                    <Option option='Twitter' setOpen={setOpen} setLinksOpen={setLinksOpen} />
                     <Option option='Github' setOpen={setOpen} setLinksOpen={setLinksOpen} />
                     <Option option='Discord' setOpen={setOpen} setLinksOpen={setLinksOpen} />
                     <Option option='Whitepaper' setOpen={setOpen} setLinksOpen={setLinksOpen} />

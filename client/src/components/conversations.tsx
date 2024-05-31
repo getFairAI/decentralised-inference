@@ -127,7 +127,7 @@ const Conversations = ({
   const [conversationIds, setConversationIds] = useState<number[]>([]);
   const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
   const [filterConversations, setFilterConversations] = useState('');
-  const [ conversationsLoading, setConversationsLoading ] = useState(false);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
   /* const conversationsTarget = useRef<HTMLDivElement>(null); */
   /* const isConversationOnScreen = useOnScreen(conversationsTarget); */
   const { enqueueSnackbar } = useSnackbar();
@@ -155,33 +155,44 @@ const Conversations = ({
       if (currentAddress) {
         setConversationsLoading(true);
         const irysQquery = new Query();
-        const results = await irysQquery.search('irys:transactions').tags([
-          {
-            name: TAG_NAMES.protocolName,
-            values: [PROTOCOL_NAME],
-          },
-          {
-            name: TAG_NAMES.protocolVersion,
-            values: [PROTOCOL_VERSION],
-          },
-          {
-            name: TAG_NAMES.operationName,
-            values: ['Conversation Start'],
-          },
-          {
-            name: TAG_NAMES.solutionTransaction,
-            values: [ state.solution.node.id ],
-          },
-        ]).from([currentAddress]);
-  
+        const results = await irysQquery
+          .search('irys:transactions')
+          .tags([
+            {
+              name: TAG_NAMES.protocolName,
+              values: [PROTOCOL_NAME],
+            },
+            {
+              name: TAG_NAMES.protocolVersion,
+              values: [PROTOCOL_VERSION],
+            },
+            {
+              name: TAG_NAMES.operationName,
+              values: ['Conversation Start'],
+            },
+            {
+              name: TAG_NAMES.solutionTransaction,
+              values: [state.solution.node.id],
+            },
+          ])
+          .from([currentAddress]);
+
         if (results.length === 0) {
-           // no conversations yet, create new
+          // no conversations yet, create new
           await createNewConversation(1);
           setCurrentConversationId(1);
           setConversationIds([1]);
           setFilteredConversationIds([1]);
         } else {
-          const cids = Array.from(new Set(results.map((el) => parseFloat(el.tags.find(tag => tag.name === 'Conversation-Identifier')?.value as string))));
+          const cids = Array.from(
+            new Set(
+              results.map((el) =>
+                parseFloat(
+                  el.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value as string,
+                ),
+              ),
+            ),
+          );
           setConversationIds(cids);
           setFilteredConversationIds(cids);
           setCurrentConversationId(cids[cids.length - 1]);
@@ -189,7 +200,7 @@ const Conversations = ({
         setConversationsLoading(false);
       }
     })();
-  }, [ currentAddress ]);
+  }, [currentAddress]);
 
   useEffect(() => {
     (async () => {

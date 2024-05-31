@@ -110,14 +110,14 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         setContent(`data:image/png;base64,${decrypted}`);
         setType('image');
         message.decData = decrypted;
-      } catch (err) {   
+      } catch (err) {
         setContent(decrypted || 'Failed to decrypt');
         setType('text');
       }
     } else {
       // ignore
     }
-  }, [ message, type ]);
+  }, [message, type]);
 
   if (type === 'image') {
     return (
@@ -159,32 +159,36 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
       </Typography>
     );
   } else if (type === 'encrypted') {
-    return (<Box sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '100%',
-    }}>
-      <Typography
+    return (
+      <Box
         sx={{
-          fontStyle: 'normal',
-          fontWeight: 400,
-          fontSize: '25px',
-          lineHeight: '34px',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: '8px',
+          justifyContent: 'center',
+          width: '100%',
         }}
-        gutterBottom
       >
-        <LockOutlined />
-        {'This content is encrypted.'}
-      </Typography>
-      <Button variant='outlined' onClick={handleDecrypt}>
-        Decrypt
-      </Button>
-    </Box>);
+        <Typography
+          sx={{
+            fontStyle: 'normal',
+            fontWeight: 400,
+            fontSize: '25px',
+            lineHeight: '34px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+          gutterBottom
+        >
+          <LockOutlined />
+          {'This content is encrypted.'}
+        </Typography>
+        <Button variant='outlined' onClick={handleDecrypt}>
+          Decrypt
+        </Button>
+      </Box>
+    );
   } else {
     return (
       <FormControl variant='outlined' fullWidth>

@@ -58,18 +58,22 @@ const StampsMenu: React.FC<StampsMenuProps> = (targetTx: StampsMenuProps) => {
     (async () => {
       if (targetTx.id) {
         try {
-          const countMap = await countStamps([ targetTx.id ]);
+          const countMap = await countStamps([targetTx.id]);
           const irys = new Query();
-  
+
           if (currentAddress !== '') {
-            const [ hasStamped ] = await irys.search('irys:transactions').tags([
-              { name: 'Protocol-Name', values: ['Stamp'] },
-              { name: 'Data-Source', values: [targetTx.id] },
-            ]).from([ currentAddress ]).limit(1);
-  
+            const [hasStamped] = await irys
+              .search('irys:transactions')
+              .tags([
+                { name: 'Protocol-Name', values: ['Stamp'] },
+                { name: 'Data-Source', values: [targetTx.id] },
+              ])
+              .from([currentAddress])
+              .limit(1);
+
             setIsStamped(!!hasStamped);
           }
-  
+
           setTotalStamps(countMap ? countMap[targetTx.id] : 0);
         } catch (error) {
           if (error instanceof Error) {
@@ -126,9 +130,7 @@ const StampsMenu: React.FC<StampsMenuProps> = (targetTx: StampsMenuProps) => {
       <HtmlTooltip
         title={
           <div>
-            <div>
-              Total: {totalStamps}
-            </div>
+            <div>Total: {totalStamps}</div>
             <br></br>
             <div>{tooltipText}</div>
           </div>

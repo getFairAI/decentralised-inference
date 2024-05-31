@@ -34,7 +34,7 @@ const useRequests = ({
 }) => {
   const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
   const irysQuery = gql`
-    query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String)  {
+    query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String) {
       transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
         edges {
           node {
@@ -72,7 +72,7 @@ const useRequests = ({
     const tags = [
       { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
       { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-      { name: TAG_NAMES.operationName, values: [ INFERENCE_REQUEST] },
+      { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
     ];
     if (solutionTx) {
       tags.push({ name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
@@ -81,15 +81,15 @@ const useRequests = ({
     if (conversationId) {
       tags.push({ name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
     }
-  
+
     getChatRequests({
       variables: {
         tags,
-        owners: [ userAddr ],
-        first: first ?? 10
+        owners: [userAddr],
+        first: first ?? 10,
       },
       context: {
-        clientName: 'irys'
+        clientName: 'irys',
       },
       fetchPolicy: 'network-only',
       nextFetchPolicy: 'network-only',
@@ -101,7 +101,6 @@ const useRequests = ({
       setHasRequestNextPage(requestsData.transactions.pageInfo.hasNextPage);
     }
   }, [requestsData, requestNetworkStatus, setHasRequestNextPage]);
-
 
   const fetchMore = () => {
     requestFetchMore({

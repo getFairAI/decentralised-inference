@@ -37,7 +37,16 @@ import {
   Checkbox,
   Tooltip,
 } from '@mui/material';
-import { ChangeEvent, Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useLocation } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -86,7 +95,7 @@ const CustomTag = ({
 
 const StableDiffusionConfigurations = ({
   control,
-  fee
+  fee,
 }: {
   control: Control<IConfiguration, unknown>;
   fee: number;
@@ -98,11 +107,15 @@ const StableDiffusionConfigurations = ({
   const landscapeWidth = 1280;
   const landscapeHeight = 720;
   const squareWidth = 1024;
-  const { state }: { state: {
-    defaultOperator?: OperatorData;
-    solution: findByTagsQuery['transactions']['edges'][0];
-    availableOperators: OperatorData[];
-  }} = useLocation();
+  const {
+    state,
+  }: {
+    state: {
+      defaultOperator?: OperatorData;
+      solution: findByTagsQuery['transactions']['edges'][0];
+      availableOperators: OperatorData[];
+    };
+  } = useLocation();
 
   const [usdCost, setUsdCost] = useState(0);
   const [showCustomAspectRatio, setShowCustomAspectRatio] = useState(false);
@@ -119,7 +132,7 @@ const StableDiffusionConfigurations = ({
 
   useEffect(() => {
     setUsdCost(fee * defaultImages);
-  }, [ fee ]);
+  }, [fee]);
 
   const handleSliderChange = useCallback(
     (_event: Event, newValue: number | number[]) => {
@@ -129,33 +142,30 @@ const StableDiffusionConfigurations = ({
     [nImagesField, fee, setUsdCost],
   );
 
-  const handleAspectRatioChange = useCallback(
-    (event: SelectChangeEvent) => {
-      switch (event.target.value) {
-        case 'Portrait':
-          setShowCustomAspectRatio(false);
-          widthField.onChange(portraitWidth);
-          heightField.onChange(portraitHeight);
-          break;
-        case 'Landscape':
-          setShowCustomAspectRatio(false);
-          widthField.onChange(landscapeWidth);
-          heightField.onChange(landscapeHeight);
-          break;
-        case 'Square':
-          setShowCustomAspectRatio(false);
-          widthField.onChange(squareWidth);
-          heightField.onChange(squareWidth);
-          break;
-        default:
-          setShowCustomAspectRatio(false);
-          widthField.onChange(0);
-          heightField.onChange(0);
-          break;
-      }
-    },
-    [],
-  );
+  const handleAspectRatioChange = useCallback((event: SelectChangeEvent) => {
+    switch (event.target.value) {
+      case 'Portrait':
+        setShowCustomAspectRatio(false);
+        widthField.onChange(portraitWidth);
+        heightField.onChange(portraitHeight);
+        break;
+      case 'Landscape':
+        setShowCustomAspectRatio(false);
+        widthField.onChange(landscapeWidth);
+        heightField.onChange(landscapeHeight);
+        break;
+      case 'Square':
+        setShowCustomAspectRatio(false);
+        widthField.onChange(squareWidth);
+        heightField.onChange(squareWidth);
+        break;
+      default:
+        setShowCustomAspectRatio(false);
+        widthField.onChange(0);
+        heightField.onChange(0);
+        break;
+    }
+  }, []);
 
   if (!showOutputConfiguration) {
     return null;
@@ -277,10 +287,16 @@ const StableDiffusionConfigurations = ({
   );
 };
 
-const TextConfiguration = ({ messages, control, }: { messages: IMessage[], control: Control<IConfiguration, unknown> }) => {
+const TextConfiguration = ({
+  messages,
+  control,
+}: {
+  messages: IMessage[];
+  control: Control<IConfiguration, unknown>;
+}) => {
   const { field: contextFileUrlField } = useController({ control, name: 'contextFileUrl' });
-  const [ contextFileOn, setContextFileOn ] = useState(false);
-  const [ contextFileDisabled, setContextFileDisabled ] = useState(false);
+  const [contextFileOn, setContextFileOn] = useState(false);
+  const [contextFileDisabled, setContextFileDisabled] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -288,10 +304,12 @@ const TextConfiguration = ({ messages, control, }: { messages: IMessage[], contr
       // no messages yet, allow contextFile
       setContextFileDisabled(false);
     } else if (messages) {
-      // current contextFile 
-      const lastMessage = [ ...messages ].pop();
-      
-      const currentCtxFileUrl = lastMessage?.tags.find(tag => tag.name === 'Context-File-Url')?.value;
+      // current contextFile
+      const lastMessage = [...messages].pop();
+
+      const currentCtxFileUrl = lastMessage?.tags.find(
+        (tag) => tag.name === 'Context-File-Url',
+      )?.value;
       if (currentCtxFileUrl) {
         setContextFileOn(true);
         contextFileUrlField.onChange(currentCtxFileUrl);
@@ -301,20 +319,23 @@ const TextConfiguration = ({ messages, control, }: { messages: IMessage[], contr
     } else {
       // ignore
     }
-  }, [ messages,contextFileUrlField, setContextFileOn, setContextFileDisabled ]);
+  }, [messages, contextFileUrlField, setContextFileOn, setContextFileDisabled]);
 
   const handleContextFileToggle = useCallback(() => {
     setContextFileOn((prev) => !prev);
-  }, [ setContextFileOn ]);
+  }, [setContextFileOn]);
 
-  const handleUploadContextFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const newFile = event.target.files[0];
-      contextFileUrlField.onChange(newFile);
-    } else {
-      // ignore
-    }
-  }, [ contextFileUrlField ]);
+  const handleUploadContextFile = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files.length > 0) {
+        const newFile = event.target.files[0];
+        contextFileUrlField.onChange(newFile);
+      } else {
+        // ignore
+      }
+    },
+    [contextFileUrlField],
+  );
 
   const handleRemoveFile = useCallback(() => {
     contextFileUrlField.onChange('');
@@ -323,75 +344,112 @@ const TextConfiguration = ({ messages, control, }: { messages: IMessage[], contr
     } else {
       // ignore,
     }
-  }, [ contextFileUrlField ]);
+  }, [contextFileUrlField]);
 
-  return <>
-    <FormControl component='fieldset' variant='standard'>
-      <FormControlLabel
-        control={<Checkbox value={contextFileOn} checked={contextFileOn} onChange={handleContextFileToggle} disabled={contextFileDisabled} />}
-        label={<Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          Context File
-          <Tooltip
-            title={
-              <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
-                {contextFileDisabled ? 'Context File must be Set at the start of the conversation.'
-                  : 'Upload or provide an url for a context file. The context File is used as a database for the model to use when answering.'}
-              </Typography>
-            }
-            placement='bottom'
-          >
-            <InfoOutlined fontSize='small' />
-          </Tooltip>
-        </Typography>}
-      />
-    </FormControl>
-    {contextFileOn && <Box display={'flex'} flexDirection={'column'}>
-      {(!contextFileUrlField.value || (!(contextFileUrlField.value as File)?.name)) && <>
-        <TextControl mat={{ label: 'Context File Url', placeholder:'https://', fullWidth: true, disabled: contextFileDisabled }} name={'contextFileUrl'} control={control}/>
-      </>}
-      {
-        !contextFileDisabled && <Typography variant='caption' >
-          {'Alternatively, '}
-          <u>
-            <label htmlFor='inputUpload' style={{ cursor: 'pointer' }}>Upload your file</label>
-              <input
-                ref={inputRef}
-                id={'inputUpload'}
-                type='file'
-                hidden
-                multiple={false}
-                accept='text/*'
-                onChange={handleUploadContextFile}
-                onBlur={handleRemoveFile}
-              />
-          </u>
-        </Typography>
-      }
-      {contextFileUrlField.value && (contextFileUrlField.value as File)?.name && <FormControl variant='outlined' fullWidth>
-        <TextField
-          value={(contextFileUrlField.value as File).name}
-          disabled={true}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start'>
-                <IconButton
-                  aria-label='Remove'
-                  onClick={handleRemoveFile}
-                  className='plausible-event-name=Remove+Contecxt+File+Click'
-                >
-                  <ClearIcon />
-                </IconButton>
-              </InputAdornment>
-            ),
-            endAdornment: <InputAdornment position='start'>{printSize(contextFileUrlField.value as File)}</InputAdornment>,
-            readOnly: true,
-          }}
-          error={(contextFileUrlField.value as File).size > MAX_MESSAGE_SIZE}
-          helperText={(contextFileUrlField.value as File).size > MAX_MESSAGE_SIZE ? 'File size should be less than 100KB' : ''}
+  return (
+    <>
+      <FormControl component='fieldset' variant='standard'>
+        <FormControlLabel
+          control={
+            <Checkbox
+              value={contextFileOn}
+              checked={contextFileOn}
+              onChange={handleContextFileToggle}
+              disabled={contextFileDisabled}
+            />
+          }
+          label={
+            <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Context File
+              <Tooltip
+                title={
+                  <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                    {contextFileDisabled
+                      ? 'Context File must be Set at the start of the conversation.'
+                      : 'Upload or provide an url for a context file. The context File is used as a database for the model to use when answering.'}
+                  </Typography>
+                }
+                placement='bottom'
+              >
+                <InfoOutlined fontSize='small' />
+              </Tooltip>
+            </Typography>
+          }
         />
-      </FormControl>}
-    </Box>}
-  </>;
+      </FormControl>
+      {contextFileOn && (
+        <Box display={'flex'} flexDirection={'column'}>
+          {(!contextFileUrlField.value || !(contextFileUrlField.value as File)?.name) && (
+            <>
+              <TextControl
+                mat={{
+                  label: 'Context File Url',
+                  placeholder: 'https://',
+                  fullWidth: true,
+                  disabled: contextFileDisabled,
+                }}
+                name={'contextFileUrl'}
+                control={control}
+              />
+            </>
+          )}
+          {!contextFileDisabled && (
+            <Typography variant='caption'>
+              {'Alternatively, '}
+              <u>
+                <label htmlFor='inputUpload' style={{ cursor: 'pointer' }}>
+                  Upload your file
+                </label>
+                <input
+                  ref={inputRef}
+                  id={'inputUpload'}
+                  type='file'
+                  hidden
+                  multiple={false}
+                  accept='text/*'
+                  onChange={handleUploadContextFile}
+                  onBlur={handleRemoveFile}
+                />
+              </u>
+            </Typography>
+          )}
+          {contextFileUrlField.value && (contextFileUrlField.value as File)?.name && (
+            <FormControl variant='outlined' fullWidth>
+              <TextField
+                value={(contextFileUrlField.value as File).name}
+                disabled={true}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <IconButton
+                        aria-label='Remove'
+                        onClick={handleRemoveFile}
+                        className='plausible-event-name=Remove+Contecxt+File+Click'
+                      >
+                        <ClearIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position='start'>
+                      {printSize(contextFileUrlField.value as File)}
+                    </InputAdornment>
+                  ),
+                  readOnly: true,
+                }}
+                error={(contextFileUrlField.value as File).size > MAX_MESSAGE_SIZE}
+                helperText={
+                  (contextFileUrlField.value as File).size > MAX_MESSAGE_SIZE
+                    ? 'File size should be less than 100KB'
+                    : ''
+                }
+              />
+            </FormControl>
+          )}
+        </Box>
+      )}
+    </>
+  );
 };
 
 const Configuration = ({
@@ -405,27 +463,28 @@ const Configuration = ({
 }: {
   control: Control<IConfiguration, unknown>;
   currentOperator?: OperatorData;
-  messages: IMessage[],
+  messages: IMessage[];
   setCurrentOperator: Dispatch<SetStateAction<OperatorData | undefined>>;
   setConfigValue: UseFormSetValue<IConfiguration>;
   reset: UseFormReset<IConfiguration>;
   handleClose: () => void;
 }) => {
   const theme = useTheme();
-  const { state }: { state: {
-    defaultOperator?: OperatorData;
-    solution: findByTagsQuery['transactions']['edges'][0];
-    availableOperators: OperatorData[];
-  }} = useLocation();
+  const {
+    state,
+  }: {
+    state: {
+      defaultOperator?: OperatorData;
+      solution: findByTagsQuery['transactions']['edges'][0];
+      availableOperators: OperatorData[];
+    };
+  } = useLocation();
   const [customTags, setCustomTags] = useState<{ name: string; value: string }[]>([]);
-  
+
   const nameRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLTextAreaElement>(null);
 
-  const isTextSolution = useMemo(
-    () => findTag(state.solution, 'output') === 'text',
-    [state],
-  );
+  const isTextSolution = useMemo(() => findTag(state.solution, 'output') === 'text', [state]);
 
   const {
     field: assetNamesField,
@@ -433,13 +492,22 @@ const Configuration = ({
   } = useController({ control, name: 'assetNames' });
   const { field: descriptionField } = useController({ control, name: 'description' });
   const { field: privateModeField } = useController({ control, name: 'privateMode' });
-  
 
-  const availableModels = useMemo(() => JSON.parse(state.solution.node.tags.find(tag => tag.name === 'Supported-Models')?.value ?? '[]'), [ state ]);
+  const availableModels = useMemo(
+    () =>
+      JSON.parse(
+        state.solution.node.tags.find((tag) => tag.name === 'Supported-Models')?.value ?? '[]',
+      ),
+    [state],
+  );
 
   useEffect(() => {
     if (availableModels.length > 0) {
-      setConfigValue('modelName', availableModels[0].name, { shouldDirty : true, shouldTouch: true, shouldValidate: true });
+      setConfigValue('modelName', availableModels[0].name, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
     }
   }, [availableModels]);
 
@@ -482,14 +550,19 @@ const Configuration = ({
 
   const handleResetClick = useCallback(() => reset(), [reset]);
 
-  const handleOperatorChange = useCallback((event: SelectChangeEvent) => {
-    const operator = state.availableOperators.find((operator) => operator.evmWallet === event.target.value);
-    if (operator) {
-      setCurrentOperator(operator);
-    } else {
-      // ifgnore
-    }
-  }, [state, setCurrentOperator ]);
+  const handleOperatorChange = useCallback(
+    (event: SelectChangeEvent) => {
+      const operator = state.availableOperators.find(
+        (operator) => operator.evmWallet === event.target.value,
+      );
+      if (operator) {
+        setCurrentOperator(operator);
+      } else {
+        // ifgnore
+      }
+    },
+    [state, setCurrentOperator],
+  );
 
   return (
     <Box
@@ -523,19 +596,23 @@ const Configuration = ({
             label={'Solution Operator'}
             onChange={handleOperatorChange}
             defaultValue={currentOperator?.evmWallet ?? ''}
-            renderValue={(value) => <Typography>{displayShortTxOrAddr(value as string)}</Typography>}
+            renderValue={(value) => (
+              <Typography>{displayShortTxOrAddr(value as string)}</Typography>
+            )}
           >
-            {
-              state.availableOperators.map((operator: OperatorData) => (
-                <MenuItem key={operator.evmWallet} value={operator.evmWallet} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                  <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
-                  <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                    <Typography>{operator.operatorFee}</Typography>
-                    <img width='20px' height='20px' src='./usdc-logo.svg' />
-                  </Box>
-                </MenuItem>
-              ))
-            }
+            {state.availableOperators.map((operator: OperatorData) => (
+              <MenuItem
+                key={operator.evmWallet}
+                value={operator.evmWallet}
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
+                <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                  <Typography>{operator.operatorFee}</Typography>
+                  <img width='20px' height='20px' src='./usdc-logo.svg' />
+                </Box>
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <TextField
@@ -555,22 +632,20 @@ const Configuration = ({
         />
       </Box>
       <Box>
-        <SelectControl
-          name={'modelName'}
-          control={control}
-          mat={{ placeholder: 'Model to Use' }}
-        >
-          {
-            availableModels.map((model: { name: string; url: string}) => (
-              <MenuItem key={model.url} value={model.name} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                <Typography>{model.name}</Typography>
-              </MenuItem>
-            ))
-          }
+        <SelectControl name={'modelName'} control={control} mat={{ placeholder: 'Model to Use' }}>
+          {availableModels.map((model: { name: string; url: string }) => (
+            <MenuItem
+              key={model.url}
+              value={model.name}
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <Typography>{model.name}</Typography>
+            </MenuItem>
+          ))}
         </SelectControl>
         {/* <img src='./arweave-logo-for-light.png' height={'18px'} width={'18px'}/> */}
       </Box>
-      <StableDiffusionConfigurations control={control} fee={currentOperator?.operatorFee ?? 0}/>
+      <StableDiffusionConfigurations control={control} fee={currentOperator?.operatorFee ?? 0} />
       <Box>
         <Divider textAlign='left' variant='fullWidth'>
           <Typography variant='h4'>Transaction Configurations</Typography>
@@ -579,20 +654,30 @@ const Configuration = ({
       {isTextSolution && <TextConfiguration messages={messages} control={control} />}
       <FormControl component='fieldset' variant='standard'>
         <FormControlLabel
-          control={<Checkbox ref={privateModeField.ref} value={privateModeField.value} onChange={privateModeField.onChange} />}
-          label={<Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            Private Mode
-            <Tooltip
-              title={
-                <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
-                  {'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'}
-                </Typography>
-              }
-              placement='bottom'
-            >
-              <InfoOutlined fontSize='small' />
-            </Tooltip>
-          </Typography>}
+          control={
+            <Checkbox
+              ref={privateModeField.ref}
+              value={privateModeField.value}
+              onChange={privateModeField.onChange}
+            />
+          }
+          label={
+            <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Private Mode
+              <Tooltip
+                title={
+                  <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                    {
+                      'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
+                    }
+                  </Typography>
+                }
+                placement='bottom'
+              >
+                <InfoOutlined fontSize='small' />
+              </Tooltip>
+            </Typography>
+          }
         />
       </FormControl>
       <SelectControl

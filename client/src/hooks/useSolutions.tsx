@@ -16,7 +16,14 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MARKETPLACE_ADDRESS, PROTOCOL_NAME, PROTOCOL_VERSION, SOLUTION_CREATION, SOLUTION_DELETION, TAG_NAMES } from '@/constants';
+import {
+  MARKETPLACE_ADDRESS,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
+  SOLUTION_CREATION,
+  SOLUTION_DELETION,
+  TAG_NAMES,
+} from '@/constants';
 import FilterContext from '@/context/filter';
 import { IContractEdge } from '@/interfaces/arweave';
 import { findTagsWithKeyword, findTag } from '@/utils/common';
@@ -42,25 +49,21 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
 
   const elementsPerPage = 5;
 
-  const {
-    data,
-    previousData,
-    loading,
-    error,
-    fetchMore,
-    networkStatus,
-  } = useQuery(findByTagsDocument, {
-    variables: {
-      tags: [
-        { name: TAG_NAMES.protocolName, values: [ PROTOCOL_NAME ]}, // keep Fair Protocol in tags to keep retrocompatibility
-        { name: TAG_NAMES.protocolVersion, values: [ PROTOCOL_VERSION ]},
-        { name: TAG_NAMES.operationName, values: [ SOLUTION_CREATION ]},
-        /*  { name: TAG_NAMES.modelTransaction, values: [ state.modelTransaction ]}, */
-      ],
-      first: nFeaturedElements ?? elementsPerPage,
-    }
-    /* skip: !model, */
-  });
+  const { data, previousData, loading, error, fetchMore, networkStatus } = useQuery(
+    findByTagsDocument,
+    {
+      variables: {
+        tags: [
+          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] }, // keep Fair Protocol in tags to keep retrocompatibility
+          { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+          { name: TAG_NAMES.operationName, values: [SOLUTION_CREATION] },
+          /*  { name: TAG_NAMES.modelTransaction, values: [ state.modelTransaction ]}, */
+        ],
+        first: nFeaturedElements ?? elementsPerPage,
+      },
+      /* skip: !model, */
+    },
+  );
   const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
 
   const transformCountsToObjectMap = (counts: CountResult[]): Map<string, CountResult> =>
@@ -96,12 +99,12 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
     // check has paid correct registration fee
     if (data && networkStatus === NetworkStatus.ready && !_.isEqual(data, previousData)) {
       (async () => {
-        const txs = [ ...data.transactions.edges ]; // mutable copy of txs
+        const txs = [...data.transactions.edges]; // mutable copy of txs
         let allPreviousVersionsTxs: string[] = [];
         const filtered = txs.reduce((acc, el) => {
           acc.push(el);
           // find previousVersionsTag
-          const previousVersions= findTag(el, 'previousVersions');
+          const previousVersions = findTag(el, 'previousVersions');
           if (previousVersions) {
             allPreviousVersionsTxs = allPreviousVersionsTxs.concat(...JSON.parse(previousVersions));
             // remove previous versions from accumulator array
@@ -111,25 +114,30 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
           return newAcc;
         }, [] as findByTagsQuery['transactions']['edges']);
 
-        const filteredCopy = [ ...filtered ];
+        const filteredCopy = [...filtered];
         for (const tx of filteredCopy) {
           const deleteTags = [
-            { name: TAG_NAMES.operationName, values: [ SOLUTION_DELETION ] },
-            { name: TAG_NAMES.solutionTransaction, values: [ tx.node.id ] },
+            { name: TAG_NAMES.operationName, values: [SOLUTION_DELETION] },
+            { name: TAG_NAMES.solutionTransaction, values: [tx.node.id] },
           ];
-        
-          const owners = [ MARKETPLACE_ADDRESS, tx.node.owner.address ];
-        
+
+          const owners = [MARKETPLACE_ADDRESS, tx.node.owner.address];
+
           const data = await client.query({
             query: findByTagsAndOwnersDocument,
             variables: {
-              tags: deleteTags, first: filteredCopy.length ,owners,
-            }
+              tags: deleteTags,
+              first: filteredCopy.length,
+              owners,
+            },
           });
-        
+
           if (data.data.transactions.edges.length > 0) {
             // remove scripts with cancellations
-            filtered.splice(filtered.findIndex((el: IContractEdge) => el.node.id === tx.node.id), 1);
+            filtered.splice(
+              filtered.findIndex((el: IContractEdge) => el.node.id === tx.node.id),
+              1,
+            );
           }
         }
 
@@ -140,7 +148,7 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
         setTxsCountsMap(await totalStamps(filtered.map((el) => el.node.id)));
       })();
     }
-  }, [data, previousData, networkStatus ]);
+  }, [data, previousData, networkStatus]);
 
   useEffect(() => {
     if (data) {

@@ -77,9 +77,11 @@ const router = createHashRouter([
       },
       {
         path: 'request',
-        element: <WalletGuard>
-          <RequestSolution />
-        </WalletGuard>,
+        element: (
+          <WalletGuard>
+            <RequestSolution />
+          </WalletGuard>
+        ),
       },
     ],
   },

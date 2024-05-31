@@ -18,14 +18,7 @@
 
 import { NET_ARWEAVE_URL } from '../constants';
 import { ITransactions } from '../interfaces/arweave';
-import {
-  ApolloClient,
-  ApolloLink,
-  from,
-  HttpLink,
-  InMemoryCache,
-  split,
-} from '@apollo/client';
+import { ApolloClient, ApolloLink, from, HttpLink, InMemoryCache, split } from '@apollo/client';
 
 const mapLink = new ApolloLink((operation, forward) =>
   forward(operation).map((result) => {
@@ -52,7 +45,8 @@ export const client = new ApolloClient({
   // uri: 'http://localhost:1984/graphql',
   cache: new InMemoryCache(),
   link: split(
-    (operation) => !operation.getContext().clientName  || operation.getContext().clientName === 'arweave', // by default use arweave
+    (operation) =>
+      !operation.getContext().clientName || operation.getContext().clientName === 'arweave', // by default use arweave
     from([
       // chainRequestLink,
       mapLink,

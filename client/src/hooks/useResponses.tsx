@@ -58,16 +58,16 @@ const useResponses = ({
 
   const [pollResponses, { data: responsesPollingData, stopPolling: stopResponsePolling }] =
     useLazyQuery(responsesQuery, {
-      fetchPolicy:'network-only',
-      nextFetchPolicy:'network-only',
+      fetchPolicy: 'network-only',
+      nextFetchPolicy: 'network-only',
     });
 
   useEffect(() => {
     const variables = {
       tags: [
-        { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] },
-        { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] },
-        { name: 'Operation-Name', values: [INFERENCE_RESPONSE ] },
+        { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
+        { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+        { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
         { name: 'Request-Transaction', values: reqIds },
       ],
       first: 10,
@@ -81,22 +81,16 @@ const useResponses = ({
       const pollReqIds = [lastRequestId];
       const variables = {
         tags: [
-          { name: 'Protocol-Name', values: [ PROTOCOL_NAME ] },
-          { name: 'Protocol-Version', values: [ PROTOCOL_VERSION ] },
-          { name: 'Operation-Name', values: [ INFERENCE_RESPONSE ] },
+          { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
+          { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
           { name: 'Request-Transaction', values: pollReqIds },
         ],
         first: 10,
       };
-      pollResponses({ variables, pollInterval: 10000, });
+      pollResponses({ variables, pollInterval: 10000 });
     }
-  }, [
-    reqIds,
-    userAddr,
-    lastRequestId,
-    conversationId,
-    first,
-  ]);
+  }, [reqIds, userAddr, lastRequestId, conversationId, first]);
 
   useEffect(() => {
     if (responsesData?.transactions?.pageInfo?.hasNextPage) {

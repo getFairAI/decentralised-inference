@@ -37,9 +37,16 @@ import { EIP6963ProviderDetail } from '@/interfaces/evm';
 import { EIP1193Provider } from 'viem';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
-const ProviderElement = ({ provider, setOpen }: { provider: EIP6963ProviderDetail, setOpen: Dispatch<SetStateAction<boolean>> }) => {
+const ProviderElement = ({
+  provider,
+  setOpen,
+}: {
+  provider: EIP6963ProviderDetail;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+}) => {
   const { connect } = useContext(EVMWalletContext);
-  const { localStorageValue: currentProviderValue, updateStorageValue } = useLocalStorage('evmProvider');
+  const { localStorageValue: currentProviderValue, updateStorageValue } =
+    useLocalStorage('evmProvider');
   const { updateStorageValue: updateHasOnboarded } = useLocalStorage('hasOnboarded');
 
   const handleEvmConnect = useCallback(async () => {
@@ -47,28 +54,32 @@ const ProviderElement = ({ provider, setOpen }: { provider: EIP6963ProviderDetai
     updateStorageValue(provider.info.name);
     updateHasOnboarded('true');
     setOpen(false);
-  }, [ connect ]);
+  }, [connect]);
 
-  return <ListItem
-    key={provider.info.uuid}
-    secondaryAction={
-      <Button
-        aria-label='connect'
-        variant='contained'
-        onClick={handleEvmConnect}
-        disabled={currentProviderValue === provider.info.name}
-        endIcon={<PowerIcon />}
-        className='plausible-event-name=EVM+Connected'
-      >
-        <Typography>{currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}</Typography>
-      </Button>
-    }
-  >
-    <ListItemAvatar>
-      <Avatar src={provider.info.icon} alt='provider.info.name' />
-    </ListItemAvatar>
-    <ListItemText primary={provider.info.name} />
-  </ListItem>;
+  return (
+    <ListItem
+      key={provider.info.uuid}
+      secondaryAction={
+        <Button
+          aria-label='connect'
+          variant='contained'
+          onClick={handleEvmConnect}
+          disabled={currentProviderValue === provider.info.name}
+          endIcon={<PowerIcon />}
+          className='plausible-event-name=EVM+Connected'
+        >
+          <Typography>
+            {currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}
+          </Typography>
+        </Button>
+      }
+    >
+      <ListItemAvatar>
+        <Avatar src={provider.info.icon} alt='provider.info.name' />
+      </ListItemAvatar>
+      <ListItemText primary={provider.info.name} />
+    </ListItem>
+  );
 };
 
 const ChooseWallet = ({
@@ -111,7 +122,9 @@ const ChooseWallet = ({
       </DialogTitle>
       <DialogContent>
         <List>
-          { providers.map((provider) => <ProviderElement provider={provider} key={provider.info.uuid} setOpen={setOpen} />) }
+          {providers.map((provider) => (
+            <ProviderElement provider={provider} key={provider.info.uuid} setOpen={setOpen} />
+          ))}
         </List>
       </DialogContent>
       <DialogActions

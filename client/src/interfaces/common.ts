@@ -97,4 +97,4 @@ export interface OperatorData {
   arweaveWallet: string;
   operatorFee: number;
   solutionId: string;
-};
+}

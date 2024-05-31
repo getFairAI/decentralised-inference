@@ -17,12 +17,7 @@
  */
 
 import Logo from '@/components/logo';
-import {
-  BUY_ARB_LINK,
-  BUY_USDC_LINK,
-  CREATE_WALLET_LINK,
-  MIN_U_BALANCE,
-} from '@/constants';
+import { BUY_ARB_LINK, BUY_USDC_LINK, CREATE_WALLET_LINK, MIN_U_BALANCE } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_TXS_BY_RECIPIENT } from '@/queries/graphql';
@@ -179,9 +174,7 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                 }}
                 InputProps={{
-                  endAdornment: (
-                    <img width='20px' height='20px' src='./eth-logo.svg' />
-                  ),
+                  endAdornment: <img width='20px' height='20px' src='./eth-logo.svg' />,
                 }}
                 FormHelperTextProps={{ component: 'div' } as Partial<FormHelperTextProps>}
                 helperText={
@@ -330,9 +323,7 @@ const WalletNoFundsContent = () => {
 
 const SinginWithFunds = () => {
   const singinFeatureElements = 4;
-  const {
-    txs,
-  } = useSolutions(undefined, singinFeatureElements);
+  const { txs } = useSolutions(undefined, singinFeatureElements);
 
   const { validTxs: operatorsData } = useOperators(txs);
 
@@ -355,7 +346,11 @@ const SinginWithFunds = () => {
       <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
         {txs.map((tx) => (
           <Box key={tx.node.id} display={'flex'} flexDirection={'column'} gap={'30px'}>
-            <Solution tx={tx} operatorsData={operatorsData.filter(el => el.solutionId === tx.node.id)} onSignIn={true} />
+            <Solution
+              tx={tx}
+              operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
+              onSignIn={true}
+            />
           </Box>
         ))}
       </Box>
