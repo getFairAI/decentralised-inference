@@ -31,6 +31,7 @@ export interface IMessage {
   from: string;
   to: string;
   tags: ITag[];
+  decData?: string;
 }
 
 export interface IConfiguration extends FieldValues {
@@ -49,6 +50,23 @@ export interface IConfiguration extends FieldValues {
   licenseConfig?: LicenseForm;
   privateMode?: boolean;
   modelName?: string;
+  contextFileUrl?: string | File; // URL or File to upload
+}
+
+export interface ConfigurationValues {
+  assetNames?: string[];
+  customTags?: { name: string; value: string }[];
+  negativePrompt?: string;
+  nImages?: number;
+  title?: string;
+  description?: string;
+  width?: number;
+  height?: number;
+  requestCaller?: string;
+  privateMode?: boolean;
+  userPubKey?: string;
+  modelName: string;
+  contextFileUrl?: string;
 }
 
 export type voteForOptions = 'model' | 'script' | 'operator';
@@ -79,4 +97,4 @@ export interface OperatorData {
   arweaveWallet: string;
   operatorFee: number;
   solutionId: string;
-};
+}

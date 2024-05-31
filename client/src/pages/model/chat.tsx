@@ -51,6 +51,8 @@ import {
   N_PREVIOUS_BLOCKS,
   MAX_MESSAGE_SIZE,
   INFERENCE_REQUEST,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { useSnackbar } from 'notistack';
@@ -61,7 +63,7 @@ import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
-import { IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
+import { ConfigurationValues, IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatContent from '@/components/chat-content';
@@ -81,7 +83,7 @@ import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { encryptSafely } from '@metamask/eth-sig-util';
-import { findByTagsQuery } from '@fairai/evm-sdk';
+import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -334,12 +336,17 @@ const Chat = () => {
     prompt,
     updateUsdcBalance,
     getPubKey,
+    decrypt,
   } = useContext(EVMWalletContext);
-  const { state }: { state: {
-    defaultOperator?: OperatorData;
-    solution: findByTagsQuery['transactions']['edges'][0];
-    availableOperators: OperatorData[];
-  }} = useLocation();
+  const {
+    state,
+  }: {
+    state: {
+      defaultOperator?: OperatorData;
+      solution: findByTagsQuery['transactions']['edges'][0];
+      availableOperators: OperatorData[];
+    };
+  } = useLocation();
   const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
@@ -368,8 +375,8 @@ const Chat = () => {
   const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(true);
   const [headerHeight, setHeaderHeight] = useState('64px');
   const [requestIds] = useState<string[]>([]);
-  const [ currentPubKey, setCurrentPubKey ] = useState('');
-  const [ currentOperator, setCurrentOperator ] = useState(state.defaultOperator);
+  const [currentPubKey, setCurrentPubKey] = useState('');
+  const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -398,7 +405,7 @@ const Chat = () => {
       paymentMode: '',
     },
     privateMode: false,
-    modelName: ''
+    modelName: '',
   };
   const {
     control: configControl,
@@ -437,7 +444,7 @@ const Chat = () => {
     } else {
       // ignore
     }
-  }, [ state, configReset]);
+  }, [state, configReset]);
 
   useEffect(() => {
     if (!_.isEqual(currentConfig, defaultConfigvalues)) {
@@ -468,7 +475,7 @@ const Chat = () => {
   const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
     useResponses(responseParams);
 
-  const showOperatorBusy = useOperatorBusy(currentOperator?.arweaveWallet as string ?? '');
+  const showOperatorBusy = useOperatorBusy((currentOperator?.arweaveWallet as string) ?? '');
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
   const showLoadMore = useMemo(
@@ -478,7 +485,7 @@ const Chat = () => {
 
   useEffect(() => {
     const pubKey = localStorage.getItem(`pubKeyFor:${userAddr}`);
-    
+
     if (!pubKey) {
       (async () => {
         const key = await getPubKey();
@@ -488,7 +495,7 @@ const Chat = () => {
     } else {
       setCurrentPubKey(pubKey);
     }
-  }, [ userAddr, setCurrentPubKey ]);
+  }, [userAddr, setCurrentPubKey]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -532,7 +539,7 @@ const Chat = () => {
         setMessages([]);
       }
     }
-  }, [requestsData, requestNetworkStatus, userAddr ]);
+  }, [requestsData, requestNetworkStatus, userAddr]);
 
   useEffect(() => {
     // only update messages after getting all responses
@@ -646,7 +653,7 @@ const Chat = () => {
     });
   };
 
-  const checkCanSend = (dataSize: number, isFile = false) => {
+  const checkCanSend = (dataSize: number) => {
     try {
       if (!currentOperator) {
         enqueueSnackbar('Missing Operator', { variant: 'error' });
@@ -658,13 +665,18 @@ const Chat = () => {
         return false;
       }
 
-      if (!isFile && dataSize > MAX_MESSAGE_SIZE) {
-        enqueueSnackbar('Message Too Long', { variant: 'error' });
+      if (dataSize > MAX_MESSAGE_SIZE) {
+        enqueueSnackbar(
+          'Message Too Long. Message must not be bigger than 50kb, or 50000 characters.',
+          { variant: 'error' },
+        );
         return false;
       }
 
       const actualFee =
-        currentConfig.nImages && isStableDiffusion ? currentOperator.operatorFee * currentConfig.nImages : currentOperator.operatorFee;
+        currentConfig.nImages && isStableDiffusion
+          ? currentOperator.operatorFee * currentConfig.nImages
+          : currentOperator.operatorFee;
       if (usdcBalance < actualFee) {
         enqueueSnackbar('Not Enough USDC to pay Operator', { variant: 'error' });
         return false;
@@ -729,14 +741,77 @@ const Chat = () => {
     [configReset],
   );
 
-  const getConfigValues = useCallback(() => {
-    const { generateAssets, description, negativePrompt, nImages, privateMode, modelName } = currentConfig;
+  const getConfigValues: () => Promise<ConfigurationValues> = useCallback(async () => {
+    const {
+      generateAssets,
+      description,
+      negativePrompt,
+      nImages,
+      privateMode,
+      modelName,
+      contextFileUrl,
+    } = currentConfig;
     const assetNames = currentConfig.assetNames
       ? currentConfig.assetNames.split(';').map((el) => el.trim())
       : undefined;
     const customTags = (currentConfig.customTags as { name: string; value: string }[]) ?? [];
     const royalty = currentConfig.rareweaveConfig?.royalty;
     const { width: configWidth, height: configHeight } = currentConfig;
+
+    let url = '';
+    if (contextFileUrl instanceof File) {
+      // upload file to arweave
+      const tempDate = Date.now() / 1000;
+      const tags = [
+        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+        { name: TAG_NAMES.operationName, value: 'Context-File' },
+        { name: TAG_NAMES.unixTime, value: tempDate.toString() },
+      ];
+      let dataToUpload;
+      if (privateMode) {
+        const fileData = await contextFileUrl.text();
+
+        const encrypted = encryptSafely({
+          data: fileData,
+          publicKey: currentPubKey,
+          version: 'x25519-xsalsa20-poly1305',
+        });
+
+        const encForOperator = encryptSafely({
+          data: fileData,
+          publicKey: currentOperator?.evmPublicKey ?? '',
+          version: 'x25519-xsalsa20-poly1305',
+        });
+
+        dataToUpload = JSON.stringify({
+          encData: encrypted,
+          encForOperator,
+        });
+
+        tags.push({ name: TAG_NAMES.privateMode, value: 'true' });
+        tags.push({ name: 'User-Public-Key', value: currentPubKey });
+      } else {
+        dataToUpload = contextFileUrl;
+      }
+      const id = await postOnArweave(dataToUpload, tags);
+      url = `https://arweave.net/${id}`;
+
+      enqueueSnackbar(
+        <>
+          Context File upload Successful
+          <br></br>
+          <a href={url} target={'_blank'} rel='noreferrer'>
+            <u>View Transaction in Explorer</u>
+          </a>
+        </>,
+        {
+          variant: 'success',
+        },
+      );
+    } else {
+      url = contextFileUrl as string;
+    }
 
     return {
       generateAssets,
@@ -745,7 +820,7 @@ const Chat = () => {
       description,
       customTags,
       nImages,
-      modelName,
+      modelName: modelName ?? '',
       width: configWidth,
       height: configHeight,
       ...(royalty && {
@@ -755,15 +830,11 @@ const Chat = () => {
       }),
       privateMode,
       userPubKey: currentPubKey,
-      encDataForOperator: '',
+      contextFileUrl: url,
     };
-  }, [ currentConfig, currentPubKey ]);
+  }, [currentConfig, currentPubKey]);
 
-  const updateMessages = async (
-    txid: string,
-    content: string | File,
-    contentType: string,
-  ) => {
+  const updateMessages = async (txid: string, content: string | File, contentType: string) => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
@@ -773,7 +844,7 @@ const Chat = () => {
     setResponseTimeout(false);
     const irysQuery = new Query();
 
-    const [ { tags } ] = (await irysQuery.search('irys:transactions').ids([txid]).limit(1));
+    const [{ tags }] = await irysQuery.search('irys:transactions').ids([txid]).limit(1);
     const url = `https://gateway.irys.xyz/${txid}`;
 
     enqueueSnackbar(
@@ -808,7 +879,7 @@ const Chat = () => {
       ...responseParams,
       conversationId: currentConversationId,
       lastRequestId: txid,
-      reqIds: []
+      reqIds: [],
     });
   };
 
@@ -819,32 +890,88 @@ const Chat = () => {
 
     const dataSize = file.size;
 
-    if (!checkCanSend(dataSize, true)) {
+    if (!checkCanSend(dataSize)) {
+      return;
+    }
+
+    if (!file.type.includes('text')) {
+      enqueueSnackbar('Only text files are supported', { variant: 'error' });
       return;
     }
 
     try {
-      const config = getConfigValues();
+      const config = await getConfigValues();
 
       if (!config.modelName) {
         enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
         return;
       }
-  
-      const { arweaveTxId }  = await prompt(newMessage, state.solution.node.id, {
-        arweaveWallet: currentOperator?.arweaveWallet ?? '',
-        evmWallet: currentOperator?.evmWallet ?? '' as `0x${string}`,
-        operatorFee: currentOperator?.operatorFee ?? 0,
-      }, currentConversationId, config);
+
+      let dataToUpload: string | { promptHistory?: string; prompt: string } = await file.text();
+      const isText =
+        state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text';
+      // only add prompt history on text solutions
+      if (isText) {
+        // if is text solution get history from last response
+        const promptHistory = await extractPromptHistory();
+        const dataSize = new TextEncoder().encode(promptHistory).length;
+
+        if (dataSize > MAX_MESSAGE_SIZE) {
+          enqueueSnackbar(
+            'You have reached the conversation limit. Please start a new conversation.',
+            { variant: 'error' },
+          );
+          return;
+        }
+
+        dataToUpload = {
+          promptHistory,
+          prompt: dataToUpload,
+        };
+      }
+
+      if (config.privateMode) {
+        const encrypted = encryptSafely({
+          data: isText
+            ? (dataToUpload as { promptHistory?: string; prompt: string }).prompt
+            : dataToUpload,
+          publicKey: currentPubKey,
+          version: 'x25519-xsalsa20-poly1305',
+        });
+
+        const encForOperator = encryptSafely({
+          data: dataToUpload,
+          publicKey: currentOperator?.evmPublicKey ?? '',
+          version: 'x25519-xsalsa20-poly1305',
+        });
+
+        dataToUpload = JSON.stringify({
+          encPrompt: encrypted,
+          encForOperator,
+        });
+      }
+
+      if (dataToUpload instanceof Object) {
+        dataToUpload = JSON.stringify(dataToUpload);
+      }
+
+      const { arweaveTxId } = await prompt(
+        dataToUpload,
+        state.solution.node.id,
+        {
+          arweaveWallet: currentOperator?.arweaveWallet ?? '',
+          evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
+          operatorFee: currentOperator?.operatorFee ?? 0,
+        },
+        currentConversationId,
+        config,
+      );
       // update balance after payments
       updateMessages(arweaveTxId, file, file.type);
       updateUsdcBalance(usdcBalance - (currentOperator?.operatorFee ?? 0));
-      enqueueSnackbar(
-        <Typography>{'Request Successfull'}</Typography>,
-        {
-          variant: 'success',
-        },
-      );
+      enqueueSnackbar(<Typography>{'Request Successfull'}</Typography>, {
+        variant: 'success',
+      });
     } catch (error) {
       if (error instanceof Object) {
         enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
@@ -867,43 +994,78 @@ const Chat = () => {
     }
 
     try {
-      const config = getConfigValues();
+      const config = await getConfigValues();
 
       if (!config.modelName) {
         enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
         return;
       }
 
-      let dataToUpload = newMessage;
-      if (config.privateMode) {
-        const encrypted = encryptSafely({
-          data: newMessage,
-          publicKey: currentPubKey,
-          version: 'x25519-xsalsa20-poly1305'
-        });
-        dataToUpload = JSON.stringify(encrypted);
-        const encForOperator = encryptSafely({
-          data: newMessage,
-          publicKey: currentOperator?.evmPublicKey ?? '',
-          version: 'x25519-xsalsa20-poly1305'
-        });
-        config.encDataForOperator = JSON.stringify(encForOperator);
+      let dataToUpload: string | { promptHistory?: string; prompt: string } = newMessage;
+      const isText =
+        state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text';
+      // only add prompt history on text solutions
+      if (isText) {
+        // if is text solution get history from last response
+        const promptHistory = await extractPromptHistory();
+        const dataSize = new TextEncoder().encode(promptHistory).length;
+
+        if (dataSize > MAX_MESSAGE_SIZE) {
+          enqueueSnackbar(
+            'You have reached the conversation limit. Please start a new conversation.',
+            { variant: 'error' },
+          );
+          return;
+        }
+
+        dataToUpload = {
+          promptHistory,
+          prompt: newMessage,
+        };
       }
 
-      const { arweaveTxId } = await prompt(dataToUpload, state.solution.node.id, {
-        arweaveWallet: currentOperator?.arweaveWallet ?? '',
-        evmWallet: currentOperator?.evmWallet ?? '' as `0x${string}`,
-        operatorFee: currentOperator?.operatorFee ?? 0,
-      }, currentConversationId, config);
+      if (config.privateMode) {
+        const encrypted = encryptSafely({
+          data: isText
+            ? (dataToUpload as { promptHistory?: string; prompt: string }).prompt
+            : dataToUpload,
+          publicKey: currentPubKey,
+          version: 'x25519-xsalsa20-poly1305',
+        });
+
+        const encForOperator = encryptSafely({
+          data: dataToUpload,
+          publicKey: currentOperator?.evmPublicKey ?? '',
+          version: 'x25519-xsalsa20-poly1305',
+        });
+
+        dataToUpload = JSON.stringify({
+          encPrompt: encrypted,
+          encForOperator,
+        });
+      }
+
+      if (dataToUpload instanceof Object) {
+        dataToUpload = JSON.stringify(dataToUpload);
+      }
+
+      const { arweaveTxId } = await prompt(
+        dataToUpload,
+        state.solution.node.id,
+        {
+          arweaveWallet: currentOperator?.arweaveWallet ?? '',
+          evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
+          operatorFee: currentOperator?.operatorFee ?? 0,
+        },
+        currentConversationId,
+        config,
+      );
       // update balance after payments
       updateMessages(arweaveTxId, newMessage, 'text/plain');
       updateUsdcBalance(usdcBalance - (currentOperator?.operatorFee ?? 0));
-      enqueueSnackbar(
-        <Typography>{'Request Successfull'}</Typography>,
-        {
-          variant: 'success',
-        },
-      );
+      enqueueSnackbar(<Typography>{'Request Successfull'}</Typography>, {
+        variant: 'success',
+      });
     } catch (error) {
       if (error instanceof Object) {
         enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
@@ -913,6 +1075,28 @@ const Chat = () => {
         enqueueSnackbar(errorMsg, { variant: 'error' });
       }
     }
+  };
+
+  const extractPromptHistory = async () => {
+    const lastResponse = messages.findLast((el) => el.type === 'response');
+    const isPrivateMode =
+      lastResponse?.tags.find((tag) => tag.name === 'Private-Mode')?.value === 'true';
+    let lastMessageData = lastResponse?.msg;
+    if (isPrivateMode && lastMessageData) {
+      // if private mode
+      // decrypt the last response if it has not been decrypted yet
+      lastMessageData = lastResponse?.decData
+        ? lastResponse.decData
+        : await decrypt(lastMessageData as `0x${string}`);
+    } else {
+      // ignore
+    }
+    try {
+      return JSON.parse(lastMessageData as string).promptHistory as string;
+    } catch (error) {
+      // could not get prompt history ignore
+    }
+    return;
   };
 
   const sortMessages = (messages: IMessage[]) => {
@@ -1117,6 +1301,7 @@ const Chat = () => {
         >
           <Configuration
             control={configControl}
+            messages={messages}
             setConfigValue={setConfigValue}
             reset={configReset}
             handleClose={handleAdvancedClose}
@@ -1334,7 +1519,7 @@ const Chat = () => {
                   variant='subtitle1'
                   sx={{ color: theme.palette.error.main, fontWeight: 500, paddingLeft: '20px' }}
                 >
-                  Message Too Long
+                  Message Too Long. Message must not be bigger than 50kb, or 50000 characters.
                 </Typography>
               )}
             </Box>

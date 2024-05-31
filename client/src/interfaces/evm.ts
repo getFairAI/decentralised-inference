@@ -14,28 +14,28 @@ export interface EIP6963ProviderInfo {
 }
 
 export type EIP6963AnnounceProviderEvent = {
-  detail:{
-    info: EIP6963ProviderInfo,
-    provider: EIP1193Provider
-  }
-}
+  detail: {
+    info: EIP6963ProviderInfo;
+    provider: EIP1193Provider;
+  };
+};
 
 export type ExtendedEIPMethods = [
   ...EIP1474Methods,
   {
-    Method: 'eth_getEncryptionPublicKey'
-    Parameters: string[]
-    ReturnType: string
+    Method: 'eth_getEncryptionPublicKey';
+    Parameters: string[];
+    ReturnType: string;
   },
   {
-    Method: 'eth_decrypt'
-    Parameters: [ string, string ]
-    ReturnType: string
+    Method: 'eth_decrypt';
+    Parameters: [string, string];
+    ReturnType: string;
   },
-]
+];
 
 export type ExtendedEIP1193Provider = Prettify<
   EIP1193Events & {
-    request: EIP1193RequestFn<ExtendedEIPMethods>
+    request: EIP1193RequestFn<ExtendedEIPMethods>;
   }
->
+>;

@@ -22,20 +22,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
-import {
-  ChangeEvent,
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useContext,
-} from 'react';
-import {
-  Button,
-  Icon,
-  InputBase,
-  Tooltip,
-  useTheme,
-} from '@mui/material';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback, useContext } from 'react';
+import { Button, Icon, InputBase, Tooltip, useTheme } from '@mui/material';
 import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -55,7 +43,6 @@ const WalletState = () => {
     } else {
       try {
         await connect();
-        
       } catch (err) {
         // open choose Wallet
         chooseWalletOpen(true);
@@ -64,7 +51,7 @@ const WalletState = () => {
   }, [hasOnboarded, navigate]);
   const handleSwitchChain = useCallback(() => switchChain(), [switchChain]);
 
-  if (!isWrongChain &&( !currentAddress || currentAddress === '')) {
+  if (!isWrongChain && (!currentAddress || currentAddress === '')) {
     return (
       <>
         <Button
@@ -84,7 +71,10 @@ const WalletState = () => {
           onClick={handleConnect}
           className='plausible-event-name=Navbar+Connect+Wallet'
         >
-          <Typography sx={{ lineHeight: '1.3', fontSize: '16px', display: 'flex', gap: '8px' }}><img src='./arbitrum-logo.svg' width={'20px'} height={'20px'}/>Connect</Typography>
+          <Typography sx={{ lineHeight: '1.3', fontSize: '16px', display: 'flex', gap: '8px' }}>
+            <img src='./arbitrum-logo.svg' width={'20px'} height={'20px'} />
+            Connect
+          </Typography>
         </Button>
         <ProfileMenu />
       </>
@@ -92,30 +82,41 @@ const WalletState = () => {
   }
 
   if (isWrongChain) {
-    return <>
-      <Button
-        variant='outlined'
-        sx={{
-          borderRadius: '8px',
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '17px',
-          border: 'solid',
-          borderColor: theme.palette.error.main,
-          borderWidth: '0.5px',
-          padding: '10px 15px',
-          ':hover': {
+    return (
+      <>
+        <Button
+          variant='outlined'
+          sx={{
+            borderRadius: '8px',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '17px',
+            border: 'solid',
             borderColor: theme.palette.error.main,
-          }
-        }}
-        onClick={handleSwitchChain}
-        className='plausible-event-name=Navbar+Connect+Wallet'
-      >
-        <Typography sx={{ lineHeight: '1.3', fontSize: '16px', fontWeight: 700, color: theme.palette.error.main }}>Invalid Network</Typography>
-      </Button>
-    </>;
+            borderWidth: '0.5px',
+            padding: '10px 15px',
+            ':hover': {
+              borderColor: theme.palette.error.main,
+            },
+          }}
+          onClick={handleSwitchChain}
+          className='plausible-event-name=Navbar+Connect+Wallet'
+        >
+          <Typography
+            sx={{
+              lineHeight: '1.3',
+              fontSize: '16px',
+              fontWeight: 700,
+              color: theme.palette.error.main,
+            }}
+          >
+            Invalid Network
+          </Typography>
+        </Button>
+      </>
+    );
   }
 
   return (
@@ -148,7 +149,12 @@ const WalletState = () => {
         >
           <Tooltip title={currentAddress} placement={'bottom-start'}>
             <Typography
-              sx={{ color: theme.palette.text.primary, lineHeight: '20.25px', fontSize: '15px', fontWeight: 700 }}
+              sx={{
+                color: theme.palette.text.primary,
+                lineHeight: '20.25px',
+                fontSize: '15px',
+                fontWeight: 700,
+              }}
             >
               {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
             </Typography>
@@ -209,7 +215,10 @@ const Navbar = ({
               EARLY
             </Typography>
           </Box>
-          <Box sx={{ flexGrow: 1, gap: '16px', marginLeft: '16px' }} display={{ sm: 'none', lg: 'flex' }}>
+          <Box
+            sx={{ flexGrow: 1, gap: '16px', marginLeft: '16px' }}
+            display={{ sm: 'none', lg: 'flex' }}
+          >
             {' '}
             {/* hide searchbar on small screens */}
             {pathname && pathname === '/' && (
@@ -250,21 +259,47 @@ const Navbar = ({
               </>
             )}
           </Box>
-          <Box sx={{ gap: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center',  margin: '0px 16px', flexGrow: 1}}>
-            {
-              pathname === '/' && currentAddress && (<>
-                <Link to='/browse'>
+          <Box
+            sx={{
+              gap: '16px',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              margin: '0px 16px',
+              flexGrow: 1,
+            }}
+          >
+            {pathname === '/' && (
+              <Link to='/browse'>
+                <Typography
+                  textTransform={'uppercase'}
+                  lineHeight={1.3}
+                  sx={{ textWrap: 'nowrap' }}
+                >
+                  Browse Requests
+                </Typography>
+              </Link>
+            )}
+            {pathname === '/' && currentAddress && (
+              <>
+                <Link
+                  to='/request'
+                  style={{
+                    border: `0.5px solid ${theme.palette.terciary.main}`,
+                    borderRadius: '8px',
+                  }}
+                >
                   <Typography
-                    textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}
+                    padding={'9.5px 15px'}
+                    textTransform={'uppercase'}
+                    lineHeight={1.3}
+                    sx={{ textWrap: 'nowrap' }}
                   >
-                    Browse Requests
+                    Request a Solution
                   </Typography>
                 </Link>
-                <Link to='/request' style={{ border: `0.5px solid ${theme.palette.terciary.main}`, borderRadius: '8px'  }}>
-                  <Typography padding={'9.5px 15px'} textTransform={'uppercase'} lineHeight={1.3} sx={{ textWrap: 'nowrap' }}>Request a Solution</Typography>
-                </Link>
-              </>)
-            }
+              </>
+            )}
           </Box>
           <Box
             className={'navbar-right-content'}

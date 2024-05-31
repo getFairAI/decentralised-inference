@@ -52,22 +52,24 @@ const useFeaturedModels = () => {
         setFiltering(false);
       })();
     }
-  }, [data, networkStatus ]);
-
+  }, [data, networkStatus]);
 
   const fetchWithFilter = useCallback(
     (filter: fetchWithFilterParam) => {
       setFiltering(true);
       if (filter !== 'none') {
         const txs = data?.transactions.edges;
-        const filtered = txs?.filter((tx) => tx.node.tags.find((tag) => tag.name === TAG_NAMES.modelCategory)?.value === filter);
+        const filtered = txs?.filter(
+          (tx) =>
+            tx.node.tags.find((tag) => tag.name === TAG_NAMES.modelCategory)?.value === filter,
+        );
         setFeaturedTxs(filtered ?? []);
       } else {
         setFeaturedTxs(data?.transactions.edges ?? []);
       }
       setFiltering(false);
     },
-    [ data, setFeaturedTxs, setFiltering ],
+    [data, setFeaturedTxs, setFiltering],
   );
 
   return {

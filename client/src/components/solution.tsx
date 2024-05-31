@@ -21,19 +21,38 @@ import { OperatorData } from '@/interfaces/common';
 import { findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';
 import { findByTagsQuery, findByTagsAndOwnersDocument } from '@fairai/evm-sdk';
-import { Card, CardActionArea, Box, CardHeader, Typography, CardContent, Tooltip, useTheme } from '@mui/material';
-import { useState, useEffect, useCallback } from 'react';
+import {
+  Card,
+  CardActionArea,
+  Box,
+  CardHeader,
+  Typography,
+  CardContent,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ComputerIcon from '@mui/icons-material/Computer';
+import { EVMWalletContext } from '@/context/evm-wallet';
 
-const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transactions']['edges'][0], operatorsData: OperatorData[], onSignIn?: boolean }) => {
-
-  const [ hasOperators, setHasOperators ] = useState(false);
-  const [ avgFee, setAvgFee ] = useState(0);
-  const [ numOperators, setNumOperators ] = useState(0);
-  const [ imgUrl, setImgUrl ] = useState('');
-  const [ isHovering, setIsHovering ] = useState(false);
+const Solution = ({
+  tx,
+  operatorsData,
+}: {
+  tx: findByTagsQuery['transactions']['edges'][0];
+  operatorsData: OperatorData[];
+  onSignIn?: boolean;
+}) => {
+  const [hasOperators, setHasOperators] = useState(false);
+  const [avgFee, setAvgFee] = useState(0);
+  const [numOperators, setNumOperators] = useState(0);
+  const [imgUrl, setImgUrl] = useState('');
+  const [isHovering, setIsHovering] = useState(false);
+  const mainCardRef = useRef<HTMLDivElement>(null);
+  const [topOffset, setTopOffset] = useState(0);
+  const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
 
   const navigate = useNavigate();
   const theme = useTheme();
@@ -41,15 +60,21 @@ const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transa
   const { data: imageData } = useQuery(findByTagsAndOwnersDocument, {
     variables: {
       tags: [
-        { name: 'Operation-Name', values: [ MODEL_ATTACHMENT] },
+        { name: 'Operation-Name', values: [MODEL_ATTACHMENT] },
         { name: 'Attachment-Role', values: [AVATAR_ATTACHMENT] },
-        { name: 'Solution-Transaction', values: [tx.node.id] }
+        { name: 'Solution-Transaction', values: [tx.node.id] },
       ],
       owners: [tx.node.owner.address],
-      first: 1
+      first: 1,
     },
-    skip: !tx.node.id || !tx.node.owner.address
+    skip: !tx.node.id || !tx.node.owner.address,
   });
+
+  useEffect(() => {
+    if (mainCardRef.current) {
+      setTopOffset(mainCardRef.current.offsetTop);
+    }
+  }, [currentAddress, usdcBalance]);
 
   useEffect(() => {
     if (imageData) {
@@ -58,27 +83,27 @@ const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transa
         setImgUrl(`https://arweave.net/${avatarTxId}`);
       }
     }
-  }, [ imageData]);
+  }, [imageData]);
 
   useEffect(() => {
     setHasOperators(operatorsData.length > 0);
     setNumOperators(operatorsData.length);
     if (operatorsData.length > 0) {
-      setAvgFee((operatorsData.reduce((acc, el) => acc + el.operatorFee, 0) / operatorsData.length));
+      setAvgFee(operatorsData.reduce((acc, el) => acc + el.operatorFee, 0) / operatorsData.length);
     } else {
       // ignore
     }
-  }, [ operatorsData ]);
+  }, [operatorsData]);
 
   const handleSolutionClick = useCallback(() => {
     navigate('/chat', {
       state: {
         defaultOperator: operatorsData[0] ?? undefined,
         availableOperators: operatorsData ?? [],
-        solution: tx
-      }
+        solution: tx,
+      },
     });
-  }, [ tx, operatorsData ]);
+  }, [tx, operatorsData]);
 
   const getTimePassed = () => {
     const timestamp = findTag(tx, 'unixTime');
@@ -108,120 +133,138 @@ const Solution = ({ tx, operatorsData, onSignIn }: { tx: findByTagsQuery['transa
     }
   };
 
-  const handleHoverStart = useCallback(() => setIsHovering(true), [ setIsHovering]);
-  const handleHoverEnd = useCallback(() => setIsHovering(false), [ setIsHovering]);
+  const handleHoverStart = useCallback(() => setIsHovering(true), [setIsHovering]);
+  const handleHoverEnd = useCallback(() => setIsHovering(false), [setIsHovering]);
 
-  return <motion.div onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd}>
-    <motion.div
-      animate={{ rotateY: isHovering ? -180 : 0 }}
-      transition={{
-        type: 'spring',
-        stiffness: 300,
-        damping: 40,
-      }}
-      style={{
-        width: '317px',
-        height: '352px',
-        backfaceVisibility: 'hidden',
-      }}
-    >
-      <Card
-        sx={{
-          width: '100%',
-          height: '100%',
+  return (
+    <motion.div onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd}>
+      <motion.div
+        ref={mainCardRef}
+        animate={{ rotateY: isHovering ? -180 : 0 }}
+        transition={{
+          type: 'spring',
+          stiffness: 300,
+          damping: 40,
         }}
-        raised={true}
+        style={{
+          width: '317px',
+          height: '352px',
+          backfaceVisibility: 'hidden',
+        }}
       >
-        <CardActionArea
+        <Card
           sx={{
+            width: '100%',
             height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            alignItems: 'flex-start',
-            padding: '8px',
-            background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 40%, ${
-              theme.palette.background.default
-            } 100%), url(${imgUrl})`,
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover' /* <------ */,
-            backgroundPosition: 'center center',
-          }} 
-          onClick={handleSolutionClick}
+          }}
+          raised={true}
         >
-          <Box display={'flex'} flexGrow={1} flexDirection={'column'}></Box>
-          <CardHeader
+          <CardActionArea
             sx={{
-              pb: 0
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start',
+              padding: '8px',
+              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 40%, ${theme.palette.background.default} 100%), url(${imgUrl})`,
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover' /* <------ */,
+              backgroundPosition: 'center center',
             }}
-            title={<Typography variant='h2'>{tx.node.tags.find(el => el.name === 'Solution-Name')?.value ?? 'Name Not Available'}</Typography>}
-            subheader= {`${tx.node.owner.address.slice(0, 6)}...${tx.node.owner.address.slice(-4)} - ${getTimePassed()}`}
-          />
-        </CardActionArea>
-      </Card>
-    </motion.div>
-    <motion.div
-      initial={{ rotateY: 180 }}
-      animate={{ rotateY: isHovering ? 0 : 180 }}
-      transition={{
-        type: 'spring',
-        stiffness: 300,
-        damping: 40,
-      }}
-      style={{
-        width: '317px',
-        height: '352px',
-        backfaceVisibility: 'hidden',
-        position: 'absolute',
-        top: onSignIn ? 'calc(50% - 120px)' : '36px',
-      }}
-    >
-      <Card
-        sx={{
-          width: '100%',
-          height: '100%',
+            onClick={handleSolutionClick}
+          >
+            <Box display={'flex'} flexGrow={1} flexDirection={'column'}></Box>
+            <CardHeader
+              sx={{
+                pb: 0,
+              }}
+              title={
+                <Typography variant='h2'>
+                  {tx.node.tags.find((el) => el.name === 'Solution-Name')?.value ??
+                    'Name Not Available'}
+                </Typography>
+              }
+              subheader={`${tx.node.owner.address.slice(0, 6)}...${tx.node.owner.address.slice(
+                -4,
+              )} - ${getTimePassed()}`}
+            />
+          </CardActionArea>
+        </Card>
+      </motion.div>
+      <motion.div
+        initial={{ rotateY: 180 }}
+        animate={{ rotateY: isHovering ? 0 : 180 }}
+        transition={{
+          type: 'spring',
+          stiffness: 300,
+          damping: 40,
         }}
-        raised={true}
+        style={{
+          width: '317px',
+          height: '352px',
+          backfaceVisibility: 'hidden',
+          position: 'absolute',
+          top: `${topOffset}px`,
+        }}
       >
-        <CardActionArea
+        <Card
           sx={{
+            width: '100%',
             height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            alignItems: 'flex-start',
-            padding: '8px',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover' /* <------ */,
-            backgroundPosition: 'center center',
-          }} 
-          onClick={handleSolutionClick}
+          }}
+          raised={true}
         >
-          <Box display={'flex'} flexGrow={1} flexDirection={'column'}></Box>
-          <CardContent>
-            <Typography>{tx.node.tags.find(el => el.name === 'Description')?.value}</Typography>
-          </CardContent>
-          
-          <CardContent sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', gap: '16px', pt: 0 }}>
-            {hasOperators && <Tooltip title='Average Fee'>
-              <Box display={'flex'} gap={'4px'} alignItems={'center'}>
-                <Typography>{avgFee}</Typography>
-                <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                  <img width='20px' height='20px' src='./usdc-logo.svg' />
+          <CardActionArea
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start',
+              padding: '8px',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover' /* <------ */,
+              backgroundPosition: 'center center',
+            }}
+            onClick={handleSolutionClick}
+          >
+            <Box display={'flex'} flexGrow={1} flexDirection={'column'}></Box>
+            <CardContent>
+              <Typography>{tx.node.tags.find((el) => el.name === 'Description')?.value}</Typography>
+            </CardContent>
+
+            <CardContent
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                width: '100%',
+                gap: '16px',
+                pt: 0,
+              }}
+            >
+              {hasOperators && (
+                <Tooltip title='Average Fee'>
+                  <Box display={'flex'} gap={'4px'} alignItems={'center'}>
+                    <Typography>{avgFee}</Typography>
+                    <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                      <img width='20px' height='20px' src='./usdc-logo.svg' />
+                    </Box>
+                  </Box>
+                </Tooltip>
+              )}
+              <Tooltip title='Available Providers'>
+                <Box display={'flex'} gap={'4px'} alignItems={'center'}>
+                  <Typography>{numOperators}</Typography>
+                  <ComputerIcon />
                 </Box>
-              </Box>
-            </Tooltip>}
-            <Tooltip title='Available Providers'>
-              <Box display={'flex'} gap={'4px'} alignItems={'center'}>
-                <Typography>{numOperators}</Typography>
-                <ComputerIcon />
-              </Box>
-            </Tooltip>
-          </CardContent>
-        </CardActionArea>
-      </Card>
+              </Tooltip>
+            </CardContent>
+          </CardActionArea>
+        </Card>
+      </motion.div>
     </motion.div>
-  </motion.div>;
+  );
 };
 
 export default Solution;

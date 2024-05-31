@@ -44,11 +44,9 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
         >
           <CssBaseline />
           <EVMWalletProvider>
-              <ChooseWalletProvider>
-                <UserFeedbackProvider>
-                  <TradeProvider>
-                    {children}
-                </TradeProvider>
+            <ChooseWalletProvider>
+              <UserFeedbackProvider>
+                <TradeProvider>{children}</TradeProvider>
               </UserFeedbackProvider>
             </ChooseWalletProvider>
           </EVMWalletProvider>
@@ -59,7 +57,6 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
 };
 
 export const Root = () => {
-
   const { pathname } = useLocation();
 
   if (pathname === '/request') {

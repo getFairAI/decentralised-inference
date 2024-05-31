@@ -78,9 +78,9 @@ const FeedbackForm = ({
       { name: TAG_NAMES.userRatingScore, value: value.toString() },
     ];
     if (comment) {
-      tags.push({ name: TAG_NAMES.userRatingComment, value: comment});
+      tags.push({ name: TAG_NAMES.userRatingComment, value: comment });
     }
-    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString()});
+    tags.push({ name: TAG_NAMES.unixTime, value: (Date.now() / secondInMS).toString() });
 
     await postOnArweave('Fair Protocol Active User Feedback', tags);
 

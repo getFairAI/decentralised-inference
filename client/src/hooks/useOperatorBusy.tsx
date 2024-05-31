@@ -16,12 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  PROTOCOL_NAME,
-  PROTOCOL_VERSION,
-  INFERENCE_RESPONSE,
-  TAG_NAMES,
-} from '@/constants';
+import { PROTOCOL_NAME, PROTOCOL_VERSION, INFERENCE_RESPONSE, TAG_NAMES } from '@/constants';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { QUERY_CHAT_RESPONSES } from '@/queries/graphql';
 import { useLazyQuery } from '@apollo/client';
@@ -45,16 +40,17 @@ const useOperatorBusy = (operatorAddr: string) => {
     const arweaveRequest = await decodeTxMemo(log.pop()?.transactionHash as `0x${string}`);
 
     const irysQuery = new Query();
-    const [ { tags } ] = await irysQuery.search('irys:transactions').ids([ arweaveRequest ]).limit(1);
+    const [{ tags }] = await irysQuery.search('irys:transactions').ids([arweaveRequest]).limit(1);
 
-    const necessaryResponses = parseFloat(tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value as string) ?? 1;
+    const necessaryResponses =
+      parseFloat(tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value as string) ?? 1;
     setNecessaryResponses(necessaryResponses);
 
     getOperatorResponses({
       variables: {
         tagsResponses: [
-          { name: TAG_NAMES.protocolName, values: [ PROTOCOL_NAME ]},
-          { name: TAG_NAMES.protocolVersion, values: [ PROTOCOL_VERSION ]},
+          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
+          { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
           { name: TAG_NAMES.operationName, values: [INFERENCE_RESPONSE] },
           { name: TAG_NAMES.requestTransaction, values: [arweaveRequest] },
         ],
@@ -78,7 +74,7 @@ const useOperatorBusy = (operatorAddr: string) => {
         unwatch();
       }
     };
-  }, [ operatorAddr, currentAddress ]);
+  }, [operatorAddr, currentAddress]);
 
   useEffect(() => {
     if (operatorResponsesData && operatorResponsesData.transactions.edges.length > 0) {

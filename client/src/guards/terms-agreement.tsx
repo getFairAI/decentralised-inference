@@ -47,12 +47,16 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
     if (currentAddress) {
       (async () => {
         const irysQuery = new Query();
-        const [ result ] = await irysQuery.search('irys:transactions').tags([
-          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME, 'Fair Protocol'] },
-          { name: TAG_NAMES.operationName, values: [TERMS_AGREEMENT] },
-          { name: TAG_NAMES.termsVersion, values: [TERMS_VERSION] },
-        ]).from([ currentAddress ]).limit(1);
-  
+        const [result] = await irysQuery
+          .search('irys:transactions')
+          .tags([
+            { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME, 'Fair Protocol'] },
+            { name: TAG_NAMES.operationName, values: [TERMS_AGREEMENT] },
+            { name: TAG_NAMES.termsVersion, values: [TERMS_VERSION] },
+          ])
+          .from([currentAddress])
+          .limit(1);
+
         if (result) {
           setShowDialog(false);
         } else {
@@ -60,7 +64,7 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
         }
       })();
     }
-  }, [ currentAddress ]);
+  }, [currentAddress]);
 
   const handleAgreeClick = useCallback(async () => {
     const tags = [

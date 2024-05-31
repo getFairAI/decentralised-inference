@@ -185,7 +185,9 @@ const MessageDetail = ({
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Typography sx={headerText}>Model Name</Typography>
-            <Typography sx={valueText}>{message.tags.find(tag => tag.name === 'modelName')?.value}</Typography>
+            <Typography sx={valueText}>
+              {message.tags.find((tag) => tag.name === 'modelName')?.value}
+            </Typography>
           </Box>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Typography sx={headerText}>Solution Name</Typography>

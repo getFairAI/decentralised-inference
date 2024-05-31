@@ -22,24 +22,24 @@ import { useEffect, useState } from 'react';
 import useRequests from './useRequests';
 
 const irysQuery = gql`
-query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String)  {
-  transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
-    edges {
-      node {
-        id
-        tags {
-          name
-          value
+  query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String) {
+    transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
+      edges {
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          address
         }
-        address
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
       }
     }
-    pageInfo {
-      endCursor
-      hasNextPage
-    }
   }
-}
 `;
 
 const useRatingFeedback = (userAddr: string) => {
@@ -61,11 +61,12 @@ const useRatingFeedback = (userAddr: string) => {
           name: TAG_NAMES.protocolVersion,
           values: [PROTOCOL_VERSION],
         },
-        { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] }],
+        { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] },
+      ],
       owners: [userAddr],
     },
     context: {
-      clientName: 'irys'
+      clientName: 'irys',
     },
     fetchPolicy: 'network-only',
     nextFetchPolicy: 'network-only',

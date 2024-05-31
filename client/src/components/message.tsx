@@ -39,7 +39,6 @@ import { toSvg } from 'jdenticon';
 import { useLazyQuery } from '@apollo/client';
 import {
   AVATAR_ATTACHMENT,
-  DEFAULT_TAGS,
   IRYS_TXS_EXPLORER,
   MODEL_ATTACHMENT,
   NET_ARWEAVE_URL,
@@ -105,7 +104,10 @@ const MessageHeader = ({
 
   const handleViewTx = useCallback(() => {
     setAnchorEl(null);
-    if (message.type === 'response' && message.tags.find((tag) => tag.name === TAG_NAMES.contractSrc)?.value !== undefined) {
+    if (
+      message.type === 'response' &&
+      message.tags.find((tag) => tag.name === TAG_NAMES.contractSrc)?.value !== undefined
+    ) {
       window.open(`${WARP_ASSETS_EXPLORER}/${message.id}`, '_blank');
     } else if (message.type === 'response') {
       window.open(`${VIEWBLOCK_TXS_EXPLORER}/${message.id}`, '_blank');
@@ -148,10 +150,12 @@ const MessageHeader = ({
         firstSolutionVersionId = state?.solution.node.id;
       }
       const attachmentAvatarTags = [
-        ...DEFAULT_TAGS, // filter from previous app versions as well
         { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
         { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-        { name: TAG_NAMES.solutionTransaction, values: [firstSolutionVersionId, currentSoludionId] },
+        {
+          name: TAG_NAMES.solutionTransaction,
+          values: [firstSolutionVersionId, currentSoludionId],
+        },
       ];
 
       await getAvatar({

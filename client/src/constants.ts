@@ -129,6 +129,8 @@ export const TAG_NAMES = {
   keywords: 'Keywords',
   solutionTransaction: 'Solution-Transaction',
   rewardsEvmAddress: 'Rewards-Evm-Address',
+  privateMode: 'Private-Mode',
+  encDataForOperator: 'Encrypted-Data-For-Operator',
 };
 
 export const TX_ORIGIN = 'Fair Protocol UI';
@@ -256,7 +258,7 @@ export const OPERATOR_REGISTRATION_PAYMENT_TAGS = [
 ];
 
 const kb = 1024;
-const maxKb = 100;
+const maxKb = 50;
 
 export const MAX_MESSAGE_SIZE = kb * maxKb;
 

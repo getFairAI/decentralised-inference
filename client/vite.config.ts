@@ -31,7 +31,6 @@ export default defineConfig({
 		}),
   ],
   optimizeDeps: {
-    disabled: false,
     include: [
       '@emotion/react', 
       '@emotion/styled', 
