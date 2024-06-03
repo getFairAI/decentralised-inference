@@ -27,7 +27,7 @@ const WalletGuard = ({ children }: { children: ReactElement }) => {
   const { localStorageValue: evmProvider } = useLocalStorage('evmProvider');
 
   useEffect(() => {
-    if (!evmProvider && (!currentAddress || !usdcBalance)) {
+    if ((!currentAddress || !usdcBalance)) {
       setCanUseInference(false);
     }
   }, [evmProvider, currentAddress, usdcBalance]);

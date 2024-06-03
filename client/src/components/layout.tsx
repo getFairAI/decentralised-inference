@@ -53,7 +53,7 @@ const WarningMessage = () => {
         <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
           Wallet Not Connected, some functionalities will not be available.{' '}
           <Link to={'/sign-in'} className='plausible-event-name=Onboarding+Click'>
-            <u>Start Onboarding</u>
+            <u>Start onboarding.</u>
           </Link>
         </Typography>
       </>
@@ -132,7 +132,7 @@ export default function Layout({ children }: { children: ReactElement }) {
               <WarningMessage />
             </Box>
           )}
-          <main style={{ height: '100%' }} ref={scrollableRef}>
+          <main style={{ height: '100%' }} ref={scrollableRef} id='main'>
             {children}
           </main>
         </Box>

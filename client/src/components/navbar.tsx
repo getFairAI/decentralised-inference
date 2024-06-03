@@ -22,12 +22,15 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
+import Option from './option';
 import {
   useCallback,
   useContext,
+  useState,
 } from 'react';
 import {
   Button,
+  MenuList,
   Tooltip,
   useTheme,
 } from '@mui/material';
@@ -35,6 +38,7 @@ import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
+import { motion } from 'framer-motion';
 
 const WalletState = () => {
   const theme = useTheme();
@@ -82,7 +86,6 @@ const WalletState = () => {
             Connect
           </Typography>
         </Button>
-        <ProfileMenu />
       </>
     );
   }
@@ -165,7 +168,6 @@ const WalletState = () => {
               {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
             </Typography>
           </Tooltip>
-          <ProfileMenu />
         </Box>
       </Box>
     </>
@@ -183,6 +185,7 @@ const Navbar = ({
   const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
   const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
   const isGetFair = window.location.hostname.includes('getfair.ai');
+  const [ isExpanded, setIsExpanded ] = useState(false);
 
   const appBarStyle = {
     zIndex,
@@ -190,60 +193,86 @@ const Navbar = ({
     padding: '10px 20px 10px 20px',
     ...(!isScrolled && { boxShadow: 'none' }),
   };
-  const spaceBetween = 'space-between';
 
   return (
     <>
       <AppBar sx={appBarStyle} color='inherit'>
-        <Toolbar sx={{ justifyContent: spaceBetween }}>
-          <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
-            <Link to='/'>
-              <Logo />
-            </Link>
-            <Typography
+        <motion.div className='flex-col w-full justify-start'
+          animate={{
+            height: isExpanded ? '100vh' : 'fit-content',
+          }}
+          transition={{
+            duration: 0.5,
+          }}
+        >
+          <Toolbar className='flex justify-between'>
+            <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
+              <Link to='/'>
+                <Logo />
+              </Link>
+              <Typography
+                sx={{
+                  fontSize: '14px',
+                  mt: '-18px',
+                  ml: '8px',
+                  padding: '0px 8px',
+                  border: '0.5px solid',
+                  borderRadius: '8px',
+                }}
+              >
+                EARLY
+              </Typography>
+            </Box>
+            <Box
+              sx={{ flexGrow: 1, gap: '16px', marginLeft: '16px' }}
+              display={{ sm: 'none', lg: 'flex' }}
+            >
+              {' '}
+            </Box>
+            <Box
               sx={{
-                fontSize: '14px',
-                mt: '-18px',
-                ml: '8px',
-                padding: '0px 8px',
-                border: '0.5px solid',
-                borderRadius: '8px',
+                gap: '16px',
+                display: { xs: 'none', sm: 'flex' },
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                margin: '0px 16px',
+                flexGrow: 1,
               }}
             >
-              EARLY
-            </Typography>
-          </Box>
-          <Box
-            sx={{ flexGrow: 1, gap: '16px', marginLeft: '16px' }}
-            display={{ sm: 'none', lg: 'flex' }}
-          >
-            {' '}
-          </Box>
-          <Box
-            sx={{
-              gap: '16px',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              margin: '0px 16px',
-              flexGrow: 1,
-            }}
-          >
-            {pathname === '/' && (
-              <Link to='/browse'>
-                <Typography
-                  textTransform={'uppercase'}
-                  lineHeight={1.3}
-                  sx={{ textWrap: 'nowrap' }}
-                >
-                  Browse Requests
-                </Typography>
-              </Link>
-            )}
-            {pathname === '/' && currentAddress && (
-              <>
+              {pathname === '/' && (
+                <Link to='/browse'>
+                  <Typography
+                    textTransform={'uppercase'}
+                    lineHeight={1.3}
+                    sx={{ textWrap: 'nowrap' }}
+                  >
+                    Browse Requests
+                  </Typography>
+                </Link>
+              )}
+              {pathname === '/' && currentAddress && (
+                <>
+                  <Link
+                    to='/request'
+                    style={{
+                      border: `0.5px solid ${theme.palette.terciary.main}`,
+                      borderRadius: '8px',
+                    }}
+                  >
+                    <Typography
+                      padding={'9.5px 15px'}
+                      textTransform={'uppercase'}
+                      lineHeight={1.3}
+                      sx={{ textWrap: 'nowrap' }}
+                    >
+                      Make a request
+                    </Typography>
+                  </Link>
+                </>
+              )}
+              { isGetFair && pathname === '/' &&
                 <Link
-                  to='/request'
+                  to='https://fairapp.ar-io.dev'
                   style={{
                     border: `0.5px solid ${theme.palette.terciary.main}`,
                     borderRadius: '8px',
@@ -255,41 +284,40 @@ const Navbar = ({
                     lineHeight={1.3}
                     sx={{ textWrap: 'nowrap' }}
                   >
-                    Request a Solution
+                    Open On Arweave
                   </Typography>
                 </Link>
-              </>
-            )}
-            { isGetFair && pathname === '/' &&
-              <Link
-                to='https://fairapp.ar-io.dev'
-                style={{
-                  border: `0.5px solid ${theme.palette.terciary.main}`,
-                  borderRadius: '8px',
-                }}
-              >
-                <Typography
-                  padding={'9.5px 15px'}
-                  textTransform={'uppercase'}
-                  lineHeight={1.3}
-                  sx={{ textWrap: 'nowrap' }}
-                >
-                  Open On Arweave
-                </Typography>
-              </Link>
-            }
-          </Box>
-          <Box
-            className={'navbar-right-content'}
-            sx={{
-              justifyContent: { sm: 'flex-end', md: 'center' },
-              gap: { sm: '16px', md: '16px' },
-              flexGrow: { sm: 1, md: 0 },
-            }}
-          >
-            <WalletState />
-          </Box>
-        </Toolbar>
+              }
+            </Box>
+            <Box
+              className={'navbar-right-content'}
+              sx={{
+                display: 'flex',
+                justifyContent: { sm: 'flex-end', md: 'center' },
+                gap: { sm: '16px', md: '16px' },
+                flexGrow: { sm: 0, md: 0 },
+              }}
+            >
+              <Box sx={{
+                display: { xs: 'none', md: 'flex' },
+              }}>
+                <WalletState />
+              </Box>
+              <ProfileMenu setIsExpanded={setIsExpanded} />
+            </Box>
+          </Toolbar>
+          {isExpanded && <Box>
+            <MenuList>
+              {/* <Option option='Links' setOpen={setIsExpanded} setLinksOpen={setLinksOpen} /> */}
+              <Option option='Twitter' setOpen={setIsExpanded} />
+              <Option option='Github' setOpen={setIsExpanded} />
+              <Option option='Discord' setOpen={setIsExpanded} />
+              <Option option='Whitepaper' setOpen={setIsExpanded} />
+              <Option option='Studio' setOpen={setIsExpanded} />
+              <Option option='Terms And Conditions' setOpen={setIsExpanded} />
+            </MenuList>
+          </Box>}
+        </motion.div>
       </AppBar>
       <Toolbar />
     </>

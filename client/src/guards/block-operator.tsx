@@ -118,7 +118,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
           </Button>
         </DialogActions>
       </Dialog>
-      {state.operatorEvmWallet !== currentAddress && children}
+      {state && state.operatorEvmWallet !== currentAddress && children}
     </>
   );
 };

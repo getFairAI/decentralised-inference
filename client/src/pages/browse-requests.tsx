@@ -35,6 +35,7 @@ import {
   Modal,
   Paper,
   TextField,
+  Fab,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
@@ -289,8 +290,8 @@ const RequestElement = ({ request }: { request: RequestData }) => {
           )}
         </Box>
       </Modal>
-      <Grid xs={12} md={6} lg={4} key={request.id}>
-        <Card>
+      <Grid xs={12} md={6} lg={4} key={request.id} sx={{ display: 'flex', alignItems: 'center' }}>
+        <Card raised={true}>
           <CardActionArea onClick={handleOpen}>
             <CardHeader title={request.title} />
             <CardContent>
@@ -361,10 +362,13 @@ const BrowseRequests = () => {
 
   return (
     <Box margin={'16px'}>
-      <Grid container spacing={2}>
+      <Grid container spacing={8}>
         {requests.map((req) => (
           <RequestElement key={req.id} request={req} />
         ))}
+        <Fab sx={{ /* widht: '20px', height: '20px', */ position: 'absolute', bottom: '30px', right: '30px' }}>
+          <img src='./chevron-bottom.svg'/>
+        </Fab>
       </Grid>
     </Box>
   );
