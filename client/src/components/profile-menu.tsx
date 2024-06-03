@@ -58,10 +58,10 @@ export default function ProfileMenu({ setIsExpanded }: { setIsExpanded: Dispatch
     setOpen((prevOpen) => !prevOpen);
     setLinksOpen(false);
   };
-  const handleToggleMobile = () => {
-    setMobileOpen((prevOpen) => !prevOpen);
+  const handleToggleMobile = useCallback(() => {
+    setMobileOpen((currVal) => !currVal);
     setIsExpanded((expanded) => !expanded);
-  };
+  }, [ setMobileOpen, setIsExpanded ]);
   const { currentAddress, ethBalance, usdcBalance, disconnect } = useContext(EVMWalletContext);
 
   const handleListKeyDown = (event: KeyboardEvent) => {
