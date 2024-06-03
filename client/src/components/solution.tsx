@@ -109,7 +109,6 @@ const Solution = ({
           solution: tx,
         },
       });
-      return;
     } else {
       navigate('/chat', {
         state: {
