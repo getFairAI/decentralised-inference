@@ -36,6 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ComputerIcon from '@mui/icons-material/Computer';
 import { EVMWalletContext } from '@/context/evm-wallet';
+import useScroll from '@/hooks/useScroll';
 
 const Solution = ({
   tx,
@@ -44,6 +45,7 @@ const Solution = ({
   tx: findByTagsQuery['transactions']['edges'][0];
   operatorsData: OperatorData[];
   onSignIn?: boolean;
+  containerRef: React.RefObject<HTMLDivElement>;
 }) => {
   const [hasOperators, setHasOperators] = useState(false);
   const [avgFee, setAvgFee] = useState(0);
@@ -53,6 +55,8 @@ const Solution = ({
   const mainCardRef = useRef<HTMLDivElement>(null);
   const [topOffset, setTopOffset] = useState(0);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
+  const scrollableRef = useRef(document.getElementById('main'));
+  const { scrollTop } = useScroll(scrollableRef);
 
   const navigate = useNavigate();
   const theme = useTheme();
@@ -72,9 +76,9 @@ const Solution = ({
 
   useEffect(() => {
     if (mainCardRef.current) {
-      setTopOffset(mainCardRef.current.offsetTop);
+      setTopOffset(mainCardRef.current.offsetTop - scrollTop);
     }
-  }, [currentAddress, usdcBalance]);
+  }, [currentAddress, usdcBalance, scrollTop ]);
 
   useEffect(() => {
     if (imageData) {
@@ -96,14 +100,26 @@ const Solution = ({
   }, [operatorsData]);
 
   const handleSolutionClick = useCallback(() => {
-    navigate('/chat', {
-      state: {
-        defaultOperator: operatorsData[0] ?? undefined,
-        availableOperators: operatorsData ?? [],
-        solution: tx,
-      },
-    });
-  }, [tx, operatorsData]);
+
+    if (!currentAddress) {
+      navigate('/sign-in', {
+        state: {
+          defaultOperator: operatorsData[0] ?? undefined,
+          availableOperators: operatorsData ?? [],
+          solution: tx,
+        },
+      });
+      return;
+    } else {
+      navigate('/chat', {
+        state: {
+          defaultOperator: operatorsData[0] ?? undefined,
+          availableOperators: operatorsData ?? [],
+          solution: tx,
+        },
+      });
+    }
+  }, [tx, operatorsData, currentAddress ]);
 
   const getTimePassed = () => {
     const timestamp = findTag(tx, 'unixTime');
@@ -137,7 +153,7 @@ const Solution = ({
   const handleHoverEnd = useCallback(() => setIsHovering(false), [setIsHovering]);
 
   return (
-    <motion.div onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd}>
+    <motion.div initial={false} onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd}>
       <motion.div
         ref={mainCardRef}
         animate={{ rotateY: isHovering ? -180 : 0 }}

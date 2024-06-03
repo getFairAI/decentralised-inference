@@ -33,6 +33,8 @@ import TermsAgreement from './guards/terms-agreement';
 import RequestSolution from './pages/request-solution';
 import BrowseRequests from './pages/browse-requests';
 
+import '@/index.css';
+
 const router = createHashRouter([
   {
     path: '/',
@@ -46,13 +48,13 @@ const router = createHashRouter([
       {
         path: 'chat',
         element: (
-          <BlockOperatorGuard>
-            <WalletGuard>
+          <WalletGuard>
+            <BlockOperatorGuard>
               <TermsAgreement>
                 <Chat />
               </TermsAgreement>
-            </WalletGuard>
-          </BlockOperatorGuard>
+            </BlockOperatorGuard>
+          </WalletGuard>
         ),
       },
       {
@@ -78,9 +80,7 @@ const router = createHashRouter([
       {
         path: 'request',
         element: (
-          <WalletGuard>
-            <RequestSolution />
-          </WalletGuard>
+          <RequestSolution />
         ),
       },
     ],

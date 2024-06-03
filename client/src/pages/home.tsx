@@ -38,6 +38,7 @@ export default function Home() {
   const { validTxs: operatorsData } = useOperators(txs);
   const loadingTiles = genLoadingArray(10);
   const theme = useTheme();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleChange = throttle((event: ChangeEvent<HTMLInputElement>) => {
     // do something
@@ -55,6 +56,7 @@ export default function Home() {
   return (
     <>
       <Container
+        ref={containerRef}
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -101,7 +103,7 @@ export default function Home() {
           </Box>
         </Box>
         {error && <Typography>Error: {error.message}</Typography>}
-        <Grid container spacing={10} display={'flex'} justifyContent={'center'} width={'100%'}>
+        <Grid container spacing={10} display={'flex'} justifyContent={'center'}>
           {loading &&
             loadingTiles.map((el) => (
               <Grid item key={el}>
@@ -114,6 +116,7 @@ export default function Home() {
               <Solution
                 tx={tx}
                 operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
+                containerRef={containerRef}
               />
             </Grid>
           ))}

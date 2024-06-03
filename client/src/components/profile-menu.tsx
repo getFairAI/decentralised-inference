@@ -39,7 +39,6 @@ import {
   ClickAwayListener,
   Divider,
   Grow,
-  MenuItem,
   MenuList,
   Paper,
   Popper,
@@ -47,131 +46,21 @@ import {
 } from '@mui/material';
 import OpenInNew from '@mui/icons-material/OpenInNew';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
-import { ChevronRight } from '@mui/icons-material';
-import { STUDIO_LINK, GITHUB_LINK, DISCORD_LINK, TWITTER_LINK, WHITEPAPER_LINK } from '@/constants';
-import { useNavigate } from 'react-router-dom';
-import GetIcon from './get-icon';
-import { ChooseWalletContext } from '@/context/choose-wallet';
+import Option from './option';
 
-const Option = ({
-  option,
-  setOpen,
-  setLinksOpen,
-}: {
-  option: string;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  setLinksOpen?: Dispatch<SetStateAction<boolean>>;
-}) => {
-  const navigate = useNavigate();
-  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
-
-  const showIcons = [
-    'Twitter',
-    'Github',
-    'Discord',
-    'Whitepaper',
-    'Terms And Conditions',
-    'Studio',
-    'Top Up',
-    'Change Wallet',
-  ];
-
-  const handleOptionClick = useCallback(() => {
-    (async () => {
-      switch (option) {
-        case 'Studio':
-          window.open(STUDIO_LINK, '_blank');
-          setOpen(false);
-          break;
-        case 'Github':
-          window.open(GITHUB_LINK, '_blank');
-          setOpen(false);
-          if (setLinksOpen) {
-            setLinksOpen(true);
-          }
-          break;
-        case 'Discord':
-          window.open(DISCORD_LINK, '_blank');
-          setOpen(false);
-          if (setLinksOpen) {
-            setLinksOpen(false);
-          }
-          break;
-        case 'Twitter':
-          window.open(TWITTER_LINK, '_blank');
-          setOpen(false);
-          if (setLinksOpen) {
-            setLinksOpen(false);
-          }
-          break;
-        case 'Whitepaper':
-          window.open(WHITEPAPER_LINK, '_blank');
-          setOpen(false);
-          if (setLinksOpen) {
-            setLinksOpen(false);
-          }
-          break;
-        case 'Top Up':
-          setOpen(false);
-          navigate('/swap');
-          return;
-        case 'Terms And Conditions':
-          setOpen(false);
-          navigate('/terms');
-          return;
-        case 'Links':
-          if (setLinksOpen) {
-            setLinksOpen(true);
-          }
-          setOpen(false);
-          return;
-        case 'Change Wallet':
-          setChooseWalletOpen(true);
-          setOpen(false);
-          return;
-        default:
-          setOpen(false);
-          return;
-      }
-    })();
-  }, [option]);
-
-  if (showIcons.includes(option)) {
-    return (
-      <MenuItem sx={{ borderRadius: '10px', margin: '8px' }} onClick={handleOptionClick}>
-        <Typography sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <GetIcon input={option}></GetIcon>
-          {option}
-        </Typography>
-      </MenuItem>
-    );
-  }
-
-  return (
-    <MenuItem sx={{ borderRadius: '10px', margin: '8px' }} onClick={handleOptionClick}>
-      <Typography
-        sx={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {option}
-        <ChevronRight fontSize='inherit' />
-      </Typography>
-    </MenuItem>
-  );
-};
-
-export default function ProfileMenu() {
+export default function ProfileMenu({ setIsExpanded }: { setIsExpanded: Dispatch<SetStateAction<boolean>>}) {
   /*  const [ trasnformPosition, setTransformPosition ] = useState(false); */
   const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [linksOpen, setLinksOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
     setLinksOpen(false);
+  };
+  const handleToggleMobile = () => {
+    setMobileOpen((prevOpen) => !prevOpen);
+    setIsExpanded((expanded) => !expanded);
   };
   const { currentAddress, ethBalance, usdcBalance, disconnect } = useContext(EVMWalletContext);
 
@@ -223,7 +112,7 @@ export default function ProfileMenu() {
 
   const showIcon = () => {
     if (!currentAddress) {
-      return <>{open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}</>;
+      return <>{open || mobileOpen ? <CloseIcon color='action' /> : <MenuIcon color='action' />}</>;
     } else {
       return <img src='./chevron-bottom.svg' />;
     }
@@ -233,6 +122,7 @@ export default function ProfileMenu() {
     setOpen(false);
     disconnect();
   }, [setOpen, disconnect]);
+  
 
   const handleViewInExplorer = useCallback(() => {
     window.open(`https://arbiscan.io/address/${currentAddress}`, '_blank');
@@ -240,22 +130,37 @@ export default function ProfileMenu() {
 
   return (
     <div>
-      <IconButton
-        aria-label='more'
-        id='long-button'
-        aria-controls={open ? 'long-menu' : undefined}
-        aria-expanded={open ? 'true' : undefined}
-        aria-haspopup='true'
-        onClick={handleToggle}
-        ref={anchorRef}
-        sx={
-          {
-            /* ...!!currentAddress && { paddingLeft: 0}, */
+      <Box display={{xs: 'none', sm: 'flex'}}>
+        <IconButton
+          aria-label='more'
+          id='long-button'
+          aria-controls={open ? 'long-menu' : undefined}
+          aria-expanded={open ? 'true' : undefined}
+          aria-haspopup='true'
+          onClick={handleToggle}
+          ref={anchorRef}
+          sx={
+            {
+              /* ...!!currentAddress && { paddingLeft: 0}, */
+            }
           }
-        }
-      >
-        {showIcon()}
-      </IconButton>
+        >
+          {showIcon()}
+        </IconButton>
+      </Box>
+      <Box display={{xs: 'flex', sm: 'none'}}>
+        <IconButton
+          aria-label='more'
+          id='long-button'
+          aria-controls={mobileOpen ? 'long-menu' : undefined}
+          aria-expanded={mobileOpen ? 'true' : undefined}
+          aria-haspopup='true'
+          onClick={handleToggleMobile}
+        >
+          {showIcon()}
+        </IconButton>
+      </Box>
+      
       <Popper
         open={open}
         anchorEl={anchorRef.current}
@@ -272,64 +177,66 @@ export default function ProfileMenu() {
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
                 <Card variant='outlined'>
-                  <CardHeader
-                    avatar={
-                      <IconButton onClick={handleDisconnect}>
-                        <PowerSettingsNewIcon />
-                      </IconButton>
-                    }
-                    subheader={'Connected Account'}
-                    title={
-                      <Typography
-                        fontWeight={500}
-                        sx={{
-                          textDecoration: 'underline',
+                  {currentAddress !== '' && <>
+                    <CardHeader
+                      avatar={
+                        <IconButton onClick={handleDisconnect}>
+                          <PowerSettingsNewIcon />
+                        </IconButton>
+                      }
+                      subheader={'Connected Account'}
+                      title={
+                        <Typography
+                          fontWeight={500}
+                          sx={{
+                            textDecoration: 'underline',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '2px',
+                            cursor: 'pointer',
+                          }}
+                          onClick={handleViewInExplorer}
+                        >
+                          {`${currentAddress.slice(0, 6)}...${currentAddress.slice(-4)}`}
+                          <OpenInNew fontSize='inherit' />
+                        </Typography>
+                      }
+                      sx={{
+                        '&.MuiCardHeader-root': {
                           display: 'flex',
-                          alignItems: 'center',
-                          gap: '2px',
-                          cursor: 'pointer',
-                        }}
-                        onClick={handleViewInExplorer}
-                      >
-                        {`${currentAddress.slice(0, 6)}...${currentAddress.slice(-4)}`}
-                        <OpenInNew fontSize='inherit' />
-                      </Typography>
-                    }
-                    sx={{
-                      '&.MuiCardHeader-root': {
-                        display: 'flex',
-                        gap: '24px',
-                        flexDirection: 'row-reverse',
-                        justifyContent: 'space-between',
-                      },
-                      '& .MuiCardHeader-avatar': {
-                        marginRight: 0,
-                      },
-                      '& .MuiCardHeader-content': {
-                        display: 'flex',
-                        flexDirection: 'column-reverse',
-                      },
-                    }}
-                  />
-                  <CardContent
-                    sx={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 0 }}
-                  >
-                    <Box display={'flex'} justifyContent={'space-between'}>
-                      <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                        <img width='20px' height='20px' src='./eth-logo.svg' />
-                        <Typography fontWeight={600}>ETH</Typography>
+                          gap: '24px',
+                          flexDirection: 'row-reverse',
+                          justifyContent: 'space-between',
+                        },
+                        '& .MuiCardHeader-avatar': {
+                          marginRight: 0,
+                        },
+                        '& .MuiCardHeader-content': {
+                          display: 'flex',
+                          flexDirection: 'column-reverse',
+                        },
+                      }}
+                    />
+                    <CardContent
+                      sx={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 0 }}
+                    >
+                      <Box display={'flex'} justifyContent={'space-between'}>
+                        <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                          <img width='20px' height='20px' src='./eth-logo.svg' />
+                          <Typography fontWeight={600}>ETH</Typography>
+                        </Box>
+                        <Typography fontWeight={400}>{ethBalance.toPrecision(4)}</Typography>
                       </Box>
-                      <Typography fontWeight={400}>{ethBalance.toPrecision(4)}</Typography>
-                    </Box>
-                    <Box display={'flex'} justifyContent={'space-between'}>
-                      <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                        <img width='20px' height='20px' src='./usdc-logo.svg' />
-                        <Typography fontWeight={600}>USDC</Typography>
+                      <Box display={'flex'} justifyContent={'space-between'}>
+                        <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                          <img width='20px' height='20px' src='./usdc-logo.svg' />
+                          <Typography fontWeight={600}>USDC</Typography>
+                        </Box>
+                        <Typography fontWeight={400}>{usdcBalance.toPrecision(4)}</Typography>
                       </Box>
-                      <Typography fontWeight={400}>{usdcBalance.toPrecision(4)}</Typography>
-                    </Box>
-                  </CardContent>
-                  <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.05)' }} />
+                    </CardContent>
+                    <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.05)' }} />
+                  </>}
                   <MenuList
                     autoFocusItem={open}
                     id='composition-menu'

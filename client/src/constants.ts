@@ -265,7 +265,8 @@ export const MAX_MESSAGE_SIZE = kb * maxKb;
 export const BAZAR_ASSETS_LINK = 'https://bazar.ar-io.dev/#/asset/';
 export const RAREWEAVE_ASSET_LIST_LINK = 'https://rareweave.store/nft';
 
-export const CREATE_WALLET_LINK = 'https://docs.arweave.org/info/wallets/arweave-wallet';
+export const CREATE_WALLET_LINK = 'https://metamask.io/';
+export const CREATE_ALTERNATIVE_LINK = 'https://www.alchemy.com/list-of/software-wallets-on-arbitrum';
 export const BUY_USDC_LINK = 'https://www.kraken.com/learn/buy-usdc-usdc';
 export const BUY_ARB_LINK = 'https://www.kraken.com/learn/buy-arbitrum-arb';
 

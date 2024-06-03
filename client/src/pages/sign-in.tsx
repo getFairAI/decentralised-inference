@@ -17,7 +17,7 @@
  */
 
 import Logo from '@/components/logo';
-import { BUY_ARB_LINK, BUY_USDC_LINK, CREATE_WALLET_LINK, MIN_U_BALANCE } from '@/constants';
+import { BUY_ARB_LINK, BUY_USDC_LINK, CREATE_ALTERNATIVE_LINK, CREATE_WALLET_LINK, MIN_U_BALANCE } from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_TXS_BY_RECIPIENT } from '@/queries/graphql';
@@ -41,14 +41,11 @@ import {
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Close, InfoOutlined } from '@mui/icons-material';
+import { Close, InfoOutlined, WarningOutlined } from '@mui/icons-material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { isTxConfirmed } from '@/utils/arweave';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import useSolutions from '@/hooks/useSolutions';
-import useOperators from '@/hooks/useOperators';
-import Solution from '@/components/solution';
 
 type EdgeWithStatus = IEdge & { status: string };
 
@@ -57,6 +54,8 @@ const justifyContent = 'space-between';
 const WalletnotConnectedContent = () => {
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const handleClick = useCallback(() => setChooseWalletOpen(true), [setChooseWalletOpen]);
+  const { providers } = useContext(EVMWalletContext);
+  const { state } = useLocation();
 
   return (
     <>
@@ -71,39 +70,53 @@ const WalletnotConnectedContent = () => {
           lineHeight={'40.5px'}
           align='center'
         >
-          First, Lets get connected!
+          {state ? 'To start using this AI solution, you need to connect a wallet!' : 'First, lets get connected!'}
         </Typography>
       </Box>
-      <Button
-        sx={{ borderRadius: '8px', gap: '10px', background: '#FFF' }}
-        onClick={handleClick}
-        className='plausible-event-name=Onboarding+Connect+Wallet+Click'
-      >
-        <Typography
-          sx={{ color: '#1F1F26' }}
-          fontWeight={700}
-          fontSize={'18px'}
-          lineHeight={'24.3px'}
+      {
+        providers.length > 0 &&  <Button
+          sx={{ borderRadius: '8px', gap: '10px', background: '#FFF' }}
+          onClick={handleClick}
+          className='plausible-event-name=Onboarding+Connect+Wallet+Click'
         >
-          Connect To the Arbitrum Network
-        </Typography>
-      </Button>
-      <Box display={'flex'} gap={'8px'}>
-        <Typography display={'flex'} gap={'8px'} alignItems={'center'} fontWeight={'500'} noWrap>
-          <InfoOutlined /* sx={{ fontSize: '12px' }}  */ />
-          Don&apos;t have a wallet yet?
-        </Typography>
-        <Typography display={'flex'} gap={'8px'} alignItems={'center'} noWrap>
-          <a
-            href={CREATE_WALLET_LINK}
-            target='_blank'
-            rel='noreferrer'
-            className='plausible-event-name=Wallet+Create+Learn+Click'
+          <Typography
+            sx={{ color: '#1F1F26' }}
+            fontWeight={700}
+            fontSize={'18px'}
+            lineHeight={'24.3px'}
           >
-            <u>Learn how to create one.</u>
-          </a>
-        </Typography>
-      </Box>
+            Connect To the Arbitrum Network
+          </Typography>
+        </Button>
+      }
+      {providers.length === 0 && <>
+        <Box display={'flex'} gap={'8px'} flexDirection={'column'}>
+          <Typography display={'flex'} gap={'8px'} alignItems={'center'} fontWeight={'500'} noWrap variant='h3'>
+            <WarningOutlined /* sx={{ fontSize: '12px' }}  */ />
+            No wallets detected. Please install a wallet to continue.
+          </Typography>
+          <Typography display={'flex'} gap={'8px'} alignItems={'center'} fontWeight={'500'} noWrap variant='h3' justifyContent={'center'}>
+            <a
+              href={CREATE_WALLET_LINK}
+              target='_blank'
+              rel='noreferrer'
+              className='plausible-event-name=Wallet+Create+Recommended+Click'
+            >
+              <u>Install our recommended wallet</u>
+            </a>
+            {'or'}
+            <a
+              href={CREATE_ALTERNATIVE_LINK}
+              target='_blank'
+              rel='noreferrer'
+              className='plausible-event-name=Wallet+Create+Alternatives+Click'
+            >
+              <u> find alternatives.</u>
+            </a>
+          </Typography>
+        </Box>
+      </>
+      }
     </>
   );
 };
@@ -321,45 +334,8 @@ const WalletNoFundsContent = () => {
   );
 };
 
-const SinginWithFunds = () => {
-  const singinFeatureElements = 4;
-  const { txs } = useSolutions(undefined, singinFeatureElements);
-
-  const { validTxs: operatorsData } = useOperators(txs);
-
-  return (
-    <>
-      <Box display={'flex'}>
-        <Logo />
-      </Box>
-      <Box>
-        <Typography
-          sx={{ color: '#1F1F26' }}
-          fontWeight={300}
-          fontSize={'30px'}
-          lineHeight={'40.5px'}
-          align='center'
-        >
-          Choose A model to get started!
-        </Typography>
-      </Box>
-      <Box className={'feature-cards-row'} justifyContent={'flex-end'}>
-        {txs.map((tx) => (
-          <Box key={tx.node.id} display={'flex'} flexDirection={'column'} gap={'30px'}>
-            <Solution
-              tx={tx}
-              operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
-              onSignIn={true}
-            />
-          </Box>
-        ))}
-      </Box>
-    </>
-  );
-};
-
 const SignIn = () => {
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const isConnected = useMemo(() => !!currentAddress, [currentAddress]);
 
@@ -368,6 +344,17 @@ const SignIn = () => {
   const handleSkip = useCallback(() => navigate('/'), [navigate]);
 
   const isSwap = useMemo(() => pathname === '/swap', [pathname]);
+
+  useEffect(() => {
+    if (isConnected && usdcBalance >= MIN_U_BALANCE && state) {
+      navigate('/chat', { state });
+    } else if (isConnected && usdcBalance >= MIN_U_BALANCE) {
+      navigate('/');
+    } else {
+      // ignore
+    }
+  }, [ isConnected ]);
+
   return (
     <Container
       sx={{
@@ -383,8 +370,6 @@ const SignIn = () => {
       {!isConnected && <WalletnotConnectedContent />}
 
       {isConnected && (usdcBalance < MIN_U_BALANCE || isSwap) && <WalletNoFundsContent />}
-
-      {!isSwap && isConnected && usdcBalance >= MIN_U_BALANCE && <SinginWithFunds />}
 
       <IconButton
         sx={{
