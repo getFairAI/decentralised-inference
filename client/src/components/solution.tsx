@@ -30,19 +30,23 @@ import {
   CardContent,
   Tooltip,
   useTheme,
+  CircularProgress,
 } from '@mui/material';
-import { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { useState, useEffect, useCallback, useRef, useContext, WheelEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ComputerIcon from '@mui/icons-material/Computer';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import useScroll from '@/hooks/useScroll';
+import useWindowDimensions from '@/hooks/useWindowDimensions';
 
 const Solution = ({
   tx,
   operatorsData,
+  loading
 }: {
   tx: findByTagsQuery['transactions']['edges'][0];
+  loading: boolean;
   operatorsData: OperatorData[];
   onSignIn?: boolean;
   containerRef: React.RefObject<HTMLDivElement>;
@@ -57,6 +61,8 @@ const Solution = ({
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const scrollableRef = useRef(document.getElementById('main'));
   const { scrollTop } = useScroll(scrollableRef);
+  const { width } = useWindowDimensions();
+  const [ isMobile, setIsMobile ] = useState(false);
 
   const navigate = useNavigate();
   const theme = useTheme();
@@ -73,6 +79,11 @@ const Solution = ({
     },
     skip: !tx.node.id || !tx.node.owner.address,
   });
+
+  useEffect(() => {
+    const sm = theme.breakpoints.values.sm;
+    setIsMobile(width < sm);
+  }, [ width, theme, setIsMobile ]);
 
   useEffect(() => {
     if (mainCardRef.current) {
@@ -100,8 +111,10 @@ const Solution = ({
   }, [operatorsData]);
 
   const handleSolutionClick = useCallback(() => {
-
-    if (!currentAddress) {
+    if (isMobile) {
+      // if mobile click is used to turn card
+      setIsHovering((hovering) => !hovering);
+    } else if (!currentAddress) {
       navigate('/sign-in', {
         state: {
           defaultOperator: operatorsData[0] ?? undefined,
@@ -118,7 +131,7 @@ const Solution = ({
         },
       });
     }
-  }, [tx, operatorsData, currentAddress ]);
+  }, [tx, operatorsData, currentAddress, isMobile ]);
 
   const getTimePassed = () => {
     const timestamp = findTag(tx, 'unixTime');
@@ -150,9 +163,19 @@ const Solution = ({
 
   const handleHoverStart = useCallback(() => setIsHovering(true), [setIsHovering]);
   const handleHoverEnd = useCallback(() => setIsHovering(false), [setIsHovering]);
+  const handleWheel = useCallback((event: WheelEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+
+    if (scrollableRef.current) {
+      scrollableRef.current.scrollBy({
+        top: event.deltaY,
+        behavior: 'instant'
+      });
+    }
+  }, [ scrollableRef ]);
 
   return (
-    <motion.div initial={false} onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd}>
+    <motion.div initial={false} onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd} onWheel={handleWheel}>
       <motion.div
         ref={mainCardRef}
         animate={{ rotateY: isHovering ? -180 : 0 }}
@@ -249,7 +272,7 @@ const Solution = ({
               <Typography>{tx.node.tags.find((el) => el.name === 'Description')?.value}</Typography>
             </CardContent>
 
-            <CardContent
+            {!loading && <CardContent
               sx={{
                 display: 'flex',
                 justifyContent: 'flex-end',
@@ -274,7 +297,12 @@ const Solution = ({
                   <ComputerIcon />
                 </Box>
               </Tooltip>
-            </CardContent>
+            </CardContent>}
+            {loading && <CardContent sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+              <Tooltip title='Loading Available Operators'>
+                <CircularProgress />
+              </Tooltip>
+            </CardContent>}
           </CardActionArea>
         </Card>
       </motion.div>

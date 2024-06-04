@@ -111,8 +111,17 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         setType('image');
         message.decData = decrypted;
       } catch (err) {
-        setContent(decrypted || 'Failed to decrypt');
-        setType('text');
+        const data = JSON.parse(decrypted);
+         if (data['response']) {
+          setContent(data['response'] as string);
+          setType('text');
+        } else if (data['prompt']) {
+          setContent(data['prompt'] as string);
+          setType('text');
+        } else {
+          setContent(JSON.stringify(decrypted, null, 2));
+          setType('text');
+        }
       }
     } else {
       // ignore
