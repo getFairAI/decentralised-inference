@@ -101,6 +101,8 @@ export default function Layout({ children }: { children: ReactElement }) {
   const { pathname } = useLocation();
   const warningRef = useRef<HTMLDivElement>(null);
   const { height: warningHeight } = useComponentDimensions(warningRef);
+  const [ isMobile, setIsMobile ] = useState(false);
+  const theme = useTheme();
 
   useLayoutEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight;
@@ -111,6 +113,17 @@ export default function Layout({ children }: { children: ReactElement }) {
 
   if (pathname === '/sign-in' || pathname === '/swap') {
     return children;
+  }
+
+  useEffect(() => {
+    const sm = theme.breakpoints.values.sm;
+    setIsMobile(width < sm);
+  }, [ width, theme, setIsMobile ]);
+
+  if (isMobile) {
+    return <>
+      <Navbar isScrolled={isScrolled} />
+    </>;
   }
 
   return (
@@ -128,7 +141,7 @@ export default function Layout({ children }: { children: ReactElement }) {
       >
         <Box height={`calc(100% - ${warningHeight}px)`}>
           {(pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse') && (
-            <Box ref={warningRef} id={'warning-box'}>
+            <Box ref={warningRef} id={'warning-box'} sx={{ position: 'relative', zIndex: 1 }}>
               <WarningMessage />
             </Box>
           )}

@@ -35,7 +35,7 @@ export default function Home() {
   const { loading, txs, error } = useSolutions(target);
   const [ filteredTxs, setFilteredTxs ] = useState<IContractEdge[]>([]);
 
-  const { validTxs: operatorsData } = useOperators(txs);
+  const { validTxs: operatorsData, loading: operatorsLoading } = useOperators(txs);
   const loadingTiles = genLoadingArray(10);
   const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,6 +115,7 @@ export default function Home() {
             <Grid item key={tx.node.id}>
               <Solution
                 tx={tx}
+                loading={operatorsLoading}
                 operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
                 containerRef={containerRef}
               />
