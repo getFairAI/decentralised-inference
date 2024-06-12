@@ -17,16 +17,20 @@
  */
 
 import { LTIPP_SOLUTION, STIP_SOLUTION } from '@/constants';
+import useOperators from '@/hooks/useOperators';
 import { useLazyQuery } from '@apollo/client';
 import { findByIdDocument } from '@fairai/evm-sdk';
+import { Backdrop, CircularProgress, Typography, useTheme } from '@mui/material';
 import { ReactElement, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
+  const theme = useTheme();
   const navigate = useNavigate();
 
   const [ getSolution, { data }] = useLazyQuery(findByIdDocument);
+  const { validTxs: operatorsData } = useOperators(data?.transactions.edges || []);
 
   useEffect(() => {
     if (pathname.includes('ltipp')) {
@@ -39,16 +43,36 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   }, [ pathname ]);
 
   useEffect(() => {
-    if (data) {
+    if (data && operatorsData) {
       navigate({}, { state: {
-        defaultOperator: '',
-        availableOperators: [],
+        defaultOperator: operatorsData[0],
+        availableOperators: operatorsData,
         solution: data.transactions.edges[0],
       }, replace: true });
     }
-  }, [data]);
+  }, [data, operatorsData]);
 
-  return children;
+  if (!state?.defaultOperator) {
+    return <Backdrop
+      sx={{
+        position: 'absolute',
+        zIndex: theme.zIndex.drawer + 1,
+        backdropFilter: 'blur(50px)',
+        display: 'flex',
+        flexDirection: 'column',
+        left: '0px',
+        right: '0px',
+      }}
+      open={true}
+    >
+      <Typography variant='h1' fontWeight={500} color={'#9ecced'}>
+        Finding Available Providers...
+      </Typography>
+      <CircularProgress sx={{ color: '#9ecced' }} size='6rem' />
+    </Backdrop>;
+  } else {
+    return children;
+  }
 };
 
 export default ArbitrumGuard;
