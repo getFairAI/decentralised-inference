@@ -32,19 +32,22 @@ import Message from './message';
 import { secondInMS } from '@/constants';
 import { useCallback } from 'react';
 import { ITag } from '@/interfaces/arweave';
+import MessageDisplay from './message-display';
 
 const ChatContent = ({
   showError,
   messages,
   isWaitingResponse,
   responseTimeout,
+  forArbitrum,
   copySettings,
 }: {
   showError: boolean;
   messages: IMessage[];
   isWaitingResponse: boolean;
   responseTimeout: boolean;
-  copySettings: (tags: ITag[]) => void;
+  forArbitrum?: boolean;
+  copySettings?: (tags: ITag[]) => void;
 }) => {
   const defaultJustifyContent = 'flex-start';
   const theme = useTheme();
@@ -173,7 +176,18 @@ const ChatContent = ({
             sx={{ paddingTop: '16px' }}
             className='message-container'
           >
-            <Message message={el} index={index} copySettings={copySettings} />
+            {!forArbitrum && copySettings && <Message message={el} index={index} copySettings={copySettings} />}
+            {forArbitrum && <div key={el.id} className={`flex w-full gap-4 md:flex-nowrap items-end ${el.type === 'request' ? 'justify-end flex-wrap' : 'justify-start flex-wrap-reverse'}`}>
+              <Card raised={true} className={'transition-all rounded-lg py-2 px-4 w-fit min-w-[30%] max-w-full md:max-w-[80%] whitespace-pre-wrap'}>
+                <MessageDisplay message={el} />
+                <div className='flex justify-end w-full opacity-30 text-xs'>
+                  {new Date(el.timestamp * 1000).toLocaleString(undefined, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                  })}
+                </div>
+              </Card>
+            </div>}
             {showDayDivider(el, index)}
           </Container>
         ))}

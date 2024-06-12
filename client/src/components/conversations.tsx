@@ -117,12 +117,14 @@ const Conversations = ({
   userAddr,
   drawerOpen,
   setDrawerOpen,
+  setLayoverOpen,
 }: {
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
   userAddr: string;
   drawerOpen: boolean;
   setDrawerOpen: Dispatch<SetStateAction<boolean>>;
+  setLayoverOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
   const [conversationIds, setConversationIds] = useState<number[]>([]);
   const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
@@ -178,11 +180,13 @@ const Conversations = ({
           .from([currentAddress]);
 
         if (results.length === 0) {
+          setLayoverOpen(true);
           // no conversations yet, create new
           await createNewConversation(1);
           setCurrentConversationId(1);
           setConversationIds([1]);
           setFilteredConversationIds([1]);
+          setLayoverOpen(false);
         } else {
           const cids = Array.from(
             new Set(
@@ -269,10 +273,12 @@ const Conversations = ({
   }, [currentConversationId]);
 
   const handleAddConversation = useCallback(async () => {
+    setLayoverOpen(true);
     const last = Math.max(...conversationIds);
     await createNewConversation(last + 1);
     setFilterConversations('');
     setCurrentConversationId(last + 1);
+    setLayoverOpen(false);
   }, [setFilterConversations, setCurrentConversationId, createNewConversation]);
 
   let keyTimeout: Timeout;

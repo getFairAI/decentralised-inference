@@ -37,6 +37,7 @@ const useRequests = ({
     query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String) {
       transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
         edges {
+          cursor
           node {
             id
             tags {
@@ -103,9 +104,10 @@ const useRequests = ({
   }, [requestsData, requestNetworkStatus, setHasRequestNextPage]);
 
   const fetchMore = () => {
+    const lastTx = requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor;
     requestFetchMore({
       variables: {
-        after: requestsData.transactions.pageInfo.endCursor,
+        after: lastTx,
       },
       updateQuery: commonUpdateQuery,
     });

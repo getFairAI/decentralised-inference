@@ -154,8 +154,8 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         sx={{
           fontStyle: 'normal',
           fontWeight: 400,
-          fontSize: message.type === 'request' ? '25px' : '18px',
-          lineHeight: message.type === 'request' ? '34px' : '25px',
+          fontSize: '18px',
+          lineHeight: '25px',
           display: 'flex',
           alignItems: 'center',
           whiteSpace: 'pre-wrap',

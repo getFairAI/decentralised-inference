@@ -377,6 +377,7 @@ const Chat = () => {
   const [requestIds] = useState<string[]>([]);
   const [currentPubKey, setCurrentPubKey] = useState('');
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
+  const [ isLayoverOpen, setLayoverOpen ] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -969,7 +970,7 @@ const Chat = () => {
       // update balance after payments
       updateMessages(arweaveTxId, file, file.type);
       updateUsdcBalance(usdcBalance - (currentOperator?.operatorFee ?? 0));
-      enqueueSnackbar(<Typography>{'Request Successfull'}</Typography>, {
+      enqueueSnackbar('Request Successfull', {
         variant: 'success',
       });
     } catch (error) {
@@ -1063,7 +1064,7 @@ const Chat = () => {
       // update balance after payments
       updateMessages(arweaveTxId, newMessage, 'text/plain');
       updateUsdcBalance(usdcBalance - (currentOperator?.operatorFee ?? 0));
-      enqueueSnackbar(<Typography>{'Request Successfull'}</Typography>, {
+      enqueueSnackbar('Request Successfull', {
         variant: 'success',
       });
     } catch (error) {
@@ -1334,6 +1335,7 @@ const Chat = () => {
             userAddr={userAddr}
             drawerOpen={drawerOpen}
             setDrawerOpen={setDrawerOpen}
+            setLayoverOpen={setLayoverOpen}
           />
         </Drawer>
         <Box
@@ -1526,6 +1528,14 @@ const Chat = () => {
           </Box>
         </Box>
       </Box>
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLayoverOpen}
+      >
+        <Typography>
+          {'Please contine on the popup extension.'}
+        </Typography>
+      </Backdrop>
       <Outlet />
     </>
   );

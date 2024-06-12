@@ -275,3 +275,7 @@ export const WARP_ASSETS_EXPLORER = 'https://sonar.warp.cc/#/app/contract';
 export const VIEWBLOCK_TXS_EXPLORER = 'https://viewblock.io/arweave/tx';
 
 export const MIN_U_BALANCE = 1;
+
+
+export const LTIPP_SOLUTION = 'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk';
+export const STIP_SOLUTION = 'zq5_Jvd4miO6QDl42XRpPx9iICDe0AVzanvTepJ_s50';

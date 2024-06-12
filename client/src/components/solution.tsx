@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MODEL_ATTACHMENT, AVATAR_ATTACHMENT } from '@/constants';
+import { MODEL_ATTACHMENT, AVATAR_ATTACHMENT, STIP_SOLUTION, LTIPP_SOLUTION } from '@/constants';
 import { OperatorData } from '@/interfaces/common';
 import { findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';
@@ -122,6 +122,22 @@ const Solution = ({
           solution: tx,
         },
       });
+    } else if (tx.node.id === STIP_SOLUTION) {
+      navigate('/chat/arbitrum/stip', {
+        state: {
+          defaultOperator: operatorsData[0] ?? undefined,
+          availableOperators: operatorsData ?? [],
+          solution: tx,
+        }
+      });
+    } else if (tx.node.id === LTIPP_SOLUTION) {
+      navigate('/chat/arbitrum/ltipp', {
+        state: {
+          defaultOperator: operatorsData[0] ?? undefined,
+          availableOperators: operatorsData ?? [],
+          solution: tx,
+        }
+    });
     } else {
       navigate('/chat', {
         state: {

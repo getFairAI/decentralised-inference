@@ -30,6 +30,7 @@ import {
 } from 'react';
 import {
   Button,
+  IconButton,
   MenuList,
   Tooltip,
   useTheme,
@@ -39,9 +40,12 @@ import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { motion } from 'framer-motion';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 
 const WalletState = () => {
   const theme = useTheme();
+  const { pathname } = useLocation();
   const { currentAddress, isWrongChain, switchChain, connect } = useContext(EVMWalletContext);
   const { setOpen: chooseWalletOpen } = useContext(ChooseWalletContext);
   const { localStorageValue: hasOnboarded } = useLocalStorage('hasOnboarded');
@@ -49,7 +53,7 @@ const WalletState = () => {
 
   const handleConnect = useCallback(async () => {
     if (!hasOnboarded) {
-      navigate('sign-in');
+      navigate('sign-in', { state: { previousPath: pathname } });
     } else {
       try {
         await connect();
@@ -59,6 +63,7 @@ const WalletState = () => {
       }
     }
   }, [hasOnboarded, navigate]);
+
   const handleSwitchChain = useCallback(() => switchChain(), [switchChain]);
 
   if (!isWrongChain && (!currentAddress || currentAddress === '')) {
@@ -168,6 +173,7 @@ const WalletState = () => {
               {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
             </Typography>
           </Tooltip>
+          <ProfileMenu />
         </Box>
       </Box>
     </>
@@ -193,6 +199,8 @@ const Navbar = ({
     padding: '10px 20px 10px 20px',
     ...(!isScrolled && { boxShadow: 'none' }),
   };
+
+  const handleMenuClick = () => setIsExpanded(prev => !prev);
 
   return (
     <>
@@ -303,7 +311,18 @@ const Navbar = ({
               }}>
                 <WalletState />
               </Box>
-              <ProfileMenu setIsExpanded={setIsExpanded} />
+              <Box
+                sx={{
+                  display: { xs: 'flex', md: 'none' },
+                }}
+              >
+                <IconButton
+                  aria-haspopup='true'
+                  onClick={handleMenuClick}
+                >
+                  {isExpanded ? <CloseIcon color='action' /> : <MenuIcon color='action' />}
+                </IconButton>
+              </Box> 
             </Box>
           </Toolbar>
           {isExpanded && <Box>
