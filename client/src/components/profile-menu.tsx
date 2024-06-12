@@ -26,8 +26,6 @@ import {
   SyntheticEvent,
   KeyboardEvent,
   useEffect,
-  Dispatch,
-  SetStateAction,
   useCallback,
 } from 'react';
 import { EVMWalletContext } from '@/context/evm-wallet';
@@ -47,21 +45,18 @@ import {
 import OpenInNew from '@mui/icons-material/OpenInNew';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import Option from './option';
+import { motion } from 'framer-motion';
 
-export default function ProfileMenu({ setIsExpanded }: { setIsExpanded: Dispatch<SetStateAction<boolean>>}) {
+export default function ProfileMenu() {
   /*  const [ trasnformPosition, setTransformPosition ] = useState(false); */
   const [open, setOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [linksOpen, setLinksOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
     setLinksOpen(false);
   };
-  const handleToggleMobile = useCallback(() => {
-    setMobileOpen((currVal) => !currVal);
-    setIsExpanded((expanded) => !expanded);
-  }, [ setMobileOpen, setIsExpanded ]);
+
   const { currentAddress, ethBalance, usdcBalance, disconnect } = useContext(EVMWalletContext);
 
   const handleListKeyDown = (event: KeyboardEvent) => {
@@ -112,9 +107,11 @@ export default function ProfileMenu({ setIsExpanded }: { setIsExpanded: Dispatch
 
   const showIcon = () => {
     if (!currentAddress) {
-      return <>{open || mobileOpen ? <CloseIcon color='action' /> : <MenuIcon color='action' />}</>;
+      return <>{open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}</>;
     } else {
-      return <img src='./chevron-bottom.svg' />;
+      return  <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.3 }}>
+        <img src='./chevron-bottom.svg' />
+      </motion.div>;
     }
   };
 
@@ -144,18 +141,6 @@ export default function ProfileMenu({ setIsExpanded }: { setIsExpanded: Dispatch
               /* ...!!currentAddress && { paddingLeft: 0}, */
             }
           }
-        >
-          {showIcon()}
-        </IconButton>
-      </Box>
-      <Box display={{xs: 'flex', sm: 'none'}}>
-        <IconButton
-          aria-label='more'
-          id='long-button'
-          aria-controls={mobileOpen ? 'long-menu' : undefined}
-          aria-expanded={mobileOpen ? 'true' : undefined}
-          aria-haspopup='true'
-          onClick={handleToggleMobile}
         >
           {showIcon()}
         </IconButton>

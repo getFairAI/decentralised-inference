@@ -39,6 +39,7 @@ const WarningMessage = () => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const theme = useTheme();
+  const { pathname } = useLocation();
 
   const handleClose = useCallback(() => {
     setShowWarning(false);
@@ -52,7 +53,7 @@ const WarningMessage = () => {
       <>
         <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
           Wallet Not Connected, some functionalities will not be available.{' '}
-          <Link to={'/sign-in'} className='plausible-event-name=Onboarding+Click'>
+          <Link to={'/sign-in'} state={{ previousPath: pathname }} className='plausible-event-name=Onboarding+Click'>
             <u>Start onboarding.</u>
           </Link>
         </Typography>
@@ -101,6 +102,8 @@ export default function Layout({ children }: { children: ReactElement }) {
   const { pathname } = useLocation();
   const warningRef = useRef<HTMLDivElement>(null);
   const { height: warningHeight } = useComponentDimensions(warningRef);
+  const [ isMobile, setIsMobile ] = useState(false);
+  const theme = useTheme();
 
   useLayoutEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight;
@@ -109,8 +112,22 @@ export default function Layout({ children }: { children: ReactElement }) {
     }
   }, [width, height]);
 
+  useEffect(() => {
+    const sm = theme.breakpoints.values.sm;
+    setIsMobile(width < sm);
+  }, [ width, theme, setIsMobile ]);
+
   if (pathname === '/sign-in' || pathname === '/swap') {
     return children;
+  }
+
+  if (isMobile) {
+    return <>
+      <Navbar isScrolled={isScrolled} />
+      <Box sx={{ height: '100%', display: 'flex', aligItems: 'center'}}>
+        <Typography>{'We currently do not Support Mobile. Stay tuned for updates.'}</Typography>
+      </Box>
+    </>;
   }
 
   return (
@@ -128,7 +145,7 @@ export default function Layout({ children }: { children: ReactElement }) {
       >
         <Box height={`calc(100% - ${warningHeight}px)`}>
           {(pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse') && (
-            <Box ref={warningRef} id={'warning-box'}>
+            <Box ref={warningRef} id={'warning-box'} sx={{ position: 'relative', zIndex: 1 }}>
               <WarningMessage />
             </Box>
           )}

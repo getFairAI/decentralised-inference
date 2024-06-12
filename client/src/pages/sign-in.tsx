@@ -123,6 +123,7 @@ const WalletnotConnectedContent = () => {
 
 const WalletNoFundsContent = () => {
   const theme = useTheme();
+  const { state } = useLocation();
   const { currentAddress, ethBalance, usdcBalance } = useContext(EVMWalletContext);
   const [lastTx, setLastTx] = useState<EdgeWithStatus | null>(null);
   const [activeStep, setActiveStep] = useState(1);
@@ -138,7 +139,13 @@ const WalletNoFundsContent = () => {
     [setActiveStep],
   );
 
-  const handleSkip = useCallback(() => navigate('/'), [navigate]);
+  const handleSkip = useCallback(() => {
+    if (state?.previousPath) {
+      navigate(state.previousPath, { state });
+    } else {
+      navigate('/');
+    }
+  }, [ state, navigate ]);
 
   const { data: receivedData } = useQuery(QUERY_TXS_BY_RECIPIENT, {
     variables: {
@@ -346,7 +353,11 @@ const SignIn = () => {
   const isSwap = useMemo(() => pathname === '/swap', [pathname]);
 
   useEffect(() => {
-    if (isConnected && usdcBalance >= MIN_U_BALANCE && state) {
+    if (isSwap) {
+      // ignore
+    } else if (isConnected && usdcBalance >= MIN_U_BALANCE && state?.previousPath) {
+      navigate(state.previousPath, { state });
+    } else if (isConnected && usdcBalance >= MIN_U_BALANCE && state) {
       navigate('/chat', { state });
     } else if (isConnected && usdcBalance >= MIN_U_BALANCE) {
       navigate('/');

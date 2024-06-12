@@ -317,7 +317,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
 
 const BrowseRequests = () => {
   const [requests, setRequests] = useState<RequestData[]>([]);
-  const { data } = useQuery(irysQuery, {
+  const { data, loading } = useQuery(irysQuery, {
     variables: {
       tags: [
         { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
@@ -351,6 +351,14 @@ const BrowseRequests = () => {
       setRequests(txsData);
     })();
   }, [data]);
+
+  if (loading) {
+    return (
+      <Box display={'flex'} justifyContent={'center'} alignItems={'center'} height={'20%'}>
+        <Typography>{'Loading...'}</Typography>
+      </Box>
+    );
+  }
 
   if (requests.length === 0) {
     return (

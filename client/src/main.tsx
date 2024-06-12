@@ -18,7 +18,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { createHashRouter, RouterProvider } from 'react-router-dom';
+import { createHashRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { Root } from '@/root';
 import Home from '@/pages/home';
 import '@/styles/main.css';
@@ -34,6 +34,8 @@ import RequestSolution from './pages/request-solution';
 import BrowseRequests from './pages/browse-requests';
 
 import '@/index.css';
+import ArbitrumChat from './pages/arbitrum-chat';
+import ArbitrumGuard from './guards/arbitrum';
 
 const router = createHashRouter([
   {
@@ -47,15 +49,36 @@ const router = createHashRouter([
       },
       {
         path: 'chat',
-        element: (
-          <WalletGuard>
-            <BlockOperatorGuard>
-              <TermsAgreement>
-                <Chat />
-              </TermsAgreement>
-            </BlockOperatorGuard>
-          </WalletGuard>
-        ),
+        children: [
+          {
+            path: '',
+            element: (
+              <WalletGuard>
+                <BlockOperatorGuard>
+                  <TermsAgreement>
+                    <Chat />
+                  </TermsAgreement>
+                </BlockOperatorGuard>
+              </WalletGuard>
+            ),
+          },
+          {
+            path: 'arbitrum',
+            element: <ArbitrumGuard>
+              <Outlet />
+            </ArbitrumGuard>,
+            children: [
+              {
+                path: 'ltipp',
+                element: <ArbitrumChat />,
+              },
+              {
+                path: 'stip',
+                element: <ArbitrumChat />,
+              },
+            ]
+          },
+        ]
       },
       {
         path: 'history',
