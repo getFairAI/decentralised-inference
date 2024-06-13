@@ -16,29 +16,25 @@ export default defineConfig({
     svgr(),
     commonjs(),
     nodePolyfills({
-			// To exclude specific polyfills, add them to this list.
-			exclude: [
-				"fs", // Excludes the polyfill for `fs` and `node:fs`.
-			],
-			// Whether to polyfill specific globals.
-			globals: {
-				Buffer: true,
-				global: true,
-				process: true,
-			},
-			// Whether to polyfill `node:` protocol imports.
-			protocolImports: true,
-		}),
+      // To exclude specific polyfills, add them to this list.
+      exclude: [
+        'fs', // Excludes the polyfill for `fs` and `node:fs`.
+      ],
+      // Whether to polyfill specific globals.
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+      // Whether to polyfill `node:` protocol imports.
+      protocolImports: true,
+    }),
   ],
   optimizeDeps: {
-    include: [
-      '@emotion/react', 
-      '@emotion/styled', 
-      '@mui/material',
-    ],
+    include: ['@emotion/react', '@emotion/styled', '@mui/material', '@mui/icons-material'],
   },
   build: {
-    commonjsOptions: { include: [] }
+    commonjsOptions: { include: [] },
   },
   test: {
     globals: true,
@@ -47,17 +43,14 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
     },
-    exclude:[
-      ...configDefaults.exclude, 
-      '**/detail.test.tsx'
-    ]
- },
- resolve: {
-  alias: {
-    process: "process/browser",
-    path: "path-browserify",
-    os: "os-browserify",
-    stream: "stream-browserify",
+    exclude: [...configDefaults.exclude, '**/detail.test.tsx'],
   },
-},
+  resolve: {
+    alias: {
+      process: 'process/browser',
+      path: 'path-browserify',
+      os: 'os-browserify',
+      stream: 'stream-browserify',
+    },
+  },
 });

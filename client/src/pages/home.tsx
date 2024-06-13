@@ -16,10 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  Box,
-  Container, Grid,  Icon,  InputBase, Typography, useTheme,
-} from '@mui/material';
+import { Box, Container, Grid, InputBase, Typography } from '@mui/material';
 import '@/styles/ui.css';
 import useSolutions from '@/hooks/useSolutions';
 import LoadingCard from '@/components/loading-card';
@@ -30,14 +27,17 @@ import Solution from '@/components/solution';
 import { throttle } from 'lodash';
 import { IContractEdge } from '@/interfaces/arweave';
 
+// icons
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import { motion } from 'framer-motion';
+
 export default function Home() {
   const target = useRef<HTMLDivElement>(null);
   const { loading, txs, error } = useSolutions(target);
-  const [ filteredTxs, setFilteredTxs ] = useState<IContractEdge[]>([]);
+  const [filteredTxs, setFilteredTxs] = useState<IContractEdge[]>([]);
 
   const { validTxs: operatorsData, loading: operatorsLoading } = useOperators(txs);
   const loadingTiles = genLoadingArray(10);
-  const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleChange = throttle((event: ChangeEvent<HTMLInputElement>) => {
@@ -45,41 +45,57 @@ export default function Home() {
     if (event.target.value === '') {
       setFilteredTxs(txs);
     } else {
-      setFilteredTxs(txs.filter((tx) => findTag(tx, 'solutionName')?.toLowerCase().includes(event.target.value.toLowerCase())));
+      setFilteredTxs(
+        txs.filter((tx) =>
+          findTag(tx, 'solutionName')?.toLowerCase().includes(event.target.value.toLowerCase()),
+        ),
+      );
     }
   }, 2000);
 
   useEffect(() => {
     setFilteredTxs(txs);
-  }, [ txs ]);
+  }, [txs]);
 
   return (
-    <>
+    <motion.div
+      initial={{ y: '-20px', opacity: 0 }}
+      animate={{ y: 0, opacity: 1, transition: { delay: 0.4, duration: 0.4 } }}
+    >
       <Container
         ref={containerRef}
         sx={{
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
+          alignItems: 'center',
           alignContent: 'center',
           '@media all': {
             maxWidth: '100%',
           },
-          mt: '18px'
+          mt: '40px',
         }}
       >
-        <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'}  mb={'24px'} pr={'20px'}>
+        <div className='w-full flex justify-center lg:justify-between mb-10 px-4 max-w-[1400px] gap-4 flex-wrap'>
+          <div className='flex-3 justify-start text-xl lg:text-3xl font-medium flex items-center gap-4'>
+            <img
+              src='./fair-protocol-face.svg'
+              className='invert opacity-80'
+              style={{ width: '42px' }}
+            />
+            Choose a solution to start creating
+          </div>
+
           <Box
             sx={{
-              borderRadius: '8px',
+              borderRadius: '10px',
               display: 'flex',
               justifyContent: 'space-between',
               padding: '3px 20px 3px 20px',
               alignItems: 'center',
-              border: 'solid',
-              borderColor: theme.palette.terciary.main,
-              borderWidth: '0.5px',
-              width: '20%',
+              width: '100%',
+              maxWidth: '400px',
+              backgroundColor: 'white',
             }}
           >
             <InputBase
@@ -91,19 +107,19 @@ export default function Home() {
                 width: '100%',
               }}
               onChange={handleChange}
-              placeholder='Search...'
+              placeholder='Search'
             />
-            <Icon
-              sx={{
-                height: '30px',
-              }}
-            >
-              <img src='./search-icon.svg'></img>
-            </Icon>
+            <SearchRoundedIcon />
           </Box>
-        </Box>
+        </div>
+
         {error && <Typography>Error: {error.message}</Typography>}
-        <Grid container spacing={10} display={'flex'} justifyContent={'center'}>
+
+        <motion.div
+          initial={{ y: '-20px', opacity: 0 }}
+          animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
+          className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
+        >
           {loading &&
             loadingTiles.map((el) => (
               <Grid item key={el}>
@@ -113,17 +129,22 @@ export default function Home() {
             ))}
           {filteredTxs.map((tx) => (
             <Grid item key={tx.node.id}>
-              <Solution
-                tx={tx}
-                loading={operatorsLoading}
-                operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
-                containerRef={containerRef}
-              />
+              <motion.div
+                initial={{ y: '-20px', opacity: 0 }}
+                animate={{ y: 0, opacity: 1, transition: { duration: 0.4 } }}
+              >
+                <Solution
+                  tx={tx}
+                  loading={operatorsLoading}
+                  operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
+                  containerRef={containerRef}
+                />
+              </motion.div>
             </Grid>
           ))}
-        </Grid>
+        </motion.div>
         <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
       </Container>
-    </>
+    </motion.div>
   );
 }

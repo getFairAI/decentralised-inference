@@ -39,6 +39,10 @@ import ComputerIcon from '@mui/icons-material/Computer';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import useScroll from '@/hooks/useScroll';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
+import { StyledMuiButton } from '@/styles/components';
+
+// icons
+import OutboundRoundedIcon from '@mui/icons-material/OutboundRounded';
 
 const Solution = ({
   tx,
@@ -57,15 +61,15 @@ const Solution = ({
   const [imgUrl, setImgUrl] = useState('');
   const [isHovering, setIsHovering] = useState(false);
   const mainCardRef = useRef<HTMLDivElement>(null);
-  const [topOffset, setTopOffset] = useState(0);
+  // const [topOffset, setTopOffset] = useState(0);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const scrollableRef = useRef(document.getElementById('main'));
   const { scrollTop } = useScroll(scrollableRef);
   const { width } = useWindowDimensions();
   const [ isMobile, setIsMobile ] = useState(false);
+  const theme = useTheme();
 
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const { data: imageData } = useQuery(findByTagsAndOwnersDocument, {
     variables: {
@@ -87,9 +91,9 @@ const Solution = ({
 
   useEffect(() => {
     if (mainCardRef.current) {
-      setTopOffset(mainCardRef.current.offsetTop - scrollTop);
+      // setTopOffset(mainCardRef.current.offsetTop - scrollTop);
     }
-  }, [currentAddress, usdcBalance, scrollTop ]);
+  }, [currentAddress, usdcBalance, scrollTop]);
 
   useEffect(() => {
     if (imageData) {
@@ -101,6 +105,7 @@ const Solution = ({
   }, [imageData]);
 
   useEffect(() => {
+    setIsHovering;
     setHasOperators(operatorsData.length > 0);
     setNumOperators(operatorsData.length);
     if (operatorsData.length > 0) {
@@ -191,27 +196,37 @@ const Solution = ({
   }, [ scrollableRef ]);
 
   return (
-    <motion.div initial={false} onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd} onWheel={handleWheel}>
+    <motion.div
+      initial={false}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
+      style={{
+        height: '400px',
+        backgroundColor: 'white',
+        width: '320px',
+        borderRadius: '15px',
+        overflow: 'hidden',
+      }}
+    >
       <motion.div
         ref={mainCardRef}
-        animate={{ rotateY: isHovering ? -180 : 0 }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 40,
-        }}
         style={{
-          width: '317px',
-          height: '352px',
-          backfaceVisibility: 'hidden',
+          width: '100%',
+          height: '400px',
+          borderRadius: '10px',
+          border: '8px solid #ffffff',
+        }}
+        animate={{
+          height: isHovering ? '150px' : '400px',
+          border: isHovering ? '10px solid #ffffff' : '8px solid #ffffff',
         }}
       >
         <Card
           sx={{
             width: '100%',
             height: '100%',
+            boxShadow: 'none !important',
           }}
-          raised={true}
         >
           <CardActionArea
             sx={{
@@ -220,21 +235,23 @@ const Solution = ({
               flexDirection: 'column',
               justifyContent: 'flex-start',
               alignItems: 'flex-start',
-              padding: '8px',
-              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 40%, ${theme.palette.background.default} 100%), url(${imgUrl})`,
+              padding: '6px',
+              background: `url(${imgUrl})`,
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'cover' /* <------ */,
               backgroundPosition: 'center center',
             }}
-            onClick={handleSolutionClick}
           >
             <Box display={'flex'} flexGrow={1} flexDirection={'column'}></Box>
             <CardHeader
               sx={{
-                pb: 0,
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                backdropFilter: 'blur(20px)',
+                width: '100%',
+                borderRadius: '5px',
               }}
               title={
-                <Typography variant='h2'>
+                <Typography variant='h3'>
                   {tx.node.tags.find((el) => el.name === 'Solution-Name')?.value ??
                     'Name Not Available'}
                 </Typography>
@@ -245,58 +262,46 @@ const Solution = ({
             />
           </CardActionArea>
         </Card>
-      </motion.div>
-      <motion.div
-        initial={{ rotateY: 180 }}
-        animate={{ rotateY: isHovering ? 0 : 180 }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 40,
-        }}
-        style={{
-          width: '317px',
-          height: '352px',
-          backfaceVisibility: 'hidden',
-          position: 'absolute',
-          top: `${topOffset}px`,
-        }}
-      >
-        <Card
-          sx={{
-            width: '100%',
-            height: '100%',
-          }}
-          raised={true}
-        >
-          <CardActionArea
-            sx={{
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-start',
-              alignItems: 'flex-start',
-              padding: '8px',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: 'cover' /* <------ */,
-              backgroundPosition: 'center center',
-            }}
-            onClick={handleSolutionClick}
-          >
-            <Box display={'flex'} flexGrow={1} flexDirection={'column'}></Box>
-            <CardContent>
-              <Typography>{tx.node.tags.find((el) => el.name === 'Description')?.value}</Typography>
-            </CardContent>
 
-            {!loading && <CardContent
-              sx={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                width: '100%',
-                gap: '16px',
-                pt: 0,
-              }}
-            >
+            
+        <motion.div
+          initial={{}}
+          animate={{}}
+          transition={{}}
+          style={{
+            width: '320px',
+            x: '-9px',
+            height: '280px',
+            color: 'rgb(50,50,50)',
+          }}
+          className='flex flex-col justify-between px-2 pt-2 pb-5'
+        >
+          {!loading && <CardContent
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              width: '100%',
+              gap: '16px',
+              pt: 0,
+            }}
+          >
+            <span className='font-semibold'>
+              {tx.node.tags.find((el) => el.name === 'Description')?.value}
+            </span>
+          </CardContent>}
+          {loading && <CardContent sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+            <Tooltip title='Loading Available Operators'>
+              <CircularProgress />
+            </Tooltip>
+          </CardContent>}
+          <div className='flex justify-center md:justify-between py-4 px-2'>
+            <div className='flex-3 flex justify-start'>
+              <StyledMuiButton className='primary' onClick={handleSolutionClick}>
+                Use solution
+                <OutboundRoundedIcon style={{ width: '22px' }} />
+              </StyledMuiButton>
+            </div>
+            <div className='flex-1 flex justify-end pr-1 gap-3'>
               {hasOperators && (
                 <Tooltip title='Average Fee'>
                   <Box display={'flex'} gap={'4px'} alignItems={'center'}>
@@ -313,14 +318,9 @@ const Solution = ({
                   <ComputerIcon />
                 </Box>
               </Tooltip>
-            </CardContent>}
-            {loading && <CardContent sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-              <Tooltip title='Loading Available Operators'>
-                <CircularProgress />
-              </Tooltip>
-            </CardContent>}
-          </CardActionArea>
-        </Card>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
     </motion.div>
   );

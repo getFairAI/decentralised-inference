@@ -18,7 +18,6 @@
 
 import {
   Avatar,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -31,11 +30,17 @@ import {
   useTheme,
 } from '@mui/material';
 import { Dispatch, SetStateAction, useCallback, useContext } from 'react';
-import PowerIcon from '@mui/icons-material/Power';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { EIP6963ProviderDetail } from '@/interfaces/evm';
 import { EIP1193Provider } from 'viem';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { StyledMuiButton } from '@/styles/components';
+
+// icons
+import HighlightOffRoundedIcon from '@mui/icons-material/HighlightOffRounded';
+import WalletRoundedIcon from '@mui/icons-material/WalletRounded';
+import ExitToAppRoundedIcon from '@mui/icons-material/ExitToAppRounded';
+import { motion } from 'framer-motion';
 
 const ProviderElement = ({
   provider,
@@ -57,28 +62,31 @@ const ProviderElement = ({
   }, [connect]);
 
   return (
-    <ListItem
-      key={provider.info.uuid}
-      secondaryAction={
-        <Button
-          aria-label='connect'
-          variant='contained'
-          onClick={handleEvmConnect}
-          disabled={currentProviderValue === provider.info.name}
-          endIcon={<PowerIcon />}
-          className='plausible-event-name=EVM+Connected'
-        >
-          <Typography>
+    <div className='rounded-3xl bg-slate-300 py-2'>
+      <ListItem
+        key={provider.info.uuid}
+        secondaryAction={
+          <StyledMuiButton
+            aria-label='Connect this wallet'
+            onClick={handleEvmConnect}
+            disabled={currentProviderValue === provider.info.name}
+            className='plausible-event-name=EVM+Connected primary'
+          >
             {currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}
-          </Typography>
-        </Button>
-      }
-    >
-      <ListItemAvatar>
-        <Avatar src={provider.info.icon} alt='provider.info.name' />
-      </ListItemAvatar>
-      <ListItemText primary={provider.info.name} />
-    </ListItem>
+            <ExitToAppRoundedIcon style={{ width: '22px' }} />
+          </StyledMuiButton>
+        }
+      >
+        <ListItemAvatar>
+          <Avatar
+            src={provider.info.icon}
+            alt='provider.info.name'
+            className='p-[6px] object-contain bg-white'
+          />
+        </ListItemAvatar>
+        <ListItemText primary={provider.info.name} className='font-semibold' />
+      </ListItem>
+    </div>
   );
 };
 
@@ -102,6 +110,7 @@ const ChooseWallet = ({
       fullWidth
       sx={{
         '& .MuiPaper-root': {
+          borderRadius: '20px',
           background:
             theme.palette.mode === 'dark'
               ? 'rgba(61, 61, 61, 0.9)'
@@ -112,37 +121,42 @@ const ChooseWallet = ({
       <DialogTitle>
         <Typography
           sx={{
-            fontWeight: 700,
-            fontSize: '23px',
-            lineHeight: '31px',
+            fontWeight: 600,
+            fontSize: '22px',
           }}
+          className='flex items-center gap-2 pb-4'
         >
-          {'Connect Wallet'}
+          <WalletRoundedIcon />
+          {'Choose a wallet to connect'}
         </Typography>
       </DialogTitle>
       <DialogContent>
-        <List>
-          {providers.map((provider) => (
-            <ProviderElement provider={provider} key={provider.info.uuid} setOpen={setOpen} />
-          ))}
-        </List>
+        <motion.div
+          initial={{ x: '-20px', opacity: 0 }}
+          animate={{ x: 0, opacity: 1, transition: { delay: 0.2, duration: 0.4 } }}
+        >
+          <List>
+            {providers.map((provider) => (
+              <ProviderElement provider={provider} key={provider.info.uuid} setOpen={setOpen} />
+            ))}
+          </List>
+        </motion.div>
       </DialogContent>
       <DialogActions
         sx={{
           display: 'flex',
           justifyContent: 'center',
-          gap: '30px',
           paddingBottom: '20px',
         }}
       >
-        <Button
-          variant='outlined'
+        <StyledMuiButton
           onClick={handleClose}
-          sx={{ width: 'fit-content' }}
-          className='plausible-event-name=Connect+Popup+Closed'
+          className='plausible-event-name=Connect+Popup+Closed secondary'
         >
-          <Typography>Close</Typography>
-        </Button>
+          <div className='flex items-center gap-2'>
+            <HighlightOffRoundedIcon /> Cancel
+          </div>
+        </StyledMuiButton>
       </DialogActions>
     </Dialog>
   );
