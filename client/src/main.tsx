@@ -65,7 +65,9 @@ const router = createHashRouter([
           {
             path: 'arbitrum',
             element: <ArbitrumGuard>
-              <Outlet />
+              <TermsAgreement>
+                <Outlet />
+              </TermsAgreement>
             </ArbitrumGuard>,
             children: [
               {
