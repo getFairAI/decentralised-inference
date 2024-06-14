@@ -558,6 +558,7 @@ const ArbitrumChat = () => {
         defaultConversation,
         {
           privateMode,
+          ...privateMode && { userPubKey: currentPubKey },
           modelName: ''
         },
       );
