@@ -84,6 +84,7 @@ import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { encryptSafely } from '@metamask/eth-sig-util';
 import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
+import { motion } from 'framer-motion';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -377,7 +378,7 @@ const Chat = () => {
   const [requestIds] = useState<string[]>([]);
   const [currentPubKey, setCurrentPubKey] = useState('');
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
-  const [ isLayoverOpen, setLayoverOpen ] = useState(false);
+  const [isLayoverOpen, setLayoverOpen] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -1245,6 +1246,14 @@ const Chat = () => {
     if (currHeaderHeight) {
       setHeaderHeight(`${currHeaderHeight}px`);
     }
+
+    if (width > theme.breakpoints.values.lg) {
+      setDrawerOpen(true);
+      setConfigurationDrawerOpen(true);
+    } else {
+      setDrawerOpen(false);
+      setConfigurationDrawerOpen(false);
+    }
   }, [width, height]);
 
   const handleAdvanced = useCallback(() => {
@@ -1408,18 +1417,20 @@ const Chat = () => {
                 sx={{
                   position: 'absolute',
                   zIndex: theme.zIndex.drawer + 1,
-                  backdropFilter: 'blur(50px)',
+                  backdropFilter: 'blur(10px)',
+                  backgroundColor: 'rgba(0,0,0,0.15)',
+                  color: 'rgb(70,70,70)',
                   display: 'flex',
-                  flexDirection: 'column',
+                  gap: 3,
                   left: drawerOpen ? '240px' : '0px',
                   right: configurationDrawerOpen ? '30%' : '0px',
                 }}
                 open={true}
               >
-                <Typography variant='h1' fontWeight={500} color={theme.palette.background.default}>
-                  Loading Messages...
+                <CircularProgress sx={{ color: 'rgb(70,70,70)' }} size='2rem' />
+                <Typography variant='h2' color={'rgb(70,70,70)'}>
+                  Loading messages...
                 </Typography>
-                <CircularProgress sx={{ color: theme.palette.background.default }} size='6rem' />
               </Backdrop>
             )}
             <Box flexGrow={1}>
@@ -1529,12 +1540,26 @@ const Chat = () => {
         </Box>
       </Box>
       <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(0,0,0,0.15)',
+        }}
         open={isLayoverOpen}
       >
-        <Typography>
-          {'Please contine on the popup extension.'}
-        </Typography>
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1, transition: { delay: 0.1, duration: 0.4 } }}
+        >
+          <Typography
+            variant='h3'
+            className='flex items-center gap-3 bg-[#3aaaaa] rounded-3xl py-3 px-6'
+          >
+            <img src='./fair-protocol-face-transp-eyes.png' style={{ width: '40px' }} />
+            {'Please contine on the popup extension.'}
+          </Typography>
+        </motion.div>
       </Backdrop>
       <Outlet />
     </>

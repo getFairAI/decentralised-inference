@@ -78,12 +78,8 @@ export default function Home() {
       >
         <div className='w-full flex justify-center lg:justify-between mb-10 px-4 max-w-[1400px] gap-4 flex-wrap'>
           <div className='flex-3 justify-start text-xl lg:text-3xl font-medium flex items-center gap-4'>
-            <img
-              src='./fair-protocol-face.svg'
-              className='invert opacity-80'
-              style={{ width: '42px' }}
-            />
-            Choose a solution to start creating
+            <img src='./fair-protocol-face-primarycolor.png' style={{ width: '42px' }} />
+            Choose a solution and start creating
           </div>
 
           <Box

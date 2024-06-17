@@ -32,7 +32,7 @@ import {
   useTheme,
   CircularProgress,
 } from '@mui/material';
-import { useState, useEffect, useCallback, useRef, useContext, WheelEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ComputerIcon from '@mui/icons-material/Computer';
@@ -47,7 +47,7 @@ import OutboundRoundedIcon from '@mui/icons-material/OutboundRounded';
 const Solution = ({
   tx,
   operatorsData,
-  loading
+  loading,
 }: {
   tx: findByTagsQuery['transactions']['edges'][0];
   loading: boolean;
@@ -66,7 +66,7 @@ const Solution = ({
   const scrollableRef = useRef(document.getElementById('main'));
   const { scrollTop } = useScroll(scrollableRef);
   const { width } = useWindowDimensions();
-  const [ isMobile, setIsMobile ] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const theme = useTheme();
 
   const navigate = useNavigate();
@@ -87,7 +87,7 @@ const Solution = ({
   useEffect(() => {
     const sm = theme.breakpoints.values.sm;
     setIsMobile(width < sm);
-  }, [ width, theme, setIsMobile ]);
+  }, [width, theme, setIsMobile]);
 
   useEffect(() => {
     if (mainCardRef.current) {
@@ -133,7 +133,7 @@ const Solution = ({
           defaultOperator: operatorsData[0] ?? undefined,
           availableOperators: operatorsData ?? [],
           solution: tx,
-        }
+        },
       });
     } else if (tx.node.id === LTIPP_SOLUTION) {
       navigate('/chat/arbitrum/ltipp', {
@@ -141,8 +141,8 @@ const Solution = ({
           defaultOperator: operatorsData[0] ?? undefined,
           availableOperators: operatorsData ?? [],
           solution: tx,
-        }
-    });
+        },
+      });
     } else {
       navigate('/chat', {
         state: {
@@ -152,7 +152,7 @@ const Solution = ({
         },
       });
     }
-  }, [tx, operatorsData, currentAddress, isMobile ]);
+  }, [tx, operatorsData, currentAddress, isMobile]);
 
   const getTimePassed = () => {
     const timestamp = findTag(tx, 'unixTime');
@@ -184,16 +184,6 @@ const Solution = ({
 
   const handleHoverStart = useCallback(() => setIsHovering(true), [setIsHovering]);
   const handleHoverEnd = useCallback(() => setIsHovering(false), [setIsHovering]);
-  const handleWheel = useCallback((event: WheelEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-
-    if (scrollableRef.current) {
-      scrollableRef.current.scrollBy({
-        top: event.deltaY,
-        behavior: 'instant'
-      });
-    }
-  }, [ scrollableRef ]);
 
   return (
     <motion.div
@@ -206,6 +196,8 @@ const Solution = ({
         width: '320px',
         borderRadius: '15px',
         overflow: 'hidden',
+        boxShadow: isHovering ? '0px 0px 8px rgba(0,0,0,0.2)' : '0px 0px 6px rgba(0,0,0,0.1)',
+        transition: '0.2s all',
       }}
     >
       <motion.div
@@ -218,7 +210,7 @@ const Solution = ({
         }}
         animate={{
           height: isHovering ? '150px' : '400px',
-          border: isHovering ? '10px solid #ffffff' : '8px solid #ffffff',
+          border: isHovering ? '10px solid #ffffff' : '6px solid #ffffff',
         }}
       >
         <Card
@@ -263,7 +255,6 @@ const Solution = ({
           </CardActionArea>
         </Card>
 
-            
         <motion.div
           initial={{}}
           animate={{}}
@@ -276,24 +267,28 @@ const Solution = ({
           }}
           className='flex flex-col justify-between px-2 pt-2 pb-5'
         >
-          {!loading && <CardContent
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              width: '100%',
-              gap: '16px',
-              pt: 0,
-            }}
-          >
-            <span className='font-semibold'>
-              {tx.node.tags.find((el) => el.name === 'Description')?.value}
-            </span>
-          </CardContent>}
-          {loading && <CardContent sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-            <Tooltip title='Loading Available Operators'>
-              <CircularProgress />
-            </Tooltip>
-          </CardContent>}
+          {!loading && (
+            <CardContent
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                width: '100%',
+                gap: '16px',
+                pt: 0,
+              }}
+            >
+              <span className='font-semibold'>
+                {tx.node.tags.find((el) => el.name === 'Description')?.value}
+              </span>
+            </CardContent>
+          )}
+          {loading && (
+            <CardContent sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+              <Tooltip title='Loading Available Operators'>
+                <CircularProgress />
+              </Tooltip>
+            </CardContent>
+          )}
           <div className='flex justify-center md:justify-between py-4 px-2'>
             <div className='flex-3 flex justify-start'>
               <StyledMuiButton className='primary' onClick={handleSolutionClick}>

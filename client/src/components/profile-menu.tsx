@@ -109,9 +109,11 @@ export default function ProfileMenu() {
     if (!currentAddress) {
       return <>{open ? <CloseIcon color='action' /> : <MenuIcon color='action' />}</>;
     } else {
-      return  <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.3 }}>
-        <img src='./chevron-bottom.svg' />
-      </motion.div>;
+      return (
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.3 }}>
+          <img src='./chevron-bottom.svg' />
+        </motion.div>
+      );
     }
   };
 
@@ -119,7 +121,6 @@ export default function ProfileMenu() {
     setOpen(false);
     disconnect();
   }, [setOpen, disconnect]);
-  
 
   const handleViewInExplorer = useCallback(() => {
     window.open(`https://arbiscan.io/address/${currentAddress}`, '_blank');
@@ -127,7 +128,7 @@ export default function ProfileMenu() {
 
   return (
     <div>
-      <Box display={{xs: 'none', sm: 'flex'}}>
+      <Box display={{ xs: 'none', sm: 'flex' }}>
         <IconButton
           aria-label='more'
           id='long-button'
@@ -145,7 +146,7 @@ export default function ProfileMenu() {
           {showIcon()}
         </IconButton>
       </Box>
-      
+
       <Popper
         open={open}
         anchorEl={anchorRef.current}
@@ -162,66 +163,68 @@ export default function ProfileMenu() {
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
                 <Card variant='outlined'>
-                  {currentAddress !== '' && <>
-                    <CardHeader
-                      avatar={
-                        <IconButton onClick={handleDisconnect}>
-                          <PowerSettingsNewIcon />
-                        </IconButton>
-                      }
-                      subheader={'Connected Account'}
-                      title={
-                        <Typography
-                          fontWeight={500}
-                          sx={{
-                            textDecoration: 'underline',
+                  {currentAddress !== '' && (
+                    <>
+                      <CardHeader
+                        avatar={
+                          <IconButton onClick={handleDisconnect}>
+                            <PowerSettingsNewIcon />
+                          </IconButton>
+                        }
+                        subheader={'Connected Account'}
+                        title={
+                          <Typography
+                            fontWeight={500}
+                            sx={{
+                              textDecoration: 'underline',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '2px',
+                              cursor: 'pointer',
+                            }}
+                            onClick={handleViewInExplorer}
+                          >
+                            {`${currentAddress.slice(0, 6)}...${currentAddress.slice(-4)}`}
+                            <OpenInNew fontSize='inherit' />
+                          </Typography>
+                        }
+                        sx={{
+                          '&.MuiCardHeader-root': {
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: '2px',
-                            cursor: 'pointer',
-                          }}
-                          onClick={handleViewInExplorer}
-                        >
-                          {`${currentAddress.slice(0, 6)}...${currentAddress.slice(-4)}`}
-                          <OpenInNew fontSize='inherit' />
-                        </Typography>
-                      }
-                      sx={{
-                        '&.MuiCardHeader-root': {
-                          display: 'flex',
-                          gap: '24px',
-                          flexDirection: 'row-reverse',
-                          justifyContent: 'space-between',
-                        },
-                        '& .MuiCardHeader-avatar': {
-                          marginRight: 0,
-                        },
-                        '& .MuiCardHeader-content': {
-                          display: 'flex',
-                          flexDirection: 'column-reverse',
-                        },
-                      }}
-                    />
-                    <CardContent
-                      sx={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 0 }}
-                    >
-                      <Box display={'flex'} justifyContent={'space-between'}>
-                        <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                          <img width='20px' height='20px' src='./eth-logo.svg' />
-                          <Typography fontWeight={600}>ETH</Typography>
+                            gap: '24px',
+                            flexDirection: 'row-reverse',
+                            justifyContent: 'space-between',
+                          },
+                          '& .MuiCardHeader-avatar': {
+                            marginRight: 0,
+                          },
+                          '& .MuiCardHeader-content': {
+                            display: 'flex',
+                            flexDirection: 'column-reverse',
+                          },
+                        }}
+                      />
+                      <CardContent
+                        sx={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 0 }}
+                      >
+                        <Box display={'flex'} justifyContent={'space-between'}>
+                          <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                            <img width='20px' height='20px' src='./eth-logo.svg' />
+                            <Typography fontWeight={600}>ETH</Typography>
+                          </Box>
+                          <Typography fontWeight={400}>{ethBalance.toPrecision(4)}</Typography>
                         </Box>
-                        <Typography fontWeight={400}>{ethBalance.toPrecision(4)}</Typography>
-                      </Box>
-                      <Box display={'flex'} justifyContent={'space-between'}>
-                        <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                          <img width='20px' height='20px' src='./usdc-logo.svg' />
-                          <Typography fontWeight={600}>USDC</Typography>
+                        <Box display={'flex'} justifyContent={'space-between'}>
+                          <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                            <img width='20px' height='20px' src='./usdc-logo.svg' />
+                            <Typography fontWeight={600}>USDC</Typography>
+                          </Box>
+                          <Typography fontWeight={400}>{usdcBalance.toPrecision(4)}</Typography>
                         </Box>
-                        <Typography fontWeight={400}>{usdcBalance.toPrecision(4)}</Typography>
-                      </Box>
-                    </CardContent>
-                    <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.05)' }} />
-                  </>}
+                      </CardContent>
+                      <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.05)' }} />
+                    </>
+                  )}
                   <MenuList
                     autoFocusItem={open}
                     id='composition-menu'

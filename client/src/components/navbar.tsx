@@ -23,18 +23,8 @@ import Typography from '@mui/material/Typography';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import Option from './option';
-import {
-  useCallback,
-  useContext,
-  useState,
-} from 'react';
-import {
-  Button,
-  IconButton,
-  MenuList,
-  Tooltip,
-  useTheme,
-} from '@mui/material';
+import { useCallback, useContext, useState } from 'react';
+import { Button, IconButton, MenuList, Tooltip, useTheme } from '@mui/material';
 import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -129,11 +119,11 @@ const WalletState = () => {
         sx={{
           background: 'rgba(0,0,0,0.08)',
           borderRadius: '10px',
-          padding: '10px 20px',
+          padding: '3px 12px',
           alignItems: 'center',
           justifyContent: 'center',
           display: 'flex',
-          gap: '8px',
+          gap: '10px',
         }}
       >
         <Box display={'flex'} padding={'6px 6px 6px 12px'}>
@@ -141,9 +131,6 @@ const WalletState = () => {
         </Box>
         <Box
           sx={{
-            /* background: theme.palette.secondary.contrastText, */
-            borderRadius: '8px',
-            padding: '6px 8px 6px 0px',
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -161,20 +148,10 @@ const WalletState = () => {
               {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
             </Typography>
           </Tooltip>
-          <ProfileMenu />
+          <div className='ml-2'>
+            <ProfileMenu />
+          </div>
         </Box>
-        <Tooltip title={`Connected wallet address:\n${currentAddress}`} placement={'bottom-start'}>
-          <Typography
-            sx={{
-              color: theme.palette.text.primary,
-              lineHeight: '20.25px',
-              fontSize: '15px',
-              fontWeight: 600,
-            }}
-          >
-            {currentAddress.slice(0, 6)}...{currentAddress.slice(-6)}
-          </Typography>
-        </Tooltip>
       </Box>
     </>
   );
@@ -197,21 +174,19 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
     ...(!isScrolled && { boxShadow: 'none' }),
   };
 
-  const handleMenuClick = () => setIsExpanded(prev => !prev);
+  const handleMenuClick = () => setIsExpanded((prev) => !prev);
 
   return (
-    <motion.div
-      initial={{ y: '-40px', opacity: 0 }}
-      animate={{ y: 0, opacity: 1, transition: { type: 'smooth', duration: 0.4, delay: 0.1 } }}
-    >
+    <>
       <AppBar sx={appBarStyle} color='inherit'>
         <motion.div
           className='flex-col w-full justify-start'
+          initial={{ y: '-40px', opacity: 0 }}
           animate={{
             height: isExpanded ? '100vh' : 'fit-content',
-          }}
-          transition={{
-            duration: 0.5,
+            y: 0,
+            opacity: 1,
+            transition: { type: 'smooth', duration: 0.4, delay: 0.1 },
           }}
         >
           <Toolbar className='flex justify-between'>
@@ -225,8 +200,9 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
                   mt: '-18px',
                   ml: '8px',
                   padding: '0px 8px',
-                  border: '0.5px solid',
+                  border: '1px solid',
                   borderRadius: '8px',
+                  color: '#3aaaaa',
                 }}
               >
                 EARLY
@@ -305,13 +281,10 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
                   display: { xs: 'flex', md: 'none' },
                 }}
               >
-                <IconButton
-                  aria-haspopup='true'
-                  onClick={handleMenuClick}
-                >
+                <IconButton aria-haspopup='true' onClick={handleMenuClick}>
                   {isExpanded ? <CloseIcon color='action' /> : <MenuIcon color='action' />}
                 </IconButton>
-              </Box> 
+              </Box>
             </Box>
           </Toolbar>
           {isExpanded && (
@@ -330,7 +303,7 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
         </motion.div>
       </AppBar>
       <Toolbar />
-    </motion.div>
+    </>
   );
 };
 
