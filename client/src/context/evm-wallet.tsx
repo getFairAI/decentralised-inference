@@ -90,7 +90,7 @@ interface EVMWalletState {
 
 interface IEVMWalletContext extends EVMWalletState {
   connect: (provider?: ExtendedEIP1193Provider) => Promise<void>;
-  startConversation: (txid: string, cid: string) => Promise<void>;
+  startConversation: (txid: string, cid: string) => Promise<string | undefined>;
   prompt: (
     data: string | File,
     solutionTx: string,

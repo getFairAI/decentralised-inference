@@ -266,7 +266,6 @@ const InputField = ({
             lineHeight: '16px',
             width: '100%',
             marginTop: '10px',
-            borderRadius: '8px',
           }}
           InputProps={{
             endAdornment: (
@@ -321,7 +320,7 @@ const InputField = ({
           onKeyDown={keyDownHandler}
           fullWidth
           disabled={isSending || disabled || !allowText}
-          placeholder='Start Chatting...'
+          placeholder='Type something...'
         />
       </>
     );
@@ -1551,14 +1550,21 @@ const Chat = () => {
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1, transition: { delay: 0.1, duration: 0.4 } }}
+          className='w-full max-w-[600px]'
         >
           <Typography
             variant='h3'
-            className='flex items-center gap-3 bg-[#3aaaaa] rounded-3xl py-3 px-6'
+            className='flex items-center gap-3 bg-[#3aaaaa] rounded-2xl py-3 px-6'
           >
             <img src='./fair-protocol-face-transp-eyes.png' style={{ width: '40px' }} />
-            {'Please contine on the popup extension.'}
+            {'Please continue on your wallet extension.'}
           </Typography>
+          <div className='mt-2 rounded-2xl py-3 px-6 bg-slate-500 font-semibold text-lg'>
+            Our chat has some special encryption features that require access to your wallet&apos;s
+            public key.
+            <br />
+            This is optional, but if you do not accept, these features will be temporarily disabled.
+          </div>
         </motion.div>
       </Backdrop>
       <Outlet />

@@ -142,7 +142,12 @@ const Conversations = ({
 
   const createNewConversation = async (id: number) => {
     try {
-      await startConversation(state.solution.node.id, id.toString());
+      const result = await startConversation(state.solution.node.id, id.toString());
+
+      if (!result) {
+        // user rejected the wallet extension signature permission
+        enqueueSnackbar('message', {});
+      }
 
       setConversationIds([id, ...conversationIds]);
       setFilteredConversationIds([id, ...conversationIds]);

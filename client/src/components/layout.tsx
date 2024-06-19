@@ -45,6 +45,7 @@ const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const handleClose = useCallback(() => {
     setShowWarning(false);
@@ -54,8 +55,6 @@ const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
   useEffect(() => setShowWarning(localStorage.getItem('warningClosed') !== 'true'), []);
 
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
-    const navigate = useNavigate();
-
     return (
       <>
         {!isScrolled && (
@@ -172,7 +171,7 @@ export default function Layout({ children }: { children: ReactElement }) {
   const { pathname } = useLocation();
   const warningRef = useRef<HTMLDivElement>(null);
   const { height: warningHeight } = useComponentDimensions(warningRef);
-  const [ isMobile, setIsMobile ] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const theme = useTheme();
 
   useLayoutEffect(() => {
@@ -185,19 +184,21 @@ export default function Layout({ children }: { children: ReactElement }) {
   useEffect(() => {
     const sm = theme.breakpoints.values.sm;
     setIsMobile(width < sm);
-  }, [ width, theme, setIsMobile ]);
+  }, [width, theme, setIsMobile]);
 
   if (pathname === '/sign-in' || pathname === '/swap') {
     return children;
   }
 
   if (isMobile) {
-    return <>
-      <Navbar isScrolled={isScrolled} />
-      <Box sx={{ height: '100%', display: 'flex', aligItems: 'center'}}>
-        <Typography>{'We currently do not Support Mobile. Stay tuned for updates.'}</Typography>
-      </Box>
-    </>;
+    return (
+      <>
+        <Navbar isScrolled={isScrolled} />
+        <Box sx={{ height: '100%', display: 'flex', aligItems: 'center' }}>
+          <Typography>{'We currently do not Support Mobile. Stay tuned for updates.'}</Typography>
+        </Box>
+      </>
+    );
   }
 
   return (
