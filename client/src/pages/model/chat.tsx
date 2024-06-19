@@ -77,7 +77,7 @@ import useResponses from '@/hooks/useResponses';
 import useScroll from '@/hooks/useScroll';
 import { useForm, useWatch } from 'react-hook-form';
 import useOperatorBusy from '@/hooks/useOperatorBusy';
-import { InfoOutlined } from '@mui/icons-material';
+import { ChevronLeftRounded, InfoOutlined } from '@mui/icons-material';
 import { UserFeedbackContext } from '@/context/user-feedback';
 import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
@@ -85,6 +85,8 @@ import { Query } from '@irys/query';
 import { encryptSafely } from '@metamask/eth-sig-util';
 import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
+import { StyledMuiButton } from '@/styles/components';
+import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -97,7 +99,6 @@ const InputField = ({
   currentConversationId,
   newMessage,
   inputRef,
-  handleAdvanced,
   handleSendFile,
   handleSendText,
   handleRemoveFile,
@@ -110,7 +111,6 @@ const InputField = ({
   currentConversationId: number;
   newMessage: string;
   inputRef: RefObject<HTMLTextAreaElement>;
-  handleAdvanced: () => void;
   handleSendFile: () => Promise<void>;
   handleSendText: () => Promise<void>;
   handleRemoveFile: () => void;
@@ -270,19 +270,10 @@ const InputField = ({
           InputProps={{
             endAdornment: (
               <>
-                <Tooltip title={'Advanced Input configuration'}>
-                  <span>
-                    <IconButton
-                      component='label'
-                      onClick={handleAdvanced}
-                      className='plausible-event-name=Open+Configuration+Click'
-                    >
-                      <SettingsIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
                 <Tooltip
-                  title={!allowFiles ? 'Solution does not support Uploading files' : 'File Loaded'}
+                  title={
+                    !allowFiles ? 'This solution does not support uploading files' : 'Attach a file'
+                  }
                 >
                   <span>
                     <IconButton
@@ -305,12 +296,14 @@ const InputField = ({
                 <DebounceIconButton
                   onClick={handleSendClick}
                   sx={{
-                    color: theme.palette.neutral.contrastText,
+                    color: '#3aaaaa',
                   }}
                   disabled={sendDisabled}
                   className='plausible-event-name=Send+Text+Click'
                 >
-                  <SendIcon />
+                  <Tooltip title={'Submit'}>
+                    <SendIcon />
+                  </Tooltip>
                 </DebounceIconButton>
               </>
             ),
@@ -1257,22 +1250,17 @@ const Chat = () => {
 
   const handleAdvanced = useCallback(() => {
     setConfigurationDrawerOpen((previousValue) => {
-      if (!previousValue) {
-        setDrawerOpen(false);
-      }
-
       return !previousValue;
     });
-  }, [setDrawerOpen, setConfigurationDrawerOpen]);
+  }, [setConfigurationDrawerOpen]);
 
   const handleAdvancedClose = useCallback(() => {
     setConfigurationDrawerOpen(false);
   }, [setConfigurationDrawerOpen]);
 
   const handleShowConversations = useCallback(() => {
-    setConfigurationDrawerOpen(false);
     setDrawerOpen(true);
-  }, [setConfigurationDrawerOpen, setDrawerOpen]);
+  }, [setDrawerOpen]);
 
   const handleLoadMore = useCallback(() => {
     fetchMore();
@@ -1294,15 +1282,15 @@ const Chat = () => {
             boxSizing: 'border-box',
             top: headerHeight,
             height: `calc(100% - ${headerHeight})`,
+            border: 'none',
+            borderRadius: '10px 0px 0px 10px',
           },
-        }}
-        PaperProps={{
-          elevation: 24,
         }}
       >
         <Box
           sx={{
             display: 'flex',
+            height: '100%',
             '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
               paddingTop: '16px',
             },
@@ -1316,6 +1304,7 @@ const Chat = () => {
             handleClose={handleAdvancedClose}
             currentOperator={currentOperator}
             setCurrentOperator={setCurrentOperator}
+            drawerOpen={configurationDrawerOpen}
           />
         </Box>
       </Drawer>
@@ -1332,8 +1321,9 @@ const Chat = () => {
               boxSizing: 'border-box',
               top: headerHeight,
               height: '100%',
-              border: 'none',
               position: 'static',
+              border: 'none',
+              borderRadius: '0px 10px 10px 0px',
             },
           }}
         >
@@ -1379,27 +1369,26 @@ const Chat = () => {
           }}
         >
           {!drawerOpen && (
-            <Paper
-              sx={{
-                borderRight: '8px',
-                border: '0.5px solid',
-                borderTopLeftRadius: '0px',
-                borderBottomLeftRadius: '0px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                transition: { delay: 0.3, duration: 0.5, type: 'spring' },
               }}
+              className='h-full flex flex-col items-end justify-end px-2'
             >
-              <Box>
-                <IconButton
+              <Tooltip title={'Show the conversations drawer'}>
+                <StyledMuiButton
                   onClick={handleShowConversations}
                   disableRipple={true}
-                  className='plausible-event-name=Show+Conversations+Click'
+                  className='plausible-event-name=Show+Conversations+Click secondary w-fit mb-5'
                 >
+                  <ChatBubbleRoundedIcon />
                   <ChevronRightIcon />
-                </IconButton>
-              </Box>
-            </Paper>
+                </StyledMuiButton>
+              </Tooltip>
+            </motion.div>
           )}
           <Box
             ref={chatRef}
@@ -1519,7 +1508,6 @@ const Chat = () => {
                 currentConversationId={currentConversationId}
                 newMessage={newMessage}
                 inputRef={inputRef}
-                handleAdvanced={handleAdvanced}
                 handleFileUpload={handleFileUpload}
                 handleRemoveFile={handleRemoveFile}
                 handleSendFile={handleSendFile}
@@ -1537,6 +1525,28 @@ const Chat = () => {
             </Box>
           </Box>
         </Box>
+        {!configurationDrawerOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              transition: { delay: 0.3, duration: 0.5, type: 'spring' },
+            }}
+            className='h-full flex flex-col items-end justify-end px-2'
+          >
+            <Tooltip title={'Show the conversations drawer'}>
+              <StyledMuiButton
+                onClick={handleAdvanced}
+                disableRipple={true}
+                className='plausible-event-name=Show+Conversations+Click secondary w-fit mb-5'
+              >
+                <ChevronLeftRounded />
+                <SettingsIcon />
+              </StyledMuiButton>
+            </Tooltip>
+          </motion.div>
+        )}
       </Box>
       <Backdrop
         sx={{

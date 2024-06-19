@@ -16,11 +16,40 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import React, { ChangeEvent, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  ChangeEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 // icons
 import { INFERENCE_REQUEST, MAX_MESSAGE_SIZE, N_PREVIOUS_BLOCKS, TAG_NAMES } from '@/constants';
 import { InfoOutlined } from '@mui/icons-material';
-import { TextField, Typography, useTheme, Box, Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Tooltip, SelectChangeEvent, IconButton, Drawer, Backdrop, CircularProgress, Zoom, Fab, Paper } from '@mui/material';
+import {
+  TextField,
+  Typography,
+  useTheme,
+  Box,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  Tooltip,
+  SelectChangeEvent,
+  IconButton,
+  Drawer,
+  Backdrop,
+  CircularProgress,
+  Zoom,
+  Fab,
+  Paper,
+} from '@mui/material';
 import DebounceIconButton from '@/components/debounce-icon-button';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { UserFeedbackContext } from '@/context/user-feedback';
@@ -67,14 +96,13 @@ const InputField = ({
   const { currentAddress: userAddr } = useContext(EVMWalletContext);
   const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr);
 
-
   const [isSending, setIsSending] = useState(false);
 
   const sendDisabled = useMemo(() => {
     if (isSending) {
       return true;
     } else {
-      return (newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE);
+      return newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE;
     }
   }, [newMessage, isSending]);
 
@@ -96,7 +124,7 @@ const InputField = ({
         setShowFeedback(false);
       }, 2000);
     }
-  }, [ handleSendText, setOpenRating, isSending, showFeedback]);
+  }, [handleSendText, setOpenRating, isSending, showFeedback]);
 
   // avoid send duplicated messages and show the new line if it's only the Enter key
   const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -109,7 +137,6 @@ const InputField = ({
       }
     }
   };
-
 
   return (
       <Box sx={{ display: 'flex', width: '100%', gap: '8px' }}>
@@ -164,12 +191,14 @@ const InputField = ({
         <IconButton sx={{
           backgroundColor: '#9ecced',
           borderRadius: '8px',
-          marginTop: '10px'
-        }} onClick={handleSettingsOpen}>
-          <SettingsIcon />
-        </IconButton>
-      </Box>
-    );
+          marginTop: '10px',
+        }}
+        onClick={handleSettingsOpen}
+      >
+        <SettingsIcon />
+      </IconButton>
+    </Box>
+  );
 };
 
 const ArbitrumChat = () => {
@@ -183,23 +212,24 @@ const ArbitrumChat = () => {
       availableOperators: OperatorData[];
     };
   } = useLocation();
-  const { currentAddress, usdcBalance, updateUsdcBalance, prompt, getPubKey } = useContext(EVMWalletContext);
+  const { currentAddress, usdcBalance, updateUsdcBalance, prompt, getPubKey } =
+    useContext(EVMWalletContext);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
   const scrollableRef = useRef<HTMLDivElement>(null);
   const target = useRef<HTMLDivElement>(null);
   const [requestIds] = useState<string[]>([]);
-  const [ currentPubKey, setCurrentPubKey] = useState('');
+  const [currentPubKey, setCurrentPubKey] = useState('');
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
-  const [ messagesLoading, setMessagesLoading] = useState(false);
-  const [ isWaitingResponse, setIsWaitingResponse] = useState(false);
-  const [ responseTimeout, setResponseTimeout] = useState(false);
-  const [ currentOperator, setCurrentOperator ] = useState(state.defaultOperator);
-  const [ privateMode, setPrivateMode ] = useState(false);
-  const [ settingsOpen, setSettingsOpen ] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [isWaitingResponse, setIsWaitingResponse] = useState(false);
+  const [responseTimeout, setResponseTimeout] = useState(false);
+  const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
+  const [privateMode, setPrivateMode] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
   const { width, height } = useWindowDimensions();
-  const [ isLayoverOpen, setIsLayoverOpen ] = useState(false);
+  const [isLayoverOpen, setIsLayoverOpen] = useState(false);
   const { isNearTop } = useScroll(scrollableRef);
   const [inputWidth, setInputWidth] = useState('');
   const [inputHeight, setInputHeight] = useState(0);
@@ -240,15 +270,18 @@ const ArbitrumChat = () => {
     [isNearTop, hasRequestNextPage, messagesLoading],
   );
 
-  const { validTxs: operatorsData } = useOperators([ state.solution ]);
+  const { validTxs: operatorsData } = useOperators([state.solution]);
 
   useEffect(() => {
     if (operatorsData.length > 0) {
       setCurrentOperator(operatorsData[0]);
     }
-  }, [ operatorsData ]);
+  }, [operatorsData]);
 
-  const handleMessageChange = useCallback((event: ChangeEvent<HTMLInputElement>) => setNewMessage(event.target.value), [ setNewMessage ]);
+  const handleMessageChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setNewMessage(event.target.value),
+    [setNewMessage],
+  );
 
   useLayoutEffect(() => {
     const currInputHeight = document.querySelector('#chat-input')?.clientHeight;
@@ -287,7 +320,7 @@ const ArbitrumChat = () => {
     } else {
       // ignore
     }
-  }, [ currentAddress ]);
+  }, [currentAddress]);
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
@@ -311,7 +344,7 @@ const ArbitrumChat = () => {
         setMessages([]);
       }
     }
-  }, [requestsData, requestNetworkStatus, currentAddress ]);
+  }, [requestsData, requestNetworkStatus, currentAddress]);
 
   useEffect(() => {
     // only update messages after getting all responses
@@ -487,34 +520,37 @@ const ArbitrumChat = () => {
     });
   };
 
-  const checkCanSend = useCallback((dataSize: number) => {
-    try {
-      if (dataSize > MAX_MESSAGE_SIZE) {
-        enqueueSnackbar(
-          'Message Too Long. Message must not be bigger than 50kb, or 50000 characters.',
-          { variant: 'error' },
-        );
-        return false;
-      }
+  const checkCanSend = useCallback(
+    (dataSize: number) => {
+      try {
+        if (dataSize > MAX_MESSAGE_SIZE) {
+          enqueueSnackbar(
+            'Message Too Long. Message must not be bigger than 50kb, or 50000 characters.',
+            { variant: 'error' },
+          );
+          return false;
+        }
 
-      if (!currentOperator) {
-        enqueueSnackbar('No Operator Selected', { variant: 'error' });
-        return false;
-      }
-      
-      const actualFee = currentOperator.operatorFee;
-      
-      if (usdcBalance < actualFee) {
-        enqueueSnackbar('Not Enough USDC to pay Operator', { variant: 'error' });
-        return false;
-      }
+        if (!currentOperator) {
+          enqueueSnackbar('No Operator Selected', { variant: 'error' });
+          return false;
+        }
 
-      return true;
-    } catch (error) {
-      enqueueSnackbar('Something went wrong', { variant: 'error' });
-      return false;
-    }
-  }, [ currentOperator, usdcBalance ]);
+        const actualFee = currentOperator.operatorFee;
+
+        if (usdcBalance < actualFee) {
+          enqueueSnackbar('Not Enough USDC to pay Operator', { variant: 'error' });
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        enqueueSnackbar('Something went wrong', { variant: 'error' });
+        return false;
+      }
+    },
+    [currentOperator, usdcBalance],
+  );
 
   const handleSendText = useCallback(async () => {
     if (!newMessage) {
@@ -527,7 +563,6 @@ const ArbitrumChat = () => {
     }
 
     try {
-
       let dataToUpload: string | { promptHistory?: string; prompt: string } = {
         prompt: newMessage,
       };
@@ -567,8 +602,8 @@ const ArbitrumChat = () => {
         defaultConversation,
         {
           privateMode,
-          ...privateMode && { userPubKey: currentPubKey },
-          modelName: ''
+          ...(privateMode && { userPubKey: currentPubKey }),
+          modelName: '',
         },
       );
       // update balance after payments
@@ -587,7 +622,7 @@ const ArbitrumChat = () => {
         enqueueSnackbar('Something Went Wrong', { variant: 'error' });
       }
     }
-  }, [ newMessage, currentOperator, currentPubKey, privateMode, state, usdcBalance, checkCanSend ]);
+  }, [newMessage, currentOperator, currentPubKey, privateMode, state, usdcBalance, checkCanSend]);
 
   const updateMessages = async (txid: string, content: string | File, contentType: string) => {
     setNewMessage('');
@@ -616,7 +651,9 @@ const ArbitrumChat = () => {
     temp.push({
       msg: content,
       type: 'request',
-      timestamp: parseFloat(tags.find((tag: ITag) => tag.name === TAG_NAMES.unixTime)?.value as string),
+      timestamp: parseFloat(
+        tags.find((tag: ITag) => tag.name === TAG_NAMES.unixTime)?.value as string,
+      ),
       id: txid,
       cid: defaultConversation,
       height: currentHeight,
@@ -636,30 +673,34 @@ const ArbitrumChat = () => {
 
   const handleOperatorChange = useCallback(
     (event: SelectChangeEvent) => {
-      const operator = operatorsData.find(
-        (operator) => operator.evmWallet === event.target.value,
-      );
+      const operator = operatorsData.find((operator) => operator.evmWallet === event.target.value);
       if (operator) {
         setCurrentOperator(operator);
       } else {
         // ifgnore
       }
     },
-    [ operatorsData, setCurrentOperator ],
+    [operatorsData, setCurrentOperator],
   );
 
-  const handlePrivateModeChanged = useCallback(() => setPrivateMode(prev => !prev), [ setPrivateMode ]);
+  const handlePrivateModeChanged = useCallback(
+    () => setPrivateMode((prev) => !prev),
+    [setPrivateMode],
+  );
 
-  const handleSettingsOpen = useCallback(() => setSettingsOpen(!settingsOpen), [ settingsOpen, setSettingsOpen ]);
+  const handleSettingsOpen = useCallback(
+    () => setSettingsOpen(!settingsOpen),
+    [settingsOpen, setSettingsOpen],
+  );
 
   const handleLoadMore = useCallback(() => {
     fetchMore();
     setMessagesLoading(true);
-  }, [ fetchMore ]);
+  }, [fetchMore]);
 
   useEffect(() => {
     console.log('scrollableRef', scrollableRef);
-  }, [ scrollableRef ]);
+  }, [scrollableRef]);
 
   useLayoutEffect(() => {
     setInputWidth(`calc(${chatWidth}px - 16px)`);
@@ -670,273 +711,268 @@ const ArbitrumChat = () => {
     setChatMaxHeight(`${height - currHeaderHeight}px`);
   }, [height]);
 
-  return (<>
-    <Backdrop
-      sx={{ color: '#fff', zIndex: (t) => t.zIndex.drawer + 1 }}
-      open={isLayoverOpen}
-    >
-      <Typography>
-        {'Please contine on the popup extension.'}
-      </Typography>
-    </Backdrop>
-    <Drawer
-      variant='persistent'
-      anchor='right'
-      open={settingsOpen}
-      onClose={handleSettingsOpen}
-      sx={{
-        '& .MuiDrawer-paper': {
-          width: '30%',
-          boxSizing: 'border-box',
-          top: headerHeight,
-          height: `calc(100% - ${headerHeight})`,
-        },
-      }}
-      PaperProps={{
-        elevation: 24,
-      }}
-    >
-      <Box
+  return (
+    <>
+      <Backdrop sx={{ color: '#fff', zIndex: (t) => t.zIndex.drawer + 1 }} open={isLayoverOpen}>
+        <Typography>{'Please contine on the popup extension.'}</Typography>
+      </Backdrop>
+      <Drawer
+        variant='persistent'
+        anchor='right'
+        open={settingsOpen}
+        onClose={handleSettingsOpen}
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          padding: '16px',
-          '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
-            paddingTop: '16px',
+          '& .MuiDrawer-paper': {
+            width: '30%',
+            boxSizing: 'border-box',
+            top: headerHeight,
+            height: `calc(100% - ${headerHeight})`,
           },
         }}
-      >
-        <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-          <IconButton onClick={handleSettingsOpen} className='plausible-event-name=Close+Configuration'>
-            <CloseIcon />
-          </IconButton>
-          <Typography sx={{ fontWeight: 700, fontSize: '23px', lineHeight: '31px' }}>
-            {'Configuration'}
-          </Typography>
-        </Box>
-        <FormControl fullWidth margin='none'>
-          <InputLabel>{'Solution Operator'}</InputLabel>
-          <Select
-            label={'Solution Operator'}
-            value={currentOperator?.evmWallet || ''}
-            onChange={handleOperatorChange}
-            renderValue={(value) => (
-              <Typography>{displayShortTxOrAddr(value as string)}</Typography>
-            )}
-          >
-            {operatorsData.map((operator: OperatorData) => (
-              <MenuItem
-                key={operator.evmWallet}
-                value={operator.evmWallet}
-                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-              >
-                <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
-                <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                  <Typography>{operator.operatorFee}</Typography>
-                  <img width='20px' height='20px' src='./usdc-logo.svg' />
-                </Box>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <TextField
-          disabled={true}
-          value={currentOperator?.operatorFee ?? 0}
-          label='Fee'
-          sx={{
-            '& .MuiInputBase-input': {
-              display: 'flex',
-              gap: '24px',
-              justifyContent: 'space-between',
-            },
-          }}
-          InputProps={{
-            endAdornment: <img width='20px' height='29px' src={'./usdc-logo.svg'} />,
-          }}
-        />
-        <FormControl component='fieldset' variant='standard'>
-          <FormControlLabel
-            control={
-              <Checkbox
-                value={privateMode}
-                onChange={handlePrivateModeChanged}
-              />
-            }
-            label={
-              <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Private Mode
-                <Tooltip
-                  title={
-                    <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
-                      {
-                        'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
-                      }
-                    </Typography>
-                  }
-                  placement='bottom'
-                >
-                  <InfoOutlined fontSize='small' />
-                </Tooltip>
-              </Typography>
-            }
-          />
-        </FormControl>
-      </Box>
-    </Drawer>
-    <Box sx={{ height: '100%', display: 'flex' }} className='bg-slate-700'>
-      <Box
-        id='chat'
-        sx={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexGrow: 1,
-          backgroundColor: 'rgb(51 65 85)',
-          transition: theme.transitions.create('margin', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-          marginRight: '0',
-          ...(settingsOpen && {
-            transition: theme.transitions.create('margin', {
-              easing: theme.transitions.easing.easeOut,
-              duration: theme.transitions.duration.enteringScreen,
-            }),
-            marginRight: '30%',
-          }),
-          alignItems: 'center',
+        PaperProps={{
+          elevation: 24,
         }}
       >
         <Box
-          ref={chatRef}
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-end',
-            width: '100%',
-            height: '100%',
+            gap: '16px',
+            padding: '16px',
+            '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
+              paddingTop: '16px',
+            },
           }}
         >
-          {messagesLoading && (
-            <Backdrop
-              sx={{
-                position: 'absolute',
-                zIndex: theme.zIndex.drawer + 1,
-                backdropFilter: 'blur(50px)',
-                display: 'flex',
-                flexDirection: 'column',
-                left: '0px',
-                right: settingsOpen ? '30%' : '0px',
-              }}
-              open={true}
+          <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+            <IconButton
+              onClick={handleSettingsOpen}
+              className='plausible-event-name=Close+Configuration'
             >
-              <Typography variant='h1' fontWeight={500} color={'#9ecced'}>
-                Loading Messages...
-              </Typography>
-              <CircularProgress sx={{ color: '#9ecced' }} size='6rem' />
-            </Backdrop>
-          )}
-          <Box flexGrow={1}>
-            <Paper
-              elevation={1}
-              sx={{
-                backgroundColor: 'rgb(51 65 85)',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-end',
-                boxShadow: 'none',
-              }}
-            >
-              <Zoom in={showLoadMore} timeout={100} mountOnEnter unmountOnExit>
-                <Box
-                  zIndex={'100'}
-                  display={'flex'}
-                  justifyContent={'center'}
-                  padding={'8px'}
-                  width={'100%'}
-                  sx={{
-                    position: 'absolute',
-                    top: '40px',
-                    width: '100%',
-                  }}
-                >
-                  <Fab
-                    variant='extended'
-                    size='medium'
-                    sx={{ backgroundColor: '#9ecced' }}
-                    aria-label='Load More'
-                    onClick={handleLoadMore}
-                  >
-                    <Typography>Load More</Typography>
-                  </Fab>
-                </Box>
-              </Zoom>
-              <Box
-                sx={{
-                  overflow: messagesLoading ? 'hidden' : 'auto',
-                  maxHeight: chatMaxHeight,
-                  pt: '50px',
-                  paddingBottom: `${inputHeight}px`,
-                }}
-                ref={scrollableRef}
-              >
-                <Box ref={target} sx={{ padding: '8px' }} />
-                <ChatContent
-                  messages={messages}
-                  showError={showError}
-                  isWaitingResponse={isWaitingResponse}
-                  responseTimeout={responseTimeout}
-                  forArbitrum={true}
-                />
-                <Box ref={messagesEndRef} sx={{ padding: '1px' }} />
-              </Box>
-            </Paper>
+              <CloseIcon />
+            </IconButton>
+            <Typography sx={{ fontWeight: 700, fontSize: '23px', lineHeight: '31px' }}>
+              {'Configuration'}
+            </Typography>
           </Box>
+          <FormControl fullWidth margin='none'>
+            <InputLabel>{'Solution Operator'}</InputLabel>
+            <Select
+              label={'Solution Operator'}
+              value={currentOperator?.evmWallet || ''}
+              onChange={handleOperatorChange}
+              renderValue={(value) => (
+                <Typography>{displayShortTxOrAddr(value as string)}</Typography>
+              )}
+            >
+              {operatorsData.map((operator: OperatorData) => (
+                <MenuItem
+                  key={operator.evmWallet}
+                  value={operator.evmWallet}
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
+                  <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                    <Typography>{operator.operatorFee}</Typography>
+                    <img width='20px' height='20px' src='./usdc-logo.svg' />
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            disabled={true}
+            value={currentOperator?.operatorFee ?? 0}
+            label='Fee'
+            sx={{
+              '& .MuiInputBase-input': {
+                display: 'flex',
+                gap: '24px',
+                justifyContent: 'space-between',
+              },
+            }}
+            InputProps={{
+              endAdornment: <img width='20px' height='29px' src={'./usdc-logo.svg'} />,
+            }}
+          />
+          <FormControl component='fieldset' variant='standard'>
+            <FormControlLabel
+              control={<Checkbox value={privateMode} onChange={handlePrivateModeChanged} />}
+              label={
+                <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Private Mode
+                  <Tooltip
+                    title={
+                      <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                        {
+                          'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
+                        }
+                      </Typography>
+                    }
+                    placement='bottom'
+                  >
+                    <InfoOutlined fontSize='small' />
+                  </Tooltip>
+                </Typography>
+              }
+            />
+          </FormControl>
+        </Box>
+      </Drawer>
+      <Box sx={{ height: '100%', display: 'flex' }} className='bg-slate-700'>
+        <Box
+          id='chat'
+          sx={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexGrow: 1,
+            backgroundColor: 'rgb(51 65 85)',
+            transition: theme.transitions.create('margin', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.leavingScreen,
+            }),
+            marginRight: '0',
+            ...(settingsOpen && {
+              transition: theme.transitions.create('margin', {
+                easing: theme.transitions.easing.easeOut,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+              marginRight: '30%',
+            }),
+            alignItems: 'center',
+          }}
+        >
           <Box
-            id={'chat-input'}
+            ref={chatRef}
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: '8px',
-              justifyContent: 'flex-start',
-              position: 'absolute',
-              margin: '8px 0px',
-              width: inputWidth,
-              paddingRight: '8px',
-              paddingLeft: '8px',
+              justifyContent: 'flex-end',
+              width: '100%',
+              height: '100%',
             }}
           >
-            {showOperatorBusy && (
-              <Box sx={{ display: 'flex', gap: '8px' }}>
-                <InfoOutlined color='warning' />
-                <Typography color={theme.palette.warning.main}>
-                  Operator is currently working on other requests. Waiting time may be
-                  increased...
-                </Typography>
-              </Box>
-            )}
-            <InputField
-              newMessage={newMessage}
-              currentPrice={currentOperator?.operatorFee ?? 0}
-              handleSendText={handleSendText}
-              handleMessageChange={handleMessageChange}
-              handleSettingsOpen={handleSettingsOpen}
-            />
-            {newMessage.length >= MAX_MESSAGE_SIZE && (
-              <Typography
-                variant='subtitle1'
-                sx={{ color: theme.palette.error.main, fontWeight: 500, paddingLeft: '20px' }}
+            {messagesLoading && (
+              <Backdrop
+                sx={{
+                  position: 'absolute',
+                  zIndex: theme.zIndex.drawer + 1,
+                  backdropFilter: 'blur(50px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  left: '0px',
+                  right: settingsOpen ? '30%' : '0px',
+                }}
+                open={true}
               >
-                Message Too Long. Message must not be bigger than 50kb, or 50000 characters.
-              </Typography>
+                <Typography variant='h1' fontWeight={500} color={'#9ecced'}>
+                  Loading Messages...
+                </Typography>
+                <CircularProgress sx={{ color: '#9ecced' }} size='6rem' />
+              </Backdrop>
             )}
+            <Box flexGrow={1}>
+              <Paper
+                elevation={1}
+                sx={{
+                  backgroundColor: 'rgb(51 65 85)',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end',
+                  boxShadow: 'none',
+                }}
+              >
+                <Zoom in={showLoadMore} timeout={100} mountOnEnter unmountOnExit>
+                  <Box
+                    zIndex={'100'}
+                    display={'flex'}
+                    justifyContent={'center'}
+                    padding={'8px'}
+                    width={'100%'}
+                    sx={{
+                      position: 'absolute',
+                      top: '40px',
+                      width: '100%',
+                    }}
+                  >
+                    <Fab
+                      variant='extended'
+                      size='medium'
+                      sx={{ backgroundColor: '#9ecced' }}
+                      aria-label='Load More'
+                      onClick={handleLoadMore}
+                    >
+                      <Typography>Load More</Typography>
+                    </Fab>
+                  </Box>
+                </Zoom>
+                <Box
+                  sx={{
+                    overflow: messagesLoading ? 'hidden' : 'auto',
+                    maxHeight: chatMaxHeight,
+                    pt: '50px',
+                    paddingBottom: `${inputHeight}px`,
+                  }}
+                  ref={scrollableRef}
+                >
+                  <Box ref={target} sx={{ padding: '8px' }} />
+                  <ChatContent
+                    messages={messages}
+                    showError={showError}
+                    isWaitingResponse={isWaitingResponse}
+                    responseTimeout={responseTimeout}
+                    forArbitrum={true}
+                  />
+                  <Box ref={messagesEndRef} sx={{ padding: '1px' }} />
+                </Box>
+              </Paper>
+            </Box>
+            <Box
+              id={'chat-input'}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: '8px',
+                justifyContent: 'flex-start',
+                position: 'absolute',
+                margin: '8px 0px',
+                width: inputWidth,
+                paddingRight: '8px',
+                paddingLeft: '8px',
+              }}
+            >
+              {showOperatorBusy && (
+                <Box sx={{ display: 'flex', gap: '8px' }}>
+                  <InfoOutlined color='warning' />
+                  <Typography color={theme.palette.warning.main}>
+                    Operator is currently working on other requests. Waiting time may be
+                    increased...
+                  </Typography>
+                </Box>
+              )}
+              <InputField
+                currentPrice={currentOperator?.operatorFee ?? 0}
+                newMessage={newMessage}
+                handleSendText={handleSendText}
+                handleMessageChange={handleMessageChange}
+                handleSettingsOpen={handleSettingsOpen}
+              />
+              {newMessage.length >= MAX_MESSAGE_SIZE && (
+                <Typography
+                  variant='subtitle1'
+                  sx={{ color: theme.palette.error.main, fontWeight: 500, paddingLeft: '20px' }}
+                >
+                  Message Too Long. Message must not be bigger than 50kb, or 50000 characters.
+                </Typography>
+              )}
+            </Box>
           </Box>
         </Box>
       </Box>
-    </Box>
-  </>);
+    </>
+  );
 };
 
 export default ArbitrumChat;

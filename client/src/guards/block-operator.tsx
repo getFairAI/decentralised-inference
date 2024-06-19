@@ -60,7 +60,6 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
         <DialogTitle>
           <Typography
             sx={{
-              color: theme.palette.primary.main,
               fontWeight: 700,
               fontSize: '23px',
               lineHeight: '31px',
@@ -69,11 +68,7 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
               alignItems: 'center',
             }}
           >
-            <img
-              src='./error-icon.svg'
-              style={{ width: '30px' }}
-              className='saturate-0 brightness-0'
-            />
+            <img src='./error-icon.svg' style={{ width: '30px' }} />
             Error: Use a different wallet!
           </Typography>
         </DialogTitle>

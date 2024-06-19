@@ -28,7 +28,6 @@ import {
   TextField,
   Typography,
   useTheme,
-  Button,
   InputLabel,
   Select,
   MenuItem,
@@ -48,9 +47,6 @@ import {
   useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import CloseIcon from '@mui/icons-material/Close';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import { enqueueSnackbar } from 'notistack';
 import { NumericFormat } from 'react-number-format';
 import LicenseConfiguration from './license-configuration';
@@ -62,11 +58,20 @@ import {
   useController,
 } from 'react-hook-form';
 import { IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SelectControl from './select-control';
 import { findByTagsQuery } from '@fairai/evm-sdk';
-import ClearIcon from '@mui/icons-material/Clear';
 import TextControl from './text-control';
+import { StyledMuiButton } from '@/styles/components';
+
+// icons
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import ClearIcon from '@mui/icons-material/Clear';
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
+import { motion } from 'framer-motion';
 
 const CustomTag = ({
   name,
@@ -356,6 +361,7 @@ const TextConfiguration = ({
               checked={contextFileOn}
               onChange={handleContextFileToggle}
               disabled={contextFileDisabled}
+              color='primary'
             />
           }
           label={
@@ -456,6 +462,7 @@ const Configuration = ({
   control,
   currentOperator,
   messages,
+  drawerOpen,
   setCurrentOperator,
   setConfigValue,
   reset,
@@ -464,6 +471,7 @@ const Configuration = ({
   control: Control<IConfiguration, unknown>;
   currentOperator?: OperatorData;
   messages: IMessage[];
+  drawerOpen: boolean;
   setCurrentOperator: Dispatch<SetStateAction<OperatorData | undefined>>;
   setConfigValue: UseFormSetValue<IConfiguration>;
   reset: UseFormReset<IConfiguration>;
@@ -569,170 +577,202 @@ const Configuration = ({
       sx={{
         display: 'flex',
         color: theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
-        fontStyle: 'normal',
-        fontWeight: 400,
-        fontSize: '20px',
-        lineHeight: '16px',
         width: '100%',
-        background: theme.palette.background.default,
-        padding: '0px 16px 16px 16px',
+        height: '100%',
+        padding: '0px 20px',
         flexDirection: 'column',
         gap: '16px',
       }}
     >
-      <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-        <IconButton onClick={handleClose} className='plausible-event-name=Close+Configuration'>
-          <CloseIcon />
-        </IconButton>
-        <Typography sx={{ fontWeight: 700, fontSize: '23px', lineHeight: '31px' }}>
-          {'Configuration'}
+      <div className='flex w-full justify-center px-2 mb-3 mt-2'>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: '23px',
+            lineHeight: '31px',
+            display: 'flex',
+            gap: 1,
+            alignItems: 'center',
+          }}
+        >
+          <SettingsRoundedIcon style={{ color: '#3aaaaa' }} />
+          Advanced Configuration
         </Typography>
-      </Box>
+      </div>
 
-      <Box display={'flex'} gap={'36px'} justifyContent={'space-between'}>
-        <FormControl fullWidth margin='none'>
-          <InputLabel>{'Solution Operator'}</InputLabel>
-          <Select
-            label={'Solution Operator'}
-            onChange={handleOperatorChange}
-            defaultValue={currentOperator?.evmWallet ?? ''}
-            renderValue={(value) => (
-              <Typography>{displayShortTxOrAddr(value as string)}</Typography>
-            )}
-          >
-            {state.availableOperators.map((operator: OperatorData) => (
+      <div className='flex flex-col gap-5 h-full min-h-fit'>
+        <Box display={'flex'} gap={'36px'} justifyContent={'space-between'}>
+          <FormControl fullWidth margin='none'>
+            <InputLabel>{'Solution Operator'}</InputLabel>
+            <Select
+              label={'Solution Operator'}
+              onChange={handleOperatorChange}
+              defaultValue={currentOperator?.evmWallet ?? ''}
+              renderValue={(value) => (
+                <Typography>{displayShortTxOrAddr(value as string)}</Typography>
+              )}
+            >
+              {state.availableOperators.map((operator: OperatorData) => (
+                <MenuItem
+                  key={operator.evmWallet}
+                  value={operator.evmWallet}
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
+                  <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                    <Typography>{operator.operatorFee}</Typography>
+                    <img width='20px' height='20px' src='./usdc-logo.svg' />
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            disabled={true}
+            value={currentOperator?.operatorFee ?? 0}
+            label='Fee'
+            sx={{
+              '& .MuiInputBase-input': {
+                display: 'flex',
+                gap: '24px',
+                justifyContent: 'space-between',
+              },
+            }}
+            InputProps={{
+              endAdornment: <img width='20px' height='29px' src={U_LOGO_SRC} />,
+            }}
+          />
+        </Box>
+        <Box>
+          <SelectControl name={'modelName'} control={control} mat={{ placeholder: 'Model to Use' }}>
+            {availableModels.map((model: { name: string; url: string }) => (
               <MenuItem
-                key={operator.evmWallet}
-                value={operator.evmWallet}
+                key={model.url}
+                value={model.name}
                 sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
               >
-                <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
-                <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                  <Typography>{operator.operatorFee}</Typography>
-                  <img width='20px' height='20px' src='./usdc-logo.svg' />
-                </Box>
+                <Typography>{model.name}</Typography>
               </MenuItem>
             ))}
-          </Select>
+          </SelectControl>
+          {/* <img src='./arweave-logo-for-light.png' height={'18px'} width={'18px'}/> */}
+        </Box>
+        <StableDiffusionConfigurations control={control} fee={currentOperator?.operatorFee ?? 0} />
+        <Box>
+          <Divider textAlign='left' variant='fullWidth'>
+            <Typography variant='h4'>Transaction Configurations</Typography>
+          </Divider>
+        </Box>
+        {isTextSolution && <TextConfiguration messages={messages} control={control} />}
+        <FormControl component='fieldset' variant='standard'>
+          <FormControlLabel
+            control={
+              <Checkbox
+                ref={privateModeField.ref}
+                value={privateModeField.value}
+                onChange={privateModeField.onChange}
+              />
+            }
+            label={
+              <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Private Mode
+                <Tooltip
+                  title={
+                    <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                      {
+                        'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
+                      }
+                    </Typography>
+                  }
+                  placement='bottom'
+                >
+                  <InfoOutlined fontSize='small' />
+                </Tooltip>
+              </Typography>
+            }
+          />
         </FormControl>
-        <TextField
-          disabled={true}
-          value={currentOperator?.operatorFee ?? 0}
-          label='Fee'
-          sx={{
-            '& .MuiInputBase-input': {
-              display: 'flex',
-              gap: '24px',
-              justifyContent: 'space-between',
-            },
-          }}
-          InputProps={{
-            endAdornment: <img width='20px' height='29px' src={U_LOGO_SRC} />,
-          }}
-        />
-      </Box>
-      <Box>
-        <SelectControl name={'modelName'} control={control} mat={{ placeholder: 'Model to Use' }}>
-          {availableModels.map((model: { name: string; url: string }) => (
-            <MenuItem
-              key={model.url}
-              value={model.name}
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <Typography>{model.name}</Typography>
-            </MenuItem>
-          ))}
+        <SelectControl
+          name='generateAssets'
+          control={control}
+          mat={{ label: 'Arweave Asset (NFT) Options', placeholder: 'Arweave Asset (NFT) Options' }}
+          defaultValue={'none'}
+        >
+          <MenuItem value='none'>Do not mint</MenuItem>
+          <MenuItem value='fair-protocol'>Fair Protocol NFT</MenuItem>
+          <MenuItem value='rareweave'>Rareweave NFT</MenuItem>
         </SelectControl>
-        {/* <img src='./arweave-logo-for-light.png' height={'18px'} width={'18px'}/> */}
-      </Box>
-      <StableDiffusionConfigurations control={control} fee={currentOperator?.operatorFee ?? 0} />
-      <Box>
-        <Divider textAlign='left' variant='fullWidth'>
-          <Typography variant='h4'>Transaction Configurations</Typography>
-        </Divider>
-      </Box>
-      {isTextSolution && <TextConfiguration messages={messages} control={control} />}
-      <FormControl component='fieldset' variant='standard'>
-        <FormControlLabel
-          control={
-            <Checkbox
-              ref={privateModeField.ref}
-              value={privateModeField.value}
-              onChange={privateModeField.onChange}
-            />
-          }
-          label={
-            <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              Private Mode
-              <Tooltip
-                title={
-                  <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
-                    {
-                      'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
-                    }
-                  </Typography>
-                }
-                placement='bottom'
-              >
-                <InfoOutlined fontSize='small' />
-              </Tooltip>
-            </Typography>
-          }
+        <TextField
+          value={assetNamesField.value}
+          onChange={assetNamesField.onChange}
+          inputRef={assetNamesField.ref}
+          label={'Atomic Asset Name(s)'}
+          multiline
+          minRows={1}
+          maxRows={3}
+          error={isAssetNamesDirty && hasAssetNameError}
+          onBlur={assetNamesField.onBlur}
+          className='plausible-event-name=Atomic+Asset+Name+Changed'
         />
-      </FormControl>
-      <SelectControl
-        name='generateAssets'
-        control={control}
-        mat={{ label: 'Arweave Asset (NFT) Options', placeholder: 'Arweave Asset (NFT) Options' }}
-        defaultValue={'none'}
-      >
-        <MenuItem value='none'>Do not mint</MenuItem>
-        <MenuItem value='fair-protocol'>Fair Protocol NFT</MenuItem>
-        <MenuItem value='rareweave'>Rareweave NFT</MenuItem>
-      </SelectControl>
-      <TextField
-        value={assetNamesField.value}
-        onChange={assetNamesField.onChange}
-        inputRef={assetNamesField.ref}
-        label={'Atomic Asset Name(s)'}
-        multiline
-        minRows={1}
-        maxRows={3}
-        error={isAssetNamesDirty && hasAssetNameError}
-        onBlur={assetNamesField.onBlur}
-        className='plausible-event-name=Atomic+Asset+Name+Changed'
-      />
-      <TextField
-        label={'Description'}
-        value={descriptionField.value}
-        onChange={descriptionField.onChange}
-        inputRef={descriptionField.ref}
-        onBlur={descriptionField.onBlur}
-        multiline
-        minRows={1}
-        maxRows={3}
-        fullWidth
-        className='plausible-event-name=Description+Changed'
-      />
-      <LicenseConfiguration configControl={control as unknown as Control<FieldValues>} />
-      <Box>
-        <Divider textAlign='left' variant='fullWidth'>
-          <Typography variant='h4'>Custom Tags</Typography>
-        </Divider>
-      </Box>
-      <Box display={'flex'} gap={'36px'} justifyContent={'space-between'}>
-        <TextField inputRef={nameRef} label={'Tag Name'} />
-        <TextField inputRef={valueRef} label={'Tag Value'} multiline minRows={1} maxRows={5} />
-        <IconButton onClick={handleAdd} className='plausible-event-name=Custom+Tag+Added'>
-          <AddIcon />
-        </IconButton>
-      </Box>
-      {customTags.map(({ name, value }) => (
-        <CustomTag key={name} name={name} value={value} handleRemove={handleRemove} />
-      ))}
-      <Button variant='outlined' onClick={handleResetClick}>
-        <Typography>Reset</Typography>
-      </Button>
+        <TextField
+          label={'Description'}
+          value={descriptionField.value}
+          onChange={descriptionField.onChange}
+          inputRef={descriptionField.ref}
+          onBlur={descriptionField.onBlur}
+          multiline
+          minRows={1}
+          maxRows={3}
+          fullWidth
+          className='plausible-event-name=Description+Changed'
+        />
+        <LicenseConfiguration configControl={control as unknown as Control<FieldValues>} />
+        <Box>
+          <Divider textAlign='left' variant='fullWidth'>
+            <Typography variant='h4'>Custom Tags</Typography>
+          </Divider>
+        </Box>
+        <Box display={'flex'} gap={'36px'} justifyContent={'space-between'}>
+          <TextField inputRef={nameRef} label={'Tag Name'} />
+          <TextField inputRef={valueRef} label={'Tag Value'} multiline minRows={1} maxRows={5} />
+          <IconButton onClick={handleAdd} className='plausible-event-name=Custom+Tag+Added'>
+            <AddIcon />
+          </IconButton>
+        </Box>
+        {customTags.map(({ name, value }) => (
+          <CustomTag key={name} name={name} value={value} handleRemove={handleRemove} />
+        ))}
+        <div className='w-full flex justify-end'>
+          <Tooltip title={'Reset every configuration on this page to its default state'}>
+            <StyledMuiButton className='w-fit secondary' onClick={handleResetClick}>
+              <DeleteRoundedIcon style={{ width: 20 }} />
+              Reset all
+            </StyledMuiButton>
+          </Tooltip>
+        </div>
+      </div>
+
+      {drawerOpen && (
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{
+            opacity: 1,
+            x: 0,
+            transition: { delay: 0.3, duration: 0.5, type: 'spring' },
+          }}
+          className='py-5 w-full'
+        >
+          <Tooltip title={'Hide the advanced configurations drawer'}>
+            <StyledMuiButton
+              onClick={handleClose}
+              className='plausible-event-name=Close+Configuration secondary'
+            >
+              Hide
+              <ArrowForwardIosRoundedIcon style={{ width: 18 }} />
+            </StyledMuiButton>
+          </Tooltip>
+        </motion.div>
+      )}
     </Box>
   );
 };

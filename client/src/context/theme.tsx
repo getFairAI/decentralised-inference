@@ -61,7 +61,7 @@ const lightTheme = createTheme({
     primary: {
       // light: will be calculated from palette.primary.main,
       light: '#464646',
-      main: '#464646',
+      main: '#3aaaaa',
       dark: '#1F1F26',
       contrastText: '#EDEDED',
       // dark: will be calculated from palette.primary.main,
