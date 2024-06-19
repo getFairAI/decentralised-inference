@@ -60,8 +60,8 @@ const lightTheme = createTheme({
     },
     primary: {
       // light: will be calculated from palette.primary.main,
-      light: '#1F1F26',
-      main: '#1F1F26',
+      light: '#464646',
+      main: '#464646',
       dark: '#1F1F26',
       contrastText: '#EDEDED',
       // dark: will be calculated from palette.primary.main,
@@ -105,7 +105,7 @@ const lightTheme = createTheme({
       dark: '#DC5141',
     },
     text: {
-      primary: '#1F1F26', // same as rgba(34,55,69,255)
+      primary: '#464646',
       secondary: 'rgba(34,55,69, 0.6)',
       disabled: 'rgba(34,55,69,0.3)',
     },

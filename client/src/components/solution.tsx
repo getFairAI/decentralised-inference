@@ -267,28 +267,19 @@ const Solution = ({
           }}
           className='flex flex-col justify-between px-2 pt-2 pb-5'
         >
-          {!loading && (
-            <CardContent
-              sx={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                width: '100%',
-                gap: '16px',
-                pt: 0,
-              }}
-            >
-              <span className='font-semibold'>
-                {tx.node.tags.find((el) => el.name === 'Description')?.value}
-              </span>
-            </CardContent>
-          )}
-          {loading && (
-            <CardContent sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-              <Tooltip title='Loading Available Operators'>
-                <CircularProgress />
-              </Tooltip>
-            </CardContent>
-          )}
+          <CardContent
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              width: '100%',
+              gap: '16px',
+              pt: 0,
+            }}
+          >
+            <span className='font-semibold'>
+              {tx.node.tags.find((el) => el.name === 'Description')?.value}
+            </span>
+          </CardContent>
           <div className='flex justify-center md:justify-between py-4 px-2'>
             <div className='flex-3 flex justify-start'>
               <StyledMuiButton className='primary' onClick={handleSolutionClick}>
@@ -296,24 +287,41 @@ const Solution = ({
                 <OutboundRoundedIcon style={{ width: '22px' }} />
               </StyledMuiButton>
             </div>
-            <div className='flex-1 flex justify-end pr-1 gap-3'>
-              {hasOperators && (
-                <Tooltip title='Average Fee'>
-                  <Box display={'flex'} gap={'4px'} alignItems={'center'}>
-                    <Typography>{avgFee}</Typography>
-                    <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                      <img width='20px' height='20px' src='./usdc-logo.svg' />
+
+            {loading && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  flex: '1 1 auto',
+                  alignItems: 'center',
+                }}
+              >
+                <Tooltip title='Loading available operators...'>
+                  <CircularProgress size={'30px'} />
+                </Tooltip>
+              </div>
+            )}
+            {!loading && (
+              <div className='flex-1 flex justify-end pr-1 gap-3'>
+                {hasOperators && (
+                  <Tooltip title='Average Fee'>
+                    <Box display={'flex'} gap={'4px'} alignItems={'center'}>
+                      <Typography>{avgFee}</Typography>
+                      <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                        <img width='20px' height='20px' src='./usdc-logo.svg' />
+                      </Box>
                     </Box>
+                  </Tooltip>
+                )}
+                <Tooltip title='Available Providers'>
+                  <Box display={'flex'} gap={'4px'} alignItems={'center'}>
+                    <Typography>{numOperators}</Typography>
+                    <ComputerIcon />
                   </Box>
                 </Tooltip>
-              )}
-              <Tooltip title='Available Providers'>
-                <Box display={'flex'} gap={'4px'} alignItems={'center'}>
-                  <Typography>{numOperators}</Typography>
-                  <ComputerIcon />
-                </Box>
-              </Tooltip>
-            </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </motion.div>
