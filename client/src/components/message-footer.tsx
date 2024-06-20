@@ -80,8 +80,8 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
             className='timeLabel'
             sx={{
               fontStyle: 'normal',
-              fontWeight: 300,
-              fontSize: '16px',
+              fontWeight: 400,
+              fontSize: '14px',
               lineHeight: '20px',
               display: 'flex',
               alignItems: 'center',
@@ -93,22 +93,22 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
             sx={{
               display: 'flex',
               alignItems: 'center',
-              margin: '8px',
+              margin: message.type === 'response' ? '8px' : '0px',
             }}
           >
-            {' - '}
+            {message.type === 'response' ? ' - ' : ''}
           </Typography>
           <Typography
             sx={{
               fontStyle: 'normal',
               fontWeight: 700,
-              fontSize: '16px',
+              fontSize: '14px',
               lineHeight: '20px',
               display: 'flex',
               alignItems: 'center',
             }}
           >
-            {message.type === 'response' ? findTag(state.solution, 'solutionName') : 'You'}
+            {message.type === 'response' ? findTag(state.solution, 'solutionName') : ''}
           </Typography>
         </Box>
       </Box>

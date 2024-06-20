@@ -55,7 +55,6 @@ import { useLocation } from 'react-router-dom';
 
 // icons
 import AddIcon from '@mui/icons-material/Add';
-import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import { motion } from 'framer-motion';
 
@@ -80,7 +79,7 @@ const ConversationElement = ({
       onClick={handleListItemClick}
       sx={{
         flexGrow: 0,
-        borderRadius: '10px',
+        borderRadius: '30px',
         width: '100%',
         justifyContent: 'center',
         height: '60px',
@@ -91,13 +90,15 @@ const ConversationElement = ({
         transition: '0.2s all',
         '&.Mui-selected': {
           backgroundColor: '#3aaaaa !important',
-          borderRadius: '30px',
           color: '#fff',
         },
+        '&.Mui-selected img': {
+          opacity: '1 !important',
+          filter: 'invert(1) !important',
+        },
         '&:hover': {
-          transform: 'translateX(8px)',
-          backgroundColor: '#43bfbf !important',
-          color: '#fff',
+          transform: 'translateX(5px)',
+          filter: 'brightness(0.9)',
         },
       }}
       className='plausible-event-name=Change+Conversation+Click'
@@ -112,7 +113,7 @@ const ConversationElement = ({
           gap: 1,
         }}
       >
-        <ChatBubbleRoundedIcon style={{ width: 18 }} />
+        <img src='./icons/comment_icon_fill.svg' style={{ width: 18, opacity: 0.7 }} />
         Conversation {cid}
       </Typography>
     </ListItemButton>
@@ -338,7 +339,7 @@ const Conversations = ({
           height: '100%',
         }}
       >
-        <div className='flex w-full justify-center px-2 mb-2 mt-2'>
+        <div className='flex w-full justify-center px-2 mb-2 mt-6'>
           <Typography
             sx={{
               fontWeight: 700,
@@ -349,7 +350,7 @@ const Conversations = ({
               alignItems: 'center',
             }}
           >
-            <ChatBubbleRoundedIcon style={{ color: '#3aaaaa', width: 20 }} />
+            <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: 20 }} />
             Conversations
           </Typography>
         </div>
@@ -364,6 +365,10 @@ const Conversations = ({
               alignItems: 'center',
               backgroundColor: '#fff',
               width: '100%',
+              outline: '1px solid lightgrey',
+              '&:focus, &:focus-within': {
+                outline: '2px solid #3aaaaa',
+              },
             }}
           >
             <InputBase
@@ -432,7 +437,7 @@ const Conversations = ({
               x: 0,
               transition: { delay: 0.3, duration: 0.5, type: 'spring' },
             }}
-            className='w-full flex justify-end p-5'
+            className='w-full flex justify-end p-8 mb-4'
           >
             <Tooltip title={'Hide the conversations drawer'}>
               <StyledMuiButton

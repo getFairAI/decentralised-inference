@@ -582,9 +582,12 @@ const Configuration = ({
         padding: '0px 20px',
         flexDirection: 'column',
         gap: '16px',
+        '*.MuiInputBase-root, .MuiInputBase-root': {
+          backgroundColor: '#fff !important',
+        },
       }}
     >
-      <div className='flex w-full justify-center px-2 mb-3 mt-2'>
+      <div className='flex w-full justify-center px-2 mb-3 mt-6'>
         <Typography
           sx={{
             fontWeight: 700,
@@ -619,12 +622,20 @@ const Configuration = ({
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
-                  <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                    <Typography>{operator.operatorFee}</Typography>
-                    <img width='20px' height='20px' src='./usdc-logo.svg' />
-                  </Box>
+                  <Tooltip title={'Operator Fee'}>
+                    <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                      <Typography>{operator.operatorFee}</Typography>
+                      <img width='20px' height='20px' src='./usdc-logo.svg' />
+                    </Box>
+                  </Tooltip>
                 </MenuItem>
               ))}
+
+              {!state.availableOperators?.length && (
+                <MenuItem value={'none'} disabled={true}>
+                  <Typography>No currently available operators</Typography>
+                </MenuItem>
+              )}
             </Select>
           </FormControl>
           <TextField
@@ -760,7 +771,7 @@ const Configuration = ({
             x: 0,
             transition: { delay: 0.3, duration: 0.5, type: 'spring' },
           }}
-          className='py-5 w-full'
+          className='py-8 w-full mb-4'
         >
           <Tooltip title={'Hide the advanced configurations drawer'}>
             <StyledMuiButton

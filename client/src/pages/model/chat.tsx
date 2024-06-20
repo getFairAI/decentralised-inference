@@ -17,6 +17,7 @@
  */
 
 import {
+  Avatar,
   Backdrop,
   Box,
   CircularProgress,
@@ -34,7 +35,7 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { NetworkStatus } from '@apollo/client';
+import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import {
   ChangeEvent,
   RefObject,
@@ -53,6 +54,7 @@ import {
   INFERENCE_REQUEST,
   PROTOCOL_NAME,
   PROTOCOL_VERSION,
+  NET_ARWEAVE_URL,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { useSnackbar } from 'notistack';
@@ -86,7 +88,9 @@ import { encryptSafely } from '@metamask/eth-sig-util';
 import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
-import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
+import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
+import { toSvg } from 'jdenticon';
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -259,13 +263,14 @@ const InputField = ({
           minRows={1}
           maxRows={3}
           sx={{
-            background: theme.palette.background.default,
+            background: '#fff',
+            borderRadius: '10px',
             fontStyle: 'normal',
             fontWeight: 400,
             fontSize: '20px',
             lineHeight: '16px',
             width: '100%',
-            marginTop: '10px',
+            margin: '10px 0px',
           }}
           InputProps={{
             endAdornment: (
@@ -411,6 +416,20 @@ const Chat = () => {
 
   const currentConfig = useWatch({ control: configControl });
 
+  const [getAvatar, { data: avatarData }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
+  const imgUrl = useMemo(() => {
+    const avatarTxId = avatarData?.transactions?.edges[0]?.node?.id;
+    if (avatarTxId) {
+      return `${NET_ARWEAVE_URL}/${avatarTxId}`;
+    } else {
+      const imgSize = 100;
+      const solutionId = state?.solution.node.id;
+      const img = toSvg(solutionId, imgSize);
+      const svg = new Blob([img], { type: 'image/svg+xml' });
+      return URL.createObjectURL(svg);
+    }
+  }, [avatarData, state]);
+
   /**
    * If there is a save element (currentEl) scroll to it to mantain user in same place after load more
    */
@@ -438,6 +457,12 @@ const Chat = () => {
     } else {
       // ignore
     }
+
+    getAvatar({
+      variables: {
+        owner: state.solution.node.owner.address,
+      },
+    });
   }, [state, configReset]);
 
   useEffect(() => {
@@ -1283,7 +1308,6 @@ const Chat = () => {
             top: headerHeight,
             height: `calc(100% - ${headerHeight})`,
             border: 'none',
-            borderRadius: '10px 0px 0px 10px',
           },
         }}
       >
@@ -1323,7 +1347,6 @@ const Chat = () => {
               height: '100%',
               position: 'static',
               border: 'none',
-              borderRadius: '0px 10px 10px 0px',
             },
           }}
         >
@@ -1336,36 +1359,25 @@ const Chat = () => {
             setLayoverOpen={setLayoverOpen}
           />
         </Drawer>
+
         <Box
           id='chat'
           sx={{
             width: '100%',
             height: '100%',
-            bgcolor: 'background.paper',
             display: 'flex',
             flexGrow: 1,
-            background: theme.palette.background.default,
-            transition: theme.transitions.create('margin', {
-              easing: theme.transitions.easing.sharp,
-              duration: theme.transitions.duration.leavingScreen,
-            }),
             marginLeft: '-240px',
             ...(drawerOpen && {
-              transition: theme.transitions.create('margin', {
-                easing: theme.transitions.easing.easeOut,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
               marginLeft: 0,
             }),
-            marginRight: '0',
+            marginRight: 0,
             ...(configurationDrawerOpen && {
-              transition: theme.transitions.create('margin', {
-                easing: theme.transitions.easing.easeOut,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
               marginRight: '30%',
             }),
             alignItems: 'center',
+            padding: '20px',
+            boxSizing: 'border-box',
           }}
         >
           {!drawerOpen && (
@@ -1376,7 +1388,7 @@ const Chat = () => {
                 x: 0,
                 transition: { delay: 0.3, duration: 0.5, type: 'spring' },
               }}
-              className='h-full flex flex-col items-end justify-end px-2'
+              className='h-full flex flex-col items-end justify-end px-2 pr-6'
             >
               <Tooltip title={'Show the conversations drawer'}>
                 <StyledMuiButton
@@ -1384,7 +1396,10 @@ const Chat = () => {
                   disableRipple={true}
                   className='plausible-event-name=Show+Conversations+Click secondary w-fit mb-5'
                 >
-                  <ChatBubbleRoundedIcon />
+                  <img
+                    src='./icons/comment_icon_fill.svg'
+                    style={{ width: 20, filter: 'invert(1)' }}
+                  />
                   <ChevronRightIcon />
                 </StyledMuiButton>
               </Tooltip>
@@ -1398,6 +1413,12 @@ const Chat = () => {
               justifyContent: 'flex-end',
               width: '100%',
               height: '100%',
+              boxSizing: 'border-box',
+              backgroundColor: '#fff',
+              borderRadius: '20px',
+              boxShadow: '0px 0px 8px rgba(0,0,0,0.1)',
+              overflow: 'hidden',
+              position: 'relative',
             }}
           >
             {messagesLoading && (
@@ -1405,13 +1426,13 @@ const Chat = () => {
                 sx={{
                   position: 'absolute',
                   zIndex: theme.zIndex.drawer + 1,
-                  backdropFilter: 'blur(10px)',
-                  backgroundColor: 'rgba(0,0,0,0.15)',
+                  backdropFilter: 'blur(20px)',
+                  backgroundColor: 'rgba(255,255,255,0.4)',
                   color: 'rgb(70,70,70)',
                   display: 'flex',
                   gap: 3,
-                  left: drawerOpen ? '240px' : '0px',
-                  right: configurationDrawerOpen ? '30%' : '0px',
+                  left: 0,
+                  right: 0,
                 }}
                 open={true}
               >
@@ -1421,16 +1442,48 @@ const Chat = () => {
                 </Typography>
               </Backdrop>
             )}
+            <div
+              className='absolute top-0 left-0 w-full px-4 bg-[rgba(240,240,240,0.8)] backdrop-blur-lg z-10 flex justify-between items-center gap-2'
+              style={{
+                height: '80px',
+                boxShadow: '0px 0px 6px rgba(0,0,0,0.15)',
+              }}
+            >
+              <div className='flex items-center gap-4'>
+                <Avatar
+                  variant='rounded'
+                  src={imgUrl}
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    border: '3px solid white',
+                    boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
+                  }}
+                />
+                <div className='flex flex-col'>
+                  <span className='font-bold text-xl'>Example Solution Name</span>
+                  <span className='text-sm text-gray-500'>{state.solution.node.id}</span>
+                </div>
+              </div>
+              <a href='../'>
+                <Tooltip title={'Close this solution and go back to the homepage'}>
+                  <StyledMuiButton className='secondary'>
+                    <CancelRoundedIcon />
+                    Exit Solution
+                  </StyledMuiButton>
+                </Tooltip>
+              </a>
+            </div>
             <Box flexGrow={1}>
               <Paper
-                elevation={1}
                 sx={{
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'flex-end',
-                  background: theme.palette.background.default,
-                  boxShadow: 'none',
+                  backgroundColor: 'transparent !important',
+                  boxShadow: 'none !important',
+                  boxSizing: 'border-box',
                 }}
               >
                 <Zoom in={showLoadMore} timeout={100} mountOnEnter unmountOnExit>
@@ -1461,8 +1514,8 @@ const Chat = () => {
                   sx={{
                     overflow: messagesLoading ? 'hidden' : 'auto',
                     maxHeight: chatMaxHeight,
-                    pt: '50px',
                     paddingBottom: `${inputHeight}px`,
+                    paddingTop: '120px',
                   }}
                   ref={scrollableRef}
                 >
@@ -1478,18 +1531,18 @@ const Chat = () => {
                 </Box>
               </Paper>
             </Box>
+
             <Box
               id={'chat-input'}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '8px',
-                justifyContent: 'flex-start',
+                justifyContent: 'center',
                 position: 'absolute',
-                margin: '8px 0px',
-                width: inputWidth,
-                paddingRight: '8px',
-                paddingLeft: '8px',
+                marginLeft: '14px',
+                marginBottom: '5px',
+                width: `calc(${inputWidth} - 12px)`,
+                boxSizing: 'border-box',
               }}
             >
               {showOperatorBusy && (
@@ -1525,6 +1578,7 @@ const Chat = () => {
             </Box>
           </Box>
         </Box>
+
         {!configurationDrawerOpen && (
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -1533,13 +1587,13 @@ const Chat = () => {
               x: 0,
               transition: { delay: 0.3, duration: 0.5, type: 'spring' },
             }}
-            className='h-full flex flex-col items-end justify-end px-2'
+            className='h-full flex flex-col items-end justify-end px-2 pr-6'
           >
             <Tooltip title={'Show the conversations drawer'}>
               <StyledMuiButton
                 onClick={handleAdvanced}
                 disableRipple={true}
-                className='plausible-event-name=Show+Conversations+Click secondary w-fit mb-5'
+                className='plausible-event-name=Show+Conversations+Click secondary w-fit mb-12'
               >
                 <ChevronLeftRounded />
                 <SettingsIcon />

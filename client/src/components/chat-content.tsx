@@ -61,7 +61,7 @@ const ChatContent = ({
               <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
                 <Box display={'flex'} alignItems='center' justifyContent={defaultJustifyContent}>
                   <Card
-                    elevation={8}
+                    elevation={1}
                     raised={true}
                     sx={{
                       width: 'fit-content',
@@ -209,18 +209,34 @@ const ChatContent = ({
             sx={{ paddingTop: '16px' }}
             className='message-container'
           >
-            {!forArbitrum && copySettings && <Message message={el} index={index} copySettings={copySettings} />}
-            {forArbitrum && <div key={el.id} className={`flex w-full gap-4 md:flex-nowrap items-end ${el.type === 'request' ? 'justify-end flex-wrap' : 'justify-start flex-wrap-reverse'}`}>
-              <Card raised={true} className={'transition-all rounded-lg py-2 px-4 w-fit min-w-[30%] max-w-full md:max-w-[80%] whitespace-pre-wrap'}>
-                <MessageDisplay message={el} />
-                <div className='flex justify-end w-full opacity-30 text-xs'>
-                  {new Date(el.timestamp * 1000).toLocaleString(undefined, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                  })}
-                </div>
-              </Card>
-            </div>}
+            {!forArbitrum && copySettings && (
+              <Message message={el} index={index} copySettings={copySettings} />
+            )}
+            {forArbitrum && (
+              <div
+                key={el.id}
+                className={`flex w-full gap-4 md:flex-nowrap items-end ${
+                  el.type === 'request'
+                    ? 'justify-end flex-wrap'
+                    : 'justify-start flex-wrap-reverse'
+                }`}
+              >
+                <Card
+                  raised={true}
+                  className={
+                    'transition-all rounded-lg py-2 px-4 w-fit min-w-[30%] max-w-full md:max-w-[80%] whitespace-pre-wrap'
+                  }
+                >
+                  <MessageDisplay message={el} />
+                  <div className='flex justify-end w-full opacity-30 text-xs'>
+                    {new Date(el.timestamp * 1000).toLocaleString(undefined, {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
+                  </div>
+                </Card>
+              </div>
+            )}
             {showDayDivider(el, index)}
           </Container>
         ))}
