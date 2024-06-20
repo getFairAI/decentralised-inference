@@ -17,7 +17,7 @@
  */
 
 import { IMessage } from '@/interfaces/common';
-import { LoadingContainer } from '@/styles/components';
+import { ArbitrumLoadingContainer, LoadingContainer } from '@/styles/components';
 import {
   Container,
   Stack,
@@ -96,6 +96,23 @@ const ChatContent = ({
     );
   }, [isWaitingResponse, responseTimeout]);
 
+  const arbitrumWaitingResponseFragment = useCallback(() => {
+    return (
+      <Container
+        maxWidth={false}
+        sx={{ paddingTop: '16px', opacity: '0.8' }}
+      >
+        {(isWaitingResponse && !responseTimeout) && (<div className={'flex w-full gap-4 md:flex-nowrap items-end justify-start flex-wrap-reverse'}>
+          <Card raised={true} className={'transition-all rounded-lg py-2 px-4 w-fit md:max-w-[80%] whitespace-pre-wrap'}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', ':last-child': { paddingBottom: '12px' } }}>
+              <ArbitrumLoadingContainer className='dot-pulse'/>
+            </CardContent>
+          </Card>
+        </div>)}
+      </Container>
+    );
+  }, [ isWaitingResponse, responseTimeout ]);
+
   const showDayDivider = useCallback(
     (el: IMessage, index: number) => {
       const daysDiffer =
@@ -103,24 +120,25 @@ const ChatContent = ({
         new Date(el.timestamp * secondInMS).getDay() !==
           new Date(messages[index + 1].timestamp * secondInMS).getDay();
       return (
-        <>
+        <Box sx={{ mt: '8px' }}>
           {daysDiffer && (
-            <Divider textAlign='center'>
+            <Divider textAlign='center' sx={{
+              '&::before, &::after': {
+                borderTop: forArbitrum ? 'thin solid #9ecced' : `thin solid ${theme.palette.primary.main}`,
+              },
+            }}>
               <Typography
                 sx={{
-                  fontStyle: 'normal',
-                  fontWeight: 300,
-                  fontSize: '20px',
-                  lineHeight: '27px',
                   display: 'flex',
                   alignItems: 'center',
+                  color: forArbitrum ? '#9ecced' : theme.palette.primary.main,
                 }}
               >
                 {new Date(messages[index + 1].timestamp * secondInMS).toLocaleDateString()}
               </Typography>
             </Divider>
           )}
-        </>
+        </Box>
       );
     },
     [messages],
@@ -166,8 +184,23 @@ const ChatContent = ({
   } else if (messages.length > 0) {
     return (
       <>
-        <Divider textAlign='center' sx={{ ml: '24px', mr: '24px' }}>
-          {new Date(messages[0].timestamp * secondInMS).toLocaleDateString()}
+        <Divider textAlign='center' sx={{
+            ml: '24px',
+            mr: '24px',
+            '&::before, &::after': {
+                borderTop: forArbitrum ? 'thin solid #9ecced' : `thin solid ${theme.palette.primary.main}`,
+            }
+          }}
+        >
+          <Typography
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              color: forArbitrum ? '#9ecced' : theme.palette.primary.main,
+            }}
+          >
+            {new Date(messages[0].timestamp * secondInMS).toLocaleDateString()}
+          </Typography>
         </Divider>
         {messages.map((el: IMessage, index: number) => (
           <Container
@@ -191,7 +224,7 @@ const ChatContent = ({
             {showDayDivider(el, index)}
           </Container>
         ))}
-        {waitingResponseFragment()}
+        {forArbitrum ? arbitrumWaitingResponseFragment() : waitingResponseFragment()}
         {showResponseTimeoutFragment()}
       </>
     );

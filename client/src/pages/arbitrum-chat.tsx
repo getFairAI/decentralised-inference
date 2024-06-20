@@ -50,11 +50,13 @@ import ChatContent from '@/components/chat-content';
 
 const InputField = ({
   newMessage,
+  currentPrice,
   handleSendText,
   handleMessageChange,
   handleSettingsOpen,
 }: {
   newMessage: string;
+  currentPrice: number;
   handleSendText: () => Promise<void>;
   handleMessageChange: (event: ChangeEvent<HTMLInputElement>) => void;
   handleSettingsOpen: () => void;
@@ -131,7 +133,14 @@ const InputField = ({
               padding: '10px 14px'
             },
             endAdornment: (
-              <>
+              <Box display={'flex'} alignItems={'center'} gap={'16px'} sx={{ opacity: '0.6' }}>
+                <Tooltip title={'Cost per Prompt'}>
+                  <Box display={'flex'} gap={'4px'}>
+                    <img src='./usdc-logo.svg' />
+                    <Typography variant='caption'>{currentPrice}</Typography>
+                  </Box>
+                </Tooltip>
+                
                 <DebounceIconButton
                   onClick={handleSendClick}
                   sx={{
@@ -142,7 +151,7 @@ const InputField = ({
                 >
                   <SendIcon />
                 </DebounceIconButton>
-              </>
+              </Box>
             ),
           }}
           error={newMessage.length >= MAX_MESSAGE_SIZE}
@@ -910,6 +919,7 @@ const ArbitrumChat = () => {
             )}
             <InputField
               newMessage={newMessage}
+              currentPrice={currentOperator?.operatorFee ?? 0}
               handleSendText={handleSendText}
               handleMessageChange={handleMessageChange}
               handleSettingsOpen={handleSettingsOpen}
