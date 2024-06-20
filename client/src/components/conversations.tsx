@@ -337,6 +337,7 @@ const Conversations = ({
           justifyContent: 'flex-end',
           alignItems: 'center',
           height: '100%',
+          paddingLeft: '15px',
         }}
       >
         <div className='flex w-full justify-center px-2 mb-2 mt-6'>
@@ -401,7 +402,11 @@ const Conversations = ({
             marginTop: '20px',
           }}
         >
-          {conversationsLoading && <LoadingContainer theme={theme} className='dot-pulse' />}
+          {conversationsLoading && (
+            <div className='w-full flex justify-center' style={{ filter: 'brightness(0.5)' }}>
+              <LoadingContainer theme={theme} className='dot-pulse' />
+            </div>
+          )}
           {filteredConversationIds
             .map((cid) => (
               <ConversationElement

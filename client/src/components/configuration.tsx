@@ -579,7 +579,7 @@ const Configuration = ({
         color: theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.neutral.contrastText,
         width: '100%',
         height: '100%',
-        padding: '0px 20px',
+        padding: '0px 40px 0px 20px',
         flexDirection: 'column',
         gap: '16px',
         '*.MuiInputBase-root, .MuiInputBase-root': {
