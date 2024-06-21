@@ -85,15 +85,30 @@ const CustomTag = ({
   const handleClick = useCallback(() => handleRemove(name, value), [name, value]);
 
   return (
-    <Box display={'flex'} justifyContent={'space-between'}>
-      <Box display={'flex'} overflow={'auto'}>
+    <Box
+      display={'flex'}
+      alignItems={'center'}
+      gap={'10px'}
+      justifyContent={'space-between'}
+      sx={{
+        width: '100%',
+        maxWidth: '550px',
+        borderRadius: '10px',
+        backgroundColor: '#fff',
+        padding: '15px',
+      }}
+    >
+      <Box display={'flex'} overflow={'auto'} alignItems={'center'}>
         <Typography sx={{ fontWeight: 700 }}>{name}</Typography>
         <Typography sx={{ fontWeight: 700 }}>:</Typography>
         <Typography sx={{ marginLeft: '8px' }}>{value}</Typography>
       </Box>
-      <IconButton onClick={handleClick} className='plausible-event-name=Custom+Tag+Removed'>
+      <StyledMuiButton
+        onClick={handleClick}
+        className='plausible-event-name=Custom+Tag+Removed outlined-secondary mini'
+      >
         <RemoveIcon />
-      </IconButton>
+      </StyledMuiButton>
     </Box>
   );
 };
@@ -371,8 +386,8 @@ const TextConfiguration = ({
                 title={
                   <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
                     {contextFileDisabled
-                      ? 'Context File must be Set at the start of the conversation.'
-                      : 'Upload or provide an url for a context file. The context File is used as a database for the model to use when answering.'}
+                      ? 'The Context File can only be set at the beginning of a conversation.'
+                      : 'Upload or provide an url for a context file. The context File is used as a database for the model to use when answering. This feature can only be used at the beginning of a new conversation.'}
                   </Typography>
                 }
                 placement='bottom'
@@ -384,7 +399,11 @@ const TextConfiguration = ({
         />
       </FormControl>
       {contextFileOn && (
-        <Box display={'flex'} flexDirection={'column'}>
+        <motion.div
+          initial={{ opacity: 0, y: '-40px' }}
+          animate={{ opacity: 1, y: 0 }}
+          className='flex flex-col'
+        >
           {(!contextFileUrlField.value || !(contextFileUrlField.value as File)?.name) && (
             <>
               <TextControl
@@ -446,13 +465,13 @@ const TextConfiguration = ({
                 error={(contextFileUrlField.value as File).size > MAX_MESSAGE_SIZE}
                 helperText={
                   (contextFileUrlField.value as File).size > MAX_MESSAGE_SIZE
-                    ? 'File size should be less than 100KB'
+                    ? `The selected file size cannot exceed ${MAX_MESSAGE_SIZE / 1024} KB.`
                     : ''
                 }
               />
             </FormControl>
           )}
-        </Box>
+        </motion.div>
       )}
     </>
   );
@@ -604,11 +623,11 @@ const Configuration = ({
       </div>
 
       <div className='flex flex-col gap-5 h-full min-h-fit'>
-        <Box display={'flex'} gap={'36px'} justifyContent={'space-between'}>
+        <Box display={'flex'} gap={'20px'} justifyContent={'space-between'}>
           <FormControl fullWidth margin='none'>
-            <InputLabel>{'Solution Operator'}</InputLabel>
+            <InputLabel>{'Solution Operator (Provider)'}</InputLabel>
             <Select
-              label={'Solution Operator'}
+              label={'Solution Operator (Provider)'}
               onChange={handleOperatorChange}
               defaultValue={currentOperator?.evmWallet ?? ''}
               renderValue={(value) => (
@@ -743,19 +762,37 @@ const Configuration = ({
             <Typography variant='h4'>Custom Tags</Typography>
           </Divider>
         </Box>
-        <Box display={'flex'} gap={'36px'} justifyContent={'space-between'}>
+        <Box display={'flex'} gap={'20px'} alignItems={'center'}>
           <TextField inputRef={nameRef} label={'Tag Name'} />
           <TextField inputRef={valueRef} label={'Tag Value'} multiline minRows={1} maxRows={5} />
-          <IconButton onClick={handleAdd} className='plausible-event-name=Custom+Tag+Added'>
+          <StyledMuiButton
+            onClick={handleAdd}
+            className='plausible-event-name=Custom+Tag+Added outlined-secondary mini'
+          >
             <AddIcon />
-          </IconButton>
+          </StyledMuiButton>
         </Box>
         {customTags.map(({ name, value }) => (
-          <CustomTag key={name} name={name} value={value} handleRemove={handleRemove} />
+          <motion.div
+            initial={{ opacity: 0, y: '-60px' }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              transition: { duration: 0.6, type: 'spring', bounce: 0.4 },
+            }}
+            key={name}
+          >
+            <CustomTag key={name} name={name} value={value} handleRemove={handleRemove} />
+          </motion.div>
         ))}
+
+        <Box>
+          <Divider textAlign='left' variant='fullWidth'></Divider>
+        </Box>
+
         <div className='w-full flex justify-end'>
           <Tooltip title={'Reset every configuration on this page to its default state'}>
-            <StyledMuiButton className='w-fit secondary' onClick={handleResetClick}>
+            <StyledMuiButton className='w-fit outlined-secondary' onClick={handleResetClick}>
               <DeleteRoundedIcon style={{ width: 20 }} />
               Reset all
             </StyledMuiButton>

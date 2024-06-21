@@ -33,6 +33,7 @@ import { secondInMS } from '@/constants';
 import { useCallback } from 'react';
 import { ITag } from '@/interfaces/arweave';
 import MessageDisplay from './message-display';
+import { motion } from 'framer-motion';
 
 const ChatContent = ({
   showError,
@@ -56,41 +57,51 @@ const ChatContent = ({
     return (
       <>
         {isWaitingResponse && !responseTimeout && (
-          <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
-            <Stack spacing={4} flexDirection='row'>
-              <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                <Box display={'flex'} alignItems='center' justifyContent={defaultJustifyContent}>
-                  <Card
-                    elevation={1}
-                    raised={true}
-                    sx={{
-                      width: 'fit-content',
-                      maxWidth: '75%',
-                      // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
-                      border: '4px solid transparent',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(52, 52, 52, 0.7)'
-                          : theme.palette.secondary.main,
-                      // opacity: '0.4',
-                    }}
-                  >
-                    <CardContent
+          <motion.div
+            initial={{ opacity: 0, x: '-40px' }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              transition: {
+                delay: 0.1,
+                duration: 0.6,
+                bounce: 0.4,
+                type: 'spring',
+              },
+            }}
+          >
+            <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
+              <Stack spacing={4} flexDirection='row'>
+                <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
+                  <Box display={'flex'} alignItems='center' justifyContent={defaultJustifyContent}>
+                    <Card
+                      raised={true}
+                      elevation={1}
                       sx={{
-                        padding: '24px 32px',
-                        gap: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: defaultJustifyContent,
+                        borderRadius: '20px 20px 20px 0px',
+                        width: 'fit-content',
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(100, 100, 100, 0.7)'
+                            : 'rgba(52, 52, 52, 0.8)',
                       }}
                     >
-                      <LoadingContainer className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
-                    </CardContent>
-                  </Card>
+                      <CardContent
+                        sx={{
+                          padding: '24px 32px',
+                          gap: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <LoadingContainer className='dot-pulse' />
+                      </CardContent>
+                    </Card>
+                  </Box>
                 </Box>
-              </Box>
-            </Stack>
-          </Container>
+              </Stack>
+            </Container>
+          </motion.div>
         )}
       </>
     );
@@ -163,7 +174,7 @@ const ChatContent = ({
                   }}
                 >
                   The last request has not received a response in the defined amount of time, please
-                  consider retrying with a new operator
+                  consider retrying with a new operator.
                 </Typography>
               </Box>
             </Box>

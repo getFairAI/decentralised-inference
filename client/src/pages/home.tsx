@@ -90,8 +90,12 @@ export default function Home() {
               padding: '3px 20px 3px 20px',
               alignItems: 'center',
               width: '100%',
-              maxWidth: '400px',
+              maxWidth: '300px',
               backgroundColor: 'white',
+              outline: '1px solid lightgrey',
+              '&:focus, &:focus-within': {
+                outline: '2px solid #3aaaaa',
+              },
             }}
           >
             <InputBase

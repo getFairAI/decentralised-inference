@@ -675,19 +675,28 @@ const Chat = () => {
   const checkCanSend = (dataSize: number) => {
     try {
       if (!currentOperator) {
-        enqueueSnackbar('Missing Operator', { variant: 'error' });
+        enqueueSnackbar(
+          'You have no operator selected. Please select a Solution Operator in the Advanced Configurations and try again.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
         return false;
       }
 
       if (!currentConversationId) {
-        enqueueSnackbar('Missing Conversation Id', { variant: 'error' });
+        enqueueSnackbar(
+          'The Conversation ID is missing. Try refreshing the page or choose/create another conversation.',
+          {
+            variant: 'error',
+            style: { fontWeight: 700 },
+          },
+        );
         return false;
       }
 
       if (dataSize > MAX_MESSAGE_SIZE) {
         enqueueSnackbar(
-          'Message Too Long. Message must not be bigger than 50kb, or 50000 characters.',
-          { variant: 'error' },
+          'Your message is too long/big. The message cannot be bigger than 50kb, or longer than 50000 characters.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
         );
         return false;
       }
@@ -697,13 +706,20 @@ const Chat = () => {
           ? currentOperator.operatorFee * currentConfig.nImages
           : currentOperator.operatorFee;
       if (usdcBalance < actualFee) {
-        enqueueSnackbar('Not Enough USDC to pay Operator', { variant: 'error' });
+        enqueueSnackbar(
+          'Not enough USDC to pay this Operator fee. Top up your balance or choose another Solution Operator.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
         return false;
       }
 
       return true;
     } catch (error) {
-      enqueueSnackbar('Something went wrong', { variant: 'error' });
+      enqueueSnackbar('Something went wrong. Please try again, or try again later.', {
+        variant: 'error',
+        autoHideDuration: 5000,
+        style: { fontWeight: 700 },
+      });
       return false;
     }
   };
@@ -914,7 +930,14 @@ const Chat = () => {
     }
 
     if (!file.type.includes('text')) {
-      enqueueSnackbar('Only text files are supported', { variant: 'error' });
+      enqueueSnackbar(
+        'The file you attached is not supported. You can only attach text files to this Solution.',
+        {
+          variant: 'error',
+          autoHideDuration: 6000,
+          style: { fontWeight: 700 },
+        },
+      );
       return;
     }
 
@@ -922,7 +945,10 @@ const Chat = () => {
       const config = await getConfigValues();
 
       if (!config.modelName) {
-        enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
+        enqueueSnackbar(
+          'You have no Model selected. Choose one in the Advanced Configurations and try again.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
         return;
       }
 
@@ -1016,7 +1042,10 @@ const Chat = () => {
       const config = await getConfigValues();
 
       if (!config.modelName) {
-        enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
+        enqueueSnackbar(
+          'You have no Model selected. Choose one in the Advanced Configurations and try again.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
         return;
       }
 
@@ -1390,7 +1419,7 @@ const Chat = () => {
               }}
               className='h-full flex flex-col items-end justify-end px-2 pr-6'
             >
-              <Tooltip title={'Show the conversations drawer'}>
+              <Tooltip title={'Open the conversations drawer'}>
                 <StyledMuiButton
                   onClick={handleShowConversations}
                   disableRipple={true}
@@ -1589,11 +1618,11 @@ const Chat = () => {
             }}
             className='h-full flex flex-col items-end justify-end px-2 pr-6'
           >
-            <Tooltip title={'Show the conversations drawer'}>
+            <Tooltip title={'Open the advanced configurations drawer'}>
               <StyledMuiButton
                 onClick={handleAdvanced}
                 disableRipple={true}
-                className='plausible-event-name=Show+Conversations+Click secondary w-fit mb-12'
+                className='plausible-event-name=Open+Configuration+Click secondary w-fit mb-12'
               >
                 <ChevronLeftRounded />
                 <SettingsIcon />
