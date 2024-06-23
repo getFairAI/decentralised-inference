@@ -181,7 +181,7 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
     // 'https://fairapp.ar-io.dev'
     const a = document.createElement('a');
     a.target = '_blank';
-    a.onclick = () => window.open('https://fairapp.ar-io.dev', '_blank');
+    a.onclick = () => window.open('https://fairapp.ar-io.dev', '_blank', 'noopener');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
