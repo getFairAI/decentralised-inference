@@ -55,6 +55,8 @@ import {
   PROTOCOL_NAME,
   PROTOCOL_VERSION,
   NET_ARWEAVE_URL,
+  MODEL_ATTACHMENT,
+  AVATAR_ATTACHMENT,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { useSnackbar } from 'notistack';
@@ -376,6 +378,7 @@ const Chat = () => {
   const [currentPubKey, setCurrentPubKey] = useState('');
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
   const [isLayoverOpen, setLayoverOpen] = useState(false);
+  const [ imgUrl, setImgUrl ] = useState('');
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -417,16 +420,16 @@ const Chat = () => {
   const currentConfig = useWatch({ control: configControl });
 
   const [getAvatar, { data: avatarData }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
-  const imgUrl = useMemo(() => {
+  useEffect(() => {
     const avatarTxId = avatarData?.transactions?.edges[0]?.node?.id;
     if (avatarTxId) {
-      return `${NET_ARWEAVE_URL}/${avatarTxId}`;
+      setImgUrl(`${NET_ARWEAVE_URL}/${avatarTxId}`);
     } else {
       const imgSize = 100;
       const solutionId = state?.solution.node.id;
       const img = toSvg(solutionId, imgSize);
       const svg = new Blob([img], { type: 'image/svg+xml' });
-      return URL.createObjectURL(svg);
+      setImgUrl(URL.createObjectURL(svg));
     }
   }, [avatarData, state]);
 
@@ -457,13 +460,36 @@ const Chat = () => {
     } else {
       // ignore
     }
-
-    getAvatar({
-      variables: {
-        owner: state.solution.node.owner.address,
-      },
-    });
   }, [state, configReset]);
+
+  useEffect(() => {
+    (async () => {
+      const currentSoludionId = state?.solution.node.id;
+      let firstSolutionVersionId;
+      try {
+        firstSolutionVersionId = (
+          JSON.parse(findTag(state?.solution, 'previousVersions') as string) as string[]
+        )[0];
+      } catch (err) {
+        firstSolutionVersionId = state?.solution.node.id;
+      }
+      const attachmentAvatarTags = [
+        { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
+        { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
+        {
+          name: TAG_NAMES.solutionTransaction,
+          values: [firstSolutionVersionId, currentSoludionId],
+        },
+      ];
+
+      await getAvatar({
+        variables: {
+          tags: attachmentAvatarTags,
+          owner: state.solution.node.owner.address,
+        },
+      });
+    })();
+  }, [state]);
 
   useEffect(() => {
     if (!_.isEqual(currentConfig, defaultConfigvalues)) {
@@ -1479,7 +1505,7 @@ const Chat = () => {
               }}
             >
               <div className='flex items-center gap-4'>
-                <Avatar
+                {imgUrl && <Avatar
                   variant='rounded'
                   src={imgUrl}
                   sx={{
@@ -1488,9 +1514,9 @@ const Chat = () => {
                     border: '3px solid white',
                     boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
                   }}
-                />
+                />}
                 <div className='flex flex-col'>
-                  <span className='font-bold text-xl'>Example Solution Name</span>
+                  <span className='font-bold text-xl'>{findTag(state.solution, 'solutionName')}</span>
                   <span className='text-sm text-gray-500'>{state.solution.node.id}</span>
                 </div>
               </div>
