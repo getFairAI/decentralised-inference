@@ -34,7 +34,6 @@ import RequestSolution from './pages/request-solution';
 import BrowseRequests from './pages/browse-requests';
 
 import '@/index.css';
-import ArbitrumChat from './pages/arbitrum-chat';
 import ArbitrumGuard from './guards/arbitrum';
 
 const router = createHashRouter([
@@ -64,23 +63,25 @@ const router = createHashRouter([
           },
           {
             path: 'arbitrum',
-            element: <ArbitrumGuard>
-              <TermsAgreement>
-                <Outlet />
-              </TermsAgreement>
-            </ArbitrumGuard>,
+            element: (
+              <ArbitrumGuard>
+                <TermsAgreement>
+                  <Outlet />
+                </TermsAgreement>
+              </ArbitrumGuard>
+            ),
             children: [
               {
                 path: 'ltipp',
-                element: <ArbitrumChat />,
+                element: <Chat />,
               },
               {
                 path: 'stip',
-                element: <ArbitrumChat />,
+                element: <Chat />,
               },
-            ]
+            ],
           },
-        ]
+        ],
       },
       {
         path: 'history',
@@ -104,9 +105,7 @@ const router = createHashRouter([
       },
       {
         path: 'request',
-        element: (
-          <RequestSolution />
-        ),
+        element: <RequestSolution />,
       },
     ],
   },

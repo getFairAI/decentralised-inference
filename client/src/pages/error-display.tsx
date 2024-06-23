@@ -34,7 +34,6 @@ const ErrorDisplay = () => {
   const [errorMessage, setErrorMessage] = useState(<></>);
 
   useEffect(() => {
-    console.log(error);
     if (isRouteErrorResponse(error)) {
       if (error.status === notFoundErrorCode) {
         setErrorMessage(<Fragment>The requested page doesn&apos;t exist!</Fragment>);

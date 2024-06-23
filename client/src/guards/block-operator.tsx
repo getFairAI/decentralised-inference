@@ -17,9 +17,9 @@
  */
 
 import { EVMWalletContext } from '@/context/evm-wallet';
+import { StyledMuiButton } from '@/styles/components';
 import {
   Alert,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -52,19 +52,23 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
               theme.palette.mode === 'dark'
                 ? 'rgba(61, 61, 61, 0.9)'
                 : theme.palette.background.default,
-            borderRadius: '30px',
+            borderRadius: '20px',
+            backdropFilter: 'blur(10px)',
           },
         }}
       >
         <DialogTitle>
           <Typography
             sx={{
-              color: theme.palette.error.main,
               fontWeight: 700,
               fontSize: '23px',
               lineHeight: '31px',
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
             }}
           >
+            <img src='./error-icon.svg' style={{ width: '30px' }} />
             Error: Use a different wallet!
           </Typography>
         </DialogTitle>
@@ -81,10 +85,11 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
               justifyContent: 'center',
               '& .MuiAlert-icon': {
                 justifyContent: 'center',
+                display: 'none',
               },
               borderColor: theme.palette.error.main,
             }}
-            icon={<img src='./error-icon.svg' />}
+            icon={''}
           >
             <Typography
               sx={{
@@ -95,11 +100,13 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
                 textAlign: 'center',
               }}
             >
-              Chosen Operator is{' '}
+              The chosen Operator or wallet is{' '}
               <u>
                 <b>invalid.</b>
               </u>{' '}
+              <br />
               It is not allowed to use inference with the same wallet as the registered Operator.
+              <br /> <br />
               <u>
                 <b>Please Choose another wallet or Operator and try again.</b>
               </u>
@@ -107,15 +114,9 @@ const BlockOperatorGuard = ({ children }: { children: ReactElement }) => {
           </Alert>
         </DialogContent>
         <DialogActions sx={{ display: 'flex', justifyContent: 'center', paddingBottom: '20px' }}>
-          <Button
-            onClick={handleGoBack}
-            sx={{
-              borderRadius: '7px',
-            }}
-            variant='outlined'
-          >
-            Go Back
-          </Button>
+          <StyledMuiButton onClick={handleGoBack} className='primary'>
+            I understand
+          </StyledMuiButton>
         </DialogActions>
       </Dialog>
       {state && state.operatorEvmWallet !== currentAddress && children}

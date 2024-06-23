@@ -33,6 +33,7 @@ import { secondInMS } from '@/constants';
 import { useCallback } from 'react';
 import { ITag } from '@/interfaces/arweave';
 import MessageDisplay from './message-display';
+import { motion } from 'framer-motion';
 
 const ChatContent = ({
   showError,
@@ -56,41 +57,51 @@ const ChatContent = ({
     return (
       <>
         {isWaitingResponse && !responseTimeout && (
-          <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
-            <Stack spacing={4} flexDirection='row'>
-              <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-                <Box display={'flex'} alignItems='center' justifyContent={defaultJustifyContent}>
-                  <Card
-                    elevation={8}
-                    raised={true}
-                    sx={{
-                      width: 'fit-content',
-                      maxWidth: '75%',
-                      // background: el.type === 'response' ? 'rgba(96, 96, 96, 0.7);' : 'rgba(52, 52, 52, 0.7);',
-                      border: '4px solid transparent',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(52, 52, 52, 0.7)'
-                          : theme.palette.secondary.main,
-                      // opacity: '0.4',
-                    }}
-                  >
-                    <CardContent
+          <motion.div
+            initial={{ opacity: 0, x: '-40px' }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              transition: {
+                delay: 0.1,
+                duration: 0.6,
+                bounce: 0.4,
+                type: 'spring',
+              },
+            }}
+          >
+            <Container maxWidth={false} sx={{ paddingTop: '16px' }}>
+              <Stack spacing={4} flexDirection='row'>
+                <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
+                  <Box display={'flex'} alignItems='center' justifyContent={defaultJustifyContent}>
+                    <Card
+                      raised={true}
+                      elevation={1}
                       sx={{
-                        padding: '24px 32px',
-                        gap: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: defaultJustifyContent,
+                        borderRadius: '20px 20px 20px 0px',
+                        width: 'fit-content',
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(100, 100, 100, 0.7)'
+                            : 'rgba(52, 52, 52, 0.8)',
                       }}
                     >
-                      <LoadingContainer className='dot-pulse' sx={{ marginBottom: '0.35em' }} />
-                    </CardContent>
-                  </Card>
+                      <CardContent
+                        sx={{
+                          padding: '24px 32px',
+                          gap: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <LoadingContainer className='dot-pulse' />
+                      </CardContent>
+                    </Card>
+                  </Box>
                 </Box>
-              </Box>
-            </Stack>
-          </Container>
+              </Stack>
+            </Container>
+          </motion.div>
         )}
       </>
     );
@@ -98,20 +109,32 @@ const ChatContent = ({
 
   const arbitrumWaitingResponseFragment = useCallback(() => {
     return (
-      <Container
-        maxWidth={false}
-        sx={{ paddingTop: '16px', opacity: '0.8' }}
-      >
-        {(isWaitingResponse && !responseTimeout) && (<div className={'flex w-full gap-4 md:flex-nowrap items-end justify-start flex-wrap-reverse'}>
-          <Card raised={true} className={'transition-all rounded-lg py-2 px-4 w-fit md:max-w-[80%] whitespace-pre-wrap'}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', ':last-child': { paddingBottom: '12px' } }}>
-              <ArbitrumLoadingContainer className='dot-pulse'/>
-            </CardContent>
-          </Card>
-        </div>)}
+      <Container maxWidth={false} sx={{ paddingTop: '16px', opacity: '0.8' }}>
+        {isWaitingResponse && !responseTimeout && (
+          <div
+            className={'flex w-full gap-4 md:flex-nowrap items-end justify-start flex-wrap-reverse'}
+          >
+            <Card
+              raised={true}
+              className={
+                'transition-all rounded-lg py-2 px-4 w-fit md:max-w-[80%] whitespace-pre-wrap'
+              }
+            >
+              <CardContent
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  ':last-child': { paddingBottom: '12px' },
+                }}
+              >
+                <ArbitrumLoadingContainer className='dot-pulse' />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </Container>
     );
-  }, [ isWaitingResponse, responseTimeout ]);
+  }, [isWaitingResponse, responseTimeout]);
 
   const showDayDivider = useCallback(
     (el: IMessage, index: number) => {
@@ -122,11 +145,16 @@ const ChatContent = ({
       return (
         <Box sx={{ mt: '8px' }}>
           {daysDiffer && (
-            <Divider textAlign='center' sx={{
-              '&::before, &::after': {
-                borderTop: forArbitrum ? 'thin solid #9ecced' : `thin solid ${theme.palette.primary.main}`,
-              },
-            }}>
+            <Divider
+              textAlign='center'
+              sx={{
+                '&::before, &::after': {
+                  borderTop: forArbitrum
+                    ? 'thin solid #9ecced'
+                    : `thin solid ${theme.palette.primary.main}`,
+                },
+              }}
+            >
               <Typography
                 sx={{
                   display: 'flex',
@@ -163,7 +191,7 @@ const ChatContent = ({
                   }}
                 >
                   The last request has not received a response in the defined amount of time, please
-                  consider retrying with a new operator
+                  consider retrying with a new operator.
                 </Typography>
               </Box>
             </Box>
@@ -184,12 +212,16 @@ const ChatContent = ({
   } else if (messages.length > 0) {
     return (
       <>
-        <Divider textAlign='center' sx={{
+        <Divider
+          textAlign='center'
+          sx={{
             ml: '24px',
             mr: '24px',
             '&::before, &::after': {
-                borderTop: forArbitrum ? 'thin solid #9ecced' : `thin solid ${theme.palette.primary.main}`,
-            }
+              borderTop: forArbitrum
+                ? 'thin solid #9ecced'
+                : `thin solid ${theme.palette.primary.main}`,
+            },
           }}
         >
           <Typography
@@ -209,18 +241,34 @@ const ChatContent = ({
             sx={{ paddingTop: '16px' }}
             className='message-container'
           >
-            {!forArbitrum && copySettings && <Message message={el} index={index} copySettings={copySettings} />}
-            {forArbitrum && <div key={el.id} className={`flex w-full gap-4 md:flex-nowrap items-end ${el.type === 'request' ? 'justify-end flex-wrap' : 'justify-start flex-wrap-reverse'}`}>
-              <Card raised={true} className={'transition-all rounded-lg py-2 px-4 w-fit min-w-[30%] max-w-full md:max-w-[80%] whitespace-pre-wrap'}>
-                <MessageDisplay message={el} />
-                <div className='flex justify-end w-full opacity-30 text-xs'>
-                  {new Date(el.timestamp * 1000).toLocaleString(undefined, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                  })}
-                </div>
-              </Card>
-            </div>}
+            {!forArbitrum && copySettings && (
+              <Message message={el} index={index} copySettings={copySettings} />
+            )}
+            {forArbitrum && (
+              <div
+                key={el.id}
+                className={`flex w-full gap-4 md:flex-nowrap items-end ${
+                  el.type === 'request'
+                    ? 'justify-end flex-wrap'
+                    : 'justify-start flex-wrap-reverse'
+                }`}
+              >
+                <Card
+                  raised={true}
+                  className={
+                    'transition-all rounded-lg py-2 px-4 w-fit min-w-[30%] max-w-full md:max-w-[80%] whitespace-pre-wrap'
+                  }
+                >
+                  <MessageDisplay message={el} />
+                  <div className='flex justify-end w-full opacity-30 text-xs'>
+                    {new Date(el.timestamp * 1000).toLocaleString(undefined, {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
+                  </div>
+                </Card>
+              </div>
+            )}
             {showDayDivider(el, index)}
           </Container>
         ))}

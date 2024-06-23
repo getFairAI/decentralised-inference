@@ -23,18 +23,8 @@ import Typography from '@mui/material/Typography';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import Option from './option';
-import {
-  useCallback,
-  useContext,
-  useState,
-} from 'react';
-import {
-  Button,
-  IconButton,
-  MenuList,
-  Tooltip,
-  useTheme,
-} from '@mui/material';
+import { useCallback, useContext, useState } from 'react';
+import { Button, IconButton, MenuList, Tooltip, useTheme } from '@mui/material';
 import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -42,6 +32,11 @@ import { ChooseWalletContext } from '@/context/choose-wallet';
 import { motion } from 'framer-motion';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import { StyledMuiButton } from '@/styles/components';
+
+// icons
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import AddCommentRoundedIcon from '@mui/icons-material/AddCommentRounded';
 
 const WalletState = () => {
   const theme = useTheme();
@@ -69,28 +64,13 @@ const WalletState = () => {
   if (!isWrongChain && (!currentAddress || currentAddress === '')) {
     return (
       <>
-        <Button
-          variant='outlined'
-          sx={{
-            borderRadius: '8px',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '17px',
-            border: 'solid',
-            borderColor: theme.palette.terciary.main,
-            borderWidth: '0.5px',
-            padding: '10px 15px',
-          }}
+        <StyledMuiButton
           onClick={handleConnect}
-          className='plausible-event-name=Navbar+Connect+Wallet'
+          className='plausible-event-name=Navbar+Connect+Wallet primary'
         >
-          <Typography sx={{ lineHeight: '1.3', fontSize: '16px', display: 'flex', gap: '8px' }}>
-            <img src='./arbitrum-logo.svg' width={'20px'} height={'20px'} />
-            Connect
-          </Typography>
-        </Button>
+          <img src='./arbitrum-logo.svg' width={'24px'} className='object-contain' />
+          Connect Wallet
+        </StyledMuiButton>
       </>
     );
   }
@@ -137,15 +117,13 @@ const WalletState = () => {
     <>
       <Box
         sx={{
-          borderRadius: '8px',
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
+          background: 'rgba(0,0,0,0.08)',
+          borderRadius: '10px',
+          padding: '3px 12px',
           alignItems: 'center',
-          gap: '17px',
-          border: 'solid',
-          borderColor: theme.palette.terciary.main,
-          borderWidth: '0.5px',
+          justifyContent: 'center',
+          display: 'flex',
+          gap: '10px',
         }}
       >
         <Box display={'flex'} padding={'6px 6px 6px 12px'}>
@@ -153,9 +131,6 @@ const WalletState = () => {
         </Box>
         <Box
           sx={{
-            /* background: theme.palette.secondary.contrastText, */
-            borderRadius: '8px',
-            padding: '6px 8px 6px 0px',
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -173,25 +148,24 @@ const WalletState = () => {
               {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
             </Typography>
           </Tooltip>
-          <ProfileMenu />
+          <div className='ml-2'>
+            <ProfileMenu />
+          </div>
         </Box>
       </Box>
     </>
   );
 };
 
-const Navbar = ({
-  isScrolled,
-}: {
-  isScrolled: boolean;
-}) => {
+const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
   const { currentAddress } = useContext(EVMWalletContext);
   const { pathname } = useLocation();
   const theme = useTheme();
-  const extraIndex = 2; // number to add to zIndex to make sure it's above the drawer
-  const zIndex = theme.zIndex.drawer + extraIndex; // add 2 to make sure it's above the drawer
+  const extraIndex = 10; // number to add to zIndex to make sure it's above the drawer
+  const zIndex = theme.zIndex.drawer + extraIndex;
   const isGetFair = window.location.hostname.includes('getfair.ai');
-  const [ isExpanded, setIsExpanded ] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const appBarStyle = {
     zIndex,
@@ -200,22 +174,35 @@ const Navbar = ({
     ...(!isScrolled && { boxShadow: 'none' }),
   };
 
-  const handleMenuClick = () => setIsExpanded(prev => !prev);
+  const handleMenuClick = useCallback(() => setIsExpanded((prev) => !prev), [setIsExpanded]);
+  const handleBrowse = useCallback(() => navigate('browse'), [navigate]);
+  const handleRequest = useCallback(() => navigate('request'), [navigate]);
+  const handleOpenOnArweave = useCallback(() => {
+    // 'https://fairapp.ar-io.dev'
+    const a = document.createElement('a');
+    a.target = '_blank';
+    a.onclick = () => window.open('https://fairapp.ar-io.dev', '_blank', 'noopener');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, []);
 
   return (
     <>
       <AppBar sx={appBarStyle} color='inherit'>
-        <motion.div className='flex-col w-full justify-start'
+        <motion.div
+          className='flex-col w-full justify-start'
+          initial={{ y: '-40px', opacity: 0 }}
           animate={{
             height: isExpanded ? '100vh' : 'fit-content',
-          }}
-          transition={{
-            duration: 0.5,
+            y: 0,
+            opacity: 1,
+            transition: { type: 'smooth', duration: 0.4, delay: 0.1 },
           }}
         >
           <Toolbar className='flex justify-between'>
             <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
-              <Link to='/'>
+              <Link to='/' style={{ width: '150px', height: '50px' }}>
                 <Logo />
               </Link>
               <Typography
@@ -224,8 +211,9 @@ const Navbar = ({
                   mt: '-18px',
                   ml: '8px',
                   padding: '0px 8px',
-                  border: '0.5px solid',
+                  border: '1px solid',
                   borderRadius: '8px',
+                  color: '#3aaaaa',
                 }}
               >
                 EARLY
@@ -248,54 +236,26 @@ const Navbar = ({
               }}
             >
               {pathname === '/' && (
-                <Link to='/browse'>
-                  <Typography
-                    textTransform={'uppercase'}
-                    lineHeight={1.3}
-                    sx={{ textWrap: 'nowrap' }}
-                  >
-                    Browse Requests
-                  </Typography>
-                </Link>
+                <StyledMuiButton className='outlined-secondary' onClick={handleBrowse}>
+                  <SearchRoundedIcon style={{ width: '20px' }} />
+                  Browse Requests
+                </StyledMuiButton>
               )}
               {pathname === '/' && currentAddress && (
-                <>
-                  <Link
-                    to='/request'
-                    style={{
-                      border: `0.5px solid ${theme.palette.terciary.main}`,
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <Typography
-                      padding={'9.5px 15px'}
-                      textTransform={'uppercase'}
-                      lineHeight={1.3}
-                      sx={{ textWrap: 'nowrap' }}
-                    >
-                      Make a request
-                    </Typography>
-                  </Link>
-                </>
+                <StyledMuiButton className='outlined-secondary' onClick={handleRequest}>
+                  <AddCommentRoundedIcon style={{ width: '20px' }} />
+                  Make a Request
+                </StyledMuiButton>
               )}
-              { isGetFair && pathname === '/' &&
-                <Link
-                  to='https://fairapp.ar-io.dev'
-                  style={{
-                    border: `0.5px solid ${theme.palette.terciary.main}`,
-                    borderRadius: '8px',
-                  }}
+              {isGetFair && pathname === '/' && (
+                <StyledMuiButton
+                  className='outlined-primary hidden lg:flex'
+                  onClick={handleOpenOnArweave}
                 >
-                  <Typography
-                    padding={'9.5px 15px'}
-                    textTransform={'uppercase'}
-                    lineHeight={1.3}
-                    sx={{ textWrap: 'nowrap' }}
-                  >
-                    Open On Arweave
-                  </Typography>
-                </Link>
-              }
+                  <img src='./arweave-small.svg' style={{ width: '20px' }} className='invert' />
+                  Open On Arweave
+                </StyledMuiButton>
+              )}
             </Box>
             <Box
               className={'navbar-right-content'}
@@ -306,9 +266,11 @@ const Navbar = ({
                 flexGrow: { sm: 0, md: 0 },
               }}
             >
-              <Box sx={{
-                display: { xs: 'none', md: 'flex' },
-              }}>
+              <Box
+                sx={{
+                  display: { xs: 'none', md: 'flex' },
+                }}
+              >
                 <WalletState />
               </Box>
               <Box
@@ -316,26 +278,25 @@ const Navbar = ({
                   display: { xs: 'flex', md: 'none' },
                 }}
               >
-                <IconButton
-                  aria-haspopup='true'
-                  onClick={handleMenuClick}
-                >
+                <IconButton aria-haspopup='true' onClick={handleMenuClick}>
                   {isExpanded ? <CloseIcon color='action' /> : <MenuIcon color='action' />}
                 </IconButton>
-              </Box> 
+              </Box>
             </Box>
           </Toolbar>
-          {isExpanded && <Box>
-            <MenuList>
-              {/* <Option option='Links' setOpen={setIsExpanded} setLinksOpen={setLinksOpen} /> */}
-              <Option option='Twitter' setOpen={setIsExpanded} />
-              <Option option='Github' setOpen={setIsExpanded} />
-              <Option option='Discord' setOpen={setIsExpanded} />
-              <Option option='Whitepaper' setOpen={setIsExpanded} />
-              <Option option='Studio' setOpen={setIsExpanded} />
-              <Option option='Terms And Conditions' setOpen={setIsExpanded} />
-            </MenuList>
-          </Box>}
+          {isExpanded && (
+            <Box>
+              <MenuList>
+                {/* <Option option='Links' setOpen={setIsExpanded} setLinksOpen={setLinksOpen} /> */}
+                <Option option='Twitter' setOpen={setIsExpanded} />
+                <Option option='Github' setOpen={setIsExpanded} />
+                <Option option='Discord' setOpen={setIsExpanded} />
+                <Option option='Whitepaper' setOpen={setIsExpanded} />
+                <Option option='Studio' setOpen={setIsExpanded} />
+                <Option option='Terms And Conditions' setOpen={setIsExpanded} />
+              </MenuList>
+            </Box>
+          )}
         </motion.div>
       </AppBar>
       <Toolbar />

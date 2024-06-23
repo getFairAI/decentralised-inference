@@ -1,4 +1,29 @@
-@import url('https://fonts.cdnfonts.com/css/satoshi');
+/* @import url('https://fonts.cdnfonts.com/css/satoshi'); */
+
+@font-face {
+  font-family: satoshi;
+  font-style: normal;
+  font-weight: 400;
+  src: local('Satoshi'), url('../assets/fonts/Satoshi-Regular.woff') format('woff');
+}
+@font-face {
+  font-family: satoshi;
+  font-style: normal;
+  font-weight: 300;
+  src: local('Satoshi'), url('../assets/fonts/Satoshi-Light.woff') format('woff');
+}
+@font-face {
+  font-family: satoshi;
+  font-style: normal;
+  font-weight: 500;
+  src: local('Satoshi'), url('../assets/fonts/Satoshi-Medium.woff') format('woff');
+}
+@font-face {
+  font-family: satoshi;
+  font-style: normal;
+  font-weight: 700;
+  src: local('Satoshi'), url('../assets/fonts/Satoshi-Bold.woff') format('woff');
+}
 
 #root {
   box-sizing: border-box;

@@ -17,6 +17,7 @@
  */
 
 import {
+  Avatar,
   Backdrop,
   Box,
   CircularProgress,
@@ -34,7 +35,7 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { NetworkStatus } from '@apollo/client';
+import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import {
   ChangeEvent,
   RefObject,
@@ -53,6 +54,9 @@ import {
   INFERENCE_REQUEST,
   PROTOCOL_NAME,
   PROTOCOL_VERSION,
+  NET_ARWEAVE_URL,
+  MODEL_ATTACHMENT,
+  AVATAR_ATTACHMENT,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { useSnackbar } from 'notistack';
@@ -77,17 +81,23 @@ import useResponses from '@/hooks/useResponses';
 import useScroll from '@/hooks/useScroll';
 import { useForm, useWatch } from 'react-hook-form';
 import useOperatorBusy from '@/hooks/useOperatorBusy';
-import { InfoOutlined } from '@mui/icons-material';
+import { ChevronLeftRounded, InfoOutlined } from '@mui/icons-material';
 import { UserFeedbackContext } from '@/context/user-feedback';
 import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { encryptSafely } from '@metamask/eth-sig-util';
 import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
+import { motion } from 'framer-motion';
+import { StyledMuiButton } from '@/styles/components';
+import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
+import { toSvg } from 'jdenticon';
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
 const RADIX = 10;
+const boxSizing = 'border-box';
 
 const InputField = ({
   file,
@@ -96,7 +106,6 @@ const InputField = ({
   currentConversationId,
   newMessage,
   inputRef,
-  handleAdvanced,
   handleSendFile,
   handleSendText,
   handleRemoveFile,
@@ -109,7 +118,6 @@ const InputField = ({
   currentConversationId: number;
   newMessage: string;
   inputRef: RefObject<HTMLTextAreaElement>;
-  handleAdvanced: () => void;
   handleSendFile: () => Promise<void>;
   handleSendText: () => Promise<void>;
   handleRemoveFile: () => void;
@@ -258,31 +266,22 @@ const InputField = ({
           minRows={1}
           maxRows={3}
           sx={{
-            background: theme.palette.background.default,
+            background: '#fff',
+            borderRadius: '10px',
             fontStyle: 'normal',
             fontWeight: 400,
             fontSize: '20px',
             lineHeight: '16px',
             width: '100%',
-            marginTop: '10px',
-            borderRadius: '8px',
+            margin: '10px 0px',
           }}
           InputProps={{
             endAdornment: (
               <>
-                <Tooltip title={'Advanced Input configuration'}>
-                  <span>
-                    <IconButton
-                      component='label'
-                      onClick={handleAdvanced}
-                      className='plausible-event-name=Open+Configuration+Click'
-                    >
-                      <SettingsIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
                 <Tooltip
-                  title={!allowFiles ? 'Solution does not support Uploading files' : 'File Loaded'}
+                  title={
+                    !allowFiles ? 'This solution does not support uploading files' : 'Attach a file'
+                  }
                 >
                   <span>
                     <IconButton
@@ -305,12 +304,14 @@ const InputField = ({
                 <DebounceIconButton
                   onClick={handleSendClick}
                   sx={{
-                    color: theme.palette.neutral.contrastText,
+                    color: '#3aaaaa',
                   }}
                   disabled={sendDisabled}
                   className='plausible-event-name=Send+Text+Click'
                 >
-                  <SendIcon />
+                  <Tooltip title={'Submit'}>
+                    <SendIcon />
+                  </Tooltip>
                 </DebounceIconButton>
               </>
             ),
@@ -320,7 +321,7 @@ const InputField = ({
           onKeyDown={keyDownHandler}
           fullWidth
           disabled={isSending || disabled || !allowText}
-          placeholder='Start Chatting...'
+          placeholder='Type something...'
         />
       </>
     );
@@ -377,7 +378,8 @@ const Chat = () => {
   const [requestIds] = useState<string[]>([]);
   const [currentPubKey, setCurrentPubKey] = useState('');
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
-  const [ isLayoverOpen, setLayoverOpen ] = useState(false);
+  const [isLayoverOpen, setLayoverOpen] = useState(false);
+  const [imgUrl, setImgUrl] = useState('');
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -418,6 +420,20 @@ const Chat = () => {
 
   const currentConfig = useWatch({ control: configControl });
 
+  const [getAvatar, { data: avatarData }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
+  useEffect(() => {
+    const avatarTxId = avatarData?.transactions?.edges[0]?.node?.id;
+    if (avatarTxId) {
+      setImgUrl(`${NET_ARWEAVE_URL}/${avatarTxId}`);
+    } else {
+      const imgSize = 100;
+      const solutionId = state?.solution.node.id;
+      const img = toSvg(solutionId, imgSize);
+      const svg = new Blob([img], { type: 'image/svg+xml' });
+      setImgUrl(URL.createObjectURL(svg));
+    }
+  }, [avatarData, state]);
+
   /**
    * If there is a save element (currentEl) scroll to it to mantain user in same place after load more
    */
@@ -446,6 +462,35 @@ const Chat = () => {
       // ignore
     }
   }, [state, configReset]);
+
+  useEffect(() => {
+    (async () => {
+      const currentSoludionId = state?.solution.node.id;
+      let firstSolutionVersionId;
+      try {
+        firstSolutionVersionId = (
+          JSON.parse(findTag(state?.solution, 'previousVersions') as string) as string[]
+        )[0];
+      } catch (err) {
+        firstSolutionVersionId = state?.solution.node.id;
+      }
+      const attachmentAvatarTags = [
+        { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
+        { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
+        {
+          name: TAG_NAMES.solutionTransaction,
+          values: [firstSolutionVersionId, currentSoludionId],
+        },
+      ];
+
+      await getAvatar({
+        variables: {
+          tags: attachmentAvatarTags,
+          owner: state.solution.node.owner.address,
+        },
+      });
+    })();
+  }, [state]);
 
   useEffect(() => {
     if (!_.isEqual(currentConfig, defaultConfigvalues)) {
@@ -657,19 +702,28 @@ const Chat = () => {
   const checkCanSend = (dataSize: number) => {
     try {
       if (!currentOperator) {
-        enqueueSnackbar('Missing Operator', { variant: 'error' });
+        enqueueSnackbar(
+          'You have no operator selected. Please select a Solution Operator in the Advanced Configurations and try again.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
         return false;
       }
 
       if (!currentConversationId) {
-        enqueueSnackbar('Missing Conversation Id', { variant: 'error' });
+        enqueueSnackbar(
+          'The Conversation ID is missing. Try refreshing the page or choose/create another conversation.',
+          {
+            variant: 'error',
+            style: { fontWeight: 700 },
+          },
+        );
         return false;
       }
 
       if (dataSize > MAX_MESSAGE_SIZE) {
         enqueueSnackbar(
-          'Message Too Long. Message must not be bigger than 50kb, or 50000 characters.',
-          { variant: 'error' },
+          'Your message is too long/big. The message cannot be bigger than 50kb, or longer than 50000 characters.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
         );
         return false;
       }
@@ -679,13 +733,20 @@ const Chat = () => {
           ? currentOperator.operatorFee * currentConfig.nImages
           : currentOperator.operatorFee;
       if (usdcBalance < actualFee) {
-        enqueueSnackbar('Not Enough USDC to pay Operator', { variant: 'error' });
+        enqueueSnackbar(
+          'Not enough USDC to pay this Operator fee. Top up your balance or choose another Solution Operator.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
         return false;
       }
 
       return true;
     } catch (error) {
-      enqueueSnackbar('Something went wrong', { variant: 'error' });
+      enqueueSnackbar('Something went wrong. Please try again, or try again later.', {
+        variant: 'error',
+        autoHideDuration: 5000,
+        style: { fontWeight: 700 },
+      });
       return false;
     }
   };
@@ -896,7 +957,14 @@ const Chat = () => {
     }
 
     if (!file.type.includes('text')) {
-      enqueueSnackbar('Only text files are supported', { variant: 'error' });
+      enqueueSnackbar(
+        'The file you attached is not supported. You can only attach text files to this Solution.',
+        {
+          variant: 'error',
+          autoHideDuration: 6000,
+          style: { fontWeight: 700 },
+        },
+      );
       return;
     }
 
@@ -904,7 +972,10 @@ const Chat = () => {
       const config = await getConfigValues();
 
       if (!config.modelName) {
-        enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
+        enqueueSnackbar(
+          'You have no Model selected. Choose one in the Advanced Configurations and try again.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
         return;
       }
 
@@ -998,7 +1069,10 @@ const Chat = () => {
       const config = await getConfigValues();
 
       if (!config.modelName) {
-        enqueueSnackbar('Please Choose the model to use', { variant: 'error' });
+        enqueueSnackbar(
+          'You have no Model selected. Choose one in the Advanced Configurations and try again.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
         return;
       }
 
@@ -1245,26 +1319,27 @@ const Chat = () => {
     if (currHeaderHeight) {
       setHeaderHeight(`${currHeaderHeight}px`);
     }
+
+    if (width > theme.breakpoints.values.lg) {
+      setDrawerOpen(true);
+      setConfigurationDrawerOpen(true);
+    } else {
+      setDrawerOpen(false);
+      setConfigurationDrawerOpen(false);
+    }
   }, [width, height]);
 
   const handleAdvanced = useCallback(() => {
-    setConfigurationDrawerOpen((previousValue) => {
-      if (!previousValue) {
-        setDrawerOpen(false);
-      }
-
-      return !previousValue;
-    });
-  }, [setDrawerOpen, setConfigurationDrawerOpen]);
+    setConfigurationDrawerOpen((previousValue) => !previousValue);
+  }, [setConfigurationDrawerOpen]);
 
   const handleAdvancedClose = useCallback(() => {
     setConfigurationDrawerOpen(false);
   }, [setConfigurationDrawerOpen]);
 
   const handleShowConversations = useCallback(() => {
-    setConfigurationDrawerOpen(false);
     setDrawerOpen(true);
-  }, [setConfigurationDrawerOpen, setDrawerOpen]);
+  }, [setDrawerOpen]);
 
   const handleLoadMore = useCallback(() => {
     fetchMore();
@@ -1283,18 +1358,17 @@ const Chat = () => {
         sx={{
           '& .MuiDrawer-paper': {
             width: '30%',
-            boxSizing: 'border-box',
             top: headerHeight,
             height: `calc(100% - ${headerHeight})`,
+            border: 'none',
+            boxSizing,
           },
-        }}
-        PaperProps={{
-          elevation: 24,
         }}
       >
         <Box
           sx={{
             display: 'flex',
+            height: '100%',
             '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
               paddingTop: '16px',
             },
@@ -1308,6 +1382,7 @@ const Chat = () => {
             handleClose={handleAdvancedClose}
             currentOperator={currentOperator}
             setCurrentOperator={setCurrentOperator}
+            drawerOpen={configurationDrawerOpen}
           />
         </Box>
       </Drawer>
@@ -1321,11 +1396,11 @@ const Chat = () => {
             flexShrink: 0,
             '& .MuiDrawer-paper': {
               width: '240px',
-              boxSizing: 'border-box',
               top: headerHeight,
               height: '100%',
-              border: 'none',
               position: 'static',
+              border: 'none',
+              boxSizing,
             },
           }}
         >
@@ -1338,60 +1413,51 @@ const Chat = () => {
             setLayoverOpen={setLayoverOpen}
           />
         </Drawer>
+
         <Box
           id='chat'
           sx={{
             width: '100%',
             height: '100%',
-            bgcolor: 'background.paper',
             display: 'flex',
             flexGrow: 1,
-            background: theme.palette.background.default,
-            transition: theme.transitions.create('margin', {
-              easing: theme.transitions.easing.sharp,
-              duration: theme.transitions.duration.leavingScreen,
-            }),
             marginLeft: '-240px',
             ...(drawerOpen && {
-              transition: theme.transitions.create('margin', {
-                easing: theme.transitions.easing.easeOut,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
               marginLeft: 0,
             }),
-            marginRight: '0',
+            marginRight: 0,
             ...(configurationDrawerOpen && {
-              transition: theme.transitions.create('margin', {
-                easing: theme.transitions.easing.easeOut,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
               marginRight: '30%',
             }),
             alignItems: 'center',
+            padding: '20px',
+            boxSizing,
           }}
         >
           {!drawerOpen && (
-            <Paper
-              sx={{
-                borderRight: '8px',
-                border: '0.5px solid',
-                borderTopLeftRadius: '0px',
-                borderBottomLeftRadius: '0px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                transition: { delay: 0.3, duration: 0.5, type: 'spring' },
               }}
+              className='h-full flex flex-col items-end justify-end px-2 pr-6'
             >
-              <Box>
-                <IconButton
+              <Tooltip title={'Open the conversations drawer'}>
+                <StyledMuiButton
                   onClick={handleShowConversations}
                   disableRipple={true}
-                  className='plausible-event-name=Show+Conversations+Click'
+                  className='plausible-event-name=Show+Conversations+Click secondary w-fit mb-5'
                 >
+                  <img
+                    src='./icons/comment_icon_fill.svg'
+                    style={{ width: 20, filter: 'invert(1)' }}
+                  />
                   <ChevronRightIcon />
-                </IconButton>
-              </Box>
-            </Paper>
+                </StyledMuiButton>
+              </Tooltip>
+            </motion.div>
           )}
           <Box
             ref={chatRef}
@@ -1401,6 +1467,12 @@ const Chat = () => {
               justifyContent: 'flex-end',
               width: '100%',
               height: '100%',
+              backgroundColor: '#fff',
+              borderRadius: '20px',
+              boxShadow: '0px 0px 8px rgba(0,0,0,0.1)',
+              overflow: 'hidden',
+              position: 'relative',
+              boxSizing,
             }}
           >
             {messagesLoading && (
@@ -1408,30 +1480,68 @@ const Chat = () => {
                 sx={{
                   position: 'absolute',
                   zIndex: theme.zIndex.drawer + 1,
-                  backdropFilter: 'blur(50px)',
+                  backdropFilter: 'blur(20px)',
+                  backgroundColor: 'rgba(255,255,255,0.4)',
+                  color: theme.palette.backdropContrast.main,
                   display: 'flex',
-                  flexDirection: 'column',
-                  left: drawerOpen ? '240px' : '0px',
-                  right: configurationDrawerOpen ? '30%' : '0px',
+                  gap: 3,
+                  left: 0,
+                  right: 0,
                 }}
                 open={true}
               >
-                <Typography variant='h1' fontWeight={500} color={theme.palette.background.default}>
-                  Loading Messages...
+                <CircularProgress sx={{ color: theme.palette.backdropContrast.main }} size='2rem' />
+                <Typography variant='h2' color={theme.palette.backdropContrast.main}>
+                  Loading messages...
                 </Typography>
-                <CircularProgress sx={{ color: theme.palette.background.default }} size='6rem' />
               </Backdrop>
             )}
+            <div
+              className='absolute top-0 left-0 w-full px-4 bg-[rgba(240,240,240,0.8)] backdrop-blur-lg z-10 flex justify-between items-center gap-2'
+              style={{
+                height: '80px',
+                boxShadow: '0px 0px 6px rgba(0,0,0,0.15)',
+              }}
+            >
+              <div className='flex items-center gap-4'>
+                {imgUrl && (
+                  <Avatar
+                    variant='rounded'
+                    src={imgUrl}
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      border: '3px solid white',
+                      boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
+                    }}
+                  />
+                )}
+                <div className='flex flex-col'>
+                  <span className='font-bold text-xl'>
+                    {findTag(state.solution, 'solutionName')}
+                  </span>
+                  <span className='text-sm text-gray-500'>{state.solution.node.id}</span>
+                </div>
+              </div>
+              <a href='../'>
+                <Tooltip title={'Close this solution and go back to the homepage'}>
+                  <StyledMuiButton className='secondary'>
+                    <CancelRoundedIcon />
+                    Exit Solution
+                  </StyledMuiButton>
+                </Tooltip>
+              </a>
+            </div>
             <Box flexGrow={1}>
               <Paper
-                elevation={1}
                 sx={{
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'flex-end',
-                  background: theme.palette.background.default,
-                  boxShadow: 'none',
+                  backgroundColor: 'transparent !important',
+                  boxShadow: 'none !important',
+                  boxSizing,
                 }}
               >
                 <Zoom in={showLoadMore} timeout={100} mountOnEnter unmountOnExit>
@@ -1462,8 +1572,8 @@ const Chat = () => {
                   sx={{
                     overflow: messagesLoading ? 'hidden' : 'auto',
                     maxHeight: chatMaxHeight,
-                    pt: '50px',
                     paddingBottom: `${inputHeight}px`,
+                    paddingTop: '120px',
                   }}
                   ref={scrollableRef}
                 >
@@ -1479,18 +1589,18 @@ const Chat = () => {
                 </Box>
               </Paper>
             </Box>
+
             <Box
               id={'chat-input'}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '8px',
-                justifyContent: 'flex-start',
+                justifyContent: 'center',
                 position: 'absolute',
-                margin: '8px 0px',
-                width: inputWidth,
-                paddingRight: '8px',
-                paddingLeft: '8px',
+                marginLeft: '14px',
+                marginBottom: '5px',
+                width: `calc(${inputWidth} - 12px)`,
+                boxSizing,
               }}
             >
               {showOperatorBusy && (
@@ -1509,7 +1619,6 @@ const Chat = () => {
                 currentConversationId={currentConversationId}
                 newMessage={newMessage}
                 inputRef={inputRef}
-                handleAdvanced={handleAdvanced}
                 handleFileUpload={handleFileUpload}
                 handleRemoveFile={handleRemoveFile}
                 handleSendFile={handleSendFile}
@@ -1527,14 +1636,58 @@ const Chat = () => {
             </Box>
           </Box>
         </Box>
+
+        {!configurationDrawerOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              transition: { delay: 0.3, duration: 0.5, type: 'spring' },
+            }}
+            className='h-full flex flex-col items-end justify-end px-2 pr-6'
+          >
+            <Tooltip title={'Open the advanced configurations drawer'}>
+              <StyledMuiButton
+                onClick={handleAdvanced}
+                disableRipple={true}
+                className='plausible-event-name=Open+Configuration+Click secondary w-fit mb-12'
+              >
+                <ChevronLeftRounded />
+                <SettingsIcon />
+              </StyledMuiButton>
+            </Tooltip>
+          </motion.div>
+        )}
       </Box>
       <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        sx={{
+          color: '#fff',
+          zIndex: theme.zIndex.drawer + 1,
+          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(0,0,0,0.15)',
+        }}
         open={isLayoverOpen}
       >
-        <Typography>
-          {'Please contine on the popup extension.'}
-        </Typography>
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1, transition: { delay: 0.1, duration: 0.4 } }}
+          className='w-full max-w-[600px]'
+        >
+          <Typography
+            variant='h3'
+            className='flex items-center gap-3 bg-[#3aaaaa] rounded-2xl py-3 px-6'
+          >
+            <img src='./fair-protocol-face-transp-eyes.png' style={{ width: '40px' }} />
+            {'Please continue on your wallet extension.'}
+          </Typography>
+          <div className='mt-2 rounded-2xl py-3 px-6 bg-slate-500 font-semibold text-lg'>
+            Our chat has some special encryption features that require access to your wallet&apos;s
+            public key.
+            <br />
+            This is optional, but if you do not accept, these features will be temporarily disabled.
+          </div>
+        </motion.div>
       </Backdrop>
       <Outlet />
     </>

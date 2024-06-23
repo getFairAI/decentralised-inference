@@ -32,18 +32,21 @@ import {
   useTheme,
   CircularProgress,
 } from '@mui/material';
-import { useState, useEffect, useCallback, useRef, useContext, WheelEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ComputerIcon from '@mui/icons-material/Computer';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import useScroll from '@/hooks/useScroll';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
+import { StyledMuiButton } from '@/styles/components';
+
+// icons
+import OutboundRoundedIcon from '@mui/icons-material/OutboundRounded';
 
 const Solution = ({
   tx,
   operatorsData,
-  loading
+  loading,
 }: {
   tx: findByTagsQuery['transactions']['edges'][0];
   loading: boolean;
@@ -57,15 +60,12 @@ const Solution = ({
   const [imgUrl, setImgUrl] = useState('');
   const [isHovering, setIsHovering] = useState(false);
   const mainCardRef = useRef<HTMLDivElement>(null);
-  const [topOffset, setTopOffset] = useState(0);
-  const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
-  const scrollableRef = useRef(document.getElementById('main'));
-  const { scrollTop } = useScroll(scrollableRef);
+  const { currentAddress } = useContext(EVMWalletContext);
   const { width } = useWindowDimensions();
-  const [ isMobile, setIsMobile ] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const theme = useTheme();
 
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const { data: imageData } = useQuery(findByTagsAndOwnersDocument, {
     variables: {
@@ -83,13 +83,7 @@ const Solution = ({
   useEffect(() => {
     const sm = theme.breakpoints.values.sm;
     setIsMobile(width < sm);
-  }, [ width, theme, setIsMobile ]);
-
-  useEffect(() => {
-    if (mainCardRef.current) {
-      setTopOffset(mainCardRef.current.offsetTop - scrollTop);
-    }
-  }, [currentAddress, usdcBalance, scrollTop ]);
+  }, [width, theme, setIsMobile]);
 
   useEffect(() => {
     if (imageData) {
@@ -128,7 +122,7 @@ const Solution = ({
           defaultOperator: operatorsData[0] ?? undefined,
           availableOperators: operatorsData ?? [],
           solution: tx,
-        }
+        },
       });
     } else if (tx.node.id === LTIPP_SOLUTION) {
       navigate('/chat/arbitrum/ltipp', {
@@ -136,8 +130,8 @@ const Solution = ({
           defaultOperator: operatorsData[0] ?? undefined,
           availableOperators: operatorsData ?? [],
           solution: tx,
-        }
-    });
+        },
+      });
     } else {
       navigate('/chat', {
         state: {
@@ -147,7 +141,7 @@ const Solution = ({
         },
       });
     }
-  }, [tx, operatorsData, currentAddress, isMobile ]);
+  }, [tx, operatorsData, currentAddress, isMobile]);
 
   const getTimePassed = () => {
     const timestamp = findTag(tx, 'unixTime');
@@ -179,39 +173,41 @@ const Solution = ({
 
   const handleHoverStart = useCallback(() => setIsHovering(true), [setIsHovering]);
   const handleHoverEnd = useCallback(() => setIsHovering(false), [setIsHovering]);
-  const handleWheel = useCallback((event: WheelEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-
-    if (scrollableRef.current) {
-      scrollableRef.current.scrollBy({
-        top: event.deltaY,
-        behavior: 'instant'
-      });
-    }
-  }, [ scrollableRef ]);
 
   return (
-    <motion.div initial={false} onHoverStart={handleHoverStart} onHoverEnd={handleHoverEnd} onWheel={handleWheel}>
+    <motion.div
+      initial={false}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
+      style={{
+        height: '400px',
+        backgroundColor: 'white',
+        width: '320px',
+        borderRadius: '15px',
+        overflow: 'hidden',
+        boxShadow: isHovering ? '0px 0px 8px rgba(0,0,0,0.2)' : '0px 0px 6px rgba(0,0,0,0.1)',
+        transition: '0.2s all',
+      }}
+    >
       <motion.div
         ref={mainCardRef}
-        animate={{ rotateY: isHovering ? -180 : 0 }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 40,
-        }}
         style={{
-          width: '317px',
-          height: '352px',
-          backfaceVisibility: 'hidden',
+          width: '100%',
+          height: '400px',
+          borderRadius: '10px',
+          border: '8px solid #ffffff',
+        }}
+        animate={{
+          height: isHovering ? '150px' : '400px',
+          border: isHovering ? '10px solid #ffffff' : '6px solid #ffffff',
         }}
       >
         <Card
           sx={{
             width: '100%',
             height: '100%',
+            boxShadow: 'none !important',
           }}
-          raised={true}
         >
           <CardActionArea
             sx={{
@@ -220,21 +216,23 @@ const Solution = ({
               flexDirection: 'column',
               justifyContent: 'flex-start',
               alignItems: 'flex-start',
-              padding: '8px',
-              background: `linear-gradient(180deg, rgba(71, 71, 71, 0) 40%, ${theme.palette.background.default} 100%), url(${imgUrl})`,
+              padding: '6px',
+              background: `url(${imgUrl})`,
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'cover' /* <------ */,
               backgroundPosition: 'center center',
             }}
-            onClick={handleSolutionClick}
           >
             <Box display={'flex'} flexGrow={1} flexDirection={'column'}></Box>
             <CardHeader
               sx={{
-                pb: 0,
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                backdropFilter: 'blur(20px)',
+                width: '100%',
+                borderRadius: '5px',
               }}
               title={
-                <Typography variant='h2'>
+                <Typography variant='h3'>
                   {tx.node.tags.find((el) => el.name === 'Solution-Name')?.value ??
                     'Name Not Available'}
                 </Typography>
@@ -245,82 +243,76 @@ const Solution = ({
             />
           </CardActionArea>
         </Card>
-      </motion.div>
-      <motion.div
-        initial={{ rotateY: 180 }}
-        animate={{ rotateY: isHovering ? 0 : 180 }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 40,
-        }}
-        style={{
-          width: '317px',
-          height: '352px',
-          backfaceVisibility: 'hidden',
-          position: 'absolute',
-          top: `${topOffset}px`,
-        }}
-      >
-        <Card
-          sx={{
-            width: '100%',
-            height: '100%',
-          }}
-          raised={true}
-        >
-          <CardActionArea
-            sx={{
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-start',
-              alignItems: 'flex-start',
-              padding: '8px',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: 'cover' /* <------ */,
-              backgroundPosition: 'center center',
-            }}
-            onClick={handleSolutionClick}
-          >
-            <Box display={'flex'} flexGrow={1} flexDirection={'column'}></Box>
-            <CardContent>
-              <Typography>{tx.node.tags.find((el) => el.name === 'Description')?.value}</Typography>
-            </CardContent>
 
-            {!loading && <CardContent
-              sx={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                width: '100%',
-                gap: '16px',
-                pt: 0,
-              }}
-            >
-              {hasOperators && (
-                <Tooltip title='Average Fee'>
-                  <Box display={'flex'} gap={'4px'} alignItems={'center'}>
-                    <Typography>{avgFee}</Typography>
-                    <Box display={'flex'} alignItems={'center'} gap={'8px'}>
-                      <img width='20px' height='20px' src='./usdc-logo.svg' />
+        <motion.div
+          initial={{}}
+          animate={{}}
+          transition={{}}
+          style={{
+            width: '320px',
+            x: '-9px',
+            height: '280px',
+            color: 'rgb(50,50,50)',
+          }}
+          className='flex flex-col justify-between px-2 pt-2 pb-5'
+        >
+          <CardContent
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              width: '100%',
+              gap: '16px',
+              pt: 0,
+            }}
+          >
+            <span className='font-semibold'>
+              {tx.node.tags.find((el) => el.name === 'Description')?.value}
+            </span>
+          </CardContent>
+          <div className='flex justify-center md:justify-between py-4 px-2'>
+            <div className='flex-3 flex justify-start'>
+              <StyledMuiButton className='primary' onClick={handleSolutionClick}>
+                Use solution
+                <OutboundRoundedIcon style={{ width: '22px' }} />
+              </StyledMuiButton>
+            </div>
+
+            {loading && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  flex: '1 1 auto',
+                  alignItems: 'center',
+                }}
+              >
+                <Tooltip title='Loading available operators...'>
+                  <CircularProgress size={'30px'} />
+                </Tooltip>
+              </div>
+            )}
+            {!loading && (
+              <div className='flex-1 flex justify-end pr-1 gap-3'>
+                {hasOperators && (
+                  <Tooltip title='Average Fee'>
+                    <Box display={'flex'} gap={'4px'} alignItems={'center'}>
+                      <Typography>{avgFee}</Typography>
+                      <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                        <img width='20px' height='20px' src='./usdc-logo.svg' />
+                      </Box>
                     </Box>
+                  </Tooltip>
+                )}
+                <Tooltip title='Available Providers'>
+                  <Box display={'flex'} gap={'4px'} alignItems={'center'}>
+                    <Typography>{numOperators}</Typography>
+                    <ComputerIcon />
                   </Box>
                 </Tooltip>
-              )}
-              <Tooltip title='Available Providers'>
-                <Box display={'flex'} gap={'4px'} alignItems={'center'}>
-                  <Typography>{numOperators}</Typography>
-                  <ComputerIcon />
-                </Box>
-              </Tooltip>
-            </CardContent>}
-            {loading && <CardContent sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-              <Tooltip title='Loading Available Operators'>
-                <CircularProgress />
-              </Tooltip>
-            </CardContent>}
-          </CardActionArea>
-        </Card>
+              </div>
+            )}
+          </div>
+        </motion.div>
       </motion.div>
     </motion.div>
   );

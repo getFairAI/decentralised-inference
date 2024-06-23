@@ -29,47 +29,55 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  const [ getSolution, { data }] = useLazyQuery(findByIdDocument);
+  const [getSolution, { data }] = useLazyQuery(findByIdDocument);
   const { validTxs: operatorsData } = useOperators(data?.transactions.edges || []);
 
   useEffect(() => {
     if (pathname.includes('ltipp')) {
-      getSolution({ variables: { ids: [ LTIPP_SOLUTION ] } });
+      getSolution({ variables: { ids: [LTIPP_SOLUTION] } });
     } else if (pathname.includes('stip')) {
-      getSolution({ variables: { ids: [ STIP_SOLUTION ] } });
+      getSolution({ variables: { ids: [STIP_SOLUTION] } });
     } else {
       navigate('/'); // Redirect to home page if the path is not a solution path
     }
-  }, [ pathname ]);
+  }, [pathname]);
 
   useEffect(() => {
     if (data && operatorsData) {
-      navigate({}, { state: {
-        defaultOperator: operatorsData[0],
-        availableOperators: operatorsData,
-        solution: data.transactions.edges[0],
-      }, replace: true });
+      navigate(
+        {},
+        {
+          state: {
+            defaultOperator: operatorsData[0],
+            availableOperators: operatorsData,
+            solution: data.transactions.edges[0],
+          },
+          replace: true,
+        },
+      );
     }
   }, [data, operatorsData]);
 
   if (!state?.defaultOperator) {
-    return <Backdrop
-      sx={{
-        position: 'absolute',
-        zIndex: theme.zIndex.drawer + 1,
-        backdropFilter: 'blur(50px)',
-        display: 'flex',
-        flexDirection: 'column',
-        left: '0px',
-        right: '0px',
-      }}
-      open={true}
-    >
-      <Typography variant='h1' fontWeight={500} color={'#9ecced'}>
-        Finding Available Providers...
-      </Typography>
-      <CircularProgress sx={{ color: '#9ecced' }} size='6rem' />
-    </Backdrop>;
+    return (
+      <Backdrop
+        sx={{
+          position: 'absolute',
+          zIndex: theme.zIndex.drawer + 1,
+          backdropFilter: 'blur(20px)',
+          display: 'flex',
+          left: '0px',
+          right: '0px',
+          gap: 3,
+        }}
+        open={true}
+      >
+        <CircularProgress sx={{ color: 'rgb(70,70,70)' }} size='2rem' />
+        <Typography variant='h2' color={'rgb(70,70,70)'}>
+          Fetching Data...
+        </Typography>
+      </Backdrop>
+    );
   } else {
     return children;
   }

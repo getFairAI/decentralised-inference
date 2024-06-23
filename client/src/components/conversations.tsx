@@ -30,13 +30,11 @@ import {
   Paper,
   Box,
   InputBase,
-  Icon,
   Tooltip,
   List,
   ListItemButton,
   Typography,
   useTheme,
-  Button,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
@@ -48,14 +46,17 @@ import {
   useEffect,
   useState,
 } from 'react';
-import AddIcon from '@mui/icons-material/Add';
-import { LoadingContainer } from '@/styles/components';
-import DebounceIconButton from './debounce-icon-button';
+import { LoadingContainer, StyledMuiButton } from '@/styles/components';
 import { Timeout } from 'react-number-format/types/types';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { useLocation } from 'react-router-dom';
+
+// icons
+import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
+import { motion } from 'framer-motion';
 
 const ConversationElement = ({
   cid,
@@ -66,7 +67,6 @@ const ConversationElement = ({
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
 }) => {
-  const theme = useTheme();
   const handleListItemClick = useCallback(
     () => setCurrentConversationId(cid),
     [setCurrentConversationId],
@@ -79,32 +79,41 @@ const ConversationElement = ({
       onClick={handleListItemClick}
       sx={{
         flexGrow: 0,
-        borderRadius: '8px',
-        border: 'solid 0.5px',
+        borderRadius: '30px',
         width: '100%',
         justifyContent: 'center',
-        height: '91px',
-        color: theme.palette.neutral.main,
-        borderColor: theme.palette.neutral.main,
-        '&.Mui-selected, &.Mui-selected:hover': {
-          backgroundColor: theme.palette.background.default,
-          color: theme.palette.text.primary,
-          borderColor: theme.palette.text.primary,
+        height: '60px',
+        fontWeight: 600,
+        color: 'rgb(70,70,70)',
+        boxShadow: '0px 0px 6px rgba(0,0,0,0.2)',
+        backgroundColor: 'white !important',
+        transition: '0.2s all',
+        '&.Mui-selected': {
+          backgroundColor: '#3aaaaa !important',
+          color: '#fff',
+        },
+        '&.Mui-selected img': {
+          opacity: '1 !important',
+          filter: 'invert(1) !important',
+        },
+        '&:hover': {
+          transform: 'translateX(5px)',
+          filter: 'brightness(0.9)',
         },
       }}
       className='plausible-event-name=Change+Conversation+Click'
     >
       <Typography
         sx={{
-          fontStyle: 'normal',
-          fontWeight: 700,
-          fontSize: '15px',
-          lineHeight: '20px',
+          fontWeight: 600,
+          fontSize: '16px',
           display: 'flex',
           alignItems: 'center',
           textAlign: 'center',
+          gap: 1,
         }}
       >
+        <img src='./icons/comment_icon_fill.svg' style={{ width: 18, opacity: 0.7 }} />
         Conversation {cid}
       </Typography>
     </ListItemButton>
@@ -142,7 +151,19 @@ const Conversations = ({
 
   const createNewConversation = async (id: number) => {
     try {
-      await startConversation(state.solution.node.id, id.toString());
+      const result = await startConversation(state.solution.node.id, id.toString());
+
+      if (!result) {
+        // user rejected the wallet extension signature permission
+        enqueueSnackbar(
+          'You chose to reject the request, or an error occurred. The feature you were trying to access might get disabled.',
+          {
+            variant: 'warning',
+            autoHideDuration: 12000,
+            style: { fontWeight: 700 },
+          },
+        );
+      }
 
       setConversationIds([id, ...conversationIds]);
       setFilteredConversationIds([id, ...conversationIds]);
@@ -307,10 +328,6 @@ const Conversations = ({
     <Paper
       sx={{
         height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        // opacity: '0.3',
       }}
     >
       <Box
@@ -319,10 +336,25 @@ const Conversations = ({
           flexDirection: 'column',
           justifyContent: 'flex-end',
           alignItems: 'center',
-          gap: '16px',
           height: '100%',
+          paddingLeft: '15px',
         }}
       >
+        <div className='flex w-full justify-center px-2 mb-2 mt-6'>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: '23px',
+              lineHeight: '31px',
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: 20 }} />
+            Conversations
+          </Typography>
+        </div>
         <Box marginTop={'16px'} width={'100%'} padding={'0px 20px'}>
           <Box
             id={'searchConversation'}
@@ -330,46 +362,31 @@ const Conversations = ({
               borderRadius: '8px',
               display: 'flex',
               justifyContent: 'space-between',
-              padding: '3px 20px 3px 20px',
+              padding: '5px 12px',
               alignItems: 'center',
-              border: 'solid 0.5px',
+              backgroundColor: '#fff',
               width: '100%',
+              outline: '1px solid lightgrey',
+              '&:focus, &:focus-within': {
+                outline: '2px solid #3aaaaa',
+              },
             }}
           >
             <InputBase
               fullWidth
+              color='primary'
               sx={{
                 color: theme.palette.text.primary,
-                fontStyle: 'normal',
                 fontWeight: 400,
-                fontSize: '12px',
-                lineHeight: '16px',
+                fontSize: '14px',
               }}
-              placeholder='Search Conversations...'
+              placeholder='Search...'
               onChange={handleFilterChange}
             />
-            <Icon
-              sx={{
-                height: '30px',
-              }}
-            >
-              <img src='./search-icon.svg'></img>
-            </Icon>
+            <img src='./search-icon.svg' style={{ width: '18px' }}></img>
           </Box>
         </Box>
-        <Tooltip title='Start a new Conversation'>
-          <DebounceIconButton
-            id={'addConversation'}
-            onClick={handleAddConversation}
-            sx={{
-              width: 'fit-content',
-              borderRadius: '8px',
-            }}
-            className='plausible-event-name=Add+Conversation+Click'
-          >
-            <AddIcon />
-          </DebounceIconButton>
-        </Tooltip>
+
         <List
           sx={{
             display: 'flex',
@@ -382,28 +399,62 @@ const Conversations = ({
             overflow: 'auto',
             maxHeight: chatMaxHeight,
             flexFlow: 'wrap',
+            marginTop: '20px',
           }}
         >
-          {conversationsLoading && <LoadingContainer theme={theme} className='dot-pulse' />}
-          {filteredConversationIds.map((cid) => (
-            <ConversationElement
-              cid={cid}
-              key={cid}
-              currentConversationId={currentConversationId}
-              setCurrentConversationId={setCurrentConversationId}
-            />
-          ))}
+          {conversationsLoading && (
+            <div className='w-full flex justify-center' style={{ filter: 'brightness(0.5)' }}>
+              <LoadingContainer theme={theme} className='dot-pulse' />
+            </div>
+          )}
+          {filteredConversationIds
+            .map((cid) => (
+              <ConversationElement
+                cid={cid}
+                key={cid}
+                currentConversationId={currentConversationId}
+                setCurrentConversationId={setCurrentConversationId}
+              />
+            ))
+            .sort()}
           <Box sx={{ paddingBottom: '8px' }}></Box>
         </List>
-        <Box flexGrow={1}></Box>
-        <Button
-          variant='outlined'
-          sx={{ mb: '8px', borderWidth: '0.5px' }}
-          onClick={toggleDrawer}
-          className='plausible-event-name=Hide+Conversation+Click'
+
+        <div
+          id={'addConversation'}
+          onClick={handleAddConversation}
+          className='plausible-event-name=Add+Conversation+Click'
         >
-          <Typography>Hide</Typography>
-        </Button>
+          <Tooltip title='Start a new Conversation'>
+            <StyledMuiButton className='secondary'>
+              <AddIcon style={{ width: '16px' }} />
+              Start New
+            </StyledMuiButton>
+          </Tooltip>
+        </div>
+
+        <Box flexGrow={1}></Box>
+        {drawerOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              transition: { delay: 0.3, duration: 0.5, type: 'spring' },
+            }}
+            className='w-full flex justify-end p-8 mb-4'
+          >
+            <Tooltip title={'Hide the conversations drawer'}>
+              <StyledMuiButton
+                onClick={toggleDrawer}
+                className='plausible-event-name=Hide+Conversation+Click secondary'
+              >
+                <ArrowBackIosNewRoundedIcon style={{ width: 18 }} />
+                Hide
+              </StyledMuiButton>
+            </Tooltip>
+          </motion.div>
+        )}
       </Box>
     </Paper>
   );

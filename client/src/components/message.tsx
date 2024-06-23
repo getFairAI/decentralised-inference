@@ -49,13 +49,16 @@ import {
 } from '@/constants';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { enqueueSnackbar } from 'notistack';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { findTag } from '@/utils/common';
 import MessageDetail from './message-detail';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import XIcon from '@mui/icons-material/X';
 import { ITag } from '@/interfaces/arweave';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import { motion } from 'framer-motion';
+
+const boxShadow = '0px 0px 4px rgba(0,0,0,0.2)';
 
 const MessageHeader = ({
   message,
@@ -231,26 +234,36 @@ const MessageHeader = ({
   }, [message, setAnchorEl, copySettings]);
 
   return (
-    <Box display={'flex'} gap={'8px'} width={'100%'}>
+    <Box display={'flex'} gap={'20px'} width={'100%'}>
       {message.type === 'response' && (
-        <Avatar variant='rounded' src={imgUrl} sx={{ width: 56, height: 56 }} />
+        <Avatar
+          variant='rounded'
+          src={imgUrl}
+          sx={{
+            width: 56,
+            height: 56,
+            border: '3px solid white',
+            boxShadow,
+          }}
+        />
       )}
-      <Box display={'flex'} justifyContent={'space-between'} width={'100%'}>
+      <Box display={'flex'} justifyContent={'space-between'} width={'100%'} gap={8}>
         {message.type === 'response' && (
           <Box display={'flex'} flexDirection={'column'}>
             <Typography
               sx={{
                 fontSize: '20px',
-                fontWeight: 400,
+                fontWeight: 600,
               }}
             >
               {findTag(state.solution, 'solutionName')}
             </Typography>
             <Typography
               sx={{
-                fontSize: '16px',
-                fontWeight: 300,
+                fontSize: '14px',
+                fontWeight: 400,
                 color: theme.palette.neutral.main,
+                opacity: 0.5,
               }}
             >
               {state.solution.node.id}
@@ -292,7 +305,7 @@ const MessageHeader = ({
             </>
           )}
           <IconButton onClick={handleClick} sx={{ padding: '8px 0px' }} disableRipple>
-            <MoreHorizIcon fontSize='large' />
+            <MoreVertRoundedIcon style={{ color: message.type === 'response' ? '' : '#fff' }} />
           </IconButton>
           <Menu
             id='demo-positioned-menu'
@@ -340,6 +353,35 @@ const MessageHeader = ({
         </Box>
         <MessageDetail open={dialogOpen} setOpen={setDialogOpen} message={message} />
       </Box>
+
+      {message.type !== 'response' && (
+        <div className='flex items-center gap-5'>
+          <Typography
+            sx={{
+              fontSize: '20px',
+              fontWeight: 600,
+            }}
+          >
+            You
+          </Typography>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              backgroundColor: '#000',
+              objectFit: 'contain',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '3px',
+              border: '3px solid white',
+              boxShadow,
+            }}
+          >
+            <img src={'./fair-protocol-face-transp-eyes.png'} className='w-full' />
+          </div>
+        </div>
+      )}
     </Box>
   );
 };
@@ -353,43 +395,63 @@ const Message = ({
   index: number;
   copySettings: (tags: ITag[]) => void;
 }) => {
-  const theme = useTheme();
-
   return (
     <Stack spacing={4} flexDirection='row'>
       <Box display={'flex'} flexDirection='column' margin='8px' width='100%'>
-        <Box
-          display={'flex'}
-          alignItems='center'
-          justifyContent={message.type === 'response' ? 'flex-start' : 'flex-end'}
+        <motion.div
+          initial={{
+            opacity: 0,
+            x: message.type === 'response' ? '-40px' : '40px',
+          }}
+          animate={{
+            opacity: 1,
+            x: 0,
+            transition: {
+              delay: 0.1,
+              duration: 0.8,
+              bounce: 0.4,
+              type: 'spring',
+            },
+          }}
         >
-          <Card
-            elevation={8}
-            raised={true}
-            sx={{
-              width: '100%',
-              maxWidth: '100%',
-              border: '0.5px solid',
-              borderColor: theme.palette.neutral.main,
-              backgroundColor: '#F2F2F2',
-              borderRadius: '8px',
-            }}
+          <Box
+            display={'flex'}
+            alignItems='center'
+            justifyContent={message.type === 'response' ? 'flex-start' : 'flex-end'}
           >
-            <CardContent
+            <Card
               sx={{
-                padding: '24px 32px',
-                gap: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: message.type === 'response' ? 'center' : 'flex-end',
+                width: 'fit-content',
+                minWidth: '300px',
+                maxWidth: '90%',
+                backgroundColor: message.type === 'response' ? '#e8e8e8' : '#3aaaaa',
+                color: message.type === 'response' ? 'rgb(70,70,70)' : '#ffffff',
+                borderRadius:
+                  message.type === 'response' ? '30px 30px 30px 0px' : '30px 30px 0px 30px',
+                boxShadow: '0px 0px 4px rgba(0,0,0,0.1)',
+                transition: '0.2s all',
+                '&:hover': {
+                  boxShadow,
+                  filter: 'brightness(1.05)',
+                },
               }}
             >
-              <MessageHeader message={message} copySettings={copySettings} />
-              <MessageDisplay message={message} />
-              <MessageFooter message={message} index={index} />
-            </CardContent>
-          </Card>
-        </Box>
+              <CardContent
+                sx={{
+                  padding: '24px 32px',
+                  gap: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: message.type === 'response' ? 'center' : 'flex-end',
+                }}
+              >
+                <MessageHeader message={message} copySettings={copySettings} />
+                <MessageDisplay message={message} />
+                <MessageFooter message={message} index={index} />
+              </CardContent>
+            </Card>
+          </Box>
+        </motion.div>
       </Box>
     </Stack>
   );

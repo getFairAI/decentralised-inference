@@ -374,8 +374,14 @@ const BrowseRequests = () => {
         {requests.map((req) => (
           <RequestElement key={req.id} request={req} />
         ))}
-        <Fab sx={{ /* widht: '20px', height: '20px', */ position: 'absolute', bottom: '30px', right: '30px' }}>
-          <img src='./chevron-bottom.svg'/>
+        <Fab
+          sx={{
+            /* widht: '20px', height: '20px', */ position: 'absolute',
+            bottom: '30px',
+            right: '30px',
+          }}
+        >
+          <img src='./chevron-bottom.svg' />
         </Fab>
       </Grid>
     </Box>

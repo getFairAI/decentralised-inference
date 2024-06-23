@@ -16,8 +16,13 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import Logo from '@/components/logo';
-import { BUY_ARB_LINK, BUY_USDC_LINK, CREATE_ALTERNATIVE_LINK, CREATE_WALLET_LINK, MIN_U_BALANCE } from '@/constants';
+import {
+  BUY_ARB_LINK,
+  BUY_USDC_LINK,
+  CREATE_ALTERNATIVE_LINK,
+  CREATE_WALLET_LINK,
+  MIN_U_BALANCE,
+} from '@/constants';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { IEdge } from '@/interfaces/arweave';
 import { QUERY_TXS_BY_RECIPIENT } from '@/queries/graphql';
@@ -41,11 +46,18 @@ import {
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Close, InfoOutlined, WarningOutlined } from '@mui/icons-material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { isTxConfirmed } from '@/utils/arweave';
 import { EVMWalletContext } from '@/context/evm-wallet';
+import { StyledMuiButton } from '@/styles/components';
+import { motion } from 'framer-motion';
+
+// icons
+import { Close, InfoOutlined } from '@mui/icons-material';
+import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 
 type EdgeWithStatus = IEdge & { status: string };
 
@@ -58,66 +70,74 @@ const WalletnotConnectedContent = () => {
   const { state } = useLocation();
 
   return (
-    <>
-      <Box display={'flex'}>
-        <Logo />
-      </Box>
-      <Box>
-        <Typography
-          sx={{ color: '#1F1F26' }}
-          fontWeight={300}
-          fontSize={'30px'}
-          lineHeight={'40.5px'}
-          align='center'
-        >
-          {state ? 'To start using this AI solution, you need to connect a wallet!' : 'First, lets get connected!'}
-        </Typography>
-      </Box>
-      {
-        providers.length > 0 &&  <Button
-          sx={{ borderRadius: '8px', gap: '10px', background: '#FFF' }}
-          onClick={handleClick}
-          className='plausible-event-name=Onboarding+Connect+Wallet+Click'
-        >
+    <motion.div
+      initial={{ y: '-40px', opacity: 0 }}
+      animate={{ y: 0, opacity: 1, transition: { delay: 0, duration: 0.3 } }}
+      className='w-full h-full flex flex-col items-center justify-start px-4 mt-20'
+    >
+      <div className='w-full max-w-[800px] flex flex-col justify-center items-center gap-6'>
+        <Box>
+          <img src='./fair-ai-outline.svg' alt='FairAI Logo' style={{ width: '200px' }} />
+        </Box>
+        <Box>
           <Typography
             sx={{ color: '#1F1F26' }}
-            fontWeight={700}
-            fontSize={'18px'}
-            lineHeight={'24.3px'}
+            fontWeight={300}
+            fontSize={'30px'}
+            lineHeight={'40.5px'}
+            align='center'
           >
-            Connect To the Arbitrum Network
-          </Typography>
-        </Button>
-      }
-      {providers.length === 0 && <>
-        <Box display={'flex'} gap={'8px'} flexDirection={'column'}>
-          <Typography display={'flex'} gap={'8px'} alignItems={'center'} fontWeight={'500'} noWrap variant='h3'>
-            <WarningOutlined /* sx={{ fontSize: '12px' }}  */ />
-            No wallets detected. Please install a wallet to continue.
-          </Typography>
-          <Typography display={'flex'} gap={'8px'} alignItems={'center'} fontWeight={'500'} noWrap variant='h3' justifyContent={'center'}>
-            <a
-              href={CREATE_WALLET_LINK}
-              target='_blank'
-              rel='noreferrer'
-              className='plausible-event-name=Wallet+Create+Recommended+Click'
-            >
-              <u>Install our recommended wallet</u>
-            </a>
-            {'or'}
-            <a
-              href={CREATE_ALTERNATIVE_LINK}
-              target='_blank'
-              rel='noreferrer'
-              className='plausible-event-name=Wallet+Create+Alternatives+Click'
-            >
-              <u> find alternatives.</u>
-            </a>
+            {state
+              ? 'To start using this AI solution, you need to connect your wallet!'
+              : 'Connect your wallet to unlock all features!'}
           </Typography>
         </Box>
-      </>
-      }
-    </>
+        {providers.length > 0 && (
+          <StyledMuiButton
+            onClick={handleClick}
+            className='plausible-event-name=Onboarding+Connect+Wallet+Click primary bigger'
+          >
+            <img src='./arbitrum-logo.svg' style={{ width: '24px' }} />
+            Connect wallet to the Arbitrum Network
+          </StyledMuiButton>
+        )}
+        {providers.length === 0 && (
+          <>
+            <div className='flex flex-col gap-6 justify-center items-center'>
+              <div className='flex items-center gap-3 rounded-xl my-2 py-3 px-4 bg-amber-400 font-medium'>
+                <ErrorRoundedIcon /> No wallets detected. Please install a wallet first.
+              </div>
+
+              <div className='flex flex-wrap gap-4 items-center flex-col md:flex-row'>
+                <a
+                  href={CREATE_WALLET_LINK}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='plausible-event-name=Wallet+Create+Recommended+Click'
+                >
+                  <StyledMuiButton className='primary'>
+                    <DownloadRoundedIcon />
+                    Install our recommended wallet
+                  </StyledMuiButton>
+                </a>
+                <span className='text-lg font-semibold'>{' or '}</span>
+                <a
+                  href={CREATE_ALTERNATIVE_LINK}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='plausible-event-name=Wallet+Create+Alternatives+Click'
+                >
+                  <StyledMuiButton className='secondary'>
+                    <OpenInNewRoundedIcon />
+                    find alternatives
+                  </StyledMuiButton>
+                </a>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </motion.div>
   );
 };
 
@@ -145,7 +165,7 @@ const WalletNoFundsContent = () => {
     } else {
       navigate('/');
     }
-  }, [ state, navigate ]);
+  }, [state, navigate]);
 
   const { data: receivedData } = useQuery(QUERY_TXS_BY_RECIPIENT, {
     variables: {
@@ -364,7 +384,7 @@ const SignIn = () => {
     } else {
       // ignore
     }
-  }, [ isConnected ]);
+  }, [isConnected]);
 
   return (
     <Container

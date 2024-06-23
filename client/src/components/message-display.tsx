@@ -112,7 +112,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         message.decData = decrypted;
       } catch (err) {
         const data = JSON.parse(decrypted);
-         if (data['response']) {
+        if (data['response']) {
           setContent(data['response'] as string);
           setType('text');
         } else if (data['prompt']) {
@@ -153,7 +153,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
       <Typography
         sx={{
           fontStyle: 'normal',
-          fontWeight: 400,
+          fontWeight: 500,
           fontSize: '18px',
           lineHeight: '25px',
           display: 'flex',

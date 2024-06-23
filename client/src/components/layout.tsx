@@ -29,17 +29,23 @@ import {
 import Navbar from './navbar';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
 import { MIN_U_BALANCE } from '@/constants';
-import CloseIcon from '@mui/icons-material/Close';
 import { EVMWalletContext } from '@/context/evm-wallet';
+import { StyledMuiButton } from '@/styles/components';
+import { motion } from 'framer-motion';
 
-const WarningMessage = () => {
+// icons
+import CloseIcon from '@mui/icons-material/Close';
+import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
+
+const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const theme = useTheme();
-  const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const handleClose = useCallback(() => {
     setShowWarning(false);
@@ -48,15 +54,76 @@ const WarningMessage = () => {
 
   useEffect(() => setShowWarning(localStorage.getItem('warningClosed') !== 'true'), []);
 
+  const handleSignIn = useCallback(() => navigate('sign-in'), [navigate]);
+
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
       <>
-        <Typography padding={'4px 32px'} sx={{ background: theme.palette.warning.main }}>
-          Wallet Not Connected, some functionalities will not be available.{' '}
-          <Link to={'/sign-in'} state={{ previousPath: pathname }} className='plausible-event-name=Onboarding+Click'>
-            <u>Start onboarding.</u>
-          </Link>
-        </Typography>
+        {!isScrolled && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, minHeight: 0 }}
+            animate={{
+              opacity: 1,
+              height: 'fit-content',
+              minHeight: '80px',
+              transition: { duration: 0.4, type: 'smooth' },
+            }}
+            className='w-fit flex flex-wrap p-4 mx-2 justify-center items-center gap-3 rounded-[30px] bg-slate-500 font-semibold text-white overflow-hidden text-md'
+          >
+            <span className='px-2 flex flex-nowrap gap-3 items-center'>
+              <ErrorRoundedIcon
+                style={{
+                  width: isScrolled ? '18px' : '24px',
+                }}
+              />
+              You don&apos;t have a wallet connected. Some functionalities will not be available
+              until you connect one.
+            </span>
+            <StyledMuiButton
+              className='plausible-event-name=Onboarding+Click primary'
+              onClick={handleSignIn}
+            >
+              <OpenInNewRoundedIcon style={{ width: '22px' }} />
+              Connect a wallet or learn more
+            </StyledMuiButton>
+          </motion.div>
+        )}
+
+        {isScrolled && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, minHeight: 0 }}
+            animate={{
+              opacity: 1,
+              height: 'fit-content',
+              minHeight: '40px',
+              transition: { duration: 0.4, type: 'smooth' },
+            }}
+            className='w-full flex flex-wrap py-2 justify-center items-center gap-3 bg-slate-500 font-semibold text-white overflow-hidden text-sm'
+          >
+            <span className='px-2 flex flex-nowrap gap-3 items-center'>
+              <ErrorRoundedIcon
+                style={{
+                  width: isScrolled ? '18px' : '24px',
+                }}
+              />
+              You don&apos;t have a wallet connected. Some functionalities will not be available
+              until you connect one.
+            </span>
+
+            <StyledMuiButton
+              style={{
+                display: 'flex',
+                gap: '5px',
+                alignItems: 'center',
+              }}
+              className='plausible-event-name=Onboarding+Click primary mini'
+              onClick={handleSignIn}
+            >
+              <OpenInNewRoundedIcon style={{ width: '18px' }} />
+              Connect a wallet or learn more
+            </StyledMuiButton>
+          </motion.div>
+        )}
       </>
     );
   } else if (showWarning && currentAddress && usdcBalance < MIN_U_BALANCE) {
@@ -96,13 +163,13 @@ const WarningMessage = () => {
 
 export default function Layout({ children }: { children: ReactElement }) {
   const [headerHeight, setHeaderHeight] = useState('64px');
-  const scrollableRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowDimensions();
+  const scrollableRef = useRef<HTMLDivElement>(null);
   const { isScrolled } = useScroll(scrollableRef);
   const { pathname } = useLocation();
   const warningRef = useRef<HTMLDivElement>(null);
   const { height: warningHeight } = useComponentDimensions(warningRef);
-  const [ isMobile, setIsMobile ] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const theme = useTheme();
 
   useLayoutEffect(() => {
@@ -115,19 +182,21 @@ export default function Layout({ children }: { children: ReactElement }) {
   useEffect(() => {
     const sm = theme.breakpoints.values.sm;
     setIsMobile(width < sm);
-  }, [ width, theme, setIsMobile ]);
+  }, [width, theme, setIsMobile]);
 
   if (pathname === '/sign-in' || pathname === '/swap') {
     return children;
   }
 
   if (isMobile) {
-    return <>
-      <Navbar isScrolled={isScrolled} />
-      <Box sx={{ height: '100%', display: 'flex', aligItems: 'center'}}>
-        <Typography>{'We currently do not Support Mobile. Stay tuned for updates.'}</Typography>
-      </Box>
-    </>;
+    return (
+      <>
+        <Navbar isScrolled={isScrolled} />
+        <Box sx={{ height: '100%', display: 'flex', aligItems: 'center' }}>
+          <Typography>{'We currently do not Support Mobile. Stay tuned for updates.'}</Typography>
+        </Box>
+      </>
+    );
   }
 
   return (
@@ -144,9 +213,13 @@ export default function Layout({ children }: { children: ReactElement }) {
         maxWidth={false}
       >
         <Box height={`calc(100% - ${warningHeight}px)`}>
-          {(pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse') && (
-            <Box ref={warningRef} id={'warning-box'} sx={{ position: 'relative', zIndex: 1 }}>
-              <WarningMessage />
+          {pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse' && (
+            <Box
+              ref={warningRef}
+              id={'warning-box'}
+              style={{ display: 'flex', justifyContent: 'center' }}
+            >
+              <WarningMessage isScrolled={isScrolled} />
             </Box>
           )}
           <main style={{ height: '100%' }} ref={scrollableRef} id='main'>
