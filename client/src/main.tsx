@@ -63,11 +63,13 @@ const router = createHashRouter([
           },
           {
             path: 'arbitrum',
-            element: <ArbitrumGuard>
-              <TermsAgreement>
-                <Outlet />
-              </TermsAgreement>
-            </ArbitrumGuard>,
+            element: (
+              <ArbitrumGuard>
+                <TermsAgreement>
+                  <Outlet />
+                </TermsAgreement>
+              </ArbitrumGuard>
+            ),
             children: [
               {
                 path: 'ltipp',
@@ -77,9 +79,9 @@ const router = createHashRouter([
                 path: 'stip',
                 element: <Chat />,
               },
-            ]
+            ],
           },
-        ]
+        ],
       },
       {
         path: 'history',
@@ -103,9 +105,7 @@ const router = createHashRouter([
       },
       {
         path: 'request',
-        element: (
-          <RequestSolution />
-        ),
+        element: <RequestSolution />,
       },
     ],
   },

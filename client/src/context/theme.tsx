@@ -5,11 +5,13 @@ declare module '@mui/material/styles' {
   interface Palette {
     terciary: Palette['primary'];
     neutral: Palette['primary'];
+    backdropContrast: Palette['primary'];
   }
   // allow configuration using `createTheme`
   interface PaletteOptions {
     terciary: PaletteOptions['primary'];
     neutral: PaletteOptions['primary'];
+    backdropContrast: Palette['primary'];
   }
 }
 
@@ -93,6 +95,12 @@ const lightTheme = createTheme({
       contrastText: '#223745',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
+    },
+    backdropContrast: {
+      main: 'rgb(70,70,70)',
+      light: 'rgb(70,70,70)',
+      dark: 'rgb(70,70,70)',
+      contrastText: 'rgb(70,70,70)',
     },
     warning: {
       main: '#F4BA61',
@@ -212,6 +220,12 @@ const darkTheme = createTheme({
       contrastText: '#FAFAFA',
       // dark: will be calculated from palette.primary.main,
       // contrastText: will be calculated to contrast with palette.primary.main
+    },
+    backdropContrast: {
+      main: 'rgb(70,70,70)',
+      light: 'rgb(70,70,70)',
+      dark: 'rgb(70,70,70)',
+      contrastText: 'rgb(70,70,70)',
     },
     text: {
       primary: '#223745', // same as rgba(34,55,69,255)

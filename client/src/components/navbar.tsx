@@ -174,7 +174,18 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
     ...(!isScrolled && { boxShadow: 'none' }),
   };
 
-  const handleMenuClick = () => setIsExpanded((prev) => !prev);
+  const handleMenuClick = useCallback(() => setIsExpanded((prev) => !prev), [setIsExpanded]);
+  const handleBrowse = useCallback(() => navigate('browse'), [navigate]);
+  const handleRequest = useCallback(() => navigate('request'), [navigate]);
+  const handleOpenOnArweave = useCallback(() => {
+    // 'https://fairapp.ar-io.dev'
+    const a = document.createElement('a');
+    a.target = '_blank';
+    a.onclick = () => window.open('https://fairapp.ar-io.dev', '_blank');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, []);
 
   return (
     <>
@@ -225,39 +236,25 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
               }}
             >
               {pathname === '/' && (
-                <StyledMuiButton
-                  className='outlined-secondary'
-                  onClick={() => {
-                    navigate('/browse');
-                  }}
-                >
+                <StyledMuiButton className='outlined-secondary' onClick={handleBrowse}>
                   <SearchRoundedIcon style={{ width: '20px' }} />
                   Browse Requests
                 </StyledMuiButton>
               )}
               {pathname === '/' && currentAddress && (
-                <StyledMuiButton
-                  className='outlined-secondary'
-                  onClick={() => {
-                    navigate('/request');
-                  }}
-                >
+                <StyledMuiButton className='outlined-secondary' onClick={handleRequest}>
                   <AddCommentRoundedIcon style={{ width: '20px' }} />
                   Make a Request
                 </StyledMuiButton>
               )}
               {isGetFair && pathname === '/' && (
-                <Link to='https://fairapp.ar-io.dev' className='hidden lg:flex'>
-                  <StyledMuiButton
-                    className='outlined-primary'
-                    onClick={() => {
-                      navigate('/request');
-                    }}
-                  >
-                    <img src='./arweave-small.svg' style={{ width: '20px' }} className='invert' />
-                    Open On Arweave
-                  </StyledMuiButton>
-                </Link>
+                <StyledMuiButton
+                  className='outlined-primary hidden lg:flex'
+                  onClick={handleOpenOnArweave}
+                >
+                  <img src='./arweave-small.svg' style={{ width: '20px' }} className='invert' />
+                  Open On Arweave
+                </StyledMuiButton>
               )}
             </Box>
             <Box

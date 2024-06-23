@@ -102,7 +102,7 @@ export const StyledMaterialDesignContent = styled(MaterialDesignContent)(({ them
   },
 }));
 
-export const StyledMuiButton = styled('button')<ButtonProps>({
+export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
   // base button design
   borderRadius: '30px',
   height: 'min-content',
@@ -134,7 +134,7 @@ export const StyledMuiButton = styled('button')<ButtonProps>({
   },
 
   '&.secondary': {
-    backgroundColor: 'rgb(70,70,70)',
+    backgroundColor: theme.palette.backdropContrast.main,
     color: '#ffffff',
 
     '&:hover': {
@@ -162,17 +162,17 @@ export const StyledMuiButton = styled('button')<ButtonProps>({
   },
 
   '&.outlined-secondary': {
-    color: 'rgb(70,70,70)',
+    color: theme.palette.backdropContrast.main,
     backgroundColor: 'transparent',
     border: '2px solid rgb(70,70,70)',
 
     '&:hover': {
-      backgroundColor: 'rgb(70,70,70)',
+      backgroundColor: theme.palette.backdropContrast.main,
       color: '#ffffff',
     },
 
     '&:focus': {
-      backgroundColor: 'rgb(70,70,70)',
+      backgroundColor: theme.palette.backdropContrast.main,
       color: '#ffffff',
     },
   },
@@ -193,4 +193,4 @@ export const StyledMuiButton = styled('button')<ButtonProps>({
     borderRadius: '20px',
     padding: '2px 10px',
   },
-});
+}));

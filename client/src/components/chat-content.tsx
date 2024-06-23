@@ -109,20 +109,32 @@ const ChatContent = ({
 
   const arbitrumWaitingResponseFragment = useCallback(() => {
     return (
-      <Container
-        maxWidth={false}
-        sx={{ paddingTop: '16px', opacity: '0.8' }}
-      >
-        {(isWaitingResponse && !responseTimeout) && (<div className={'flex w-full gap-4 md:flex-nowrap items-end justify-start flex-wrap-reverse'}>
-          <Card raised={true} className={'transition-all rounded-lg py-2 px-4 w-fit md:max-w-[80%] whitespace-pre-wrap'}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', ':last-child': { paddingBottom: '12px' } }}>
-              <ArbitrumLoadingContainer className='dot-pulse'/>
-            </CardContent>
-          </Card>
-        </div>)}
+      <Container maxWidth={false} sx={{ paddingTop: '16px', opacity: '0.8' }}>
+        {isWaitingResponse && !responseTimeout && (
+          <div
+            className={'flex w-full gap-4 md:flex-nowrap items-end justify-start flex-wrap-reverse'}
+          >
+            <Card
+              raised={true}
+              className={
+                'transition-all rounded-lg py-2 px-4 w-fit md:max-w-[80%] whitespace-pre-wrap'
+              }
+            >
+              <CardContent
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  ':last-child': { paddingBottom: '12px' },
+                }}
+              >
+                <ArbitrumLoadingContainer className='dot-pulse' />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </Container>
     );
-  }, [ isWaitingResponse, responseTimeout ]);
+  }, [isWaitingResponse, responseTimeout]);
 
   const showDayDivider = useCallback(
     (el: IMessage, index: number) => {
@@ -133,11 +145,16 @@ const ChatContent = ({
       return (
         <Box sx={{ mt: '8px' }}>
           {daysDiffer && (
-            <Divider textAlign='center' sx={{
-              '&::before, &::after': {
-                borderTop: forArbitrum ? 'thin solid #9ecced' : `thin solid ${theme.palette.primary.main}`,
-              },
-            }}>
+            <Divider
+              textAlign='center'
+              sx={{
+                '&::before, &::after': {
+                  borderTop: forArbitrum
+                    ? 'thin solid #9ecced'
+                    : `thin solid ${theme.palette.primary.main}`,
+                },
+              }}
+            >
               <Typography
                 sx={{
                   display: 'flex',
@@ -195,12 +212,16 @@ const ChatContent = ({
   } else if (messages.length > 0) {
     return (
       <>
-        <Divider textAlign='center' sx={{
+        <Divider
+          textAlign='center'
+          sx={{
             ml: '24px',
             mr: '24px',
             '&::before, &::after': {
-                borderTop: forArbitrum ? 'thin solid #9ecced' : `thin solid ${theme.palette.primary.main}`,
-            }
+              borderTop: forArbitrum
+                ? 'thin solid #9ecced'
+                : `thin solid ${theme.palette.primary.main}`,
+            },
           }}
         >
           <Typography

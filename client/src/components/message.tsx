@@ -58,6 +58,8 @@ import { ITag } from '@/interfaces/arweave';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import { motion } from 'framer-motion';
 
+const boxShadow = '0px 0px 4px rgba(0,0,0,0.2)';
+
 const MessageHeader = ({
   message,
   copySettings,
@@ -241,7 +243,7 @@ const MessageHeader = ({
             width: 56,
             height: 56,
             border: '3px solid white',
-            boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
+            boxShadow,
           }}
         />
       )}
@@ -373,7 +375,7 @@ const MessageHeader = ({
               alignItems: 'center',
               padding: '3px',
               border: '3px solid white',
-              boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
+              boxShadow,
             }}
           >
             <img src={'./fair-protocol-face-transp-eyes.png'} className='w-full' />
@@ -429,7 +431,7 @@ const Message = ({
                 boxShadow: '0px 0px 4px rgba(0,0,0,0.1)',
                 transition: '0.2s all',
                 '&:hover': {
-                  boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
+                  boxShadow,
                   filter: 'brightness(1.05)',
                 },
               }}

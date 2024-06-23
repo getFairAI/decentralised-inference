@@ -266,7 +266,8 @@ export const BAZAR_ASSETS_LINK = 'https://bazar.ar-io.dev/#/asset/';
 export const RAREWEAVE_ASSET_LIST_LINK = 'https://rareweave.store/nft';
 
 export const CREATE_WALLET_LINK = 'https://metamask.io/';
-export const CREATE_ALTERNATIVE_LINK = 'https://www.alchemy.com/list-of/software-wallets-on-arbitrum';
+export const CREATE_ALTERNATIVE_LINK =
+  'https://www.alchemy.com/list-of/software-wallets-on-arbitrum';
 export const BUY_USDC_LINK = 'https://www.kraken.com/learn/buy-usdc-usdc';
 export const BUY_ARB_LINK = 'https://www.kraken.com/learn/buy-arbitrum-arb';
 
@@ -275,7 +276,6 @@ export const WARP_ASSETS_EXPLORER = 'https://sonar.warp.cc/#/app/contract';
 export const VIEWBLOCK_TXS_EXPLORER = 'https://viewblock.io/arweave/tx';
 
 export const MIN_U_BALANCE = 1;
-
 
 export const LTIPP_SOLUTION = 'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk';
 export const STIP_SOLUTION = 'zq5_Jvd4miO6QDl42XRpPx9iICDe0AVzanvTepJ_s50';

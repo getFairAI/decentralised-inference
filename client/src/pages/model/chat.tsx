@@ -97,6 +97,7 @@ import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
 const RADIX = 10;
+const boxSizing = 'border-box';
 
 const InputField = ({
   file,
@@ -378,7 +379,7 @@ const Chat = () => {
   const [currentPubKey, setCurrentPubKey] = useState('');
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
   const [isLayoverOpen, setLayoverOpen] = useState(false);
-  const [ imgUrl, setImgUrl ] = useState('');
+  const [imgUrl, setImgUrl] = useState('');
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -1329,9 +1330,7 @@ const Chat = () => {
   }, [width, height]);
 
   const handleAdvanced = useCallback(() => {
-    setConfigurationDrawerOpen((previousValue) => {
-      return !previousValue;
-    });
+    setConfigurationDrawerOpen((previousValue) => !previousValue);
   }, [setConfigurationDrawerOpen]);
 
   const handleAdvancedClose = useCallback(() => {
@@ -1359,10 +1358,10 @@ const Chat = () => {
         sx={{
           '& .MuiDrawer-paper': {
             width: '30%',
-            boxSizing: 'border-box',
             top: headerHeight,
             height: `calc(100% - ${headerHeight})`,
             border: 'none',
+            boxSizing,
           },
         }}
       >
@@ -1397,11 +1396,11 @@ const Chat = () => {
             flexShrink: 0,
             '& .MuiDrawer-paper': {
               width: '240px',
-              boxSizing: 'border-box',
               top: headerHeight,
               height: '100%',
               position: 'static',
               border: 'none',
+              boxSizing,
             },
           }}
         >
@@ -1432,7 +1431,7 @@ const Chat = () => {
             }),
             alignItems: 'center',
             padding: '20px',
-            boxSizing: 'border-box',
+            boxSizing,
           }}
         >
           {!drawerOpen && (
@@ -1468,12 +1467,12 @@ const Chat = () => {
               justifyContent: 'flex-end',
               width: '100%',
               height: '100%',
-              boxSizing: 'border-box',
               backgroundColor: '#fff',
               borderRadius: '20px',
               boxShadow: '0px 0px 8px rgba(0,0,0,0.1)',
               overflow: 'hidden',
               position: 'relative',
+              boxSizing,
             }}
           >
             {messagesLoading && (
@@ -1483,7 +1482,7 @@ const Chat = () => {
                   zIndex: theme.zIndex.drawer + 1,
                   backdropFilter: 'blur(20px)',
                   backgroundColor: 'rgba(255,255,255,0.4)',
-                  color: 'rgb(70,70,70)',
+                  color: theme.palette.backdropContrast.main,
                   display: 'flex',
                   gap: 3,
                   left: 0,
@@ -1491,8 +1490,8 @@ const Chat = () => {
                 }}
                 open={true}
               >
-                <CircularProgress sx={{ color: 'rgb(70,70,70)' }} size='2rem' />
-                <Typography variant='h2' color={'rgb(70,70,70)'}>
+                <CircularProgress sx={{ color: theme.palette.backdropContrast.main }} size='2rem' />
+                <Typography variant='h2' color={theme.palette.backdropContrast.main}>
                   Loading messages...
                 </Typography>
               </Backdrop>
@@ -1505,18 +1504,22 @@ const Chat = () => {
               }}
             >
               <div className='flex items-center gap-4'>
-                {imgUrl && <Avatar
-                  variant='rounded'
-                  src={imgUrl}
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    border: '3px solid white',
-                    boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
-                  }}
-                />}
+                {imgUrl && (
+                  <Avatar
+                    variant='rounded'
+                    src={imgUrl}
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      border: '3px solid white',
+                      boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
+                    }}
+                  />
+                )}
                 <div className='flex flex-col'>
-                  <span className='font-bold text-xl'>{findTag(state.solution, 'solutionName')}</span>
+                  <span className='font-bold text-xl'>
+                    {findTag(state.solution, 'solutionName')}
+                  </span>
                   <span className='text-sm text-gray-500'>{state.solution.node.id}</span>
                 </div>
               </div>
@@ -1538,7 +1541,7 @@ const Chat = () => {
                   justifyContent: 'flex-end',
                   backgroundColor: 'transparent !important',
                   boxShadow: 'none !important',
-                  boxSizing: 'border-box',
+                  boxSizing,
                 }}
               >
                 <Zoom in={showLoadMore} timeout={100} mountOnEnter unmountOnExit>
@@ -1597,7 +1600,7 @@ const Chat = () => {
                 marginLeft: '14px',
                 marginBottom: '5px',
                 width: `calc(${inputWidth} - 12px)`,
-                boxSizing: 'border-box',
+                boxSizing,
               }}
             >
               {showOperatorBusy && (
@@ -1660,7 +1663,7 @@ const Chat = () => {
       <Backdrop
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          zIndex: theme.zIndex.drawer + 1,
           backdropFilter: 'blur(10px)',
           backgroundColor: 'rgba(0,0,0,0.15)',
         }}

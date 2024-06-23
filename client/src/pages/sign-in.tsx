@@ -165,7 +165,7 @@ const WalletNoFundsContent = () => {
     } else {
       navigate('/');
     }
-  }, [ state, navigate ]);
+  }, [state, navigate]);
 
   const { data: receivedData } = useQuery(QUERY_TXS_BY_RECIPIENT, {
     variables: {

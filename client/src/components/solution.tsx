@@ -37,7 +37,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ComputerIcon from '@mui/icons-material/Computer';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import useScroll from '@/hooks/useScroll';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import { StyledMuiButton } from '@/styles/components';
 
@@ -61,10 +60,7 @@ const Solution = ({
   const [imgUrl, setImgUrl] = useState('');
   const [isHovering, setIsHovering] = useState(false);
   const mainCardRef = useRef<HTMLDivElement>(null);
-  // const [topOffset, setTopOffset] = useState(0);
-  const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
-  const scrollableRef = useRef(document.getElementById('main'));
-  const { scrollTop } = useScroll(scrollableRef);
+  const { currentAddress } = useContext(EVMWalletContext);
   const { width } = useWindowDimensions();
   const [isMobile, setIsMobile] = useState(false);
   const theme = useTheme();
@@ -90,12 +86,6 @@ const Solution = ({
   }, [width, theme, setIsMobile]);
 
   useEffect(() => {
-    if (mainCardRef.current) {
-      // setTopOffset(mainCardRef.current.offsetTop - scrollTop);
-    }
-  }, [currentAddress, usdcBalance, scrollTop]);
-
-  useEffect(() => {
     if (imageData) {
       const avatarTxId = imageData.transactions.edges[0]?.node.id;
       if (avatarTxId) {
@@ -105,7 +95,6 @@ const Solution = ({
   }, [imageData]);
 
   useEffect(() => {
-    setIsHovering;
     setHasOperators(operatorsData.length > 0);
     setNumOperators(operatorsData.length);
     if (operatorsData.length > 0) {

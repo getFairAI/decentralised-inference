@@ -54,6 +54,8 @@ const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
 
   useEffect(() => setShowWarning(localStorage.getItem('warningClosed') !== 'true'), []);
 
+  const handleSignIn = useCallback(() => navigate('sign-in'), [navigate]);
+
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
       <>
@@ -79,9 +81,7 @@ const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
             </span>
             <StyledMuiButton
               className='plausible-event-name=Onboarding+Click primary'
-              onClick={() => {
-                navigate('/sign-in');
-              }}
+              onClick={handleSignIn}
             >
               <OpenInNewRoundedIcon style={{ width: '22px' }} />
               Connect a wallet or learn more
@@ -117,9 +117,7 @@ const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
                 alignItems: 'center',
               }}
               className='plausible-event-name=Onboarding+Click primary mini'
-              onClick={() => {
-                navigate('/sign-in');
-              }}
+              onClick={handleSignIn}
             >
               <OpenInNewRoundedIcon style={{ width: '18px' }} />
               Connect a wallet or learn more

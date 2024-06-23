@@ -73,6 +73,8 @@ import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRound
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import { motion } from 'framer-motion';
 
+const spaceBetween = 'space-between';
+
 const CustomTag = ({
   name,
   value,
@@ -89,7 +91,7 @@ const CustomTag = ({
       display={'flex'}
       alignItems={'center'}
       gap={'10px'}
-      justifyContent={'space-between'}
+      justifyContent={spaceBetween}
       sx={{
         width: '100%',
         maxWidth: '550px',
@@ -627,7 +629,7 @@ const Configuration = ({
       </div>
 
       <div className='flex flex-col gap-5 h-full min-h-fit'>
-        <Box display={'flex'} gap={'20px'} justifyContent={'space-between'}>
+        <Box display={'flex'} gap={'20px'} justifyContent={spaceBetween}>
           <FormControl fullWidth margin='none'>
             <InputLabel>{'Solution Operator (Provider)'}</InputLabel>
             <Select
@@ -642,7 +644,7 @@ const Configuration = ({
                 <MenuItem
                   key={operator.evmWallet}
                   value={operator.evmWallet}
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: spaceBetween }}
                 >
                   <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
                   <Tooltip title={'Operator Fee'}>
@@ -669,7 +671,7 @@ const Configuration = ({
               '& .MuiInputBase-input': {
                 display: 'flex',
                 gap: '24px',
-                justifyContent: 'space-between',
+                justifyContent: spaceBetween,
               },
             }}
             InputProps={{
@@ -677,27 +679,37 @@ const Configuration = ({
             }}
           />
         </Box>
-        {!isArbitrumSolution && <Box>
-          <SelectControl name={'modelName'} control={control} mat={{ placeholder: 'Model to Use' }}>
-            {availableModels.map((model: { name: string; url: string }) => (
-              <MenuItem
-                key={model.url}
-                value={model.name}
-                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-              >
-                <Typography>{model.name}</Typography>
-              </MenuItem>
-            ))}
-          </SelectControl>
-          {/* <img src='./arweave-logo-for-light.png' height={'18px'} width={'18px'}/> */}
-        </Box>}
+        {!isArbitrumSolution && (
+          <Box>
+            <SelectControl
+              name={'modelName'}
+              control={control}
+              mat={{ placeholder: 'Model to Use' }}
+            >
+              {availableModels.map((model: { name: string; url: string }) => (
+                <MenuItem
+                  key={model.url}
+                  value={model.name}
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: spaceBetween }}
+                >
+                  <Typography>{model.name}</Typography>
+                </MenuItem>
+              ))}
+            </SelectControl>
+            {/* <img src='./arweave-logo-for-light.png' height={'18px'} width={'18px'}/> */}
+          </Box>
+        )}
         <StableDiffusionConfigurations control={control} fee={currentOperator?.operatorFee ?? 0} />
-        {!isArbitrumSolution && <Box>
-          <Divider textAlign='left' variant='fullWidth'>
-            <Typography variant='h4'>Transaction Configurations</Typography>
-          </Divider>
-        </Box>}
-        {!isArbitrumSolution && isTextSolution && <TextConfiguration messages={messages} control={control} />}
+        {!isArbitrumSolution && (
+          <Box>
+            <Divider textAlign='left' variant='fullWidth'>
+              <Typography variant='h4'>Transaction Configurations</Typography>
+            </Divider>
+          </Box>
+        )}
+        {!isArbitrumSolution && isTextSolution && (
+          <TextConfiguration messages={messages} control={control} />
+        )}
         <FormControl component='fieldset' variant='standard'>
           <FormControlLabel
             control={
@@ -726,72 +738,82 @@ const Configuration = ({
             }
           />
         </FormControl>
-        {!isArbitrumSolution && <>
-          
-          <SelectControl
-            name='generateAssets'
-            control={control}
-            mat={{ label: 'Arweave Asset (NFT) Options', placeholder: 'Arweave Asset (NFT) Options' }}
-            defaultValue={'none'}
-          >
-            <MenuItem value='none'>Do not mint</MenuItem>
-            <MenuItem value='fair-protocol'>Fair Protocol NFT</MenuItem>
-            <MenuItem value='rareweave'>Rareweave NFT</MenuItem>
-          </SelectControl>
-          <TextField
-            value={assetNamesField.value}
-            onChange={assetNamesField.onChange}
-            inputRef={assetNamesField.ref}
-            label={'Atomic Asset Name(s)'}
-            multiline
-            minRows={1}
-            maxRows={3}
-            error={isAssetNamesDirty && hasAssetNameError}
-            onBlur={assetNamesField.onBlur}
-            className='plausible-event-name=Atomic+Asset+Name+Changed'
-          />
-          <TextField
-            label={'Description'}
-            value={descriptionField.value}
-            onChange={descriptionField.onChange}
-            inputRef={descriptionField.ref}
-            onBlur={descriptionField.onBlur}
-            multiline
-            minRows={1}
-            maxRows={3}
-            fullWidth
-            className='plausible-event-name=Description+Changed'
-          />
-          <LicenseConfiguration configControl={control as unknown as Control<FieldValues>} />
-          <Box>
-            <Divider textAlign='left' variant='fullWidth'>
-              <Typography variant='h4'>Custom Tags</Typography>
-            </Divider>
-          </Box>
-          <Box display={'flex'} gap={'20px'} alignItems={'center'}>
-            <TextField inputRef={nameRef} label={'Tag Name'} />
-            <TextField inputRef={valueRef} label={'Tag Value'} multiline minRows={1} maxRows={5} />
-            <StyledMuiButton
-              onClick={handleAdd}
-              className='plausible-event-name=Custom+Tag+Added outlined-secondary mini'
-            >
-              <AddIcon />
-            </StyledMuiButton>
-          </Box>
-          {customTags.map(({ name, value }) => (
-            <motion.div
-              initial={{ opacity: 0, y: '-60px' }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                transition: { duration: 0.6, type: 'spring', bounce: 0.4 },
+        {!isArbitrumSolution && (
+          <>
+            <SelectControl
+              name='generateAssets'
+              control={control}
+              mat={{
+                label: 'Arweave Asset (NFT) Options',
+                placeholder: 'Arweave Asset (NFT) Options',
               }}
-              key={name}
+              defaultValue={'none'}
             >
-              <CustomTag key={name} name={name} value={value} handleRemove={handleRemove} />
-            </motion.div>
-          ))}
-        </>}
+              <MenuItem value='none'>Do not mint</MenuItem>
+              <MenuItem value='fair-protocol'>Fair Protocol NFT</MenuItem>
+              <MenuItem value='rareweave'>Rareweave NFT</MenuItem>
+            </SelectControl>
+            <TextField
+              value={assetNamesField.value}
+              onChange={assetNamesField.onChange}
+              inputRef={assetNamesField.ref}
+              label={'Atomic Asset Name(s)'}
+              multiline
+              minRows={1}
+              maxRows={3}
+              error={isAssetNamesDirty && hasAssetNameError}
+              onBlur={assetNamesField.onBlur}
+              className='plausible-event-name=Atomic+Asset+Name+Changed'
+            />
+            <TextField
+              label={'Description'}
+              value={descriptionField.value}
+              onChange={descriptionField.onChange}
+              inputRef={descriptionField.ref}
+              onBlur={descriptionField.onBlur}
+              multiline
+              minRows={1}
+              maxRows={3}
+              fullWidth
+              className='plausible-event-name=Description+Changed'
+            />
+            <LicenseConfiguration configControl={control as unknown as Control<FieldValues>} />
+            <Box>
+              <Divider textAlign='left' variant='fullWidth'>
+                <Typography variant='h4'>Custom Tags</Typography>
+              </Divider>
+            </Box>
+            <Box display={'flex'} gap={'20px'} alignItems={'center'}>
+              <TextField inputRef={nameRef} label={'Tag Name'} />
+              <TextField
+                inputRef={valueRef}
+                label={'Tag Value'}
+                multiline
+                minRows={1}
+                maxRows={5}
+              />
+              <StyledMuiButton
+                onClick={handleAdd}
+                className='plausible-event-name=Custom+Tag+Added outlined-secondary mini'
+              >
+                <AddIcon />
+              </StyledMuiButton>
+            </Box>
+            {customTags.map(({ name, value }) => (
+              <motion.div
+                initial={{ opacity: 0, y: '-60px' }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  transition: { duration: 0.6, type: 'spring', bounce: 0.4 },
+                }}
+                key={name}
+              >
+                <CustomTag key={name} name={name} value={value} handleRemove={handleRemove} />
+              </motion.div>
+            ))}
+          </>
+        )}
 
         <Box>
           <Divider textAlign='left' variant='fullWidth'></Divider>

@@ -76,7 +76,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
   const owners = useMemo(() => txs.map((tx) => tx.node.owner.address), [txs]);
   const solutionIds = useMemo(() => solutions.map((solution) => solution.node.id), [solutions]);
 
-/*   const { currentAddress } = useContext(EVMWalletContext); */
+  /*   const { currentAddress } = useContext(EVMWalletContext); */
 
   const elementsPerPage = 100;
 
@@ -92,7 +92,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
         ],
         first: elementsPerPage,
       },
-      skip: !solutionIds /* || !currentAddress, // skip if no address as well because the operators validation require a evm connection */
+      skip: !solutionIds /* || !currentAddress, // skip if no address as well because the operators validation require a evm connection */,
     },
   );
 
