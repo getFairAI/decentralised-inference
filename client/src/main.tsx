@@ -34,7 +34,6 @@ import RequestSolution from './pages/request-solution';
 import BrowseRequests from './pages/browse-requests';
 
 import '@/index.css';
-import ArbitrumChat from './pages/arbitrum-chat';
 import ArbitrumGuard from './guards/arbitrum';
 
 const router = createHashRouter([
@@ -72,11 +71,11 @@ const router = createHashRouter([
             children: [
               {
                 path: 'ltipp',
-                element: <ArbitrumChat />,
+                element: <Chat />,
               },
               {
                 path: 'stip',
-                element: <ArbitrumChat />,
+                element: <Chat />,
               },
             ]
           },

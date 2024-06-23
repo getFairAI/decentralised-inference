@@ -57,18 +57,18 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
       sx={{
         position: 'absolute',
         zIndex: theme.zIndex.drawer + 1,
-        backdropFilter: 'blur(50px)',
+        backdropFilter: 'blur(20px)',
         display: 'flex',
-        flexDirection: 'column',
         left: '0px',
         right: '0px',
+        gap: 3,
       }}
       open={true}
     >
-      <Typography variant='h1' fontWeight={500} color={'#9ecced'}>
-        Finding Available Providers...
+      <CircularProgress sx={{ color: 'rgb(70,70,70)' }} size='2rem' />
+      <Typography variant='h2' color={'rgb(70,70,70)'}>
+        Fetching Data...
       </Typography>
-      <CircularProgress sx={{ color: '#9ecced' }} size='6rem' />
     </Backdrop>;
   } else {
     return children;
