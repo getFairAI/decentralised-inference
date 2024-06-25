@@ -193,4 +193,22 @@ export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
     borderRadius: '20px',
     padding: '2px 10px',
   },
+
+  '&.fully-rounded': {
+    minHeight: 'fit-content',
+    borderRadius: '50%',
+    width: '45px',
+    height: '45px',
+    padding: '0px',
+
+    '&.mini': {
+      width: '30px',
+      height: '30px',
+    },
+  },
+
+  '&:disabled': {
+    opacity: '0.5 !important',
+    'pointer-events': 'none',
+  },
 }));

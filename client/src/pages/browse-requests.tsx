@@ -23,25 +23,26 @@ import Close from '@mui/icons-material/Close';
 import {
   Card,
   Box,
-  CardHeader,
   CardContent,
   Chip,
   Typography,
   CardActionArea,
   DialogTitle,
-  IconButton,
   DialogContent,
-  Divider,
   Modal,
   Paper,
   TextField,
   Fab,
+  Tooltip,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
 import { ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { postOnArweave } from '@fairai/evm-sdk';
+import { motion } from 'framer-motion';
+import { StyledMuiButton } from '@/styles/components';
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 
 interface IrysTx {
   id: string;
@@ -88,24 +89,36 @@ interface Comment {
   content: string;
 }
 
-const CommentElement = ({ comment }: { comment: Comment }) => {
+const CommentElement = ({ comment, request }: { comment: Comment; request: RequestData }) => {
   const handleAddressClick = useCallback(() => {
     window.open(`https://arbiscan.io/address/${comment.owner}`, '_blank');
   }, [comment]);
 
   return (
-    <Box key={comment.timestamp} display={'flex'} flexDirection={'column'} gap={'8px'}>
-      <Typography variant='caption'>
-        {'By '}
-        <a style={{ cursor: 'pointer' }} onClick={handleAddressClick}>
-          <u>
-            {comment.owner.slice(0, 6)}...{comment.owner.slice(-4)}
-          </u>
-        </a>
-        {` on ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`}
-      </Typography>
-      <Typography>{comment.content}</Typography>
-    </Box>
+    <div className='rounded-xl bg-white py-5 px-6'>
+      <Box key={comment.timestamp} display={'flex'} flexDirection={'column'} gap={'8px'}>
+        <div className='flex gap-2 items-center'>
+          <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: '16px' }} />{' '}
+          <Typography variant='caption'>
+            {'Commented by '}
+            <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
+              <u>
+                {comment.owner.slice(0, 6)}...{comment.owner.slice(-4)}
+              </u>
+            </a>
+            {` on ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`}
+          </Typography>
+          {comment.owner === request.owner && (
+            <Tooltip title={'Original Poster. User that created this request.'}>
+              <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs'>
+                Request Creator
+              </div>
+            </Tooltip>
+          )}
+        </div>
+        <div className='font-medium'>{comment.content}</div>
+      </Box>
+    </div>
   );
 };
 
@@ -188,123 +201,186 @@ const RequestElement = ({ request }: { request: RequestData }) => {
 
   return (
     <>
-      <Modal open={open}>
+      <Modal
+        open={open}
+        sx={{
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100%',
+          maxWidth: '100vw !important',
+        }}
+      >
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            width: '100%',
+            maxWidth: '1200px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: '12px',
             justifyContent: 'center',
             alignItems: 'center',
+            padding: '20px',
+            boxSizing: 'border-box',
           }}
         >
-          <Paper>
-            <Box>
-              <DialogTitle
-                display='flex'
-                justifyContent={'flex-end'}
-                alignItems='flex-start'
-                lineHeight={0}
-              >
-                <Box display={'flex'} flexDirection={'column'} width={'100%'}>
-                  <Typography fontWeight={600}>{request.title}</Typography>
-                  <Typography variant='caption'>
-                    {`Created ${new Date(Number(request.timestamp) * 1000).toLocaleString()} By `}
-                    <a style={{ cursor: 'pointer' }} onClick={handleAddressClick}>
-                      <u>
-                        {request.owner.slice(0, 6)}...{request.owner.slice(-4)}
-                      </u>
-                    </a>
-                  </Typography>
-                </Box>
+          <motion.div
+            initial={{ opacity: 0, y: '-40px' }}
+            animate={{ opacity: 1, y: 0 }}
+            className='w-full'
+          >
+            <Paper sx={{ padding: '10px', width: '100%' }}>
+              <Box>
+                <DialogTitle display='flex' justifyContent={'flex-end'} alignItems='flex-start'>
+                  <Box display={'flex'} flexDirection={'column'} width={'100%'} marginRight={'5px'}>
+                    <Typography fontWeight={600} fontSize={'200%'}>
+                      {request.title}
+                    </Typography>
+                    <Typography variant='caption'>
+                      {`Created on ${new Date(
+                        Number(request.timestamp) * 1000,
+                      ).toLocaleString()} by `}
+                      <a
+                        style={{ cursor: 'pointer', color: '#3aaaaa' }}
+                        onClick={handleAddressClick}
+                      >
+                        <u>
+                          {request.owner.slice(0, 6)}...{request.owner.slice(-4)}
+                        </u>
+                      </a>
+                    </Typography>
+                  </Box>
 
-                <IconButton
-                  onClick={handleClose}
-                  size='small'
-                  sx={{
-                    borderRadius: '10px',
-                  }}
-                  className='plausible-event-name=Close+Model+Click'
-                >
-                  <Close />
-                </IconButton>
-              </DialogTitle>
-              <DialogContent>
-                <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
-                  <Typography component={'pre'}>{request.description}</Typography>
-                  <Box display={'flex'} justifyContent={'flex-end'} gap={'8px'}>
-                    {request.keywords.map((keyword) => (
-                      <Chip key={keyword} label={keyword} variant='outlined' />
+                  <StyledMuiButton
+                    onClick={handleClose}
+                    className='plausible-event-name=Close+Model+Click secondary fully-rounded'
+                  >
+                    <Close />
+                  </StyledMuiButton>
+                </DialogTitle>
+                <DialogContent>
+                  <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
+                    <span className='whitespace-pre-wrap text-lg font-medium'>
+                      {request.description}
+                    </span>
+                    <Box display={'flex'} justifyContent={'flex-end'} gap={'8px'}>
+                      {request.keywords.map((keyword) => (
+                        <Chip
+                          key={keyword}
+                          label={keyword}
+                          variant='filled'
+                          color='primary'
+                          className='font-bold saturate-50'
+                        />
+                      ))}
+                    </Box>
+                    <div className='w-full px-2 font-semibold'>Comments</div>
+                    {comments.length === 0 && (
+                      <Typography
+                        width={'100%'}
+                        display={'flex'}
+                        justifyContent={'center'}
+                        fontWeight={600}
+                        className='bg-white rounded-lg py-3'
+                      >
+                        {'No comments yet.'}
+                      </Typography>
+                    )}
+                    {comments.map((comment) => (
+                      <CommentElement key={comment.timestamp} comment={comment} request={request} />
                     ))}
                   </Box>
-                  <Divider textAlign='left'>
-                    <Typography>{'Comments'}</Typography>
-                  </Divider>
-                  {comments.length === 0 && (
-                    <Typography width={'100%'} display={'flex'} justifyContent={'center'}>
-                      {'No Comments Yet'}
-                    </Typography>
-                  )}
-                  {comments.map((comment) => (
-                    <CommentElement key={comment.timestamp} comment={comment} />
-                  ))}
-                </Box>
-              </DialogContent>
-            </Box>
-          </Paper>
-          {currentAddress && (
-            <Paper sx={{ width: '100%', padding: '8px 16px 8px 32px' }}>
-              <TextField
-                placeholder='New Comment'
-                variant='standard'
-                fullWidth
-                value={newComment}
-                onChange={handleCommentChange}
-                InputProps={{
-                  sx: {
-                    ':before': {
-                      borderBottom: 'none',
-                    },
-                    ':after': {
-                      borderBottom: 'none',
-                    },
-                    ':hover:not(.Mui-disabled .Mui-error):before': {
-                      borderBottom: 'none',
-                    },
-                  },
-                  endAdornment: (
-                    <DebounceIconButton
-                      onClick={handleNewComment}
-                      className='plausible-event-name=Request+Comment+Click'
-                    >
-                      <SendIcon />
-                    </DebounceIconButton>
-                  ),
-                }}
-              />
+                </DialogContent>
+              </Box>
+
+              {currentAddress && (
+                <motion.div
+                  className='w-full justify-center'
+                  initial={{ opacity: 0, y: '-40px' }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
+                >
+                  <div className='w-full px-6 pt-3 pb-6'>
+                    <TextField
+                      placeholder='Add a new comment'
+                      variant='outlined'
+                      fullWidth
+                      value={newComment}
+                      onChange={handleCommentChange}
+                      sx={{
+                        bgcolor: 'white',
+                        borderRadius: '8px',
+                      }}
+                      InputProps={{
+                        sx: {
+                          ':before': {
+                            borderBottom: 'none',
+                          },
+                          ':after': {
+                            borderBottom: 'none',
+                          },
+                          ':hover:not(.Mui-disabled .Mui-error):before': {
+                            borderBottom: 'none',
+                          },
+                        },
+                        endAdornment: (
+                          <DebounceIconButton
+                            onClick={handleNewComment}
+                            className='plausible-event-name=Request+Comment+Click'
+                          >
+                            <SendIcon style={{ color: '#3aaaaa' }} />
+                          </DebounceIconButton>
+                        ),
+                      }}
+                    />
+                  </div>
+                </motion.div>
+              )}
             </Paper>
-          )}
+          </motion.div>
         </Box>
       </Modal>
+
       <Grid xs={12} md={6} lg={4} key={request.id} sx={{ display: 'flex', alignItems: 'center' }}>
-        <Card raised={true}>
+        <Card raised={true} elevation={1} sx={{ backgroundColor: '#ffffff !important' }}>
           <CardActionArea onClick={handleOpen}>
-            <CardHeader title={request.title} />
+            <div
+              className='flex flex-col gap-1'
+              style={{ fontWeight: 600, padding: '10px 15px', fontSize: '18px', marginTop: '5px' }}
+            >
+              {request.title}
+
+              <Typography variant='caption'>
+                {`${new Date(Number(request.timestamp) * 1000).toLocaleString()} by `}
+                <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
+                  <u>
+                    {request.owner.slice(0, 6)}...{request.owner.slice(-4)}
+                  </u>
+                </a>
+              </Typography>
+            </div>
             <CardContent>
               <Typography
                 sx={{
                   WebkitLineClamp: 3,
+                  paddingBottom: '20px',
+                  fontWeight: 400,
                 }}
               >
                 {request.description}
               </Typography>
-              <Box display={'flex'} justifyContent={'flex-end'} gap={'8px'}>
+              <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'} gap={'5px'}>
+                <span className='font-bold mr-2 flex-auto' style={{ fontSize: '14px' }}>
+                  {comments.length} {comments.length === 1 ? ' comment' : ' comments'}
+                </span>
                 {request.keywords.map((keyword) => (
-                  <Chip key={keyword} label={keyword} variant='outlined' />
+                  <Chip
+                    key={keyword}
+                    label={keyword}
+                    variant='filled'
+                    color='primary'
+                    className='font-bold saturate-50'
+                  />
                 ))}
               </Box>
             </CardContent>
@@ -352,39 +428,77 @@ const BrowseRequests = () => {
     })();
   }, [data]);
 
-  if (loading) {
-    return (
-      <Box display={'flex'} justifyContent={'center'} alignItems={'center'} height={'20%'}>
-        <Typography>{'Loading...'}</Typography>
-      </Box>
-    );
-  }
-
-  if (requests.length === 0) {
-    return (
-      <Box display={'flex'} justifyContent={'center'} alignItems={'center'} height={'20%'}>
-        <Typography>{'No Requests Found'}</Typography>
-      </Box>
-    );
-  }
-
   return (
-    <Box margin={'16px'}>
-      <Grid container spacing={8}>
-        {requests.map((req) => (
-          <RequestElement key={req.id} request={req} />
-        ))}
-        <Fab
-          sx={{
-            /* widht: '20px', height: '20px', */ position: 'absolute',
-            bottom: '30px',
-            right: '30px',
-          }}
-        >
-          <img src='./chevron-bottom.svg' />
-        </Fab>
-      </Grid>
-    </Box>
+    <>
+      <div className='bg-[#EDEDED] h-full w-full fixed -z-10'></div>
+
+      <motion.div
+        initial={{ opacity: 0, y: '-40px' }}
+        animate={{ opacity: 1, y: 0, transition: { duration: 0.3, type: 'smooth' } }}
+      >
+        <div className='w-full flex justify-center'>
+          <div className='w-full max-w-[1600px] px-10 mt-10 flex flex-wrap justify-between items-center font-bold gap-3'>
+            <div className='gap-3 flex justify-center items-center text-3xl'>
+              <img
+                src='./fair-protocol-face-primarycolor.png'
+                style={{ width: 40, marginTop: 5 }}
+              />
+              Current Feature Requests
+            </div>
+            <a href='#/'>
+              <StyledMuiButton className='secondary whitespace-nowrap'>
+                <ArrowBackIosNewRoundedIcon />
+                Go Back
+              </StyledMuiButton>
+            </a>
+          </div>
+        </div>
+
+        {loading && (
+          <Box display={'flex'} justifyContent={'center'} alignItems={'center'} marginTop={'30px'}>
+            <Typography sx={{ fontWeight: 600, fontSize: '120%' }}>
+              {'Loading requests...'}
+            </Typography>
+          </Box>
+        )}
+
+        {requests.length === 0 && !loading && (
+          <Box display={'flex'} justifyContent={'center'} alignItems={'center'} marginTop={'30px'}>
+            <Typography sx={{ fontWeight: 600, fontSize: '120%' }}>
+              {'No requests found.'}
+            </Typography>
+          </Box>
+        )}
+
+        {requests.length > 0 && !loading && (
+          <motion.div
+            initial={{ opacity: 0, y: '-40px' }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.3, type: 'smooth' } }}
+          >
+            <Box>
+              <div className='flex justify-center items-center'>
+                <div className='flex flex-wrap gap-10 w-full max-w-[1600px] p-10'>
+                  {requests.map((req) => (
+                    <div style={{ flex: '1 1 500px' }} key={req.id}>
+                      <RequestElement request={req} />
+                    </div>
+                  ))}
+                  <Fab
+                    sx={{
+                      /* widht: '20px', height: '20px', */ position: 'absolute',
+                      bottom: '30px',
+                      right: '30px',
+                    }}
+                  >
+                    <img src='./chevron-bottom.svg' />
+                  </Fab>
+                </div>
+              </div>
+            </Box>
+          </motion.div>
+        )}
+      </motion.div>
+    </>
   );
 };
 

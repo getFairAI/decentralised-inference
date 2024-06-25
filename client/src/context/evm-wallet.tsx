@@ -46,6 +46,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useEvmProviders } from '@/hooks/useEvmProviders';
 import { EIP6963ProviderDetail, ExtendedEIP1193Provider } from '@/interfaces/evm';
 import { ConfigurationValues } from '@/interfaces/common';
+import { enqueueSnackbar } from 'notistack';
 
 type WalletConnectedAction = {
   type: 'wallet_connected';
@@ -178,6 +179,10 @@ const asyncEvmWalletconnect = async (
     }
   } catch (error) {
     console.error('Error connecting wallet', error);
+    enqueueSnackbar(
+      'We were unable to contact your wallet. Check if you are logged into your wallet or if there any pending requests on it.',
+      { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+    );
   }
 };
 

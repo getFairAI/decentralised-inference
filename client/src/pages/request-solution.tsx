@@ -16,15 +16,17 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import DebounceButton from '@/components/debounce-button';
 import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
+import { StyledMuiButton } from '@/styles/components';
 import { postOnArweave } from '@fairai/evm-sdk';
 import Close from '@mui/icons-material/Close';
-import { Box, Button, Chip, IconButton, TextField, Typography } from '@mui/material';
+import { Box, Button, Chip, TextField, Typography } from '@mui/material';
+import { motion } from 'framer-motion';
 import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
 import { UseFormSetValue, useController, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 
 const Keyword = ({
   currentKeyword,
@@ -139,114 +141,135 @@ const RequestSolution = () => {
   }
 
   return (
-    <Box
-      height={'100%'}
-      display={'flex'}
-      flexDirection={'column'}
-      gap={'24px'}
-      justifyContent={'center'}
-      alignItems={'center'}
-      overflow={'auto'}
+    <motion.div
+      initial={{ opacity: 0, y: '-40px' }}
+      animate={{ opacity: 1, y: 0, transition: { type: 'smooth', duration: 0.3 } }}
+      className='w-full flex justify-center mt-20'
     >
-      <Box display={'flex'} justifyContent={'flex-end'} gap={'16px'} width={'65%'}>
-        <IconButton
-          onClick={handleBack}
-          sx={{
-            borderRadius: '10px',
-          }}
-          className='plausible-event-name=Close+Onboarding+Click'
+      <Box
+        height={'100%'}
+        display={'flex'}
+        flexDirection={'column'}
+        gap={'24px'}
+        justifyContent={'center'}
+        alignItems={'center'}
+        overflow={'auto'}
+        width={'100%'}
+        maxWidth={'1600px'}
+      >
+        <Box display={'flex'} justifyContent={'flex-end'} gap={'16px'} width={'65%'}>
+          <StyledMuiButton
+            onClick={handleBack}
+            className='plausible-event-name=Close+Onboarding+Click outlined-secondary fully-rounded'
+          >
+            <Close />
+          </StyledMuiButton>
+        </Box>
+        <div className='flex gap-3 py-5'>
+          <img
+            src='./fair-protocol-face-primarycolor.png'
+            style={{ width: '40px', objectFit: 'contain' }}
+          />
+          <Typography variant='h2'>Tell us about your needs</Typography>
+        </div>
+        <Box
+          display={'flex'}
+          flexDirection={'column'}
+          justifyContent={'center'}
+          alignItems={'center'}
+          gap={'16px'}
+          width={'65%'}
         >
-          <Close />
-        </IconButton>
-      </Box>
-      <Typography variant='h1'>Tell us about your needs</Typography>
-      <Box
-        display={'flex'}
-        flexDirection={'column'}
-        justifyContent={'center'}
-        alignItems={'center'}
-        gap={'16px'}
-        width={'65%'}
-      >
-        <Typography textAlign={'left'} width={'100%'}>
-          Please Provide a short sentence that describes your problem
-        </Typography>
-        <TextField
-          value={title.value}
-          onChange={title.onChange}
-          inputRef={title.ref}
-          onBlur={title.onBlur}
-          fullWidth
-          variant='outlined'
-        />
-      </Box>
-      <Box
-        display={'flex'}
-        flexDirection={'column'}
-        justifyContent={'center'}
-        alignItems={'center'}
-        gap={'16px'}
-        width={'65%'}
-      >
-        <Typography textAlign={'left'} width={'100%'}>
-          Please Provide A detailed Description of your problem
-        </Typography>
-        <TextField
-          value={description.value}
-          onChange={description.onChange}
-          inputRef={description.ref}
-          onBlur={description.onBlur}
-          multiline
-          minRows={7}
-          fullWidth
-          variant='outlined'
-        />
-      </Box>
-      <Box
-        display={'flex'}
-        flexDirection={'column'}
-        justifyContent={'center'}
-        alignItems={'center'}
-        gap={'16px'}
-        width={'65%'}
-      >
-        <Typography textAlign={'left'} width={'100%'}>
-          Add Keywords
-        </Typography>
-        <TextField
-          fullWidth
-          multiline
-          variant='outlined'
-          value={newKeyword}
-          onChange={handleNewKeywordChanged}
-          onKeyDown={keyDownHandler}
-          InputProps={{
-            startAdornment: (
-              <Box display={'flex'} flexWrap='wrap' gap={'8px'} paddingRight={'8px'}>
-                {keywords.map((keyword) => (
-                  <Keyword
-                    key={keyword}
-                    currentKeyword={keyword}
-                    keywords={keywords}
-                    setValue={setValue}
-                  />
-                ))}
-              </Box>
-            ),
-          }}
-        />
-      </Box>
-      <Box display={'flex'} justifyContent={'flex-end'} gap={'16px'} width={'65%'}>
-        <DebounceButton
-          variant='contained'
-          onClick={handleSubmit(handleClick)}
-          className='plausible-event-name=Submit+Request+Click'
-          disabled={!formState.isDirty || !formState.isValid || formState.isSubmitted}
+          <Typography textAlign={'left'} width={'100%'} fontWeight={500}>
+            Please provide a short sentence that describes your problem
+          </Typography>
+          <TextField
+            value={title.value}
+            onChange={title.onChange}
+            inputRef={title.ref}
+            onBlur={title.onBlur}
+            fullWidth
+            variant='outlined'
+            sx={{ backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px' }}
+          />
+        </Box>
+        <Box
+          display={'flex'}
+          flexDirection={'column'}
+          justifyContent={'center'}
+          alignItems={'center'}
+          gap={'16px'}
+          width={'65%'}
         >
-          <Typography>Submit</Typography>
-        </DebounceButton>
+          <Typography textAlign={'left'} width={'100%'} fontWeight={500}>
+            Please provide a detailed description of your problem
+          </Typography>
+          <TextField
+            value={description.value}
+            onChange={description.onChange}
+            inputRef={description.ref}
+            onBlur={description.onBlur}
+            multiline
+            minRows={7}
+            fullWidth
+            variant='outlined'
+            sx={{ backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px' }}
+          />
+        </Box>
+        <Box
+          display={'flex'}
+          flexDirection={'column'}
+          justifyContent={'center'}
+          alignItems={'center'}
+          gap={'16px'}
+          width={'65%'}
+        >
+          <Typography textAlign={'left'} width={'100%'} fontWeight={500}>
+            Add a few keywords
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            variant='outlined'
+            value={newKeyword}
+            onChange={handleNewKeywordChanged}
+            onKeyDown={keyDownHandler}
+            sx={{ backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px' }}
+            InputProps={{
+              startAdornment: (
+                <Box display={'flex'} flexWrap='wrap' gap={'8px'} paddingRight={'8px'}>
+                  {keywords.map((keyword) => (
+                    <Keyword
+                      key={keyword}
+                      currentKeyword={keyword}
+                      keywords={keywords}
+                      setValue={setValue}
+                    />
+                  ))}
+                </Box>
+              ),
+            }}
+          />
+        </Box>
+        <Box display={'flex'} justifyContent={'flex-end'} gap={'16px'} width={'65%'}>
+          <StyledMuiButton
+            onClick={handleSubmit(handleClick)}
+            className='plausible-event-name=Submit+Request+Click secondary'
+          >
+            <Close />
+            Cancel
+          </StyledMuiButton>
+          <StyledMuiButton
+            onClick={handleSubmit(handleClick)}
+            className='plausible-event-name=Submit+Request+Click primary'
+            disabled={!formState.isDirty || !formState.isValid || formState.isSubmitted}
+          >
+            <CheckRoundedIcon />
+            Save and Submit
+          </StyledMuiButton>
+        </Box>
       </Box>
-    </Box>
+    </motion.div>
   );
 };
 

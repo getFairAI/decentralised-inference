@@ -192,8 +192,19 @@ export default function Layout({ children }: { children: ReactElement }) {
     return (
       <>
         <Navbar isScrolled={isScrolled} />
-        <Box sx={{ height: '100%', display: 'flex', aligItems: 'center' }}>
-          <Typography>{'We currently do not Support Mobile. Stay tuned for updates.'}</Typography>
+        <Box
+          sx={{
+            height: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '40px 20px 10px 20px',
+          }}
+        >
+          <Typography sx={{ fontWeight: 600, fontSize: '120%' }}>
+            {
+              'We currently do not support mobile, but we are working on it! Stay tuned with our blog and socials for updates.'
+            }
+          </Typography>
         </Box>
       </>
     );
