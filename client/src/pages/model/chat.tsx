@@ -1525,9 +1525,9 @@ const Chat = () => {
               </div>
               <a href='#/'>
                 <Tooltip title={'Close this solution and go back to the homepage'}>
-                  <StyledMuiButton className='secondary'>
+                  <StyledMuiButton className='outlined-secondary'>
                     <CancelRoundedIcon />
-                    Exit Solution
+                    Close Solution
                   </StyledMuiButton>
                 </Tooltip>
               </a>
