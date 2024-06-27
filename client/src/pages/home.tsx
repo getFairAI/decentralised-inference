@@ -116,7 +116,7 @@ export default function Home() {
         {error && <Typography>Error: {error.message}</Typography>}
 
         <motion.div
-          initial={{ y: '-20px', opacity: 0 }}
+          initial={{ y: '-40px', opacity: 0 }}
           animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
           className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
         >
@@ -130,7 +130,7 @@ export default function Home() {
           {filteredTxs.map((tx) => (
             <Grid item key={tx.node.id}>
               <motion.div
-                initial={{ y: '-20px', opacity: 0 }}
+                initial={{ y: '-40px', opacity: 0 }}
                 animate={{ y: 0, opacity: 1, transition: { duration: 0.4 } }}
               >
                 <Solution

@@ -1523,11 +1523,11 @@ const Chat = () => {
                   <span className='text-sm text-gray-500'>{state.solution.node.id}</span>
                 </div>
               </div>
-              <a href='../'>
+              <a href='#/'>
                 <Tooltip title={'Close this solution and go back to the homepage'}>
-                  <StyledMuiButton className='secondary'>
+                  <StyledMuiButton className='outlined-secondary'>
                     <CancelRoundedIcon />
-                    Exit Solution
+                    Close Solution
                   </StyledMuiButton>
                 </Tooltip>
               </a>

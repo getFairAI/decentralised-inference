@@ -179,6 +179,7 @@ const Solution = ({
       initial={false}
       onHoverStart={handleHoverStart}
       onHoverEnd={handleHoverEnd}
+      onTap={handleHoverStart}
       style={{
         height: '400px',
         backgroundColor: 'white',
