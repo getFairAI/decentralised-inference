@@ -64,7 +64,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
         sx={{
           position: 'absolute',
           zIndex: theme.zIndex.drawer + 1,
-          backdropFilter: 'blur(20px)',
+          backdropFilter: 'blur(10px)',
           display: 'flex',
           left: '0px',
           right: '0px',
@@ -72,8 +72,8 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
         }}
         open={true}
       >
-        <CircularProgress sx={{ color: 'rgb(70,70,70)' }} size='2rem' />
-        <Typography variant='h2' color={'rgb(70,70,70)'}>
+        <CircularProgress sx={{ color: '#fff' }} size='2rem' />
+        <Typography variant='h2' color={'#fff'}>
           Fetching Data...
         </Typography>
       </Backdrop>
