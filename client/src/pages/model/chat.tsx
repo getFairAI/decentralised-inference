@@ -381,6 +381,8 @@ const Chat = () => {
   const [isLayoverOpen, setLayoverOpen] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
 
+  const isArbitrumChat = location.href?.includes('/arbitrum/') ?? false;
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const isStableDiffusion = useMemo(
@@ -971,7 +973,7 @@ const Chat = () => {
     try {
       const config = await getConfigValues();
 
-      if (!config.modelName) {
+      if (!isArbitrumChat && !config.modelName) {
         enqueueSnackbar(
           'You have no Model selected. Choose one in the Advanced Configurations and try again.',
           { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
@@ -1068,7 +1070,7 @@ const Chat = () => {
     try {
       const config = await getConfigValues();
 
-      if (!config.modelName) {
+      if (!isArbitrumChat && !config.modelName) {
         enqueueSnackbar(
           'You have no Model selected. Choose one in the Advanced Configurations and try again.',
           { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },

@@ -238,9 +238,10 @@ const Solution = ({
                     'Name Not Available'}
                 </Typography>
               }
-              subheader={`${tx.node.owner.address.slice(0, 6)}...${tx.node.owner.address.slice(
-                -4,
-              )} - ${getTimePassed()}`}
+              subheader={`${getTimePassed()}`}
+              // ${tx.node.owner.address.slice(0, 6)}...${tx.node.owner.address.slice(
+              //   -4,
+              // )}
             />
           </CardActionArea>
         </Card>
