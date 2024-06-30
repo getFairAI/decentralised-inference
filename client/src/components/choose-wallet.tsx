@@ -221,7 +221,7 @@ const ProviderElement = ({
 
 const InstallMetaMaskElement = () => {
   const installWallet = () => {
-    window.open('https://metamask.io/download/', '_blank');
+    window.open('https://metamask.io/download/', '_blank', 'noopener');
   };
 
   return (
