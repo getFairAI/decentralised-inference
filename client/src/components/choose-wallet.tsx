@@ -47,13 +47,117 @@ import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import { motion } from 'framer-motion';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { enqueueSnackbar } from 'notistack';
+import { CheckCircle } from '@mui/icons-material';
+
+const DialogConfirmUntestedWallet = ({
+  open,
+  setOpen,
+  provider,
+}: {
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  provider: EIP6963ProviderDetail;
+}) => {
+  const theme = useTheme();
+  const handleClose = useCallback(() => setOpen(false), [setOpen]);
+
+  const { connect } = useContext(EVMWalletContext);
+  const { localStorageValue: currentProviderValue, updateStorageValue } =
+    useLocalStorage('evmProvider');
+  const { updateStorageValue: updateHasOnboarded } = useLocalStorage('hasOnboarded');
+
+  const handleEvmConnect = useCallback(async () => {
+    await connect(provider.provider as EIP1193Provider);
+    updateStorageValue(provider.info.name);
+    updateHasOnboarded('true');
+    setOpen(false);
+  }, [connect]);
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth={'sm'}
+      fullWidth
+      sx={{
+        backdropFilter: 'blur(10px) !important',
+        '& .MuiPaper-root': {
+          borderRadius: '20px',
+          background:
+            theme.palette.mode === 'dark'
+              ? 'rgba(61, 61, 61, 0.9)'
+              : theme.palette.background.default,
+        },
+      }}
+    >
+      <DialogTitle>
+        <Typography
+          sx={{
+            fontWeight: 600,
+            fontSize: '22px',
+          }}
+          className='flex items-center gap-2 pb-4'
+        >
+          <WalletRoundedIcon />
+          {'Connecting different wallets'}
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
+        <div className='font-regular px-2 pb-2'>
+          You are about to connect an untested wallet.
+          <br /> <br />
+          <strong>
+            While we expect everything to work correctly, we cannot test every aspect with every
+            wallet, so we cannot guarantee that every feature will function as expected. It&apos;s
+            also possible that some wallets may require additional configuration to work seamlessly
+            with our app.
+          </strong>
+          <br /> <br />
+          If something doesn&apos;t quite work as expected, or if you have any questions, feel free
+          to contact us through our social media channels.
+        </div>
+      </DialogContent>
+      <DialogActions
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          paddingBottom: '20px',
+          gap: '10px',
+        }}
+      >
+        <StyledMuiButton
+          onClick={handleClose}
+          className='plausible-event-name=Connect+WarningUntestedWallet+Popup+Cancelled secondary'
+        >
+          <div className='flex items-center gap-2'>
+            <HighlightOffRoundedIcon /> Cancel
+          </div>
+        </StyledMuiButton>
+        <StyledMuiButton
+          onClick={handleEvmConnect}
+          disabled={currentProviderValue === provider.info.name}
+          className='plausible-event-name=Connect+WarningUntestedWallet+Popup+Agreed+Connect primary'
+        >
+          <div className='flex items-center gap-2'>
+            <CheckCircle />
+            Agree and connect
+          </div>
+        </StyledMuiButton>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 const ProviderElement = ({
   provider,
   setOpen,
+  isRecommendedWallet,
+  setOpenDialogWarningUntestedWallet,
 }: {
   provider: EIP6963ProviderDetail;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  setOpenDialogWarningUntestedWallet?: Dispatch<SetStateAction<boolean>>;
+  isRecommendedWallet: boolean;
 }) => {
   const { connect } = useContext(EVMWalletContext);
   const { localStorageValue: currentProviderValue, updateStorageValue } =
@@ -67,6 +171,12 @@ const ProviderElement = ({
     setOpen(false);
   }, [connect]);
 
+  const showPopupUntestedWallet = () => {
+    if (setOpenDialogWarningUntestedWallet) {
+      setOpenDialogWarningUntestedWallet(true);
+    }
+  };
+
   const [moreInfoWalletOpened, openMoreInfoWallet] = useState(false);
 
   return (
@@ -77,7 +187,7 @@ const ProviderElement = ({
           secondaryAction={
             <StyledMuiButton
               aria-label='Connect this wallet'
-              onClick={handleEvmConnect}
+              onClick={isRecommendedWallet ? handleEvmConnect : showPopupUntestedWallet}
               disabled={currentProviderValue === provider.info.name}
               className='plausible-event-name=EVM+Connected primary'
             >
@@ -239,13 +349,37 @@ const InstallMetaMaskElement = () => {
         }
       >
         <ListItemAvatar>
-          <Avatar
-            src={'./icons/metamask.svg'}
-            alt='provider.info.name'
-            className='p-[6px] object-contain bg-white'
-          />
+          <Avatar src={'./icons/metamask.svg'} className='p-[6px] object-contain bg-white' />
         </ListItemAvatar>
         <ListItemText primary={'MetaMask'} />
+      </ListItem>
+    </div>
+  );
+};
+
+const InstallRabbyElement = () => {
+  const installWallet = () => {
+    window.open('https://rabby.io/', '_blank', 'noopener');
+  };
+
+  return (
+    <div className='rounded-3xl bg-slate-300 py-2 my-2'>
+      <ListItem
+        secondaryAction={
+          <StyledMuiButton
+            aria-label='Install this wallet'
+            onClick={installWallet}
+            className='plausible-event-name=EVM+Connected secondary'
+          >
+            Install
+            <OpenInNewRoundedIcon style={{ width: '22px' }} />
+          </StyledMuiButton>
+        }
+      >
+        <ListItemAvatar className='rounded-full overflow-hidden'>
+          <Avatar src={'./icons/rabby-wallet.png'} className='object-contain bg-white' />
+        </ListItemAvatar>
+        <ListItemText primary={'Rabby Wallet'} />
       </ListItem>
     </div>
   );
@@ -262,88 +396,116 @@ const ChooseWallet = ({
   const theme = useTheme();
   const { providers } = useContext(EVMWalletContext);
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
+  const [dialogWarningUntestedWallet, switchWarningDialogState] = useState(false);
 
   const metaMaskProviderFound = providers.find((provider) => provider.info.name === 'MetaMask');
+  const rabbyProviderFound = providers.find((provider) => provider.info.name === 'Rabby Wallet');
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth={'sm'}
-      fullWidth
-      sx={{
-        '& .MuiPaper-root': {
-          borderRadius: '20px',
-          background:
-            theme.palette.mode === 'dark'
-              ? 'rgba(61, 61, 61, 0.9)'
-              : theme.palette.background.default,
-        },
-      }}
-    >
-      <DialogTitle>
-        <Typography
-          sx={{
-            fontWeight: 600,
-            fontSize: '22px',
-          }}
-          className='flex items-center gap-2 pb-4'
-        >
-          <WalletRoundedIcon />
-          {'Choose a wallet to connect'}
-        </Typography>
-      </DialogTitle>
-      <DialogContent>
-        <motion.div
-          initial={{ x: '-20px', opacity: 0 }}
-          animate={{ x: 0, opacity: 1, transition: { delay: 0.2, duration: 0.4 } }}
-        >
-          <List>
-            <div className='font-semibold font-xl'>Our most recommended and well tested wallet</div>
-            {metaMaskProviderFound && (
-              <ProviderElement
-                provider={metaMaskProviderFound}
-                key={metaMaskProviderFound.info.uuid}
-                setOpen={setOpen}
-              />
-            )}
-            {!metaMaskProviderFound && <InstallMetaMaskElement />}
-            {providers.find((provider) => provider.info.name !== 'MetaMask') && (
-              <>
-                <div className='font-semibold font-xl mt-8'>Other wallets we found installed</div>
-                {providers.map((provider) => (
-                  <div key={provider.info.uuid}>
-                    {provider.info.name !== 'MetaMask' && (
-                      <ProviderElement
-                        provider={provider}
-                        key={provider.info.uuid}
-                        setOpen={setOpen}
-                      />
-                    )}
-                  </div>
-                ))}
-              </>
-            )}
-          </List>
-        </motion.div>
-      </DialogContent>
-      <DialogActions
+    <>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth={'sm'}
+        fullWidth
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          paddingBottom: '20px',
+          backdropFilter: 'blur(10px) !important',
+          '& .MuiPaper-root': {
+            borderRadius: '20px',
+            background:
+              theme.palette.mode === 'dark'
+                ? 'rgba(61, 61, 61, 0.9)'
+                : theme.palette.background.default,
+          },
         }}
       >
-        <StyledMuiButton
-          onClick={handleClose}
-          className='plausible-event-name=Connect+Popup+Closed secondary'
+        <DialogTitle>
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: '22px',
+            }}
+            className='flex items-center gap-2 pb-4'
+          >
+            <WalletRoundedIcon />
+            {'Choose a wallet to connect'}
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <motion.div
+            initial={{ x: '-20px', opacity: 0 }}
+            animate={{ x: 0, opacity: 1, transition: { duration: 0.4 } }}
+          >
+            <List>
+              <div className='font-semibold font-xl'>Our top recommended wallets</div>
+              {metaMaskProviderFound && (
+                <ProviderElement
+                  provider={metaMaskProviderFound}
+                  key={metaMaskProviderFound.info.uuid}
+                  setOpen={setOpen}
+                  isRecommendedWallet={true}
+                />
+              )}
+              {rabbyProviderFound && (
+                <ProviderElement
+                  provider={rabbyProviderFound}
+                  key={rabbyProviderFound.info.uuid}
+                  setOpen={setOpen}
+                  isRecommendedWallet={true}
+                />
+              )}
+              {!metaMaskProviderFound && <InstallMetaMaskElement />}
+              {!rabbyProviderFound && <InstallRabbyElement />}
+              {providers.find(
+                (provider) =>
+                  provider.info.name !== 'MetaMask' && provider.info.name !== 'Rabby Wallet',
+              ) && (
+                <>
+                  <div className='font-semibold font-xl mt-8'>Other wallets we found installed</div>
+                  {providers
+                    .filter(
+                      (provider) =>
+                        provider.info.name !== 'MetaMask' && provider.info.name !== 'Rabby Wallet',
+                    )
+                    .map((provider) => (
+                      <div key={provider.info.uuid}>
+                        <DialogConfirmUntestedWallet
+                          open={dialogWarningUntestedWallet}
+                          setOpen={switchWarningDialogState}
+                          provider={provider}
+                        />
+                        <ProviderElement
+                          provider={provider}
+                          key={provider.info.uuid}
+                          setOpen={setOpen}
+                          isRecommendedWallet={false}
+                          setOpenDialogWarningUntestedWallet={switchWarningDialogState}
+                        />
+                      </div>
+                    ))}
+                </>
+              )}
+            </List>
+          </motion.div>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            paddingBottom: '20px',
+          }}
         >
-          <div className='flex items-center gap-2'>
-            <HighlightOffRoundedIcon /> Cancel
-          </div>
-        </StyledMuiButton>
-      </DialogActions>
-    </Dialog>
+          <StyledMuiButton
+            onClick={handleClose}
+            className='plausible-event-name=Connect+Popup+Closed secondary'
+          >
+            <div className='flex items-center gap-2'>
+              <HighlightOffRoundedIcon /> Cancel
+            </div>
+          </StyledMuiButton>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 

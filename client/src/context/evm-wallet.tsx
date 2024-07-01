@@ -163,6 +163,7 @@ const initialState: EVMWalletState = {
 
 const asyncEvmWalletconnect = async (
   dispatch: Dispatch<EVMWalletAction>,
+  setPreviousProvider: (provider: string) => void,
   provider: ExtendedEIP1193Provider,
 ) => {
   try {
@@ -179,8 +180,12 @@ const asyncEvmWalletconnect = async (
     }
   } catch (error) {
     console.error('Error connecting wallet', error);
+
+    // disconnect the wallet immediately to avoid bugs
+    dispatch({ type: 'wallet_disconnected' });
+    setPreviousProvider('');
     enqueueSnackbar(
-      'We were unable to contact your wallet. Check if you are logged into your wallet or if there any pending requests on it.',
+      'We were unable to connect to your wallet. Check if you are logged into the wallet, if it is configured correctly or if there already any pending requests on it and try again.',
       { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
     );
   }
@@ -210,7 +215,7 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   const handleConnect = async (provider?: ExtendedEIP1193Provider) => {
     if (provider) {
       setCurrentProvider(provider);
-      await asyncEvmWalletconnect(dispatch, provider);
+      await asyncEvmWalletconnect(dispatch, setPreviousProvider, provider);
     } else {
       // connect to the previous provider
       const previousConnectedProvider = providers.find(
@@ -218,7 +223,11 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       );
       if (previousConnectedProvider) {
         setCurrentProvider(previousConnectedProvider.provider);
-        await asyncEvmWalletconnect(dispatch, previousConnectedProvider.provider);
+        await asyncEvmWalletconnect(
+          dispatch,
+          setPreviousProvider,
+          previousConnectedProvider.provider,
+        );
       } else {
         throw new Error('No previous provider found');
       }
@@ -230,7 +239,11 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'wallet_disconnected' });
       setPreviousProvider('');
     } else if (accounts[0] !== state.currentAddress) {
-      await asyncEvmWalletconnect(dispatch, currentProvider as ExtendedEIP1193Provider);
+      await asyncEvmWalletconnect(
+        dispatch,
+        setPreviousProvider,
+        currentProvider as ExtendedEIP1193Provider,
+      );
     } else {
       // wallet already connected ignore
     }

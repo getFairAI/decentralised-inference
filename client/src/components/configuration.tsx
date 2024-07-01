@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MAX_MESSAGE_SIZE, U_LOGO_SRC } from '@/constants';
+import { MAX_MESSAGE_SIZE } from '@/constants';
 import { displayShortTxOrAddr, findTag, printSize } from '@/utils/common';
 import {
   Box,
@@ -675,7 +675,7 @@ const Configuration = ({
               },
             }}
             InputProps={{
-              endAdornment: <img width='20px' height='29px' src={U_LOGO_SRC} />,
+              endAdornment: <img width='20px' height='29px' src={'./usdc-logo.svg'} />,
             }}
           />
         </Box>
