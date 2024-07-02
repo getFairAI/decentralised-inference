@@ -637,7 +637,12 @@ const Configuration = ({
               onChange={handleOperatorChange}
               defaultValue={currentOperator?.tx.node.id}
               renderValue={(value) => (
-                <Typography>{displayShortTxOrAddr(state.availableOperators.find(op => op.tx.node.id === value)?.evmWallet ?? 'None')}</Typography>
+                <Typography>
+                  {displayShortTxOrAddr(
+                    state.availableOperators.find((op) => op.tx.node.id === value)?.evmWallet ??
+                      'None',
+                  )}
+                </Typography>
               )}
             >
               {state.availableOperators.map((operator: OperatorData) => (
