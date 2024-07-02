@@ -5,11 +5,13 @@ import eslint from 'vite-plugin-eslint';
 import svgr from 'vite-plugin-svgr';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import commonjs from '@rollup/plugin-commonjs';
+import mkcert from 'vite-plugin-mkcert';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: './',
   plugins: [
+    mkcert(),
     react(),
     tsconfigPaths(),
     eslint(),
