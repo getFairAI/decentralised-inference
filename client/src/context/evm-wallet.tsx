@@ -44,7 +44,7 @@ import {
 } from '@fairai/evm-sdk';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useEvmProviders } from '@/hooks/useEvmProviders';
-import { EIP6963ProviderDetail, ExtendedEIP1193Provider } from '@/interfaces/evm';
+import { EIP6963ProviderDetail } from '@/interfaces/evm';
 import { ConfigurationValues } from '@/interfaces/common';
 import { enqueueSnackbar } from 'notistack';
 
@@ -90,7 +90,7 @@ interface EVMWalletState {
 }
 
 interface IEVMWalletContext extends EVMWalletState {
-  connect: (provider?: ExtendedEIP1193Provider) => Promise<void>;
+  connect: (provider?: EIP6963ProviderDetail) => Promise<void>;
   startConversation: (txid: string, cid: string) => Promise<string | undefined>;
   prompt: (
     data: string | File,
@@ -163,11 +163,12 @@ const initialState: EVMWalletState = {
 
 const asyncEvmWalletconnect = async (
   dispatch: Dispatch<EVMWalletAction>,
-  provider: ExtendedEIP1193Provider,
+  setPreviousProvider: (provider: string) => void,
+  provider: EIP6963ProviderDetail,
 ) => {
   try {
-    await setProvider(provider);
-    await setIrys(provider);
+    await setProvider(provider.provider);
+    await setIrys(provider.provider);
     if ((await getCurrentChainId()) !== arbitrum.id) {
       switchChain(arbitrum);
       // subscribe to chain switched event
@@ -177,10 +178,15 @@ const asyncEvmWalletconnect = async (
       const usdcBalance = await getUsdcBalance();
       dispatch({ type: 'wallet_connected', address, ethBalance, usdcBalance });
     }
+    setPreviousProvider(provider.info.name);
   } catch (error) {
     console.error('Error connecting wallet', error);
+
+    // disconnect the wallet immediately to avoid bugs
+    dispatch({ type: 'wallet_disconnected' });
+    setPreviousProvider('');
     enqueueSnackbar(
-      'We were unable to contact your wallet. Check if you are logged into your wallet or if there any pending requests on it.',
+      'We were unable to connect to your wallet. Check if you are logged into the wallet, if it is configured correctly or if there already any pending requests on it and try again.',
       { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
     );
   }
@@ -202,23 +208,23 @@ export const EVMWalletContext = createContext<IEVMWalletContext>({} as IEVMWalle
 
 export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(walletReducer, initialState);
-  const [currentProvider, setCurrentProvider] = useState<ExtendedEIP1193Provider | null>(null);
+  const [currentProvider, setCurrentProvider] = useState<EIP6963ProviderDetail | null>(null);
   const providers = useEvmProviders();
   const { localStorageValue: previousProvider, updateStorageValue: setPreviousProvider } =
     useLocalStorage('evmProvider');
 
-  const handleConnect = async (provider?: ExtendedEIP1193Provider) => {
+  const handleConnect = async (provider?: EIP6963ProviderDetail) => {
     if (provider) {
+      await asyncEvmWalletconnect(dispatch, setPreviousProvider, provider);
       setCurrentProvider(provider);
-      await asyncEvmWalletconnect(dispatch, provider);
     } else {
       // connect to the previous provider
       const previousConnectedProvider = providers.find(
         (provider) => provider.info.name === previousProvider,
       );
       if (previousConnectedProvider) {
-        setCurrentProvider(previousConnectedProvider.provider);
-        await asyncEvmWalletconnect(dispatch, previousConnectedProvider.provider);
+        setCurrentProvider(previousConnectedProvider);
+        await asyncEvmWalletconnect(dispatch, setPreviousProvider, previousConnectedProvider);
       } else {
         throw new Error('No previous provider found');
       }
@@ -230,7 +236,11 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'wallet_disconnected' });
       setPreviousProvider('');
     } else if (accounts[0] !== state.currentAddress) {
-      await asyncEvmWalletconnect(dispatch, currentProvider as ExtendedEIP1193Provider);
+      await asyncEvmWalletconnect(
+        dispatch,
+        setPreviousProvider,
+        currentProvider as EIP6963ProviderDetail,
+      );
     } else {
       // wallet already connected ignore
     }
@@ -238,7 +248,7 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const getPubKey = async () => {
     if (currentProvider && state.currentAddress) {
-      const pubKey = await currentProvider.request({
+      const pubKey = await currentProvider.provider.request({
         method: 'eth_getEncryptionPublicKey',
         params: [state.currentAddress],
       });
@@ -268,7 +278,7 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
         },
         getPubKey,
         decrypt: async (data: `0x${string}`) => {
-          const result = await currentProvider?.request({
+          const result = await currentProvider?.provider.request({
             method: 'eth_decrypt',
             params: [data, state.currentAddress],
           });
@@ -288,12 +298,14 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (currentProvider) {
       // subscribe to wallet changes
-      currentProvider.on('accountsChanged', handleAccountChanged);
-      currentProvider.on('chainChanged', async () => handleChainChanged(dispatch));
+      currentProvider.provider.on('accountsChanged', handleAccountChanged);
+      currentProvider.provider.on('chainChanged', async () => handleChainChanged(dispatch));
 
       return () => {
-        currentProvider.removeListener('chainChanged', async () => handleChainChanged(dispatch));
-        currentProvider.removeListener('accountsChanged', handleAccountChanged);
+        currentProvider.provider.removeListener('chainChanged', async () =>
+          handleChainChanged(dispatch),
+        );
+        currentProvider.provider.removeListener('accountsChanged', handleAccountChanged);
       };
     }
   }, [currentProvider]);

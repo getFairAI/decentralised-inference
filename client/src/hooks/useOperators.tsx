@@ -101,11 +101,11 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
       tags: [
         {
           name: 'Protocol-Name',
-          values: ['FairAI'],
+          values: ['FairAI', 'Fair Protocol'],
         },
         {
           name: 'Protocol-Version',
-          values: ['2.0'],
+          values: ['2.0', '1.0'],
         },
         {
           name: 'Operation-Name',

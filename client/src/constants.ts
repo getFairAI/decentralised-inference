@@ -209,11 +209,11 @@ export const DEFAULT_TAGS_FOR_ASSETS = [
   { name: TAG_NAMES.appVersion, values: ['0.3.0'] },
 ];
 
-export const GITHUB_LINK = 'https://github.com/FAIR-Protocol/decentralized-inference';
+export const GITHUB_LINK = 'https://github.com/getFairAI/decentralised-inference';
 export const DISCORD_LINK = 'https://discord.gg/GRf7CukfXf';
 export const WHITEPAPER_LINK =
   'https://lqcpjipmt2d2daazjknargowboxuhn3wgealzbqdsjmwxbgli52q.arweave.net/XAT0oeyeh6GAGUqaCJnWC69Dt3YxALyGA5JZa4TLR3U';
-export const TWITTER_LINK = 'https://twitter.com/fairAIprotocol';
+export const TWITTER_LINK = 'https://x.com/getFairAI';
 export const STUDIO_LINK = 'https://fairstudio.ar-io.dev/';
 
 export const secondInMS = 1000;

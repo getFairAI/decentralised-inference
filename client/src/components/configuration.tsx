@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MAX_MESSAGE_SIZE, U_LOGO_SRC } from '@/constants';
+import { MAX_MESSAGE_SIZE } from '@/constants';
 import { displayShortTxOrAddr, findTag, printSize } from '@/utils/common';
 import {
   Box,
@@ -586,7 +586,7 @@ const Configuration = ({
   const handleOperatorChange = useCallback(
     (event: SelectChangeEvent) => {
       const operator = state.availableOperators.find(
-        (operator) => operator.evmWallet === event.target.value,
+        (operator) => operator.tx.node.id === event.target.value,
       );
       if (operator) {
         setCurrentOperator(operator);
@@ -635,15 +635,20 @@ const Configuration = ({
             <Select
               label={'Solution Operator (Provider)'}
               onChange={handleOperatorChange}
-              defaultValue={currentOperator?.evmWallet ?? ''}
+              defaultValue={currentOperator?.tx.node.id}
               renderValue={(value) => (
-                <Typography>{displayShortTxOrAddr(value as string)}</Typography>
+                <Typography>
+                  {displayShortTxOrAddr(
+                    state.availableOperators.find((op) => op.tx.node.id === value)?.evmWallet ??
+                      'None',
+                  )}
+                </Typography>
               )}
             >
               {state.availableOperators.map((operator: OperatorData) => (
                 <MenuItem
-                  key={operator.evmWallet}
-                  value={operator.evmWallet}
+                  key={operator.tx.node.id}
+                  value={operator.tx.node.id}
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: spaceBetween }}
                 >
                   <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
@@ -675,7 +680,7 @@ const Configuration = ({
               },
             }}
             InputProps={{
-              endAdornment: <img width='20px' height='29px' src={U_LOGO_SRC} />,
+              endAdornment: <img width='20px' height='29px' src={'./usdc-logo.svg'} />,
             }}
           />
         </Box>

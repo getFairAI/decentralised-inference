@@ -3,7 +3,7 @@ import { Prettify } from 'viem/chains';
 
 export interface EIP6963ProviderDetail {
   info: EIP6963ProviderInfo;
-  provider: EIP1193Provider;
+  provider: ExtendedEIP1193Provider;
 }
 
 export interface EIP6963ProviderInfo {
