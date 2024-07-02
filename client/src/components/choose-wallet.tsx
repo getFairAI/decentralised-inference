@@ -33,7 +33,6 @@ import {
 import { Dispatch, SetStateAction, useCallback, useContext, useState } from 'react';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { EIP6963ProviderDetail } from '@/interfaces/evm';
-import { EIP1193Provider } from 'viem';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { StyledMuiButton } from '@/styles/components';
 
@@ -62,13 +61,11 @@ const DialogConfirmUntestedWallet = ({
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
   const { connect } = useContext(EVMWalletContext);
-  const { localStorageValue: currentProviderValue, updateStorageValue } =
-    useLocalStorage('evmProvider');
+  const { localStorageValue: currentProviderValue } = useLocalStorage('evmProvider');
   const { updateStorageValue: updateHasOnboarded } = useLocalStorage('hasOnboarded');
 
   const handleEvmConnect = useCallback(async () => {
-    await connect(provider.provider as EIP1193Provider);
-    updateStorageValue(provider.info.name);
+    await connect(provider);
     updateHasOnboarded('true');
     setOpen(false);
   }, [connect]);
@@ -160,13 +157,11 @@ const ProviderElement = ({
   isRecommendedWallet: boolean;
 }) => {
   const { connect } = useContext(EVMWalletContext);
-  const { localStorageValue: currentProviderValue, updateStorageValue } =
-    useLocalStorage('evmProvider');
+  const { localStorageValue: currentProviderValue } = useLocalStorage('evmProvider');
   const { updateStorageValue: updateHasOnboarded } = useLocalStorage('hasOnboarded');
 
   const handleEvmConnect = useCallback(async () => {
-    await connect(provider.provider as EIP1193Provider);
-    updateStorageValue(provider.info.name);
+    await connect(provider);
     updateHasOnboarded('true');
     setOpen(false);
   }, [connect]);
