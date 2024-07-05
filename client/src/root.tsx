@@ -29,6 +29,7 @@ import { ChooseWalletProvider } from './context/choose-wallet';
 import { TradeProvider } from './context/trade';
 import { UserFeedbackProvider } from './context/user-feedback';
 import { EVMWalletProvider } from './context/evm-wallet';
+import { ThrowawayProvider } from './context/throwaway';
 
 const BaseRoot = ({ children }: { children: ReactElement }) => {
   return (
@@ -46,7 +47,9 @@ const BaseRoot = ({ children }: { children: ReactElement }) => {
           <EVMWalletProvider>
             <ChooseWalletProvider>
               <UserFeedbackProvider>
-                <TradeProvider>{children}</TradeProvider>
+                <TradeProvider>
+                  <ThrowawayProvider>{children}</ThrowawayProvider>
+                </TradeProvider>
               </UserFeedbackProvider>
             </ChooseWalletProvider>
           </EVMWalletProvider>

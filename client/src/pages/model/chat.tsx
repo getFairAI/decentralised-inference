@@ -93,6 +93,7 @@ import { StyledMuiButton } from '@/styles/components';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { toSvg } from 'jdenticon';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { ThrowawayContext } from '@/context/throwaway';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -339,6 +340,7 @@ const Chat = () => {
     getPubKey,
     decrypt,
   } = useContext(EVMWalletContext);
+  const { promptWithThrowaway } = useContext(ThrowawayContext);
   const {
     state,
   }: {
@@ -1136,7 +1138,7 @@ const Chat = () => {
         dataToUpload = JSON.stringify(dataToUpload);
       }
 
-      const { arweaveTxId } = await prompt(
+      const { arweaveTxId } = await promptWithThrowaway(
         dataToUpload,
         state.solution.node.id,
         {
