@@ -109,7 +109,7 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
             {` on ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`}
           </Typography>
           {comment.owner === request.owner && (
-            <Tooltip title={'Original Poster. User that created this request.'}>
+            <Tooltip title={'User that created this request.'}>
               <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs'>
                 Request Creator
               </div>

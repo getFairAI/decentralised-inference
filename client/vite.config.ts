@@ -5,13 +5,13 @@ import eslint from 'vite-plugin-eslint';
 import svgr from 'vite-plugin-svgr';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import commonjs from '@rollup/plugin-commonjs';
-import mkcert from 'vite-plugin-mkcert';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: './',
   plugins: [
-    mkcert(),
+    basicSsl(),
     react(),
     tsconfigPaths(),
     eslint(),
@@ -54,5 +54,8 @@ export default defineConfig({
       os: 'os-browserify',
       stream: 'stream-browserify',
     },
+  },
+  server: {
+    host: '0.0.0.0',
   },
 });

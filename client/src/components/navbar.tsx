@@ -157,7 +157,13 @@ const WalletState = () => {
   );
 };
 
-const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
+const Navbar = ({
+  isScrolled,
+  userScrolledDown,
+}: {
+  isScrolled: boolean;
+  userScrolledDown: boolean;
+}) => {
   const { currentAddress } = useContext(EVMWalletContext);
   const { pathname } = useLocation();
   const theme = useTheme();
@@ -172,6 +178,8 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
     alignContent: 'center',
     padding: '10px 20px 10px 20px',
     ...(!isScrolled && { boxShadow: 'none' }),
+    transform: userScrolledDown ? 'translateY(-80px)' : 'translateY(0px)',
+    transition: 'all 0.2s',
   };
 
   const handleMenuClick = useCallback(() => setIsExpanded((prev) => !prev), [setIsExpanded]);
@@ -188,8 +196,8 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
   }, []);
 
   return (
-    <>
-      <AppBar sx={appBarStyle} color='inherit'>
+    <div style={appBarStyle}>
+      <AppBar color='inherit'>
         <motion.div
           className='flex-col w-full justify-start'
           initial={{ y: '-40px', opacity: 0 }}
@@ -300,7 +308,7 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
         </motion.div>
       </AppBar>
       <Toolbar />
-    </>
+    </div>
   );
 };
 
