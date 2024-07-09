@@ -105,10 +105,7 @@ const Solution = ({
   }, [operatorsData]);
 
   const handleSolutionClick = useCallback(() => {
-    if (isMobile) {
-      // if mobile click is used to turn card
-      setIsHovering((hovering) => !hovering);
-    } else if (!currentAddress) {
+    if (!currentAddress) {
       navigate('/sign-in', {
         state: {
           defaultOperator: operatorsData[0] ?? undefined,
@@ -179,7 +176,7 @@ const Solution = ({
       initial={false}
       onHoverStart={handleHoverStart}
       onHoverEnd={handleHoverEnd}
-      onTap={handleHoverStart}
+      onClick={handleHoverStart}
       style={{
         height: '400px',
         backgroundColor: 'white',
