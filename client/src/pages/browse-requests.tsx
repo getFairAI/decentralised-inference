@@ -110,13 +110,13 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
           </Typography>
           {comment.owner === request.owner && (
             <Tooltip title={'User that created this request.'}>
-              <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs'>
+              <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs max-fit'>
                 Request Creator
               </div>
             </Tooltip>
           )}
         </div>
-        <div className='font-medium'>{comment.content}</div>
+        <div className='font-medium text-sm sm:text-base'>{comment.content}</div>
       </Box>
     </div>
   );
@@ -232,11 +232,9 @@ const RequestElement = ({ request }: { request: RequestData }) => {
           >
             <Paper sx={{ padding: '10px', width: '100%' }}>
               <Box>
-                <DialogTitle display='flex' justifyContent={'flex-end'} alignItems='flex-start'>
-                  <Box display={'flex'} flexDirection={'column'} width={'100%'} marginRight={'5px'}>
-                    <Typography fontWeight={600} fontSize={'200%'}>
-                      {request.title}
-                    </Typography>
+                <DialogTitle display='flex' justifyContent={'flex-end'} gap={'5px'}>
+                  <Box display={'flex'} flexDirection={'column'} width={'100%'}>
+                    <div className='font-semibold text-lg sm:text-2xl'>{request.title}</div>
                     <Typography variant='caption'>
                       {`Created on ${new Date(
                         Number(request.timestamp) * 1000,
@@ -252,19 +250,21 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                     </Typography>
                   </Box>
 
-                  <StyledMuiButton
-                    onClick={handleClose}
-                    className='plausible-event-name=Close+Model+Click secondary fully-rounded'
-                  >
-                    <Close />
-                  </StyledMuiButton>
+                  <div className=' relative translate-x-4'>
+                    <StyledMuiButton
+                      onClick={handleClose}
+                      className='plausible-event-name=Close+Model+Click secondary fully-rounded smaller'
+                    >
+                      <Close />
+                    </StyledMuiButton>
+                  </div>
                 </DialogTitle>
                 <DialogContent>
-                  <Box display={'flex'} flexDirection={'column'} gap={'16px'}>
-                    <span className='whitespace-pre-wrap text-lg font-medium'>
+                  <Box display={'flex'} flexDirection={'column'} gap={'16px'} flexWrap={'wrap'}>
+                    <span className='whitespace-pre-wrap text-base sm:text-lg font-medium'>
                       {request.description}
                     </span>
-                    <Box display={'flex'} justifyContent={'flex-end'} gap={'8px'}>
+                    <Box display={'flex'} justifyContent={'flex-end'} gap={'8px'} flexWrap={'wrap'}>
                       {request.keywords.map((keyword) => (
                         <Chip
                           key={keyword}
@@ -275,7 +275,9 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                         />
                       ))}
                     </Box>
-                    <div className='w-full px-2 font-semibold'>Comments</div>
+                    <div className='w-full px-2 font-semibold text-sm sm:text-base'>
+                      {comments.length} {comments.length === 1 ? ' comment' : 'comments'}
+                    </div>
                     {comments.length === 0 && (
                       <Typography
                         width={'100%'}
@@ -369,7 +371,13 @@ const RequestElement = ({ request }: { request: RequestData }) => {
               >
                 {request.description}
               </Typography>
-              <Box display={'flex'} justifyContent={'flex-end'} alignItems={'center'} gap={'5px'}>
+              <Box
+                display={'flex'}
+                justifyContent={'flex-end'}
+                alignItems={'center'}
+                gap={'5px'}
+                flexWrap={'wrap'}
+              >
                 <span className='font-bold mr-2 flex-auto' style={{ fontSize: '14px' }}>
                   {comments.length} {comments.length === 1 ? ' comment' : ' comments'}
                 </span>
@@ -437,8 +445,8 @@ const BrowseRequests = () => {
         animate={{ opacity: 1, y: 0, transition: { duration: 0.3, type: 'smooth' } }}
       >
         <div className='w-full flex justify-center'>
-          <div className='w-full max-w-[1600px] px-10 mt-10 flex flex-wrap justify-between items-center font-bold gap-3'>
-            <div className='gap-3 flex justify-center items-center text-3xl'>
+          <div className='w-full max-w-[1600px] px-10 mt-10 flex flex-wrap-reverse justify-center sm:justify-between items-center font-bold gap-5'>
+            <div className='gap-3 flex justify-center items-center text-lg lg:text-3xl'>
               <img
                 src='./fair-protocol-face-primarycolor.png'
                 style={{ width: 40, marginTop: 5 }}

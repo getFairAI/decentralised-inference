@@ -35,6 +35,8 @@ import { ITag } from '@/interfaces/arweave';
 import MessageDisplay from './message-display';
 import { motion } from 'framer-motion';
 
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+
 const ChatContent = ({
   showError,
   messages,
@@ -278,7 +280,16 @@ const ChatContent = ({
     );
   } else {
     return (
-      <Typography alignItems='center' display='flex' flexDirection='column-reverse' height={'100%'}>
+      <Typography
+        display='flex'
+        justifyContent={'center'}
+        alignItems='center'
+        gap={1}
+        height={'100%'}
+        padding={'0px 15px'}
+        fontWeight={500}
+      >
+        <StarRoundedIcon />
         This is the start of your conversation. Type in your first prompt to get started.
       </Typography>
     );
