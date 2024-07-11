@@ -37,7 +37,7 @@ export default function Home() {
   const [filteredTxs, setFilteredTxs] = useState<IContractEdge[]>([]);
 
   const { validTxs: operatorsData, loading: operatorsLoading } = useOperators(txs);
-  const loadingTiles = genLoadingArray(10);
+  const loadingTiles = genLoadingArray(8);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleChange = throttle((event: ChangeEvent<HTMLInputElement>) => {
@@ -123,7 +123,6 @@ export default function Home() {
           {loading &&
             loadingTiles.map((el) => (
               <Grid item key={el}>
-                {' '}
                 <LoadingCard />
               </Grid>
             ))}

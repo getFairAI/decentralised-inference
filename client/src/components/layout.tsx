@@ -164,7 +164,6 @@ export default function Layout({ children }: { children: ReactElement }) {
 
   return (
     <>
-      <Navbar isScrolled={isScrolled} userScrolledDown={isSmallScreen && userScrolledDown} />
       <Container
         disableGutters
         sx={{
@@ -198,6 +197,7 @@ export default function Layout({ children }: { children: ReactElement }) {
           </main>
         </Box>
       </Container>
+      <Navbar isScrolled={isScrolled} userScrolledDown={isSmallScreen && userScrolledDown} />
     </>
   );
 }

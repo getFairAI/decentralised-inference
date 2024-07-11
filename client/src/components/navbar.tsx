@@ -24,12 +24,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import Option from './option';
 import { useCallback, useContext, useState } from 'react';
-import { Button, IconButton, MenuList, Tooltip, useTheme } from '@mui/material';
+import { Button, ButtonBase, IconButton, MenuList, Tooltip, useTheme } from '@mui/material';
 import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import { StyledMuiButton } from '@/styles/components';
@@ -174,7 +174,7 @@ const Navbar = ({
   const navigate = useNavigate();
 
   const appBarStyle = {
-    zIndex,
+    zIndex: zIndex,
     alignContent: 'center',
     padding: '10px 20px 10px 20px',
     ...(!isScrolled && { boxShadow: 'none' }),
@@ -183,8 +183,16 @@ const Navbar = ({
   };
 
   const handleMenuClick = useCallback(() => setIsExpanded((prev) => !prev), [setIsExpanded]);
-  const handleBrowse = useCallback(() => navigate('browse'), [navigate]);
-  const handleRequest = useCallback(() => navigate('request'), [navigate]);
+  const handleBrowse = useCallback(() => {
+    navigate('browse');
+    setTimeout(() => {
+      setIsExpanded(false);
+    }, 400);
+  }, [navigate]);
+  const handleRequest = useCallback(() => {
+    navigate('request');
+    setIsExpanded(false);
+  }, [navigate]);
   const handleOpenOnArweave = useCallback(() => {
     // 'https://fairapp.ar-io.dev'
     const a = document.createElement('a');
@@ -198,16 +206,7 @@ const Navbar = ({
   return (
     <div style={appBarStyle}>
       <AppBar color='inherit'>
-        <motion.div
-          className='flex-col w-full justify-start'
-          initial={{ y: '-40px', opacity: 0 }}
-          animate={{
-            height: isExpanded ? '100vh' : 'fit-content',
-            y: 0,
-            opacity: 1,
-            transition: { type: 'smooth', duration: 0.4, delay: 0.1 },
-          }}
-        >
+        <div className='flex-col w-full justify-start'>
           <Toolbar className='flex justify-between'>
             <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
               <Link to='/' style={{ width: '150px', height: '50px' }}>
@@ -292,20 +291,123 @@ const Navbar = ({
               </Box>
             </Box>
           </Toolbar>
-          {isExpanded && (
-            <Box>
-              <MenuList>
-                {/* <Option option='Links' setOpen={setIsExpanded} setLinksOpen={setLinksOpen} /> */}
-                <Option option='Twitter' setOpen={setIsExpanded} />
-                <Option option='Github' setOpen={setIsExpanded} />
-                <Option option='Discord' setOpen={setIsExpanded} />
-                <Option option='Whitepaper' setOpen={setIsExpanded} />
-                <Option option='Studio' setOpen={setIsExpanded} />
-                <Option option='Terms And Conditions' setOpen={setIsExpanded} />
-              </MenuList>
-            </Box>
-          )}
-        </motion.div>
+
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, y: '-60px', x: '50px' }}
+                animate={{ opacity: 1, y: 0, x: 0 }}
+                exit={{
+                  opacity: 0,
+                  y: '-60px',
+                  x: '50px',
+                  transition: {
+                    duration: 0.2,
+                  },
+                }}
+                className='flex justify-center bg-[#ededed] h-[100vh] absolute top-[0px] z-[1000] left-0 w-[100vw]'
+              >
+                <div className='h-full absolute top-[15px] right-[15px] z-[1000]'>
+                  <StyledMuiButton className='secondary fully-rounded' onClick={handleMenuClick}>
+                    <CloseIcon />
+                  </StyledMuiButton>
+                </div>
+                <div className='w-full overflow-y-auto pt-2 pb-28 flex justify-center'>
+                  <div className='w-full max-w-[400px] font-medium'>
+                    <MenuList>
+                      {/* <Option option='Links' setOpen={setIsExpanded} setLinksOpen={setLinksOpen} /> */}
+
+                      <div className='w-full px-4'>
+                        <img
+                          src='./fair-ai-outline.svg'
+                          alt='FairAI Logo'
+                          style={{
+                            width: '200px',
+                            objectFit: 'contain',
+                            opacity: 0.85,
+                          }}
+                        />
+                      </div>
+
+                      <div className='px-4 font-bold mt-5'>
+                        <p>Main Menu</p>
+                      </div>
+                      <div
+                        className='bg-[#3aaaaa] text-white rounded-xl m-3 scale(1) active:scale(0.9)'
+                        onClick={handleBrowse}
+                      >
+                        <ButtonBase
+                          component='div'
+                          sx={{
+                            padding: '12px 20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            borderRadius: '10px',
+                            gap: 1,
+                            '&:hover': {
+                              backdropFilter: 'brightness(0.95)',
+                            },
+                          }}
+                        >
+                          <SearchRoundedIcon style={{ width: '20px' }} />
+                          Browse Requests
+                        </ButtonBase>
+                      </div>
+
+                      <div
+                        className='bg-[#3aaaaa] text-white rounded-xl m-3'
+                        onClick={handleRequest}
+                      >
+                        <ButtonBase
+                          component='div'
+                          sx={{
+                            padding: '12px 20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            borderRadius: '10px',
+                            gap: 1,
+                            '&:hover': {
+                              backdropFilter: 'brightness(0.95)',
+                            },
+                          }}
+                        >
+                          <AddCommentRoundedIcon style={{ width: '20px' }} />
+                          Make a Request
+                        </ButtonBase>
+                      </div>
+
+                      <div className='px-4 mt-5 font-bold'>
+                        <p>Links</p>
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Studio' setOpen={setIsExpanded} />
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <span className='brightness-[6]'>
+                          <Option option='Discord' setOpen={setIsExpanded} />
+                        </span>
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Twitter' setOpen={setIsExpanded} />
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Github' setOpen={setIsExpanded} />
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Whitepaper' setOpen={setIsExpanded} />
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Terms And Conditions' setOpen={setIsExpanded} />
+                      </div>
+                    </MenuList>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </AppBar>
       <Toolbar />
     </div>

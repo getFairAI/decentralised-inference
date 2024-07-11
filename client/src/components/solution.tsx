@@ -277,16 +277,20 @@ const Solution = ({
             </div>
 
             {loading && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  flex: '1 1 auto',
-                  alignItems: 'center',
-                }}
-              >
-                <Tooltip title='Loading available operators...'>
-                  <CircularProgress size={'30px'} />
+              <div className='flex-1 flex justify-end pr-1 gap-3'>
+                <Tooltip title='Average fee is loading...'>
+                  <Box display={'flex'} gap={'4px'} alignItems={'center'}>
+                    <CircularProgress size={'20px'} />
+                    <Box display={'flex'} alignItems={'center'} gap={'8px'}>
+                      <img width='20px' height='20px' src='./usdc-logo.svg' />
+                    </Box>
+                  </Box>
+                </Tooltip>
+                <Tooltip title='Available providers are loading...'>
+                  <Box display={'flex'} gap={'4px'} alignItems={'center'}>
+                    <CircularProgress size={'20px'} />
+                    <ComputerIcon />
+                  </Box>
                 </Tooltip>
               </div>
             )}

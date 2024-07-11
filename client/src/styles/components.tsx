@@ -214,6 +214,6 @@ export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
 
   '&:disabled': {
     opacity: '0.5 !important',
-    'pointer-events': 'none',
+    pointerEvents: 'none',
   },
 }));

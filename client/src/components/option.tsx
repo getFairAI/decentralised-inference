@@ -110,7 +110,16 @@ const Option = ({
   if (showIcons.includes(option)) {
     return (
       <MenuItem sx={{ borderRadius: '10px', margin: '8px' }} onClick={handleOptionClick}>
-        <Typography sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <Typography
+          sx={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontWeight: 500,
+            whiteSpace: 'break-spaces',
+          }}
+        >
           <GetIcon input={option}></GetIcon>
           {option}
         </Typography>
@@ -126,6 +135,7 @@ const Option = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          fontWeight: 500,
         }}
       >
         {option}
