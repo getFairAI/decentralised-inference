@@ -34,7 +34,6 @@ import {
   Container,
   Divider,
   FormHelperTextProps,
-  IconButton,
   Step,
   StepContent,
   StepLabel,
@@ -55,7 +54,8 @@ import { motion } from 'framer-motion';
 import { MobileView, BrowserView } from 'react-device-detect';
 
 // icons
-import { Close, InfoOutlined } from '@mui/icons-material';
+import { InfoOutlined } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
@@ -106,10 +106,13 @@ const WalletnotConnectedContent = () => {
           <>
             <MobileView>
               <div className='flex flex-col gap-6 justify-center items-center'>
-                <div className='flex items-center gap-3 rounded-xl my-2 py-3 px-4 bg-amber-400 font-medium'>
-                  <ErrorRoundedIcon /> You seem to be using a mobile browser or operating system.
-                  Currently, wallets are very limited on mobile. For now, we strongly recommend you
-                  use the in-app browser inside the MetaMask wallet app for mobile.
+                <div className='flex gap-3 rounded-xl my-2 py-3 px-4 bg-amber-400 font-medium'>
+                  <ErrorRoundedIcon />
+                  <span>
+                    You seem to be using a mobile browser or operating system. Currently, wallets
+                    are very limited on mobile. For now, we strongly recommend you use the in-app
+                    browser inside the MetaMask wallet app for mobile.
+                  </span>
                 </div>
 
                 <div className='flex flex-wrap gap-4 items-center flex-col md:flex-row'>
@@ -429,20 +432,14 @@ const SignIn = () => {
 
       {isConnected && (usdcBalance < MIN_U_BALANCE || isSwap) && <WalletNoFundsContent />}
 
-      <IconButton
-        sx={{
-          top: '40px',
-          right: '40px',
-          position: 'fixed',
-          borderRadius: '8px',
-          background: '#FFF',
-          border: '0.5px solid',
-        }}
-        onClick={handleSkip}
-        className='plausible-event-name=Close+Onboarding+Click'
-      >
-        <Close />
-      </IconButton>
+      <div className='absolute top-[15px] right-[15px] z-[1001]'>
+        <StyledMuiButton
+          className='plausible-event-name=Close+Onboarding+Click secondary fully-rounded'
+          onClick={handleSkip}
+        >
+          <CloseIcon />
+        </StyledMuiButton>
+      </div>
     </Container>
   );
 };

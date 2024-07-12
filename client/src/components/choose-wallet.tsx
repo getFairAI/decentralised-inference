@@ -35,6 +35,11 @@ import { EVMWalletContext } from '@/context/evm-wallet';
 import { EIP6963ProviderDetail } from '@/interfaces/evm';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { StyledMuiButton } from '@/styles/components';
+import { motion } from 'framer-motion';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { enqueueSnackbar } from 'notistack';
+import { isMobile } from 'react-device-detect';
+import { CREATE_WALLET_LINK } from '@/constants';
 
 // icons
 import HighlightOffRoundedIcon from '@mui/icons-material/HighlightOffRounded';
@@ -43,10 +48,9 @@ import ExitToAppRoundedIcon from '@mui/icons-material/ExitToAppRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
-import { motion } from 'framer-motion';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { enqueueSnackbar } from 'notistack';
 import { CheckCircle } from '@mui/icons-material';
+import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
 const DialogConfirmUntestedWallet = ({
   open,
@@ -419,7 +423,7 @@ const ChooseWallet = ({
             className='flex items-center gap-2 pb-4'
           >
             <WalletRoundedIcon />
-            {'Choose a wallet to connect'}
+            {'Connect a wallet'}
           </Typography>
         </DialogTitle>
         <DialogContent>
@@ -427,56 +431,88 @@ const ChooseWallet = ({
             initial={{ x: '-20px', opacity: 0 }}
             animate={{ x: 0, opacity: 1, transition: { duration: 0.4 } }}
           >
-            <List>
-              <div className='font-semibold font-xl'>Our top recommended wallets</div>
-              {metaMaskProviderFound && (
-                <ProviderElement
-                  provider={metaMaskProviderFound}
-                  key={metaMaskProviderFound.info.uuid}
-                  setOpen={setOpen}
-                  isRecommendedWallet={true}
-                />
-              )}
-              {rabbyProviderFound && (
-                <ProviderElement
-                  provider={rabbyProviderFound}
-                  key={rabbyProviderFound.info.uuid}
-                  setOpen={setOpen}
-                  isRecommendedWallet={true}
-                />
-              )}
-              {!metaMaskProviderFound && <InstallMetaMaskElement />}
-              {!rabbyProviderFound && <InstallRabbyElement />}
-              {providers.find(
-                (provider) =>
-                  provider.info.name !== 'MetaMask' && provider.info.name !== 'Rabby Wallet',
-              ) && (
-                <>
-                  <div className='font-semibold font-xl mt-8'>Other wallets we found installed</div>
-                  {providers
-                    .filter(
-                      (provider) =>
-                        provider.info.name !== 'MetaMask' && provider.info.name !== 'Rabby Wallet',
-                    )
-                    .map((provider) => (
-                      <div key={provider.info.uuid}>
-                        <DialogConfirmUntestedWallet
-                          open={dialogWarningUntestedWallet}
-                          setOpen={switchWarningDialogState}
-                          provider={provider}
-                        />
-                        <ProviderElement
-                          provider={provider}
-                          key={provider.info.uuid}
-                          setOpen={setOpen}
-                          isRecommendedWallet={false}
-                          setOpenDialogWarningUntestedWallet={switchWarningDialogState}
-                        />
-                      </div>
-                    ))}
-                </>
-              )}
-            </List>
+            {!providers.length && isMobile && (
+              <div className='flex flex-col gap-6 justify-center items-center'>
+                <div className='flex gap-3 rounded-xl my-2 py-3 px-4 bg-amber-400 font-medium'>
+                  <ErrorRoundedIcon />
+                  <span>
+                    You seem to be using a mobile browser or operating system. Currently, wallets
+                    are very limited on mobile. For now, we strongly recommend you use the in-app
+                    browser inside the MetaMask wallet app for mobile.
+                  </span>
+                </div>
+
+                <div className='flex flex-wrap gap-4 items-center flex-col md:flex-row'>
+                  <a
+                    href={CREATE_WALLET_LINK}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='plausible-event-name=Wallet+Create+Recommended+Click'
+                  >
+                    <StyledMuiButton className='primary'>
+                      <DownloadRoundedIcon />
+                      Install MetaMask App
+                    </StyledMuiButton>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {(!isMobile || providers.length > 0) && (
+              <List>
+                <div className='font-semibold font-xl'>Our top recommended wallets</div>
+                {metaMaskProviderFound && (
+                  <ProviderElement
+                    provider={metaMaskProviderFound}
+                    key={metaMaskProviderFound.info.uuid}
+                    setOpen={setOpen}
+                    isRecommendedWallet={true}
+                  />
+                )}
+                {rabbyProviderFound && (
+                  <ProviderElement
+                    provider={rabbyProviderFound}
+                    key={rabbyProviderFound.info.uuid}
+                    setOpen={setOpen}
+                    isRecommendedWallet={true}
+                  />
+                )}
+                {!metaMaskProviderFound && <InstallMetaMaskElement />}
+                {!rabbyProviderFound && <InstallRabbyElement />}
+                {providers.find(
+                  (provider) =>
+                    provider.info.name !== 'MetaMask' && provider.info.name !== 'Rabby Wallet',
+                ) && (
+                  <>
+                    <div className='font-semibold font-xl mt-8'>
+                      Other wallets we found installed
+                    </div>
+                    {providers
+                      .filter(
+                        (provider) =>
+                          provider.info.name !== 'MetaMask' &&
+                          provider.info.name !== 'Rabby Wallet',
+                      )
+                      .map((provider) => (
+                        <div key={provider.info.uuid}>
+                          <DialogConfirmUntestedWallet
+                            open={dialogWarningUntestedWallet}
+                            setOpen={switchWarningDialogState}
+                            provider={provider}
+                          />
+                          <ProviderElement
+                            provider={provider}
+                            key={provider.info.uuid}
+                            setOpen={setOpen}
+                            isRecommendedWallet={false}
+                            setOpenDialogWarningUntestedWallet={switchWarningDialogState}
+                          />
+                        </div>
+                      ))}
+                  </>
+                )}
+              </List>
+            )}
           </motion.div>
         </DialogContent>
         <DialogActions
