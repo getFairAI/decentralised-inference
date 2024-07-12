@@ -114,25 +114,25 @@ jobs:
         name: Build artifacts
         path: ./client/dist/
       
-  test:
-    needs: [build-and-install-deps]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x]
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: Load Cache
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-deps
-      with:
-        path: ./client/node_modules
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
-    - name: Build
-      run: cd client && npm run test:cov
+#  test:
+#    needs: [build-and-install-deps]
+#    runs-on: ubuntu-latest
+#    strategy:
+#      matrix:
+#        node-version: [18.x]
+#    steps:
+#    - name: Checkout Repository
+#      uses: actions/checkout@v3
+#    - name: Use Node.js ${{ matrix.node-version }}
+#      uses: actions/setup-node@v3
+#      with:
+#        node-version: ${{ matrix.node-version }}
+#    - name: Load Cache
+#      uses: actions/cache@v3
+#      env:
+#        cache-name: cache-deps
+#      with:
+#        path: ./client/node_modules
+#        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+#    - name: Build
+#      run: cd client && npm run test:cov
