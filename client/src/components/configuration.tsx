@@ -612,23 +612,45 @@ const Configuration = ({
         },
       }}
     >
-      <div className='flex w-full justify-center px-2 mb-3 mt-6'>
+      <div className='flex w-full justify-between items-center mt-[30px] mb-4 gap-4 flex-wrap'>
+        {drawerOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              transition: { delay: 0.1, duration: 0.5, type: 'spring' },
+            }}
+            style={{ flex: '0 0 fit-content' }}
+          >
+            <Tooltip title={'Hide the advanced configurations drawer'}>
+              <StyledMuiButton
+                onClick={handleClose}
+                className='plausible-event-name=Close+Configuration secondary'
+              >
+                <ArrowForwardIosRoundedIcon style={{ width: 18 }} />
+              </StyledMuiButton>
+            </Tooltip>
+          </motion.div>
+        )}
+
         <Typography
           sx={{
             fontWeight: 700,
             fontSize: '23px',
-            lineHeight: '31px',
             display: 'flex',
+            justifyContent: 'end',
             gap: 1,
             alignItems: 'center',
+            flex: '1 1 max-content',
           }}
         >
-          <SettingsRoundedIcon style={{ color: '#3aaaaa' }} />
-          Advanced Configuration
+          <SettingsRoundedIcon style={{ color: '#3aaaaa', width: 30, height: 30 }} />
+          Configurations
         </Typography>
       </div>
 
-      <div className='flex flex-col gap-5 h-full min-h-fit'>
+      <div className='flex flex-col gap-5 pb-8'>
         <Box display={'flex'} gap={'20px'} justifyContent={spaceBetween}>
           <FormControl fullWidth margin='none'>
             <InputLabel>{'Solution Operator (Provider)'}</InputLabel>
@@ -788,7 +810,7 @@ const Configuration = ({
                 <Typography variant='h4'>Custom Tags</Typography>
               </Divider>
             </Box>
-            <Box display={'flex'} gap={'20px'} alignItems={'center'}>
+            <Box display={'flex'} gap={2} alignItems={'center'}>
               <TextField inputRef={nameRef} label={'Tag Name'} />
               <TextField
                 inputRef={valueRef}
@@ -799,7 +821,7 @@ const Configuration = ({
               />
               <StyledMuiButton
                 onClick={handleAdd}
-                className='plausible-event-name=Custom+Tag+Added outlined-secondary mini'
+                className='plausible-event-name=Custom+Tag+Added outlined-secondary fully-rounded mini '
               >
                 <AddIcon />
               </StyledMuiButton>
@@ -833,28 +855,6 @@ const Configuration = ({
           </Tooltip>
         </div>
       </div>
-
-      {drawerOpen && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{
-            opacity: 1,
-            x: 0,
-            transition: { delay: 0.3, duration: 0.5, type: 'spring' },
-          }}
-          className='py-8 w-full mb-4'
-        >
-          <Tooltip title={'Hide the advanced configurations drawer'}>
-            <StyledMuiButton
-              onClick={handleClose}
-              className='plausible-event-name=Close+Configuration secondary'
-            >
-              Hide
-              <ArrowForwardIosRoundedIcon style={{ width: 18 }} />
-            </StyledMuiButton>
-          </Tooltip>
-        </motion.div>
-      )}
     </Box>
   );
 };

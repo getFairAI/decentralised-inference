@@ -24,12 +24,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import Option from './option';
 import { useCallback, useContext, useState } from 'react';
-import { Button, IconButton, MenuList, Tooltip, useTheme } from '@mui/material';
+import { Button, ButtonBase, IconButton, MenuList, Tooltip, useTheme } from '@mui/material';
 import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import { StyledMuiButton } from '@/styles/components';
@@ -37,6 +37,9 @@ import { StyledMuiButton } from '@/styles/components';
 // icons
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddCommentRoundedIcon from '@mui/icons-material/AddCommentRounded';
+import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
+import OpenInNew from '@mui/icons-material/OpenInNew';
+import GetIcon from './get-icon';
 
 const WalletState = () => {
   const theme = useTheme();
@@ -157,8 +160,14 @@ const WalletState = () => {
   );
 };
 
-const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
-  const { currentAddress } = useContext(EVMWalletContext);
+const Navbar = ({
+  isScrolled,
+  userScrolledDown,
+}: {
+  isScrolled: boolean;
+  userScrolledDown: boolean;
+}) => {
+  const { currentAddress, ethBalance, usdcBalance, disconnect } = useContext(EVMWalletContext);
   const { pathname } = useLocation();
   const theme = useTheme();
   const extraIndex = 10; // number to add to zIndex to make sure it's above the drawer
@@ -168,15 +177,25 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
   const navigate = useNavigate();
 
   const appBarStyle = {
-    zIndex,
+    zIndex: zIndex,
     alignContent: 'center',
     padding: '10px 20px 10px 20px',
     ...(!isScrolled && { boxShadow: 'none' }),
+    transform: userScrolledDown ? 'translateY(-80px)' : 'translateY(0px)',
+    transition: 'all 0.2s',
   };
 
   const handleMenuClick = useCallback(() => setIsExpanded((prev) => !prev), [setIsExpanded]);
-  const handleBrowse = useCallback(() => navigate('browse'), [navigate]);
-  const handleRequest = useCallback(() => navigate('request'), [navigate]);
+  const handleBrowse = useCallback(() => {
+    navigate('browse');
+    setTimeout(() => {
+      setIsExpanded(false);
+    }, 400);
+  }, [navigate]);
+  const handleRequest = useCallback(() => {
+    navigate('request');
+    setIsExpanded(false);
+  }, [navigate]);
   const handleOpenOnArweave = useCallback(() => {
     // 'https://fairapp.ar-io.dev'
     const a = document.createElement('a');
@@ -187,19 +206,24 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
     document.body.removeChild(a);
   }, []);
 
+  const handleDisconnect = useCallback(() => {
+    setIsExpanded(false);
+    disconnect();
+  }, [setIsExpanded, disconnect]);
+
+  const handleViewInExplorer = useCallback(() => {
+    window.open(`https://arbiscan.io/address/${currentAddress}`, '_blank');
+  }, [currentAddress]);
+
+  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+  const chooseWalletOpen = () => {
+    setChooseWalletOpen(true);
+  };
+
   return (
-    <>
-      <AppBar sx={appBarStyle} color='inherit'>
-        <motion.div
-          className='flex-col w-full justify-start'
-          initial={{ y: '-40px', opacity: 0 }}
-          animate={{
-            height: isExpanded ? '100vh' : 'fit-content',
-            y: 0,
-            opacity: 1,
-            transition: { type: 'smooth', duration: 0.4, delay: 0.1 },
-          }}
-        >
+    <div style={appBarStyle}>
+      <AppBar color='inherit'>
+        <div className='flex-col w-full justify-start'>
           <Toolbar className='flex justify-between'>
             <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
               <Link to='/' style={{ width: '150px', height: '50px' }}>
@@ -284,23 +308,215 @@ const Navbar = ({ isScrolled }: { isScrolled: boolean }) => {
               </Box>
             </Box>
           </Toolbar>
-          {isExpanded && (
-            <Box>
-              <MenuList>
-                {/* <Option option='Links' setOpen={setIsExpanded} setLinksOpen={setLinksOpen} /> */}
-                <Option option='Twitter' setOpen={setIsExpanded} />
-                <Option option='Github' setOpen={setIsExpanded} />
-                <Option option='Discord' setOpen={setIsExpanded} />
-                <Option option='Whitepaper' setOpen={setIsExpanded} />
-                <Option option='Studio' setOpen={setIsExpanded} />
-                <Option option='Terms And Conditions' setOpen={setIsExpanded} />
-              </MenuList>
-            </Box>
-          )}
-        </motion.div>
+
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, y: '-60px', x: '50px' }}
+                animate={{ opacity: 1, y: 0, x: 0 }}
+                exit={{
+                  opacity: 0,
+                  y: '-60px',
+                  x: '50px',
+                  transition: {
+                    duration: 0.2,
+                  },
+                }}
+                className='flex justify-center bg-[#ededed] h-[100vh] absolute top-[0px] z-[1000] left-0 w-[100vw]'
+              >
+                <div className='h-full absolute top-[15px] right-[15px] z-[1000]'>
+                  <StyledMuiButton className='secondary fully-rounded' onClick={handleMenuClick}>
+                    <CloseIcon />
+                  </StyledMuiButton>
+                </div>
+                <div className='w-full overflow-y-auto pt-2 pb-28 flex justify-center'>
+                  <div className='w-full max-w-[400px] font-medium'>
+                    <MenuList>
+                      {/* <Option option='Links' setOpen={setIsExpanded} setLinksOpen={setLinksOpen} /> */}
+
+                      <div className='w-full px-4'>
+                        <img
+                          src='./fair-ai-outline.svg'
+                          alt='FairAI Logo'
+                          style={{
+                            width: '200px',
+                            objectFit: 'contain',
+                            opacity: 0.85,
+                          }}
+                        />
+                      </div>
+
+                      <div className='px-4 font-bold mt-5 flex justify-between gap-2  flex-wrap'>
+                        <div className='flex flex-col'>
+                          <span>Account connected</span>
+                          <div
+                            className='font-medium text-sm flex gap-1 flex-nowrap items-center'
+                            onClick={handleViewInExplorer}
+                          >
+                            <span className='text-[#3aaaaa] cursor-pointer'>
+                              {`${currentAddress.slice(0, 8)}...${currentAddress.slice(-6)}`}
+                            </span>
+                            <OpenInNew fontSize='inherit' />
+                          </div>
+                        </div>
+
+                        <Tooltip title='Disconnect your wallet/account'>
+                          <StyledMuiButton
+                            className='secondary fully-rounded'
+                            onClick={handleDisconnect}
+                          >
+                            <PowerSettingsNewRoundedIcon />
+                          </StyledMuiButton>
+                        </Tooltip>
+                      </div>
+
+                      <div className='flex flex-col px-3 gap-3 mt-4'>
+                        <div className='flex justify-between bg-white rounded-xl h-[50px] px-4 items-center flex-wrap'>
+                          <div className='flex items-center gap-3'>
+                            <img width='16px' className='ml-[5px] mr-[2px]' src='./eth-logo.svg' />
+                            <span className='font-bold'>ETH</span>
+                          </div>
+                          <span className='font-medium font-mono'>{ethBalance.toPrecision(5)}</span>
+                        </div>
+                        <div className='flex justify-between bg-white rounded-xl h-[50px] px-4 items-center flex-wrap'>
+                          <div className='flex items-center gap-3'>
+                            <img width='22px' className='ml-[2px]' src='./usdc-logo.svg' />
+                            <span className='font-bold'>USDC</span>
+                          </div>
+                          <span className='font-medium font-mono'>
+                            {usdcBalance.toPrecision(5)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
+                        onClick={handleRequest}
+                      >
+                        <ButtonBase
+                          component='div'
+                          sx={{
+                            padding: '12px 20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            borderRadius: '10px',
+                            gap: 1,
+                            '&:hover': {
+                              backdropFilter: 'brightness(1.3)',
+                            },
+                          }}
+                        >
+                          <GetIcon input={'Top Up'}></GetIcon>
+                          Top Up
+                        </ButtonBase>
+                      </div>
+
+                      <div
+                        className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
+                        onClick={chooseWalletOpen}
+                      >
+                        <ButtonBase
+                          component='div'
+                          sx={{
+                            padding: '12px 20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            borderRadius: '10px',
+                            gap: 1,
+                            '&:hover': {
+                              backdropFilter: 'brightness(1.3)',
+                            },
+                          }}
+                        >
+                          <GetIcon input={'Change Wallet'}></GetIcon>
+                          Change Wallet
+                        </ButtonBase>
+                      </div>
+
+                      <div className='px-4 font-bold mt-5'>
+                        <p>Menu</p>
+                      </div>
+                      <div
+                        className='bg-[#3aaaaa] text-white rounded-xl m-3 scale(1) active:scale(0.9)'
+                        onClick={handleBrowse}
+                      >
+                        <ButtonBase
+                          component='div'
+                          sx={{
+                            padding: '12px 20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            borderRadius: '10px',
+                            gap: 1,
+                            '&:hover': {
+                              backdropFilter: 'brightness(0.9)',
+                            },
+                          }}
+                        >
+                          <SearchRoundedIcon style={{ width: '20px' }} />
+                          Browse Requests
+                        </ButtonBase>
+                      </div>
+
+                      <div
+                        className='bg-[#3aaaaa] text-white rounded-xl m-3'
+                        onClick={handleRequest}
+                      >
+                        <ButtonBase
+                          component='div'
+                          sx={{
+                            padding: '12px 20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            borderRadius: '10px',
+                            gap: 1,
+                            '&:hover': {
+                              backdropFilter: 'brightness(0.9)',
+                            },
+                          }}
+                        >
+                          <AddCommentRoundedIcon style={{ width: '20px' }} />
+                          Make a Request
+                        </ButtonBase>
+                      </div>
+
+                      <div className='px-4 mt-5 font-bold'>
+                        <p>Links</p>
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Studio' setOpen={setIsExpanded} />
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <span className='brightness-[6]'>
+                          <Option option='Discord' setOpen={setIsExpanded} />
+                        </span>
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Twitter' setOpen={setIsExpanded} />
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Github' setOpen={setIsExpanded} />
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Whitepaper' setOpen={setIsExpanded} />
+                      </div>
+                      <div className='bg-[#3aaaaa] text-white rounded-xl mx-3'>
+                        <Option option='Terms And Conditions' setOpen={setIsExpanded} />
+                      </div>
+                    </MenuList>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </AppBar>
       <Toolbar />
-    </>
+    </div>
   );
 };
 

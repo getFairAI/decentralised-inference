@@ -5,6 +5,7 @@ import eslint from 'vite-plugin-eslint';
 import svgr from 'vite-plugin-svgr';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import commonjs from '@rollup/plugin-commonjs';
+import fs from 'fs';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -51,6 +52,14 @@ export default defineConfig({
       path: 'path-browserify',
       os: 'os-browserify',
       stream: 'stream-browserify',
+    },
+  },
+  server: {
+    host: '0.0.0.0',
+    https: {
+      cert: fs.readFileSync('./httpscerts/cert.pem'),
+      key: fs.readFileSync('./httpscerts/key.pem'),
+      passphrase: 'fairai',
     },
   },
 });

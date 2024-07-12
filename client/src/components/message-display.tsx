@@ -154,7 +154,6 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         sx={{
           fontStyle: 'normal',
           fontWeight: 500,
-          fontSize: '18px',
           lineHeight: '25px',
           display: 'flex',
           alignItems: 'center',
@@ -164,7 +163,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         gutterBottom
         component={'pre'}
       >
-        {content as string}
+        <span className='text-base lg:text-lg'>{content as string}</span>
       </Typography>
     );
   } else if (type === 'encrypted') {

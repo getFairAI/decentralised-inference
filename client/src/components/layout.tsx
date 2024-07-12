@@ -23,6 +23,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -40,6 +41,7 @@ import { motion } from 'framer-motion';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
+import usePrevious from '@/hooks/usePrevious';
 
 const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
   const [showWarning, setShowWarning] = useState(false);
@@ -58,73 +60,39 @@ const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
 
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
-      <>
-        {!isScrolled && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, minHeight: 0 }}
-            animate={{
-              opacity: 1,
-              height: 'fit-content',
-              minHeight: '80px',
-              transition: { duration: 0.4, type: 'smooth' },
+      <motion.div
+        initial={{ opacity: 0, height: 0, minHeight: 0 }}
+        animate={{
+          opacity: 1,
+          height: 'fit-content',
+          minHeight: '40px',
+          transition: { duration: 0.2, type: 'smooth' },
+        }}
+        className='w-full flex flex-wrap py-2 justify-center items-center gap-3 bg-slate-500 font-semibold text-white overflow-hidden text-xs md:text-base'
+      >
+        <span className='px-2 flex flex-nowrap gap-3 items-center'>
+          <ErrorRoundedIcon
+            style={{
+              width: isScrolled ? '18px' : '24px',
             }}
-            className='w-fit flex flex-wrap p-4 mx-2 justify-center items-center gap-3 rounded-[30px] bg-slate-500 font-semibold text-white overflow-hidden text-md'
-          >
-            <span className='px-2 flex flex-nowrap gap-3 items-center'>
-              <ErrorRoundedIcon
-                style={{
-                  width: isScrolled ? '18px' : '24px',
-                }}
-              />
-              You don&apos;t have a wallet connected. Some functionalities will not be available
-              until you connect one.
-            </span>
-            <StyledMuiButton
-              className='plausible-event-name=Onboarding+Click primary'
-              onClick={handleSignIn}
-            >
-              <OpenInNewRoundedIcon style={{ width: '22px' }} />
-              Connect a wallet or learn more
-            </StyledMuiButton>
-          </motion.div>
-        )}
+          />
+          You don&apos;t have a wallet connected. Some functionalities will not be available until
+          you connect one.
+        </span>
 
-        {isScrolled && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, minHeight: 0 }}
-            animate={{
-              opacity: 1,
-              height: 'fit-content',
-              minHeight: '40px',
-              transition: { duration: 0.4, type: 'smooth' },
-            }}
-            className='w-full flex flex-wrap py-2 justify-center items-center gap-3 bg-slate-500 font-semibold text-white overflow-hidden text-sm'
-          >
-            <span className='px-2 flex flex-nowrap gap-3 items-center'>
-              <ErrorRoundedIcon
-                style={{
-                  width: isScrolled ? '18px' : '24px',
-                }}
-              />
-              You don&apos;t have a wallet connected. Some functionalities will not be available
-              until you connect one.
-            </span>
-
-            <StyledMuiButton
-              style={{
-                display: 'flex',
-                gap: '5px',
-                alignItems: 'center',
-              }}
-              className='plausible-event-name=Onboarding+Click primary mini'
-              onClick={handleSignIn}
-            >
-              <OpenInNewRoundedIcon style={{ width: '18px' }} />
-              Connect a wallet or learn more
-            </StyledMuiButton>
-          </motion.div>
-        )}
-      </>
+        <StyledMuiButton
+          style={{
+            display: 'flex',
+            gap: '5px',
+            alignItems: 'center',
+          }}
+          className='plausible-event-name=Onboarding+Click primary mini'
+          onClick={handleSignIn}
+        >
+          <OpenInNewRoundedIcon style={{ width: '18px' }} />
+          Connect a wallet or learn more
+        </StyledMuiButton>
+      </motion.div>
     );
   } else if (showWarning && currentAddress && usdcBalance < MIN_U_BALANCE) {
     return (
@@ -165,11 +133,11 @@ export default function Layout({ children }: { children: ReactElement }) {
   const [headerHeight, setHeaderHeight] = useState('64px');
   const { width, height } = useWindowDimensions();
   const scrollableRef = useRef<HTMLDivElement>(null);
-  const { isScrolled } = useScroll(scrollableRef);
+  const { isScrolled, scrollTop: currentScrollAmount } = useScroll(scrollableRef);
   const { pathname } = useLocation();
   const warningRef = useRef<HTMLDivElement>(null);
   const { height: warningHeight } = useComponentDimensions(warningRef);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const theme = useTheme();
 
   useLayoutEffect(() => {
@@ -180,57 +148,48 @@ export default function Layout({ children }: { children: ReactElement }) {
   }, [width, height]);
 
   useEffect(() => {
-    const sm = theme.breakpoints.values.sm;
-    setIsMobile(width < sm);
-  }, [width, theme, setIsMobile]);
+    const md = theme.breakpoints.values.md;
+    setIsSmallScreen(width < md);
+  }, [width, theme, setIsSmallScreen]);
+
+  const oldScrollValue = usePrevious(currentScrollAmount);
+  const userScrolledDown = useMemo(() => {
+    if (currentScrollAmount > (oldScrollValue ?? 0)) return true;
+    else return false;
+  }, [currentScrollAmount, oldScrollValue]);
 
   if (pathname === '/sign-in' || pathname === '/swap') {
     return children;
   }
 
-  if (isMobile) {
-    return (
-      <>
-        <Navbar isScrolled={isScrolled} />
-        <Box
-          sx={{
-            height: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            padding: '40px 20px 10px 20px',
-          }}
-        >
-          <Typography sx={{ fontWeight: 600, fontSize: '120%' }}>
-            {
-              'We currently do not support mobile, but we are working on it! Stay tuned with our blog and socials for updates.'
-            }
-          </Typography>
-        </Box>
-      </>
-    );
-  }
-
   return (
     <>
-      <Navbar isScrolled={isScrolled} />
       <Container
         disableGutters
         sx={{
           width: '100%',
-          height: `calc(100% - ${headerHeight})`,
-          top: headerHeight,
+          height: !userScrolledDown && !isSmallScreen ? `calc(100% - ${headerHeight})` : '100%',
+          top: userScrolledDown && isSmallScreen ? 0 : headerHeight,
           position: 'fixed',
+          transition: 'all 0.2s',
         }}
         maxWidth={false}
       >
-        <Box height={`calc(100% - ${warningHeight}px)`}>
+        <Box
+          height={!userScrolledDown && !isSmallScreen ? `calc(100% - ${warningHeight}px)` : '100%'}
+        >
           {pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse' && (
             <Box
               ref={warningRef}
               id={'warning-box'}
-              style={{ display: 'flex', justifyContent: 'center' }}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+              }}
             >
-              <WarningMessage isScrolled={isScrolled} />
+              {((!userScrolledDown && !isSmallScreen) || (!userScrolledDown && isSmallScreen)) && (
+                <WarningMessage isScrolled={isScrolled} />
+              )}
             </Box>
           )}
           <main style={{ height: '100%' }} ref={scrollableRef} id='main'>
@@ -238,6 +197,7 @@ export default function Layout({ children }: { children: ReactElement }) {
           </main>
         </Box>
       </Container>
+      <Navbar isScrolled={isScrolled} userScrolledDown={isSmallScreen && userScrolledDown} />
     </>
   );
 }

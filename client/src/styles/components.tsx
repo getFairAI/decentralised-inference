@@ -201,6 +201,11 @@ export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
     height: '45px',
     padding: '0px',
 
+    '&.smaller': {
+      width: '34px',
+      height: '34px',
+    },
+
     '&.mini': {
       width: '30px',
       height: '30px',
@@ -209,6 +214,6 @@ export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
 
   '&:disabled': {
     opacity: '0.5 !important',
-    'pointer-events': 'none',
+    pointerEvents: 'none',
   },
 }));

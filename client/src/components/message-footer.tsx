@@ -17,7 +17,7 @@
  */
 
 import { IMessage } from '@/interfaces/common';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import useTimeInterval from '@/hooks/useTimeInterval';
@@ -75,42 +75,37 @@ const MessageFooter = ({ message, index }: { message: IMessage; index: number })
         width={'100%'}
         flexDirection={message.type === 'response' ? 'row' : 'row-reverse'}
       >
-        <Box display={'flex'}>
-          <Typography
-            className='timeLabel'
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 400,
-              fontSize: '14px',
-              lineHeight: '20px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            {getTimePassed(message.timestamp)}
-          </Typography>
-          <Typography
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              margin: message.type === 'response' ? '8px' : '0px',
-            }}
-          >
-            {message.type === 'response' ? ' - ' : ''}
-          </Typography>
-          <Typography
-            sx={{
-              fontStyle: 'normal',
-              fontWeight: 700,
-              fontSize: '14px',
-              lineHeight: '20px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            {message.type === 'response' ? findTag(state.solution, 'solutionName') : ''}
-          </Typography>
-        </Box>
+        <div className='text-xs md:text-sm'>
+          <Box display={'flex'}>
+            <div
+              className='timeLabel'
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              {getTimePassed(message.timestamp)}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                margin: message.type === 'response' ? '8px' : '0px',
+              }}
+            >
+              {message.type === 'response' ? ' - ' : ''}
+            </div>
+            <div
+              style={{
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              {message.type === 'response' ? findTag(state.solution, 'solutionName') : ''}
+            </div>
+          </Box>
+        </div>
       </Box>
     </>
   );

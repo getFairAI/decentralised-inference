@@ -92,7 +92,7 @@ import { motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { toSvg } from 'jdenticon';
-import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -1322,7 +1322,7 @@ const Chat = () => {
       setHeaderHeight(`${currHeaderHeight}px`);
     }
 
-    if (width > theme.breakpoints.values.lg) {
+    if (width > 1500) {
       setDrawerOpen(true);
       setConfigurationDrawerOpen(true);
     } else {
@@ -1351,8 +1351,59 @@ const Chat = () => {
     setCurrentEl(oldestMessage as HTMLDivElement);
   }, [fetchMore, requestsData]);
 
+  const [isMiniScreen, setIsMiniScreen] = useState(false);
+  useEffect(() => {
+    const md = theme.breakpoints.values.md;
+    setIsMiniScreen(width < md);
+  }, [width, theme, setIsMiniScreen]);
+
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  useEffect(() => {
+    const md = theme.breakpoints.values.md;
+    setIsSmallScreen(width < 1400 && width > md);
+  }, [width, theme, setIsSmallScreen]);
+
+  const conversationsDrawerOpenedWidth = '240px';
+
   return (
     <>
+      <Drawer
+        variant='persistent'
+        anchor='left'
+        open={drawerOpen}
+        sx={{
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: conversationsDrawerOpenedWidth,
+            height: '100%',
+            position: 'absolute',
+            left: 0,
+            top: '10px',
+            border: 'none',
+            boxSizing,
+            ...(isSmallScreen && {
+              width: '30vw',
+              position: 'absolute',
+              left: '10px',
+              top: '10px',
+              boxShadow: '0px 0px 10px rgba(0,0,0,0.3)',
+              borderRadius: '20px',
+              height: '98%',
+            }),
+            ...(isMiniScreen && { position: 'absolute', left: 0, width: '100%', top: '10px' }),
+          },
+        }}
+      >
+        <Conversations
+          currentConversationId={currentConversationId}
+          setCurrentConversationId={setCurrentConversationId}
+          userAddr={userAddr}
+          drawerOpen={drawerOpen}
+          setDrawerOpen={setDrawerOpen}
+          setLayoverOpen={setLayoverOpen}
+        />
+      </Drawer>
+
       <Drawer
         variant='persistent'
         anchor='right'
@@ -1360,10 +1411,20 @@ const Chat = () => {
         sx={{
           '& .MuiDrawer-paper': {
             width: '30%',
-            top: headerHeight,
+            top: `calc(${headerHeight} + 10px)`,
             height: `calc(100% - ${headerHeight})`,
             border: 'none',
             boxSizing,
+            ...(isSmallScreen && {
+              position: 'absolute',
+              right: '10px',
+              width: '50vw',
+              top: '10px',
+              boxShadow: '0px 0px 10px rgba(0,0,0,0.3)',
+              borderRadius: '20px',
+              height: '98%',
+            }),
+            ...(isMiniScreen && { position: 'absolute', right: 0, width: '100%', top: '10px' }),
           },
         }}
       >
@@ -1388,34 +1449,15 @@ const Chat = () => {
           />
         </Box>
       </Drawer>
-      <Box sx={{ height: '100%', display: 'flex' }}>
-        <Drawer
-          variant='persistent'
-          anchor='left'
-          open={drawerOpen}
-          sx={{
-            width: '240px',
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: '240px',
-              top: headerHeight,
-              height: '100%',
-              position: 'static',
-              border: 'none',
-              boxSizing,
-            },
-          }}
-        >
-          <Conversations
-            currentConversationId={currentConversationId}
-            setCurrentConversationId={setCurrentConversationId}
-            userAddr={userAddr}
-            drawerOpen={drawerOpen}
-            setDrawerOpen={setDrawerOpen}
-            setLayoverOpen={setLayoverOpen}
-          />
-        </Drawer>
 
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          ...(isMiniScreen && { height: `calc(100% - ${headerHeight})` }),
+          ...(isSmallScreen && (configurationDrawerOpen || drawerOpen) && { filter: 'blur(10px)' }),
+        }}
+      >
         <Box
           id='chat'
           sx={{
@@ -1423,16 +1465,20 @@ const Chat = () => {
             height: '100%',
             display: 'flex',
             flexGrow: 1,
-            marginLeft: '-240px',
-            ...(drawerOpen && {
-              marginLeft: 0,
-            }),
             marginRight: 0,
-            ...(configurationDrawerOpen && {
-              marginRight: '30%',
-            }),
+            marginLeft: 0,
+            ...(drawerOpen &&
+              !isMiniScreen &&
+              !isSmallScreen && {
+                marginLeft: conversationsDrawerOpenedWidth,
+              }),
+            ...(configurationDrawerOpen &&
+              !isMiniScreen &&
+              !isSmallScreen && {
+                marginRight: '30%',
+              }),
             alignItems: 'center',
-            padding: '20px',
+            padding: '20px 10px',
             boxSizing,
           }}
         >
@@ -1444,9 +1490,20 @@ const Chat = () => {
                 x: 0,
                 transition: { delay: 0.3, duration: 0.5, type: 'spring' },
               }}
-              className='h-full flex flex-col items-end justify-end px-2 pr-6'
+              className='w-full flex max-w-[120px] pl-1 pr-6 justify-center mt-[40px]'
+              style={{
+                position: 'static',
+                height: '100%',
+                ...(isMiniScreen && {
+                  position: 'absolute',
+                  left: '18px',
+                  top: 0,
+                  zIndex: 100,
+                  height: 'fit-content',
+                }),
+              }}
             >
-              <Tooltip title={'Open the conversations drawer'}>
+              <Tooltip title={'Open the chats drawer'}>
                 <StyledMuiButton
                   onClick={handleShowConversations}
                   disableRipple={true}
@@ -1499,40 +1556,63 @@ const Chat = () => {
               </Backdrop>
             )}
             <div
-              className='absolute top-0 left-0 w-full px-4 bg-[rgba(240,240,240,0.8)] backdrop-blur-lg z-10 flex justify-between items-center gap-2'
+              className='absolute top-0 left-0 w-full  bg-[rgba(240,240,240,0.8)] backdrop-blur-lg z-10 '
               style={{
                 height: '80px',
                 boxShadow: '0px 0px 6px rgba(0,0,0,0.15)',
               }}
             >
-              <div className='flex items-center gap-4'>
-                {imgUrl && (
-                  <Avatar
-                    variant='rounded'
-                    src={imgUrl}
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      border: '3px solid white',
-                      boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
-                    }}
-                  />
-                )}
-                <div className='flex flex-col'>
-                  <span className='font-bold text-xl'>
-                    {findTag(state.solution, 'solutionName')}
-                  </span>
-                  <span className='text-sm text-gray-500'>{state.solution.node.id}</span>
+              <div
+                className='px-4 flex justify-between items-center gap-2 h-full'
+                style={{
+                  margin: 0,
+                  ...(isMiniScreen && { margin: '0px 110px 0px 100px' }),
+                }}
+              >
+                <div className='flex items-center gap-4'>
+                  {imgUrl && (
+                    <div className='hidden sm:inline-block'>
+                      <Avatar
+                        variant='rounded'
+                        src={imgUrl}
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          border: '3px solid white',
+                          boxShadow: '0px 0px 4px rgba(0,0,0,0.2)',
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className='flex flex-col'>
+                    <span className='font-bold text-sm sm:text-lg lg:text-xl'>
+                      {findTag(state.solution, 'solutionName')}
+                    </span>
+                    <span className='text-xs lg:text-base hidden sm:inline-block text-gray-500'>
+                      {state.solution.node.id}
+                    </span>
+                  </div>
                 </div>
+                <a href='#/'>
+                  <>
+                    <div className='inline-block lg:hidden'>
+                      <Tooltip title={'Close this solution and go back to the homepage'}>
+                        <StyledMuiButton className='outlined-secondary fully-rounded smaller mt-[2px]'>
+                          <CloseRoundedIcon />
+                        </StyledMuiButton>
+                      </Tooltip>
+                    </div>
+                    <div className='hidden lg:inline-block'>
+                      <Tooltip title={'Close this solution and go back to the homepage'}>
+                        <StyledMuiButton className='outlined-secondary'>
+                          <CloseRoundedIcon />
+                          Close Solution
+                        </StyledMuiButton>
+                      </Tooltip>
+                    </div>
+                  </>
+                </a>
               </div>
-              <a href='#/'>
-                <Tooltip title={'Close this solution and go back to the homepage'}>
-                  <StyledMuiButton className='outlined-secondary'>
-                    <CancelRoundedIcon />
-                    Close Solution
-                  </StyledMuiButton>
-                </Tooltip>
-              </a>
             </div>
             <Box flexGrow={1}>
               <Paper
@@ -1647,13 +1727,23 @@ const Chat = () => {
               x: 0,
               transition: { delay: 0.3, duration: 0.5, type: 'spring' },
             }}
-            className='h-full flex flex-col items-end justify-end px-2 pr-6'
+            className='w-full flex max-w-[120px] justify-center px-2 pr-6 mt-[40px]'
+            style={{
+              position: 'static',
+              height: 'fit-content',
+              ...(isMiniScreen && {
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                zIndex: 100,
+              }),
+            }}
           >
             <Tooltip title={'Open the advanced configurations drawer'}>
               <StyledMuiButton
                 onClick={handleAdvanced}
                 disableRipple={true}
-                className='plausible-event-name=Open+Configuration+Click secondary w-fit mb-12'
+                className='plausible-event-name=Open+Configuration+Click secondary w-fit'
               >
                 <ChevronLeftRounded />
                 <SettingsIcon />

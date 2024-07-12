@@ -48,7 +48,6 @@ import {
 } from 'react';
 import { LoadingContainer, StyledMuiButton } from '@/styles/components';
 import { Timeout } from 'react-number-format/types/types';
-import useWindowDimensions from '@/hooks/useWindowDimensions';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { useLocation } from 'react-router-dom';
@@ -110,11 +109,11 @@ const ConversationElement = ({
           display: 'flex',
           alignItems: 'center',
           textAlign: 'center',
-          gap: 1,
+          gap: 2,
         }}
       >
         <img src='./icons/comment_icon_fill.svg' style={{ width: 18, opacity: 0.7 }} />
-        Conversation {cid}
+        Chat {cid}
       </Typography>
     </ListItemButton>
   );
@@ -146,8 +145,6 @@ const Conversations = ({
   const { startConversation, currentAddress } = useContext(EVMWalletContext);
   const { state } = useLocation();
   const [getConversationHistory] = useLazyQuery(QUERY_CONVERSATIONS_TX_ID);
-  const { height } = useWindowDimensions();
-  const [chatMaxHeight, setChatMaxHeight] = useState('100%');
 
   const createNewConversation = async (id: number) => {
     try {
@@ -310,16 +307,6 @@ const Conversations = ({
     }, 500);
   };
 
-  useEffect(() => {
-    const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
-    const searchbarHeight = document.querySelector('#searchConversation')?.clientHeight as number;
-    const addButtonHeight = document.querySelector('#addConversation')?.clientHeight as number;
-    const margins = 72; // 16 from search, 16 from button and 8 from bottom +16px * 3 for gaps
-    setChatMaxHeight(
-      `${height - (currHeaderHeight + searchbarHeight + addButtonHeight + margins)}px`,
-    );
-  }, [height]);
-
   const toggleDrawer = useCallback(() => {
     setDrawerOpen(!drawerOpen);
   }, [drawerOpen, setDrawerOpen]);
@@ -328,6 +315,7 @@ const Conversations = ({
     <Paper
       sx={{
         height: '100%',
+        overflowY: 'auto',
       }}
     >
       <Box
@@ -336,24 +324,49 @@ const Conversations = ({
           flexDirection: 'column',
           justifyContent: 'flex-end',
           alignItems: 'center',
-          height: '100%',
           paddingLeft: '15px',
+          paddingBottom: '80px',
         }}
       >
-        <div className='flex w-full justify-center px-2 mb-2 mt-6'>
+        <div className='flex items-center justify-between w-full px-4 mb-2 mt-[30px]'>
           <Typography
             sx={{
               fontWeight: 700,
-              fontSize: '23px',
-              lineHeight: '31px',
+              fontSize: '24px',
               display: 'flex',
-              gap: 1,
+              justifyContent: 'end',
               alignItems: 'center',
+              gap: 1,
+              marginLeft: '10px',
             }}
           >
-            <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: 20 }} />
-            Conversations
+            <img
+              src='./icons/comment_icon_fill_primarycolor.svg'
+              style={{ width: 30, height: 30 }}
+            />
+            Chats
           </Typography>
+
+          {drawerOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                transition: { delay: 0.1, duration: 0.5, type: 'spring' },
+              }}
+              className='flex: 0 0 fit-content'
+            >
+              <Tooltip title={'Hide the chats drawer'}>
+                <StyledMuiButton
+                  onClick={toggleDrawer}
+                  className='plausible-event-name=Hide+Conversation+Click secondary'
+                >
+                  <ArrowBackIosNewRoundedIcon style={{ width: 18 }} />
+                </StyledMuiButton>
+              </Tooltip>
+            </motion.div>
+          )}
         </div>
         <Box marginTop={'16px'} width={'100%'} padding={'0px 20px'}>
           <Box
@@ -396,8 +409,6 @@ const Conversations = ({
             width: '100%',
             paddingLeft: '20px',
             paddingRight: '20px',
-            overflow: 'auto',
-            maxHeight: chatMaxHeight,
             flexFlow: 'wrap',
             marginTop: '20px',
           }}
@@ -425,36 +436,13 @@ const Conversations = ({
           onClick={handleAddConversation}
           className='plausible-event-name=Add+Conversation+Click'
         >
-          <Tooltip title='Start a new Conversation'>
+          <Tooltip title='Start a new chat'>
             <StyledMuiButton className='secondary'>
               <AddIcon style={{ width: '16px' }} />
               Start New
             </StyledMuiButton>
           </Tooltip>
         </div>
-
-        <Box flexGrow={1}></Box>
-        {drawerOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{
-              opacity: 1,
-              x: 0,
-              transition: { delay: 0.3, duration: 0.5, type: 'spring' },
-            }}
-            className='w-full flex justify-end p-8 mb-4'
-          >
-            <Tooltip title={'Hide the conversations drawer'}>
-              <StyledMuiButton
-                onClick={toggleDrawer}
-                className='plausible-event-name=Hide+Conversation+Click secondary'
-              >
-                <ArrowBackIosNewRoundedIcon style={{ width: 18 }} />
-                Hide
-              </StyledMuiButton>
-            </Tooltip>
-          </motion.div>
-        )}
       </Box>
     </Paper>
   );

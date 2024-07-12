@@ -23,7 +23,6 @@ import {
   CardContent,
   useTheme,
   Button,
-  Avatar,
   Typography,
   IconButton,
   Menu,
@@ -234,40 +233,38 @@ const MessageHeader = ({
   }, [message, setAnchorEl, copySettings]);
 
   return (
-    <Box display={'flex'} gap={'20px'} width={'100%'}>
+    <Box display={'flex'} gap={'20px'} width={'100%'} alignItems={'start'}>
       {message.type === 'response' && (
-        <Avatar
-          variant='rounded'
+        <img
           src={imgUrl}
-          sx={{
-            width: 56,
-            height: 56,
+          style={{
+            backgroundColor: '#000',
+            objectFit: 'cover',
+            borderRadius: '10px',
             border: '3px solid white',
             boxShadow,
           }}
+          className='w-[56px] h-[56px] absolute left-6 sm:static opacity-80 sm:opacity-100'
         />
       )}
-      <Box display={'flex'} justifyContent={'space-between'} width={'100%'} gap={8}>
+      <Box display={'flex'} justifyContent={'space-between'} width={'100%'} gap={8} zIndex={10}>
         {message.type === 'response' && (
-          <Box display={'flex'} flexDirection={'column'}>
-            <Typography
-              sx={{
-                fontSize: '20px',
-                fontWeight: 600,
-              }}
-            >
+          <Box display={'flex'} flexDirection={'column'} justifyContent={'center'}>
+            <span className='text-sm sm:text-base md:text-lg lg:text-xl font-bold rounded-md bg-[rgba(255,255,255,0.9)] px-1 sm:bg-transparent mt-6 sm:mt-0'>
               {findTag(state.solution, 'solutionName')}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: '14px',
-                fontWeight: 400,
-                color: theme.palette.neutral.main,
-                opacity: 0.5,
-              }}
-            >
-              {state.solution.node.id}
-            </Typography>
+            </span>
+            <div className='hidden md:inline-block'>
+              <Typography
+                sx={{
+                  fontSize: '12px',
+                  fontWeight: 400,
+                  color: theme.palette.neutral.main,
+                  opacity: 0.5,
+                }}
+              >
+                {state.solution.node.id}
+              </Typography>
+            </div>
           </Box>
         )}
         <Box display={'flex'} alignItems='center' gap={'8px'}>
@@ -355,21 +352,16 @@ const MessageHeader = ({
       </Box>
 
       {message.type !== 'response' && (
-        <div className='flex items-center gap-5'>
-          <Typography
-            sx={{
-              fontSize: '20px',
-              fontWeight: 600,
-            }}
-          >
-            You
-          </Typography>
+        <div className='flex items-start gap-5'>
+          <div className='flex items-center h-[60px]'>
+            <span className='text-base sm:text-lg lg:text-xl font-bold rounded-md bg-[rgba(255,255,255,0.9)] px-1 sm:bg-transparent mt-11 mr-7 sm:mt-0 sm:mr-0 text-gray-800 sm:text-white z-10'>
+              You
+            </span>
+          </div>
           <div
             style={{
-              width: 56,
-              height: 56,
               backgroundColor: '#000',
-              objectFit: 'contain',
+              objectFit: 'cover',
               borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
@@ -377,6 +369,7 @@ const MessageHeader = ({
               border: '3px solid white',
               boxShadow,
             }}
+            className='w-[56px] h-[56px] absolute right-6 sm:static opacity-90 sm:opacity-100'
           >
             <img src={'./fair-protocol-face-transp-eyes.png'} className='w-full' />
           </div>

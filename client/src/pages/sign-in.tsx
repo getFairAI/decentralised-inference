@@ -52,6 +52,7 @@ import { isTxConfirmed } from '@/utils/arweave';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { StyledMuiButton } from '@/styles/components';
 import { motion } from 'framer-motion';
+import { MobileView, BrowserView } from 'react-device-detect';
 
 // icons
 import { Close, InfoOutlined } from '@mui/icons-material';
@@ -103,37 +104,63 @@ const WalletnotConnectedContent = () => {
         )}
         {providers.length === 0 && (
           <>
-            <div className='flex flex-col gap-6 justify-center items-center'>
-              <div className='flex items-center gap-3 rounded-xl my-2 py-3 px-4 bg-amber-400 font-medium'>
-                <ErrorRoundedIcon /> No wallets detected. Please install a wallet first.
-              </div>
+            <MobileView>
+              <div className='flex flex-col gap-6 justify-center items-center'>
+                <div className='flex items-center gap-3 rounded-xl my-2 py-3 px-4 bg-amber-400 font-medium'>
+                  <ErrorRoundedIcon /> You seem to be using a mobile browser or operating system.
+                  Currently, wallets are very limited on mobile. For now, we strongly recommend you
+                  use the in-app browser inside the MetaMask wallet app for mobile.
+                </div>
 
-              <div className='flex flex-wrap gap-4 items-center flex-col md:flex-row'>
-                <a
-                  href={CREATE_WALLET_LINK}
-                  target='_blank'
-                  rel='noreferrer'
-                  className='plausible-event-name=Wallet+Create+Recommended+Click'
-                >
-                  <StyledMuiButton className='primary'>
-                    <DownloadRoundedIcon />
-                    Install our recommended wallet
-                  </StyledMuiButton>
-                </a>
-                <span className='text-lg font-semibold'>{' or '}</span>
-                <a
-                  href={CREATE_ALTERNATIVE_LINK}
-                  target='_blank'
-                  rel='noreferrer'
-                  className='plausible-event-name=Wallet+Create+Alternatives+Click'
-                >
-                  <StyledMuiButton className='secondary'>
-                    <OpenInNewRoundedIcon />
-                    find alternatives
-                  </StyledMuiButton>
-                </a>
+                <div className='flex flex-wrap gap-4 items-center flex-col md:flex-row'>
+                  <a
+                    href={CREATE_WALLET_LINK}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='plausible-event-name=Wallet+Create+Recommended+Click'
+                  >
+                    <StyledMuiButton className='primary'>
+                      <DownloadRoundedIcon />
+                      Install MetaMask App
+                    </StyledMuiButton>
+                  </a>
+                </div>
               </div>
-            </div>
+            </MobileView>
+
+            <BrowserView>
+              <div className='flex flex-col gap-6 justify-center items-center'>
+                <div className='flex items-center gap-3 rounded-xl my-2 py-3 px-4 bg-amber-400 font-medium'>
+                  <ErrorRoundedIcon /> No wallets detected. Please install a wallet first.
+                </div>
+
+                <div className='flex flex-wrap gap-4 items-center flex-col md:flex-row'>
+                  <a
+                    href={CREATE_WALLET_LINK}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='plausible-event-name=Wallet+Create+Recommended+Click'
+                  >
+                    <StyledMuiButton className='primary'>
+                      <DownloadRoundedIcon />
+                      Install our recommended wallet
+                    </StyledMuiButton>
+                  </a>
+                  <span className='text-lg font-semibold'>{' or '}</span>
+                  <a
+                    href={CREATE_ALTERNATIVE_LINK}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='plausible-event-name=Wallet+Create+Alternatives+Click'
+                  >
+                    <StyledMuiButton className='secondary'>
+                      <OpenInNewRoundedIcon />
+                      find alternatives
+                    </StyledMuiButton>
+                  </a>
+                </div>
+              </div>
+            </BrowserView>
           </>
         )}
       </div>
