@@ -30,16 +30,17 @@ import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { AnimatePresence, motion } from 'framer-motion';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
 import { StyledMuiButton } from '@/styles/components';
 
 // icons
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddCommentRoundedIcon from '@mui/icons-material/AddCommentRounded';
 import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
 import OpenInNew from '@mui/icons-material/OpenInNew';
 import GetIcon from './get-icon';
+import PowerOffRoundedIcon from '@mui/icons-material/PowerOffRounded';
 
 const WalletState = () => {
   const theme = useTheme();
@@ -324,12 +325,12 @@ const Navbar = ({
                 }}
                 className='flex justify-center bg-[#ededed] h-[100vh] absolute top-[0px] z-[1000] left-0 w-[100vw]'
               >
-                <div className='h-full absolute top-[15px] right-[15px] z-[1000]'>
+                <div className='absolute top-[15px] right-[15px] z-[1001]'>
                   <StyledMuiButton className='secondary fully-rounded' onClick={handleMenuClick}>
                     <CloseIcon />
                   </StyledMuiButton>
                 </div>
-                <div className='w-full overflow-y-auto pt-2 pb-28 flex justify-center'>
+                <div className='w-full overflow-y-auto pt-2 flex justify-center'>
                   <div className='w-full max-w-[400px] font-medium'>
                     <MenuList>
                       {/* <Option option='Links' setOpen={setIsExpanded} setLinksOpen={setLinksOpen} /> */}
@@ -348,92 +349,136 @@ const Navbar = ({
 
                       <div className='px-4 font-bold mt-5 flex justify-between gap-2  flex-wrap'>
                         <div className='flex flex-col'>
-                          <span>Account connected</span>
-                          <div
-                            className='font-medium text-sm flex gap-1 flex-nowrap items-center'
-                            onClick={handleViewInExplorer}
-                          >
-                            <span className='text-[#3aaaaa] cursor-pointer'>
-                              {`${currentAddress.slice(0, 8)}...${currentAddress.slice(-6)}`}
-                            </span>
-                            <OpenInNew fontSize='inherit' />
-                          </div>
+                          {currentAddress && <span>Wallet connected</span>}
+                          {!currentAddress && (
+                            <div className='flex items-center gap-1'>
+                              <PowerOffRoundedIcon /> No wallet connected
+                            </div>
+                          )}
+                          {currentAddress && (
+                            <div
+                              className='font-medium text-sm flex gap-1 flex-nowrap items-center'
+                              onClick={handleViewInExplorer}
+                            >
+                              <span className='text-[#3aaaaa] cursor-pointer'>
+                                {`${currentAddress.slice(0, 8)}...${currentAddress.slice(-6)}`}
+                              </span>
+                              <OpenInNew fontSize='inherit' />
+                            </div>
+                          )}
                         </div>
 
-                        <Tooltip title='Disconnect your wallet/account'>
-                          <StyledMuiButton
-                            className='secondary fully-rounded'
-                            onClick={handleDisconnect}
+                        {currentAddress && (
+                          <Tooltip title='Disconnect your wallet/account'>
+                            <StyledMuiButton
+                              className='secondary fully-rounded'
+                              onClick={handleDisconnect}
+                            >
+                              <PowerSettingsNewRoundedIcon />
+                            </StyledMuiButton>
+                          </Tooltip>
+                        )}
+                      </div>
+
+                      {!currentAddress && (
+                        <div
+                          className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
+                          onClick={chooseWalletOpen}
+                        >
+                          <ButtonBase
+                            component='div'
+                            sx={{
+                              padding: '12px 20px',
+                              width: '100%',
+                              display: 'flex',
+                              justifyContent: 'flex-start',
+                              borderRadius: '10px',
+                              gap: 1,
+                              '&:hover': {
+                                backdropFilter: 'brightness(1.3)',
+                              },
+                            }}
                           >
                             <PowerSettingsNewRoundedIcon />
-                          </StyledMuiButton>
-                        </Tooltip>
-                      </div>
-
-                      <div className='flex flex-col px-3 gap-3 mt-4'>
-                        <div className='flex justify-between bg-white rounded-xl h-[50px] px-4 items-center flex-wrap'>
-                          <div className='flex items-center gap-3'>
-                            <img width='16px' className='ml-[5px] mr-[2px]' src='./eth-logo.svg' />
-                            <span className='font-bold'>ETH</span>
-                          </div>
-                          <span className='font-medium font-mono'>{ethBalance.toPrecision(5)}</span>
+                            Connect Wallet
+                          </ButtonBase>
                         </div>
-                        <div className='flex justify-between bg-white rounded-xl h-[50px] px-4 items-center flex-wrap'>
-                          <div className='flex items-center gap-3'>
-                            <img width='22px' className='ml-[2px]' src='./usdc-logo.svg' />
-                            <span className='font-bold'>USDC</span>
+                      )}
+
+                      {currentAddress && (
+                        <>
+                          <div className='flex flex-col px-3 gap-3 mt-4'>
+                            <div className='flex justify-between bg-white rounded-xl h-[50px] px-4 items-center flex-wrap'>
+                              <div className='flex items-center gap-3'>
+                                <img
+                                  width='16px'
+                                  className='ml-[5px] mr-[2px]'
+                                  src='./eth-logo.svg'
+                                />
+                                <span className='font-bold'>ETH</span>
+                              </div>
+                              <span className='font-medium font-mono'>
+                                {ethBalance.toPrecision(5)}
+                              </span>
+                            </div>
+                            <div className='flex justify-between bg-white rounded-xl h-[50px] px-4 items-center flex-wrap'>
+                              <div className='flex items-center gap-3'>
+                                <img width='22px' className='ml-[2px]' src='./usdc-logo.svg' />
+                                <span className='font-bold'>USDC</span>
+                              </div>
+                              <span className='font-medium font-mono'>
+                                {usdcBalance.toPrecision(5)}
+                              </span>
+                            </div>
                           </div>
-                          <span className='font-medium font-mono'>
-                            {usdcBalance.toPrecision(5)}
-                          </span>
-                        </div>
-                      </div>
 
-                      <div
-                        className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
-                        onClick={handleRequest}
-                      >
-                        <ButtonBase
-                          component='div'
-                          sx={{
-                            padding: '12px 20px',
-                            width: '100%',
-                            display: 'flex',
-                            justifyContent: 'flex-start',
-                            borderRadius: '10px',
-                            gap: 1,
-                            '&:hover': {
-                              backdropFilter: 'brightness(1.3)',
-                            },
-                          }}
-                        >
-                          <GetIcon input={'Top Up'}></GetIcon>
-                          Top Up
-                        </ButtonBase>
-                      </div>
+                          <div
+                            className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
+                            onClick={handleRequest}
+                          >
+                            <ButtonBase
+                              component='div'
+                              sx={{
+                                padding: '12px 20px',
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'flex-start',
+                                borderRadius: '10px',
+                                gap: 1,
+                                '&:hover': {
+                                  backdropFilter: 'brightness(1.3)',
+                                },
+                              }}
+                            >
+                              <GetIcon input={'Top Up'}></GetIcon>
+                              Top Up
+                            </ButtonBase>
+                          </div>
 
-                      <div
-                        className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
-                        onClick={chooseWalletOpen}
-                      >
-                        <ButtonBase
-                          component='div'
-                          sx={{
-                            padding: '12px 20px',
-                            width: '100%',
-                            display: 'flex',
-                            justifyContent: 'flex-start',
-                            borderRadius: '10px',
-                            gap: 1,
-                            '&:hover': {
-                              backdropFilter: 'brightness(1.3)',
-                            },
-                          }}
-                        >
-                          <GetIcon input={'Change Wallet'}></GetIcon>
-                          Change Wallet
-                        </ButtonBase>
-                      </div>
+                          <div
+                            className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
+                            onClick={chooseWalletOpen}
+                          >
+                            <ButtonBase
+                              component='div'
+                              sx={{
+                                padding: '12px 20px',
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'flex-start',
+                                borderRadius: '10px',
+                                gap: 1,
+                                '&:hover': {
+                                  backdropFilter: 'brightness(1.3)',
+                                },
+                              }}
+                            >
+                              <GetIcon input={'Change Wallet'}></GetIcon>
+                              Change Wallet
+                            </ButtonBase>
+                          </div>
+                        </>
+                      )}
 
                       <div className='px-4 font-bold mt-5'>
                         <p>Menu</p>

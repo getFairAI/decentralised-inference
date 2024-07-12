@@ -975,7 +975,7 @@ const Chat = () => {
 
       if (!isArbitrumChat && !config.modelName) {
         enqueueSnackbar(
-          'You have no Model selected. Choose one in the Advanced Configurations and try again.',
+          'You have no Model selected. Choose one in the configurations drawer and try again.',
           { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
         );
         return;
@@ -1047,12 +1047,20 @@ const Chat = () => {
         variant: 'success',
       });
     } catch (error) {
-      if (error instanceof Object) {
-        enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
-      } else if (error instanceof String) {
-        enqueueSnackbar(error, { variant: 'error' });
+      if (typeof error === 'object') {
+        enqueueSnackbar(
+          'An error ocurred. Did you accept the request on your wallet? ' + JSON.stringify(error),
+          { variant: 'error' },
+        );
+      } else if (typeof error === 'string') {
+        enqueueSnackbar('An error ocurred. Did you accept the request on your wallet? ' + error, {
+          variant: 'error',
+        });
       } else {
-        enqueueSnackbar(errorMsg, { variant: 'error' });
+        enqueueSnackbar(
+          'An error ocurred. Did you accept the request on your wallet? ' + errorMsg,
+          { variant: 'error' },
+        );
       }
     }
   };
@@ -1072,7 +1080,7 @@ const Chat = () => {
 
       if (!isArbitrumChat && !config.modelName) {
         enqueueSnackbar(
-          'You have no Model selected. Choose one in the Advanced Configurations and try again.',
+          'You have no Model selected. Choose one in the configurations drawer and try again.',
           { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
         );
         return;
@@ -1144,12 +1152,22 @@ const Chat = () => {
         variant: 'success',
       });
     } catch (error) {
-      if (error instanceof Object) {
-        enqueueSnackbar(JSON.stringify(error), { variant: 'error' });
-      } else if (error instanceof String) {
-        enqueueSnackbar(error, { variant: 'error' });
+      if (typeof error === 'object') {
+        enqueueSnackbar(
+          'An error ocurred. Did you accept the request on your wallet? ' + JSON.stringify(error),
+          {
+            variant: 'error',
+          },
+        );
+      } else if (typeof error === 'string') {
+        enqueueSnackbar('An error ocurred. Did you accept the request on your wallet? ' + error, {
+          variant: 'error',
+        });
       } else {
-        enqueueSnackbar(errorMsg, { variant: 'error' });
+        enqueueSnackbar(
+          'An error ocurred. Did you accept the request on your wallet? ' + errorMsg,
+          { variant: 'error' },
+        );
       }
     }
   };
