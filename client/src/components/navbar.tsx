@@ -37,6 +37,9 @@ import { StyledMuiButton } from '@/styles/components';
 // icons
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddCommentRoundedIcon from '@mui/icons-material/AddCommentRounded';
+import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
+import OpenInNew from '@mui/icons-material/OpenInNew';
+import GetIcon from './get-icon';
 
 const WalletState = () => {
   const theme = useTheme();
@@ -164,7 +167,7 @@ const Navbar = ({
   isScrolled: boolean;
   userScrolledDown: boolean;
 }) => {
-  const { currentAddress } = useContext(EVMWalletContext);
+  const { currentAddress, ethBalance, usdcBalance, disconnect } = useContext(EVMWalletContext);
   const { pathname } = useLocation();
   const theme = useTheme();
   const extraIndex = 10; // number to add to zIndex to make sure it's above the drawer
@@ -202,6 +205,20 @@ const Navbar = ({
     a.click();
     document.body.removeChild(a);
   }, []);
+
+  const handleDisconnect = useCallback(() => {
+    setIsExpanded(false);
+    disconnect();
+  }, [setIsExpanded, disconnect]);
+
+  const handleViewInExplorer = useCallback(() => {
+    window.open(`https://arbiscan.io/address/${currentAddress}`, '_blank');
+  }, [currentAddress]);
+
+  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+  const chooseWalletOpen = () => {
+    setChooseWalletOpen(true);
+  };
 
   return (
     <div style={appBarStyle}>
@@ -329,8 +346,97 @@ const Navbar = ({
                         />
                       </div>
 
+                      <div className='px-4 font-bold mt-5 flex justify-between gap-2  flex-wrap'>
+                        <div className='flex flex-col'>
+                          <span>Account connected</span>
+                          <div
+                            className='font-medium text-sm flex gap-1 flex-nowrap items-center'
+                            onClick={handleViewInExplorer}
+                          >
+                            <span className='text-[#3aaaaa] cursor-pointer'>
+                              {`${currentAddress.slice(0, 8)}...${currentAddress.slice(-6)}`}
+                            </span>
+                            <OpenInNew fontSize='inherit' />
+                          </div>
+                        </div>
+
+                        <Tooltip title='Disconnect your wallet/account'>
+                          <StyledMuiButton
+                            className='secondary fully-rounded'
+                            onClick={handleDisconnect}
+                          >
+                            <PowerSettingsNewRoundedIcon />
+                          </StyledMuiButton>
+                        </Tooltip>
+                      </div>
+
+                      <div className='flex flex-col px-3 gap-3 mt-4'>
+                        <div className='flex justify-between bg-white rounded-xl h-[50px] px-4 items-center flex-wrap'>
+                          <div className='flex items-center gap-3'>
+                            <img width='16px' className='ml-[5px] mr-[2px]' src='./eth-logo.svg' />
+                            <span className='font-bold'>ETH</span>
+                          </div>
+                          <span className='font-medium font-mono'>{ethBalance.toPrecision(5)}</span>
+                        </div>
+                        <div className='flex justify-between bg-white rounded-xl h-[50px] px-4 items-center flex-wrap'>
+                          <div className='flex items-center gap-3'>
+                            <img width='22px' className='ml-[2px]' src='./usdc-logo.svg' />
+                            <span className='font-bold'>USDC</span>
+                          </div>
+                          <span className='font-medium font-mono'>
+                            {usdcBalance.toPrecision(5)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
+                        onClick={handleRequest}
+                      >
+                        <ButtonBase
+                          component='div'
+                          sx={{
+                            padding: '12px 20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            borderRadius: '10px',
+                            gap: 1,
+                            '&:hover': {
+                              backdropFilter: 'brightness(1.3)',
+                            },
+                          }}
+                        >
+                          <GetIcon input={'Top Up'}></GetIcon>
+                          Top Up
+                        </ButtonBase>
+                      </div>
+
+                      <div
+                        className='bg-[rgb(70,70,70)] text-white rounded-xl m-3'
+                        onClick={chooseWalletOpen}
+                      >
+                        <ButtonBase
+                          component='div'
+                          sx={{
+                            padding: '12px 20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            borderRadius: '10px',
+                            gap: 1,
+                            '&:hover': {
+                              backdropFilter: 'brightness(1.3)',
+                            },
+                          }}
+                        >
+                          <GetIcon input={'Change Wallet'}></GetIcon>
+                          Change Wallet
+                        </ButtonBase>
+                      </div>
+
                       <div className='px-4 font-bold mt-5'>
-                        <p>Main Menu</p>
+                        <p>Menu</p>
                       </div>
                       <div
                         className='bg-[#3aaaaa] text-white rounded-xl m-3 scale(1) active:scale(0.9)'
@@ -346,7 +452,7 @@ const Navbar = ({
                             borderRadius: '10px',
                             gap: 1,
                             '&:hover': {
-                              backdropFilter: 'brightness(0.95)',
+                              backdropFilter: 'brightness(0.9)',
                             },
                           }}
                         >
@@ -369,7 +475,7 @@ const Navbar = ({
                             borderRadius: '10px',
                             gap: 1,
                             '&:hover': {
-                              backdropFilter: 'brightness(0.95)',
+                              backdropFilter: 'brightness(0.9)',
                             },
                           }}
                         >

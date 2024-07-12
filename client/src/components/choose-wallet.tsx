@@ -179,17 +179,7 @@ const ProviderElement = ({
       {provider.info.name !== 'Rabby Wallet' && (
         <ListItem
           key={provider.info.uuid}
-          secondaryAction={
-            <StyledMuiButton
-              aria-label='Connect this wallet'
-              onClick={isRecommendedWallet ? handleEvmConnect : showPopupUntestedWallet}
-              disabled={currentProviderValue === provider.info.name}
-              className='plausible-event-name=EVM+Connected primary'
-            >
-              {currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}
-              <ExitToAppRoundedIcon style={{ width: '22px' }} />
-            </StyledMuiButton>
-          }
+          sx={{ display: 'flex', flexWrap: 'wrap', gap: '15px 0px', justifyContent: 'center' }}
         >
           <ListItemAvatar>
             <Avatar
@@ -199,6 +189,15 @@ const ProviderElement = ({
             />
           </ListItemAvatar>
           <ListItemText primary={provider.info.name} />
+          <StyledMuiButton
+            aria-label='Connect this wallet'
+            onClick={isRecommendedWallet ? handleEvmConnect : showPopupUntestedWallet}
+            disabled={currentProviderValue === provider.info.name}
+            className='plausible-event-name=EVM+Connected primary'
+          >
+            {currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}
+            <ExitToAppRoundedIcon style={{ width: '22px' }} />
+          </StyledMuiButton>
         </ListItem>
       )}
 
@@ -206,18 +205,7 @@ const ProviderElement = ({
         <>
           <ListItem
             key={provider.info.uuid}
-            secondaryAction={
-              <StyledMuiButton
-                aria-label='Connect this wallet'
-                onClick={() => {
-                  openMoreInfoWallet(!moreInfoWalletOpened);
-                }}
-                className='plausible-event-name=EVM+Connected secondary'
-              >
-                {currentProviderValue === provider.info.name ? 'Connected' : 'More Info'}
-                <KeyboardArrowDownRoundedIcon style={{ width: '22px' }} />
-              </StyledMuiButton>
-            }
+            sx={{ display: 'flex', flexWrap: 'wrap', gap: '15px 0px', justifyContent: 'center' }}
           >
             <ListItemAvatar>
               <Avatar
@@ -227,6 +215,16 @@ const ProviderElement = ({
               />
             </ListItemAvatar>
             <ListItemText primary={provider.info.name} />
+            <StyledMuiButton
+              aria-label='Connect this wallet'
+              onClick={() => {
+                openMoreInfoWallet(!moreInfoWalletOpened);
+              }}
+              className='plausible-event-name=EVM+Connected secondary'
+            >
+              {currentProviderValue === provider.info.name ? 'Connected' : 'More Info'}
+              <KeyboardArrowDownRoundedIcon style={{ width: '22px' }} />
+            </StyledMuiButton>
           </ListItem>
 
           {moreInfoWalletOpened && (
@@ -332,21 +330,20 @@ const InstallMetaMaskElement = () => {
   return (
     <div className='rounded-3xl bg-slate-300 py-2 my-2'>
       <ListItem
-        secondaryAction={
-          <StyledMuiButton
-            aria-label='Install this wallet'
-            onClick={installWallet}
-            className='plausible-event-name=EVM+Connected secondary'
-          >
-            Install
-            <OpenInNewRoundedIcon style={{ width: '22px' }} />
-          </StyledMuiButton>
-        }
+        sx={{ display: 'flex', flexWrap: 'wrap', gap: '15px 0px', justifyContent: 'center' }}
       >
         <ListItemAvatar>
           <Avatar src={'./icons/metamask.svg'} className='p-[6px] object-contain bg-white' />
         </ListItemAvatar>
         <ListItemText primary={'MetaMask'} />
+        <StyledMuiButton
+          aria-label='Install this wallet'
+          onClick={installWallet}
+          className='plausible-event-name=EVM+Connected secondary'
+        >
+          Install
+          <OpenInNewRoundedIcon style={{ width: '22px' }} />
+        </StyledMuiButton>
       </ListItem>
     </div>
   );
@@ -360,21 +357,20 @@ const InstallRabbyElement = () => {
   return (
     <div className='rounded-3xl bg-slate-300 py-2 my-2'>
       <ListItem
-        secondaryAction={
-          <StyledMuiButton
-            aria-label='Install this wallet'
-            onClick={installWallet}
-            className='plausible-event-name=EVM+Connected secondary'
-          >
-            Install
-            <OpenInNewRoundedIcon style={{ width: '22px' }} />
-          </StyledMuiButton>
-        }
+        sx={{ display: 'flex', flexWrap: 'wrap', gap: '15px 0px', justifyContent: 'center' }}
       >
         <ListItemAvatar className='rounded-full overflow-hidden'>
           <Avatar src={'./icons/rabby-wallet.png'} className='object-contain bg-white' />
         </ListItemAvatar>
         <ListItemText primary={'Rabby Wallet'} />
+        <StyledMuiButton
+          aria-label='Install this wallet'
+          onClick={installWallet}
+          className='plausible-event-name=EVM+Connected secondary'
+        >
+          Install
+          <OpenInNewRoundedIcon style={{ width: '22px' }} />
+        </StyledMuiButton>
       </ListItem>
     </div>
   );
