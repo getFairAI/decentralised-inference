@@ -79,7 +79,7 @@ import useComponentDimensions from '@/hooks/useComponentDimensions';
 import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
 import useScroll from '@/hooks/useScroll';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import useOperatorBusy from '@/hooks/useOperatorBusy';
 import { ChevronLeftRounded, InfoOutlined } from '@mui/icons-material';
 import { UserFeedbackContext } from '@/context/user-feedback';
@@ -416,11 +416,12 @@ const Chat = () => {
     control: configControl,
     setValue: setConfigValue,
     reset: configReset,
+    watch,
   } = useForm<IConfiguration>({
     defaultValues: defaultConfigvalues,
   });
 
-  const currentConfig = useWatch({ control: configControl });
+  const currentConfig = watch();
 
   const [getAvatar, { data: avatarData }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
   useEffect(() => {
@@ -495,10 +496,11 @@ const Chat = () => {
   }, [state]);
 
   useEffect(() => {
-    if (!_.isEqual(currentConfig, defaultConfigvalues)) {
+    const previousConfig =
+      localStorage.getItem(`config#${state.solution.node.id}`) ||
+      JSON.stringify(defaultConfigvalues);
+    if (JSON.stringify(currentConfig) !== previousConfig) {
       localStorage.setItem(`config#${state.solution.node.id}`, JSON.stringify(currentConfig));
-    } else {
-      localStorage.removeItem(`config#${state.solution.node.id}`);
     }
   }, [currentConfig]);
 
