@@ -161,13 +161,7 @@ const WalletState = () => {
   );
 };
 
-const Navbar = ({
-  isScrolled,
-  userScrolledDown,
-}: {
-  isScrolled: boolean;
-  userScrolledDown: boolean;
-}) => {
+const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
   const { currentAddress, ethBalance, usdcBalance, disconnect } = useContext(EVMWalletContext);
   const { pathname } = useLocation();
   const theme = useTheme();
@@ -181,7 +175,7 @@ const Navbar = ({
     zIndex: zIndex,
     alignContent: 'center',
     padding: '10px 20px 10px 20px',
-    ...(!isScrolled && { boxShadow: 'none' }),
+    ...(!userScrolledDown && { boxShadow: 'none' }),
     transform: userScrolledDown ? 'translateY(-80px)' : 'translateY(0px)',
     transition: 'all 0.2s',
   };
