@@ -255,25 +255,27 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
               }}
             >
               {pathname === '/' && (
-                <StyledMuiButton className='outlined-secondary' onClick={handleBrowse}>
-                  <SearchRoundedIcon style={{ width: '20px' }} />
-                  Browse Requests
-                </StyledMuiButton>
-              )}
-              {pathname === '/' && currentAddress && (
-                <StyledMuiButton className='outlined-secondary' onClick={handleRequest}>
-                  <AddCommentRoundedIcon style={{ width: '20px' }} />
-                  Make a Request
-                </StyledMuiButton>
-              )}
-              {isGetFair && pathname === '/' && (
-                <StyledMuiButton
-                  className='outlined-primary hidden lg:flex'
-                  onClick={handleOpenOnArweave}
-                >
-                  <img src='./arweave-small.svg' style={{ width: '20px' }} className='invert' />
-                  Open On Arweave
-                </StyledMuiButton>
+                <>
+                  <StyledMuiButton className='outlined-secondary' onClick={handleBrowse}>
+                    <SearchRoundedIcon style={{ width: '20px' }} />
+                    Browse Requests
+                  </StyledMuiButton>
+                  {currentAddress && (
+                    <StyledMuiButton className='outlined-secondary' onClick={handleRequest}>
+                      <AddCommentRoundedIcon style={{ width: '20px' }} />
+                      Make a Request
+                    </StyledMuiButton>
+                  )}
+                  {isGetFair && (
+                    <StyledMuiButton
+                      className='outlined-primary hidden lg:flex'
+                      onClick={handleOpenOnArweave}
+                    >
+                      <img src='./arweave-small.svg' style={{ width: '20px' }} className='invert' />
+                      Open On Arweave
+                    </StyledMuiButton>
+                  )}
+                </>
               )}
             </Box>
             <Box
