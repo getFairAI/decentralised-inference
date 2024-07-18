@@ -24,32 +24,18 @@ import {
   Tooltip,
   useTheme,
 } from '@mui/material';
-import { ChangeEvent, DragEvent, useCallback, useMemo, useState } from 'react';
+import { ChangeEvent, DragEvent, useCallback, useMemo, useRef, useState } from 'react';
 import ClearIcon from '@mui/icons-material/Clear';
 import { printSize } from '@/utils/common';
 import { motion } from 'framer-motion';
 import DebounceIconButton from '@/components/debounce-icon-button';
 import SendIcon from '@mui/icons-material/Send';
-import { ReactSketchCanvas } from 'react-sketch-canvas';
+import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { enqueueSnackbar } from 'notistack';
 import { MAX_IMG2IMG_UPLOAD_SIZE } from '@/constants';
-
-const SketchCanvasZone = ({ backgroundImage }: { backgroundImage: File }) => {
-  return (
-    <ReactSketchCanvas
-      width='100%'
-      height='100%'
-      canvasColor='transparent'
-      strokeColor='#ff00ff'
-      strokeWidth={15}
-      backgroundImage={URL.createObjectURL(backgroundImage)}
-      exportWithBackgroundImage={true}
-      style={{
-        border: 'none !important',
-      }}
-    />
-  );
-};
+import { StyledMuiButton } from '@/styles/components';
+import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
+import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
 
 const FileInputDropZone = () => {
   const [file, setFile] = useState<File | undefined>(undefined);
@@ -143,6 +129,16 @@ const FileInputDropZone = () => {
     setIsSending(false);
   }, [file, isSending]);
 
+  const canvasRef = useRef<ReactSketchCanvasRef>(null);
+
+  const handleUndoButton = () => {
+    canvasRef.current?.undo();
+  };
+
+  const handleRedoButton = () => {
+    canvasRef.current?.redo();
+  };
+
   if (file) {
     return (
       <div className='w-full flex flex-col gap-2'>
@@ -153,14 +149,40 @@ const FileInputDropZone = () => {
         <motion.div
           initial={{ opacity: 0, y: '-20px' }}
           animate={{ opacity: 1, y: 0 }}
-          className='w-full rounded-lg border-gray-700 border-2 overflow-hidden'
+          className='w-full rounded-lg border-gray-700 border-2 overflow-hidden relative'
         >
           <div className='w-full h-full absolute z-50'>
-            <SketchCanvasZone backgroundImage={file} />
+            <div className='flex flex-col w-full h-full absolute z-50'>
+              <ReactSketchCanvas
+                ref={canvasRef}
+                width='100%'
+                height='100%'
+                canvasColor='transparent'
+                strokeColor='#ff00ff'
+                strokeWidth={15}
+                backgroundImage={URL.createObjectURL(file)}
+                exportWithBackgroundImage={true}
+                style={{
+                  border: 'none !important',
+                }}
+              />
+            </div>
           </div>
           {/* The img bellow is only used to set the container size of the sketch zone absolute */}
           <img src={URL.createObjectURL(file)} className='w-full object-contain z-0'></img>
         </motion.div>
+
+        <div className='py-4 w-full flex gap-2 flex-wrap px-2'>
+          <StyledMuiButton className='secondary' onClick={handleUndoButton}>
+            <UndoRoundedIcon />
+            Undo Stroke
+          </StyledMuiButton>
+          <StyledMuiButton className='secondary' onClick={handleRedoButton}>
+            <RedoRoundedIcon />
+            Redo Stroke
+          </StyledMuiButton>
+        </div>
+
         <FormControl variant='outlined' fullWidth>
           <TextField
             multiline
