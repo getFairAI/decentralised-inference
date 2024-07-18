@@ -35,6 +35,7 @@ import BrowseRequests from './pages/browse-requests';
 
 import '@/index.css';
 import ArbitrumGuard from './guards/arbitrum';
+import Img2ImgChat from './pages/img2img-chat';
 
 const router = createHashRouter([
   {
@@ -82,6 +83,10 @@ const router = createHashRouter([
             ],
           },
         ],
+      },
+      {
+        path: 'img2img-chat',
+        element: <Img2ImgChat />,
       },
       {
         path: 'history',

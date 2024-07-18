@@ -52,6 +52,7 @@
     "react-hook-form": "7.43.1",
     "react-number-format": "5.1.4",
     "react-router-dom": "6.8.1",
+    "react-sketch-canvas": "^6.2.0",
     "redstone-api": "0.4.11",
     "rehype-sanitize": "5.0.1",
     "viem": "^2.9.16",
