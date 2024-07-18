@@ -161,13 +161,7 @@ const WalletState = () => {
   );
 };
 
-const Navbar = ({
-  isScrolled,
-  userScrolledDown,
-}: {
-  isScrolled: boolean;
-  userScrolledDown: boolean;
-}) => {
+const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
   const { currentAddress, ethBalance, usdcBalance, disconnect } = useContext(EVMWalletContext);
   const { pathname } = useLocation();
   const theme = useTheme();
@@ -181,7 +175,7 @@ const Navbar = ({
     zIndex: zIndex,
     alignContent: 'center',
     padding: '10px 20px 10px 20px',
-    ...(!isScrolled && { boxShadow: 'none' }),
+    ...(!userScrolledDown && { boxShadow: 'none' }),
     transform: userScrolledDown ? 'translateY(-80px)' : 'translateY(0px)',
     transition: 'all 0.2s',
   };
@@ -261,25 +255,27 @@ const Navbar = ({
               }}
             >
               {pathname === '/' && (
-                <StyledMuiButton className='outlined-secondary' onClick={handleBrowse}>
-                  <SearchRoundedIcon style={{ width: '20px' }} />
-                  Browse Requests
-                </StyledMuiButton>
-              )}
-              {pathname === '/' && currentAddress && (
-                <StyledMuiButton className='outlined-secondary' onClick={handleRequest}>
-                  <AddCommentRoundedIcon style={{ width: '20px' }} />
-                  Make a Request
-                </StyledMuiButton>
-              )}
-              {isGetFair && pathname === '/' && (
-                <StyledMuiButton
-                  className='outlined-primary hidden lg:flex'
-                  onClick={handleOpenOnArweave}
-                >
-                  <img src='./arweave-small.svg' style={{ width: '20px' }} className='invert' />
-                  Open On Arweave
-                </StyledMuiButton>
+                <>
+                  <StyledMuiButton className='outlined-secondary' onClick={handleBrowse}>
+                    <SearchRoundedIcon style={{ width: '20px' }} />
+                    Browse Requests
+                  </StyledMuiButton>
+                  {currentAddress && (
+                    <StyledMuiButton className='outlined-secondary' onClick={handleRequest}>
+                      <AddCommentRoundedIcon style={{ width: '20px' }} />
+                      Make a Request
+                    </StyledMuiButton>
+                  )}
+                  {isGetFair && (
+                    <StyledMuiButton
+                      className='outlined-primary hidden lg:flex'
+                      onClick={handleOpenOnArweave}
+                    >
+                      <img src='./arweave-small.svg' style={{ width: '20px' }} className='invert' />
+                      Open On Arweave
+                    </StyledMuiButton>
+                  )}
+                </>
               )}
             </Box>
             <Box

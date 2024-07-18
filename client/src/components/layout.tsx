@@ -43,7 +43,7 @@ import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import usePrevious from '@/hooks/usePrevious';
 
-const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
+const WarningMessage = () => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const theme = useTheme();
@@ -73,7 +73,7 @@ const WarningMessage = ({ isScrolled }: { isScrolled: boolean }) => {
         <span className='px-2 flex flex-nowrap gap-3 items-center'>
           <ErrorRoundedIcon
             style={{
-              width: isScrolled ? '18px' : '24px',
+              width: '24px',
             }}
           />
           You don&apos;t have a wallet connected. Some functionalities will not be available until
@@ -133,7 +133,7 @@ export default function Layout({ children }: { children: ReactElement }) {
   const [headerHeight, setHeaderHeight] = useState('64px');
   const { width, height } = useWindowDimensions();
   const scrollableRef = useRef<HTMLDivElement>(null);
-  const { isScrolled, scrollTop: currentScrollAmount } = useScroll(scrollableRef);
+  const { scrollTop: currentScrollAmount } = useScroll(scrollableRef);
   const { pathname } = useLocation();
   const warningRef = useRef<HTMLDivElement>(null);
   const { height: warningHeight } = useComponentDimensions(warningRef);
@@ -187,9 +187,7 @@ export default function Layout({ children }: { children: ReactElement }) {
                 justifyContent: 'center',
               }}
             >
-              {((!userScrolledDown && !isSmallScreen) || (!userScrolledDown && isSmallScreen)) && (
-                <WarningMessage isScrolled={isScrolled} />
-              )}
+              {(!isSmallScreen || (!userScrolledDown && isSmallScreen)) && <WarningMessage />}
             </Box>
           )}
           <main style={{ height: '100%' }} ref={scrollableRef} id='main'>
@@ -197,7 +195,7 @@ export default function Layout({ children }: { children: ReactElement }) {
           </main>
         </Box>
       </Container>
-      <Navbar isScrolled={isScrolled} userScrolledDown={isSmallScreen && userScrolledDown} />
+      <Navbar userScrolledDown={isSmallScreen && userScrolledDown} />
     </>
   );
 }
