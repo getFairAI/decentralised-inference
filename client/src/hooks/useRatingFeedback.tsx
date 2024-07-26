@@ -42,12 +42,12 @@ const irysQuery = gql`
   }
 `;
 
-const useRatingFeedback = (userAddr: string) => {
+const useRatingFeedback = (userAddrs: string[]) => {
   const [isActiveUser, setIsActiveUser] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
   const { requestsData, requestNetworkStatus } = useRequests({
-    userAddr,
+    userAddrs,
   });
 
   const { data: feedbackData } = useQuery(irysQuery, {
@@ -63,14 +63,14 @@ const useRatingFeedback = (userAddr: string) => {
         },
         { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] },
       ],
-      owners: [userAddr],
+      owners: userAddrs,
     },
     context: {
       clientName: 'irys',
     },
     fetchPolicy: 'network-only',
     nextFetchPolicy: 'network-only',
-    skip: !userAddr,
+    skip: !userAddrs || userAddrs.length === 0,
   });
 
   useEffect(() => {

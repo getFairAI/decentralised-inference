@@ -22,12 +22,12 @@ import { NetworkStatus, gql, useLazyQuery } from '@apollo/client';
 import { useEffect, useState } from 'react';
 
 const useRequests = ({
-  userAddr,
+  userAddrs,
   solutionTx,
   conversationId,
   first,
 }: {
-  userAddr: string;
+  userAddrs: string[];
   solutionTx?: string;
   conversationId?: number;
   first?: number;
@@ -66,7 +66,7 @@ const useRequests = ({
     },
   ] = useLazyQuery(irysQuery);
   useEffect(() => {
-    if (!userAddr) {
+    if (!userAddrs || userAddrs.length === 0) {
       // skip fetching while user address is not loaded
       return;
     }
@@ -86,7 +86,7 @@ const useRequests = ({
     getChatRequests({
       variables: {
         tags,
-        owners: [userAddr],
+        owners: userAddrs,
         first: first ?? 10,
       },
       context: {
@@ -95,7 +95,7 @@ const useRequests = ({
       fetchPolicy: 'network-only',
       nextFetchPolicy: 'network-only',
     });
-  }, [userAddr, conversationId, first]);
+  }, [userAddrs, conversationId, first]);
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {

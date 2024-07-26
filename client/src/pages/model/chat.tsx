@@ -34,7 +34,7 @@ import {
   useTheme,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import {
   ChangeEvent,
@@ -93,6 +93,8 @@ import { StyledMuiButton } from '@/styles/components';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
 import { toSvg } from 'jdenticon';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { ThrowawayContext } from '@/context/throwaway';
+import RequestAllowance from '@/components/request-allowance';
 
 const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
@@ -128,7 +130,7 @@ const InputField = ({
   const { state } = useLocation();
   const { setOpen: setOpenRating } = useContext(UserFeedbackContext);
   const { currentAddress: userAddr } = useContext(EVMWalletContext);
-  const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr);
+  const { showFeedback, setShowFeedback } = useRatingFeedback([userAddr]);
 
   const allowFiles = useMemo(() => findTag(state.solution, 'allowFiles') === 'true', [state]);
   const allowText = useMemo(
@@ -331,14 +333,14 @@ const InputField = ({
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const navigate = useNavigate();
+  const { currentAddress: userAddr, prompt, getPubKey, decrypt } = useContext(EVMWalletContext);
   const {
-    currentAddress: userAddr,
-    usdcBalance,
-    prompt,
-    updateUsdcBalance,
-    getPubKey,
-    decrypt,
-  } = useContext(EVMWalletContext);
+    promptWithThrowaway,
+    throwawayAddr,
+    throwawayUsdcAllowance,
+    updateBalance,
+    updateAllowance,
+  } = useContext(ThrowawayContext);
   const {
     state,
   }: {
@@ -507,13 +509,12 @@ const Chat = () => {
   const [requestParams, setRequestParams] = useState({
     target,
     scrollableRef,
-    userAddr,
+    userAddrs: [] as string[],
     solutionTx: state.solution.node.id,
     conversationId: currentConversationId,
     first: elementsPerPage,
   });
   const [responseParams, setResponseParams] = useState({
-    userAddr,
     reqIds: requestIds,
     conversationId: currentConversationId,
     lastRequestId: '',
@@ -560,12 +561,12 @@ const Chat = () => {
     } else if (userAddr) {
       setRequestParams((previousParams) => ({
         ...previousParams,
-        userAddr,
+        userAddrs: [userAddr, throwawayAddr],
       }));
     } else {
       // ignore
     }
-  }, [previousAddr, userAddr]);
+  }, [previousAddr, userAddr, throwawayAddr]);
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
@@ -576,7 +577,6 @@ const Chat = () => {
         (async () => reqData())();
         setResponseParams({
           ...responseParams,
-          userAddr,
           reqIds,
         });
       } else {
@@ -589,7 +589,7 @@ const Chat = () => {
         setMessages([]);
       }
     }
-  }, [requestsData, requestNetworkStatus, userAddr]);
+  }, [requestsData, requestNetworkStatus, userAddr, throwawayAddr]);
 
   useEffect(() => {
     // only update messages after getting all responses
@@ -736,9 +736,9 @@ const Chat = () => {
         currentConfig.nImages && isStableDiffusion
           ? currentOperator.operatorFee * currentConfig.nImages
           : currentOperator.operatorFee;
-      if (usdcBalance < actualFee) {
+      if (throwawayUsdcAllowance < actualFee) {
         enqueueSnackbar(
-          'Not enough USDC to pay this Operator fee. Top up your balance or choose another Solution Operator.',
+          'Not enough USDC Allowance to pay this Operator fee. Please increase your allowance and try again.',
           { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
         );
         return false;
@@ -1044,10 +1044,8 @@ const Chat = () => {
       );
       // update balance after payments
       updateMessages(arweaveTxId, file, file.type);
-      updateUsdcBalance(usdcBalance - (currentOperator?.operatorFee ?? 0));
-      enqueueSnackbar('Request Successfull', {
-        variant: 'success',
-      });
+      await updateAllowance();
+      await updateBalance();
     } catch (error) {
       if (typeof error === 'object') {
         enqueueSnackbar(
@@ -1136,7 +1134,7 @@ const Chat = () => {
         dataToUpload = JSON.stringify(dataToUpload);
       }
 
-      const { arweaveTxId } = await prompt(
+      const { arweaveTxId } = await promptWithThrowaway(
         dataToUpload,
         state.solution.node.id,
         {
@@ -1149,10 +1147,8 @@ const Chat = () => {
       );
       // update balance after payments
       updateMessages(arweaveTxId, newMessage, 'text/plain');
-      updateUsdcBalance(usdcBalance - (currentOperator?.operatorFee ?? 0));
-      enqueueSnackbar('Request Successfull', {
-        variant: 'success',
-      });
+      await updateAllowance();
+      await updateBalance();
     } catch (error) {
       if (typeof error === 'object') {
         enqueueSnackbar(
@@ -1801,7 +1797,7 @@ const Chat = () => {
           </div>
         </motion.div>
       </Backdrop>
-      <Outlet />
+      <RequestAllowance />
     </>
   );
 };
