@@ -130,7 +130,7 @@ const InputField = ({
   const { state } = useLocation();
   const { setOpen: setOpenRating } = useContext(UserFeedbackContext);
   const { currentAddress: userAddr } = useContext(EVMWalletContext);
-  const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr);
+  const { showFeedback, setShowFeedback } = useRatingFeedback([userAddr]);
 
   const allowFiles = useMemo(() => findTag(state.solution, 'allowFiles') === 'true', [state]);
   const allowText = useMemo(
