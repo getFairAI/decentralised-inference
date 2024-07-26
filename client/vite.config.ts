@@ -31,7 +31,7 @@ export default defineConfig({
     }),
   ],
   optimizeDeps: {
-    include: ['@emotion/react', '@emotion/styled', '@mui/material', '@mui/icons-material'],
+    include: ['@emotion/react', '@emotion/styled', '@mui/material', '@mui/icons-material', '@mui/material/Unstable_Grid2'],
   },
   build: {
     commonjsOptions: { include: [] },

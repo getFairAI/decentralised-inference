@@ -24,20 +24,18 @@ import { PROTOCOL_NAME, PROTOCOL_VERSION, INFERENCE_RESPONSE } from '@/constants
 
 const useResponses = ({
   reqIds,
-  userAddr,
   conversationId,
   lastRequestId,
   first,
 }: {
   reqIds: string[];
-  userAddr: string;
   conversationId: number;
   lastRequestId?: string;
   first?: number;
 }) => {
   const { query: responsesQuery } = FairSDKWeb.utils.getResponsesQuery(
     reqIds,
-    userAddr,
+    undefined,
     undefined,
     undefined,
     [],
@@ -90,7 +88,7 @@ const useResponses = ({
       };
       pollResponses({ variables, pollInterval: 10000 });
     }
-  }, [reqIds, userAddr, lastRequestId, conversationId, first]);
+  }, [reqIds, lastRequestId, conversationId, first]);
 
   useEffect(() => {
     if (responsesData?.transactions?.pageInfo?.hasNextPage) {

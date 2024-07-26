@@ -25,7 +25,7 @@
     "@emotion/react": "11.10.5",
     "@emotion/styled": "11.10.5",
     "@fair-protocol/sdk": "^2.0.22",
-    "@fairai/evm-sdk": "file:./fairai-evm-sdk-0.0.22.tgz",
+    "@fairai/evm-sdk": "0.0.13",
     "@irys/query": "^0.0.6",
     "@metamask/eth-sig-util": "^7.0.2",
     "@mui/icons-material": "^5.15.5",
