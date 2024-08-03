@@ -65,7 +65,6 @@ const RequestArbitrumUpdate = () => {
     rules: { required: false },
   });
 
-
   const generateCode = (length = 10) => {
     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let code = '';
