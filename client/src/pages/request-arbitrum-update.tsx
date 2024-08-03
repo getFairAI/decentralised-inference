@@ -30,7 +30,6 @@ import ContentCopy from '@mui/icons-material/ContentCopy';
 
 const RequestArbitrumUpdate = () => {
   const [requestSuccessful, setRequestSuccessfull] = useState(false);
-  const [keepProposalLink, setKeepProposalLink] = useState(true);
   const [verificationCode, setVerificationCode] = useState<string>('');
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -58,6 +57,11 @@ const RequestArbitrumUpdate = () => {
   const { field: feedback } = useController({
     control,
     name: 'feedback',
+    rules: { required: false },
+  });
+  const { field: keepLink } = useController({
+    control,
+    name: 'keepLink',
     rules: { required: false },
   });
 
@@ -101,13 +105,6 @@ const RequestArbitrumUpdate = () => {
       enqueueSnackbar('An error occurred while submitting your request', { variant: 'error' });
     }
   };
-
-  const handleSwitchChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setKeepProposalLink(event.target.checked);
-    },
-    [setKeepProposalLink],
-  );
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(verificationCode);
@@ -234,8 +231,9 @@ const RequestArbitrumUpdate = () => {
           <InfoOutlined fontSize='small' color='action' />
         </Tooltip>
         <Switch
-          checked={keepProposalLink}
-          onChange={handleSwitchChange}
+          value={keepLink.value}
+          checked={keepLink.value}
+          onChange={keepLink.onChange}
           inputProps={{ 'aria-label': 'Keep my Proposal' }}
         />
       </Box>
