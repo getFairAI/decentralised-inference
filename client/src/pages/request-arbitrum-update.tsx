@@ -30,7 +30,6 @@ import ContentCopy from '@mui/icons-material/ContentCopy';
 
 const RequestArbitrumUpdate = () => {
   const [requestSuccessful, setRequestSuccessfull] = useState(false);
-  const [keepProposalLink, setKeepProposalLink] = useState(true);
   const [verificationCode, setVerificationCode] = useState<string>('');
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -60,6 +59,12 @@ const RequestArbitrumUpdate = () => {
     name: 'feedback',
     rules: { required: false },
   });
+  const { field: keepLink } = useController({
+    control,
+    name: 'keepLink',
+    rules: { required: false },
+  });
+
 
   const generateCode = (length = 10) => {
     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -82,7 +87,7 @@ const RequestArbitrumUpdate = () => {
       const tags = [
         { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
         { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
-        { name: TAG_NAMES.operationName, value: 'Request-Arbitrum-Update' },
+        { name: TAG_NAMES.operationName, value: 'Request-Arbitrum-Update-demo' },
         { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
       ];
 
@@ -101,13 +106,6 @@ const RequestArbitrumUpdate = () => {
       enqueueSnackbar('An error occurred while submitting your request', { variant: 'error' });
     }
   };
-
-  const handleSwitchChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setKeepProposalLink(event.target.checked);
-    },
-    [setKeepProposalLink],
-  );
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(verificationCode);
@@ -234,8 +232,9 @@ const RequestArbitrumUpdate = () => {
           <InfoOutlined fontSize='small' color='action' />
         </Tooltip>
         <Switch
-          checked={keepProposalLink}
-          onChange={handleSwitchChange}
+          value={keepLink.value}
+          checked={keepLink.value}
+          onChange={keepLink.onChange}
           inputProps={{ 'aria-label': 'Keep my Proposal' }}
         />
       </Box>
