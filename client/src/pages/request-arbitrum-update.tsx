@@ -64,9 +64,10 @@ const RequestArbitrumUpdate = () => {
   const generateCode = (length = 10) => {
     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let code = '';
+    const array = new Uint32Array(length);
+    window.crypto.getRandomValues(array);
     for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      code += charset[randomIndex];
+      code += charset[array[i] % charset.length];
     }
     return code;
   };
