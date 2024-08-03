@@ -472,7 +472,7 @@ const BrowseRequests = () => {
       tags: [
         { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
         { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-        { name: TAG_NAMES.operationName, values: ['Request-Arbitrum-Update-demo'] },
+        { name: TAG_NAMES.operationName, values: ['Request-Arbitrum-Update'] },
       ],
       first: 20,
     },

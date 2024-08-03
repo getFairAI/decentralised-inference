@@ -87,7 +87,7 @@ const RequestArbitrumUpdate = () => {
       const tags = [
         { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
         { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
-        { name: TAG_NAMES.operationName, value: 'Request-Arbitrum-Update-demo' },
+        { name: TAG_NAMES.operationName, value: 'Request-Arbitrum-Update' },
         { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
       ];
 
