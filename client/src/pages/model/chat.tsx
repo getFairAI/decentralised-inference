@@ -914,8 +914,7 @@ const Chat = () => {
 
     enqueueSnackbar(
       <>
-        Inference Request
-        <br></br>
+        <span style={{ marginRight: '5px' }}>Inference Request </span>
         <a href={url} target={'_blank'} rel='noreferrer'>
           <u>View Transaction in Explorer</u>
         </a>

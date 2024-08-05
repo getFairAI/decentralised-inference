@@ -42,6 +42,7 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
+  const [showChildren, setShowChildren] = useState(false);
 
   useEffect(() => {
     if (currentAddress) {
@@ -59,6 +60,7 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
 
         if (result) {
           setShowDialog(false);
+          setShowChildren(true);
         } else {
           setShowDialog(true);
         }
@@ -76,6 +78,7 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
 
     await postOnArweave(TERMS_AGREEMENT, tags);
     setShowDialog(false);
+    setShowChildren(true);
   }, [setShowDialog]);
 
   const handleBackClick = useCallback(() => navigate('/'), [navigate]);
@@ -133,7 +136,8 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
           </Button>
         </DialogActions>
       </Dialog>
-      {children}
+
+      {showChildren && <>{children}</>}
     </>
   );
 };
