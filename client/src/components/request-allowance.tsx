@@ -44,18 +44,21 @@ const RequestAllowance = () => {
 
       const { value: ethAvgPrice } = await redstone.getPrice('ETH');
 
-      const minAmount = 0.1;
+      const minAmount = 0.01;
+      const minAmountUsdc = 0.1;
+      const chargeAmountUsdc = 1;
+      const chargeAmount = 0.1;
       const minAmountInEth = minAmount / ethAvgPrice;
       const digits = 6;
       setIsLayoverOpen(
-        throwawayUsdcAllowance < minAmount ||
+        throwawayUsdcAllowance < minAmountUsdc ||
           throwawayBalance.toFixed(digits) < minAmountInEth.toFixed(digits),
       );
       let hasEnoughAllowance = false;
       let hasEnoughBalance = false;
-      if (throwawayUsdcAllowance < minAmount) {
-        const hash = await allowUsdc(throwawayAddr as `0x${string}`, 1);
-        await updateAllowance();
+      if (throwawayUsdcAllowance < minAmountUsdc) {
+        const hash = await allowUsdc(throwawayAddr as `0x${string}`, chargeAmountUsdc);
+        await updateAllowance(throwawayUsdcAllowance + chargeAmountUsdc);
         hasEnoughAllowance = !!hash;
       } else {
         hasEnoughAllowance = true;
@@ -63,8 +66,8 @@ const RequestAllowance = () => {
 
       if (throwawayBalance.toFixed(digits) < minAmountInEth.toFixed(digits)) {
         // prompt to add funds
-        const hash = await sendEth(throwawayAddr as `0x${string}`, minAmountInEth);
-        await updateBalance();
+        const hash = await sendEth(throwawayAddr as `0x${string}`, chargeAmount);
+        await updateBalance(throwawayBalance + (chargeAmount / ethAvgPrice));
         hasEnoughBalance = !!hash;
       } else {
         hasEnoughBalance = true;
