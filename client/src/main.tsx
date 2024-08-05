@@ -32,6 +32,8 @@ import Terms from './pages/terms';
 import TermsAgreement from './guards/terms-agreement';
 import RequestSolution from './pages/request-solution';
 import BrowseRequests from './pages/browse-requests';
+import BrowseArbitrumRequests from './pages/browse-arbitrum-requests';
+import RequestArbitrumUpdate from './pages/request-arbitrum-update';
 
 import '@/index.css';
 import ArbitrumGuard from './guards/arbitrum';
@@ -117,8 +119,16 @@ const router = createHashRouter([
         element: <BrowseRequests />,
       },
       {
+        path: 'browse-arbitrum-requests',
+        element: <BrowseArbitrumRequests />,
+      },
+      {
         path: 'request',
         element: <RequestSolution />,
+      },
+      {
+        path: 'request-arbitrum-update',
+        element: <RequestArbitrumUpdate />,
       },
     ],
   },

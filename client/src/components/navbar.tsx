@@ -31,6 +31,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { AnimatePresence, motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 
 // icons
 import MenuIcon from '@mui/icons-material/Menu';
@@ -187,6 +188,12 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
       setIsExpanded(false);
     }, 400);
   }, [navigate]);
+  const handleBrowseArbitrum = useCallback(() => {
+    navigate('browse-arbitrum-requests');
+    setTimeout(() => {
+      setIsExpanded(false);
+    }, 400);
+  }, [navigate]);
   const handleRequest = useCallback(() => {
     navigate('request');
     setIsExpanded(false);
@@ -256,6 +263,10 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
             >
               {pathname === '/' && (
                 <>
+                  <StyledMuiButton className='outlined-secondary' onClick={handleBrowseArbitrum}>
+                    <SettingsRoundedIcon style={{ width: '20px' }} />
+                    Arbitrum LTIP/STIP
+                  </StyledMuiButton>
                   <StyledMuiButton className='outlined-secondary' onClick={handleBrowse}>
                     <SearchRoundedIcon style={{ width: '20px' }} />
                     Browse Requests
