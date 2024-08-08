@@ -1,4 +1,5 @@
-import { ThemeProvider, createTheme, darken, useMediaQuery } from '@mui/material';
+import { ThemeProvider, darken, useMediaQuery } from '@mui/material';
+import createTheme from '@mui/material/styles/createTheme';
 import { ReactNode, createContext, useEffect, useMemo, useState } from 'react';
 
 declare module '@mui/material/styles' {
