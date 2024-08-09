@@ -317,6 +317,7 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
             </Box>
           </Toolbar>
 
+          {/* MOBILE / SMALL SCREEN MENU */}
           <AnimatePresence>
             {isExpanded && (
               <motion.div

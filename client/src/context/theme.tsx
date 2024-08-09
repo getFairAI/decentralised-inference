@@ -147,6 +147,14 @@ const lightTheme = createTheme({
         },
       },
     },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#FFFFFF',
+          borderRadius: '8px',
+        },
+      },
+    },
   },
 });
 
@@ -232,6 +240,16 @@ const darkTheme = createTheme({
       primary: '#223745', // same as rgba(34,55,69,255)
       secondary: 'rgba(34,55,69, 0.6)',
       disabled: 'rgba(34,55,69,0.3)',
+    },
+  },
+  components: {
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#000000',
+          borderRadius: '8px',
+        },
+      },
     },
   },
 });
