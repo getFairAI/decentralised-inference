@@ -59,6 +59,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import OnboadingPage from './onboarding-page';
 
 type EdgeWithStatus = IEdge & { status: string };
 
@@ -76,27 +77,21 @@ const WalletnotConnectedContent = () => {
       animate={{ y: 0, opacity: 1, transition: { delay: 0, duration: 0.3 } }}
       className='w-full h-full flex flex-col items-center justify-start px-4 mt-20'
     >
-      <div className='w-full max-w-[800px] flex flex-col justify-center items-center gap-6'>
+      <div className='w-full flex flex-col justify-center items-center gap-6'>
         <Box>
           <img src='./fair-ai-outline.svg' alt='FairAI Logo' style={{ width: '200px' }} />
         </Box>
         <Box>
-          <Typography
-            sx={{ color: '#1F1F26' }}
-            fontWeight={300}
-            fontSize={'30px'}
-            lineHeight={'40.5px'}
-            align='center'
-          >
+          <Typography fontWeight={400} fontSize={'30px'} lineHeight={'40.5px'} align='center'>
             {state
-              ? 'To start using this AI solution, you need to connect your wallet!'
-              : 'Connect your wallet to unlock all features!'}
+              ? 'To start using this AI solution, you need to connect your wallet to FairAI'
+              : 'Connect your wallet to FairAI and unlock all features'}
           </Typography>
         </Box>
         {providers.length > 0 && (
           <StyledMuiButton
             onClick={handleClick}
-            className='plausible-event-name=Onboarding+Connect+Wallet+Click primary bigger'
+            className='plausible-event-name=Onboarding+Connect+Wallet+Click primary bigger gradient-bg'
           >
             <img src='./arbitrum-logo.svg' style={{ width: '24px' }} />
             Connect wallet to the Arbitrum Network
@@ -419,26 +414,30 @@ const SignIn = () => {
   return (
     <Container
       sx={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '21px',
+        width: '100vw',
+        minWidth: '100vw',
+        maxHeight: '100vh',
+        paddingBottom: '100px',
+        overflowY: 'auto',
+        position: 'absolute',
+        top: 0,
+        left: 0,
       }}
     >
       {!isConnected && <WalletnotConnectedContent />}
 
       {isConnected && (usdcBalance < MIN_U_BALANCE || isSwap) && <WalletNoFundsContent />}
 
-      <div className='absolute top-[15px] right-[15px] z-[1001]'>
+      <div className='absolute top-[20px] right-[20px] z-[1001]'>
         <StyledMuiButton
           className='plausible-event-name=Close+Onboarding+Click secondary fully-rounded'
           onClick={handleSkip}
         >
           <CloseIcon />
         </StyledMuiButton>
+      </div>
+      <div className='mt-16'>
+        <OnboadingPage />
       </div>
     </Container>
   );
