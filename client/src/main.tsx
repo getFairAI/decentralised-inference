@@ -37,7 +37,6 @@ import RequestArbitrumUpdate from './pages/request-arbitrum-update';
 
 import '@/index.css';
 import ArbitrumGuard from './guards/arbitrum';
-import Img2ImgChat from './pages/img2img-chat';
 
 const router = createHashRouter([
   {
@@ -86,18 +85,18 @@ const router = createHashRouter([
           },
         ],
       },
-      {
-        path: 'img2img-chat',
-        element: (
-          <WalletGuard>
-            <BlockOperatorGuard>
-              <TermsAgreement>
-                <Img2ImgChat />
-              </TermsAgreement>
-            </BlockOperatorGuard>
-          </WalletGuard>
-        ),
-      },
+      // {
+      //   path: 'img2img-chat',
+      //   element: (
+      //     <WalletGuard>
+      //       <BlockOperatorGuard>
+      //         <TermsAgreement>
+      //           <Img2ImgChat />
+      //         </TermsAgreement>
+      //       </BlockOperatorGuard>
+      //     </WalletGuard>
+      //   ),
+      // },
       {
         path: 'history',
         element: <History />,

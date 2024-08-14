@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "vite --host",
+    "start:remote": "vite --host --config vite-remote.config.ts",
     "dev": "vite --host",
     "dev:remote": "vite --host --config vite-remote.config.ts",
     "build": "tsc && vite build",
