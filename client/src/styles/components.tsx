@@ -212,6 +212,19 @@ export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
     },
   },
 
+  '&.gradient-bg': {
+    background: 'linear-gradient(220deg, #00ddae, #b860d9, #3aaaaa)',
+    backgroundSize: '400% 400%',
+    animation: '10s backgroundGradientAnimation ease infinite',
+    boxShadow: '0px 0px 8px rgba(0,0,0,0.05)',
+    transition: '0.3s all',
+
+    '&:hover': {
+      boxShadow: '0px 0px 8px rgba(0,0,0,0.2)',
+      transform: 'scale(1.02)',
+    },
+  },
+
   '&:disabled': {
     opacity: '0.5 !important',
     pointerEvents: 'none',
