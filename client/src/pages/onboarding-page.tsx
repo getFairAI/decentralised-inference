@@ -20,7 +20,7 @@ import { Container } from '@mui/material';
 import { stagger, useAnimate } from 'framer-motion';
 import { useEffect } from 'react';
 
-const staggerCards = stagger(0.1, { startDelay: 0.1 });
+const staggerCards = stagger(0.1, { startDelay: 0.2 });
 
 function useCardsAnimation() {
   const [scope, animate] = useAnimate();
@@ -53,14 +53,27 @@ const OnboadingPage = () => {
         className='grid grid-flow-row grid-cols-1 md:grid-cols-2 grid-rows-1 gap-8 w-full'
         ref={scope}
       >
-        <div className='stagger-card rounded-xl bg-[#3aaaaa] font-semibold p-5 flex flex-col justify-between gap-5 text-white shadow-lg'>
+        <div className='stagger-card rounded-xl bg-white font-semibold p-5 flex flex-col justify-between gap-5 shadow-lg'>
           <div className='flex flex-col gap-4'>
             <p className='text-2xl flex gap-3 items-center'>
-              <img src='./fair-protocol-face-transp-eyes.png' className='w-[38px] h-[26px]' />
-              Why connect a wallet?
+              <img
+                src='./fair-protocol-face-transp-eyes.png'
+                className='w-[38px] h-[26px] invert brightness-75'
+              />
+              Why do I need a wallet?
             </p>
-            <p>Connecting a wallet will unlock all the features on our app.</p>
-            <p>Chat, create, generate, get help, do thousands of things within our app.</p>
+            <p>
+              On FairAI, your crypto wallet is your account. No additional steps are needed. If you
+              already have a compatible wallet, you are all set.
+            </p>
+            <p>
+              Connecting a wallet will unlock all free and paid the features within our app and
+              marketplace.
+            </p>
+            <p>
+              Chat, create, generate, sell, purchase, get help, do thousands of AI things with just
+              your wallet, on FairAI.
+            </p>
           </div>
           <img
             src='./onboarding-images/home-screen-zoomed.png'
@@ -76,6 +89,7 @@ const OnboadingPage = () => {
             />
             Connect your wallet in seconds
           </p>
+          <p>Start using FairAI in just a few seconds.</p>
           <p>
             Install a wallet extension on your browser, and then click connect here on FairAI.
             It&apos;s that simple.
@@ -100,11 +114,11 @@ const OnboadingPage = () => {
           </p>
 
           <p>
-            We throughoutly test our recommended wallets, but you can use whatever wallet you
-            already have!
+            We rigorously test every feature with our recommended wallets, but you can use whatever
+            wallet you already have.
           </p>
           <p>
-            {"If you don't have a wallet yet, creating one just takes 1-2 minutes!"} <br />
+            {"If you don't have a wallet yet, creating one takes under 2 minutes!"} <br />
             {`To start,
             first install a wallet extension from the recommended ones, by clicking the "Connect"
             button at the top of this page, then, follow the quick instructions on the wallet itself.`}
@@ -125,11 +139,6 @@ const OnboadingPage = () => {
           <p>
             We work inside the blockchain. Every transaction is tested and confirmed for complete
             legitimacy.
-          </p>
-
-          <p>
-            FairAI and its components are completely open-source and built with privacy in mind from
-            the ground up.
           </p>
 
           <p>

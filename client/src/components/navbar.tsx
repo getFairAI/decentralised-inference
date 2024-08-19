@@ -38,16 +38,16 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddCommentRoundedIcon from '@mui/icons-material/AddCommentRounded';
-import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
 import OpenInNew from '@mui/icons-material/OpenInNew';
 import GetIcon from './get-icon';
 import PowerOffRoundedIcon from '@mui/icons-material/PowerOffRounded';
+import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 
 const WalletState = () => {
   const theme = useTheme();
   const { pathname } = useLocation();
   const { currentAddress, isWrongChain, switchChain, connect } = useContext(EVMWalletContext);
-  const { setOpen: chooseWalletOpen } = useContext(ChooseWalletContext);
   const { localStorageValue: hasOnboarded } = useLocalStorage('hasOnboarded');
   const navigate = useNavigate();
 
@@ -59,7 +59,7 @@ const WalletState = () => {
         await connect();
       } catch (err) {
         // open choose Wallet
-        chooseWalletOpen(true);
+        navigate('sign-in', { state: { previousPath: pathname } });
       }
     }
   }, [hasOnboarded, navigate]);
@@ -71,10 +71,11 @@ const WalletState = () => {
       <>
         <StyledMuiButton
           onClick={handleConnect}
-          className='plausible-event-name=Navbar+Connect+Wallet primary'
+          className='plausible-event-name=Navbar+Connect+Wallet primary gradient-bg'
         >
           <img src='./arbitrum-logo.svg' width={'24px'} className='object-contain' />
           Connect Wallet
+          <PlayArrowRoundedIcon />
         </StyledMuiButton>
       </>
     );

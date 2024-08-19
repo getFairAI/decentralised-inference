@@ -152,3 +152,15 @@ html {
     box-shadow: 10014px 0 0 -5px;
   }
 }
+
+@keyframes backgroundGradientAnimation {
+  0% {
+    background-position: 86% 0%;
+  }
+  50% {
+    background-position: 15% 100%;
+  }
+  100% {
+    background-position: 86% 0%;
+  }
+}
