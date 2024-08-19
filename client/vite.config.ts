@@ -38,6 +38,7 @@ export default defineConfig({
       '@mui/icons-material',
       '@mui/material/Unstable_Grid2',
       '@mui/material/styles/createTheme',
+      '@mui/material/Box',
     ],
   },
   build: {

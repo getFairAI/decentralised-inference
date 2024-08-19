@@ -70,7 +70,6 @@ const WalletnotConnectedContent = () => {
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const handleClick = useCallback(() => setChooseWalletOpen(true), [setChooseWalletOpen]);
   const { providers } = useContext(EVMWalletContext);
-  const { state } = useLocation();
 
   return (
     <motion.div
@@ -91,17 +90,9 @@ const WalletnotConnectedContent = () => {
             You are one step away from experiencing FairAI.
           </Typography>
 
-          {!state && (
-            <Typography fontWeight={400} fontSize={'22px'} align='center' color={'rgb(60,60,60)'}>
-              All you need is just two clicks away.
-            </Typography>
-          )}
-
-          {state && (
-            <Typography fontWeight={400} fontSize={'22px'} align='center' color={'rgb(60,60,60)'}>
-              This solution requires you to have a wallet connected.
-            </Typography>
-          )}
+          <Typography fontWeight={400} fontSize={'22px'} align='center' color={'rgb(60,60,60)'}>
+            All you need is just two clicks away.
+          </Typography>
         </Box>
         {providers.length > 0 && (
           <StyledMuiButton
@@ -443,7 +434,7 @@ const SignIn = () => {
           paddingBottom: '100px',
           overflowY: 'auto',
           position: 'absolute',
-          background: 'linear-gradient(204deg, #78cfcf, #ffffff)',
+          background: 'linear-gradient(220deg, #9fd6d6, #ffffff)',
           top: 0,
           left: 0,
         }}

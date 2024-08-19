@@ -186,8 +186,12 @@ const asyncEvmWalletconnect = async (
     dispatch({ type: 'wallet_disconnected' });
     setPreviousProvider('');
     enqueueSnackbar(
-      'We were unable to connect to your wallet. Check if you are logged into the wallet, if it is configured correctly or if there already any pending requests on it and try again.',
-      { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+      'We were unable to connect to your wallet. Check if you are logged into the wallet, if it is configured correctly or if there already any pending requests on it and try again.\nIf the problem persists, try refreshing the page.',
+      {
+        variant: 'error',
+        autoHideDuration: 6000,
+        style: { fontWeight: 700, whiteSpace: 'pre-wrap' },
+      },
     );
   }
 };

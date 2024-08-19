@@ -19,7 +19,6 @@
 import {
   Avatar,
   Backdrop,
-  Box,
   CircularProgress,
   Drawer,
   Fab,
@@ -32,6 +31,7 @@ import {
   Typography,
   Zoom,
   useTheme,
+  Box,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { useLocation, useNavigate } from 'react-router-dom';

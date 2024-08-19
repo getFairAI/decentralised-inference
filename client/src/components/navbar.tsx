@@ -16,24 +16,31 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import Option from './option';
 import { useCallback, useContext, useState } from 'react';
-import { Button, ButtonBase, IconButton, MenuList, Tooltip, useTheme } from '@mui/material';
+import {
+  Button,
+  ButtonBase,
+  IconButton,
+  MenuList,
+  Tooltip,
+  useTheme,
+  AppBar,
+  Toolbar,
+  Typography,
+  Box,
+} from '@mui/material';
 import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { AnimatePresence, motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 
 // icons
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -175,8 +182,6 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
 
   const appBarStyle = {
     zIndex: zIndex,
-    alignContent: 'center',
-    padding: '10px 20px 10px 20px',
     ...(!userScrolledDown && { boxShadow: 'none' }),
     transform: userScrolledDown ? 'translateY(-80px)' : 'translateY(0px)',
     transition: 'all 0.2s',

@@ -67,10 +67,6 @@ const OnboadingPage = () => {
               already have a compatible wallet, you are all set.
             </p>
             <p>
-              Connecting a wallet will unlock all free and paid the features within our app and
-              marketplace.
-            </p>
-            <p>
               Chat, create, generate, sell, purchase, get help, do thousands of AI things with just
               your wallet, on FairAI.
             </p>
@@ -115,7 +111,7 @@ const OnboadingPage = () => {
 
           <p>
             We rigorously test every feature with our recommended wallets, but you can use whatever
-            wallet you already have.
+            EVM-compatible wallet you already have.
           </p>
           <p>
             {"If you don't have a wallet yet, creating one takes under 2 minutes!"} <br />
@@ -140,6 +136,8 @@ const OnboadingPage = () => {
             We work inside the blockchain. Every transaction is tested and confirmed for complete
             legitimacy.
           </p>
+
+          <p>All your prompts can be fully End-to-End encrypted.</p>
 
           <p>
             FairAI and its components are completely open-source and built with privacy in mind from
