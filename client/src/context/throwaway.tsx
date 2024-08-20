@@ -45,8 +45,8 @@ export interface ThrowawayContext {
     cid?: number,
     config?: ConfigurationValues,
   ) => Promise<{ arweaveTxId: string; evmTxId: string }>;
-  updateBalance: () => Promise<void>;
-  updateAllowance: () => Promise<void>;
+  updateBalance: (newAmount?: number) => Promise<void>;
+  updateAllowance: (newAmount?: number) => Promise<void>;
 }
 
 const promptWithThrowaway = async (

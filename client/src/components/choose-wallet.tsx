@@ -18,6 +18,7 @@
 
 import {
   Avatar,
+  Backdrop,
   Dialog,
   DialogActions,
   DialogContent,
@@ -51,6 +52,7 @@ import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import { CheckCircle } from '@mui/icons-material';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 
 const DialogConfirmUntestedWallet = ({
   open,
@@ -163,12 +165,19 @@ const ProviderElement = ({
   const { connect } = useContext(EVMWalletContext);
   const { localStorageValue: currentProviderValue } = useLocalStorage('evmProvider');
   const { updateStorageValue: updateHasOnboarded } = useLocalStorage('hasOnboarded');
+  const [isLayoverOpen, setIsLayoverOpen] = useState<boolean>(false);
 
   const handleEvmConnect = useCallback(async () => {
     await connect(provider);
     updateHasOnboarded('true');
+    setIsLayoverOpen(false);
     setOpen(false);
   }, [connect]);
+
+  const connectWallet = () => {
+    setIsLayoverOpen(true);
+    handleEvmConnect();
+  };
 
   const showPopupUntestedWallet = () => {
     if (setOpenDialogWarningUntestedWallet) {
@@ -179,34 +188,34 @@ const ProviderElement = ({
   const [moreInfoWalletOpened, openMoreInfoWallet] = useState(false);
 
   return (
-    <div className='rounded-3xl bg-slate-300 py-2 my-2'>
-      {provider.info.name !== 'Rabby Wallet' && (
-        <ListItem
-          key={provider.info.uuid}
-          sx={{ display: 'flex', flexWrap: 'wrap', gap: '15px 0px', justifyContent: 'center' }}
+    <>
+      <Backdrop
+        sx={{
+          zIndex: 1000,
+          backdropFilter: 'blur(6px)',
+          backgroundColor: 'rgba(240,240,240,0.6)',
+          borderRadius: '10px',
+        }}
+        open={isLayoverOpen}
+      >
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1, transition: { delay: 0.1, duration: 0.4 } }}
+          className='w-full max-w-[600px] flex flex-col gap-3'
         >
-          <ListItemAvatar>
-            <Avatar
-              src={provider.info.icon}
-              alt='provider.info.name'
-              className='p-[6px] object-contain bg-white'
-            />
-          </ListItemAvatar>
-          <ListItemText primary={provider.info.name} />
-          <StyledMuiButton
-            aria-label='Connect this wallet'
-            onClick={isRecommendedWallet ? handleEvmConnect : showPopupUntestedWallet}
-            disabled={currentProviderValue === provider.info.name}
-            className='plausible-event-name=EVM+Connected primary'
-          >
-            {currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}
-            <ExitToAppRoundedIcon style={{ width: '22px' }} />
-          </StyledMuiButton>
-        </ListItem>
-      )}
+          <div className='flex items-center gap-3 py-3 px-6 rounded-xl bg-[#3aaaaa] text-white text-lg font-medium'>
+            <InfoRoundedIcon />
+            Please continue on your wallet.
+          </div>
 
-      {provider.info.name === 'Rabby Wallet' && (
-        <>
+          <div className='flex items-center gap-3 py-3 px-6 rounded-xl bg-slate-600 text-white text-md'>
+            Your wallet should be currently asking you to accept this connection.
+          </div>
+        </motion.div>
+      </Backdrop>
+
+      <div className='rounded-3xl bg-slate-300 py-2 my-2'>
+        {provider.info.name !== 'Rabby Wallet' && (
           <ListItem
             key={provider.info.uuid}
             sx={{ display: 'flex', flexWrap: 'wrap', gap: '15px 0px', justifyContent: 'center' }}
@@ -221,108 +230,135 @@ const ProviderElement = ({
             <ListItemText primary={provider.info.name} />
             <StyledMuiButton
               aria-label='Connect this wallet'
-              onClick={() => {
-                openMoreInfoWallet(!moreInfoWalletOpened);
-              }}
-              className='plausible-event-name=EVM+Connected secondary'
+              onClick={isRecommendedWallet ? connectWallet : showPopupUntestedWallet}
+              disabled={currentProviderValue === provider.info.name}
+              className='plausible-event-name=EVM+Connected primary'
             >
-              {currentProviderValue === provider.info.name ? 'Connected' : 'More Info'}
-              <KeyboardArrowDownRoundedIcon style={{ width: '22px' }} />
+              {currentProviderValue === provider.info.name ? 'Connected' : 'Connect'}
+              <ExitToAppRoundedIcon style={{ width: '22px' }} />
             </StyledMuiButton>
           </ListItem>
+        )}
 
-          {moreInfoWalletOpened && (
-            <motion.div
-              initial={{ opacity: 0, padding: 0, y: '-60px', height: 0 }}
-              animate={{
-                opacity: 1,
-                padding: '10px 30px',
-                height: 'max-content',
-                y: 0,
-                transition: {
-                  duration: 0.2,
-                },
-              }}
-              className='flex flex-col gap-4'
+        {provider.info.name === 'Rabby Wallet' && (
+          <>
+            <ListItem
+              key={provider.info.uuid}
+              sx={{ display: 'flex', flexWrap: 'wrap', gap: '15px 0px', justifyContent: 'center' }}
             >
-              <div className='font-semibold'>This wallet needs a few extra configurations:</div>
-              <p>{'1. Click on the Rabby extension, and then click on "more".'}</p>
-              <div className='w-full p-2 flex justify-center'>
-                <img
-                  src='./wallet-instructions/rabby-1.jpg'
-                  className='w-full max-w-[400px] rounded-3xl shadow-lg'
+              <ListItemAvatar>
+                <Avatar
+                  src={provider.info.icon}
+                  alt='provider.info.name'
+                  className='p-[6px] object-contain bg-white'
                 />
-              </div>
-              <p>{'2. In the settings section, click on the "Modify RPC URL" option.'}</p>
-              <div className='w-full p-2 flex justify-center'>
-                <img
-                  src='./wallet-instructions/rabby-2.jpg'
-                  className='w-full max-w-[400px] rounded-3xl shadow-lg'
-                />
-              </div>
-              <p>
-                {
-                  '3. Click on the "Modify RPC URL" option and then click on the "Arbitrum" network.'
-                }
-              </p>
-              <div className='w-full p-2 flex justify-center'>
-                <img
-                  src='./wallet-instructions/rabby-3.jpg'
-                  className='w-full max-w-[400px] rounded-3xl shadow-lg'
-                />
-              </div>
-              <p>
-                {'4. Add the URL '}
-                <CopyToClipboard
-                  text={'https://arb1.arbitrum.io/rpc'}
-                  onCopy={() => {
-                    enqueueSnackbar('Copied to clipboard.', {
-                      variant: 'success',
-                      autoHideDuration: 2000,
-                      style: { fontWeight: 700 },
-                    });
-                  }}
-                >
-                  <Tooltip title={'Click to copy'}>
-                    <span className='cursor-pointer bg-slate-600 py-1 px-2 rounded-xl text-white hover:bg-slate-500'>
-                      https://arb1.arbitrum.io/rpc
-                      <ContentCopyRoundedIcon
-                        style={{ width: '20px', marginLeft: '5px', marginBottom: '3px' }}
-                      />
-                    </span>
-                  </Tooltip>
-                </CopyToClipboard>
-                {' and click Save.'}
-              </p>
-              <div className='w-full p-2 flex justify-center'>
-                <img
-                  src='./wallet-instructions/rabby-4.jpg'
-                  className='w-full max-w-[400px] rounded-3xl shadow-lg'
-                />
-              </div>
-              <p>
-                <strong>Note: </strong> It may be necessary to clear the cache (CTRL+SHIFT+R) to
-                apply the changes.
-              </p>
+              </ListItemAvatar>
+              <ListItemText primary={provider.info.name} />
+              <StyledMuiButton
+                aria-label='Connect this wallet'
+                onClick={() => {
+                  openMoreInfoWallet(!moreInfoWalletOpened);
+                }}
+                className='plausible-event-name=EVM+Connected secondary'
+              >
+                {currentProviderValue === provider.info.name ? 'Connected' : 'More Info'}
+                <KeyboardArrowDownRoundedIcon style={{ width: '22px' }} />
+              </StyledMuiButton>
+            </ListItem>
 
-              <div className='flex justify-end pb-3'>
-                <StyledMuiButton
-                  aria-label='Connect this wallet'
-                  onClick={handleEvmConnect}
-                  disabled={currentProviderValue === provider.info.name}
-                  className='plausible-event-name=EVM+Connected primary'
-                >
-                  {currentProviderValue === provider.info.name
-                    ? 'Connected'
-                    : 'Confirm and Connect'}
-                  <ExitToAppRoundedIcon style={{ width: '22px' }} />
-                </StyledMuiButton>
-              </div>
-            </motion.div>
-          )}
-        </>
-      )}
-    </div>
+            {moreInfoWalletOpened && (
+              <motion.div
+                initial={{ opacity: 0, padding: 0, y: '-60px', height: 0 }}
+                animate={{
+                  opacity: 1,
+                  padding: '10px 30px',
+                  height: 'max-content',
+                  y: 0,
+                  transition: {
+                    duration: 0.2,
+                  },
+                }}
+                className='flex flex-col gap-4'
+              >
+                <div className='font-semibold'>This wallet needs a few extra configurations:</div>
+                <p>{'1. Click on the Rabby extension, and then click on "more".'}</p>
+                <div className='w-full p-2 flex justify-center'>
+                  <img
+                    src='./wallet-instructions/rabby-1.jpg'
+                    className='w-full max-w-[400px] rounded-3xl shadow-lg'
+                  />
+                </div>
+                <p>{'2. In the settings section, click on the "Modify RPC URL" option.'}</p>
+                <div className='w-full p-2 flex justify-center'>
+                  <img
+                    src='./wallet-instructions/rabby-2.jpg'
+                    className='w-full max-w-[400px] rounded-3xl shadow-lg'
+                  />
+                </div>
+                <p>
+                  {
+                    '3. Click on the "Modify RPC URL" option and then click on the "Arbitrum" network.'
+                  }
+                </p>
+                <div className='w-full p-2 flex justify-center'>
+                  <img
+                    src='./wallet-instructions/rabby-3.jpg'
+                    className='w-full max-w-[400px] rounded-3xl shadow-lg'
+                  />
+                </div>
+                <p>
+                  {'4. Add the URL '}
+                  <CopyToClipboard
+                    text={'https://arb1.arbitrum.io/rpc'}
+                    onCopy={() => {
+                      enqueueSnackbar('Copied to clipboard.', {
+                        variant: 'success',
+                        autoHideDuration: 2000,
+                        style: { fontWeight: 700 },
+                      });
+                    }}
+                  >
+                    <Tooltip title={'Click to copy'}>
+                      <span className='cursor-pointer bg-slate-600 py-1 px-2 rounded-xl text-white hover:bg-slate-500'>
+                        https://arb1.arbitrum.io/rpc
+                        <ContentCopyRoundedIcon
+                          style={{ width: '20px', marginLeft: '5px', marginBottom: '3px' }}
+                        />
+                      </span>
+                    </Tooltip>
+                  </CopyToClipboard>
+                  {' and click Save.'}
+                </p>
+                <div className='w-full p-2 flex justify-center'>
+                  <img
+                    src='./wallet-instructions/rabby-4.jpg'
+                    className='w-full max-w-[400px] rounded-3xl shadow-lg'
+                  />
+                </div>
+                <p>
+                  <strong>Note: </strong> It may be necessary to clear the cache (CTRL+SHIFT+R) to
+                  apply the changes.
+                </p>
+
+                <div className='flex justify-end pb-3'>
+                  <StyledMuiButton
+                    aria-label='Connect this wallet'
+                    onClick={handleEvmConnect}
+                    disabled={currentProviderValue === provider.info.name}
+                    className='plausible-event-name=EVM+Connected primary'
+                  >
+                    {currentProviderValue === provider.info.name
+                      ? 'Connected'
+                      : 'Confirm and Connect'}
+                    <ExitToAppRoundedIcon style={{ width: '22px' }} />
+                  </StyledMuiButton>
+                </div>
+              </motion.div>
+            )}
+          </>
+        )}
+      </div>
+    </>
   );
 };
 
@@ -404,7 +440,7 @@ const ChooseWallet = ({
         maxWidth={'sm'}
         fullWidth
         sx={{
-          backdropFilter: 'blur(10px) !important',
+          backdropFilter: 'blur(14px) !important',
           '& .MuiPaper-root': {
             borderRadius: '20px',
             background:
@@ -417,13 +453,13 @@ const ChooseWallet = ({
         <DialogTitle>
           <Typography
             sx={{
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: '22px',
             }}
-            className='flex items-center gap-2 pb-4'
+            className='flex items-center gap-3 pb-4'
           >
             <WalletRoundedIcon />
-            {'Connect a wallet'}
+            {'Connect your wallet'}
           </Typography>
         </DialogTitle>
         <DialogContent>

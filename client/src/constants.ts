@@ -259,8 +259,11 @@ export const OPERATOR_REGISTRATION_PAYMENT_TAGS = [
 
 const kb = 1024;
 const maxKb = 50;
+const maxImg2ImgUploadKb = 1500;
 
 export const MAX_MESSAGE_SIZE = kb * maxKb;
+
+export const MAX_IMG2IMG_UPLOAD_SIZE = kb * maxImg2ImgUploadKb;
 
 export const BAZAR_ASSETS_LINK = 'https://bazar.ar-io.dev/#/asset/';
 export const RAREWEAVE_ASSET_LIST_LINK = 'https://rareweave.store/nft';

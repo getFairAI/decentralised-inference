@@ -158,7 +158,8 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
           display: 'flex',
           alignItems: 'center',
           whiteSpace: 'pre-wrap',
-          textAlign: message.type === 'request' ? 'right' : 'left',
+          width: '100%',
+          justifyContent: message.type === 'request' ? 'flex-end' : 'flex-start',
         }}
         gutterBottom
         component={'pre'}

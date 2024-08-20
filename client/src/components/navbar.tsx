@@ -16,38 +16,45 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ProfileMenu from './profile-menu';
 import Option from './option';
 import { useCallback, useContext, useState } from 'react';
-import { Button, ButtonBase, IconButton, MenuList, Tooltip, useTheme } from '@mui/material';
+import {
+  Button,
+  ButtonBase,
+  IconButton,
+  MenuList,
+  Tooltip,
+  useTheme,
+  AppBar,
+  Toolbar,
+  Typography,
+  Box,
+} from '@mui/material';
 import Logo from './logo';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ChooseWalletContext } from '@/context/choose-wallet';
 import { AnimatePresence, motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 
 // icons
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddCommentRoundedIcon from '@mui/icons-material/AddCommentRounded';
-import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
 import OpenInNew from '@mui/icons-material/OpenInNew';
 import GetIcon from './get-icon';
 import PowerOffRoundedIcon from '@mui/icons-material/PowerOffRounded';
+import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 
 const WalletState = () => {
   const theme = useTheme();
   const { pathname } = useLocation();
   const { currentAddress, isWrongChain, switchChain, connect } = useContext(EVMWalletContext);
-  const { setOpen: chooseWalletOpen } = useContext(ChooseWalletContext);
   const { localStorageValue: hasOnboarded } = useLocalStorage('hasOnboarded');
   const navigate = useNavigate();
 
@@ -59,7 +66,7 @@ const WalletState = () => {
         await connect();
       } catch (err) {
         // open choose Wallet
-        chooseWalletOpen(true);
+        navigate('sign-in', { state: { previousPath: pathname } });
       }
     }
   }, [hasOnboarded, navigate]);
@@ -71,10 +78,11 @@ const WalletState = () => {
       <>
         <StyledMuiButton
           onClick={handleConnect}
-          className='plausible-event-name=Navbar+Connect+Wallet primary'
+          className='plausible-event-name=Navbar+Connect+Wallet primary gradient-bg'
         >
           <img src='./arbitrum-logo.svg' width={'24px'} className='object-contain' />
           Connect Wallet
+          <PlayArrowRoundedIcon />
         </StyledMuiButton>
       </>
     );
@@ -174,8 +182,6 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
 
   const appBarStyle = {
     zIndex: zIndex,
-    alignContent: 'center',
-    padding: '10px 20px 10px 20px',
     ...(!userScrolledDown && { boxShadow: 'none' }),
     transform: userScrolledDown ? 'translateY(-80px)' : 'translateY(0px)',
     transition: 'all 0.2s',
@@ -317,6 +323,7 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
             </Box>
           </Toolbar>
 
+          {/* MOBILE / SMALL SCREEN MENU */}
           <AnimatePresence>
             {isExpanded && (
               <motion.div

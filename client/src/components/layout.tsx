@@ -43,7 +43,7 @@ import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import usePrevious from '@/hooks/usePrevious';
 
-const WarningMessage = () => {
+const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const theme = useTheme();
@@ -66,9 +66,16 @@ const WarningMessage = () => {
           opacity: 1,
           height: 'fit-content',
           minHeight: '40px',
-          transition: { duration: 0.2, type: 'smooth' },
+          width: '100%',
+          maxWidth: !smallScreen ? '1200px' : '100%',
+          marginTop: !smallScreen ? '30px' : '0px',
+          padding: !smallScreen ? '20px' : '10px',
+          borderRadius: !smallScreen ? '20px' : '0px',
+          background: 'linear-gradient(200deg, #bfe3e0, #a9c9d4)',
+          color: '#003030',
+          transition: { duration: 0 },
         }}
-        className='w-full flex flex-wrap py-2 justify-center items-center gap-3 bg-slate-500 font-semibold text-white overflow-hidden text-xs md:text-base'
+        className='w-full flex flex-wrap justify-center xl:justify-between items-center gap-3 shadow-sm font-medium overflow-hidden text-xs md:text-base'
       >
         <span className='px-2 flex flex-nowrap gap-3 items-center'>
           <ErrorRoundedIcon
@@ -76,8 +83,8 @@ const WarningMessage = () => {
               width: '24px',
             }}
           />
-          You don&apos;t have a wallet connected. Some functionalities will not be available until
-          you connect one.
+          You don&apos;t seem to have a wallet connected. Connect a wallet to experience all FairAI
+          features and benefits.
         </span>
 
         <StyledMuiButton
@@ -86,10 +93,10 @@ const WarningMessage = () => {
             gap: '5px',
             alignItems: 'center',
           }}
-          className='plausible-event-name=Onboarding+Click primary mini'
+          className='plausible-event-name=Onboarding+Click primary'
           onClick={handleSignIn}
         >
-          <OpenInNewRoundedIcon style={{ width: '18px' }} />
+          <OpenInNewRoundedIcon style={{ width: '20px', marginRight: '4px' }} />
           Connect a wallet or learn more
         </StyledMuiButton>
       </motion.div>
@@ -187,7 +194,9 @@ export default function Layout({ children }: { children: ReactElement }) {
                 justifyContent: 'center',
               }}
             >
-              {(!isSmallScreen || (!userScrolledDown && isSmallScreen)) && <WarningMessage />}
+              {(!isSmallScreen || (!userScrolledDown && isSmallScreen)) && (
+                <WarningMessage smallScreen={isSmallScreen} />
+              )}
             </Box>
           )}
           <main style={{ height: '100%' }} ref={scrollableRef} id='main'>

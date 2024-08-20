@@ -19,7 +19,6 @@
 import {
   Avatar,
   Backdrop,
-  Box,
   CircularProgress,
   Drawer,
   Fab,
@@ -32,6 +31,7 @@ import {
   Typography,
   Zoom,
   useTheme,
+  Box,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -96,7 +96,6 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { ThrowawayContext } from '@/context/throwaway';
 import RequestAllowance from '@/components/request-allowance';
 
-const errorMsg = 'An Error Occurred. Please try again later.';
 const DEFAULT_N_IMAGES = 1;
 const RADIX = 10;
 const boxSizing = 'border-box';
@@ -915,8 +914,7 @@ const Chat = () => {
 
     enqueueSnackbar(
       <>
-        Inference Request
-        <br></br>
+        <span style={{ marginRight: '5px' }}>Inference Request </span>
         <a href={url} target={'_blank'} rel='noreferrer'>
           <u>View Transaction in Explorer</u>
         </a>
@@ -1047,21 +1045,10 @@ const Chat = () => {
       await updateAllowance();
       await updateBalance();
     } catch (error) {
-      if (typeof error === 'object') {
-        enqueueSnackbar(
-          'An error ocurred. Did you accept the request on your wallet? ' + JSON.stringify(error),
-          { variant: 'error' },
-        );
-      } else if (typeof error === 'string') {
-        enqueueSnackbar('An error ocurred. Did you accept the request on your wallet? ' + error, {
-          variant: 'error',
-        });
-      } else {
-        enqueueSnackbar(
-          'An error ocurred. Did you accept the request on your wallet? ' + errorMsg,
-          { variant: 'error' },
-        );
-      }
+      console.error(error);
+      enqueueSnackbar('An error ocurred. Did you accept the request on your wallet? ', {
+        variant: 'error',
+      });
     }
   };
 
@@ -1150,23 +1137,10 @@ const Chat = () => {
       await updateAllowance();
       await updateBalance();
     } catch (error) {
-      if (typeof error === 'object') {
-        enqueueSnackbar(
-          'An error ocurred. Did you accept the request on your wallet? ' + JSON.stringify(error),
-          {
-            variant: 'error',
-          },
-        );
-      } else if (typeof error === 'string') {
-        enqueueSnackbar('An error ocurred. Did you accept the request on your wallet? ' + error, {
-          variant: 'error',
-        });
-      } else {
-        enqueueSnackbar(
-          'An error ocurred. Did you accept the request on your wallet? ' + errorMsg,
-          { variant: 'error' },
-        );
-      }
+      console.error(error);
+      enqueueSnackbar('An error ocurred. Did you accept the request on your wallet? ', {
+        variant: 'error',
+      });
     }
   };
 

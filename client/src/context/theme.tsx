@@ -1,4 +1,5 @@
-import { ThemeProvider, createTheme, darken, useMediaQuery } from '@mui/material';
+import { ThemeProvider, darken, useMediaQuery } from '@mui/material';
+import createTheme from '@mui/material/styles/createTheme';
 import { ReactNode, createContext, useEffect, useMemo, useState } from 'react';
 
 declare module '@mui/material/styles' {
@@ -146,6 +147,14 @@ const lightTheme = createTheme({
         },
       },
     },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#FFFFFF',
+          borderRadius: '8px',
+        },
+      },
+    },
   },
 });
 
@@ -231,6 +240,16 @@ const darkTheme = createTheme({
       primary: '#223745', // same as rgba(34,55,69,255)
       secondary: 'rgba(34,55,69, 0.6)',
       disabled: 'rgba(34,55,69,0.3)',
+    },
+  },
+  components: {
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#000000',
+          borderRadius: '8px',
+        },
+      },
     },
   },
 });

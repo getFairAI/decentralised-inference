@@ -52,6 +52,7 @@ import { EVMWalletContext } from '@/context/evm-wallet';
 import { StyledMuiButton } from '@/styles/components';
 import { motion } from 'framer-motion';
 import { MobileView, BrowserView } from 'react-device-detect';
+import OnboadingPage from './onboarding-page';
 
 // icons
 import { InfoOutlined } from '@mui/icons-material';
@@ -59,6 +60,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 
 type EdgeWithStatus = IEdge & { status: string };
 
@@ -68,38 +70,38 @@ const WalletnotConnectedContent = () => {
   const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
   const handleClick = useCallback(() => setChooseWalletOpen(true), [setChooseWalletOpen]);
   const { providers } = useContext(EVMWalletContext);
-  const { state } = useLocation();
 
   return (
     <motion.div
       initial={{ y: '-40px', opacity: 0 }}
-      animate={{ y: 0, opacity: 1, transition: { delay: 0, duration: 0.3 } }}
+      animate={{ y: 0, opacity: 1, transition: { delay: 0, duration: 0.6 } }}
       className='w-full h-full flex flex-col items-center justify-start px-4 mt-20'
     >
-      <div className='w-full max-w-[800px] flex flex-col justify-center items-center gap-6'>
+      <div className='w-full flex flex-col justify-center items-center gap-10'>
         <Box>
-          <img src='./fair-ai-outline.svg' alt='FairAI Logo' style={{ width: '200px' }} />
+          <img
+            src='./fair-ai-outline.svg'
+            alt='FairAI Logo'
+            style={{ width: '230px', filter: 'brightness(1.5)' }}
+          />
         </Box>
         <Box>
-          <Typography
-            sx={{ color: '#1F1F26' }}
-            fontWeight={300}
-            fontSize={'30px'}
-            lineHeight={'40.5px'}
-            align='center'
-          >
-            {state
-              ? 'To start using this AI solution, you need to connect your wallet!'
-              : 'Connect your wallet to unlock all features!'}
+          <Typography fontWeight={600} fontSize={'28px'} align='center' color={'rgb(60,60,60)'}>
+            You are one step away from experiencing FairAI.
+          </Typography>
+
+          <Typography fontWeight={400} fontSize={'22px'} align='center' color={'rgb(60,60,60)'}>
+            All you need is just two clicks away.
           </Typography>
         </Box>
         {providers.length > 0 && (
           <StyledMuiButton
             onClick={handleClick}
-            className='plausible-event-name=Onboarding+Connect+Wallet+Click primary bigger'
+            className='plausible-event-name=Onboarding+Connect+Wallet+Click primary bigger gradient-bg'
           >
             <img src='./arbitrum-logo.svg' style={{ width: '24px' }} />
-            Connect wallet to the Arbitrum Network
+            Connect or get your wallet to the Arbitrum Network
+            <PlayArrowRoundedIcon />
           </StyledMuiButton>
         )}
         {providers.length === 0 && (
@@ -395,6 +397,9 @@ const SignIn = () => {
   const { pathname, state } = useLocation();
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const isConnected = useMemo(() => !!currentAddress, [currentAddress]);
+  const { setOpen: setChooseWalletOpen } = useContext(ChooseWalletContext);
+  const handleClick = useCallback(() => setChooseWalletOpen(true), [setChooseWalletOpen]);
+  const { providers } = useContext(EVMWalletContext);
 
   const navigate = useNavigate();
 
@@ -417,30 +422,53 @@ const SignIn = () => {
   }, [isConnected]);
 
   return (
-    <Container
-      sx={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '21px',
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: '-60px' }}
+      animate={{ opacity: 1, y: 0, transition: { type: 'keyframes', duration: 0.4 } }}
     >
-      {!isConnected && <WalletnotConnectedContent />}
+      <Container
+        sx={{
+          width: '100vw',
+          minWidth: '100vw',
+          maxHeight: '100vh',
+          paddingBottom: '100px',
+          overflowY: 'auto',
+          position: 'absolute',
+          background: 'linear-gradient(220deg, #9fd6d6, #ffffff)',
+          top: 0,
+          left: 0,
+        }}
+      >
+        {!isConnected && <WalletnotConnectedContent />}
 
-      {isConnected && (usdcBalance < MIN_U_BALANCE || isSwap) && <WalletNoFundsContent />}
+        {isConnected && (usdcBalance < MIN_U_BALANCE || isSwap) && <WalletNoFundsContent />}
 
-      <div className='absolute top-[15px] right-[15px] z-[1001]'>
-        <StyledMuiButton
-          className='plausible-event-name=Close+Onboarding+Click secondary fully-rounded'
-          onClick={handleSkip}
-        >
-          <CloseIcon />
-        </StyledMuiButton>
-      </div>
-    </Container>
+        <div className='absolute top-[20px] right-[20px] z-[1001]'>
+          <StyledMuiButton
+            className='plausible-event-name=Close+Onboarding+Click secondary fully-rounded'
+            onClick={handleSkip}
+          >
+            <CloseIcon />
+          </StyledMuiButton>
+        </div>
+        <div className='mt-20'>
+          <OnboadingPage />
+        </div>
+
+        <div className='w-100 flex justify-center mt-24 mb-5'>
+          {providers.length > 0 && (
+            <StyledMuiButton
+              onClick={handleClick}
+              className='plausible-event-name=Onboarding+Connect+Wallet+Click primary bigger gradient-bg'
+            >
+              <img src='./arbitrum-logo.svg' style={{ width: '24px' }} />
+              Connect or get your wallet to the Arbitrum Network
+              <PlayArrowRoundedIcon />
+            </StyledMuiButton>
+          )}
+        </div>
+      </Container>
+    </motion.div>
   );
 };
 

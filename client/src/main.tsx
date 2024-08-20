@@ -85,6 +85,18 @@ const router = createHashRouter([
           },
         ],
       },
+      // {
+      //   path: 'img2img-chat',
+      //   element: (
+      //     <WalletGuard>
+      //       <BlockOperatorGuard>
+      //         <TermsAgreement>
+      //           <Img2ImgChat />
+      //         </TermsAgreement>
+      //       </BlockOperatorGuard>
+      //     </WalletGuard>
+      //   ),
+      // },
       {
         path: 'history',
         element: <History />,
