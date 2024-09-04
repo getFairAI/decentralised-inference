@@ -16,125 +16,16 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { Box, Container, IconButton, Typography, useTheme } from '@mui/material';
-import {
-  ReactElement,
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Box, Container, useTheme } from '@mui/material';
+import { ReactElement, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Navbar from './navbar';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
-import { MIN_U_BALANCE } from '@/constants';
-import { EVMWalletContext } from '@/context/evm-wallet';
-import { StyledMuiButton } from '@/styles/components';
-import { motion } from 'framer-motion';
 
 // icons
-import CloseIcon from '@mui/icons-material/Close';
-import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
-import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import usePrevious from '@/hooks/usePrevious';
-
-const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
-  const [showWarning, setShowWarning] = useState(false);
-  const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
-  const theme = useTheme();
-  const navigate = useNavigate();
-
-  const handleClose = useCallback(() => {
-    setShowWarning(false);
-    localStorage.setItem('warningClosed', 'true');
-  }, [setShowWarning]);
-
-  useEffect(() => setShowWarning(localStorage.getItem('warningClosed') !== 'true'), []);
-
-  const handleSignIn = useCallback(() => navigate('sign-in'), [navigate]);
-
-  if (!localStorage.getItem('evmProvider') && !currentAddress) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, height: 0, minHeight: 0 }}
-        animate={{
-          opacity: 1,
-          height: 'fit-content',
-          minHeight: '40px',
-          width: '100%',
-          maxWidth: !smallScreen ? '1200px' : '100%',
-          marginTop: !smallScreen ? '30px' : '0px',
-          padding: !smallScreen ? '20px' : '10px',
-          borderRadius: !smallScreen ? '20px' : '0px',
-          background: 'linear-gradient(200deg, #bfe3e0, #a9c9d4)',
-          color: '#003030',
-          transition: { duration: 0 },
-        }}
-        className='w-full flex flex-wrap justify-center xl:justify-between items-center gap-3 shadow-sm font-medium overflow-hidden text-xs md:text-base'
-      >
-        <span className='px-2 flex flex-nowrap gap-3 items-center'>
-          <ErrorRoundedIcon
-            style={{
-              width: '24px',
-            }}
-          />
-          You don&apos;t seem to have a wallet connected. Connect a wallet to experience all FairAI
-          features and benefits.
-        </span>
-
-        <StyledMuiButton
-          style={{
-            display: 'flex',
-            gap: '5px',
-            alignItems: 'center',
-          }}
-          className='plausible-event-name=Onboarding+Click primary'
-          onClick={handleSignIn}
-        >
-          <OpenInNewRoundedIcon style={{ width: '20px', marginRight: '4px' }} />
-          Connect a wallet or learn more
-        </StyledMuiButton>
-      </motion.div>
-    );
-  } else if (showWarning && currentAddress && usdcBalance < MIN_U_BALANCE) {
-    return (
-      <Box
-        sx={{
-          background: theme.palette.warning.main,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-        padding={'2px 16px 2px 32px'}
-      >
-        <Typography>
-          Looks Like you are running low on your USDC balance,{' '}
-          <Link to={'/swap'} className='plausible-event-name=Top+Up+Click'>
-            <u>Click here to Top Up</u>
-          </Link>
-        </Typography>
-        <IconButton
-          sx={{
-            border: 'none',
-            padding: '2px',
-          }}
-          size='medium'
-          onClick={handleClose}
-          className='plausible-event-name=Top+Up+Warning+Close'
-        >
-          <CloseIcon fontSize='inherit' />
-        </IconButton>
-      </Box>
-    );
-  } else {
-    return <></>;
-  }
-};
 
 export default function Layout({ children }: { children: ReactElement }) {
   const [headerHeight, setHeaderHeight] = useState('64px');
@@ -193,11 +84,7 @@ export default function Layout({ children }: { children: ReactElement }) {
                 display: 'flex',
                 justifyContent: 'center',
               }}
-            >
-              {(!isSmallScreen || (!userScrolledDown && isSmallScreen)) && (
-                <WarningMessage smallScreen={isSmallScreen} />
-              )}
-            </Box>
+            ></Box>
           )}
           <main style={{ height: '100%' }} ref={scrollableRef} id='main'>
             {children}
