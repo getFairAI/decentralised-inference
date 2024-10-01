@@ -27,7 +27,6 @@ import History from '@/pages/history';
 import BlockOperatorGuard from '@/guards/block-operator';
 import ErrorDisplay from '@/pages/error-display';
 import SignIn from './pages/sign-in';
-import WalletGuard from './guards/wallet';
 import Terms from './pages/terms';
 import TermsAgreement from './guards/terms-agreement';
 import RequestSolution from './pages/request-solution';
@@ -54,13 +53,14 @@ const router = createHashRouter([
           {
             path: '',
             element: (
-              <WalletGuard>
+              <ArbitrumGuard>
                 <BlockOperatorGuard>
+                
                   <TermsAgreement>
                     <Chat />
                   </TermsAgreement>
                 </BlockOperatorGuard>
-              </WalletGuard>
+              </ArbitrumGuard>
             ),
           },
           {

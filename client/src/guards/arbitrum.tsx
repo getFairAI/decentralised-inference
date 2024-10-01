@@ -19,44 +19,59 @@
 import { LTIPP_SOLUTION, STIP_SOLUTION } from '@/constants';
 import useOperators from '@/hooks/useOperators';
 import { useLazyQuery } from '@apollo/client';
-import { findByIdDocument } from '@fairai/evm-sdk';
+import { findByIdDocument, findByTagsQuery } from '@fairai/evm-sdk';
 import { Backdrop, CircularProgress, Typography, useTheme } from '@mui/material';
-import { ReactElement, useEffect } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
-  const { pathname, state } = useLocation();
+  const { state, pathname } = useLocation();
   const theme = useTheme();
   const navigate = useNavigate();
+  const [ solutions, setSolutions ] = useState<findByTagsQuery['transactions']['edges']>([]);
 
   const [getSolution, { data }] = useLazyQuery(findByIdDocument);
-  const { validTxs: operatorsData } = useOperators(data?.transactions.edges || []);
+  const { validTxs: operatorsData, loading } = useOperators(solutions);
 
   useEffect(() => {
-    if (pathname.includes('ltipp')) {
+    if (state && state.defaultOperator) {
+      // skip fetching data if already present
+    } else if (state && state.solution) {
+      // ifg solution is already present, set it as default
+      setSolutions([state.solution]);
+    } else if (pathname.includes('ltipp')) {
+      // fetch LTIPP solution
       getSolution({ variables: { ids: [LTIPP_SOLUTION] } });
     } else if (pathname.includes('stip')) {
+      // fetch STIP solution
       getSolution({ variables: { ids: [STIP_SOLUTION] } });
     } else {
-      navigate('/'); // Redirect to home page if the path is not a solution path
+      // if no solution is present, navigate to home
+      navigate('/');
     }
-  }, [pathname]);
+  }, [ state ]);
 
   useEffect(() => {
-    if (data && operatorsData) {
+    if (solutions.length > 0 && operatorsData && !loading) {
       navigate(
         {},
         {
           state: {
             defaultOperator: operatorsData[0],
             availableOperators: operatorsData,
-            solution: data.transactions.edges[0],
+            solution: solutions[0],
           },
           replace: true,
         },
       );
     }
-  }, [data, operatorsData]);
+  }, [solutions, operatorsData, loading]);
+
+  useEffect(() => {
+    if (data?.transactions?.edges) {
+      setSolutions(data.transactions.edges);
+    }
+  }, [data]);
 
   if (!state?.defaultOperator) {
     return (

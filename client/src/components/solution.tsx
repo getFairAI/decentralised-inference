@@ -270,10 +270,9 @@ const Solution = ({
           </CardContent>
           <div className='flex justify-center md:justify-between py-4 px-2'>
             <div className='flex-3 flex justify-start'>
-              <StyledMuiButton className='primary' onClick={handleSolutionClick} disabled={loading}>
+              <StyledMuiButton className='primary' onClick={handleSolutionClick}>
                 Use solution
-                {!loading && <OutboundRoundedIcon style={{ width: '22px' }} />}
-                {loading && <CircularProgress size={'20px'} color='secondary' />}
+                <OutboundRoundedIcon style={{ width: '22px' }} />
               </StyledMuiButton>
             </div>
 
