@@ -107,11 +107,13 @@ const InputField = ({
   currentConversationId,
   newMessage,
   inputRef,
+  showFeedback,
   handleSendFile,
   handleSendText,
   handleRemoveFile,
   handleMessageChange,
   handleFileUpload,
+  setShowFeedback
 }: {
   file?: File;
   loading: boolean;
@@ -119,17 +121,17 @@ const InputField = ({
   currentConversationId: number;
   newMessage: string;
   inputRef: RefObject<HTMLTextAreaElement>;
+  showFeedback: boolean;
   handleSendFile: () => Promise<void>;
   handleSendText: () => Promise<void>;
   handleRemoveFile: () => void;
   handleMessageChange: (event: ChangeEvent<HTMLInputElement>) => void;
   handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => void;
+  setShowFeedback: (value: boolean) => void;
 }) => {
   const theme = useTheme();
   const { state } = useLocation();
   const { setOpen: setOpenRating } = useContext(UserFeedbackContext);
-  const { currentAddress: userAddr } = useContext(EVMWalletContext);
-  const { showFeedback, setShowFeedback } = useRatingFeedback([userAddr]);
 
   const allowFiles = useMemo(() => findTag(state.solution, 'allowFiles') === 'true', [state]);
   const allowText = useMemo(
@@ -506,8 +508,6 @@ const Chat = () => {
   }, [currentConfig]);
 
   const [requestParams, setRequestParams] = useState({
-    target,
-    scrollableRef,
     userAddrs: [] as string[],
     solutionTx: state.solution.node.id,
     conversationId: currentConversationId,
@@ -526,6 +526,7 @@ const Chat = () => {
     useResponses(responseParams);
 
   const showOperatorBusy = useOperatorBusy((currentOperator?.arweaveWallet as string) ?? '');
+  const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr, requestsData?.length ?? 0, hasRequestNextPage);
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
   const showLoadMore = useMemo(
@@ -1691,11 +1692,13 @@ const Chat = () => {
                 currentConversationId={currentConversationId}
                 newMessage={newMessage}
                 inputRef={inputRef}
+                showFeedback={showFeedback}
                 handleFileUpload={handleFileUpload}
                 handleRemoveFile={handleRemoveFile}
                 handleSendFile={handleSendFile}
                 handleSendText={handleSendText}
                 handleMessageChange={handleMessageChange}
+                setShowFeedback={setShowFeedback}
               />
               {newMessage.length >= MAX_MESSAGE_SIZE && (
                 <Typography
