@@ -231,7 +231,10 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
       (async () => {
         // validate previous requests
         const filtered = [];
-        const registrationFees = availableOperators.map(el => ({ solutionId: el.node.tags.find(tag => tag.name === 'Solution-Transaction')?.value ?? '', fee: Number(el.node.tags.find(tag => tag.name === 'Operator-Fee')?.value) }));
+        const registrationFees = availableOperators.map((el) => ({
+          solutionId: el.node.tags.find((tag) => tag.name === 'Solution-Transaction')?.value ?? '',
+          fee: Number(el.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value),
+        }));
 
         for (const operator of availableOperators) {
           // operator fee

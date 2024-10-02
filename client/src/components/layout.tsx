@@ -70,9 +70,7 @@ export default function Layout({ children }: { children: ReactElement }) {
         }}
         maxWidth={false}
       >
-        <Box
-          height={'100%'}
-        >
+        <Box height={'100%'}>
           <main style={{ height: '100%' }} ref={scrollableRef} id='main'>
             {children}
           </main>

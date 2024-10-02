@@ -256,58 +256,64 @@ export default function Home() {
             </Box>
           </div>
 
-          {error && <motion.div
-            initial={{ y: '-40px', opacity: 0 }}
-            animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
-            className='w-full flex flex-col flex-wrap justify-center gap-4 max-w-[1400px] items-center absolute bottom-[-100px]'
-          >
-            <Box display={'flex'} alignItems={'center'} gap={'12px'}>
-              <ErrorRoundedIcon fontSize='large' />
-              <Typography variant='h3'>An Error Has Occurred!</Typography>
-            </Box>
-            <Typography variant='body1' sx={{ textAlign: 'center' }}>
-              {'There was an error fetching the data, this could be caused by periods of higher load. Please try again in a few moments.'}
-            </Typography>
-            <Typography variant='body1' sx={{ textAlign: 'center' }}>
-              {'If the problem persists, please contact support.'}
-            </Typography>
-            <StyledMuiButton
-              onClick={handleRefetch}
-              sx={{ width: 'fit-content' }}
-              className='plausible-event-name=Refetch+Click primary'
+          {error && (
+            <motion.div
+              initial={{ y: '-40px', opacity: 0 }}
+              animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
+              className='w-full flex flex-col flex-wrap justify-center gap-4 max-w-[1400px] items-center absolute bottom-[-100px]'
             >
-              <ReplayRoundedIcon />
-              Retry
-            </StyledMuiButton>
-          </motion.div>}
+              <Box display={'flex'} alignItems={'center'} gap={'12px'}>
+                <ErrorRoundedIcon fontSize='large' />
+                <Typography variant='h3'>An Error Has Occurred!</Typography>
+              </Box>
+              <Typography variant='body1' sx={{ textAlign: 'center' }}>
+                {
+                  'There was an error fetching the data, this could be caused by periods of higher load. Please try again in a few moments.'
+                }
+              </Typography>
+              <Typography variant='body1' sx={{ textAlign: 'center' }}>
+                {'If the problem persists, please contact support.'}
+              </Typography>
+              <StyledMuiButton
+                onClick={handleRefetch}
+                sx={{ width: 'fit-content' }}
+                className='plausible-event-name=Refetch+Click primary'
+              >
+                <ReplayRoundedIcon />
+                Retry
+              </StyledMuiButton>
+            </motion.div>
+          )}
 
-          {!error && <motion.div
-            initial={{ y: '-40px', opacity: 0 }}
-            animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
-            className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
-          >
-            {loading &&
-              loadingTiles.map((el) => (
-                <Grid item key={el}>
-                  <LoadingCard />
+          {!error && (
+            <motion.div
+              initial={{ y: '-40px', opacity: 0 }}
+              animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
+              className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
+            >
+              {loading &&
+                loadingTiles.map((el) => (
+                  <Grid item key={el}>
+                    <LoadingCard />
+                  </Grid>
+                ))}
+              {filteredTxs.map((tx) => (
+                <Grid item key={tx.node.id}>
+                  <motion.div
+                    initial={{ y: '-40px', opacity: 0 }}
+                    animate={{ y: 0, opacity: 1, transition: { duration: 0.4 } }}
+                  >
+                    <Solution
+                      tx={tx}
+                      loading={operatorsLoading}
+                      operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
+                      containerRef={containerRef}
+                    />
+                  </motion.div>
                 </Grid>
               ))}
-            {filteredTxs.map((tx) => (
-              <Grid item key={tx.node.id}>
-                <motion.div
-                  initial={{ y: '-40px', opacity: 0 }}
-                  animate={{ y: 0, opacity: 1, transition: { duration: 0.4 } }}
-                >
-                  <Solution
-                    tx={tx}
-                    loading={operatorsLoading}
-                    operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
-                    containerRef={containerRef}
-                  />
-                </motion.div>
-              </Grid>
-            ))}
-          </motion.div>}
+            </motion.div>
+          )}
           <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
         </Container>
       </motion.div>

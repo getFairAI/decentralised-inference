@@ -203,22 +203,28 @@ const WalletnotConnectedContent = () => {
 const WalletNoFundsContent = () => {
   const { state, pathname } = useLocation();
   const { ethBalance, usdcBalance } = useContext(EVMWalletContext);
-  const { throwawayBalance, throwawayAddr, throwawayUsdcAllowance, updateAllowance, updateBalance } = useContext(ThrowawayContext);
-  const [ fundAmount, setFundAmount ] = useState(0);
-  const [ fundAmountInUsdc, setFundAmountInUsdc ] = useState(0);
-  const [ allowAmount, setAllowAmount ] = useState(0);
-  const [ adjustAllowance, setAdjustAllowance ] = useState(false);
-  const [ adjustPayerBalance, setAdjustPayerBalance ] = useState(false);
-  const [ ethBalanceInUsd, setEthBalanceInUsd ] = useState(0);
-  const [ throwawayBalanceInUsd, setThrowawayBalanceInUsd ] = useState(0);
-  const [ sliderValue, setSliderValue ] = useState(0);
+  const {
+    throwawayBalance,
+    throwawayAddr,
+    throwawayUsdcAllowance,
+    updateAllowance,
+    updateBalance,
+  } = useContext(ThrowawayContext);
+  const [fundAmount, setFundAmount] = useState(0);
+  const [fundAmountInUsdc, setFundAmountInUsdc] = useState(0);
+  const [allowAmount, setAllowAmount] = useState(0);
+  const [adjustAllowance, setAdjustAllowance] = useState(false);
+  const [adjustPayerBalance, setAdjustPayerBalance] = useState(false);
+  const [ethBalanceInUsd, setEthBalanceInUsd] = useState(0);
+  const [throwawayBalanceInUsd, setThrowawayBalanceInUsd] = useState(0);
+  const [sliderValue, setSliderValue] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const navigate = useNavigate();
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(throwawayAddr);
     enqueueSnackbar('Copied to clipboard', { variant: 'success' });
-  }, [ throwawayAddr, enqueueSnackbar ]);
+  }, [throwawayAddr, enqueueSnackbar]);
 
   const handleNext = useCallback(
     () => setActiveStep((prevActiveStep) => prevActiveStep + 1),
@@ -230,8 +236,14 @@ const WalletNoFundsContent = () => {
     [setActiveStep],
   );
 
-  const handleAdjustShow = useCallback(() => setAdjustAllowance(prev => !prev), [setAdjustAllowance]);
-  const handleAdjustPayerBalanceShow = useCallback(() => setAdjustPayerBalance(prev => !prev), [setAdjustPayerBalance]);
+  const handleAdjustShow = useCallback(
+    () => setAdjustAllowance((prev) => !prev),
+    [setAdjustAllowance],
+  );
+  const handleAdjustPayerBalanceShow = useCallback(
+    () => setAdjustPayerBalance((prev) => !prev),
+    [setAdjustPayerBalance],
+  );
   const handleChangeFundAmount = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       if (event.target.value === '') {
@@ -246,21 +258,24 @@ const WalletNoFundsContent = () => {
     (_event: Event, newValue: number | number[]) => {
       // calculate value (slider is percentage)
       setSliderValue(newValue as number);
-      const value = (usdcBalance * (newValue as number) / maxPercentage);
+      const value = (usdcBalance * (newValue as number)) / maxPercentage;
       setAllowAmount(value);
     },
     [usdcBalance, setAllowAmount, maxPercentage],
   );
-  const handleAllowChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.value === '') {
-      setAllowAmount(0);
-      setSliderValue(0);
-    } else {
-      const percentage = Number(event.target.value) / usdcBalance * maxPercentage;
-      setSliderValue(Number(percentage.toFixed(0)));
-      setAllowAmount(Number(event.target.value));
-    }
-  }, [ setAllowAmount, setSliderValue, usdcBalance ]);
+  const handleAllowChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.value === '') {
+        setAllowAmount(0);
+        setSliderValue(0);
+      } else {
+        const percentage = (Number(event.target.value) / usdcBalance) * maxPercentage;
+        setSliderValue(Number(percentage.toFixed(0)));
+        setAllowAmount(Number(event.target.value));
+      }
+    },
+    [setAllowAmount, setSliderValue, usdcBalance],
+  );
 
   /* const handleChangeAllowAmount = useCallback((event: ChangeEvent<HTMLInputElement>) => setAllowAmount(Number(event.target.value)), [setAllowAmount]); */
   const handleMaxClick = useCallback(() => setFundAmount(ethBalance), [setFundAmount, ethBalance]);
@@ -281,7 +296,7 @@ const WalletNoFundsContent = () => {
       enqueueSnackbar('Allowance update failed', { variant: 'error' });
     }
     updateAllowance(allowAmount);
-  }, [allowAmount,throwawayAddr, allowUsdc, updateAllowance, enqueueSnackbar]);
+  }, [allowAmount, throwawayAddr, allowUsdc, updateAllowance, enqueueSnackbar]);
 
   const fund = useCallback(async () => {
     const hash = await sendEth(throwawayAddr as `0x${string}`, fundAmount);
@@ -301,7 +316,7 @@ const WalletNoFundsContent = () => {
       const { value: ethAvgPrice } = await redstone.getPrice('ETH');
       setFundAmountInUsdc(ethAvgPrice * fundAmount);
     })();
-  }, [ fundAmount, setFundAmountInUsdc ]);
+  }, [fundAmount, setFundAmountInUsdc]);
 
   useEffect(() => {
     // convert eth to dollars
@@ -309,7 +324,7 @@ const WalletNoFundsContent = () => {
       const { value: ethAvgPrice } = await redstone.getPrice('ETH');
       setThrowawayBalanceInUsd(ethAvgPrice * throwawayBalance);
     })();
-  }, [ throwawayBalance, setThrowawayBalanceInUsd ]);
+  }, [throwawayBalance, setThrowawayBalanceInUsd]);
 
   useEffect(() => {
     // convert eth to dollars
@@ -317,13 +332,13 @@ const WalletNoFundsContent = () => {
       const { value: ethAvgPrice } = await redstone.getPrice('ETH');
       setEthBalanceInUsd(ethAvgPrice * ethBalance);
     })();
-  }, [ ethBalance, setEthBalanceInUsd ]);
+  }, [ethBalance, setEthBalanceInUsd]);
 
   useEffect(() => {
-    const percentage = throwawayUsdcAllowance / usdcBalance * maxPercentage;
+    const percentage = (throwawayUsdcAllowance / usdcBalance) * maxPercentage;
     setSliderValue(Number(percentage.toFixed(0)));
     setAllowAmount(throwawayUsdcAllowance);
-  }, [ throwawayUsdcAllowance, setSliderValue, setAllowAmount ]);
+  }, [throwawayUsdcAllowance, setSliderValue, setAllowAmount]);
 
   useEffect(() => {
     if (pathname.includes('swap')) {
@@ -331,7 +346,7 @@ const WalletNoFundsContent = () => {
     } else {
       setActiveStep(0);
     }
-  }, [ pathname ]);
+  }, [pathname]);
 
   return (
     <motion.div
@@ -350,14 +365,15 @@ const WalletNoFundsContent = () => {
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
             <Typography mt={'16px'}>
-              To create a better experience for you, we will create a temporary wallet. This wallet will be used to pay for transactions on your behalf.
+              To create a better experience for you, we will create a temporary wallet. This wallet
+              will be used to pay for transactions on your behalf.
               <br />
               The wallet will remain on your device, and will be stored encrypted on arweave as a
               fallback.
             </Typography>
             <Typography display={'flex'} alignItems={'center'} gap={'4px'}>
-              <ErrorRoundedIcon fontSize='small' sx={{ mt: '10.5px', mb: '10.5px' }}/>
-              <strong>We do not recommend you use this wallet for anything else.</strong> 
+              <ErrorRoundedIcon fontSize='small' sx={{ mt: '10.5px', mb: '10.5px' }} />
+              <strong>We do not recommend you use this wallet for anything else.</strong>
             </Typography>
             <Box display={'flex'} width={'100%'} gap={'16px'} mt={'16px'}>
               <TextField
@@ -370,12 +386,14 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                   '& .MuiInputBase-root': {
                     background: 'transparent',
-                  }
+                  },
                 }}
                 InputProps={{
-                  endAdornment: <IconButton onClick={handleCopy}>
-                    <ContentCopyRounded width='20px' height='20px' />
-                  </IconButton>
+                  endAdornment: (
+                    <IconButton onClick={handleCopy}>
+                      <ContentCopyRounded width='20px' height='20px' />
+                    </IconButton>
+                  ),
                 }}
               />
               <Tooltip title='Generate new Wallet'>
@@ -398,14 +416,16 @@ const WalletNoFundsContent = () => {
           </StepContent>
         </Step>
         <Step sx={{ width: '100%' }}>
-          <StepLabel optional={<Typography variant="caption">Optional</Typography>}>
+          <StepLabel optional={<Typography variant='caption'>Optional</Typography>}>
             <Typography fontWeight={'700'}>Top Up ETH Balance</Typography>
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
             <Typography mt={'16px'}>
-              Our marketplace payments use the <strong>Arbitrum Network.</strong> To pay for transactions, you will need some residual ETH in the &apos;Payer&apos; Wallet.
+              Our marketplace payments use the <strong>Arbitrum Network.</strong> To pay for
+              transactions, you will need some residual ETH in the &apos;Payer&apos; Wallet.
               <br />
-              In order to top up the balance of the &apos;Payer&apos; Wallet, you will need to have ETH. Alternatively, you can fund the wallet directly. 
+              In order to top up the balance of the &apos;Payer&apos; Wallet, you will need to have
+              ETH. Alternatively, you can fund the wallet directly.
             </Typography>
             <Box display={'flex'} width={'100%'} mt={'16px'} gap={'16px'} alignItems={'flex-start'}>
               <NumericFormat
@@ -421,7 +441,7 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                   '& .MuiInputBase-root': {
                     background: 'transparent',
-                  }
+                  },
                 }}
                 InputProps={{
                   endAdornment: <Typography>${ethBalanceInUsd.toFixed(4)}</Typography>,
@@ -448,11 +468,13 @@ const WalletNoFundsContent = () => {
                   </Box>
                 }
               />
-              {ethBalanceInUsd < MIN_ETH_IN_USDC && <Tooltip title={'Low Balance'}>
-                <IconButton size='large' sx={{ mt: '14px', mb: '14px', p: 0 }}>
-                  <ErrorRoundedIcon fontSize='inherit' />
-                </IconButton>
-              </Tooltip>}
+              {ethBalanceInUsd < MIN_ETH_IN_USDC && (
+                <Tooltip title={'Low Balance'}>
+                  <IconButton size='large' sx={{ mt: '14px', mb: '14px', p: 0 }}>
+                    <ErrorRoundedIcon fontSize='inherit' />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
             <Box display={'flex'} justifyContent={'space-between'} mt={'48px'}>
               <Button
@@ -491,15 +513,24 @@ const WalletNoFundsContent = () => {
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
             <Typography mt={'16px'}>
-              The &apos;Payer&apos; Wallet will need some residual ETH to pay for network fees on your behalf.
+              The &apos;Payer&apos; Wallet will need some residual ETH to pay for network fees on
+              your behalf.
+              <br />A typical Transaction in our marketplace costs <strong>
+                less than $0.01
+              </strong>{' '}
+              of network fees. We will ask you to top up the balance of the &apos;Payer&apos; Wallet
+              with at least $0.10 worth of ETH in the <strong>Arbitrum Network</strong>.
               <br />
-              A typical Transaction in our marketplace costs <strong>less than $0.01</strong> of network fees. We will ask you to top up the balance of the &apos;Payer&apos; Wallet with at least $0.10 worth of ETH in the <strong>Arbitrum Network</strong>.
-              <br />
-              In this step you can send ETH from your connected wallet to the &apos;Payer&apos; Wallet. <strong>Alternatively,</strong> you can fund the &apos;Payer&apos; Wallet directly. You can find the address in the first step.
+              In this step you can send ETH from your connected wallet to the &apos;Payer&apos;
+              Wallet. <strong>Alternatively,</strong> you can fund the &apos;Payer&apos; Wallet
+              directly. You can find the address in the first step.
             </Typography>
-            <Typography display={'flex'} alignItems={'center'} gap={'4px'} mt={'16px'} >
-              <ErrorRoundedIcon fontSize='small' sx={{ mt: '10.5px', mb: '10.5px' }}/>
-              <strong>Do not send large amounts in this wallet. We can not recover funds from it in case of loss!</strong> 
+            <Typography display={'flex'} alignItems={'center'} gap={'4px'} mt={'16px'}>
+              <ErrorRoundedIcon fontSize='small' sx={{ mt: '10.5px', mb: '10.5px' }} />
+              <strong>
+                Do not send large amounts in this wallet. We can not recover funds from it in case
+                of loss!
+              </strong>
             </Typography>
             <Box display={'flex'} width={'100%'} gap={'16px'} mt={'16px'}>
               <NumericFormat
@@ -515,7 +546,7 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                   '& .MuiInputBase-root': {
                     background: 'transparent',
-                  }
+                  },
                 }}
                 InputProps={{
                   endAdornment: <Typography>${throwawayBalanceInUsd.toFixed(4)}</Typography>,
@@ -523,49 +554,55 @@ const WalletNoFundsContent = () => {
                 FormHelperTextProps={{ component: 'div' } as Partial<FormHelperTextProps>}
               />
               <Tooltip title={'Deposit ETH'}>
-                <IconButton size='large' sx={{ mt: '10.5px', mb: '10.5px', p: 0 }} onClick={handleAdjustPayerBalanceShow}>
+                <IconButton
+                  size='large'
+                  sx={{ mt: '10.5px', mb: '10.5px', p: 0 }}
+                  onClick={handleAdjustPayerBalanceShow}
+                >
                   <ArrowCircleDownIcon fontSize='inherit' />
                 </IconButton>
               </Tooltip>
             </Box>
-            {adjustPayerBalance && (<Box mt={'16px'} display={'flex'} alignItems={'flex-start'} gap={'32px'}>
-              <NumericFormat
-                label='Amount to Fund (ETH)'
-                placeholder='Amount to Fund'
-                value={fundAmount}
-                onChange={handleChangeFundAmount}
-                customInput={TextField}
-                allowNegative={false}
-                margin='normal'
-                decimalScale={5}
-                sx={{
-                  padding: 0,
-                  '& .MuiInputBase-root': {
-                    background: 'transparent',
+            {adjustPayerBalance && (
+              <Box mt={'16px'} display={'flex'} alignItems={'flex-start'} gap={'32px'}>
+                <NumericFormat
+                  label='Amount to Fund (ETH)'
+                  placeholder='Amount to Fund'
+                  value={fundAmount}
+                  onChange={handleChangeFundAmount}
+                  customInput={TextField}
+                  allowNegative={false}
+                  margin='normal'
+                  decimalScale={5}
+                  sx={{
+                    padding: 0,
+                    '& .MuiInputBase-root': {
+                      background: 'transparent',
+                    },
+                  }}
+                  InputProps={{
+                    endAdornment: <Typography>${fundAmountInUsdc.toFixed(4)}</Typography>,
+                  }}
+                  helperText={
+                    <Typography sx={{ cursor: 'pointer' }} variant='caption'>
+                      <u>Max: {ethBalance}</u>
+                    </Typography>
                   }
-                }}
-                InputProps={{
-                  endAdornment: <Typography>${fundAmountInUsdc.toFixed(4)}</Typography>,
-                }}
-                helperText={
-                  <Typography sx={{ cursor: 'pointer' }} variant='caption'>
-                    <u>Max: {ethBalance}</u>
-                  </Typography>
-                }
-                FormHelperTextProps={{
-                  onClick: handleMaxClick,
-                }}
-              />
-              <Button
-                variant='contained'
-                sx={{ p: '15px 14px', mt: '16px' }}
-                onClick={fund}
-                disabled={fundAmount <= 0}
-                className='plausible-event-name=Onboarding+Fund+Wallet+Click'
-              >
-                Fund Wallet
-              </Button>
-            </Box>)}
+                  FormHelperTextProps={{
+                    onClick: handleMaxClick,
+                  }}
+                />
+                <Button
+                  variant='contained'
+                  sx={{ p: '15px 14px', mt: '16px' }}
+                  onClick={fund}
+                  disabled={fundAmount <= 0}
+                  className='plausible-event-name=Onboarding+Fund+Wallet+Click'
+                >
+                  Fund Wallet
+                </Button>
+              </Box>
+            )}
             <Box display={'flex'} justifyContent={justifyContent} mt={'48px'}>
               <Button
                 sx={{ mt: 1, mr: 1 }}
@@ -593,9 +630,11 @@ const WalletNoFundsContent = () => {
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
             <Typography mt={'16px'}>
-              Hardware providers in our marketplace set their costs and receive payments in USDC, on the <strong>Arbitrum Network</strong>.
+              Hardware providers in our marketplace set their costs and receive payments in USDC, on
+              the <strong>Arbitrum Network</strong>.
               <br />
-              To ensure a good experince you need to have at least <strong>1 USDC</strong> in your wallet.
+              To ensure a good experince you need to have at least <strong>1 USDC</strong> in your
+              wallet.
             </Typography>
             <Box display={'flex'} width={'100%'} gap={'16px'} mt={'16px'} alignItems={'flex-start'}>
               <NumericFormat
@@ -611,7 +650,7 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                   '& .MuiInputBase-root': {
                     background: 'transparent',
-                  }
+                  },
                 }}
                 InputProps={{
                   endAdornment: <img width='20px' height='20px' src={'./usdc-logo.svg'} />,
@@ -638,11 +677,13 @@ const WalletNoFundsContent = () => {
                   </Box>
                 }
               />
-              {usdcBalance < 1 && <Tooltip title={'Low Balance'}>
-                <IconButton size='large' sx={{ mt: '14px', mb: '14px', p: 0 }}>
-                  <ErrorRoundedIcon fontSize='inherit' />
-                </IconButton>
-              </Tooltip>}
+              {usdcBalance < 1 && (
+                <Tooltip title={'Low Balance'}>
+                  <IconButton size='large' sx={{ mt: '14px', mb: '14px', p: 0 }}>
+                    <ErrorRoundedIcon fontSize='inherit' />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
             <Box display={'flex'} justifyContent={justifyContent} mt={'48px'}>
               <Button
@@ -671,15 +712,20 @@ const WalletNoFundsContent = () => {
           </StepLabel>
           <StepContent sx={{ width: '100%' }}>
             <Typography mt={'16px'}>
-              For the best user experience, you need to allow the &apos;Payer&apos; Wallet to spend USDC on your behalf.
+              For the best user experience, you need to allow the &apos;Payer&apos; Wallet to spend
+              USDC on your behalf.
               <br />
-              This will allow the wallet to pay for transactions on your behalf without requiring you to sign each transaction.
+              This will allow the wallet to pay for transactions on your behalf without requiring
+              you to sign each transaction.
               <br />
               To Modify the Allowance, click on the gear button and adjust the slider below.
             </Typography>
-            <Typography display={'flex'} alignItems={'center'} gap={'4px'} mt={'16px'} >
-              <ErrorRoundedIcon fontSize='small' sx={{ mt: '10.5px', mb: '10.5px' }}/>
-              <strong>We recommend you only allow small amounts at a time. You can increase or decrease this Allowance anytime.</strong>
+            <Typography display={'flex'} alignItems={'center'} gap={'4px'} mt={'16px'}>
+              <ErrorRoundedIcon fontSize='small' sx={{ mt: '10.5px', mb: '10.5px' }} />
+              <strong>
+                We recommend you only allow small amounts at a time. You can increase or decrease
+                this Allowance anytime.
+              </strong>
             </Typography>
             <Box display={'flex'} width={'100%'} gap={'16px'} mt={'16px'} alignItems={'flex-start'}>
               <NumericFormat
@@ -695,7 +741,7 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                   '& .MuiInputBase-root': {
                     background: 'transparent',
-                  }
+                  },
                 }}
                 InputProps={{
                   endAdornment: <img width='20px' height='20px' src={'./usdc-logo.svg'} />,
@@ -717,45 +763,53 @@ const WalletNoFundsContent = () => {
                   width: '85%',
                   '& .MuiInputBase-root': {
                     background: 'transparent',
-                  }
+                  },
                 }}
                 InputProps={{
-                  endAdornment: <img width='20px' height='20px' src={'./usdc-logo.svg'} alt='usdc logo'/>,
+                  endAdornment: (
+                    <img width='20px' height='20px' src={'./usdc-logo.svg'} alt='usdc logo' />
+                  ),
                 }}
               />
               <Tooltip title={'Modify Allowance'}>
-                <IconButton size='large' sx={{ mt: '10.5px', mb: '10.5px', p: 0 }} onClick={handleAdjustShow}>
+                <IconButton
+                  size='large'
+                  sx={{ mt: '10.5px', mb: '10.5px', p: 0 }}
+                  onClick={handleAdjustShow}
+                >
                   <SettingsIcon fontSize='inherit' />
                 </IconButton>
               </Tooltip>
             </Box>
-            {adjustAllowance && (<Box display={'flex'} gap={'24px'} alignItems={'center'} mt={'16px'}>
-              <Slider
-                marks={marks}
-                value={sliderValue}
-                onChange={handleSliderChange}
-                step={1}
-                min={0}
-                getAriaValueText={valueLabelFormat}
-                valueLabelFormat={valueLabelFormat}
-                valueLabelDisplay='auto'
-              />
-              <NumericFormat
-                label='Quantity'
-                placeholder='Quantity'
-                onChange={handleAllowChange}
-                value={allowAmount}
-                customInput={TextField}
-                allowNegative={false}
-                margin='dense'
-                decimalScale={4}
-                sx={{
-                  '& .MuiInputBase-root': {
-                    background: 'transparent',
-                  }
-                }}
-              />
-            </Box>)}
+            {adjustAllowance && (
+              <Box display={'flex'} gap={'24px'} alignItems={'center'} mt={'16px'}>
+                <Slider
+                  marks={marks}
+                  value={sliderValue}
+                  onChange={handleSliderChange}
+                  step={1}
+                  min={0}
+                  getAriaValueText={valueLabelFormat}
+                  valueLabelFormat={valueLabelFormat}
+                  valueLabelDisplay='auto'
+                />
+                <NumericFormat
+                  label='Quantity'
+                  placeholder='Quantity'
+                  onChange={handleAllowChange}
+                  value={allowAmount}
+                  customInput={TextField}
+                  allowNegative={false}
+                  margin='dense'
+                  decimalScale={4}
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      background: 'transparent',
+                    },
+                  }}
+                />
+              </Box>
+            )}
             <Box display={'flex'} justifyContent={justifyContent} mt={'48px'}>
               <Button
                 sx={{ mt: 1, mr: 1 }}
@@ -840,7 +894,8 @@ const SignIn = () => {
           left: 0,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: isConnected && (usdcBalance < MIN_U_BALANCE || isSwap) ? 'center' : 'flex-start',
+          justifyContent:
+            isConnected && (usdcBalance < MIN_U_BALANCE || isSwap) ? 'center' : 'flex-start',
         }}
       >
         {!isConnected && <WalletnotConnectedContent />}
@@ -855,23 +910,25 @@ const SignIn = () => {
             <CloseIcon />
           </StyledMuiButton>
         </div>
-        {!isConnected && <>
-          <div className='mt-20'>
-            <OnboadingPage />
-          </div>
-          <div className='w-100 flex justify-center mt-24 mb-5'>
-            {providers.length > 0 && (
-              <StyledMuiButton
-                onClick={handleClick}
-                className='plausible-event-name=Onboarding+Connect+Wallet+Click primary bigger gradient-bg'
-              >
-                <img src='./arbitrum-logo.svg' style={{ width: '24px' }} alt='arbitrum logo' />
-                Connect or get your wallet to the Arbitrum Network
-                <PlayArrowRoundedIcon />
-              </StyledMuiButton>
-            )}
-          </div>
-        </>}
+        {!isConnected && (
+          <>
+            <div className='mt-20'>
+              <OnboadingPage />
+            </div>
+            <div className='w-100 flex justify-center mt-24 mb-5'>
+              {providers.length > 0 && (
+                <StyledMuiButton
+                  onClick={handleClick}
+                  className='plausible-event-name=Onboarding+Connect+Wallet+Click primary bigger gradient-bg'
+                >
+                  <img src='./arbitrum-logo.svg' style={{ width: '24px' }} alt='arbitrum logo' />
+                  Connect or get your wallet to the Arbitrum Network
+                  <PlayArrowRoundedIcon />
+                </StyledMuiButton>
+              )}
+            </div>
+          </>
+        )}
       </Container>
     </motion.div>
   );

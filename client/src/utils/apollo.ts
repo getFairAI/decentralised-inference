@@ -55,8 +55,8 @@ export const client = new ApolloClient({
   link: from([
     errorLink,
     split(
-    (operation) =>
-      !operation.getContext().clientName || operation.getContext().clientName === 'arweave', // by default use arweave
+      (operation) =>
+        !operation.getContext().clientName || operation.getContext().clientName === 'arweave', // by default use arweave
       new HttpLink({ uri: NET_ARWEAVE_URL + '/graphql' }),
       new HttpLink({ uri: irysUrl }),
     ),

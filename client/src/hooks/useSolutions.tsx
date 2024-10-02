@@ -55,13 +55,13 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
       errorPolicy: 'all',
       variables: {
         tags: [
-          { name: TAG_NAMES.protocolName, values: [ PROTOCOL_NAME ]}, // keep Fair Protocol in tags to keep retrocompatibility
-          { name: TAG_NAMES.protocolVersion, values: [ PROTOCOL_VERSION ] },
-          { name: TAG_NAMES.operationName, values: [ SOLUTION_CREATION ] },
+          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] }, // keep Fair Protocol in tags to keep retrocompatibility
+          { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+          { name: TAG_NAMES.operationName, values: [SOLUTION_CREATION] },
         ],
         first: nFeaturedElements ?? elementsPerPage,
         minBlock: 1433693,
-        maxBlock: 1442981
+        maxBlock: 1442981,
       },
       /* skip: !model, */
     },
@@ -200,7 +200,7 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
     txsCountsMap,
     isOnScreen,
     error,
-    refetch
+    refetch,
   };
 };
 

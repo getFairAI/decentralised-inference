@@ -16,7 +16,15 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   getEthBalance,
   getUsdcAllowance,
@@ -100,7 +108,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
   } = useContext(EVMWalletContext);
   const [getExistingThrowaway, throwawayData] = useLazyQuery(irysQuery);
   const [isLayoverOpen, setIsLayoverOpen] = useState<boolean>(false);
-  const theme = useTheme();;
+  const theme = useTheme();
 
   useEffect(() => {
     (async () => {
@@ -109,14 +117,16 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
       // if current address and last connected address differ, then there is the need to generate new encrypted throwaway wallet and save to arweave
       const storedWallet = localStorage.getItem('throwawayWallet')?.split(':')[1];
       const lastConnectedAddress = localStorage.getItem('throwawayWallet')?.split(':')[0];
-      if (mainAddr && storedWallet && mainAddr.toLowerCase() === lastConnectedAddress?.toLowerCase()) {
+      if (
+        mainAddr &&
+        storedWallet &&
+        mainAddr.toLowerCase() === lastConnectedAddress?.toLowerCase()
+      ) {
         await setIrys(storedWallet as `0x${string}`);
         setThrowawayProvider(storedWallet as `0x${string}`);
         const addr = privateKeyToAddress(storedWallet as `0x${string}`);
         setThrowawayBalance(await getEthBalance(addr));
-        setThrowawayUsdcAllowance(
-          await getUsdcAllowance(mainAddr as `0x${string}`, addr),
-        );
+        setThrowawayUsdcAllowance(await getUsdcAllowance(mainAddr as `0x${string}`, addr));
         setThrowawayAddr(addr);
       } else if (mainAddr) {
         getExistingThrowaway({
@@ -155,9 +165,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
 
         const addr = privateKeyToAddress(decData as `0x${string}`);
         setThrowawayBalance(await getEthBalance(addr));
-        setThrowawayUsdcAllowance(
-          await getUsdcAllowance(mainAddr as `0x${string}`, addr),
-        );
+        setThrowawayUsdcAllowance(await getUsdcAllowance(mainAddr as `0x${string}`, addr));
         setThrowawayAddr(addr);
         setIsLayoverOpen(false);
       } else if (!isNetworkRequestInFlight(throwawayData.networkStatus) && throwawayData.called) {
@@ -193,16 +201,14 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         const addr = privateKeyToAddress(throwawayKey as `0x${string}`);
 
         setThrowawayBalance(await getEthBalance(addr));
-        setThrowawayUsdcAllowance(
-          await getUsdcAllowance(mainAddr as `0x${string}`, addr),
-        );
+        setThrowawayUsdcAllowance(await getUsdcAllowance(mainAddr as `0x${string}`, addr));
         setThrowawayAddr(addr);
         setIsLayoverOpen(false);
       } else {
         // ignore
       }
     })();
-  }, [ mainAddr, throwawayData ]);
+  }, [mainAddr, throwawayData]);
 
   const updateBalance = useCallback(
     async (newAmount?: number) =>
@@ -219,19 +225,27 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
     [throwawayAddr, mainAddr],
   );
 
-  const value = useMemo(() => ({
-    throwawayAddr,
-    promptWithThrowaway,
-    throwawayBalance,
-    throwawayUsdcAllowance,
-    updateBalance,
-    updateAllowance,
-  }), [ throwawayAddr, throwawayBalance, throwawayUsdcAllowance, promptWithThrowaway, updateBalance, updateAllowance ]);
+  const value = useMemo(
+    () => ({
+      throwawayAddr,
+      promptWithThrowaway,
+      throwawayBalance,
+      throwawayUsdcAllowance,
+      updateBalance,
+      updateAllowance,
+    }),
+    [
+      throwawayAddr,
+      throwawayBalance,
+      throwawayUsdcAllowance,
+      promptWithThrowaway,
+      updateBalance,
+      updateAllowance,
+    ],
+  );
 
   return (
-    <ThrowawayContext.Provider
-      value={value}
-    >
+    <ThrowawayContext.Provider value={value}>
       {children}
       <Backdrop
         sx={{

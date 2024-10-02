@@ -54,7 +54,6 @@ const router = createHashRouter([
             element: (
               <ArbitrumGuard>
                 <BlockOperatorGuard>
-                
                   <TermsAgreement>
                     <Chat />
                   </TermsAgreement>

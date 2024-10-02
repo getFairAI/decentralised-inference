@@ -41,7 +41,11 @@ const irysQuery = gql`
   }
 `;
 
-const useRatingFeedback = (userAddr: string, requestsLength: number, hasRequestsNextPage: boolean) => {
+const useRatingFeedback = (
+  userAddr: string,
+  requestsLength: number,
+  hasRequestsNextPage: boolean,
+) => {
   const [isActiveUser, setIsActiveUser] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
@@ -58,7 +62,7 @@ const useRatingFeedback = (userAddr: string, requestsLength: number, hasRequests
         },
         { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] },
       ],
-      owners: [ userAddr ],
+      owners: [userAddr],
     },
     context: {
       clientName: 'irys',
@@ -69,7 +73,7 @@ const useRatingFeedback = (userAddr: string, requestsLength: number, hasRequests
   useEffect(() => {
     // user is considered active if they have made more than 5 requests
     // or if they have made more than 2 requests and there are more requests to fetch
-    setIsActiveUser(requestsLength >= 5 || requestsLength > 2 && hasRequestsNextPage);
+    setIsActiveUser(requestsLength >= 5 || (requestsLength > 2 && hasRequestsNextPage));
   }, [requestsLength, hasRequestsNextPage, setIsActiveUser]);
 
   useEffect(() => {

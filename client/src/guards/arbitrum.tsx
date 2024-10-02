@@ -28,7 +28,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   const { state, pathname } = useLocation();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [ solutions, setSolutions ] = useState<findByTagsQuery['transactions']['edges']>([]);
+  const [solutions, setSolutions] = useState<findByTagsQuery['transactions']['edges']>([]);
 
   const [getSolution, { data }] = useLazyQuery(findByIdDocument);
   const { validTxs: operatorsData, loading } = useOperators(solutions);
@@ -49,7 +49,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
       // if no solution is present, navigate to home
       navigate('/');
     }
-  }, [ state ]);
+  }, [state]);
 
   useEffect(() => {
     if (solutions.length > 0 && operatorsData && !loading) {

@@ -113,7 +113,7 @@ const InputField = ({
   handleRemoveFile,
   handleMessageChange,
   handleFileUpload,
-  setShowFeedback
+  setShowFeedback,
 }: {
   file?: File;
   loading: boolean;
@@ -526,7 +526,11 @@ const Chat = () => {
     useResponses(responseParams);
 
   const showOperatorBusy = useOperatorBusy((currentOperator?.arweaveWallet as string) ?? '');
-  const { showFeedback, setShowFeedback } = useRatingFeedback(userAddr, requestsData?.length ?? 0, hasRequestNextPage);
+  const { showFeedback, setShowFeedback } = useRatingFeedback(
+    userAddr,
+    requestsData?.length ?? 0,
+    hasRequestNextPage,
+  );
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
   const showLoadMore = useMemo(
