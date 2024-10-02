@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   getEthBalance,
   getUsdcAllowance,
@@ -91,7 +91,7 @@ const irysQuery = gql`
 export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
   const [throwawayAddr, setThrowawayAddr] = useState<string>('');
   const [throwawayBalance, setThrowawayBalance] = useState<number>(0);
-  const [throwawayUsdcAllowance, setThrowawayAllowance] = useState<number>(0);
+  const [throwawayUsdcAllowance, setThrowawayUsdcAllowance] = useState<number>(0);
   const {
     currentAddress: mainAddr,
     getPubKey,
@@ -100,18 +100,22 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
   } = useContext(EVMWalletContext);
   const [getExistingThrowaway, throwawayData] = useLazyQuery(irysQuery);
   const [isLayoverOpen, setIsLayoverOpen] = useState<boolean>(false);
-  const theme = useTheme();
+  const theme = useTheme();;
 
   useEffect(() => {
     (async () => {
-      const storedWallet = localStorage.getItem('throwawayWallet');
-      if (mainAddr && storedWallet) {
+      // throwaway wallet is stored in local storage in the format of `${connectedAddress}:${privateKey}`
+      // connectedAddress is the last connected address that has been used to generate the throwaway wallet
+      // if current address and last connected address differ, then there is the need to generate new encrypted throwaway wallet and save to arweave
+      const storedWallet = localStorage.getItem('throwawayWallet')?.split(':')[1];
+      const lastConnectedAddress = localStorage.getItem('throwawayWallet')?.split(':')[0];
+      if (mainAddr && storedWallet && mainAddr.toLowerCase() === lastConnectedAddress?.toLowerCase()) {
         await setIrys(storedWallet as `0x${string}`);
-        await setThrowawayProvider(storedWallet as `0x${string}`);
+        setThrowawayProvider(storedWallet as `0x${string}`);
         const addr = privateKeyToAddress(storedWallet as `0x${string}`);
-        setThrowawayBalance(await getEthBalance(addr as `0x${string}`));
-        setThrowawayAllowance(
-          await getUsdcAllowance(mainAddr as `0x${string}`, addr as `0x${string}`),
+        setThrowawayBalance(await getEthBalance(addr));
+        setThrowawayUsdcAllowance(
+          await getUsdcAllowance(mainAddr as `0x${string}`, addr),
         );
         setThrowawayAddr(addr);
       } else if (mainAddr) {
@@ -146,20 +150,21 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         const encData = await result.text();
         const decData = await decrypt(encData as `0x${string}`);
         await setIrys(decData as `0x${string}`);
-        await setThrowawayProvider(decData as `0x${string}`);
-        localStorage.setItem('throwawayWallet', decData as `0x${string}`);
+        setThrowawayProvider(decData as `0x${string}`);
+        localStorage.setItem('throwawayWallet', `${mainAddr}:${decData}`);
 
         const addr = privateKeyToAddress(decData as `0x${string}`);
-        setThrowawayBalance(await getEthBalance(addr as `0x${string}`));
-        setThrowawayAllowance(
-          await getUsdcAllowance(mainAddr as `0x${string}`, addr as `0x${string}`),
+        setThrowawayBalance(await getEthBalance(addr));
+        setThrowawayUsdcAllowance(
+          await getUsdcAllowance(mainAddr as `0x${string}`, addr),
         );
         setThrowawayAddr(addr);
         setIsLayoverOpen(false);
       } else if (!isNetworkRequestInFlight(throwawayData.networkStatus) && throwawayData.called) {
         setIsLayoverOpen(true);
-        // generate new throwaway key
-        const throwawayKey = generatePrivateKey();
+        // get key from storage or generate new throwaway key
+        const storedWallet = localStorage.getItem('throwawayWallet')?.split(':')[1];
+        const throwawayKey = storedWallet ?? generatePrivateKey();
         // save encrypted throwaway key
         let pubKey = localStorage.getItem(`pubKeyFor:${mainAddr}`);
 
@@ -182,14 +187,14 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
           { name: 'Unix-Time', value: (Date.now() / secondInMS).toString() },
         ]);
 
-        await setIrys(throwawayKey);
-        await setThrowawayProvider(throwawayKey as `0x${string}`);
-        localStorage.setItem('throwawayWallet', throwawayKey);
-        const addr = privateKeyToAddress(throwawayKey);
+        await setIrys(throwawayKey as `0x${string}`);
+        setThrowawayProvider(throwawayKey as `0x${string}`);
+        localStorage.setItem('throwawayWallet', `${mainAddr}:${throwawayKey}`);
+        const addr = privateKeyToAddress(throwawayKey as `0x${string}`);
 
-        setThrowawayBalance(await getEthBalance(addr as `0x${string}`));
-        setThrowawayAllowance(
-          await getUsdcAllowance(mainAddr as `0x${string}`, addr as `0x${string}`),
+        setThrowawayBalance(await getEthBalance(addr));
+        setThrowawayUsdcAllowance(
+          await getUsdcAllowance(mainAddr as `0x${string}`, addr),
         );
         setThrowawayAddr(addr);
         setIsLayoverOpen(false);
@@ -197,7 +202,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         // ignore
       }
     })();
-  }, [throwawayData]);
+  }, [ mainAddr, throwawayData ]);
 
   const updateBalance = useCallback(
     async (newAmount?: number) =>
@@ -207,23 +212,25 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
 
   const updateAllowance = useCallback(
     async (newAmount?: number) =>
-      setThrowawayAllowance(
+      setThrowawayUsdcAllowance(
         newAmount ??
           (await getUsdcAllowance(mainAddr as `0x${string}`, throwawayAddr as `0x${string}`)),
       ),
     [throwawayAddr, mainAddr],
   );
 
+  const value = useMemo(() => ({
+    throwawayAddr,
+    promptWithThrowaway,
+    throwawayBalance,
+    throwawayUsdcAllowance,
+    updateBalance,
+    updateAllowance,
+  }), [ throwawayAddr, throwawayBalance, throwawayUsdcAllowance, promptWithThrowaway, updateBalance, updateAllowance ]);
+
   return (
     <ThrowawayContext.Provider
-      value={{
-        throwawayAddr,
-        promptWithThrowaway,
-        throwawayBalance,
-        throwawayUsdcAllowance,
-        updateBalance,
-        updateAllowance,
-      }}
+      value={value}
     >
       {children}
       <Backdrop
