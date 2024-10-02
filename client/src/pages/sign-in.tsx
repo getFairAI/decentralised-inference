@@ -389,7 +389,7 @@ const WalletNoFundsContent = () => {
                 sx={{ mt: 1, mr: 1 }}
                 variant='contained'
                 onClick={handleNext}
-                className='plausible-event-name=Explore+Marketplace'
+                className='plausible-event-name=Onboarding+Step1+Next+Click'
                 disabled={!throwawayAddr}
               >
                 Next
@@ -459,7 +459,7 @@ const WalletNoFundsContent = () => {
                 sx={{ mt: 1, mr: 1 }}
                 onClick={handleBack}
                 variant='text'
-                className='plausible-event-name=Onboarding+Top+Up+AR+Click'
+                className='plausible-event-name=Onboarding+Step2+Back+Click'
               >
                 Back
               </Button>
@@ -468,7 +468,7 @@ const WalletNoFundsContent = () => {
                   sx={{ mt: 1, mr: 1 }}
                   onClick={handleNext}
                   variant='outlined'
-                  className='plausible-event-name=Onboarding+Top+Up+AR+Click'
+                  className='plausible-event-name=Onboarding+Step2+Skip+Click'
                 >
                   Skip
                 </Button>
@@ -477,7 +477,7 @@ const WalletNoFundsContent = () => {
                   variant='contained'
                   onClick={handleNext}
                   sx={{ mt: 1, mr: 1 }}
-                  className='plausible-event-name=Onboarding+Top+Up+U+Click'
+                  className='plausible-event-name=Onboarding+Step2+Next+Click'
                 >
                   Next
                 </Button>
@@ -561,7 +561,7 @@ const WalletNoFundsContent = () => {
                 sx={{ p: '15px 14px', mt: '16px' }}
                 onClick={fund}
                 disabled={fundAmount <= 0}
-                className='plausible-event-name=Onboarding+Top+Up+Payer+Wallet+Click'
+                className='plausible-event-name=Onboarding+Fund+Wallet+Click'
               >
                 Fund Wallet
               </Button>
@@ -571,7 +571,7 @@ const WalletNoFundsContent = () => {
                 sx={{ mt: 1, mr: 1 }}
                 onClick={handleBack}
                 variant='text'
-                className='plausible-event-name=Onboarding+Top+Up+AR+Click'
+                className='plausible-event-name=Onboarding+Step3+Back+Click'
               >
                 Back
               </Button>
@@ -580,7 +580,7 @@ const WalletNoFundsContent = () => {
                 variant='contained'
                 disabled={throwawayBalanceInUsd < MIN_ETH_IN_USDC}
                 onClick={handleNext}
-                className='plausible-event-name=Explore+Marketplace'
+                className='plausible-event-name=Onboarding+Step3+Next+Click'
               >
                 Next
               </Button>
@@ -649,7 +649,7 @@ const WalletNoFundsContent = () => {
                 sx={{ mt: 1, mr: 1 }}
                 onClick={handleBack}
                 variant='text'
-                className='plausible-event-name=Onboarding+Top+Up+AR+Click'
+                className='plausible-event-name=Onboarding+Step4+Back+Click'
               >
                 Back
               </Button>
@@ -658,7 +658,7 @@ const WalletNoFundsContent = () => {
                 variant='contained'
                 disabled={usdcBalance < MIN_USDC}
                 onClick={handleNext}
-                className='plausible-event-name=Explore+Marketplace'
+                className='plausible-event-name=Onboarding+Step4+Next+Click'
               >
                 Next
               </Button>
@@ -761,7 +761,7 @@ const WalletNoFundsContent = () => {
                 sx={{ mt: 1, mr: 1 }}
                 onClick={handleBack}
                 variant='text'
-                className='plausible-event-name=Onboarding+Top+Up+AR+Click'
+                className='plausible-event-name=Onboarding+Step5+Back+Click'
               >
                 Back
               </Button>
@@ -771,7 +771,7 @@ const WalletNoFundsContent = () => {
                   disabled={allowAmount === throwawayUsdcAllowance}
                   variant='outlined'
                   onClick={changeAllowance}
-                  className='plausible-event-name=Save+Allowance+Click'
+                  className='plausible-event-name=Onboarding+Save+Allowance+Click'
                 >
                   Save Allowance
                 </Button>
@@ -780,7 +780,7 @@ const WalletNoFundsContent = () => {
                   variant='contained'
                   disabled={throwawayUsdcAllowance < 1}
                   onClick={handleFinish}
-                  className='plausible-event-name=Explore+Marketplace'
+                  className='plausible-event-name=Onboarding+Explore+Marketplace+Click'
                 >
                   Explore marketplace
                 </Button>
