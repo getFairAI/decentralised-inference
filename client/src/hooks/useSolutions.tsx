@@ -60,6 +60,8 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
           { name: TAG_NAMES.operationName, values: [ SOLUTION_CREATION ] },
         ],
         first: nFeaturedElements ?? elementsPerPage,
+        minBlock: 1433693,
+        maxBlock: 1442981
       },
       /* skip: !model, */
     },

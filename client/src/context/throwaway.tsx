@@ -262,7 +262,6 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
           </div>
         </motion.div>
       </Backdrop>
-      ;
     </ThrowawayContext.Provider>
   );
 };
