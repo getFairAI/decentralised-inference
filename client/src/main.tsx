@@ -23,7 +23,6 @@ import { Root } from '@/root';
 import Home from '@/pages/home';
 import '@/styles/main.css';
 import Chat from '@/pages/model/chat';
-import History from '@/pages/history';
 import BlockOperatorGuard from '@/guards/block-operator';
 import ErrorDisplay from '@/pages/error-display';
 import SignIn from './pages/sign-in';
@@ -97,10 +96,6 @@ const router = createHashRouter([
       //     </WalletGuard>
       //   ),
       // },
-      {
-        path: 'history',
-        element: <History />,
-      },
       {
         path: 'sign-in',
         element: <SignIn />,

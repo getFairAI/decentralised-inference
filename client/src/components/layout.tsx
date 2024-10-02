@@ -22,7 +22,6 @@ import Navbar from './navbar';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import useScroll from '@/hooks/useScroll';
 import { useLocation } from 'react-router-dom';
-import useComponentDimensions from '@/hooks/useComponentDimensions';
 
 // icons
 import usePrevious from '@/hooks/usePrevious';
@@ -33,8 +32,6 @@ export default function Layout({ children }: { children: ReactElement }) {
   const scrollableRef = useRef<HTMLDivElement>(null);
   const { scrollTop: currentScrollAmount } = useScroll(scrollableRef);
   const { pathname } = useLocation();
-  const warningRef = useRef<HTMLDivElement>(null);
-  const { height: warningHeight } = useComponentDimensions(warningRef);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const theme = useTheme();
 
@@ -74,18 +71,8 @@ export default function Layout({ children }: { children: ReactElement }) {
         maxWidth={false}
       >
         <Box
-          height={!userScrolledDown && !isSmallScreen ? `calc(100% - ${warningHeight}px)` : '100%'}
+          height={'100%'}
         >
-          {pathname !== '/terms' && pathname !== '/request' && pathname !== '/browse' && (
-            <Box
-              ref={warningRef}
-              id={'warning-box'}
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-              }}
-            ></Box>
-          )}
           <main style={{ height: '100%' }} ref={scrollableRef} id='main'>
             {children}
           </main>
