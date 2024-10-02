@@ -49,15 +49,15 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
 
   const elementsPerPage = 5;
 
-  const { data, previousData, loading, error, fetchMore, networkStatus } = useQuery(
+  const { data, previousData, loading, error, fetchMore, networkStatus, refetch } = useQuery(
     findByTagsDocument,
     {
+      errorPolicy: 'all',
       variables: {
         tags: [
-          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] }, // keep Fair Protocol in tags to keep retrocompatibility
-          { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-          { name: TAG_NAMES.operationName, values: [SOLUTION_CREATION] },
-          /*  { name: TAG_NAMES.modelTransaction, values: [ state.modelTransaction ]}, */
+          { name: TAG_NAMES.protocolName, values: [ PROTOCOL_NAME ]}, // keep Fair Protocol in tags to keep retrocompatibility
+          { name: TAG_NAMES.protocolVersion, values: [ PROTOCOL_VERSION ] },
+          { name: TAG_NAMES.operationName, values: [ SOLUTION_CREATION ] },
         ],
         first: nFeaturedElements ?? elementsPerPage,
       },
@@ -198,6 +198,7 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
     txsCountsMap,
     isOnScreen,
     error,
+    refetch
   };
 };
 
