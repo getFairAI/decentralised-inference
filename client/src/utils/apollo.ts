@@ -17,47 +17,50 @@
  */
 
 import { NET_ARWEAVE_URL } from '../constants';
-import { ITransactions } from '../interfaces/arweave';
-import { ApolloClient, ApolloLink, from, HttpLink, InMemoryCache, split } from '@apollo/client';
+import { ApolloClient, from, HttpLink, InMemoryCache, split, Observable } from '@apollo/client';
+import { onError } from '@apollo/client/link/error';
+import { enqueueSnackbar } from 'notistack';
 
-const mapLink = new ApolloLink((operation, forward) =>
-  forward(operation).map((result) => {
-    if (operation.operationName === 'history') {
-      const nested = result.data as { owned: ITransactions; received: ITransactions };
-      const parsedResult = {
-        ...result,
-        data: {
-          owned: nested.owned.edges,
-          received: nested.received.edges,
-        },
-      };
+const retryTimeout = 2000;
 
-      return parsedResult;
-    } else {
-      return result;
-    }
-  }),
-);
+const errorLink = onError(({ graphQLErrors, operation, forward }) => {
+  if (graphQLErrors && graphQLErrors[0]?.message === 'query timed out') {
+    // retry the request with exponential increase in delay
+    enqueueSnackbar('Query timed out. Retrying...', { variant: 'info' });
+    return new Observable((observer) => {
+      const timer = setTimeout(() => {
+        forward(operation).subscribe({
+          next: observer.next.bind(observer),
+          error: observer.error.bind(observer),
+          complete: observer.complete.bind(observer),
+        });
+      }, retryTimeout);
+
+      return () => clearTimeout(timer);
+    });
+  }
+
+  // To retry on network errors, we recommend the RetryLink
+  // instead of the onError link. This just logs the error.
+  // if (networkError) {
+  //   console.log(`[Network error]: ${networkError}`);
+  // }
+});
 
 const irysUrl = 'https://arweave.mainnet.irys.xyz/graphql';
 
 export const client = new ApolloClient({
   // uri: 'http://localhost:1984/graphql',
   cache: new InMemoryCache(),
-  link: split(
-    (operation) =>
-      !operation.getContext().clientName || operation.getContext().clientName === 'arweave', // by default use arweave
-    from([
-      // chainRequestLink,
-      mapLink,
+  link: from([
+    errorLink,
+    split(
+      (operation) =>
+        !operation.getContext().clientName || operation.getContext().clientName === 'arweave', // by default use arweave
       new HttpLink({ uri: NET_ARWEAVE_URL + '/graphql' }),
-    ]),
-    from([
-      // chainRequestLink,
-      mapLink,
       new HttpLink({ uri: irysUrl }),
-    ]),
-  ),
+    ),
+  ]),
   defaultOptions: {
     watchQuery: {
       fetchPolicy: 'network-only',

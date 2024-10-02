@@ -17,9 +17,8 @@
  */
 
 import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES, USER_FEEDBACK } from '@/constants';
-import { NetworkStatus, gql, useQuery } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client';
 import { useEffect, useState } from 'react';
-import useRequests from './useRequests';
 
 const irysQuery = gql`
   query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String) {
@@ -42,13 +41,13 @@ const irysQuery = gql`
   }
 `;
 
-const useRatingFeedback = (userAddrs: string[]) => {
+const useRatingFeedback = (
+  userAddr: string,
+  requestsLength: number,
+  hasRequestsNextPage: boolean,
+) => {
   const [isActiveUser, setIsActiveUser] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-
-  const { requestsData, requestNetworkStatus } = useRequests({
-    userAddrs,
-  });
 
   const { data: feedbackData } = useQuery(irysQuery, {
     variables: {
@@ -63,21 +62,19 @@ const useRatingFeedback = (userAddrs: string[]) => {
         },
         { name: TAG_NAMES.operationName, values: [USER_FEEDBACK] },
       ],
-      owners: userAddrs,
+      owners: [userAddr],
     },
     context: {
       clientName: 'irys',
     },
-    fetchPolicy: 'network-only',
-    nextFetchPolicy: 'network-only',
-    skip: !userAddrs || userAddrs.length === 0,
+    skip: !userAddr,
   });
 
   useEffect(() => {
-    if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      setIsActiveUser(requestsData.transactions.edges.length > 5); // is Active user if more than 5 requests
-    }
-  }, [requestsData, requestNetworkStatus, setIsActiveUser]);
+    // user is considered active if they have made more than 5 requests
+    // or if they have made more than 2 requests and there are more requests to fetch
+    setIsActiveUser(requestsLength >= 5 || (requestsLength > 2 && hasRequestsNextPage));
+  }, [requestsLength, hasRequestsNextPage, setIsActiveUser]);
 
   useEffect(() => {
     if (feedbackData) {

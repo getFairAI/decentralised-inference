@@ -91,6 +91,8 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
           { name: TAG_NAMES.solutionTransaction, values: solutionIds },
         ],
         first: elementsPerPage,
+        minBlock: 1435623, // query only after block 1435623
+        maxBlock: 1456231,
       },
       skip: !solutionIds /* || !currentAddress, // skip if no address as well because the operators validation require a evm connection */,
     },
@@ -229,6 +231,10 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
       (async () => {
         // validate previous requests
         const filtered = [];
+        const registrationFees = availableOperators.map((el) => ({
+          solutionId: el.node.tags.find((tag) => tag.name === 'Solution-Transaction')?.value ?? '',
+          fee: Number(el.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value),
+        }));
 
         for (const operator of availableOperators) {
           // operator fee
@@ -260,7 +266,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
             (await validateDistributionFees(
               operatorEvmResult?.evmWallet,
               operator.node.owner.address,
-              operatorFee,
+              registrationFees,
               timestamp,
               curatorEvmAddress,
             ))

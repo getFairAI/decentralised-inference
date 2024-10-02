@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { Box, Container, Grid, IconButton, InputBase, Typography, useTheme } from '@mui/material';
+import { Box, Container, Grid, InputBase, Typography, useTheme } from '@mui/material';
 import '@/styles/ui.css';
 import useSolutions from '@/hooks/useSolutions';
 import LoadingCard from '@/components/loading-card';
@@ -26,7 +26,7 @@ import { findTag, genLoadingArray } from '@/utils/common';
 import Solution from '@/components/solution';
 import { throttle } from 'lodash';
 import { IContractEdge } from '@/interfaces/arweave';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { motion } from 'framer-motion';
 import { MIN_U_BALANCE } from '@/constants';
@@ -34,15 +34,14 @@ import { StyledMuiButton } from '@/styles/components';
 
 // icons
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 
 const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
-  const theme = useTheme();
   const navigate = useNavigate();
 
   const handleClose = useCallback(() => {
@@ -53,6 +52,7 @@ const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
   useEffect(() => setShowWarning(localStorage.getItem('warningClosed') !== 'true'), []);
 
   const handleSignIn = useCallback(() => navigate('sign-in'), [navigate]);
+  const handleSwap = useCallback(() => navigate('swap'), [navigate]);
 
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
@@ -62,7 +62,7 @@ const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
           opacity: 1,
           height: 'fit-content',
           minHeight: '40px',
-          width: '100%',
+          width: 'fit-content',
           maxWidth: !smallScreen ? '1200px' : '100%',
           marginTop: !smallScreen ? '30px' : '0px',
           padding: !smallScreen ? '20px' : '10px',
@@ -70,6 +70,8 @@ const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
           background: 'linear-gradient(200deg, #bfe3e0, #a9c9d4)',
           color: '#003030',
           transition: { duration: 0 },
+          marginLeft: '20px',
+          marginRight: '20px',
         }}
         className='w-full flex flex-wrap justify-center xl:justify-between items-center gap-3 shadow-sm font-medium overflow-hidden text-xs md:text-base'
       >
@@ -99,33 +101,54 @@ const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
     );
   } else if (showWarning && currentAddress && usdcBalance < MIN_U_BALANCE) {
     return (
-      <Box
-        sx={{
-          background: theme.palette.warning.main,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+      <motion.div
+        initial={{ opacity: 0, height: 0, minHeight: 0 }}
+        animate={{
+          opacity: 1,
+          height: 'fit-content',
+          minHeight: '40px',
+          width: 'fit-content',
+          maxWidth: !smallScreen ? '1200px' : '100%',
+          marginTop: !smallScreen ? '30px' : '0px',
+          padding: !smallScreen ? '20px' : '10px',
+          borderRadius: !smallScreen ? '20px' : '0px',
+          background: 'linear-gradient(200deg, #bfe3e0, #a9c9d4)',
+          color: '#003030',
+          transition: { duration: 0 },
         }}
-        padding={'2px 16px 2px 32px'}
+        className='w-full flex flex-wrap justify-center xl:justify-between items-center gap-3 shadow-sm font-medium overflow-hidden text-xs md:text-base'
       >
-        <Typography>
-          Looks Like you are running low on your USDC balance,{' '}
-          <Link to={'/swap'} className='plausible-event-name=Top+Up+Click'>
-            <u>Click here to Top Up</u>
-          </Link>
-        </Typography>
-        <IconButton
-          sx={{
-            border: 'none',
-            padding: '2px',
+        <span className='px-2 flex flex-nowrap gap-3 items-center'>
+          <ErrorRoundedIcon
+            style={{
+              width: '24px',
+            }}
+          />
+          Looks Like you are running low on your USDC balance.
+        </span>
+        <StyledMuiButton
+          style={{
+            display: 'flex',
+            gap: '5px',
+            alignItems: 'center',
           }}
-          size='medium'
-          onClick={handleClose}
-          className='plausible-event-name=Top+Up+Warning+Close'
+          className='plausible-event-name=Top+Up+Click primary'
+          onClick={handleSwap}
         >
-          <CloseIcon fontSize='inherit' />
-        </IconButton>
-      </Box>
+          Top Up
+        </StyledMuiButton>
+        <StyledMuiButton
+          style={{
+            display: 'flex',
+            gap: '5px',
+            alignItems: 'center',
+          }}
+          className='plausible-event-name=Top+Up+Click secondary'
+          onClick={handleClose}
+        >
+          Ignore
+        </StyledMuiButton>
+      </motion.div>
     );
   } else {
     return <></>;
@@ -134,7 +157,7 @@ const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
 
 export default function Home() {
   const target = useRef<HTMLDivElement>(null);
-  const { loading, txs, error } = useSolutions(target);
+  const { loading, txs, error, refetch } = useSolutions(target);
   const [filteredTxs, setFilteredTxs] = useState<IContractEdge[]>([]);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const theme = useTheme();
@@ -161,6 +184,8 @@ export default function Home() {
       );
     }
   }, 2000);
+
+  const handleRefetch = useCallback(() => refetch(), [refetch]);
 
   useEffect(() => {
     setFilteredTxs(txs);
@@ -231,35 +256,64 @@ export default function Home() {
             </Box>
           </div>
 
-          {error && <Typography>Error: {error.message}</Typography>}
+          {error && (
+            <motion.div
+              initial={{ y: '-40px', opacity: 0 }}
+              animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
+              className='w-full flex flex-col flex-wrap justify-center gap-4 max-w-[1400px] items-center absolute bottom-[-100px]'
+            >
+              <Box display={'flex'} alignItems={'center'} gap={'12px'}>
+                <ErrorRoundedIcon fontSize='large' />
+                <Typography variant='h3'>An Error Has Occurred!</Typography>
+              </Box>
+              <Typography variant='body1' sx={{ textAlign: 'center' }}>
+                {
+                  'There was an error fetching the data, this could be caused by periods of higher load. Please try again in a few moments.'
+                }
+              </Typography>
+              <Typography variant='body1' sx={{ textAlign: 'center' }}>
+                {'If the problem persists, please contact support.'}
+              </Typography>
+              <StyledMuiButton
+                onClick={handleRefetch}
+                sx={{ width: 'fit-content' }}
+                className='plausible-event-name=Refetch+Click primary'
+              >
+                <ReplayRoundedIcon />
+                Retry
+              </StyledMuiButton>
+            </motion.div>
+          )}
 
-          <motion.div
-            initial={{ y: '-40px', opacity: 0 }}
-            animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
-            className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
-          >
-            {loading &&
-              loadingTiles.map((el) => (
-                <Grid item key={el}>
-                  <LoadingCard />
+          {!error && (
+            <motion.div
+              initial={{ y: '-40px', opacity: 0 }}
+              animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
+              className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
+            >
+              {loading &&
+                loadingTiles.map((el) => (
+                  <Grid item key={el}>
+                    <LoadingCard />
+                  </Grid>
+                ))}
+              {filteredTxs.map((tx) => (
+                <Grid item key={tx.node.id}>
+                  <motion.div
+                    initial={{ y: '-40px', opacity: 0 }}
+                    animate={{ y: 0, opacity: 1, transition: { duration: 0.4 } }}
+                  >
+                    <Solution
+                      tx={tx}
+                      loading={operatorsLoading}
+                      operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
+                      containerRef={containerRef}
+                    />
+                  </motion.div>
                 </Grid>
               ))}
-            {filteredTxs.map((tx) => (
-              <Grid item key={tx.node.id}>
-                <motion.div
-                  initial={{ y: '-40px', opacity: 0 }}
-                  animate={{ y: 0, opacity: 1, transition: { duration: 0.4 } }}
-                >
-                  <Solution
-                    tx={tx}
-                    loading={operatorsLoading}
-                    operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
-                    containerRef={containerRef}
-                  />
-                </motion.div>
-              </Grid>
-            ))}
-          </motion.div>
+            </motion.div>
+          )}
           <Box ref={target} sx={{ paddingBottom: '16px' }}></Box>
         </Container>
       </motion.div>
