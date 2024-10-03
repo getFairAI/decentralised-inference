@@ -31,7 +31,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   const [solutions, setSolutions] = useState<findByTagsQuery['transactions']['edges']>([]);
 
   const [getSolution, { data }] = useLazyQuery(findByIdDocument);
-  const { validTxs: operatorsData, loading } = useOperators(solutions);
+  const { validTxs: operatorsData, loadingMap } = useOperators(solutions);
 
   useEffect(() => {
     if (state && state.defaultOperator) {
@@ -52,7 +52,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   }, [state]);
 
   useEffect(() => {
-    if (solutions.length > 0 && operatorsData && !loading) {
+    if (solutions.length > 0 && operatorsData && !loadingMap[solutions[0].node.id]) {
       navigate(
         {},
         {
@@ -65,7 +65,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
         },
       );
     }
-  }, [solutions, operatorsData, loading]);
+  }, [solutions, operatorsData, loadingMap]);
 
   useEffect(() => {
     if (data?.transactions?.edges) {
