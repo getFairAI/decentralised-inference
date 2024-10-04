@@ -130,6 +130,8 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         setThrowawayBalance(await getEthBalance(addr));
         setThrowawayUsdcAllowance(await getUsdcAllowance(mainAddr as `0x${string}`, addr));
         setThrowawayAddr(addr);
+      } else if (!mainAddr ) {
+         // no wallet connected ignore
       } else if (mainAddr || isOldVersion) {
         getExistingThrowaway({
           variables: {
@@ -173,7 +175,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
       } else if (!isNetworkRequestInFlight(throwawayData.networkStatus) && throwawayData.called) {
         setIsLayoverOpen(true);
         // get key from storage or generate new throwaway key
-        const storedWallet = localStorage.getItem('throwawayWallet')?.split(':')[1];
+        const storedWallet = localStorage.getItem('throwawayWallet')?.split(':')[1] ?? localStorage.getItem('throwawayWallet');
         const throwawayKey = storedWallet ?? generatePrivateKey();
         // save encrypted throwaway key
         let pubKey = localStorage.getItem(`pubKeyFor:${mainAddr}`);
