@@ -86,8 +86,11 @@ const main = async () => {
     return;
   }
 
+  const controllerWallet = './wallet-controller.json';
+
+  const controllerJWK = JSON.parse(fs.readFileSync(controllerWallet).toString());
   // in a node environment
-  const nodeSigner = new ArweaveSigner(jwk);
+  const nodeSigner = new ArweaveSigner(controllerJWK);
 
   const ant = ANT.init({
     processId: 'wAzmwCy7msdaNj9rhKRRIBlHFBx5n_yrMZQeo6bVrrQ', // fair.ar-io.dev contract
