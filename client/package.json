@@ -33,6 +33,7 @@
     "@mui/lab": "5.0.0-alpha.120",
     "@mui/material": "^5.16.7",
     "@mui/x-date-pickers": "6.2.1",
+    "@permaweb/arx": "^1.0.0",
     "@permaweb/stampjs": "^0.6.2",
     "@uiw/react-md-editor": "3.20.2",
     "@vitejs/plugin-legacy": "^5.4.0",
@@ -63,7 +64,7 @@
     "warp-contracts-plugin-deploy": "1.0.9"
   },
   "devDependencies": {
-    "@ar.io/sdk": "^1.1.1",
+    "@ar.io/sdk": "^2.2.5",
     "@irys/sdk": "0.0.4",
     "@rollup/plugin-commonjs": "^25.0.8",
     "@testing-library/react": "14.0.0",

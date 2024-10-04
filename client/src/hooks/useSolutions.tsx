@@ -18,9 +18,6 @@
 
 import {
   MARKETPLACE_ADDRESS,
-  PROTOCOL_NAME,
-  PROTOCOL_VERSION,
-  SOLUTION_CREATION,
   SOLUTION_DELETION,
   TAG_NAMES,
 } from '@/constants';
@@ -35,9 +32,21 @@ import Stamps, { CountResult } from '@permaweb/stampjs';
 import { WarpFactory } from 'warp-contracts';
 import Arweave from 'arweave';
 import { client } from '@/utils/apollo';
-import { findByTagsQuery, findByTagsAndOwnersDocument, findByTagsDocument } from '@fairai/evm-sdk';
+import { findByTagsQuery, findByTagsAndOwnersDocument, findByIdDocument } from '@fairai/evm-sdk';
 
-const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: number) => {
+const currentMarketplaceSolutions = [
+  'x8D4-9-lR05EJPlQ_UeRYkL1KPI28Of2NLeepY7CBbo',
+  '5tl8yIoz0tI9MMTA4ereCBLxY4ioZRsnBmpjh0heW-4',
+  'nXIPpMJ8jN9wusSxcTIijwSHgvb6Z19-Iswzr8A3g2Q',
+  'XK1YGb6o2pn10t0usz8VpeICazYlRM5VOTf-1YG80mc',
+  'vLeSUPae1fEzEBRYrXJaplikgPAqa3eOVC38mUaDYZk',
+  'j8wkH4jRdPygr6DY106n9ibq_WLeA1jaoDgJ16PlFJI',
+  'RuBfsVIARw1jLKsGjQCrEHL_QBCAmAAIJ0E3UUu5X0w',
+  'zq5_Jvd4miO6QDl42XRpPx9iICDe0AVzanvTepJ_s50',
+  'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk'
+];
+
+const useSolutions = (target?: RefObject<HTMLElement>) => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [txs, setTxs] = useState<IContractEdge[]>([]);
   const [validTxs, setValidTxs] = useState<IContractEdge[]>([]);
@@ -47,23 +56,14 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
   const filterValue = useContext(FilterContext);
   const isOnScreen = useOnScreen(target);
 
-  const elementsPerPage = 5;
-
   const { data, previousData, loading, error, fetchMore, networkStatus, refetch } = useQuery(
-    findByTagsDocument,
+    findByIdDocument,
     {
       errorPolicy: 'all',
       variables: {
-        tags: [
-          { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] }, // keep Fair Protocol in tags to keep retrocompatibility
-          { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-          { name: TAG_NAMES.operationName, values: [SOLUTION_CREATION] },
-        ],
-        first: nFeaturedElements ?? elementsPerPage,
-        minBlock: 1433693,
-        maxBlock: 1442981,
+        ids: currentMarketplaceSolutions
       },
-      /* skip: !model, */
+      notifyOnNetworkStatusChange: true,
     },
   );
   const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
@@ -89,15 +89,20 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
     }
   };
 
+
+  useEffect(() => {
+    if (networkStatus === NetworkStatus.refetch || networkStatus === NetworkStatus.loading) {
+      setFiltering(true);
+    } else if (networkStatus === NetworkStatus.error) {
+      setFiltering(false);
+    }
+  }, [ networkStatus ]);
   /**
    * @description Effect that runs on data changes;
    * it is responsible to set the nextPage status and to update current loaded transactionsm
    * filtering correct payments
    */
   useEffect(() => {
-    if (networkStatus === NetworkStatus.loading) {
-      setFiltering(true);
-    }
     // check has paid correct registration fee
     if (data && networkStatus === NetworkStatus.ready && !_.isEqual(data, previousData)) {
       (async () => {
@@ -151,6 +156,13 @@ const useSolutions = (target?: RefObject<HTMLElement>, nFeaturedElements?: numbe
       })();
     }
   }, [data, previousData, networkStatus]);
+
+  
+  useEffect(() => {
+    if (error) {
+      setFiltering(false);
+    }
+  }, [ error ]);
 
   useEffect(() => {
     if (data) {

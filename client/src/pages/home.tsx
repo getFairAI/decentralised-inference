@@ -20,7 +20,7 @@ import { Box, Container, Grid, InputBase, Typography, useTheme } from '@mui/mate
 import '@/styles/ui.css';
 import useSolutions from '@/hooks/useSolutions';
 import LoadingCard from '@/components/loading-card';
-import { ChangeEvent, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, RefObject, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import useOperators from '@/hooks/useOperators';
 import { findTag, genLoadingArray } from '@/utils/common';
 import Solution from '@/components/solution';
@@ -39,7 +39,7 @@ import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 
-const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
+const WarningMessage = ({ smallScreen, containerRef }: { smallScreen: boolean, containerRef: RefObject<HTMLDivElement> }) => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const navigate = useNavigate();
@@ -53,6 +53,20 @@ const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
 
   const handleSignIn = useCallback(() => navigate('sign-in'), [navigate]);
   const handleSwap = useCallback(() => navigate('swap'), [navigate]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      // ignore
+    } else if (!localStorage.getItem('evmProvider') && !currentAddress) {
+      container.style.paddingBottom = '186px';
+    } else if (showWarning && currentAddress && usdcBalance < MIN_U_BALANCE) {
+      container.style.paddingBottom = '186px';
+    } else {
+      container.style.paddingBottom = '86px';
+    }
+  }, [ containerRef, localStorage, currentAddress, showWarning, usdcBalance, MIN_U_BALANCE ]);
 
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
@@ -191,6 +205,22 @@ export default function Home() {
     setFilteredTxs(txs);
   }, [txs]);
 
+
+  useEffect(() => {
+    // remove scroll from main element
+    const mainEl = document.getElementById('main');
+    if (mainEl) {
+      mainEl.style.overflowY = 'visible';
+    }
+
+    // on unmount re-add scroll to main ot not break other parts of app
+    return () => {
+      if (mainEl) {
+        mainEl.style.overflowY = 'auto';
+      }
+    };
+  }, []); // run only on first load
+
   return (
     <>
       <motion.div
@@ -198,11 +228,12 @@ export default function Home() {
         animate={{ y: 0, opacity: 1, transition: { delay: 0.2, duration: 0.4 } }}
         className='flex justify-center w-full'
       >
-        <WarningMessage smallScreen={isSmallScreen} />
+        <WarningMessage smallScreen={isSmallScreen} containerRef={containerRef}/>
       </motion.div>
       <motion.div
         initial={{ y: '-20px', opacity: 0 }}
         animate={{ y: 0, opacity: 1, transition: { delay: 0.4, duration: 0.4 } }}
+        className='overflow-y-auto max-h-[100vh]'
       >
         <Container
           ref={containerRef}
@@ -216,7 +247,7 @@ export default function Home() {
               maxWidth: '100%',
             },
             mt: '40px',
-            paddingBottom: '200px',
+            paddingBottom: '86px',
           }}
         >
           <div className='w-full flex justify-center lg:justify-between mb-10 px-4 max-w-[1400px] gap-4 flex-wrap'>
@@ -285,18 +316,24 @@ export default function Home() {
             </motion.div>
           )}
 
-          {!error && (
+          {loading && <motion.div
+            initial={{ y: '-40px', opacity: 0 }}
+            animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
+            className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
+          >
+            {loadingTiles.map((el) => (
+              <Grid item key={el}>
+                <LoadingCard />
+              </Grid>
+            ))}
+          </motion.div>}
+
+          {!error && !loading && (
             <motion.div
               initial={{ y: '-40px', opacity: 0 }}
               animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
               className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
             >
-              {loading &&
-                loadingTiles.map((el) => (
-                  <Grid item key={el}>
-                    <LoadingCard />
-                  </Grid>
-                ))}
               {filteredTxs.map((tx) => (
                 <Grid item key={tx.node.id}>
                   <motion.div

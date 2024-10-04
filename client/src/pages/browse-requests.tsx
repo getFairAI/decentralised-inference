@@ -37,12 +37,13 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
-import { ChangeEvent, useCallback, useContext, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { postOnArweave } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
+import useScroll from '@/hooks/useScroll';
 
 interface IrysTx {
   id: string;
@@ -413,6 +414,11 @@ const RequestElement = ({ request }: { request: RequestData }) => {
 
 const BrowseRequests = () => {
   const [requests, setRequests] = useState<RequestData[]>([]);
+  const [ filtering, setFiltering ] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const { isAtBottom, isScrolled } = useScroll(ref);
+
   const { data, loading } = useQuery(irysQuery, {
     variables: {
       tags: [
@@ -426,9 +432,11 @@ const BrowseRequests = () => {
       clientName: 'irys',
     },
   });
+  const isLoading = useMemo(() => loading || filtering, [loading, filtering]);
 
   useEffect(() => {
     (async () => {
+      setFiltering(true);
       const txs: { node: IrysTx }[] = data?.transactions?.edges ?? [];
 
       const txsData: RequestData[] = [];
@@ -445,8 +453,30 @@ const BrowseRequests = () => {
       }
 
       setRequests(txsData);
+      setFiltering(false);
     })();
   }, [data]);
+
+  const handleScrollToBottom = useCallback(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [ bottomRef ]);
+
+  useEffect(() => {
+    // remove scroll from main element
+    const mainEl = document.getElementById('main');
+    if (mainEl) {
+      mainEl.style.overflowY = 'visible';
+    }
+
+    // on unmount re-add scroll to main ot not break other parts of app
+    return () => {
+      if (mainEl) {
+        mainEl.style.overflowY = 'auto';
+      }
+    };
+  }, []); // run only on first load
 
   return (
     <>
@@ -454,7 +484,9 @@ const BrowseRequests = () => {
 
       <motion.div
         initial={{ opacity: 0, y: '-40px' }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.3, type: 'smooth' } }}
+        animate={{ opacity: 1, y: 0, transition: { duration: 0.1, type: 'smooth' } }}
+        className='max-h-[100vh] overflow-y-auto pb-[56px]'
+        ref={ref}
       >
         <div className='w-full flex justify-center'>
           <div className='w-full max-w-[1600px] px-10 mt-10 flex flex-wrap-reverse justify-center sm:justify-between items-center font-bold gap-5'>
@@ -474,7 +506,7 @@ const BrowseRequests = () => {
           </div>
         </div>
 
-        {loading && (
+        {isLoading && (
           <Box display={'flex'} justifyContent={'center'} alignItems={'center'} marginTop={'30px'}>
             <Typography sx={{ fontWeight: 600, fontSize: '120%' }}>
               {'Loading requests...'}
@@ -482,7 +514,7 @@ const BrowseRequests = () => {
           </Box>
         )}
 
-        {requests.length === 0 && !loading && (
+        {requests.length === 0 && !isLoading && (
           <Box display={'flex'} justifyContent={'center'} alignItems={'center'} marginTop={'30px'}>
             <Typography sx={{ fontWeight: 600, fontSize: '120%' }}>
               {'No requests found.'}
@@ -490,10 +522,10 @@ const BrowseRequests = () => {
           </Box>
         )}
 
-        {requests.length > 0 && !loading && (
+        {requests.length > 0 && !isLoading && (
           <motion.div
             initial={{ opacity: 0, y: '-40px' }}
-            animate={{ opacity: 1, y: 0, transition: { duration: 0.3, type: 'smooth' } }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.1, type: 'smooth' } }}
           >
             <Box>
               <div className='flex justify-center items-center'>
@@ -503,20 +535,23 @@ const BrowseRequests = () => {
                       <RequestElement request={req} />
                     </div>
                   ))}
-                  <Fab
-                    sx={{
-                      /* widht: '20px', height: '20px', */ position: 'absolute',
-                      bottom: '30px',
-                      right: '30px',
-                    }}
-                  >
-                    <img src='./chevron-bottom.svg' />
-                  </Fab>
+                  <div ref={bottomRef} />
                 </div>
               </div>
             </Box>
           </motion.div>
         )}
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: '-40px' }}
+        animate={{ opacity: !isScrolled || !isAtBottom ? 1 : 0, y: 0, transition: { duration: 0.1, type: 'smooth' } }}
+        className={'absolute bottom-[20px] right-[20px]'}
+      >
+        <Fab
+          onClick={handleScrollToBottom}
+        >
+          <img src='./chevron-bottom.svg' />
+        </Fab>
       </motion.div>
     </>
   );
