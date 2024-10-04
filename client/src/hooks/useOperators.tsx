@@ -75,21 +75,12 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [txs, setTxs] = useState<findByTagsQuery['transactions']['edges']>([]);
   const [validTxs, setValidTxs] = useState<OperatorData[]>([]);
-  const [loadingMap, setLoadingMap] = useState<{ [solutionId: string]: boolean}>({
-    'TJwdKL6m7mGGyWpjp_V2tO3UXilvylPdduLSstQQDyk': false,
-    'FWNNrjjm8gFKcySaHfXltb3LtoDp3tUl_XxuXqAUbp4': false,
-    'NC5gZBNACmfVCuEFRD-8W7Jo8XnOCJGFNyCRNzHSMkU': false,
-    'EE0GajOfSDB3s5MqqPs_gBPkFpQjw-lQjIyTaaOjE5Y': false,
-    'tNGQUyAw3KxN_iz66mSX_xz0eBfniBnxez14-GGZr24': false,
-    'kAb3-8IG40wAIl3m3qayODH88ajUFGxSDrPziX6PpCs': false,
-    'ViMaY4LUTS24QVyq04_m84HP7pGGbAZWTk-TRBC9kIE': false,
-    'Vut0HO9JTPcNgK4GpVFDPsq8HGea1XZgQcwjplqVIDE': false,
-  }); // initialize all false
+  const [filtering, setFiltering] = useState(false);
 
   const ids = useMemo(() => txs.map((tx) => tx.node.id), [txs]);
   const owners = useMemo(() => txs.map((tx) => tx.node.owner.address), [txs]);
 
-  const { data, previousData, error, fetchMore, networkStatus } = useQuery(
+  const { data, previousData, loading, error, fetchMore, networkStatus } = useQuery(
     findByIdDocument,
     {
       variables: {
@@ -98,6 +89,8 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
       notifyOnNetworkStatusChange: true,
     },
   );
+
+  const loadingOrFiltering = useMemo(() => filtering || loading, [filtering, loading]);
 
   const { data: proofData } = useQuery(findByTagsAndOwnersDocument, {
     variables: {
@@ -115,9 +108,9 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
           values: ['Operator Active Proof'],
         },
       ],
-      owners,
-      first: 100,
-      minBlock: 1519194, // query only after block 1519219
+      owners: Array.from(new Set(owners)),
+      first: Array.from(new Set(owners)).length, // this should be enough to get proofs for all operators in the last half hour if they are behaving correctly
+      // minBlock: 1519194, // query only after block 1519219
     },
     skip: owners.length === 0 || ids.length === 0,
   });
@@ -129,13 +122,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
    */
   useEffect(() => {
     if (networkStatus === NetworkStatus.loading) {
-      setLoadingMap((prev) => {
-        Object.keys(prev).forEach((key) => {
-          prev[key] = true;
-        });
-
-        return prev;
-      });
+      setFiltering(true);
     }
     // check has paid correct registration fee
     if (data && networkStatus === NetworkStatus.ready && !_.isEqual(data, previousData)) {
@@ -177,7 +164,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
             (proof) =>
               proof.node.owner.address === op.node.owner.address &&
               Number(proof.node.tags.find((tag) => tag.name === 'Unix-Time')?.value) >
-                Date.now() / 1000 - 30 * 60, // needs valid proof in the last 30 min
+                Date.now() / 1000 - 45 * 60, // needs valid proof in the last 45 min (30min + 15min for tx to be included in network for sure)
           ),
       );
 
@@ -240,24 +227,18 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
               operatorFee,
               solutionId,
             });
-            setValidTxs(filtered);
-            setLoadingMap((prev) => {
-              const solutionId = operator.node.tags.find((tag) => tag.name === 'Solution-Transaction')
-                ?.value as string;
-              if (solutionId) {
-                prev[solutionId] = false;
-              }
-              return prev;
-            });
+            
             // "stream updates"
           }
         }
+        setValidTxs(filtered);
+        setFiltering(false);
       })();
     }
   }, [proofData, txs]);
 
   return {
-    loadingMap,
+    loading: loadingOrFiltering,
     validTxs,
     error,
   };

@@ -20,7 +20,7 @@ import { Box, Container, Grid, InputBase, Typography, useTheme } from '@mui/mate
 import '@/styles/ui.css';
 import useSolutions from '@/hooks/useSolutions';
 import LoadingCard from '@/components/loading-card';
-import { ChangeEvent, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, RefObject, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import useOperators from '@/hooks/useOperators';
 import { findTag, genLoadingArray } from '@/utils/common';
 import Solution from '@/components/solution';
@@ -39,7 +39,7 @@ import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 
-const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
+const WarningMessage = ({ smallScreen, containerRef }: { smallScreen: boolean, containerRef: RefObject<HTMLDivElement> }) => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const navigate = useNavigate();
@@ -53,6 +53,20 @@ const WarningMessage = ({ smallScreen }: { smallScreen: boolean }) => {
 
   const handleSignIn = useCallback(() => navigate('sign-in'), [navigate]);
   const handleSwap = useCallback(() => navigate('swap'), [navigate]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      // ignore
+    } else if (!localStorage.getItem('evmProvider') && !currentAddress) {
+      container.style.paddingBottom = '186px';
+    } else if (showWarning && currentAddress && usdcBalance < MIN_U_BALANCE) {
+      container.style.paddingBottom = '186px';
+    } else {
+      container.style.paddingBottom = '86px';
+    }
+  }, [ containerRef, localStorage, currentAddress, showWarning, usdcBalance, MIN_U_BALANCE ]);
 
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
@@ -163,7 +177,7 @@ export default function Home() {
   const theme = useTheme();
   const { width } = useWindowDimensions();
 
-  const { validTxs: operatorsData, loadingMap: operatorsLoading } = useOperators(txs);
+  const { validTxs: operatorsData, loading: operatorsLoading } = useOperators(txs);
   const loadingTiles = genLoadingArray(8);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -214,7 +228,7 @@ export default function Home() {
         animate={{ y: 0, opacity: 1, transition: { delay: 0.2, duration: 0.4 } }}
         className='flex justify-center w-full'
       >
-        <WarningMessage smallScreen={isSmallScreen} />
+        <WarningMessage smallScreen={isSmallScreen} containerRef={containerRef}/>
       </motion.div>
       <motion.div
         initial={{ y: '-20px', opacity: 0 }}
@@ -328,7 +342,7 @@ export default function Home() {
                   >
                     <Solution
                       tx={tx}
-                      loading={operatorsLoading[tx.node.id]}
+                      loading={operatorsLoading}
                       operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
                       containerRef={containerRef}
                     />
