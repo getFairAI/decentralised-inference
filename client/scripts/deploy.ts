@@ -96,9 +96,14 @@ const main = async () => {
     processId: 'wAzmwCy7msdaNj9rhKRRIBlHFBx5n_yrMZQeo6bVrrQ', // fair.ar-io.dev contract
     signer: nodeSigner,
   });
-  const state = await ant.getState();
-  console.log(state);
-  console.log('previous Txid:', await ant.getRecords());
+
+  try {
+    const state = await ant.getState();
+    console.log(state);
+    console.log('previous Txid:', await ant.getRecords());
+  } catch (err) {
+    console.log('Error getting state:', err);
+  }
   
   const undername = '@';
   const ttlSeconds = 900;
