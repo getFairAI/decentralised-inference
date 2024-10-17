@@ -34,6 +34,7 @@ import {
   TextField,
   Fab,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
@@ -44,6 +45,10 @@ import { motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import useScroll from '@/hooks/useScroll';
+import useWindowDimensions from '@/hooks/useWindowDimensions';
+import LibraryAddRoundedIcon from '@mui/icons-material/LibraryAddRounded';
+import { InfoRounded } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 interface IrysTx {
   id: string;
@@ -263,8 +268,14 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                     </div>
                   </DialogTitle>
                   <DialogContent>
-                    <Box display={'flex'} flexDirection={'column'} gap={'16px'} flexWrap={'wrap'}>
-                      <span className='whitespace-pre-wrap text-base sm:text-lg font-medium'>
+                    <Box
+                      display={'flex'}
+                      flexDirection={'column'}
+                      gap={'16px'}
+                      flexWrap={'wrap'}
+                      maxWidth={'100%'}
+                    >
+                      <span className='whitespace-pre-wrap text-base sm:text-lg font-medium break-words w-full'>
                         {request.description}
                       </span>
                       <Box
@@ -363,7 +374,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
               className='flex flex-col gap-1'
               style={{ fontWeight: 600, padding: '10px 15px', fontSize: '18px', marginTop: '5px' }}
             >
-              {request.title}
+              {request.title.substring(0, 200) + (request.title.length > 200 ? ' (...)' : '')}
 
               <Typography variant='caption'>
                 {`${new Date(Number(request.timestamp) * 1000).toLocaleString()} by `}
@@ -379,10 +390,13 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                 sx={{
                   WebkitLineClamp: 3,
                   paddingBottom: '20px',
+                  textWrap: 'wrap',
+                  wordBreak: 'break-word',
                   fontWeight: 400,
                 }}
               >
-                {request.description}
+                {request.description.substring(0, 500) +
+                  (request.description.length > 500 ? ' (...)' : '')}
               </Typography>
               <Box
                 display={'flex'}
@@ -412,12 +426,68 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   );
 };
 
+const MakeRequestMessage = ({ smallScreen }: { smallScreen: boolean }) => {
+  const navigate = useNavigate();
+  const openRequestsRoute = useCallback(() => navigate('/request'), [navigate]);
+
+  return (
+    <div className='flex justify-center w-full animate-slide-down'>
+      <div
+        style={{
+          opacity: 1,
+          height: 'fit-content',
+          minHeight: '40px',
+          width: 'fit-content',
+          maxWidth: '100%',
+          marginTop: !smallScreen ? '30px' : '20px',
+          padding: !smallScreen ? '20px' : '10px',
+          borderRadius: '20px',
+          background: 'linear-gradient(200deg, #bfe3e0, #a9c9d4)',
+          color: '#003030',
+          marginLeft: '20px',
+          marginRight: '20px',
+        }}
+        className='w-full flex flex-wrap justify-center xl:justify-between items-center gap-3 shadow-sm font-medium overflow-hidden text-xs md:text-base'
+      >
+        <span className='px-2 flex flex-nowrap gap-3 items-center'>
+          <InfoRounded className='mr-2' />
+          Are you looking for custom made, tailored solutions for your own projects?
+          <br />
+          Create your own request listing, define your budget and quickly get amazing solutions
+          tailored for you by the trusted FairAI community members.
+        </span>
+
+        <StyledMuiButton
+          style={{
+            display: 'flex',
+            gap: '5px',
+            alignItems: 'center',
+          }}
+          className='plausible-event-name=HomeScreen-Info-Message-Access-Requests primary'
+          onClick={openRequestsRoute}
+        >
+          <LibraryAddRoundedIcon style={{ width: '20px', marginRight: '4px' }} />
+          Create a request
+        </StyledMuiButton>
+      </div>
+    </div>
+  );
+};
+
 const BrowseRequests = () => {
   const [requests, setRequests] = useState<RequestData[]>([]);
-  const [ filtering, setFiltering ] = useState(false);
+  const [filtering, setFiltering] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { isAtBottom, isScrolled } = useScroll(ref);
+  const theme = useTheme();
+  const { width } = useWindowDimensions();
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const md = theme.breakpoints.values.md;
+    setIsSmallScreen(width < md);
+  }, [width, theme, setIsSmallScreen]);
 
   const { data, loading } = useQuery(irysQuery, {
     variables: {
@@ -461,7 +531,7 @@ const BrowseRequests = () => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [ bottomRef ]);
+  }, [bottomRef]);
 
   useEffect(() => {
     // remove scroll from main element
@@ -479,17 +549,19 @@ const BrowseRequests = () => {
   }, []); // run only on first load
 
   return (
-    <>
-      <div className='bg-[#EDEDED] h-full w-full fixed -z-10'></div>
-
-      <motion.div
-        initial={{ opacity: 0, y: '-40px' }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.1, type: 'smooth' } }}
-        className='max-h-[100vh] overflow-y-auto pb-[56px]'
+    <div className='flex justify-center w-full'>
+      <div
+        className='max-h-[100vh] overflow-y-auto pb-[56px] w-full max-w-[1600px] animate-slide-down'
         ref={ref}
       >
         <div className='w-full flex justify-center'>
-          <div className='w-full max-w-[1600px] px-10 mt-10 flex flex-wrap-reverse justify-center sm:justify-between items-center font-bold gap-5'>
+          <div className='w-full max-w-[1600px] px-10 mt-10 flex flex-wrap justify-center sm:justify-between items-center font-bold gap-5'>
+            <a href='#/'>
+              <StyledMuiButton className='secondary'>
+                <ArrowBackIosNewRoundedIcon />
+                Go Back
+              </StyledMuiButton>
+            </a>
             <div className='gap-3 flex justify-center items-center text-lg lg:text-3xl'>
               <img
                 src='./fair-protocol-face-primarycolor.png'
@@ -497,12 +569,7 @@ const BrowseRequests = () => {
               />
               Current Feature Requests
             </div>
-            <a href='#/'>
-              <StyledMuiButton className='secondary whitespace-nowrap'>
-                <ArrowBackIosNewRoundedIcon />
-                Go Back
-              </StyledMuiButton>
-            </a>
+            <div></div>
           </div>
         </div>
 
@@ -513,6 +580,8 @@ const BrowseRequests = () => {
             </Typography>
           </Box>
         )}
+
+        {!isLoading && <MakeRequestMessage smallScreen={isSmallScreen} />}
 
         {requests.length === 0 && !isLoading && (
           <Box display={'flex'} justifyContent={'center'} alignItems={'center'} marginTop={'30px'}>
@@ -541,19 +610,21 @@ const BrowseRequests = () => {
             </Box>
           </motion.div>
         )}
-      </motion.div>
+      </div>
       <motion.div
         initial={{ opacity: 0, y: '-40px' }}
-        animate={{ opacity: !isScrolled || !isAtBottom ? 1 : 0, y: 0, transition: { duration: 0.1, type: 'smooth' } }}
+        animate={{
+          opacity: !isScrolled || !isAtBottom ? 1 : 0,
+          y: 0,
+          transition: { duration: 0.1, type: 'smooth' },
+        }}
         className={'absolute bottom-[20px] right-[20px]'}
       >
-        <Fab
-          onClick={handleScrollToBottom}
-        >
+        <Fab onClick={handleScrollToBottom}>
           <img src='./chevron-bottom.svg' />
         </Fab>
       </motion.div>
-    </>
+    </div>
   );
 };
 

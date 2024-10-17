@@ -20,13 +20,44 @@ import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
 import { StyledMuiButton } from '@/styles/components';
 import { postOnArweave } from '@fairai/evm-sdk';
 import Close from '@mui/icons-material/Close';
-import { Box, Button, Chip, TextField, Typography } from '@mui/material';
-import { motion } from 'framer-motion';
+import { Autocomplete, Box, Button, Chip, TextField, Typography } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
 import { UseFormSetValue, useController, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+
+const defaultKeywordsList = [
+  'AI',
+  'AI Assistant',
+  'AI Chat Support',
+  'AI Coding',
+  'Audio Generation',
+  'Audio Editing',
+  'Bot',
+  'Crypto',
+  'Game Development',
+  'Data Scraping',
+  'Documents/Office',
+  'Code Analisys',
+  'DeFi',
+  'Social Media',
+  'Trading',
+  'Web2',
+  'Web3',
+  'Image Generation',
+  'Image Editing',
+  'Video Generation',
+  'Video Editing',
+  'Text-To-Speech',
+  'Speech-To-Text',
+  'Voice Recognition',
+  'Smart Contract',
+  'Technology',
+  'Hardware Control',
+  'Database Management',
+  'Other (specify)',
+];
 
 const Keyword = ({
   currentKeyword,
@@ -48,7 +79,15 @@ const Keyword = ({
     );
   }, [currentKeyword, keywords, setValue]);
 
-  return <Chip label={currentKeyword} onDelete={onDelete} variant='outlined' />;
+  return (
+    <Chip
+      label={currentKeyword}
+      onDelete={onDelete}
+      variant='filled'
+      color='primary'
+      className='font-bold'
+    />
+  );
 };
 
 const RequestSolution = () => {
@@ -66,7 +105,7 @@ const RequestSolution = () => {
     defaultValues: {
       title: '',
       description: '',
-      keywords: [],
+      keywords: ['asd'],
     },
   });
   const { field: title } = useController({ control, name: 'title', rules: { required: true } });
@@ -141,47 +180,34 @@ const RequestSolution = () => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: '-40px' }}
-      animate={{ opacity: 1, y: 0, transition: { type: 'smooth', duration: 0.3 } }}
-      className='w-full flex justify-center mt-20'
-    >
-      <Box
-        height={'100%'}
-        display={'flex'}
-        flexDirection={'column'}
-        gap={'24px'}
-        justifyContent={'center'}
-        alignItems={'center'}
-        overflow={'auto'}
-        width={'100%'}
-        maxWidth={'1600px'}
-      >
-        <Box display={'flex'} justifyContent={'flex-end'} gap={'16px'} width={'65%'}>
-          <StyledMuiButton
-            onClick={handleBack}
-            className='plausible-event-name=Close+Onboarding+Click outlined-secondary fully-rounded'
-          >
-            <Close />
-          </StyledMuiButton>
-        </Box>
-        <div className='flex gap-3 py-5'>
-          <img
-            src='./fair-protocol-face-primarycolor.png'
-            style={{ width: '40px', objectFit: 'contain' }}
-          />
-          <Typography variant='h2'>Tell us about your needs</Typography>
+    <div className='w-full flex justify-center mt-10 animate-slide-down'>
+      <div className='w-full flex gap-8 flex-col max-w-[900px] px-4'>
+        <div className='w-full flex justify-end md:justify-between items-center flex-wrap-reverse'>
+          <div className='flex flex-grow-0 gap-3 py-5'>
+            <img
+              src='./fair-protocol-face-primarycolor.png'
+              style={{ width: '40px', objectFit: 'contain' }}
+            />
+            <Typography variant='h2'>
+              Create a request: tell the community what you need.
+            </Typography>
+          </div>
+
+          <div className='flex flex-grow-0 w-fit justify-end'>
+            <StyledMuiButton
+              onClick={handleBack}
+              className='plausible-event-name=Close+Onboarding+Click secondary fully-rounded'
+            >
+              <Close />
+            </StyledMuiButton>
+          </div>
         </div>
-        <Box
-          display={'flex'}
-          flexDirection={'column'}
-          justifyContent={'center'}
-          alignItems={'center'}
-          gap={'16px'}
-          width={'65%'}
-        >
-          <Typography textAlign={'left'} width={'100%'} fontWeight={500}>
-            Please provide a short sentence that describes your problem
+        <div className='w-full'>
+          <Typography width={'100%'} fontWeight={600}>
+            1. Provide a short title that describes your problem or idea
+          </Typography>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px'}>
+            This will be shown as the title of your request.
           </Typography>
           <TextField
             value={title.value}
@@ -190,72 +216,90 @@ const RequestSolution = () => {
             onBlur={title.onBlur}
             fullWidth
             variant='outlined'
+            placeholder='Write a title or subject...'
             sx={{ backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px' }}
           />
-        </Box>
-        <Box
-          display={'flex'}
-          flexDirection={'column'}
-          justifyContent={'center'}
-          alignItems={'center'}
-          gap={'16px'}
-          width={'65%'}
-        >
-          <Typography textAlign={'left'} width={'100%'} fontWeight={500}>
-            Please provide a detailed description of your problem
+        </div>
+        <div className='w-full'>
+          <Typography width={'100%'} fontWeight={700}>
+            2. Provide a detailed description
+          </Typography>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px'}>
+            Explain what you need, the context, the problem and what are your initial suggestions or
+            requisites. You should provide as much information as possible so that whoever reads
+            this request can get a straightfoward idea of how we can build a custom solution for
+            you. Remember that everything you write here will be public and visible to everyone.
           </Typography>
           <TextField
             value={description.value}
             onChange={description.onChange}
             inputRef={description.ref}
             onBlur={description.onBlur}
+            placeholder='Explain your problem and ideas...'
             multiline
             minRows={7}
             fullWidth
             variant='outlined'
             sx={{ backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px' }}
           />
-        </Box>
-        <Box
-          display={'flex'}
-          flexDirection={'column'}
-          justifyContent={'center'}
-          alignItems={'center'}
-          gap={'16px'}
-          width={'65%'}
-        >
-          <Typography textAlign={'left'} width={'100%'} fontWeight={500}>
-            Add a few keywords
+        </div>
+        <div className='w-full'>
+          <Typography width={'100%'} fontWeight={700}>
+            3. Add keywords (categories) that best suit your request
           </Typography>
-          <TextField
-            fullWidth
-            multiline
-            variant='outlined'
-            value={newKeyword}
-            onChange={handleNewKeywordChanged}
-            onKeyDown={keyDownHandler}
-            sx={{ backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px' }}
-            InputProps={{
-              startAdornment: (
-                <Box display={'flex'} flexWrap='wrap' gap={'8px'} paddingRight={'8px'}>
-                  {keywords.map((keyword) => (
-                    <Keyword
-                      key={keyword}
-                      currentKeyword={keyword}
-                      keywords={keywords}
-                      setValue={setValue}
-                    />
-                  ))}
-                </Box>
-              ),
-            }}
-          />
-        </Box>
-        <Box display={'flex'} justifyContent={'flex-end'} gap={'16px'} width={'65%'}>
-          <StyledMuiButton
-            onClick={handleSubmit(handleClick)}
-            className='plausible-event-name=Submit+Request+Click secondary'
-          >
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px'}>
+            Add at least two or three keywords that best fit your request. It will make it easier
+            for others to understand what your need and find your request faster. Some members of
+            the community like to focus on certain categories or keywords. Add up to 6 keywords.
+          </Typography>
+
+          <div className='mt-3 w-full'>
+            {keywords.map((keyword) => (
+              <Keyword
+                key={keyword}
+                currentKeyword={keyword}
+                keywords={keywords}
+                setValue={setValue}
+              />
+            ))}
+          </div>
+
+          <div className='flex flex-wrap items-center w-full gap-3 my-3'>
+            <Autocomplete
+              disablePortal
+              options={defaultKeywordsList}
+              sx={{ width: '100%', maxWidth: '250px' }}
+              renderInput={(params) => <TextField {...params} label='Keyword' />}
+            />
+            <TextField
+              className='w-full max-w-[250px]'
+              variant='outlined'
+              placeholder='Type a keyword...'
+              value={newKeyword}
+              onChange={handleNewKeywordChanged}
+              onKeyDown={keyDownHandler}
+            />
+            <StyledMuiButton className='primary'>Add</StyledMuiButton>
+          </div>
+        </div>
+
+        <div className='w-full'>
+          <Typography width={'100%'} fontWeight={700}>
+            5. What is your initial budget for this request?
+          </Typography>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px'}>
+            Providing an initially planned budget for your request will convince more developers to
+            try and accept your idea, as they see this budget as their reward for successfuly
+            completing your request. You can always talk and debate this budget with whoever accepts
+            your request.
+          </Typography>
+          <div className='w-full my-3 px-6'>
+            <TextField type='number'></TextField>
+          </div>
+        </div>
+
+        <div className='w-full flex justify-end gap-2 flex-wrap'>
+          <StyledMuiButton onClick={handleBack} className='secondary'>
             <Close />
             Cancel
           </StyledMuiButton>
@@ -265,11 +309,11 @@ const RequestSolution = () => {
             disabled={!formState.isDirty || !formState.isValid || formState.isSubmitted}
           >
             <CheckRoundedIcon />
-            Save and Submit
+            Submit Request
           </StyledMuiButton>
-        </Box>
-      </Box>
-    </motion.div>
+        </div>
+      </div>
+    </div>
   );
 };
 

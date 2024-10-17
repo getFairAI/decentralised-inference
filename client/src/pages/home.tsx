@@ -20,7 +20,15 @@ import { Box, Container, Grid, InputBase, Typography, useTheme } from '@mui/mate
 import '@/styles/ui.css';
 import useSolutions from '@/hooks/useSolutions';
 import LoadingCard from '@/components/loading-card';
-import { ChangeEvent, RefObject, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  RefObject,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import useOperators from '@/hooks/useOperators';
 import { findTag, genLoadingArray } from '@/utils/common';
 import Solution from '@/components/solution';
@@ -38,8 +46,15 @@ import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
+import { InfoRounded } from '@mui/icons-material';
 
-const WarningMessage = ({ smallScreen, containerRef }: { smallScreen: boolean, containerRef: RefObject<HTMLDivElement> }) => {
+const WarningMessage = ({
+  smallScreen,
+  containerRef,
+}: {
+  smallScreen: boolean;
+  containerRef: RefObject<HTMLDivElement>;
+}) => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const navigate = useNavigate();
@@ -66,7 +81,7 @@ const WarningMessage = ({ smallScreen, containerRef }: { smallScreen: boolean, c
     } else {
       container.style.paddingBottom = '86px';
     }
-  }, [ containerRef, localStorage, currentAddress, showWarning, usdcBalance, MIN_U_BALANCE ]);
+  }, [containerRef, localStorage, currentAddress, showWarning, usdcBalance, MIN_U_BALANCE]);
 
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
@@ -169,6 +184,53 @@ const WarningMessage = ({ smallScreen, containerRef }: { smallScreen: boolean, c
   }
 };
 
+const B2bMessage = ({ smallScreen }: { smallScreen: boolean }) => {
+  const navigate = useNavigate();
+  const openRequestsRoute = useCallback(() => navigate('/browse'), [navigate]);
+
+  return (
+    <div
+      style={{
+        opacity: 1,
+        height: 'fit-content',
+        minHeight: '40px',
+        width: 'fit-content',
+        maxWidth: !smallScreen ? '1600px' : '100%',
+        marginTop: !smallScreen ? '30px' : '0px',
+        padding: !smallScreen ? '20px' : '10px',
+        borderRadius: !smallScreen ? '20px' : '0px',
+        background: 'linear-gradient(200deg, #bfe3e0, #a9c9d4)',
+        color: '#003030',
+        marginLeft: '20px',
+        marginRight: '20px',
+      }}
+      className='animate-slide-down w-full flex flex-wrap justify-center xl:justify-between items-center gap-3 shadow-sm font-medium overflow-hidden text-xs md:text-base'
+    >
+      <span className='px-2 flex flex-nowrap gap-3 items-center'>
+        <InfoRounded className='mr-2' />
+        Are you a business or company looking for custom made, tailored solutions for your own
+        projects?
+        <br />
+        Make a request, define your budget and quickly get amazing solutions tailored for you by the
+        trusted FairAI community members.
+      </span>
+
+      <StyledMuiButton
+        style={{
+          display: 'flex',
+          gap: '5px',
+          alignItems: 'center',
+        }}
+        className='plausible-event-name=HomeScreen-Info-Message-Access-Requests primary'
+        onClick={openRequestsRoute}
+      >
+        <OpenInNewRoundedIcon style={{ width: '20px', marginRight: '4px' }} />
+        Go to requests
+      </StyledMuiButton>
+    </div>
+  );
+};
+
 export default function Home() {
   const target = useRef<HTMLDivElement>(null);
   const { loading, txs, error, refetch } = useSolutions(target);
@@ -205,7 +267,6 @@ export default function Home() {
     setFilteredTxs(txs);
   }, [txs]);
 
-
   useEffect(() => {
     // remove scroll from main element
     const mainEl = document.getElementById('main');
@@ -228,7 +289,7 @@ export default function Home() {
         animate={{ y: 0, opacity: 1, transition: { delay: 0.2, duration: 0.4 } }}
         className='flex justify-center w-full'
       >
-        <WarningMessage smallScreen={isSmallScreen} containerRef={containerRef}/>
+        <WarningMessage smallScreen={isSmallScreen} containerRef={containerRef} />
       </motion.div>
       <motion.div
         initial={{ y: '-20px', opacity: 0 }}
@@ -247,10 +308,10 @@ export default function Home() {
               maxWidth: '100%',
             },
             mt: '40px',
-            paddingBottom: '86px',
+            paddingBottom: '20px',
           }}
         >
-          <div className='w-full flex justify-center lg:justify-between mb-10 px-4 max-w-[1400px] gap-4 flex-wrap'>
+          <div className='w-full flex justify-center lg:justify-between px-4 max-w-[1400px] gap-4 flex-wrap'>
             <div className='flex-3 justify-start text-xl lg:text-3xl font-medium flex items-center gap-4'>
               <img src='./fair-protocol-face-primarycolor.png' style={{ width: '42px' }} />
               Choose a solution and start creating
@@ -316,17 +377,25 @@ export default function Home() {
             </motion.div>
           )}
 
-          {loading && <motion.div
-            initial={{ y: '-40px', opacity: 0 }}
-            animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
-            className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
-          >
-            {loadingTiles.map((el) => (
-              <Grid item key={el}>
-                <LoadingCard />
-              </Grid>
-            ))}
-          </motion.div>}
+          {loading && (
+            <motion.div
+              initial={{ y: '-40px', opacity: 0 }}
+              animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
+              className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
+            >
+              {loadingTiles.map((el) => (
+                <Grid item key={el}>
+                  <LoadingCard />
+                </Grid>
+              ))}
+            </motion.div>
+          )}
+
+          {!error && !loading && (
+            <div className='mt-4 mb-10'>
+              <B2bMessage smallScreen={isSmallScreen} />
+            </div>
+          )}
 
           {!error && !loading && (
             <motion.div
