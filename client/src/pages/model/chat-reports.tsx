@@ -22,17 +22,17 @@ import {
   CircularProgress,
   Drawer,
   FormControl,
-  IconButton,
-  InputAdornment,
   Paper,
   TextField,
   Tooltip,
   Typography,
-  Zoom,
   useTheme,
   Box,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import {
@@ -61,27 +61,21 @@ import { IEdge, ITag } from '@/interfaces/arweave';
 import { useSnackbar } from 'notistack';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
-import { findTag, printSize } from '@/utils/common';
+import { findTag } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
 import { ConfigurationValues, IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import ClearIcon from '@mui/icons-material/Clear';
-import ChatContent from '@/components/chat-content';
-import DebounceIconButton from '@/components/debounce-icon-button';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Configuration from '@/components/configuration';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
 import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
-import useScroll from '@/hooks/useScroll';
 import { useForm } from 'react-hook-form';
 import useOperatorBusy from '@/hooks/useOperatorBusy';
-import { ChevronLeftRounded, InfoOutlined } from '@mui/icons-material';
-import { UserFeedbackContext } from '@/context/user-feedback';
+import { ChevronLeftRounded, InfoOutlined, NoteAddRounded } from '@mui/icons-material';
 import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
@@ -94,6 +88,7 @@ import { toSvg } from 'jdenticon';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { ThrowawayContext } from '@/context/throwaway';
 import RequestAllowance from '@/components/request-allowance';
+import ChatReportsContent from '@/components/chat-reports-content ';
 
 const DEFAULT_N_IMAGES = 1;
 const RADIX = 10;
@@ -105,14 +100,9 @@ const InputField = ({
   disabled,
   currentConversationId,
   newMessage,
-  inputRef,
-  showFeedback,
   handleSendFile,
   handleSendText,
-  handleRemoveFile,
   handleMessageChange,
-  handleFileUpload,
-  setShowFeedback,
 }: {
   file?: File;
   loading: boolean;
@@ -128,11 +118,8 @@ const InputField = ({
   handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   setShowFeedback: (value: boolean) => void;
 }) => {
-  const theme = useTheme();
   const { state } = useLocation();
-  const { setOpen: setOpenRating } = useContext(UserFeedbackContext);
 
-  const allowFiles = useMemo(() => findTag(state.solution, 'allowFiles') === 'true', [state]);
   const allowText = useMemo(
     () =>
       !findTag(state.solution, 'allowText')
@@ -141,10 +128,6 @@ const InputField = ({
     [state],
   );
 
-  const uploadDisabled = useMemo(
-    () => file instanceof File || loading || !allowFiles,
-    [file, loading, allowFiles],
-  );
   const [isSending, setIsSending] = useState(false);
 
   const sendDisabled = useMemo(() => {
@@ -156,31 +139,6 @@ const InputField = ({
       return (newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE) && !file;
     }
   }, [newMessage, file, currentConversationId, loading, isSending]);
-
-  const handleSendClick = useCallback(async () => {
-    if (isSending) {
-      return;
-    } else {
-      // continue
-    }
-    setIsSending(true);
-
-    if (file) {
-      // handle send file
-      await handleSendFile();
-    } else {
-      await handleSendText();
-    }
-
-    setIsSending(false);
-    // if user is active and has not submitted feedback, show feedback
-    if (showFeedback) {
-      setTimeout(() => {
-        setOpenRating(true);
-        setShowFeedback(false);
-      }, 2000);
-    }
-  }, [handleSendFile, handleSendText, setOpenRating, file, isSending, showFeedback]);
 
   // avoid send duplicated messages and show the new line if it's only the Enter key
   const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -199,138 +157,61 @@ const InputField = ({
     }
   };
 
-  const handleFileBlur = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.value === '') {
-      handleRemoveFile();
-    }
-  }, []);
-
-  if (loading || file) {
-    return (
-      <FormControl variant='outlined' fullWidth>
-        {file && (
-          <TextField
-            value={file?.name}
-            disabled={disabled}
-            multiline
-            minRows={1}
-            maxRows={3}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position='start'>
-                  <IconButton
-                    aria-label='Remove'
-                    onClick={handleRemoveFile}
-                    className='plausible-event-name=Remove+File+Click'
-                  >
-                    <ClearIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <>
-                  <InputAdornment position='start'>{printSize(file)}</InputAdornment>
-                  <DebounceIconButton
-                    onClick={handleSendClick}
-                    sx={{
-                      color: theme.palette.neutral.contrastText,
-                    }}
-                    disabled={sendDisabled}
-                    className='plausible-event-name=Send+File+Click'
-                  >
-                    <SendIcon />
-                  </DebounceIconButton>
-                </>
-              ),
-              sx: {
-                background: theme.palette.background.default,
-                fontStyle: 'normal',
-                fontWeight: 400,
-                fontSize: '20px',
-                lineHeight: '16px',
-                width: '100%',
-                marginTop: '10px',
-                borderRadius: '8px',
-              },
-              readOnly: true,
-            }}
-          />
-        )}
-        {loading && <CircularProgress variant='indeterminate' />}
-      </FormControl>
-    );
+  if (loading) {
+    return <CircularProgress variant='indeterminate' />;
   } else {
     return (
       <>
-        <TextField
-          inputRef={inputRef}
-          multiline
-          minRows={1}
-          maxRows={3}
-          sx={{
-            background: '#fff',
-            borderRadius: '10px',
-            fontStyle: 'normal',
-            fontWeight: 400,
-            fontSize: '20px',
-            lineHeight: '16px',
-            width: '100%',
-            margin: '10px 0px',
-          }}
-          InputProps={{
-            endAdornment: (
-              <>
-                <Tooltip
-                  title={
-                    !allowFiles ? 'This solution does not support uploading files' : 'Attach a file'
-                  }
-                >
-                  <span>
-                    <IconButton
-                      component='label'
-                      disabled={uploadDisabled}
-                      className='plausible-event-name=Upload+File+Click'
-                    >
-                      <AttachFileIcon />
-                      <input
-                        type='file'
-                        hidden
-                        multiple={false}
-                        onChange={handleFileUpload}
-                        onBlur={handleFileBlur}
-                      />
-                    </IconButton>
-                  </span>
-                </Tooltip>
+        {false && (
+          <FormControl>
+            <FormLabel id='demo-radio-buttons-group-label'>
+              Select one question from the list, or type your own:
+            </FormLabel>
+            <RadioGroup aria-labelledby='demo-radio-buttons-group-label' name='radio-buttons-group'>
+              <FormControlLabel
+                value={'other'}
+                control={<Radio />}
+                sx={{
+                  '.MuiFormControlLabel-label': {
+                    width: '100%',
+                  },
+                }}
+                label={
+                  <TextField
+                    sx={{
+                      background: '#fff',
+                      borderRadius: '10px',
+                      fontStyle: 'normal',
+                      fontWeight: 400,
+                      fontSize: '20px',
+                      lineHeight: '16px',
+                      width: '100%',
+                      margin: '10px 0px',
+                    }}
+                    error={newMessage.length >= MAX_MESSAGE_SIZE}
+                    onChange={handleMessageChange}
+                    onKeyDown={keyDownHandler}
+                    disabled={isSending || disabled || !allowText}
+                    placeholder='Type your custom question here'
+                  />
+                }
+              />
+            </RadioGroup>
+          </FormControl>
+        )}
 
-                <DebounceIconButton
-                  onClick={handleSendClick}
-                  sx={{
-                    color: '#3aaaaa',
-                  }}
-                  disabled={sendDisabled}
-                  className='plausible-event-name=Send+Text+Click'
-                >
-                  <Tooltip title={'Submit'}>
-                    <SendIcon />
-                  </Tooltip>
-                </DebounceIconButton>
-              </>
-            ),
-          }}
-          error={newMessage.length >= MAX_MESSAGE_SIZE}
-          onChange={handleMessageChange}
-          onKeyDown={keyDownHandler}
-          fullWidth
-          disabled={isSending || disabled || !allowText}
-          placeholder='Type something...'
-        />
+        <div className='flex justify-center p-2 mb-4'>
+          <StyledMuiButton className='primary'>
+            <NoteAddRounded style={{ width: '20px' }} />
+            Generate Report
+          </StyledMuiButton>
+        </div>
       </>
     );
   }
 };
 
-const Chat = () => {
+const ReportsChat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const navigate = useNavigate();
   const { currentAddress: userAddr, prompt, getPubKey, decrypt } = useContext(EVMWalletContext);
@@ -368,14 +249,12 @@ const Chat = () => {
   const target = useRef<HTMLDivElement>(null);
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
   const [currentEl, setCurrentEl] = useState<HTMLDivElement | undefined>(undefined);
-  const { isNearTop } = useScroll(scrollableRef);
   const { scrollHeight } = useComponentDimensions(scrollableRef);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState('');
   const [inputHeight, setInputHeight] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(true);
   const [headerHeight, setHeaderHeight] = useState('64px');
   const [requestIds] = useState<string[]>([]);
   const [currentPubKey, setCurrentPubKey] = useState('');
@@ -383,7 +262,7 @@ const Chat = () => {
   const [isLayoverOpen, setLayoverOpen] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
 
-  const isArbitrumChat = location.href?.includes('/arbitrum/') ?? false;
+  const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(true);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -518,7 +397,7 @@ const Chat = () => {
     lastRequestId: '',
   });
 
-  const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage, fetchMore } =
+  const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage } =
     useRequests(requestParams);
 
   const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
@@ -532,10 +411,6 @@ const Chat = () => {
   );
 
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
-  const showLoadMore = useMemo(
-    () => isNearTop && hasRequestNextPage && !messagesLoading,
-    [isNearTop, hasRequestNextPage, messagesLoading],
-  );
 
   useEffect(() => {
     const pubKey = localStorage.getItem(`pubKeyFor:${userAddr}`);
@@ -977,7 +852,7 @@ const Chat = () => {
     try {
       const config = await getConfigValues();
 
-      if (!isArbitrumChat && !config.modelName) {
+      if (!config.modelName) {
         enqueueSnackbar(
           'You have no Model selected. Choose one in the configurations drawer and try again.',
           { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
@@ -1069,7 +944,7 @@ const Chat = () => {
     try {
       const config = await getConfigValues();
 
-      if (!isArbitrumChat && !config.modelName) {
+      if (!config.modelName) {
         enqueueSnackbar(
           'You have no Model selected. Choose one in the configurations drawer and try again.',
           { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
@@ -1337,14 +1212,6 @@ const Chat = () => {
     setDrawerOpen(true);
   }, [setDrawerOpen]);
 
-  const handleLoadMore = useCallback(() => {
-    fetchMore();
-    setMessagesLoading(true);
-    const oldestMessage = document.querySelectorAll('.message-container')[0]; // first message on html is the oldest
-
-    setCurrentEl(oldestMessage as HTMLDivElement);
-  }, [fetchMore, requestsData]);
-
   const [isMiniScreen, setIsMiniScreen] = useState(false);
   useEffect(() => {
     const md = theme.breakpoints.values.md;
@@ -1357,7 +1224,7 @@ const Chat = () => {
     setIsSmallScreen(width < 1400 && width > md);
   }, [width, theme, setIsSmallScreen]);
 
-  const conversationsDrawerOpenedWidth = '240px';
+  const conversationsDrawerOpenedWidth = '260px';
 
   return (
     <>
@@ -1395,54 +1262,58 @@ const Chat = () => {
           drawerOpen={drawerOpen}
           setDrawerOpen={setDrawerOpen}
           setLayoverOpen={setLayoverOpen}
+          isReportsChat={true}
+          reportsChatTimestamp={new Date().getTime()}
         />
       </Drawer>
 
-      <Drawer
-        variant='persistent'
-        anchor='right'
-        open={configurationDrawerOpen}
-        sx={{
-          '& .MuiDrawer-paper': {
-            width: '30%',
-            top: `calc(${headerHeight} + 10px)`,
-            height: `calc(100% - ${headerHeight})`,
-            border: 'none',
-            boxSizing,
-            ...(isSmallScreen && {
-              position: 'absolute',
-              right: '10px',
-              width: '50vw',
-              top: '10px',
-              boxShadow: '0px 0px 10px rgba(0,0,0,0.3)',
-              borderRadius: '20px',
-              height: '98%',
-            }),
-            ...(isMiniScreen && { position: 'absolute', right: 0, width: '100%', top: '10px' }),
-          },
-        }}
-      >
-        <Box
+      {false && (
+        <Drawer
+          variant='persistent'
+          anchor='right'
+          open={configurationDrawerOpen}
           sx={{
-            display: 'flex',
-            height: '100%',
-            '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
-              paddingTop: '16px',
+            '& .MuiDrawer-paper': {
+              width: '30%',
+              top: `calc(${headerHeight} + 10px)`,
+              height: `calc(100% - ${headerHeight})`,
+              border: 'none',
+              boxSizing,
+              ...(isSmallScreen && {
+                position: 'absolute',
+                right: '10px',
+                width: '50vw',
+                top: '10px',
+                boxShadow: '0px 0px 10px rgba(0,0,0,0.3)',
+                borderRadius: '20px',
+                height: '98%',
+              }),
+              ...(isMiniScreen && { position: 'absolute', right: 0, width: '100%', top: '10px' }),
             },
           }}
         >
-          <Configuration
-            control={configControl}
-            messages={messages}
-            setConfigValue={setConfigValue}
-            reset={configReset}
-            handleClose={handleAdvancedClose}
-            currentOperator={currentOperator}
-            setCurrentOperator={setCurrentOperator}
-            drawerOpen={configurationDrawerOpen}
-          />
-        </Box>
-      </Drawer>
+          <Box
+            sx={{
+              display: 'flex',
+              height: '100%',
+              '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
+                paddingTop: '16px',
+              },
+            }}
+          >
+            <Configuration
+              control={configControl}
+              messages={messages}
+              setConfigValue={setConfigValue}
+              reset={configReset}
+              handleClose={handleAdvancedClose}
+              currentOperator={currentOperator}
+              setCurrentOperator={setCurrentOperator}
+              drawerOpen={configurationDrawerOpen}
+            />
+          </Box>
+        </Drawer>
+      )}
 
       <Box
         sx={{
@@ -1469,7 +1340,7 @@ const Chat = () => {
             ...(configurationDrawerOpen &&
               !isMiniScreen &&
               !isSmallScreen && {
-                marginRight: '30%',
+                marginRight: '3%', // changed while we dont have configurations on reports - was 30% before
               }),
             alignItems: 'center',
             padding: '20px 10px',
@@ -1620,28 +1491,6 @@ const Chat = () => {
                   boxSizing,
                 }}
               >
-                <Zoom in={showLoadMore} timeout={100} mountOnEnter unmountOnExit>
-                  <Box
-                    zIndex={'100'}
-                    display={'flex'}
-                    justifyContent={'center'}
-                    padding={'8px'}
-                    width={'100%'}
-                    sx={{
-                      position: 'absolute',
-                      top: '100px',
-                      width: inputWidth,
-                    }}
-                  >
-                    <StyledMuiButton
-                      aria-label='Load More'
-                      onClick={handleLoadMore}
-                      className='secondary'
-                    >
-                      Load More
-                    </StyledMuiButton>
-                  </Box>
-                </Zoom>
                 <Box
                   sx={{
                     overflow: messagesLoading ? 'hidden' : 'auto',
@@ -1652,7 +1501,7 @@ const Chat = () => {
                   ref={scrollableRef}
                 >
                   <Box ref={target} sx={{ padding: '8px' }} />
-                  <ChatContent
+                  <ChatReportsContent
                     messages={messages}
                     showError={showError}
                     isWaitingResponse={isWaitingResponse}
@@ -1780,4 +1629,4 @@ const Chat = () => {
   );
 };
 
-export default Chat;
+export default ReportsChat;

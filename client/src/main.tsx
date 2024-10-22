@@ -35,6 +35,7 @@ import RequestArbitrumUpdate from './pages/request-arbitrum-update';
 
 import '@/index.css';
 import ArbitrumGuard from './guards/arbitrum';
+import ReportsChat from './pages/model/chat-reports';
 
 const router = createHashRouter([
   {
@@ -82,6 +83,10 @@ const router = createHashRouter([
             ],
           },
         ],
+      },
+      {
+        path: 'reports-chat',
+        element: <ReportsChat />,
       },
       // {
       //   path: 'img2img-chat',

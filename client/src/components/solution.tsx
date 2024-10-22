@@ -105,6 +105,18 @@ const Solution = ({
   }, [operatorsData]);
 
   const handleSolutionClick = useCallback(() => {
+    // temporary
+    if (tx.cursor === 'reports-chat') {
+      navigate('/reports-chat', {
+        state: {
+          defaultOperator: operatorsData[0] ?? undefined,
+          availableOperators: operatorsData ?? [],
+          solution: tx,
+        },
+      });
+      return;
+    }
+
     if (!currentAddress) {
       navigate('/sign-in', {
         state: {
@@ -264,7 +276,7 @@ const Solution = ({
               pt: 0,
             }}
           >
-            <span className='font-semibold'>
+            <span className='font-semibold w-full'>
               {tx.node.tags.find((el) => el.name === 'Description')?.value}
             </span>
           </CardContent>

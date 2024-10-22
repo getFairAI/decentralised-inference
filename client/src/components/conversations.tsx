@@ -51,20 +51,26 @@ import { Timeout } from 'react-number-format/types/types';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 // icons
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
-import { motion } from 'framer-motion';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import { ArticleRounded } from '@mui/icons-material';
 
 const ConversationElement = ({
   cid,
   currentConversationId,
   setCurrentConversationId,
+  isReportsChat,
+  reportsChatTimestamp,
 }: {
   cid: number;
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
+  isReportsChat?: boolean;
+  reportsChatTimestamp?: number;
 }) => {
   const handleListItemClick = useCallback(
     () => setCurrentConversationId(cid),
@@ -109,11 +115,21 @@ const ConversationElement = ({
           display: 'flex',
           alignItems: 'center',
           textAlign: 'center',
-          gap: 2,
+          gap: isReportsChat ? 0 : 2,
         }}
       >
-        <img src='./icons/comment_icon_fill.svg' style={{ width: 18, opacity: 0.7 }} />
-        Chat {cid}
+        {!isReportsChat && (
+          <>
+            <img src='./icons/comment_icon_fill.svg' style={{ width: 18, opacity: 0.7 }} />
+            {'Chat ' + cid}
+          </>
+        )}
+        {isReportsChat && reportsChatTimestamp && (
+          <>
+            <ArticleRounded />
+            {new Date(reportsChatTimestamp).toLocaleString()}
+          </>
+        )}
       </Typography>
     </ListItemButton>
   );
@@ -126,6 +142,8 @@ const Conversations = ({
   drawerOpen,
   setDrawerOpen,
   setLayoverOpen,
+  isReportsChat,
+  reportsChatTimestamp,
 }: {
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
@@ -133,6 +151,8 @@ const Conversations = ({
   drawerOpen: boolean;
   setDrawerOpen: Dispatch<SetStateAction<boolean>>;
   setLayoverOpen: Dispatch<SetStateAction<boolean>>;
+  isReportsChat?: boolean;
+  reportsChatTimestamp?: number;
 }) => {
   const [conversationIds, setConversationIds] = useState<number[]>([]);
   const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
@@ -156,7 +176,7 @@ const Conversations = ({
           'You chose to reject the request, or an error occurred. The feature you were trying to access might get disabled.',
           {
             variant: 'warning',
-            autoHideDuration: 12000,
+            autoHideDuration: 6000,
             style: { fontWeight: 700 },
           },
         );
@@ -340,11 +360,16 @@ const Conversations = ({
               marginLeft: '10px',
             }}
           >
-            <img
-              src='./icons/comment_icon_fill_primarycolor.svg'
-              style={{ width: 30, height: 30 }}
-            />
-            Chats
+            {!isReportsChat && (
+              <img
+                src='./icons/comment_icon_fill_primarycolor.svg'
+                style={{ width: 30, height: 30 }}
+              />
+            )}
+            {isReportsChat && (
+              <AssessmentIcon style={{ color: '#3aaaaa', width: '30px', height: '30px' }} />
+            )}
+            {!isReportsChat ? 'Chats' : 'Reports'}
           </Typography>
 
           {drawerOpen && (
@@ -357,7 +382,7 @@ const Conversations = ({
               }}
               className='flex: 0 0 fit-content'
             >
-              <Tooltip title={'Hide the chats drawer'}>
+              <Tooltip title={'Hide this drawer'}>
                 <StyledMuiButton
                   onClick={toggleDrawer}
                   className='plausible-event-name=Hide+Conversation+Click secondary'
@@ -425,6 +450,8 @@ const Conversations = ({
                 key={cid}
                 currentConversationId={currentConversationId}
                 setCurrentConversationId={setCurrentConversationId}
+                isReportsChat={isReportsChat}
+                reportsChatTimestamp={reportsChatTimestamp}
               />
             ))
             .sort()}
@@ -436,10 +463,10 @@ const Conversations = ({
           onClick={handleAddConversation}
           className='plausible-event-name=Add+Conversation+Click'
         >
-          <Tooltip title='Start a new chat'>
+          <Tooltip title={!isReportsChat ? 'Start a new chat' : 'Generate a new report'}>
             <StyledMuiButton className='secondary'>
               <AddIcon style={{ width: '16px' }} />
-              Start New
+              {!isReportsChat ? 'Start New' : 'New Report'}
             </StyledMuiButton>
           </Tooltip>
         </div>
