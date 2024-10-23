@@ -56,8 +56,7 @@ import { motion } from 'framer-motion';
 // icons
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import { ArticleRounded } from '@mui/icons-material';
+import { ArticleRounded, FolderCopyRounded } from '@mui/icons-material';
 
 const ConversationElement = ({
   cid,
@@ -106,7 +105,7 @@ const ConversationElement = ({
           filter: 'brightness(0.9)',
         },
       }}
-      className='plausible-event-name=Change+Conversation+Click'
+      className='plausible-event-name=Change+Report+Click'
     >
       <Typography
         sx={{
@@ -367,7 +366,7 @@ const Conversations = ({
               />
             )}
             {isReportsChat && (
-              <AssessmentIcon style={{ color: '#3aaaaa', width: '30px', height: '30px' }} />
+              <FolderCopyRounded style={{ color: '#3aaaaa', width: '30px', height: '30px' }} />
             )}
             {!isReportsChat ? 'Chats' : 'Reports'}
           </Typography>
@@ -385,7 +384,7 @@ const Conversations = ({
               <Tooltip title={'Hide this drawer'}>
                 <StyledMuiButton
                   onClick={toggleDrawer}
-                  className='plausible-event-name=Hide+Conversation+Click secondary'
+                  className='plausible-event-name=Hide+Reports+Click secondary'
                 >
                   <ArrowBackIosNewRoundedIcon style={{ width: 18 }} />
                 </StyledMuiButton>
@@ -461,7 +460,7 @@ const Conversations = ({
         <div
           id={'addConversation'}
           onClick={handleAddConversation}
-          className='plausible-event-name=Add+Conversation+Click'
+          className='plausible-event-name=New+Report+Click'
         >
           <Tooltip title={!isReportsChat ? 'Start a new chat' : 'Generate a new report'}>
             <StyledMuiButton className='secondary'>

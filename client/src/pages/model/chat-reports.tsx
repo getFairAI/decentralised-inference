@@ -21,23 +21,15 @@ import {
   Backdrop,
   CircularProgress,
   Drawer,
-  FormControl,
   Paper,
-  TextField,
   Tooltip,
   Typography,
   useTheme,
   Box,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import {
-  ChangeEvent,
-  RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -49,16 +41,12 @@ import {
 import {
   TAG_NAMES,
   N_PREVIOUS_BLOCKS,
-  MAX_MESSAGE_SIZE,
   INFERENCE_REQUEST,
-  PROTOCOL_NAME,
-  PROTOCOL_VERSION,
   NET_ARWEAVE_URL,
   MODEL_ATTACHMENT,
   AVATAR_ATTACHMENT,
 } from '@/constants';
-import { IEdge, ITag } from '@/interfaces/arweave';
-import { useSnackbar } from 'notistack';
+import { IEdge } from '@/interfaces/arweave';
 import usePrevious from '@/hooks/usePrevious';
 import arweave, { getData } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
@@ -66,21 +54,16 @@ import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
-import { ConfigurationValues, IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
-import SettingsIcon from '@mui/icons-material/Settings';
+import { IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Configuration from '@/components/configuration';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
 import useRequests from '@/hooks/useRequests';
 import useResponses from '@/hooks/useResponses';
 import { useForm } from 'react-hook-form';
-import useOperatorBusy from '@/hooks/useOperatorBusy';
-import { ChevronLeftRounded, InfoOutlined, NoteAddRounded } from '@mui/icons-material';
-import useRatingFeedback from '@/hooks/useRatingFeedback';
+import { FolderCopyRounded } from '@mui/icons-material';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import { Query } from '@irys/query';
-import { encryptSafely } from '@metamask/eth-sig-util';
-import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
+import { findByTagsQuery } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
@@ -91,137 +74,13 @@ import RequestAllowance from '@/components/request-allowance';
 import ChatReportsContent from '@/components/chat-reports-content ';
 
 const DEFAULT_N_IMAGES = 1;
-const RADIX = 10;
 const boxSizing = 'border-box';
-
-const InputField = ({
-  file,
-  loading,
-  disabled,
-  currentConversationId,
-  newMessage,
-  handleSendFile,
-  handleSendText,
-  handleMessageChange,
-}: {
-  file?: File;
-  loading: boolean;
-  disabled: boolean;
-  currentConversationId: number;
-  newMessage: string;
-  inputRef: RefObject<HTMLTextAreaElement>;
-  showFeedback: boolean;
-  handleSendFile: () => Promise<void>;
-  handleSendText: () => Promise<void>;
-  handleRemoveFile: () => void;
-  handleMessageChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleFileUpload: (event: ChangeEvent<HTMLInputElement>) => void;
-  setShowFeedback: (value: boolean) => void;
-}) => {
-  const { state } = useLocation();
-
-  const allowText = useMemo(
-    () =>
-      !findTag(state.solution, 'allowText')
-        ? true
-        : findTag(state.solution, 'allowText') === 'true',
-    [state],
-  );
-
-  const [isSending, setIsSending] = useState(false);
-
-  const sendDisabled = useMemo(() => {
-    if (isSending) {
-      return true;
-    } else if (!currentConversationId || loading) {
-      return true;
-    } else {
-      return (newMessage.length === 0 || newMessage.length >= MAX_MESSAGE_SIZE) && !file;
-    }
-  }, [newMessage, file, currentConversationId, loading, isSending]);
-
-  // avoid send duplicated messages and show the new line if it's only the Enter key
-  const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.code === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      if (!sendDisabled && !isSending) {
-        setIsSending(true);
-        if (file) {
-          // handle send file
-          await handleSendFile();
-        } else {
-          await handleSendText();
-        }
-        setIsSending(false);
-      }
-    }
-  };
-
-  if (loading) {
-    return <CircularProgress variant='indeterminate' />;
-  } else {
-    return (
-      <>
-        {false && (
-          <FormControl>
-            <FormLabel id='demo-radio-buttons-group-label'>
-              Select one question from the list, or type your own:
-            </FormLabel>
-            <RadioGroup aria-labelledby='demo-radio-buttons-group-label' name='radio-buttons-group'>
-              <FormControlLabel
-                value={'other'}
-                control={<Radio />}
-                sx={{
-                  '.MuiFormControlLabel-label': {
-                    width: '100%',
-                  },
-                }}
-                label={
-                  <TextField
-                    sx={{
-                      background: '#fff',
-                      borderRadius: '10px',
-                      fontStyle: 'normal',
-                      fontWeight: 400,
-                      fontSize: '20px',
-                      lineHeight: '16px',
-                      width: '100%',
-                      margin: '10px 0px',
-                    }}
-                    error={newMessage.length >= MAX_MESSAGE_SIZE}
-                    onChange={handleMessageChange}
-                    onKeyDown={keyDownHandler}
-                    disabled={isSending || disabled || !allowText}
-                    placeholder='Type your custom question here'
-                  />
-                }
-              />
-            </RadioGroup>
-          </FormControl>
-        )}
-
-        <div className='flex justify-center p-2 mb-4'>
-          <StyledMuiButton className='primary'>
-            <NoteAddRounded style={{ width: '20px' }} />
-            Generate Report
-          </StyledMuiButton>
-        </div>
-      </>
-    );
-  }
-};
 
 const ReportsChat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const navigate = useNavigate();
-  const { currentAddress: userAddr, prompt, getPubKey, decrypt } = useContext(EVMWalletContext);
-  const {
-    promptWithThrowaway,
-    throwawayAddr,
-    throwawayUsdcAllowance,
-    updateBalance,
-    updateAllowance,
-  } = useContext(ThrowawayContext);
+  const { currentAddress: userAddr } = useContext(EVMWalletContext);
+  const { throwawayAddr } = useContext(ThrowawayContext);
   const {
     state,
   }: {
@@ -233,14 +92,11 @@ const ReportsChat = () => {
   } = useLocation();
   const previousAddr = usePrevious<string>(userAddr);
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [newMessage, setNewMessage] = useState<string>('');
   const [messagesLoading, setMessagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowDimensions();
-  const { width: chatWidth } = useComponentDimensions(chatRef);
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
-  const { enqueueSnackbar } = useSnackbar();
   const elementsPerPage = 2;
   const scrollableRef = useRef<HTMLDivElement>(null);
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
@@ -250,21 +106,15 @@ const ReportsChat = () => {
   const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
   const [currentEl, setCurrentEl] = useState<HTMLDivElement | undefined>(undefined);
   const { scrollHeight } = useComponentDimensions(scrollableRef);
-  const [file, setFile] = useState<File | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
-  const [inputWidth, setInputWidth] = useState('');
   const [inputHeight, setInputHeight] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
   const [requestIds] = useState<string[]>([]);
-  const [currentPubKey, setCurrentPubKey] = useState('');
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
   const [isLayoverOpen, setLayoverOpen] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
 
   const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(true);
-
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const isStableDiffusion = useMemo(
     () => findTag(state.solution, 'outputConfiguration') === 'stable-diffusion',
@@ -397,34 +247,12 @@ const ReportsChat = () => {
     lastRequestId: '',
   });
 
-  const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage } =
-    useRequests(requestParams);
+  const { requestsData, requestError, requestNetworkStatus } = useRequests(requestParams);
 
   const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
     useResponses(responseParams);
 
-  const showOperatorBusy = useOperatorBusy((currentOperator?.arweaveWallet as string) ?? '');
-  const { showFeedback, setShowFeedback } = useRatingFeedback(
-    userAddr,
-    requestsData?.length ?? 0,
-    hasRequestNextPage,
-  );
-
   const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
-
-  useEffect(() => {
-    const pubKey = localStorage.getItem(`pubKeyFor:${userAddr}`);
-
-    if (!pubKey) {
-      (async () => {
-        const key = await getPubKey();
-        localStorage.setItem(`pubKeyFor:${userAddr}`, key);
-        setCurrentPubKey(key);
-      })();
-    } else {
-      setCurrentPubKey(pubKey);
-    }
-  }, [userAddr, setCurrentPubKey]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -581,470 +409,6 @@ const ReportsChat = () => {
     });
   };
 
-  const checkCanSend = (dataSize: number) => {
-    try {
-      if (!currentOperator) {
-        enqueueSnackbar(
-          'You have no operator selected. Please select a Solution Operator in the Advanced Configurations and try again.',
-          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
-        );
-        return false;
-      }
-
-      if (!currentConversationId) {
-        enqueueSnackbar(
-          'The Conversation ID is missing. Try refreshing the page or choose/create another conversation.',
-          {
-            variant: 'error',
-            style: { fontWeight: 700 },
-          },
-        );
-        return false;
-      }
-
-      if (dataSize > MAX_MESSAGE_SIZE) {
-        enqueueSnackbar(
-          'Your message is too long/big. The message cannot be bigger than 50kb, or longer than 50000 characters.',
-          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
-        );
-        return false;
-      }
-
-      const actualFee =
-        currentConfig.nImages && isStableDiffusion
-          ? currentOperator.operatorFee * currentConfig.nImages
-          : currentOperator.operatorFee;
-      if (throwawayUsdcAllowance < actualFee) {
-        enqueueSnackbar(
-          'Not enough USDC Allowance to pay this Operator fee. Please increase your allowance and try again.',
-          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
-        );
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      enqueueSnackbar('Something went wrong. Please try again, or try again later.', {
-        variant: 'error',
-        autoHideDuration: 5000,
-        style: { fontWeight: 700 },
-      });
-      return false;
-    }
-  };
-
-  const copySettings = useCallback(
-    (promptTags: ITag[]) => {
-      const settingsTags = [
-        TAG_NAMES.generateAssets,
-        TAG_NAMES.assetNames,
-        TAG_NAMES.negativePrompt,
-        TAG_NAMES.description,
-        TAG_NAMES.userCustomTags,
-        TAG_NAMES.nImages,
-        TAG_NAMES.rareweaveConfig,
-      ];
-      const tags = promptTags.filter((tag) => settingsTags.includes(tag.name));
-      const configuration: IConfiguration = {};
-
-      tags.reduce((acc, tag) => {
-        switch (tag.name) {
-          case TAG_NAMES.generateAssets:
-            acc.generateAssets = tag.value as 'fair-protocol' | 'rareweave' | 'none';
-            break;
-          case TAG_NAMES.assetNames:
-            acc.assetNames = JSON.parse(tag.value);
-            break;
-          case TAG_NAMES.negativePrompt:
-            acc.negativePrompt = tag.value;
-            break;
-          case TAG_NAMES.description:
-            acc.description = tag.value;
-            break;
-          case TAG_NAMES.userCustomTags:
-            acc.customTags = JSON.parse(tag.value);
-            break;
-          case TAG_NAMES.nImages:
-            acc.nImages = parseInt(tag.value, RADIX);
-            break;
-          case TAG_NAMES.rareweaveConfig:
-            acc.rareweaveConfig = JSON.parse(tag.value);
-            break;
-          case TAG_NAMES.licenseConfig:
-            acc.licenseConfig = JSON.parse(tag.value);
-            acc.license = JSON.parse(tag.value).license;
-            break;
-          default:
-            break;
-        }
-        return acc;
-      }, configuration);
-
-      configReset(configuration, { keepDefaultValues: true });
-    },
-    [configReset],
-  );
-
-  const getConfigValues: () => Promise<ConfigurationValues> = useCallback(async () => {
-    const {
-      generateAssets,
-      description,
-      negativePrompt,
-      nImages,
-      privateMode,
-      modelName,
-      contextFileUrl,
-    } = currentConfig;
-    const assetNames = currentConfig.assetNames
-      ? currentConfig.assetNames.split(';').map((el) => el.trim())
-      : undefined;
-    const customTags = (currentConfig.customTags as { name: string; value: string }[]) ?? [];
-    const royalty = currentConfig.rareweaveConfig?.royalty;
-    const { width: configWidth, height: configHeight } = currentConfig;
-
-    let url = '';
-    if (contextFileUrl instanceof File) {
-      // upload file to arweave
-      const tempDate = Date.now() / 1000;
-      const tags = [
-        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
-        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
-        { name: TAG_NAMES.operationName, value: 'Context-File' },
-        { name: TAG_NAMES.unixTime, value: tempDate.toString() },
-      ];
-      let dataToUpload;
-      if (privateMode) {
-        const fileData = await contextFileUrl.text();
-
-        const encrypted = encryptSafely({
-          data: fileData,
-          publicKey: currentPubKey,
-          version: 'x25519-xsalsa20-poly1305',
-        });
-
-        const encForOperator = encryptSafely({
-          data: fileData,
-          publicKey: currentOperator?.evmPublicKey ?? '',
-          version: 'x25519-xsalsa20-poly1305',
-        });
-
-        dataToUpload = JSON.stringify({
-          encData: encrypted,
-          encForOperator,
-        });
-
-        tags.push({ name: TAG_NAMES.privateMode, value: 'true' });
-        tags.push({ name: 'User-Public-Key', value: currentPubKey });
-      } else {
-        dataToUpload = contextFileUrl;
-      }
-      const id = await postOnArweave(dataToUpload, tags);
-      url = `https://arweave.net/${id}`;
-
-      enqueueSnackbar(
-        <>
-          Context File upload Successful
-          <br></br>
-          <a href={url} target={'_blank'} rel='noreferrer'>
-            <u>View Transaction in Explorer</u>
-          </a>
-        </>,
-        {
-          variant: 'success',
-        },
-      );
-    } else {
-      url = contextFileUrl as string;
-    }
-
-    return {
-      generateAssets,
-      assetNames,
-      negativePrompt,
-      description,
-      customTags,
-      nImages,
-      modelName: modelName ?? '',
-      width: configWidth,
-      height: configHeight,
-      ...(royalty && {
-        rareweaveConfig: {
-          royalty: royalty / 100,
-        },
-      }),
-      privateMode,
-      userPubKey: currentPubKey,
-      contextFileUrl: url,
-    };
-  }, [currentConfig, currentPubKey]);
-
-  const updateMessages = async (txid: string, content: string | File, contentType: string) => {
-    setNewMessage('');
-    if (inputRef?.current) {
-      inputRef.current.value = '';
-    }
-    setFile(undefined);
-    setIsWaitingResponse(true);
-    setResponseTimeout(false);
-    const irysQuery = new Query();
-
-    const [{ tags }] = await irysQuery.search('irys:transactions').ids([txid]).limit(1);
-    const url = `https://gateway.irys.xyz/${txid}`;
-
-    enqueueSnackbar(
-      <>
-        <span style={{ marginRight: '5px' }}>Inference Request </span>
-        <a href={url} target={'_blank'} rel='noreferrer'>
-          <u>View Transaction in Explorer</u>
-        </a>
-      </>,
-      {
-        variant: 'success',
-      },
-    );
-    const temp = messages.length > 0 ? [...messages] : [];
-    const currentHeight = (await arweave.blocks.getCurrent()).height;
-
-    temp.push({
-      msg: content,
-      type: 'request',
-      timestamp: parseFloat(tags.find((tag) => tag.name === TAG_NAMES.unixTime)?.value as string),
-      id: txid,
-      cid: currentConversationId,
-      height: currentHeight,
-      to: currentOperator?.arweaveWallet ?? '',
-      from: userAddr,
-      contentType,
-      tags,
-    });
-    setMessages(temp);
-    setResponseParams({
-      ...responseParams,
-      conversationId: currentConversationId,
-      lastRequestId: txid,
-      reqIds: [],
-    });
-  };
-
-  const handleSendFile = async () => {
-    if (!file) {
-      return;
-    }
-
-    const dataSize = file.size;
-
-    if (!checkCanSend(dataSize)) {
-      return;
-    }
-
-    if (!file.type.includes('text')) {
-      enqueueSnackbar(
-        'The file you attached is not supported. You can only attach text files to this Solution.',
-        {
-          variant: 'error',
-          autoHideDuration: 6000,
-          style: { fontWeight: 700 },
-        },
-      );
-      return;
-    }
-
-    try {
-      const config = await getConfigValues();
-
-      if (!config.modelName) {
-        enqueueSnackbar(
-          'You have no Model selected. Choose one in the configurations drawer and try again.',
-          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
-        );
-        return;
-      }
-
-      let dataToUpload: string | { promptHistory?: string; prompt: string } = await file.text();
-      const isText =
-        state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text';
-      // only add prompt history on text solutions
-      if (isText) {
-        // if is text solution get history from last response
-        const promptHistory = await extractPromptHistory();
-        const dataSize = new TextEncoder().encode(promptHistory).length;
-
-        if (dataSize > MAX_MESSAGE_SIZE) {
-          enqueueSnackbar(
-            'You have reached the conversation limit. Please start a new conversation.',
-            { variant: 'error' },
-          );
-          return;
-        }
-
-        dataToUpload = {
-          promptHistory,
-          prompt: dataToUpload,
-        };
-      }
-
-      if (config.privateMode) {
-        const encrypted = encryptSafely({
-          data: isText
-            ? (dataToUpload as { promptHistory?: string; prompt: string }).prompt
-            : dataToUpload,
-          publicKey: currentPubKey,
-          version: 'x25519-xsalsa20-poly1305',
-        });
-
-        const encForOperator = encryptSafely({
-          data: dataToUpload,
-          publicKey: currentOperator?.evmPublicKey ?? '',
-          version: 'x25519-xsalsa20-poly1305',
-        });
-
-        dataToUpload = JSON.stringify({
-          encPrompt: encrypted,
-          encForOperator,
-        });
-      }
-
-      if (dataToUpload instanceof Object) {
-        dataToUpload = JSON.stringify(dataToUpload);
-      }
-
-      const { arweaveTxId } = await prompt(
-        dataToUpload,
-        state.solution.node.id,
-        {
-          arweaveWallet: currentOperator?.arweaveWallet ?? '',
-          evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
-          operatorFee: currentOperator?.operatorFee ?? 0,
-        },
-        currentConversationId,
-        config,
-      );
-      // update balance after payments
-      updateMessages(arweaveTxId, file, file.type);
-      await updateAllowance();
-      await updateBalance();
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('An error ocurred. Did you accept the request on your wallet? ', {
-        variant: 'error',
-      });
-    }
-  };
-
-  const handleSendText = async () => {
-    if (!newMessage) {
-      return;
-    }
-    const dataSize = new TextEncoder().encode(newMessage).length;
-
-    if (!checkCanSend(dataSize)) {
-      return;
-    }
-
-    try {
-      const config = await getConfigValues();
-
-      if (!config.modelName) {
-        enqueueSnackbar(
-          'You have no Model selected. Choose one in the configurations drawer and try again.',
-          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
-        );
-        return;
-      }
-
-      let dataToUpload: string | { promptHistory?: string; prompt: string } = newMessage;
-      const isText =
-        state.solution.node.tags.find((tag) => tag.name === 'Output')?.value === 'text';
-      // only add prompt history on text solutions
-      if (isText) {
-        // if is text solution get history from last response
-        const promptHistory = await extractPromptHistory();
-        const dataSize = new TextEncoder().encode(promptHistory).length;
-
-        if (dataSize > MAX_MESSAGE_SIZE) {
-          enqueueSnackbar(
-            'You have reached the conversation limit. Please start a new conversation.',
-            { variant: 'error' },
-          );
-          return;
-        }
-
-        dataToUpload = {
-          promptHistory,
-          prompt: newMessage,
-        };
-      }
-
-      if (config.privateMode) {
-        const encrypted = encryptSafely({
-          data: isText
-            ? (dataToUpload as { promptHistory?: string; prompt: string }).prompt
-            : dataToUpload,
-          publicKey: currentPubKey,
-          version: 'x25519-xsalsa20-poly1305',
-        });
-
-        const encForOperator = encryptSafely({
-          data: dataToUpload,
-          publicKey: currentOperator?.evmPublicKey ?? '',
-          version: 'x25519-xsalsa20-poly1305',
-        });
-
-        dataToUpload = JSON.stringify({
-          encPrompt: encrypted,
-          encForOperator,
-        });
-      }
-
-      if (dataToUpload instanceof Object) {
-        dataToUpload = JSON.stringify(dataToUpload);
-      }
-
-      const { arweaveTxId } = await promptWithThrowaway(
-        dataToUpload,
-        state.solution.node.id,
-        {
-          arweaveWallet: currentOperator?.arweaveWallet ?? '',
-          evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
-          operatorFee: currentOperator?.operatorFee ?? 0,
-        },
-        currentConversationId,
-        config,
-      );
-      // update balance after payments
-      updateMessages(arweaveTxId, newMessage, 'text/plain');
-      await updateAllowance();
-      await updateBalance();
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('An error ocurred. Did you accept the request on your wallet? ', {
-        variant: 'error',
-      });
-    }
-  };
-
-  const extractPromptHistory = async () => {
-    const lastResponse = messages.findLast((el) => el.type === 'response');
-    const isPrivateMode =
-      lastResponse?.tags.find((tag) => tag.name === 'Private-Mode')?.value === 'true';
-    let lastMessageData = lastResponse?.msg;
-    if (isPrivateMode && lastMessageData) {
-      // if private mode
-      // decrypt the last response if it has not been decrypted yet
-      lastMessageData = lastResponse?.decData
-        ? lastResponse.decData
-        : await decrypt(lastMessageData as `0x${string}`);
-    } else {
-      // ignore
-    }
-    try {
-      return JSON.parse(lastMessageData as string).promptHistory as string;
-    } catch (error) {
-      // could not get prompt history ignore
-    }
-    return;
-  };
-
   const sortMessages = (messages: IMessage[]) => {
     messages.sort((a, b) => {
       if (a.timestamp === b.timestamp && a.type !== b.type) {
@@ -1129,56 +493,6 @@ const ReportsChat = () => {
     }
   };
 
-  const onFileLoad = (fr: FileReader, newFile: File) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return () => {
-      setLoading(false);
-      fr.removeEventListener('error', onFileError(fr, newFile));
-      fr.removeEventListener('load', onFileLoad(fr, newFile));
-    };
-  };
-
-  const onFileError = (fr: FileReader, newFile: File) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return (_event: ProgressEvent) => {
-      setFile(undefined);
-      setLoading(false);
-      fr.removeEventListener('error', onFileError(fr, newFile));
-      fr.removeEventListener('load', onFileLoad(fr, newFile));
-    };
-  };
-
-  const handleFileUpload = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files && event.target.files.length > 0) {
-        const newFile = event.target.files[0];
-        const fr = new FileReader();
-        setFile(newFile);
-        setLoading(true);
-        fr.addEventListener('load', onFileLoad(fr, newFile));
-        fr.addEventListener('error', onFileError(fr, newFile));
-        fr.readAsArrayBuffer(newFile);
-      } else {
-        setFile(undefined);
-        setLoading(false);
-      }
-    },
-    [file, setFile, setLoading, onFileError, onFileLoad],
-  );
-
-  const handleRemoveFile = useCallback(() => {
-    setFile(undefined);
-  }, [setFile]);
-
-  const handleMessageChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => setNewMessage(event.target.value),
-    [setNewMessage],
-  );
-
-  useLayoutEffect(() => {
-    setInputWidth(`calc(${chatWidth}px - 16px)`);
-  }, [chatWidth]);
-
   useLayoutEffect(() => {
     const currInputHeight = document.querySelector('#chat-input')?.clientHeight;
     if (currInputHeight) {
@@ -1199,10 +513,6 @@ const ReportsChat = () => {
       setConfigurationDrawerOpen(false);
     }
   }, [width, height]);
-
-  const handleAdvanced = useCallback(() => {
-    setConfigurationDrawerOpen((previousValue) => !previousValue);
-  }, [setConfigurationDrawerOpen]);
 
   const handleAdvancedClose = useCallback(() => {
     setConfigurationDrawerOpen(false);
@@ -1368,16 +678,13 @@ const ReportsChat = () => {
                 }),
               }}
             >
-              <Tooltip title={'Open the chats drawer'}>
+              <Tooltip title={'Open the reports drawer'}>
                 <StyledMuiButton
                   onClick={handleShowConversations}
                   disableRipple={true}
-                  className='plausible-event-name=Show+Conversations+Click secondary w-fit mb-5'
+                  className='plausible-event-name=Show+Reports+Click secondary w-fit mb-5'
                 >
-                  <img
-                    src='./icons/comment_icon_fill.svg'
-                    style={{ width: 20, filter: 'invert(1)' }}
-                  />
+                  <FolderCopyRounded />
                   <ChevronRightIcon />
                 </StyledMuiButton>
               </Tooltip>
@@ -1431,7 +738,7 @@ const ReportsChat = () => {
                 className='px-4 flex justify-between items-center gap-2 h-full'
                 style={{
                   margin: 0,
-                  ...(isMiniScreen && { margin: '0px 110px 0px 100px' }),
+                  ...(isMiniScreen && { margin: '0px 5px 0px 100px' }),
                 }}
               >
                 <div className='flex items-center gap-4'>
@@ -1506,94 +813,13 @@ const ReportsChat = () => {
                     showError={showError}
                     isWaitingResponse={isWaitingResponse}
                     responseTimeout={responseTimeout}
-                    copySettings={copySettings}
                   />
                   <Box ref={messagesEndRef} sx={{ padding: '1px' }} />
                 </Box>
               </Paper>
             </Box>
-
-            <Box
-              id={'chat-input'}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                position: 'absolute',
-                marginLeft: '14px',
-                marginBottom: '5px',
-                width: `calc(${inputWidth} - 12px)`,
-                boxSizing,
-              }}
-            >
-              {showOperatorBusy && (
-                <Box sx={{ display: 'flex', gap: '8px' }}>
-                  <InfoOutlined color='warning' />
-                  <Typography color={theme.palette.warning.main}>
-                    Operator is currently working on other requests. Waiting time may be
-                    increased...
-                  </Typography>
-                </Box>
-              )}
-              <InputField
-                file={file}
-                loading={loading}
-                disabled={isWaitingResponse}
-                currentConversationId={currentConversationId}
-                newMessage={newMessage}
-                inputRef={inputRef}
-                showFeedback={showFeedback}
-                handleFileUpload={handleFileUpload}
-                handleRemoveFile={handleRemoveFile}
-                handleSendFile={handleSendFile}
-                handleSendText={handleSendText}
-                handleMessageChange={handleMessageChange}
-                setShowFeedback={setShowFeedback}
-              />
-              {newMessage.length >= MAX_MESSAGE_SIZE && (
-                <Typography
-                  variant='subtitle1'
-                  sx={{ color: theme.palette.error.main, fontWeight: 500, paddingLeft: '20px' }}
-                >
-                  Message Too Long. Message must not be bigger than 50kb, or 50000 characters.
-                </Typography>
-              )}
-            </Box>
           </Box>
         </Box>
-
-        {!configurationDrawerOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{
-              opacity: 1,
-              x: 0,
-              transition: { delay: 0.3, duration: 0.5, type: 'spring' },
-            }}
-            className='w-full flex max-w-[120px] justify-center px-2 pr-6 mt-[40px]'
-            style={{
-              position: 'static',
-              height: 'fit-content',
-              ...(isMiniScreen && {
-                position: 'absolute',
-                right: 0,
-                top: 0,
-                zIndex: 100,
-              }),
-            }}
-          >
-            <Tooltip title={'Open the advanced configurations drawer'}>
-              <StyledMuiButton
-                onClick={handleAdvanced}
-                disableRipple={true}
-                className='plausible-event-name=Open+Configuration+Click secondary w-fit'
-              >
-                <ChevronLeftRounded />
-                <SettingsIcon />
-              </StyledMuiButton>
-            </Tooltip>
-          </motion.div>
-        )}
       </Box>
       <Backdrop
         sx={{
