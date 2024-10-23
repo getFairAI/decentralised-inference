@@ -91,7 +91,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   }, [state]);
 
   useEffect(() => {
-    if (solutions.length > 0 && operatorsData && !loading) {
+    if (solutions.length > 0 && operatorsData && operatorsData.length > 0 && !loading) {
       navigate(
         {},
         {

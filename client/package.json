@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@apollo/client": "3.7.13",
+    "@dha-team/arbundles": "^1.0.1",
     "@dicebear/collection": "6.0.2",
     "@dicebear/core": "6.0.2",
     "@emotion/react": "^11.13.0",
@@ -33,6 +34,7 @@
     "@mui/lab": "5.0.0-alpha.120",
     "@mui/material": "^5.16.7",
     "@mui/x-date-pickers": "6.2.1",
+    "@permaweb/aoconnect": "^0.0.59",
     "@permaweb/arx": "^1.0.0",
     "@permaweb/stampjs": "^0.6.2",
     "@types/dompurify": "^3.0.5",
@@ -61,6 +63,7 @@
     "react-sketch-canvas": "^6.2.0",
     "redstone-api": "0.4.11",
     "rehype-sanitize": "5.0.1",
+    "typed-assert": "^1.0.9",
     "viem": "^2.9.16",
     "vite": "^5.4.0",
     "warp-contracts": "1.4.5",

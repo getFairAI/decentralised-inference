@@ -357,8 +357,8 @@ export default function Home() {
                   >
                     <Solution
                       tx={tx}
-                      loading={tx.node.id === RETROSPECTIVE_SOLUTION ? false : operatorsLoading}
-                      operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
+                      loading={operatorsLoading}
+                      operatorsData={operatorsData.filter((el) => el.solutionIds.includes(tx.node.id))}
                       containerRef={containerRef}
                     />
                   </motion.div>

@@ -38,10 +38,10 @@ import { findByTagsQuery, findByTagsAndOwnersDocument, findByIdDocument } from '
 const currentMarketplaceSolutions = [
   'x8D4-9-lR05EJPlQ_UeRYkL1KPI28Of2NLeepY7CBbo',
   '5tl8yIoz0tI9MMTA4ereCBLxY4ioZRsnBmpjh0heW-4',
-  'nXIPpMJ8jN9wusSxcTIijwSHgvb6Z19-Iswzr8A3g2Q',
+  // 'nXIPpMJ8jN9wusSxcTIijwSHgvb6Z19-Iswzr8A3g2Q',
   'XK1YGb6o2pn10t0usz8VpeICazYlRM5VOTf-1YG80mc',
   'vLeSUPae1fEzEBRYrXJaplikgPAqa3eOVC38mUaDYZk',
-  'j8wkH4jRdPygr6DY106n9ibq_WLeA1jaoDgJ16PlFJI',
+  // 'j8wkH4jRdPygr6DY106n9ibq_WLeA1jaoDgJ16PlFJI',
   'RuBfsVIARw1jLKsGjQCrEHL_QBCAmAAIJ0E3UUu5X0w',
   'zq5_Jvd4miO6QDl42XRpPx9iICDe0AVzanvTepJ_s50',
   'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk',

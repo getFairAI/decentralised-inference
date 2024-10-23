@@ -586,7 +586,7 @@ const Configuration = ({
   const handleOperatorChange = useCallback(
     (event: SelectChangeEvent) => {
       const operator = state.availableOperators.find(
-        (operator) => operator.tx.node.id === event.target.value,
+        (operator) => operator.txId === event.target.value,
       );
       if (operator) {
         setCurrentOperator(operator);
@@ -657,11 +657,11 @@ const Configuration = ({
             <Select
               label={'Solution Operator (Provider)'}
               onChange={handleOperatorChange}
-              defaultValue={currentOperator?.tx.node.id}
+              defaultValue={currentOperator?.txId}
               renderValue={(value) => (
                 <Typography>
                   {displayShortTxOrAddr(
-                    state.availableOperators.find((op) => op.tx.node.id === value)?.evmWallet ??
+                    state.availableOperators.find((op) => op.txId === value)?.evmWallet ??
                       'None',
                   )}
                 </Typography>
@@ -669,8 +669,8 @@ const Configuration = ({
             >
               {state.availableOperators.map((operator: OperatorData) => (
                 <MenuItem
-                  key={operator.tx.node.id}
-                  value={operator.tx.node.id}
+                  key={operator.txId}
+                  value={operator.txId}
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: spaceBetween }}
                 >
                   <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>

@@ -84,9 +84,8 @@ import { ChevronLeftRounded, InfoOutlined } from '@mui/icons-material';
 import { UserFeedbackContext } from '@/context/user-feedback';
 import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import { Query } from '@irys/query';
 import { encryptSafely } from '@metamask/eth-sig-util';
-import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
+import { findByTagsQuery, postOnArweave, sendThrowawayUSDC } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
 import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
@@ -94,6 +93,9 @@ import { toSvg } from 'jdenticon';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { ThrowawayContext } from '@/context/throwaway';
 import RequestAllowance from '@/components/request-allowance';
+import ao from '@/utils/ao';
+import { OpfsContext } from '@/context/opfs';
+import { Types } from '@permaweb/aoconnect/dist/dal';
 
 const DEFAULT_N_IMAGES = 1;
 const RADIX = 10;
@@ -333,9 +335,8 @@ const InputField = ({
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const navigate = useNavigate();
-  const { currentAddress: userAddr, prompt, getPubKey, decrypt } = useContext(EVMWalletContext);
+  const { currentAddress: userAddr, getPubKey, decrypt } = useContext(EVMWalletContext);
   const {
-    promptWithThrowaway,
     throwawayAddr,
     throwawayUsdcAllowance,
     updateBalance,
@@ -382,6 +383,7 @@ const Chat = () => {
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
   const [isLayoverOpen, setLayoverOpen] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
+  const { payerPK } = useContext(OpfsContext);
 
   const isArbitrumChat = location.href?.includes('/arbitrum/') ?? false;
 
@@ -527,7 +529,7 @@ const Chat = () => {
   const showOperatorBusy = useOperatorBusy((currentOperator?.arweaveWallet as string) ?? '');
   const { showFeedback, setShowFeedback } = useRatingFeedback(
     userAddr,
-    requestsData?.length ?? 0,
+    requestsData.length ?? 0,
     hasRequestNextPage,
   );
 
@@ -574,7 +576,7 @@ const Chat = () => {
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       //
-      const reqIds = requestsData.transactions.edges.map((el: IEdge) => el.node.id);
+      const reqIds = requestsData.map((el: IMessage) => el.id);
 
       if (reqIds.length > 0) {
         (async () => reqData())();
@@ -903,7 +905,7 @@ const Chat = () => {
     };
   }, [currentConfig, currentPubKey]);
 
-  const updateMessages = async (txid: string, content: string | File, contentType: string) => {
+  const updateMessages = async (txid: string, content: string | File, contentType: string, tags: ITag[]) => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
@@ -911,10 +913,8 @@ const Chat = () => {
     setFile(undefined);
     setIsWaitingResponse(true);
     setResponseTimeout(false);
-    const irysQuery = new Query();
 
-    const [{ tags }] = await irysQuery.search('irys:transactions').ids([txid]).limit(1);
-    const url = `https://gateway.irys.xyz/${txid}`;
+    const url = `https://ao.link/#/message/${txid}`;
 
     enqueueSnackbar(
       <>
@@ -950,6 +950,115 @@ const Chat = () => {
       reqIds: [],
     });
   };
+
+  const addConfigTags = (tags: { name: string, value: string }[], configuration: ConfigurationValues, userAddr: string) => {
+    if (configuration.assetNames) {
+      tags.push({ name: 'Asset-Names', value: JSON.stringify(configuration.assetNames) });
+    }
+  
+    if (configuration.negativePrompt) {
+      tags.push({ name: 'Negative-Prompt', value: configuration.negativePrompt });
+    }
+  
+    if (configuration.description) {
+      tags.push({ name: 'Description', value: configuration.description });
+    }
+  
+    if (configuration.customTags && configuration.customTags?.length > 0) {
+      tags.push({ name: 'User-Custom-Tags', value: JSON.stringify(configuration.customTags) });
+    }
+  
+    if (configuration.nImages && configuration.nImages > 0 && configuration.nImages < 10) {
+      tags.push({ name: 'N-Images', value: configuration.nImages.toString() });
+    }
+  
+    if (configuration.width && configuration.width > 0) {
+      tags.push({ name: 'Images-Width', value: configuration.width.toString() });
+    }
+  
+    if (configuration.height && configuration.height > 0) {
+      tags.push({ name: 'Images-Height', value: configuration.height.toString() });
+    }
+  
+    if (configuration.requestCaller) {
+      tags.push({ name: 'Request-Caller', value: configuration.requestCaller });
+    } else {
+      tags.push({ name: 'Request-Caller', value: userAddr });
+    }
+  
+    if (configuration.privateMode) {
+      tags.push({ name: 'Private-Mode', value: 'true' });
+    }
+  
+    if (configuration.userPubKey) {
+      tags.push({ name: 'User-Public-Key', value: configuration.userPubKey });
+    }
+  
+    if (configuration.modelName) {
+      tags.push({ name: 'Model-Name', value: configuration.modelName });
+    }
+
+    if (configuration.contextFileUrl) {
+      tags.push({ name: 'Context-File-Url', value: configuration.contextFileUrl });
+    }
+  };
+
+  const aoPrompt = useCallback(async (data: File | string, config: ConfigurationValues, newMessage: string) => {
+    if (!currentOperator) {
+      enqueueSnackbar(
+        'You have no operator selected. Please select a Solution Operator in the Advanced Configurations and try again.',
+        { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+      );
+      return;
+    }
+  
+    const operatorConfig = {
+      id: currentOperator.txId,
+      arweaveWallet: currentOperator?.arweaveWallet,
+      evmWallet: currentOperator?.evmWallet,
+      operatorFee: currentOperator?.operatorFee,
+    };
+    const tags: { name: string; value: string }[] = [];
+    tags.push({ name: 'Protocol-Name', value: 'FairAI' });
+    tags.push({ name: 'Protocol-Version', value: '3.0' });
+    tags.push({ name: 'Solution-Transaction', value: state.solution.node.id });
+    tags.push({ name: 'Operator-Registration', value: operatorConfig.id });
+    tags.push({ name: 'Operation-Name', value: 'Inference Request' });
+    tags.push({ name: 'Conversation-Identifier', value: currentConversationId.toString() });
+  
+    const tempDate = Date.now() / 1000;
+    tags.push({ name: 'Unix-Time', value: tempDate.toString() });
+    tags.push({ name: 'Content-Type', value: data instanceof File ? data.type : 'text/plain' });
+    tags.push({ name: 'Transaction-Origin', value: 'FairAI Browser' });  
+    tags.push({ name: 'License', value: '' });
+    tags.push({ name: 'Derivation', value: 'Allowed-With-License-Passthrough' });
+    tags.push({ name: 'Commercial-Use', value: 'Allowed' });
+  
+    if (config) {
+      addConfigTags(tags, config, userAddr);
+    }
+  
+    const requestId = await ao.message({
+      process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
+      tags: [
+        ...tags,
+        { name: 'Action', value: 'Manager-Register-Request' }
+      ],
+      signer: ao.customDataSignerEth(payerPK!) as unknown as Types['signer'],
+      data: data instanceof File ? await data.text() : data,
+    });
+
+    console.log(requestId);
+    // pay request
+    let finalFee = operatorConfig.operatorFee;
+
+    if (config?.nImages && (config.nImages > 1 || config.nImages < 10)) {
+      finalFee *= config.nImages;
+    }
+    updateMessages(requestId, newMessage, 'text/plain', tags);
+    const paymentId = await sendThrowawayUSDC(userAddr as `0x${string}`, operatorConfig.evmWallet, finalFee, requestId);
+    console.log(paymentId);
+  }, [ ao, userAddr, currentConversationId, state, currentOperator, sendThrowawayUSDC, payerPK ]);
 
   const handleSendFile = async () => {
     if (!file) {
@@ -1033,19 +1142,8 @@ const Chat = () => {
         dataToUpload = JSON.stringify(dataToUpload);
       }
 
-      const { arweaveTxId } = await prompt(
-        dataToUpload,
-        state.solution.node.id,
-        {
-          arweaveWallet: currentOperator?.arweaveWallet ?? '',
-          evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
-          operatorFee: currentOperator?.operatorFee ?? 0,
-        },
-        currentConversationId,
-        config,
-      );
+      await aoPrompt(dataToUpload, config, newMessage);
       // update balance after payments
-      updateMessages(arweaveTxId, file, file.type);
       await updateAllowance();
       await updateBalance();
     } catch (error) {
@@ -1125,19 +1223,8 @@ const Chat = () => {
         dataToUpload = JSON.stringify(dataToUpload);
       }
 
-      const { arweaveTxId } = await promptWithThrowaway(
-        dataToUpload,
-        state.solution.node.id,
-        {
-          arweaveWallet: currentOperator?.arweaveWallet ?? '',
-          evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
-          operatorFee: currentOperator?.operatorFee ?? 0,
-        },
-        currentConversationId,
-        config,
-      );
+      await aoPrompt(dataToUpload, config, newMessage);
       // update balance after payments
-      updateMessages(arweaveTxId, newMessage, 'text/plain');
       await updateAllowance();
       await updateBalance();
     } catch (error) {
@@ -1204,29 +1291,21 @@ const Chat = () => {
     }
   };
 
-  const reqData = async (allResponses?: IEdge[]) => {
-    const previousRequest = requestsData?.transactions?.edges ?? [];
+  const reqData = async (allResponses?: IMessage[]) => {
+    const previousRequest = requestsData ?? [];
     let allData = [...previousRequest];
     if (allResponses && allResponses.length > 0) {
       allData = allData.concat(allResponses);
     }
 
-    const filteredData = allData.filter((el: IEdge) => {
-      const cid = findTag(el, 'conversationIdentifier');
-      if (cid && cid.split('-').length > 1) {
-        return parseInt(cid.split('-')[1], 10) === currentConversationId;
-      } else if (cid) {
-        return parseInt(cid, 10) === currentConversationId;
+    const temp = allData.filter((el: IMessage) => {
+      const cid = el.cid;
+      if (cid) {
+        return cid === currentConversationId;
       } else {
         return false;
       }
     });
-
-    const temp: IMessage[] = [];
-    await Promise.all(
-      filteredData.map(async (el: IEdge) => temp.push(await mapTransactionsToMessages(el))),
-    );
-
     const allnewMessages = [...temp, ...messages];
 
     setMessages((prev) => {

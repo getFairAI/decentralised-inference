@@ -91,10 +91,11 @@ export interface LicenseForm {
 }
 
 export interface OperatorData {
-  tx: findByTagsQuery['transactions']['edges'][0];
+  txId: string;
+  label: string;
   evmWallet: `0x${string}`;
   evmPublicKey: string;
   arweaveWallet: string;
   operatorFee: number;
-  solutionId: string;
+  solutionIds: string[];
 }

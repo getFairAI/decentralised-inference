@@ -16,16 +16,10 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  INFERENCE_REQUEST,
-  PROTOCOL_NAME,
-  PROTOCOL_VERSION,
-  RETROSPECTIVE_SOLUTION,
-  TAG_NAMES,
-} from '@/constants';
-import { irysQuery } from '@/queries/graphql';
-import { commonUpdateQuery } from '@/utils/common';
-import { NetworkStatus, useLazyQuery } from '@apollo/client';
+import { INFERENCE_REQUEST, PROTOCOL_NAME, PROTOCOL_VERSION, RETROSPECTIVE_SOLUTION, TAG_NAMES } from '@/constants';
+import { IMessage } from '@/interfaces/common';
+import ao from '@/utils/ao';
+import { getData } from '@/utils/arweave';
 import { useEffect, useState } from 'react';
 
 const useRequests = ({
@@ -41,86 +35,87 @@ const useRequests = ({
   conversationId?: number;
   first?: number;
 }) => {
+  const [requests, setRequests] = useState<IMessage[]>([]);
   const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
 
-  const [
-    getChatRequests,
-    {
-      data: requestsData,
-      loading: requestsLoading,
-      error: requestError,
-      networkStatus: requestNetworkStatus,
-      fetchMore: requestFetchMore,
-    },
-  ] = useLazyQuery(irysQuery);
   useEffect(() => {
-    if (!userAddrs || userAddrs.length === 0) {
-      // skip fetching while user address is not loaded
-      return;
-    }
-    const tags = [
-      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-      { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
-    ];
-    if (solutionTx) {
-      tags.push({ name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
-    }
+    (async () => {
 
-    if (conversationId && solutionTx === RETROSPECTIVE_SOLUTION) {
-      //
-      tags.push({ name: 'Conversation-ID', values: [conversationId.toString()] });
-    } else if (conversationId) {
-      tags.push({ name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
-    }
+      if (!userAddrs || userAddrs.length === 0) {
+        // skip fetching while user address is not loaded
+        return;
+      }
+      const tags = [
+        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
+        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+        { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
+      ];
+      if (solutionTx) {
+        tags.push({ name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
+      }
+  
+      if (conversationId && solutionTx === RETROSPECTIVE_SOLUTION) {
+        //
+        tags.push({ name: 'Conversation-ID', values: [conversationId.toString()] });
+      } else if (conversationId) {
+        tags.push({ name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
+      }
+  
+      if (solutionTx === RETROSPECTIVE_SOLUTION) {
+        tags.push({ name: 'Request-Type', values: ['Report'] });
+      }
 
-    if (solutionTx === RETROSPECTIVE_SOLUTION) {
-      tags.push({ name: 'Request-Type', values: ['Report'] });
-    }
+      try {
+        const result = await ao.dryrun({
+          process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
+          tags,
+        });
+        const { Messages: [ { Data: requestsStr } ] } = result;
 
-    if (requestCaller) {
-      tags.push({ name: 'Request-Caller', values: [requestCaller] });
-    }
+        const parsedRequests: IMessage[] = [];     
+        
+        for (const el of JSON.parse(requestsStr)) {
+          const {
+            Id: id,
+            'Request-Caller': from,
+            'File-Name': fileName,
+            'TagArray': tags,
+            'Conversation-Identifier': cid,
+            'Block-Height': height,
+            'Unix-Time': timestamp,
+            'Content-Type': contentType,
+          } = el;
+          const data = await getData(id, fileName);
+          const to = '';
 
-    getChatRequests({
-      variables: {
-        tags,
-        owners: userAddrs,
-        first: first ?? 10,
-      },
-      context: {
-        clientName: 'irys',
-      },
-      fetchPolicy: 'network-only',
-      nextFetchPolicy: 'network-only',
-      notifyOnNetworkStatusChange: true,
-    });
-  }, [userAddrs, conversationId, first]);
-
-  useEffect(() => {
-    if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      setHasRequestNextPage(requestsData.transactions.pageInfo.hasNextPage);
-    }
-  }, [requestsData, requestNetworkStatus, setHasRequestNextPage]);
-
-  const fetchMore = () => {
-    const lastTx =
-      requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor;
-    requestFetchMore({
-      variables: {
-        after: lastTx,
-      },
-      updateQuery: commonUpdateQuery,
-    });
-  };
+          parsedRequests.push({
+            id,
+            from,
+            to,
+            msg: data,
+            tags,
+            cid,
+            height,
+            type: 'request',
+            timestamp,
+            contentType,
+          });
+        }
+        
+        setRequests(parsedRequests);
+      } catch (err) {
+        console.error('Error fetching requests', err);
+      }
+    })();
+  }, [ ao, userAddrs, solutionTx, conversationId, first ]);
 
   return {
-    requestsData,
-    requestsLoading,
+    requestsData: requests,
+    /* requestsLoading,
     requestError,
-    requestNetworkStatus,
+    requestNetworkStatus, */
     hasRequestNextPage,
-    fetchMore,
+    /* fetchMore, */
   };
 };
 

@@ -118,6 +118,12 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
         } else if (data['prompt']) {
           setContent(data['prompt'] as string);
           setType('text');
+        } else if (data['type'] && data['type'] === 'Buffer') {
+          // create file
+          // const file = new File([new Uint8Array(data['data'])], 'file');
+          const audio = URL.createObjectURL(new Blob([new Uint8Array(data['data'])], { type: 'audio/wav' }));
+          setContent(audio);
+          setType('audio');
         } else {
           setContent(JSON.stringify(decrypted, null, 2));
           setType('text');
@@ -193,7 +199,7 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
           <LockOutlined />
           {'This content is encrypted.'}
         </Typography>
-        <Button variant='outlined' onClick={handleDecrypt}>
+        <Button variant='outlined' onClick={handleDecrypt} color={message.type === 'request' ? 'inherit' : 'primary'}>
           Decrypt
         </Button>
       </Box>
