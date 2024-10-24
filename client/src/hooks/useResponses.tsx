@@ -64,7 +64,12 @@ const useResponses = ({
       first: 10,
     };
     if (reqIds.length > 0) {
-      getChatResponses({ variables, fetchPolicy: 'network-only', nextFetchPolicy: 'network-only', notifyOnNetworkStatusChange: true });
+      getChatResponses({
+        variables,
+        fetchPolicy: 'network-only',
+        nextFetchPolicy: 'network-only',
+        notifyOnNetworkStatusChange: true,
+      });
     }
 
     if (lastRequestId) {
@@ -82,7 +87,7 @@ const useResponses = ({
       };
       pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
     }
-  }, [reqIds, lastRequestId, conversationId, first, owners ]);
+  }, [reqIds, lastRequestId, conversationId, first, owners]);
 
   useEffect(() => {
     if (responsesData?.transactions?.pageInfo?.hasNextPage) {

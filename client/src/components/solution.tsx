@@ -16,7 +16,13 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MODEL_ATTACHMENT, AVATAR_ATTACHMENT, STIP_SOLUTION, LTIPP_SOLUTION, RETROSPECTIVE_SOLUTION } from '@/constants';
+import {
+  MODEL_ATTACHMENT,
+  AVATAR_ATTACHMENT,
+  STIP_SOLUTION,
+  LTIPP_SOLUTION,
+  RETROSPECTIVE_SOLUTION,
+} from '@/constants';
 import { OperatorData } from '@/interfaces/common';
 import { findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';

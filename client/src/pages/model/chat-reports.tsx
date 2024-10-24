@@ -29,20 +29,8 @@ import {
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLazyQuery } from '@apollo/client';
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
-import {
-  TAG_NAMES,
-  NET_ARWEAVE_URL,
-  MODEL_ATTACHMENT,
-  AVATAR_ATTACHMENT,
-} from '@/constants';
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { TAG_NAMES, NET_ARWEAVE_URL, MODEL_ATTACHMENT, AVATAR_ATTACHMENT } from '@/constants';
 import usePrevious from '@/hooks/usePrevious';
 import { findTag } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
@@ -83,15 +71,15 @@ const ReportsChat = () => {
     };
   } = useLocation();
   const previousAddr = usePrevious<string>(userAddr);
-  const [messages,] = useState<IMessage[]>([]);
-  const [messagesLoading,] = useState(false);
+  const [messages] = useState<IMessage[]>([]);
+  const [messagesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowDimensions();
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
   const scrollableRef = useRef<HTMLDivElement>(null);
-  const [isWaitingResponse,] = useState(false);
-  const [responseTimeout,] = useState(false);
+  const [isWaitingResponse] = useState(false);
+  const [responseTimeout] = useState(false);
   const theme = useTheme();
   const target = useRef<HTMLDivElement>(null);
   const [currentEl] = useState<HTMLDivElement | undefined>(undefined);
@@ -218,7 +206,6 @@ const ReportsChat = () => {
       localStorage.setItem(`config#${state.solution.node.id}`, JSON.stringify(currentConfig));
     }
   }, [currentConfig]);
-
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;

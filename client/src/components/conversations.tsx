@@ -234,7 +234,7 @@ const Conversations = ({
             newMap.set(cid, timestamp);
           }
           setConversationIds(newMap);
-          setFilteredConversationIds([ ...newMap.keys() ]);
+          setFilteredConversationIds([...newMap.keys()]);
           setCurrentConversationId(Array.from(newMap.keys()).pop()!);
         }
         setConversationsLoading(false);

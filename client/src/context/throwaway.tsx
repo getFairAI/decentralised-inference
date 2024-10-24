@@ -103,7 +103,7 @@ const irysQuery = gql`
 `;
 
 export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
-  const [ privateKey, setPrivateKey ] = useState<string>('');
+  const [privateKey, setPrivateKey] = useState<string>('');
   const [throwawayAddr, setThrowawayAddr] = useState<string>('');
   const [throwawayBalance, setThrowawayBalance] = useState<number>(0);
   const [throwawayUsdcAllowance, setThrowawayUsdcAllowance] = useState<number>(0);
@@ -122,7 +122,9 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
       // throwaway wallet is stored in local storage in the format of `${connectedAddress}:${privateKey}`
       // connectedAddress is the last connected address that has been used to generate the throwaway wallet
       // if current address and last connected address differ, then there is the need to generate new encrypted throwaway wallet and save to arweave
-      const isOldVersion = localStorage.getItem('throwawayWallet') && !localStorage.getItem('throwawayWallet')?.includes(':');
+      const isOldVersion =
+        localStorage.getItem('throwawayWallet') &&
+        !localStorage.getItem('throwawayWallet')?.includes(':');
 
       const storedWallet = localStorage.getItem('throwawayWallet')?.split(':')[1];
       const lastConnectedAddress = localStorage.getItem('throwawayWallet')?.split(':')[0];
@@ -138,8 +140,8 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         setThrowawayBalance(await getEthBalance(addr));
         setThrowawayUsdcAllowance(await getUsdcAllowance(mainAddr as `0x${string}`, addr));
         setThrowawayAddr(addr);
-      } else if (!mainAddr ) {
-         // no wallet connected ignore
+      } else if (!mainAddr) {
+        // no wallet connected ignore
       } else if (mainAddr || isOldVersion) {
         getExistingThrowaway({
           variables: {
@@ -162,28 +164,31 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
     })();
   }, [mainAddr]);
 
-  const customUpload = useCallback(async (data: string, tags: ITag[]) => {
-    const irys = new BaseWebIrys({
-      network: 'mainnet',
-      config: {
-        providerUrl: 'https://arb1.arbitrum.io/rpc',
-      },
-      getTokenConfig: (i): WebToken =>
-        new EthereumConfig({
-          irys: i,
-          name: 'arbitrum',
-          ticker: 'ARB',
-          minConfirm: 1,
+  const customUpload = useCallback(
+    async (data: string, tags: ITag[]) => {
+      const irys = new BaseWebIrys({
+        network: 'mainnet',
+        config: {
           providerUrl: 'https://arb1.arbitrum.io/rpc',
-          wallet: privateKey,
-        }) as unknown as WebToken,
-    });
-    await irys.ready();
+        },
+        getTokenConfig: (i): WebToken =>
+          new EthereumConfig({
+            irys: i,
+            name: 'arbitrum',
+            ticker: 'ARB',
+            minConfirm: 1,
+            providerUrl: 'https://arb1.arbitrum.io/rpc',
+            wallet: privateKey,
+          }) as unknown as WebToken,
+      });
+      await irys.ready();
 
-    const { id } = await irys.upload(data, { tags });
+      const { id } = await irys.upload(data, { tags });
 
-    return id;
-  }, [privateKey]);
+      return id;
+    },
+    [privateKey],
+  );
 
   useEffect(() => {
     (async () => {
@@ -207,7 +212,9 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
       } else if (!isNetworkRequestInFlight(throwawayData.networkStatus) && throwawayData.called) {
         setIsLayoverOpen(true);
         // get key from storage or generate new throwaway key
-        const storedWallet = localStorage.getItem('throwawayWallet')?.split(':')[1] ?? localStorage.getItem('throwawayWallet');
+        const storedWallet =
+          localStorage.getItem('throwawayWallet')?.split(':')[1] ??
+          localStorage.getItem('throwawayWallet');
         const throwawayKey = storedWallet ?? generatePrivateKey();
         // save encrypted throwaway key
         let pubKey = localStorage.getItem(`pubKeyFor:${mainAddr}`);
@@ -270,7 +277,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
       throwawayUsdcAllowance,
       updateBalance,
       updateAllowance,
-      customUpload
+      customUpload,
     }),
     [
       throwawayAddr,
@@ -279,7 +286,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
       promptWithThrowaway,
       updateBalance,
       updateAllowance,
-      customUpload
+      customUpload,
     ],
   );
 

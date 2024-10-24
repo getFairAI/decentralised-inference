@@ -61,7 +61,14 @@ import DOMPurify from 'dompurify';
 import Markdown from 'react-markdown';
 import { useLazyQuery } from '@apollo/client';
 import { irysQuery, responsesQuery } from '@/queries/graphql';
-import { INFERENCE_REQUEST, INFERENCE_RESPONSE, PROTOCOL_NAME, PROTOCOL_VERSION, RETROSPECTIVE_SOLUTION, TAG_NAMES } from '@/constants';
+import {
+  INFERENCE_REQUEST,
+  INFERENCE_RESPONSE,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
+  RETROSPECTIVE_SOLUTION,
+  TAG_NAMES,
+} from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { findTag } from '@/utils/common';
 import Message from './message';
@@ -81,13 +88,13 @@ const ChatReportsContent = ({
   const { state } = useLocation();
   const { throwawayAddr, customUpload } = useContext(ThrowawayContext);
   const { currentAddress } = useContext(EVMWalletContext);
-  const [ /* requestIds, */ ,setRequestIds ] = useState([] as string[]);
-  const [ safeHtmlStr, setSafeHtmlStr ] = useState('');
-  const [ loading, setLoading ] = useState(false);
-  const [ generateLoading, setGenerateLoading ] = useState(false);
-  const [ currentReportId, setCurrentReportId ] = useState('');
-  const [ messages, setMessages ] = useState([] as IMessage[]);
-  const [ inputValue, setInputValue ] = useState('');
+  const [, /* requestIds, */ setRequestIds] = useState([] as string[]);
+  const [safeHtmlStr, setSafeHtmlStr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [generateLoading, setGenerateLoading] = useState(false);
+  const [currentReportId, setCurrentReportId] = useState('');
+  const [messages, setMessages] = useState([] as IMessage[]);
+  const [inputValue, setInputValue] = useState('');
 
   const [reportIsGenerated, setReportIsGenerated] = useState(false);
   const [requestParams, setRequestParams] = useState({
@@ -102,11 +109,13 @@ const ChatReportsContent = ({
     lastRequestId: '',
   });
 
-  const { requestsData, /* requestError, requestNetworkStatus */ } = useRequests(requestParams);
+  const { requestsData /* requestError, requestNetworkStatus */ } = useRequests(requestParams);
 
-  const { responsesPollingData, stopResponsePolling/* responseError, responseNetworkStatus, responsesPollingData */ } =
-    useResponses(responseParams);
-  
+  const {
+    responsesPollingData,
+    stopResponsePolling /* responseError, responseNetworkStatus, responsesPollingData */,
+  } = useResponses(responseParams);
+
   const [
     getReportPrompts,
     {
@@ -137,14 +146,14 @@ const ChatReportsContent = ({
         userAddrs: [throwawayAddr],
       }));
     }
-  }, [ throwawayAddr ]);
+  }, [throwawayAddr]);
 
   useEffect(() => {
     setRequestParams((previousParams) => ({
       ...previousParams,
       conversationId: currentConversationId,
     }));
-  }, [ currentConversationId ]);
+  }, [currentConversationId]);
 
   useEffect(() => {
     if (requestsData?.transactions?.edges && requestsData.transactions.edges.length > 0) {
@@ -163,22 +172,32 @@ const ChatReportsContent = ({
       setResponseParams((previousParams) => ({
         ...previousParams,
         lastRequestId: '',
-        reqIds: [ 'none' ],
+        reqIds: ['none'],
       }));
       setReportIsGenerated(false);
       setSafeHtmlStr('');
     }
-  }, [ requestsData ]);
+  }, [requestsData]);
 
   useEffect(() => {
     (async () => {
-      if (responsesPollingData?.transactions?.edges && responsesPollingData.transactions.edges.length > 0) {
+      if (
+        responsesPollingData?.transactions?.edges &&
+        responsesPollingData.transactions.edges.length > 0
+      ) {
         const id = responsesPollingData.transactions.edges[0].node.id;
         const data = await getData(id);
         if (typeof data === 'string') {
           const { response } = JSON.parse(data);
           const safeHtml = DOMPurify.sanitize(response);
-          setSafeHtmlStr(safeHtml.replaceAll('<p>', '').replaceAll('</p>', '\n\n').replaceAll('<br>', '\n\n').replaceAll(' **', '**').replaceAll('** ', '**'));
+          setSafeHtmlStr(
+            safeHtml
+              .replaceAll('<p>', '')
+              .replaceAll('</p>', '\n\n')
+              .replaceAll('<br>', '\n\n')
+              .replaceAll(' **', '**')
+              .replaceAll('** ', '**'),
+          );
           setReportIsGenerated(true);
           setLoading(false);
           setGenerateLoading(false);
@@ -186,7 +205,15 @@ const ChatReportsContent = ({
         stopResponsePolling(); // stop polling after receiving response
       }
     })();
-  }, [ responsesPollingData, stopResponsePolling, getData, setLoading, setReportIsGenerated, setGenerateLoading, setSafeHtmlStr ]);
+  }, [
+    responsesPollingData,
+    stopResponsePolling,
+    getData,
+    setLoading,
+    setReportIsGenerated,
+    setGenerateLoading,
+    setSafeHtmlStr,
+  ]);
 
   const handleSetReportGenerated = useCallback(async () => {
     try {
@@ -204,11 +231,16 @@ const ChatReportsContent = ({
         { name: 'Content-Type', value: 'text/plain' },
         { name: 'Unix-Time', value: Date.now().toString() },
       ];
-      
+
       const id = await customUpload('Generate Report', tags);
       setRequestIds([id]);
-      await sendThrowawayUSDC(currentAddress as `0x${string}`, state.defaultOperator.evmWallet, state.defaultOperator.operatorFee, id);
-      
+      await sendThrowawayUSDC(
+        currentAddress as `0x${string}`,
+        state.defaultOperator.evmWallet,
+        state.defaultOperator.operatorFee,
+        id,
+      );
+
       enqueueSnackbar('Report generation request sent.', { variant: 'success' });
       // update balance after payments
       // activate polling
@@ -224,13 +256,13 @@ const ChatReportsContent = ({
         variant: 'error',
       });
     }
-  }, [ currentConversationId, state, currentAddress, customUpload ]);
+  }, [currentConversationId, state, currentAddress, customUpload]);
 
   const newPrompt = useCallback(async () => {
     if (!inputValue) {
       return;
     }
-  
+
     try {
       const timestamp = Date.now() / 1000;
       const tags = [
@@ -245,14 +277,19 @@ const ChatReportsContent = ({
         { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
         { name: 'Transaction-Origin', value: 'FairAI Browser' },
         { name: 'Content-Type', value: 'text/plain' },
-        { name: 'Unix-Time', value: timestamp.toString()},
-        { name: 'Report-Transaction', value: currentReportId }
+        { name: 'Unix-Time', value: timestamp.toString() },
+        { name: 'Report-Transaction', value: currentReportId },
       ];
-      
+
       const id = await customUpload(inputValue, tags);
       setRequestIds([id]);
-      await sendThrowawayUSDC(currentAddress as `0x${string}`, state.defaultOperator.evmWallet, state.defaultOperator.operatorFee, id);
-      
+      await sendThrowawayUSDC(
+        currentAddress as `0x${string}`,
+        state.defaultOperator.evmWallet,
+        state.defaultOperator.operatorFee,
+        id,
+      );
+
       enqueueSnackbar('Report prompt request sent.', { variant: 'success' });
       setInputValue('');
       const newMessage: IMessage = {
@@ -264,10 +301,10 @@ const ChatReportsContent = ({
         cid: currentConversationId,
         from: currentAddress,
         to: state.defaultOperator.arweaveWallet,
-        tags: tags
+        tags: tags,
       };
       // update balance after payments
-      setMessages((prev) => prev.concat([ newMessage ]));
+      setMessages((prev) => prev.concat([newMessage]));
       // activate polling
       stopReportAnswersPolling(); // stop any previous polling
       const variables = {
@@ -275,7 +312,7 @@ const ChatReportsContent = ({
           { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
           { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
           { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-          { name: 'Request-Transaction', values: [ id ] },
+          { name: 'Request-Transaction', values: [id] },
         ],
         owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
         first: 10,
@@ -287,7 +324,7 @@ const ChatReportsContent = ({
         variant: 'error',
       });
     }
-  }, [ currentConversationId, inputValue, currentReportId, state, currentAddress, customUpload ]);
+  }, [currentConversationId, inputValue, currentReportId, state, currentAddress, customUpload]);
   const [showLearnMoreChat, setShowLearnMoreChat] = useState(false);
   const handleSetShowChat = useCallback(() => {
     // load prompts
@@ -297,13 +334,13 @@ const ChatReportsContent = ({
       { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
       { name: TAG_NAMES.solutionTransaction, values: [RETROSPECTIVE_SOLUTION] },
       { name: 'Conversation-ID', values: [currentConversationId.toString()] },
-      { name: 'Request-Type', values: ['Prompt'] }
+      { name: 'Request-Type', values: ['Prompt'] },
     ];
 
     getReportPrompts({
       variables: {
         tags,
-        owners: [ throwawayAddr ],
+        owners: [throwawayAddr],
         first: 10,
       },
       context: {
@@ -314,15 +351,18 @@ const ChatReportsContent = ({
       notifyOnNetworkStatusChange: true,
     });
     setShowLearnMoreChat((prev) => !prev);
-  }, [ throwawayAddr, currentConversationId, setShowLearnMoreChat, getReportPrompts ]);
-
+  }, [throwawayAddr, currentConversationId, setShowLearnMoreChat, getReportPrompts]);
 
   useEffect(() => {
     (async () => {
       const temp: IMessage[] = [];
-      if (reportAnswersData?.transactions.edges && reportAnswersData.transactions.edges.length > 0) {
-          
-        const newMessages = reportAnswersData.transactions.edges.filter((el: IEdge) => !messages.find(msg => msg.id === el.node.id));
+      if (
+        reportAnswersData?.transactions.edges &&
+        reportAnswersData.transactions.edges.length > 0
+      ) {
+        const newMessages = reportAnswersData.transactions.edges.filter(
+          (el: IEdge) => !messages.find((msg) => msg.id === el.node.id),
+        );
         for (const tx of newMessages) {
           const data = await getData(tx.node.id);
           const newMessage: IMessage = {
@@ -334,8 +374,10 @@ const ChatReportsContent = ({
             height: tx.node.block?.height ?? 0,
             cid: currentConversationId,
             from: tx.node.owner.address,
-            to: tx.node.tags.find((tag: ITag) => tag.name === 'Request-Caller')?.value || throwawayAddr,
-            tags: tx.node.tags
+            to:
+              tx.node.tags.find((tag: ITag) => tag.name === 'Request-Caller')?.value ||
+              throwawayAddr,
+            tags: tx.node.tags,
           };
 
           temp.push(newMessage);
@@ -347,13 +389,18 @@ const ChatReportsContent = ({
         setMessages((prev) => prev.concat(temp)); // add new messages to the list
       }
     })();
-  }, [ reportAnswersData ]);
+  }, [reportAnswersData]);
   useEffect(() => {
     const temp: IMessage[] = [];
-    (async() => {
-      if (reportPromptsData?.transactions.edges && reportPromptsData.transactions.edges.length > 0) {
+    (async () => {
+      if (
+        reportPromptsData?.transactions.edges &&
+        reportPromptsData.transactions.edges.length > 0
+      ) {
         const requestIds: string[] = [];
-        const newMessages = reportPromptsData.transactions.edges.filter((el: IEdge) => !messages.find(msg => msg.id === el.node.id));
+        const newMessages = reportPromptsData.transactions.edges.filter(
+          (el: IEdge) => !messages.find((msg) => msg.id === el.node.id),
+        );
         // setMessages((prev) => prev.concat(newMessages));
         for (const tx of newMessages) {
           const data = await getData(tx.node.id);
@@ -365,9 +412,11 @@ const ChatReportsContent = ({
             contentType: 'text/plain',
             height: tx.node.block?.height ?? 0,
             cid: currentConversationId,
-            from: tx.node.tags.find((tag: ITag) => tag.name === 'Request-Caller')?.value || currentAddress,
+            from:
+              tx.node.tags.find((tag: ITag) => tag.name === 'Request-Caller')?.value ||
+              currentAddress,
             to: state.defaultOperator.arweaveWallet,
-            tags: tx.node.tags
+            tags: tx.node.tags,
           };
           requestIds.push(tx.node.id);
           temp.push(newMessage);
@@ -386,7 +435,7 @@ const ChatReportsContent = ({
               first: 1,
             },
             pollInterval: 10000,
-            notifyOnNetworkStatusChange: true
+            notifyOnNetworkStatusChange: true,
           });
         }
       }
@@ -395,21 +444,25 @@ const ChatReportsContent = ({
 
       setMessages((prev) => prev.concat(temp)); // add new messages to the list
     })();
-  }, [ reportPromptsData ]);
+  }, [reportPromptsData]);
 
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value),
     [setInputValue],
   );
 
-  const handleCopySettings = useCallback((_: ITag[]) => {},[]);
-  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleCopySettings = useCallback((_: ITag[]) => {}, []);
+
   const waitingResponseFragment = useCallback(() => {
-    const lastRequest = messages.filter(el => el.type === 'request').pop();
-    const hasResponse = lastRequest && messages.find(
-      el => el.type === 'response' &&
-        el.tags.find(tag => tag.name === 'Request-Transaction')?.value === lastRequest.id
-    );
+    const lastRequest = messages.filter((el) => el.type === 'request').pop();
+    const hasResponse =
+      lastRequest &&
+      messages.find(
+        (el) =>
+          el.type === 'response' &&
+          el.tags.find((tag) => tag.name === 'Request-Transaction')?.value === lastRequest.id,
+      );
     return (
       <Container maxWidth={false} sx={{ paddingTop: '16px', opacity: '0.8', mb: '16px' }}>
         {lastRequest && !hasResponse && (
@@ -436,7 +489,7 @@ const ChatReportsContent = ({
         )}
       </Container>
     );
-  }, [ messages ]);
+  }, [messages]);
 
   if (loading || generateLoading) {
     return (
@@ -456,7 +509,7 @@ const ChatReportsContent = ({
       >
         <CircularProgress sx={{ color: theme.palette.backdropContrast.main }} size='2rem' />
         <Typography variant='h2' color={theme.palette.backdropContrast.main}>
-          {generateLoading ? 'Generating Report...': 'Loading Existing Report...'}
+          {generateLoading ? 'Generating Report...' : 'Loading Existing Report...'}
         </Typography>
       </Backdrop>
     );
@@ -481,7 +534,9 @@ const ChatReportsContent = ({
           </div>
         </Divider>
 
-        <Markdown className='flex flex-col gap-3 p-5 m-4 lg:m-10 bg-slate-200 rounded-xl'>{safeHtmlStr}</Markdown>
+        <Markdown className='flex flex-col gap-3 p-5 m-4 lg:m-10 bg-slate-200 rounded-xl'>
+          {safeHtmlStr}
+        </Markdown>
 
         {!showLearnMoreChat && (
           <div className='flex justify-center p-2 mb-6 animate-scale-in animation-delay-200ms'>
@@ -524,7 +579,10 @@ const ChatReportsContent = ({
                 maxRows={3}
               ></TextField>
             </FormControl>
-            <StyledMuiButton className='primary animate-slide-right animation-delay-300ms' onClick={newPrompt}>
+            <StyledMuiButton
+              className='primary animate-slide-right animation-delay-300ms'
+              onClick={newPrompt}
+            >
               Send <SendRounded />
             </StyledMuiButton>
           </div>
