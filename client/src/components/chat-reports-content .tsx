@@ -297,6 +297,7 @@ const ChatReportsContent = ({
         timestamp,
         msg: inputValue,
         type: 'request',
+        contentType: 'text/plain',
         height: 0,
         cid: currentConversationId,
         from: currentAddress,
