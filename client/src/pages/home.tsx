@@ -46,7 +46,6 @@ import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
-import { transactionEdge } from '@fairai/evm-sdk';
 
 const WarningMessage = ({
   smallScreen,
@@ -235,46 +234,6 @@ export default function Home() {
     };
   }, []); // run only on first load
 
-  // temporary
-  const temporaryCustomTransaction: transactionEdge = {
-    cursor: 'reports-chat',
-    node: {
-      anchor: '',
-      data: {
-        size: '',
-      },
-      fee: {
-        ar: '0.001',
-        winston: '',
-      },
-      id: '',
-      owner: {
-        address: '',
-        key: '',
-      },
-      quantity: {
-        ar: '',
-        winston: '',
-      },
-      recipient: '',
-      signature: '',
-      tags: [
-        {
-          name: 'Description',
-          value: 'Generate and read reports.',
-        },
-        {
-          name: 'Solution-Name',
-          value: 'Reports',
-        },
-        {
-          name: 'unixTime',
-          value: '1729595475684',
-        },
-      ],
-    },
-  };
-
   return (
     <>
       <motion.div
@@ -390,20 +349,6 @@ export default function Home() {
               animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
               className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
             >
-              <Grid>
-                <motion.div
-                  initial={{ y: '-40px', opacity: 0 }}
-                  animate={{ y: 0, opacity: 1, transition: { duration: 0.4 } }}
-                >
-                  <Solution
-                    tx={temporaryCustomTransaction}
-                    loading={false}
-                    operatorsData={operatorsData.slice(0, 1)}
-                    containerRef={containerRef}
-                  />
-                </motion.div>
-              </Grid>
-
               {filteredTxs.map((tx) => (
                 <Grid item key={tx.node.id}>
                   <motion.div

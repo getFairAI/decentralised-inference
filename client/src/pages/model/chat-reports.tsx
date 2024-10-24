@@ -28,38 +28,30 @@ import {
   Box,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { NetworkStatus, useLazyQuery } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 import {
   useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
 import {
   TAG_NAMES,
-  N_PREVIOUS_BLOCKS,
-  INFERENCE_REQUEST,
   NET_ARWEAVE_URL,
   MODEL_ATTACHMENT,
   AVATAR_ATTACHMENT,
 } from '@/constants';
-import { IEdge } from '@/interfaces/arweave';
 import usePrevious from '@/hooks/usePrevious';
-import arweave, { getData } from '@/utils/arweave';
 import { findTag } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
-import _ from 'lodash';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
 import { IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Configuration from '@/components/configuration';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
-import useRequests from '@/hooks/useRequests';
-import useResponses from '@/hooks/useResponses';
 import { useForm } from 'react-hook-form';
 import { FolderCopyRounded } from '@mui/icons-material';
 import { EVMWalletContext } from '@/context/evm-wallet';
@@ -91,35 +83,27 @@ const ReportsChat = () => {
     };
   } = useLocation();
   const previousAddr = usePrevious<string>(userAddr);
-  const [messages, setMessages] = useState<IMessage[]>([]);
-  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messages,] = useState<IMessage[]>([]);
+  const [messagesLoading,] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowDimensions();
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
-  const elementsPerPage = 2;
   const scrollableRef = useRef<HTMLDivElement>(null);
-  const [isWaitingResponse, setIsWaitingResponse] = useState(false);
-  const [responseTimeout, setResponseTimeout] = useState(false);
+  const [isWaitingResponse,] = useState(false);
+  const [responseTimeout,] = useState(false);
   const theme = useTheme();
   const target = useRef<HTMLDivElement>(null);
-  const [previousResponses, setPreviousResponses] = useState<IEdge[]>([]);
-  const [currentEl, setCurrentEl] = useState<HTMLDivElement | undefined>(undefined);
+  const [currentEl] = useState<HTMLDivElement | undefined>(undefined);
   const { scrollHeight } = useComponentDimensions(scrollableRef);
   const [inputHeight, setInputHeight] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
-  const [requestIds] = useState<string[]>([]);
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
   const [isLayoverOpen, setLayoverOpen] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
 
   const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(true);
-
-  const isStableDiffusion = useMemo(
-    () => findTag(state.solution, 'outputConfiguration') === 'stable-diffusion',
-    [state],
-  );
   const defaultConfigvalues: IConfiguration = {
     assetNames: '',
     generateAssets: 'none',
@@ -235,24 +219,6 @@ const ReportsChat = () => {
     }
   }, [currentConfig]);
 
-  const [requestParams, setRequestParams] = useState({
-    userAddrs: [] as string[],
-    solutionTx: state.solution.node.id,
-    conversationId: currentConversationId,
-    first: elementsPerPage,
-  });
-  const [responseParams, setResponseParams] = useState({
-    reqIds: requestIds,
-    conversationId: currentConversationId,
-    lastRequestId: '',
-  });
-
-  const { requestsData, requestError, requestNetworkStatus } = useRequests(requestParams);
-
-  const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
-    useResponses(responseParams);
-
-  const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -264,234 +230,10 @@ const ReportsChat = () => {
       navigate(0);
     } else if (!localStorage.getItem('evmProvider') && !userAddr) {
       navigate('/');
-    } else if (userAddr) {
-      setRequestParams((previousParams) => ({
-        ...previousParams,
-        userAddrs: [userAddr, throwawayAddr],
-      }));
     } else {
       // ignore
     }
   }, [previousAddr, userAddr, throwawayAddr]);
-
-  useEffect(() => {
-    if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      //
-      const reqIds = requestsData.transactions.edges.map((el: IEdge) => el.node.id);
-
-      if (reqIds.length > 0) {
-        (async () => reqData())();
-        setResponseParams({
-          ...responseParams,
-          reqIds,
-        });
-      } else {
-        setResponseParams({
-          ...responseParams,
-          reqIds,
-          lastRequestId: '',
-        });
-        setMessagesLoading(false);
-        setMessages([]);
-      }
-    }
-  }, [requestsData, requestNetworkStatus, userAddr, throwawayAddr]);
-
-  useEffect(() => {
-    // only update messages after getting all responses
-    const hasResponsesNextPage = responsesData?.transactions.pageInfo.hasNextPage;
-    if (responsesData && responseNetworkStatus === NetworkStatus.ready && !hasResponsesNextPage) {
-      const newResponses = responsesData.transactions.edges.filter(
-        (previous: IEdge) =>
-          !previousResponses.find((current: IEdge) => current.node.id === previous.node.id),
-      );
-      if (newResponses.length > 0) {
-        setPreviousResponses((prev) => [...prev, ...newResponses]);
-        (async () => {
-          await reqData([...previousResponses, ...newResponses]);
-          setMessagesLoading(false);
-        })();
-      } else {
-        setMessagesLoading(false);
-      }
-    }
-  }, [responsesData, responseNetworkStatus]);
-
-  useEffect(() => {
-    if (currentConversationId) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      setCurrentEl(undefined);
-      setPreviousResponses([]); // clear previous responses
-      setIsWaitingResponse(false);
-      setRequestParams({
-        ...requestParams,
-        conversationId: currentConversationId,
-      });
-      setMessagesLoading(true);
-    }
-  }, [currentConversationId]);
-
-  useEffect(() => {
-    if (!responsesPollingData) {
-      return;
-    }
-
-    const responses = responsesPollingData?.transactions?.edges || [];
-    const currentRespones = previousResponses;
-    const newValidResponses = responses.filter(
-      (res: IEdge) => !currentRespones.find((el: IEdge) => el.node.id === res.node.id),
-    );
-    (async () => {
-      if (newValidResponses.length > 0) {
-        setPreviousResponses([...currentRespones, ...newValidResponses]);
-        await asyncMap(newValidResponses);
-      } else {
-        await emptyPolling();
-      }
-    })();
-  }, [responsesPollingData]);
-
-  const mapTransactionsToMessages = async (el: IEdge) => {
-    const msgIdx = messages.findIndex((m) => m.id === el.node.id);
-
-    const contentType = findTag(el, 'contentType');
-    const data =
-      msgIdx <= 0 ? await getData(el.node.id, findTag(el, 'fileName')) : messages[msgIdx].msg;
-    const timestamp =
-      parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
-    const cid = findTag(el, 'conversationIdentifier') as string;
-    const currentHeight = (await arweave.blocks.getCurrent()).height;
-    const isRequest = findTag(el, 'operationName') === INFERENCE_REQUEST;
-
-    const msg: IMessage = {
-      id: el.node.id,
-      msg: data,
-      type: isRequest ? 'request' : 'response',
-      cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid, 10),
-      height: el.node.block ? el.node.block.height : currentHeight,
-      to: isRequest ? (findTag(el, 'solutionOperator') as string) : userAddr,
-      from: isRequest ? userAddr : el.node.address,
-      tags: el.node.tags,
-      contentType,
-      timestamp,
-    };
-
-    return msg;
-  };
-
-  const asyncMap = async (newData: IEdge[]) => {
-    const temp: IMessage[] = [];
-
-    const filteredData = newData.filter((el: IEdge) => {
-      const cid = findTag(el, 'conversationIdentifier');
-      if (cid && cid.split('-').length > 1) {
-        return parseInt(cid.split('-')[1], 10) === currentConversationId;
-      } else if (cid) {
-        return parseInt(cid, 10) === currentConversationId;
-      } else {
-        return false;
-      }
-    });
-
-    await Promise.all(
-      filteredData.map(async (el) => temp.push(await mapTransactionsToMessages(el))),
-    );
-
-    const allnewMessages = [...temp, ...messages];
-    setMessages((prev) => {
-      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
-        (el) => el.cid === currentConversationId,
-      );
-      sortMessages(uniqueNewMsgs);
-
-      checkIsWaitingResponse(uniqueNewMsgs);
-      return uniqueNewMsgs;
-    });
-  };
-
-  const sortMessages = (messages: IMessage[]) => {
-    messages.sort((a, b) => {
-      if (a.timestamp === b.timestamp && a.type !== b.type) {
-        return a.type === 'request' ? -1 : 1;
-      } else if (a.timestamp === b.timestamp) {
-        return a.id < b.id ? -1 : 1;
-      }
-      return a.timestamp - b.timestamp;
-    });
-  };
-
-  const checkIsWaitingResponse = (filteredNewMsgs: IMessage[]) => {
-    const lastRequest = filteredNewMsgs.findLast((el) => el.type === 'request');
-    if (lastRequest) {
-      const responses = filteredNewMsgs.filter(
-        (el) =>
-          el.type === 'response' &&
-          el.tags.find((tag) => tag.name === TAG_NAMES.requestTransaction)?.value ===
-            lastRequest.id,
-      );
-      const nImages = lastRequest.tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value;
-      if (nImages && isStableDiffusion) {
-        setIsWaitingResponse(responses.length < parseInt(nImages, 10));
-        setResponseTimeout(false);
-      } else if (isStableDiffusion) {
-        setIsWaitingResponse(responses.length < DEFAULT_N_IMAGES);
-        setResponseTimeout(false);
-      } else {
-        setIsWaitingResponse(responses.length < 1);
-        setResponseTimeout(false);
-      }
-    }
-  };
-
-  const reqData = async (allResponses?: IEdge[]) => {
-    const previousRequest = requestsData?.transactions?.edges ?? [];
-    let allData = [...previousRequest];
-    if (allResponses && allResponses.length > 0) {
-      allData = allData.concat(allResponses);
-    }
-
-    const filteredData = allData.filter((el: IEdge) => {
-      const cid = findTag(el, 'conversationIdentifier');
-      if (cid && cid.split('-').length > 1) {
-        return parseInt(cid.split('-')[1], 10) === currentConversationId;
-      } else if (cid) {
-        return parseInt(cid, 10) === currentConversationId;
-      } else {
-        return false;
-      }
-    });
-
-    const temp: IMessage[] = [];
-    await Promise.all(
-      filteredData.map(async (el: IEdge) => temp.push(await mapTransactionsToMessages(el))),
-    );
-
-    const allnewMessages = [...temp, ...messages];
-
-    setMessages((prev) => {
-      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
-        (el) => el.cid === currentConversationId,
-      );
-      sortMessages(uniqueNewMsgs);
-
-      checkIsWaitingResponse(uniqueNewMsgs);
-      return uniqueNewMsgs;
-    });
-  };
-
-  const emptyPolling = async () => {
-    const currentBlockHeight = (await arweave.blocks.getCurrent()).height;
-    const lastMessage = [...messages.filter((el) => el.cid === currentConversationId)].pop();
-    if (lastMessage && lastMessage.type === 'request') {
-      if (currentBlockHeight - lastMessage.height > N_PREVIOUS_BLOCKS) {
-        setIsWaitingResponse(false);
-        setResponseTimeout(true);
-      } else {
-        setIsWaitingResponse(true);
-        setResponseTimeout(false);
-      }
-    }
-  };
 
   useLayoutEffect(() => {
     const currInputHeight = document.querySelector('#chat-input')?.clientHeight;
@@ -573,7 +315,6 @@ const ReportsChat = () => {
           setDrawerOpen={setDrawerOpen}
           setLayoverOpen={setLayoverOpen}
           isReportsChat={true}
-          reportsChatTimestamp={new Date().getTime()}
         />
       </Drawer>
 
@@ -810,9 +551,9 @@ const ReportsChat = () => {
                   <Box ref={target} sx={{ padding: '8px' }} />
                   <ChatReportsContent
                     messages={messages}
-                    showError={showError}
                     isWaitingResponse={isWaitingResponse}
                     responseTimeout={responseTimeout}
+                    currentConversationId={currentConversationId}
                   />
                   <Box ref={messagesEndRef} sx={{ padding: '1px' }} />
                 </Box>

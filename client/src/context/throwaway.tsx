@@ -41,6 +41,10 @@ import { gql, useLazyQuery } from '@apollo/client';
 import { isNetworkRequestInFlight } from '@apollo/client/core/networkStatus';
 import { Backdrop, Typography, useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
+import { BaseWebIrys } from '@irys/sdk/build/esm/web/base';
+import EthereumConfig from '@irys/sdk/build/esm/node/tokens/ethereum';
+import { type WebToken } from '@irys/sdk/build/esm/web/types';
+import { ITag } from '@/interfaces/arweave';
 
 export interface ThrowawayContext {
   throwawayAddr: string;
@@ -55,6 +59,7 @@ export interface ThrowawayContext {
   ) => Promise<{ arweaveTxId: string; evmTxId: string }>;
   updateBalance: (newAmount?: number) => Promise<void>;
   updateAllowance: (newAmount?: number) => Promise<void>;
+  customUpload: (data: string, tags: ITag[]) => Promise<string>;
 }
 
 const promptWithThrowaway = async (
@@ -72,6 +77,7 @@ export const ThrowawayContext = createContext<ThrowawayContext>({
   promptWithThrowaway,
   updateAllowance: async () => {},
   updateBalance: async () => {},
+  customUpload: async () => '',
 });
 
 const irysQuery = gql`
@@ -97,6 +103,7 @@ const irysQuery = gql`
 `;
 
 export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
+  const [ privateKey, setPrivateKey ] = useState<string>('');
   const [throwawayAddr, setThrowawayAddr] = useState<string>('');
   const [throwawayBalance, setThrowawayBalance] = useState<number>(0);
   const [throwawayUsdcAllowance, setThrowawayUsdcAllowance] = useState<number>(0);
@@ -124,6 +131,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         storedWallet &&
         mainAddr.toLowerCase() === lastConnectedAddress?.toLowerCase()
       ) {
+        setPrivateKey(storedWallet);
         await setIrys(storedWallet as `0x${string}`);
         setThrowawayProvider(storedWallet as `0x${string}`);
         const addr = privateKeyToAddress(storedWallet as `0x${string}`);
@@ -154,6 +162,29 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
     })();
   }, [mainAddr]);
 
+  const customUpload = useCallback(async (data: string, tags: ITag[]) => {
+    const irys = new BaseWebIrys({
+      network: 'mainnet',
+      config: {
+        providerUrl: 'https://arb1.arbitrum.io/rpc',
+      },
+      getTokenConfig: (i): WebToken =>
+        new EthereumConfig({
+          irys: i,
+          name: 'arbitrum',
+          ticker: 'ARB',
+          minConfirm: 1,
+          providerUrl: 'https://arb1.arbitrum.io/rpc',
+          wallet: privateKey,
+        }) as unknown as WebToken,
+    });
+    await irys.ready();
+
+    const { id } = await irys.upload(data, { tags });
+
+    return id;
+  }, [privateKey]);
+
   useEffect(() => {
     (async () => {
       if (throwawayData.data && throwawayData.data.transactions.edges.length > 0) {
@@ -163,6 +194,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         );
         const encData = await result.text();
         const decData = await decrypt(encData as `0x${string}`);
+        setPrivateKey(decData);
         await setIrys(decData as `0x${string}`);
         setThrowawayProvider(decData as `0x${string}`);
         localStorage.setItem('throwawayWallet', `${mainAddr}:${decData}`);
@@ -199,6 +231,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
           { name: 'Unix-Time', value: (Date.now() / secondInMS).toString() },
         ]);
 
+        setPrivateKey(throwawayKey);
         await setIrys(throwawayKey as `0x${string}`);
         setThrowawayProvider(throwawayKey as `0x${string}`);
         localStorage.setItem('throwawayWallet', `${mainAddr}:${throwawayKey}`);
@@ -237,6 +270,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
       throwawayUsdcAllowance,
       updateBalance,
       updateAllowance,
+      customUpload
     }),
     [
       throwawayAddr,
@@ -245,6 +279,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
       promptWithThrowaway,
       updateBalance,
       updateAllowance,
+      customUpload
     ],
   );
 

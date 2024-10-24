@@ -86,7 +86,9 @@ const router = createHashRouter([
       },
       {
         path: 'reports-chat',
-        element: <ReportsChat />,
+        element: <ArbitrumGuard>
+          <ReportsChat />
+        </ArbitrumGuard>
       },
       // {
       //   path: 'img2img-chat',

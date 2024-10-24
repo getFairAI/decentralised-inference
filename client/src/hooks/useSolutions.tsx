@@ -20,6 +20,7 @@ import {
   MARKETPLACE_ADDRESS,
   SOLUTION_DELETION,
   TAG_NAMES,
+  RETROSPECTIVE_SOLUTION
 } from '@/constants';
 import FilterContext from '@/context/filter';
 import { IContractEdge } from '@/interfaces/arweave';
@@ -43,7 +44,8 @@ const currentMarketplaceSolutions = [
   'j8wkH4jRdPygr6DY106n9ibq_WLeA1jaoDgJ16PlFJI',
   'RuBfsVIARw1jLKsGjQCrEHL_QBCAmAAIJ0E3UUu5X0w',
   'zq5_Jvd4miO6QDl42XRpPx9iICDe0AVzanvTepJ_s50',
-  'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk'
+  'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk',
+  RETROSPECTIVE_SOLUTION
 ];
 
 const useSolutions = (target?: RefObject<HTMLElement>) => {

@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { MODEL_ATTACHMENT, AVATAR_ATTACHMENT, STIP_SOLUTION, LTIPP_SOLUTION } from '@/constants';
+import { MODEL_ATTACHMENT, AVATAR_ATTACHMENT, STIP_SOLUTION, LTIPP_SOLUTION, RETROSPECTIVE_SOLUTION } from '@/constants';
 import { OperatorData } from '@/interfaces/common';
 import { findTag } from '@/utils/common';
 import { useQuery } from '@apollo/client';
@@ -77,7 +77,7 @@ const Solution = ({
       owners: [tx.node.owner.address],
       first: 1,
     },
-    skip: !tx.node.id || !tx.node.owner.address,
+    skip: !tx.node.id || !tx.node.owner.address || tx.node.id === RETROSPECTIVE_SOLUTION, // skip fetching info for this solution
   });
 
   useEffect(() => {
@@ -91,6 +91,8 @@ const Solution = ({
       if (avatarTxId) {
         setImgUrl(`https://arweave.net/${avatarTxId}`);
       }
+    } else if (tx.node.id === RETROSPECTIVE_SOLUTION) {
+      setImgUrl('https://arweave.net/wOPiTA5XqhmWyDx6OtS11rrD1c13UZtnZrHblJFc-OM');
     }
   }, [imageData]);
 
@@ -99,19 +101,22 @@ const Solution = ({
     setNumOperators(operatorsData.length);
     if (operatorsData.length > 0) {
       setAvgFee(operatorsData.reduce((acc, el) => acc + el.operatorFee, 0) / operatorsData.length);
-    } else {
+    } else if (tx.node.id === RETROSPECTIVE_SOLUTION) {
       // ignore
+      setAvgFee(0.1);
+      setNumOperators(1);
+      setHasOperators(true);
     }
   }, [operatorsData]);
 
   const handleSolutionClick = useCallback(() => {
     // temporary
-    if (tx.cursor === 'reports-chat') {
+    if (tx.node.id === RETROSPECTIVE_SOLUTION) {
       navigate('/reports-chat', {
         state: {
           defaultOperator: operatorsData[0] ?? undefined,
           availableOperators: operatorsData ?? [],
-          solution: tx,
+          solution: undefined,
         },
       });
       return;

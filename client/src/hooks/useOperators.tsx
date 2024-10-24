@@ -87,6 +87,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
         ids: currentOperatorRegistrations
       },
       notifyOnNetworkStatusChange: true,
+      skip: solutions.length === 0,
     },
   );
 
