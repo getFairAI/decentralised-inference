@@ -36,11 +36,9 @@ import { findTag } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import '@/styles/main.css';
 import Conversations from '@/components/conversations';
-import { IConfiguration, IMessage, OperatorData } from '@/interfaces/common';
+import { IMessage, OperatorData } from '@/interfaces/common';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import Configuration from '@/components/configuration';
 import useComponentDimensions from '@/hooks/useComponentDimensions';
-import { useForm } from 'react-hook-form';
 import { FolderCopyRounded } from '@mui/icons-material';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { findByTagsQuery } from '@fairai/evm-sdk';
@@ -53,7 +51,6 @@ import { ThrowawayContext } from '@/context/throwaway';
 import RequestAllowance from '@/components/request-allowance';
 import ChatReportsContent from '@/components/chat-reports-content ';
 
-const DEFAULT_N_IMAGES = 1;
 const boxSizing = 'border-box';
 
 const ReportsChat = () => {
@@ -87,44 +84,8 @@ const ReportsChat = () => {
   const [inputHeight, setInputHeight] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
-  const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
   const [isLayoverOpen, setLayoverOpen] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
-
-  const [configurationDrawerOpen, setConfigurationDrawerOpen] = useState(true);
-  const defaultConfigvalues: IConfiguration = {
-    assetNames: '',
-    generateAssets: 'none',
-    negativePrompt: '',
-    description: '',
-    customTags: [],
-    width: 0,
-    height: 0,
-    nImages: DEFAULT_N_IMAGES,
-    rareweaveConfig: {
-      royalty: 0,
-    },
-    license: 'Default',
-    licenseConfig: {
-      derivations: '',
-      commercialUse: '',
-      licenseFeeInterval: '',
-      currency: '$U',
-      paymentMode: '',
-    },
-    privateMode: false,
-    modelName: '',
-  };
-  const {
-    control: configControl,
-    setValue: setConfigValue,
-    reset: configReset,
-    watch,
-  } = useForm<IConfiguration>({
-    defaultValues: defaultConfigvalues,
-  });
-
-  const currentConfig = watch();
 
   const [getAvatar, { data: avatarData }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
   useEffect(() => {
@@ -150,24 +111,6 @@ const ReportsChat = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [scrollHeight, currentEl, messagesEndRef]);
-
-  useEffect(() => {
-    const previousConfig = localStorage.getItem(`config#${state.solution.node.id}`);
-    const useStableDiffusionConfig =
-      findTag(state.solution, 'outputConfiguration') === 'stable-diffusion';
-    if (previousConfig) {
-      configReset(JSON.parse(previousConfig), { keepDefaultValues: true });
-    } else if (useStableDiffusionConfig) {
-      const nonSDconfig = {
-        ...defaultConfigvalues,
-        nImages: undefined,
-        negativePrompt: undefined,
-      };
-      configReset(nonSDconfig, { keepDefaultValues: true });
-    } else {
-      // ignore
-    }
-  }, [state, configReset]);
 
   useEffect(() => {
     (async () => {
@@ -199,15 +142,6 @@ const ReportsChat = () => {
   }, [state]);
 
   useEffect(() => {
-    const previousConfig =
-      localStorage.getItem(`config#${state.solution.node.id}`) ||
-      JSON.stringify(defaultConfigvalues);
-    if (JSON.stringify(currentConfig) !== previousConfig) {
-      localStorage.setItem(`config#${state.solution.node.id}`, JSON.stringify(currentConfig));
-    }
-  }, [currentConfig]);
-
-  useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
     setChatMaxHeight(`${height - currHeaderHeight}px`);
   }, [height]);
@@ -236,16 +170,10 @@ const ReportsChat = () => {
 
     if (width > 1500) {
       setDrawerOpen(true);
-      setConfigurationDrawerOpen(true);
     } else {
       setDrawerOpen(false);
-      setConfigurationDrawerOpen(false);
     }
   }, [width, height]);
-
-  const handleAdvancedClose = useCallback(() => {
-    setConfigurationDrawerOpen(false);
-  }, [setConfigurationDrawerOpen]);
 
   const handleShowConversations = useCallback(() => {
     setDrawerOpen(true);
@@ -305,60 +233,12 @@ const ReportsChat = () => {
         />
       </Drawer>
 
-      {false && (
-        <Drawer
-          variant='persistent'
-          anchor='right'
-          open={configurationDrawerOpen}
-          sx={{
-            '& .MuiDrawer-paper': {
-              width: '30%',
-              top: `calc(${headerHeight} + 10px)`,
-              height: `calc(100% - ${headerHeight})`,
-              border: 'none',
-              boxSizing,
-              ...(isSmallScreen && {
-                position: 'absolute',
-                right: '10px',
-                width: '50vw',
-                top: '10px',
-                boxShadow: '0px 0px 10px rgba(0,0,0,0.3)',
-                borderRadius: '20px',
-                height: '98%',
-              }),
-              ...(isMiniScreen && { position: 'absolute', right: 0, width: '100%', top: '10px' }),
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              height: '100%',
-              '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
-                paddingTop: '16px',
-              },
-            }}
-          >
-            <Configuration
-              control={configControl}
-              messages={messages}
-              setConfigValue={setConfigValue}
-              reset={configReset}
-              handleClose={handleAdvancedClose}
-              currentOperator={currentOperator}
-              setCurrentOperator={setCurrentOperator}
-              drawerOpen={configurationDrawerOpen}
-            />
-          </Box>
-        </Drawer>
-      )}
-
       <Box
         sx={{
           height: '100%',
           display: 'flex',
           ...(isMiniScreen && { height: `calc(100% - ${headerHeight})` }),
-          ...(isSmallScreen && (configurationDrawerOpen || drawerOpen) && { filter: 'blur(10px)' }),
+          ...(isSmallScreen && drawerOpen && { filter: 'blur(10px)' }),
         }}
       >
         <Box
@@ -375,8 +255,7 @@ const ReportsChat = () => {
               !isSmallScreen && {
                 marginLeft: conversationsDrawerOpenedWidth,
               }),
-            ...(configurationDrawerOpen &&
-              !isMiniScreen &&
+            ...(!isMiniScreen &&
               !isSmallScreen && {
                 marginRight: '3%', // changed while we dont have configurations on reports - was 30% before
               }),
