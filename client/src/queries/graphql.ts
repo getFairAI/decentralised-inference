@@ -1121,3 +1121,49 @@ export const QUERY_TXS_BY_RECIPIENT = gql`
     }
   }
 `;
+
+export const irysQuery = gql`
+  query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String) {
+    transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
+      edges {
+        cursor
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          address
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+`;
+
+export const responsesQuery = gql`
+  query TransactionAnswered($tags: [TagFilter!], $owner: String!, $first: Int!) {
+    transactions(first: $first, tags: $tags, owners: [$owner], sort: HEIGHT_DESC) {
+      edges {
+        node {
+          id
+          owner {
+            address
+            key
+          }
+          quantity {
+            winston
+            ar
+          }
+          tags {
+            name
+            value
+          }
+        }
+      }
+    }
+  }
+`;

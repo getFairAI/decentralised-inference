@@ -20,7 +20,15 @@ import { Box, Container, Grid, InputBase, Typography, useTheme } from '@mui/mate
 import '@/styles/ui.css';
 import useSolutions from '@/hooks/useSolutions';
 import LoadingCard from '@/components/loading-card';
-import { ChangeEvent, RefObject, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  RefObject,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import useOperators from '@/hooks/useOperators';
 import { findTag, genLoadingArray } from '@/utils/common';
 import Solution from '@/components/solution';
@@ -39,7 +47,13 @@ import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 
-const WarningMessage = ({ smallScreen, containerRef }: { smallScreen: boolean, containerRef: RefObject<HTMLDivElement> }) => {
+const WarningMessage = ({
+  smallScreen,
+  containerRef,
+}: {
+  smallScreen: boolean;
+  containerRef: RefObject<HTMLDivElement>;
+}) => {
   const [showWarning, setShowWarning] = useState(false);
   const { currentAddress, usdcBalance } = useContext(EVMWalletContext);
   const navigate = useNavigate();
@@ -66,7 +80,7 @@ const WarningMessage = ({ smallScreen, containerRef }: { smallScreen: boolean, c
     } else {
       container.style.paddingBottom = '86px';
     }
-  }, [ containerRef, localStorage, currentAddress, showWarning, usdcBalance, MIN_U_BALANCE ]);
+  }, [containerRef, localStorage, currentAddress, showWarning, usdcBalance, MIN_U_BALANCE]);
 
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
@@ -205,7 +219,6 @@ export default function Home() {
     setFilteredTxs(txs);
   }, [txs]);
 
-
   useEffect(() => {
     // remove scroll from main element
     const mainEl = document.getElementById('main');
@@ -228,7 +241,7 @@ export default function Home() {
         animate={{ y: 0, opacity: 1, transition: { delay: 0.2, duration: 0.4 } }}
         className='flex justify-center w-full'
       >
-        <WarningMessage smallScreen={isSmallScreen} containerRef={containerRef}/>
+        <WarningMessage smallScreen={isSmallScreen} containerRef={containerRef} />
       </motion.div>
       <motion.div
         initial={{ y: '-20px', opacity: 0 }}
@@ -316,17 +329,19 @@ export default function Home() {
             </motion.div>
           )}
 
-          {loading && <motion.div
-            initial={{ y: '-40px', opacity: 0 }}
-            animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
-            className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
-          >
-            {loadingTiles.map((el) => (
-              <Grid item key={el}>
-                <LoadingCard />
-              </Grid>
-            ))}
-          </motion.div>}
+          {loading && (
+            <motion.div
+              initial={{ y: '-40px', opacity: 0 }}
+              animate={{ y: 0, opacity: 1, transition: { delay: 0.6, duration: 0.4 } }}
+              className='w-full flex flex-wrap justify-center gap-8 max-w-[1400px]'
+            >
+              {loadingTiles.map((el) => (
+                <Grid item key={el}>
+                  <LoadingCard />
+                </Grid>
+              ))}
+            </motion.div>
+          )}
 
           {!error && !loading && (
             <motion.div

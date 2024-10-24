@@ -195,20 +195,27 @@ export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
   },
 
   '&.fully-rounded': {
-    minHeight: 'fit-content',
+    minHeight: '45px',
     borderRadius: '50%',
+    minWidth: '45px',
     width: '45px',
     height: '45px',
     padding: '0px',
 
     '&.smaller': {
+      fontSize: '90%',
       width: '34px',
       height: '34px',
+      minWidth: '34px',
+      minHeight: '34px',
     },
 
     '&.mini': {
+      fontSize: '80%',
       width: '30px',
       height: '30px',
+      minWidth: '30px',
+      minHeight: '30px',
     },
   },
 

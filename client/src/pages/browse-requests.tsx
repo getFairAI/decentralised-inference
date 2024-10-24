@@ -414,7 +414,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
 
 const BrowseRequests = () => {
   const [requests, setRequests] = useState<RequestData[]>([]);
-  const [ filtering, setFiltering ] = useState(false);
+  const [filtering, setFiltering] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { isAtBottom, isScrolled } = useScroll(ref);
@@ -461,7 +461,7 @@ const BrowseRequests = () => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [ bottomRef ]);
+  }, [bottomRef]);
 
   useEffect(() => {
     // remove scroll from main element
@@ -544,12 +544,14 @@ const BrowseRequests = () => {
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: '-40px' }}
-        animate={{ opacity: !isScrolled || !isAtBottom ? 1 : 0, y: 0, transition: { duration: 0.1, type: 'smooth' } }}
+        animate={{
+          opacity: !isScrolled || !isAtBottom ? 1 : 0,
+          y: 0,
+          transition: { duration: 0.1, type: 'smooth' },
+        }}
         className={'absolute bottom-[20px] right-[20px]'}
       >
-        <Fab
-          onClick={handleScrollToBottom}
-        >
+        <Fab onClick={handleScrollToBottom}>
           <img src='./chevron-bottom.svg' />
         </Fab>
       </motion.div>

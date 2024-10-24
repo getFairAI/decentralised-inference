@@ -16,11 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  TAG_NAMES,
-  MARKETPLACE_EVM_ADDRESS,
-  REGISTRATION_USDC_FEE,
-} from '@/constants';
+import { TAG_NAMES, MARKETPLACE_EVM_ADDRESS, REGISTRATION_USDC_FEE } from '@/constants';
 import { useQuery, NetworkStatus } from '@apollo/client';
 import { useState, useEffect, useMemo } from 'react';
 import _ from 'lodash';
@@ -84,9 +80,10 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
     findByIdDocument,
     {
       variables: {
-        ids: currentOperatorRegistrations
+        ids: currentOperatorRegistrations,
       },
       notifyOnNetworkStatusChange: true,
+      skip: solutions.length === 0,
     },
   );
 
@@ -158,14 +155,13 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
 
   useEffect(() => {
     if (proofData /* && cancellationData */) {
-      const availableOperators = txs.filter(
-        (op) =>
-          proofData?.transactions.edges.find(
-            (proof) =>
-              proof.node.owner.address === op.node.owner.address &&
-              Number(proof.node.tags.find((tag) => tag.name === 'Unix-Time')?.value) >
-                Date.now() / 1000 - 45 * 60, // needs valid proof in the last 45 min (30min + 15min for tx to be included in network for sure)
-          ),
+      const availableOperators = txs.filter((op) =>
+        proofData?.transactions.edges.find(
+          (proof) =>
+            proof.node.owner.address === op.node.owner.address &&
+            Number(proof.node.tags.find((tag) => tag.name === 'Unix-Time')?.value) >
+              Date.now() / 1000 - 45 * 60, // needs valid proof in the last 45 min (30min + 15min for tx to be included in network for sure)
+        ),
       );
 
       (async () => {
@@ -176,7 +172,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
           fee: Number(el.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value),
         }));
 
-        const evmWalletsMap = new Map<string, { evmWallet: `0x${string}`, publicKey: string }>();
+        const evmWalletsMap = new Map<string, { evmWallet: `0x${string}`; publicKey: string }>();
         for (const operator of availableOperators) {
           // operator fee
           const operatorFee = Number(
@@ -184,14 +180,14 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
           );
 
           // operator evm wallet
-          let operatorEvmResult: { evmWallet: `0x${string}`, publicKey: string } | undefined;
+          let operatorEvmResult: { evmWallet: `0x${string}`; publicKey: string } | undefined;
           if (evmWalletsMap.has(operator.node.owner.address)) {
             operatorEvmResult = evmWalletsMap.get(operator.node.owner.address);
           } else {
             operatorEvmResult = await getLinkedEvmWallet(operator.node.owner.address);
             evmWalletsMap.set(operator.node.owner.address, operatorEvmResult!);
           }
-          
+
           const solutionId = operator.node.tags.find((tag) => tag.name === 'Solution-Transaction')
             ?.value as string;
           const curatorEvmAddress = solutions
@@ -227,7 +223,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
               operatorFee,
               solutionId,
             });
-            
+
             // "stream updates"
           }
         }
