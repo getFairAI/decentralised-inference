@@ -445,7 +445,7 @@ const Conversations = ({
             .map((cid) => (
               <ConversationElement
                 cid={cid}
-                key={cid}
+                key={conversationIds.get(cid) ?? cid}
                 currentConversationId={currentConversationId}
                 setCurrentConversationId={setCurrentConversationId}
                 isReportsChat={isReportsChat}
