@@ -181,7 +181,6 @@ const ReportsChat = () => {
         <Conversations
           currentConversationId={currentConversationId}
           setCurrentConversationId={setCurrentConversationId}
-          userAddr={userAddr}
           drawerOpen={drawerOpen}
           setDrawerOpen={setDrawerOpen}
           setLayoverOpen={setLayoverOpen}
