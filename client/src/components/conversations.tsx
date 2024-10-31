@@ -17,16 +17,6 @@
  */
 
 import {
-  textContentType,
-  TAG_NAMES,
-  INFERENCE_REQUEST,
-  PROTOCOL_VERSION,
-  PROTOCOL_NAME,
-} from '@/constants';
-import { QUERY_CONVERSATIONS_TX_ID } from '@/queries/graphql';
-import { getTextData } from '@/utils/arweave';
-import { useLazyQuery } from '@apollo/client';
-import {
   Paper,
   Box,
   InputBase,
@@ -48,8 +38,6 @@ import {
 } from 'react';
 import { LoadingContainer, StyledMuiButton } from '@/styles/components';
 import { Timeout } from 'react-number-format/types/types';
-import { EVMWalletContext } from '@/context/evm-wallet';
-import { Query } from '@irys/query';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -57,6 +45,10 @@ import { motion } from 'framer-motion';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import { ArticleRounded, FolderCopyRounded } from '@mui/icons-material';
+import ao from '@/utils/ao';
+import { OpfsContext } from '@/context/opfs';
+import { Types } from '@permaweb/aoconnect/dist/dal';
+import { ThrowawayContext } from '@/context/throwaway';
 
 const ConversationElement = ({
   cid,
@@ -137,7 +129,6 @@ const ConversationElement = ({
 const Conversations = ({
   currentConversationId,
   setCurrentConversationId,
-  userAddr,
   drawerOpen,
   setDrawerOpen,
   setLayoverOpen,
@@ -145,7 +136,6 @@ const Conversations = ({
 }: {
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
-  userAddr: string;
   drawerOpen: boolean;
   setDrawerOpen: Dispatch<SetStateAction<boolean>>;
   setLayoverOpen: Dispatch<SetStateAction<boolean>>;
@@ -159,25 +149,34 @@ const Conversations = ({
   /* const isConversationOnScreen = useOnScreen(conversationsTarget); */
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
-  const { startConversation, currentAddress } = useContext(EVMWalletContext);
   const { state } = useLocation();
-  const [getConversationHistory] = useLazyQuery(QUERY_CONVERSATIONS_TX_ID);
+  const { payerPK } = useContext(OpfsContext);
+  const { throwawayAddr } = useContext(ThrowawayContext);
 
-  const createNewConversation = async (id: number) => {
-    try {
-      const result = await startConversation(state.solution.node.id, id.toString());
+  const createNewConversation = useCallback(
+    async (id: number) => {
+      try {
+        const tags: { name: string; value: string }[] = [];
+        tags.push({ name: 'Protocol-Name', value: 'FairAI' });
+        tags.push({ name: 'Protocol-Version', value: '3.0' });
+        tags.push({ name: 'Solution-Transaction', value: state.solution.node.id });
+        tags.push({ name: 'Conversation-Identifier', value: id.toString() });
+        const result = await ao.message({
+          process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
+          tags: [...tags, { name: 'Action', value: 'Manager-Add-Conversation' }],
+          signer: ao.customDataSignerEth(payerPK!) as unknown as Types['signer'],
+          data: `Conversation ${id}`,
+        });
 
-      if (!result) {
-        // user rejected the wallet extension signature permission
-        enqueueSnackbar(
-          'You chose to reject the request, or an error occurred. The feature you were trying to access might get disabled.',
-          {
+        if (!result) {
+          // user rejected the wallet extension signature permission
+          enqueueSnackbar('Could Not create new conversation.', {
             variant: 'warning',
             autoHideDuration: 6000,
             style: { fontWeight: 700 },
-          },
-        );
-      }
+          });
+          return;
+        }
 
       setConversationIds((prev) => prev.set(id, Date.now() / 1000));
       setFilteredConversationIds((prev) => [...prev, id]);
@@ -185,36 +184,30 @@ const Conversations = ({
     } catch (error) {
       enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
     }
-  };
+  }, [ao, state, payerPK]);
 
   useEffect(() => {
     (async () => {
-      if (currentAddress) {
+      if (throwawayAddr) {
         setConversationsLoading(true);
-        const irysQquery = new Query();
-        const results = await irysQquery
-          .search('irys:transactions')
-          .tags([
-            {
-              name: TAG_NAMES.protocolName,
-              values: [PROTOCOL_NAME],
-            },
-            {
-              name: TAG_NAMES.protocolVersion,
-              values: [PROTOCOL_VERSION],
-            },
-            {
-              name: TAG_NAMES.operationName,
-              values: ['Conversation Start'],
-            },
-            {
-              name: TAG_NAMES.solutionTransaction,
-              values: [state.solution.node.id],
-            },
-          ])
-          .from([currentAddress]);
+        const result = await ao.dryrun({
+          process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
+          tags: [{ name: 'Action', value: 'Manager-Get-Conversations' }],
+          Owner: throwawayAddr,
+        });
+        const {
+          Messages: [{ Data: conversationsStr }],
+        } = result;
+        const conversations: {
+          solution: string;
+          user: string;
+          status: string;
+          cid: string;
+          label: string;
+          timestamp: number;
+        }[] = JSON.parse(conversationsStr);
 
-        if (results.length === 0) {
+        if (conversations.length === 0) {
           setLayoverOpen(true);
           // no conversations yet, create new
           await createNewConversation(1);
@@ -224,14 +217,8 @@ const Conversations = ({
           setLayoverOpen(false);
         } else {
           const newMap = new Map<number, number>();
-          for (const el of results) {
-            const cid = parseFloat(
-              el.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value as string,
-            );
-            const timestamp = parseFloat(
-              el.tags.find((tag) => tag.name === 'Unix-Time')?.value as string,
-            );
-            newMap.set(cid, timestamp);
+          for (const el of conversations) {
+            newMap.set(parseFloat(el.cid ?? 1), el.timestamp);
           }
           setConversationIds(newMap);
           setFilteredConversationIds([...newMap.keys()]);
@@ -240,60 +227,16 @@ const Conversations = ({
         setConversationsLoading(false);
       }
     })();
-  }, [currentAddress]);
+  }, [throwawayAddr, ao]);
 
   useEffect(() => {
     (async () => {
       if (conversationIds && conversationIds.size > 0) {
         const filteredIds = [];
-        let hasMatch = false;
         for (const el of conversationIds) {
-          hasMatch = false;
           const includesFilter =
             filterConversations.trim() === '' || filterConversations.includes(`${el}`);
-          if (!includesFilter) {
-            const checkTransactions = await getConversationHistory({
-              variables: {
-                address: userAddr,
-                first: 100,
-                tags: [
-                  {
-                    name: TAG_NAMES.protocolName,
-                    values: [PROTOCOL_NAME],
-                  },
-                  {
-                    name: TAG_NAMES.protocolVersion,
-                    values: [PROTOCOL_VERSION],
-                  },
-                  {
-                    name: TAG_NAMES.operationName,
-                    values: [INFERENCE_REQUEST],
-                  },
-                  {
-                    name: TAG_NAMES.contentType,
-                    values: [textContentType],
-                  },
-                  {
-                    name: TAG_NAMES.conversationIdentifier,
-                    values: [el.toString()],
-                  },
-                  {
-                    name: TAG_NAMES.solutionTransaction,
-                    values: [state.solution.node.id],
-                  },
-                ],
-              },
-            });
-            for (const item of checkTransactions.data.transactions.edges) {
-              const txData = await getTextData(item.node.id);
-              if (txData.toLowerCase().includes(filterConversations.toLowerCase())) {
-                hasMatch = true;
-                break;
-              }
-            }
-          }
-
-          if (includesFilter || hasMatch) {
+          if (includesFilter) {
             filteredIds.push(el);
           }
         }

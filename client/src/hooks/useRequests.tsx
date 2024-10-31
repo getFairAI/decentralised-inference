@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { INFERENCE_REQUEST, PROTOCOL_NAME, PROTOCOL_VERSION, RETROSPECTIVE_SOLUTION, TAG_NAMES } from '@/constants';
+import { INFERENCE_REQUEST, RETROSPECTIVE_SOLUTION, TAG_NAMES } from '@/constants';
 import { IMessage } from '@/interfaces/common';
 import ao from '@/utils/ao';
 import { getData } from '@/utils/arweave';
@@ -36,33 +36,34 @@ const useRequests = ({
   first?: number;
 }) => {
   const [requests, setRequests] = useState<IMessage[]>([]);
-  const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
+  const [hasRequestNextPage /* setHasRequestNextPage */] = useState(false);
 
   useEffect(() => {
     (async () => {
-
       if (!userAddrs || userAddrs.length === 0) {
         // skip fetching while user address is not loaded
         return;
       }
       const tags = [
-        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-        { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
+        { name: 'Action', value: 'Manager-Get-Requests' },
+        { name: TAG_NAMES.protocolName, value: 'FairAI' },
+        { name: TAG_NAMES.protocolVersion, value: '3.0' },
+        { name: TAG_NAMES.operationName, value: INFERENCE_REQUEST },
+        { name: 'Request-Caller', value: userAddrs[0] },
       ];
       if (solutionTx) {
-        tags.push({ name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
+        tags.push({ name: TAG_NAMES.solutionTransaction, value: solutionTx });
       }
-  
+
       if (conversationId && solutionTx === RETROSPECTIVE_SOLUTION) {
         //
-        tags.push({ name: 'Conversation-ID', values: [conversationId.toString()] });
+        tags.push({ name: 'Conversation-ID', value: conversationId.toString() });
       } else if (conversationId) {
-        tags.push({ name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
+        tags.push({ name: TAG_NAMES.conversationIdentifier, value: conversationId.toString() });
       }
-  
+
       if (solutionTx === RETROSPECTIVE_SOLUTION) {
-        tags.push({ name: 'Request-Type', values: ['Report'] });
+        tags.push({ name: 'Request-Type', value: 'Report' });
       }
 
       try {
@@ -70,16 +71,18 @@ const useRequests = ({
           process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
           tags,
         });
-        const { Messages: [ { Data: requestsStr } ] } = result;
+        const {
+          Messages: [{ Data: requestsStr }],
+        } = result;
 
-        const parsedRequests: IMessage[] = [];     
-        
+        const parsedRequests: IMessage[] = [];
+
         for (const el of JSON.parse(requestsStr)) {
           const {
             Id: id,
             'Request-Caller': from,
             'File-Name': fileName,
-            'TagArray': tags,
+            TagArray: tags,
             'Conversation-Identifier': cid,
             'Block-Height': height,
             'Unix-Time': timestamp,
@@ -94,20 +97,20 @@ const useRequests = ({
             to,
             msg: data,
             tags,
-            cid,
+            cid: Number(cid),
             height,
             type: 'request',
             timestamp,
             contentType,
           });
         }
-        
+
         setRequests(parsedRequests);
       } catch (err) {
         console.error('Error fetching requests', err);
       }
     })();
-  }, [ ao, userAddrs, solutionTx, conversationId, first ]);
+  }, [ao, userAddrs, solutionTx, conversationId, first]);
 
   return {
     requestsData: requests,

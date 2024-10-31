@@ -19,7 +19,7 @@
 import { useLazyQuery } from '@apollo/client';
 import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
-import { PROTOCOL_NAME, PROTOCOL_VERSION, INFERENCE_RESPONSE } from '@/constants';
+import { PROTOCOL_NAME, INFERENCE_RESPONSE } from '@/constants';
 import { responsesQuery } from '@/queries/graphql';
 
 const useResponses = ({
@@ -57,8 +57,8 @@ const useResponses = ({
       tags: [
         { name: 'Request-Transaction', values: reqIds },
         { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+        { name: 'Protocol-Version', values: ['3.0'] },
         { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-        { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
       ],
       owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
       first: 10,
@@ -79,8 +79,8 @@ const useResponses = ({
         tags: [
           { name: 'Request-Transaction', values: pollReqIds },
           { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+          { name: 'Protocol-Version', values: ['3.0'] },
           { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-          { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
         ],
         owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
         first: 10,

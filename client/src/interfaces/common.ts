@@ -18,7 +18,6 @@
 
 import { FieldValues } from 'react-hook-form';
 import { ITag } from './arweave';
-import { findByTagsQuery } from '@fairai/evm-sdk';
 
 export interface IMessage {
   id: string;

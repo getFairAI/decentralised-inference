@@ -64,7 +64,7 @@
     "redstone-api": "0.4.11",
     "rehype-sanitize": "5.0.1",
     "typed-assert": "^1.0.9",
-    "viem": "^2.9.16",
+    "viem": "^2.21.37",
     "vite": "^5.4.0",
     "warp-contracts": "1.4.5",
     "warp-contracts-plugin-deploy": "1.0.9"

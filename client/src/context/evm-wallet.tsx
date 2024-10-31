@@ -36,7 +36,6 @@ import {
   countStamps,
   switchChain,
   getCurrentChainId,
-  startConversation,
   setIrys,
   postOnArweave,
   prompt,
@@ -91,7 +90,6 @@ interface EVMWalletState {
 
 interface IEVMWalletContext extends EVMWalletState {
   connect: (provider?: EIP6963ProviderDetail) => Promise<void>;
-  startConversation: (txid: string, cid: string) => Promise<string | undefined>;
   prompt: (
     data: string | File,
     solutionTx: string,
@@ -269,7 +267,6 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       ({
         ...state,
         countStamps,
-        startConversation,
         postOnArweave,
         prompt,
         switchChain: () => switchChain(arbitrum),

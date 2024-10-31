@@ -661,8 +661,7 @@ const Configuration = ({
               renderValue={(value) => (
                 <Typography>
                   {displayShortTxOrAddr(
-                    state.availableOperators.find((op) => op.txId === value)?.evmWallet ??
-                      'None',
+                    state.availableOperators.find((op) => op.txId === value)?.evmWallet ?? 'None',
                   )}
                 </Typography>
               )}

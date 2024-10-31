@@ -17,9 +17,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import {
-  findByTagsQuery,
-} from '@fairai/evm-sdk';
+import { findByTagsQuery } from '@fairai/evm-sdk';
 import { OperatorData } from '@/interfaces/common';
 import ao from '@/utils/ao';
 
@@ -27,7 +25,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
   const [txs, setTxs] = useState<OperatorData[]>([]);
   const [filteredTxs, setFilteredTxs] = useState<OperatorData[]>([]);
   const [filtering, setFiltering] = useState(false);
-  const [ error, setError ] = useState('');
+  const [error, setError] = useState('');
 
   const loadingOrFiltering = useMemo(() => filtering, [filtering]);
 
@@ -36,15 +34,16 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
       setFiltering(true);
       // request operators from ao process
       try {
+        console.log('use operators');
         const result = await ao.dryrun({
           process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
-          tags: [
-            { name: 'Action', value: 'Manager-Get-Registrations'}
-          ]
+          tags: [{ name: 'Action', value: 'Manager-Get-Registrations' }],
         });
-        
+        console.log(result, 'registrations result');
         // parse result
-        const { Messages: [ { Data: registrationsStr } ] } = result;
+        const {
+          Messages: [{ Data: registrationsStr }],
+        } = result;
 
         const txs: {
           solutions: string[];
@@ -54,32 +53,36 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
           evmAddress: `0x${string}`;
           evmPublicKey: string;
           owner: string;
-        }[]= JSON.parse(registrationsStr);
-        setTxs(txs.map(el => ({
-          txId: el.id,
-          operatorFee: el.fee,
-          evmPublicKey: el.evmPublicKey,
-          evmWallet: el.evmAddress,
-          arweaveWallet: el.owner,
-          label: el.label,
-          solutionIds: el.solutions
-        })));
+        }[] = JSON.parse(registrationsStr);
+        setTxs(
+          txs.map((el) => ({
+            txId: el.id,
+            operatorFee: el.fee,
+            evmPublicKey: el.evmPublicKey,
+            evmWallet: el.evmAddress,
+            arweaveWallet: el.owner,
+            label: el.label,
+            solutionIds: el.solutions,
+          })),
+        );
       } catch (err) {
         setFilteredTxs([]);
         setError('Error fetching operators');
       }
-      
+
       setFiltering(false);
     })();
-  }, [ ao ]);
+  }, [ao]);
 
   useEffect(() => {
     if (txs.length > 0 && solutions.length > 0) {
-      const filtered = txs.filter(el => solutions.some(sol => el.solutionIds.includes(sol.node.id)));
+      const filtered = txs.filter((el) =>
+        solutions.some((sol) => el.solutionIds.includes(sol.node.id)),
+      );
       // filter out operators with solutions
       setFilteredTxs(filtered);
     }
-  }, [ txs, solutions ]);
+  }, [txs, solutions]);
 
   return {
     loading: loadingOrFiltering,

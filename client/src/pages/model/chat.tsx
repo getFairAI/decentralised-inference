@@ -84,7 +84,7 @@ import { ChevronLeftRounded, InfoOutlined } from '@mui/icons-material';
 import { UserFeedbackContext } from '@/context/user-feedback';
 import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import { encryptSafely } from '@metamask/eth-sig-util';
+import { encryptSafely, getEncryptionPublicKey } from '@metamask/eth-sig-util';
 import { findByTagsQuery, postOnArweave, sendThrowawayUSDC } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
@@ -335,13 +335,9 @@ const InputField = ({
 const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
   const navigate = useNavigate();
-  const { currentAddress: userAddr, getPubKey, decrypt } = useContext(EVMWalletContext);
-  const {
-    throwawayAddr,
-    throwawayUsdcAllowance,
-    updateBalance,
-    updateAllowance,
-  } = useContext(ThrowawayContext);
+  const { currentAddress: userAddr, decrypt } = useContext(EVMWalletContext);
+  const { throwawayAddr, throwawayUsdcAllowance, updateBalance, updateAllowance } =
+    useContext(ThrowawayContext);
   const {
     state,
   }: {
@@ -520,8 +516,10 @@ const Chat = () => {
     lastRequestId: '',
   });
 
-  const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage, fetchMore } =
-    useRequests(requestParams);
+  const {
+    requestsData,
+    /* requestError, requestNetworkStatus, */ hasRequestNextPage /* , fetchMore */,
+  } = useRequests(requestParams);
 
   const { responsesData, responseError, responseNetworkStatus, responsesPollingData } =
     useResponses(responseParams);
@@ -533,25 +531,21 @@ const Chat = () => {
     hasRequestNextPage,
   );
 
-  const showError = useMemo(() => !!requestError || !!responseError, [requestError, responseError]);
+  const showError = useMemo(
+    () => /* !!requestError ||  */ !!responseError,
+    [/* requestError,  */ responseError],
+  );
   const showLoadMore = useMemo(
     () => isNearTop && hasRequestNextPage && !messagesLoading,
     [isNearTop, hasRequestNextPage, messagesLoading],
   );
 
   useEffect(() => {
-    const pubKey = localStorage.getItem(`pubKeyFor:${userAddr}`);
-
-    if (!pubKey) {
-      (async () => {
-        const key = await getPubKey();
-        localStorage.setItem(`pubKeyFor:${userAddr}`, key);
-        setCurrentPubKey(key);
-      })();
-    } else {
+    if (payerPK) {
+      const pubKey = getEncryptionPublicKey(payerPK.replace('0x', ''));
       setCurrentPubKey(pubKey);
     }
-  }, [userAddr, setCurrentPubKey]);
+  }, [payerPK, setCurrentPubKey]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -574,7 +568,7 @@ const Chat = () => {
   }, [previousAddr, userAddr, throwawayAddr]);
 
   useEffect(() => {
-    if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
+    if (requestsData /* && requestNetworkStatus === NetworkStatus.ready */) {
       //
       const reqIds = requestsData.map((el: IMessage) => el.id);
 
@@ -594,20 +588,21 @@ const Chat = () => {
         setMessages([]);
       }
     }
-  }, [requestsData, requestNetworkStatus, userAddr, throwawayAddr]);
+  }, [requestsData, /* requestNetworkStatus, */ userAddr, throwawayAddr]);
 
   useEffect(() => {
     // only update messages after getting all responses
-    const hasResponsesNextPage = responsesData?.transactions.pageInfo.hasNextPage;
+    const hasResponsesNextPage = responsesData?.transactions.pageInfo?.hasNextPage;
     if (responsesData && responseNetworkStatus === NetworkStatus.ready && !hasResponsesNextPage) {
       const newResponses = responsesData.transactions.edges.filter(
         (previous: IEdge) =>
           !previousResponses.find((current: IEdge) => current.node.id === previous.node.id),
       );
       if (newResponses.length > 0) {
-        setPreviousResponses((prev) => [...prev, ...newResponses]);
         (async () => {
-          await reqData([...previousResponses, ...newResponses]);
+          setPreviousResponses((prev) => [...prev, ...newResponses]);
+          await asyncMap(newResponses);
+
           setMessagesLoading(false);
         })();
       } else {
@@ -905,7 +900,12 @@ const Chat = () => {
     };
   }, [currentConfig, currentPubKey]);
 
-  const updateMessages = async (txid: string, content: string | File, contentType: string, tags: ITag[]) => {
+  const updateMessages = async (
+    txid: string,
+    content: string | File,
+    contentType: string,
+    tags: ITag[],
+  ) => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
@@ -951,49 +951,53 @@ const Chat = () => {
     });
   };
 
-  const addConfigTags = (tags: { name: string, value: string }[], configuration: ConfigurationValues, userAddr: string) => {
+  const addConfigTags = (
+    tags: { name: string; value: string }[],
+    configuration: ConfigurationValues,
+    userAddr: string,
+  ) => {
     if (configuration.assetNames) {
       tags.push({ name: 'Asset-Names', value: JSON.stringify(configuration.assetNames) });
     }
-  
+
     if (configuration.negativePrompt) {
       tags.push({ name: 'Negative-Prompt', value: configuration.negativePrompt });
     }
-  
+
     if (configuration.description) {
       tags.push({ name: 'Description', value: configuration.description });
     }
-  
+
     if (configuration.customTags && configuration.customTags?.length > 0) {
       tags.push({ name: 'User-Custom-Tags', value: JSON.stringify(configuration.customTags) });
     }
-  
+
     if (configuration.nImages && configuration.nImages > 0 && configuration.nImages < 10) {
       tags.push({ name: 'N-Images', value: configuration.nImages.toString() });
     }
-  
+
     if (configuration.width && configuration.width > 0) {
       tags.push({ name: 'Images-Width', value: configuration.width.toString() });
     }
-  
+
     if (configuration.height && configuration.height > 0) {
       tags.push({ name: 'Images-Height', value: configuration.height.toString() });
     }
-  
+
     if (configuration.requestCaller) {
       tags.push({ name: 'Request-Caller', value: configuration.requestCaller });
     } else {
       tags.push({ name: 'Request-Caller', value: userAddr });
     }
-  
+
     if (configuration.privateMode) {
       tags.push({ name: 'Private-Mode', value: 'true' });
     }
-  
+
     if (configuration.userPubKey) {
       tags.push({ name: 'User-Public-Key', value: configuration.userPubKey });
     }
-  
+
     if (configuration.modelName) {
       tags.push({ name: 'Model-Name', value: configuration.modelName });
     }
@@ -1003,62 +1007,67 @@ const Chat = () => {
     }
   };
 
-  const aoPrompt = useCallback(async (data: File | string, config: ConfigurationValues, newMessage: string) => {
-    if (!currentOperator) {
-      enqueueSnackbar(
-        'You have no operator selected. Please select a Solution Operator in the Advanced Configurations and try again.',
-        { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+  const aoPrompt = useCallback(
+    async (data: File | string, config: ConfigurationValues, newMessage: string) => {
+      if (!currentOperator) {
+        enqueueSnackbar(
+          'You have no operator selected. Please select a Solution Operator in the Advanced Configurations and try again.',
+          { variant: 'error', autoHideDuration: 6000, style: { fontWeight: 700 } },
+        );
+        return;
+      }
+
+      const operatorConfig = {
+        id: currentOperator.txId,
+        arweaveWallet: currentOperator?.arweaveWallet,
+        evmWallet: currentOperator?.evmWallet,
+        operatorFee: currentOperator?.operatorFee,
+      };
+      const tags: { name: string; value: string }[] = [];
+      tags.push({ name: 'Protocol-Name', value: 'FairAI' });
+      tags.push({ name: 'Protocol-Version', value: '3.0' });
+      tags.push({ name: 'Solution-Transaction', value: state.solution.node.id });
+      tags.push({ name: 'Operator-Registration', value: operatorConfig.id });
+      tags.push({ name: 'Operation-Name', value: 'Inference Request' });
+      tags.push({ name: 'Conversation-Identifier', value: currentConversationId.toString() });
+
+      const tempDate = Date.now() / 1000;
+      tags.push({ name: 'Unix-Time', value: tempDate.toString() });
+      tags.push({ name: 'Content-Type', value: data instanceof File ? data.type : 'text/plain' });
+      tags.push({ name: 'Transaction-Origin', value: 'FairAI Browser' });
+      tags.push({ name: 'License', value: '' });
+      tags.push({ name: 'Derivation', value: 'Allowed-With-License-Passthrough' });
+      tags.push({ name: 'Commercial-Use', value: 'Allowed' });
+
+      if (config) {
+        addConfigTags(tags, config, userAddr);
+      }
+
+      const requestId = await ao.message({
+        process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
+        tags: [{ name: 'Action', value: 'Manager-Register-Request' }, ...tags],
+        signer: ao.customDataSignerEth(payerPK!) as unknown as Types['signer'],
+        data: data instanceof File ? await data.text() : data,
+      });
+
+      console.log(requestId);
+      // pay request
+      let finalFee = operatorConfig.operatorFee;
+
+      if (config?.nImages && (config.nImages > 1 || config.nImages < 10)) {
+        finalFee *= config.nImages;
+      }
+      updateMessages(requestId, newMessage, 'text/plain', tags);
+      const paymentId = await sendThrowawayUSDC(
+        userAddr as `0x${string}`,
+        operatorConfig.evmWallet,
+        finalFee,
+        requestId,
       );
-      return;
-    }
-  
-    const operatorConfig = {
-      id: currentOperator.txId,
-      arweaveWallet: currentOperator?.arweaveWallet,
-      evmWallet: currentOperator?.evmWallet,
-      operatorFee: currentOperator?.operatorFee,
-    };
-    const tags: { name: string; value: string }[] = [];
-    tags.push({ name: 'Protocol-Name', value: 'FairAI' });
-    tags.push({ name: 'Protocol-Version', value: '3.0' });
-    tags.push({ name: 'Solution-Transaction', value: state.solution.node.id });
-    tags.push({ name: 'Operator-Registration', value: operatorConfig.id });
-    tags.push({ name: 'Operation-Name', value: 'Inference Request' });
-    tags.push({ name: 'Conversation-Identifier', value: currentConversationId.toString() });
-  
-    const tempDate = Date.now() / 1000;
-    tags.push({ name: 'Unix-Time', value: tempDate.toString() });
-    tags.push({ name: 'Content-Type', value: data instanceof File ? data.type : 'text/plain' });
-    tags.push({ name: 'Transaction-Origin', value: 'FairAI Browser' });  
-    tags.push({ name: 'License', value: '' });
-    tags.push({ name: 'Derivation', value: 'Allowed-With-License-Passthrough' });
-    tags.push({ name: 'Commercial-Use', value: 'Allowed' });
-  
-    if (config) {
-      addConfigTags(tags, config, userAddr);
-    }
-  
-    const requestId = await ao.message({
-      process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
-      tags: [
-        ...tags,
-        { name: 'Action', value: 'Manager-Register-Request' }
-      ],
-      signer: ao.customDataSignerEth(payerPK!) as unknown as Types['signer'],
-      data: data instanceof File ? await data.text() : data,
-    });
-
-    console.log(requestId);
-    // pay request
-    let finalFee = operatorConfig.operatorFee;
-
-    if (config?.nImages && (config.nImages > 1 || config.nImages < 10)) {
-      finalFee *= config.nImages;
-    }
-    updateMessages(requestId, newMessage, 'text/plain', tags);
-    const paymentId = await sendThrowawayUSDC(userAddr as `0x${string}`, operatorConfig.evmWallet, finalFee, requestId);
-    console.log(paymentId);
-  }, [ ao, userAddr, currentConversationId, state, currentOperator, sendThrowawayUSDC, payerPK ]);
+      console.log(paymentId);
+    },
+    [ao, userAddr, currentConversationId, state, currentOperator, sendThrowawayUSDC, payerPK],
+  );
 
   const handleSendFile = async () => {
     if (!file) {
@@ -1417,12 +1426,12 @@ const Chat = () => {
   }, [setDrawerOpen]);
 
   const handleLoadMore = useCallback(() => {
-    fetchMore();
+    /* fetchMore(); */
     setMessagesLoading(true);
     const oldestMessage = document.querySelectorAll('.message-container')[0]; // first message on html is the oldest
 
     setCurrentEl(oldestMessage as HTMLDivElement);
-  }, [fetchMore, requestsData]);
+  }, [/* fetchMore,  */ requestsData]);
 
   const [isMiniScreen, setIsMiniScreen] = useState(false);
   useEffect(() => {
@@ -1470,7 +1479,6 @@ const Chat = () => {
         <Conversations
           currentConversationId={currentConversationId}
           setCurrentConversationId={setCurrentConversationId}
-          userAddr={userAddr}
           drawerOpen={drawerOpen}
           setDrawerOpen={setDrawerOpen}
           setLayoverOpen={setLayoverOpen}

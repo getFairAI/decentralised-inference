@@ -46,6 +46,7 @@ import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
+/* import ao from '@/utils/ao'; */
 
 const WarningMessage = ({
   smallScreen,
@@ -81,6 +82,18 @@ const WarningMessage = ({
       container.style.paddingBottom = '86px';
     }
   }, [containerRef, localStorage, currentAddress, showWarning, usdcBalance, MIN_U_BALANCE]);
+
+  /* useEffect(() => {
+    (async () => {
+      const result = await ao.dryrun({
+        process: 'h9AowtfL42rKUEV9C-LjsP5yWitnZh9n1cKLBZjipk8',
+        tags: [
+          { name: 'Action', value: 'Manager-Get-Requests'}
+        ]
+      });
+      console.log(result);
+    })();
+  }, [ ao ]); */
 
   if (!localStorage.getItem('evmProvider') && !currentAddress) {
     return (
@@ -358,7 +371,9 @@ export default function Home() {
                     <Solution
                       tx={tx}
                       loading={operatorsLoading}
-                      operatorsData={operatorsData.filter((el) => el.solutionIds.includes(tx.node.id))}
+                      operatorsData={operatorsData.filter((el) =>
+                        el.solutionIds.includes(tx.node.id),
+                      )}
                       containerRef={containerRef}
                     />
                   </motion.div>

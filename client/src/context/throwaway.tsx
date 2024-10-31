@@ -46,7 +46,7 @@ import { OpfsContext } from './opfs';
 import { BaseWebARx } from '@permaweb/arx/build/esm/web/base';
 import { ITag } from '@/interfaces/arweave';
 import { WebToken } from '@permaweb/arx/build/esm/web/types';
-import EthereumConfig from "@permaweb/arx/build/esm/web/tokens/ethereum";
+import EthereumConfig from '@permaweb/arx/build/esm/web/tokens/ethereum';
 
 export interface ThrowawayContext {
   throwawayAddr: string;
@@ -83,18 +83,28 @@ export const ThrowawayContext = createContext<ThrowawayContext>({
 });
 
 type ProxyWalletState = {
-  current: 'initial' | 'wallet-connected' | 'ready' | 'proxy-found-in-opfs' | 'proxy-found-in-arweave' | 'proxy-generated';
+  current:
+    | 'initial'
+    | 'wallet-connected'
+    | 'ready'
+    | 'proxy-found-in-opfs'
+    | 'proxy-found-in-arweave'
+    | 'proxy-generated';
   data: string;
 };
 
-type ProxyWalletAction = { type: 'set-proxy-found-in-opfs', data: string } |
-  { type: 'set-wallet-connected' } |
-  { type: 'set-proxy-found-in-arweave', data: string } |
-  { type: 'set-proxy-generated', data: string } |
-  { type: 'set-ready' } |
-  { type: 'set-initial' };
+type ProxyWalletAction =
+  | { type: 'set-proxy-found-in-opfs'; data: string }
+  | { type: 'set-wallet-connected' }
+  | { type: 'set-proxy-found-in-arweave'; data: string }
+  | { type: 'set-proxy-generated'; data: string }
+  | { type: 'set-ready' }
+  | { type: 'set-initial' };
 
-const proxyWalletReducer: (state: ProxyWalletState, action: ProxyWalletAction) => ProxyWalletState = (state, action) => {
+const proxyWalletReducer: (
+  state: ProxyWalletState,
+  action: ProxyWalletAction,
+) => ProxyWalletState = (state, action) => {
   switch (action.type) {
     case 'set-wallet-connected':
       return { ...state, current: 'wallet-connected', data: '' };
@@ -107,26 +117,26 @@ const proxyWalletReducer: (state: ProxyWalletState, action: ProxyWalletAction) =
     case 'set-proxy-found-in-arweave':
       return { ...state, current: 'proxy-found-in-arweave', data: action.data };
     case 'set-ready':
-      return { ...state, current: 'ready',  data: state.data };
+      return { ...state, current: 'ready', data: state.data };
     default:
       return state;
-  };
+  }
 };
 
 export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
-  const [ state, dispatch ] = useReducer(proxyWalletReducer, { current: 'initial', data: '' });
+  const [state, dispatch] = useReducer(proxyWalletReducer, { current: 'initial', data: '' });
 
   const { payerPK: proxyKey, savePayerPK: setProxyKey } = useContext(OpfsContext);
-  const [ throwawayAddr, setThrowawayAddr] = useState<string>('');
-  const [ throwawayBalance, setThrowawayBalance] = useState<number>(0);
-  const [ throwawayUsdcAllowance, setThrowawayUsdcAllowance] = useState<number>(0);
+  const [throwawayAddr, setThrowawayAddr] = useState<string>('');
+  const [throwawayBalance, setThrowawayBalance] = useState<number>(0);
+  const [throwawayUsdcAllowance, setThrowawayUsdcAllowance] = useState<number>(0);
   const {
     currentAddress: mainAddr,
     getPubKey,
     postOnArweave,
     decrypt,
   } = useContext(EVMWalletContext);
-  const [ getProxyKey, proxyData ] = useLazyQuery(findByTagsDocument);
+  const [getProxyKey, proxyData] = useLazyQuery(findByTagsDocument);
   const [isLayoverOpen, setIsLayoverOpen] = useState<boolean>(false);
   const theme = useTheme();
 
@@ -136,12 +146,14 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
     } else {
       dispatch({ type: 'set-initial' });
     }
-  }, [ mainAddr, dispatch ]);
+  }, [mainAddr, dispatch]);
 
   useEffect(() => {
     // code to handleold versions of app, simple remove key from localStorage
     // it will then look for a key in arweave throught the new app normal flow
-    const storedWallet = localStorage.getItem('throwawayWallet')?.split(':')[1] ?? localStorage.getItem('throwawayWallet');
+    const storedWallet =
+      localStorage.getItem('throwawayWallet')?.split(':')[1] ??
+      localStorage.getItem('throwawayWallet');
     if (storedWallet) {
       localStorage.removeItem('throwawayWallet');
     }
@@ -192,34 +204,37 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         // ignore
       }
     })();
-  }, [ mainAddr, proxyData, dispatch ]);
+  }, [mainAddr, proxyData, dispatch]);
 
-  const saveProxyKey = useCallback(async (pk: string) => {
-    // save encrypted throwaway key
-    let pubKey = localStorage.getItem(`pubKeyFor:${mainAddr}`);
+  const saveProxyKey = useCallback(
+    async (pk: string) => {
+      // save encrypted throwaway key
+      let pubKey = localStorage.getItem(`pubKeyFor:${mainAddr}`);
 
-    if (!pubKey) {
-      pubKey = await getPubKey();
-      localStorage.setItem(`pubKeyFor:${mainAddr}`, pubKey);
-    }
+      if (!pubKey) {
+        pubKey = await getPubKey();
+        localStorage.setItem(`pubKeyFor:${mainAddr}`, pubKey);
+      }
 
-    const encData = encryptSafely({
-      data: pk,
-      publicKey: pubKey,
-      version: 'x25519-xsalsa20-poly1305',
-    });
-    const secondInMS = 1000;
+      const encData = encryptSafely({
+        data: pk,
+        publicKey: pubKey,
+        version: 'x25519-xsalsa20-poly1305',
+      });
+      const secondInMS = 1000;
 
-    await postOnArweave(JSON.stringify(encData), [
-      { name: 'Protocol-Name', value: PROTOCOL_NAME },
-      { name: 'Protocol-Version', value: PROTOCOL_VERSION },
-      { name: 'Operation-Name', value: 'Proxy-Key' },
-      { name: 'Foreign-Owner', value: mainAddr as `0x${string}` },
-      { name: 'Unix-Time', value: (Date.now() / secondInMS).toString() },
-    ]);
-    setProxyKey(pk);
-    dispatch({ type: 'set-ready' });
-  }, [ mainAddr, dispatch, setProxyKey ]);
+      await postOnArweave(JSON.stringify(encData), [
+        { name: 'Protocol-Name', value: PROTOCOL_NAME },
+        { name: 'Protocol-Version', value: PROTOCOL_VERSION },
+        { name: 'Operation-Name', value: 'Proxy-Key' },
+        { name: 'Foreign-Owner', value: mainAddr as `0x${string}` },
+        { name: 'Unix-Time', value: (Date.now() / secondInMS).toString() },
+      ]);
+      setProxyKey(pk);
+      dispatch({ type: 'set-ready' });
+    },
+    [mainAddr, dispatch, setProxyKey],
+  );
 
   const updateBalance = useCallback(
     async (newAmount?: number) =>
@@ -258,7 +273,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
   );
 
   useEffect(() => {
-    switch(state.current) {
+    switch (state.current) {
       case 'wallet-connected':
         // try to find existing proxy wallet
         if (proxyKey) {
@@ -296,16 +311,17 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
         (async () => {
           const address = privateKeyToAddress(proxyKey as `0x${string}`);
           setThrowawayBalance(await getEthBalance(address));
-          setThrowawayUsdcAllowance(await getUsdcAllowance(mainAddr as `0x${string}`, address as `0x${string}`));
+          setThrowawayUsdcAllowance(
+            await getUsdcAllowance(mainAddr as `0x${string}`, address as `0x${string}`),
+          );
           await setThrowawayProvider(proxyKey as `0x${string}`);
           setThrowawayAddr(address);
-
         })();
         break;
       default:
         return;
     }
-  }, [ state, proxyKey, mainAddr, setProxyKey, dispatch, saveProxyKey, getProxyKey]);
+  }, [state, proxyKey, mainAddr, setProxyKey, dispatch, saveProxyKey, getProxyKey]);
 
   return (
     <ThrowawayContext.Provider value={value}>

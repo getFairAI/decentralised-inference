@@ -162,13 +162,18 @@ const ChatReportsContent = ({
   }, [currentConversationId]);
 
   useEffect(() => {
-    if (requestsData?.transactions?.edges && requestsData.transactions.edges.length > 0) {
-      const lastRequest = requestsData.transactions.edges[0];
-      setCurrentReportId(lastRequest.node.id);
+    if (
+      requestsData &&
+      requestsData.length >
+        0 /* requestsData?.transactions?.edges && requestsData.transactions.edges.length > 0 */
+    ) {
+      /* const lastRequest = requestsData.transactions.edges[0]; */
+      const lastRequest = requestsData[0];
+      setCurrentReportId(lastRequest.id);
       setResponseParams({
         ...responseParams,
         reqIds: [],
-        lastRequestId: lastRequest.node.id,
+        lastRequestId: lastRequest.id,
       });
       setLoading(true);
     } else {
