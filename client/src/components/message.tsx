@@ -251,7 +251,7 @@ const MessageHeader = ({
         {message.type === 'response' && (
           <Box display={'flex'} flexDirection={'column'} justifyContent={'center'}>
             <span className='text-sm sm:text-base md:text-lg lg:text-xl font-bold rounded-md bg-[rgba(255,255,255,0.9)] px-1 sm:bg-transparent mt-6 sm:mt-0'>
-              {findTag(state.solution, 'solutionName')}
+              {findTag(state.solution, 'solutionName') || 'Solution'}
             </span>
             <div className='hidden md:inline-block'>
               <Typography
@@ -260,6 +260,7 @@ const MessageHeader = ({
                   fontWeight: 400,
                   color: theme.palette.neutral.main,
                   opacity: 0.5,
+                  marginLeft: '4px',
                 }}
               >
                 {state.solution.node.id}

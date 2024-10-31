@@ -240,8 +240,8 @@ const ReportsChat = () => {
                   </div>
 
                   <img
-                    src='./onboarding-solutions/reports/example-report.png'
-                    className='m-3 flex-1 rounded-xl'
+                    src='./onboarding-solutions/reports/example-report2.png'
+                    className='m-3 flex-1 rounded-xl border-white border-4 shadow-lg'
                     style={{ width: '100%', maxWidth: '500px' }}
                   />
                 </div>
@@ -263,7 +263,7 @@ const ReportsChat = () => {
 
                   <img
                     src='./onboarding-solutions/reports/reports-list.png'
-                    className='m-3 flex-1 rounded-xl'
+                    className='m-3 flex-1 rounded-xl border-white border-4 shadow-lg'
                     style={{ width: '100%', maxWidth: '300px' }}
                   />
                 </div>
@@ -281,8 +281,8 @@ const ReportsChat = () => {
                   </div>
 
                   <img
-                    src='./onboarding-solutions/reports/example-report.png'
-                    className='m-3 flex-1 rounded-xl'
+                    src='./onboarding-solutions/reports/compare-data.png'
+                    className='m-3 flex-1 rounded-xl border-white border-4 shadow-lg'
                     style={{ width: '100%', maxWidth: '500px' }}
                   />
                 </div>
@@ -302,8 +302,8 @@ const ReportsChat = () => {
                   </div>
 
                   <img
-                    src='./onboarding-solutions/reports/example-report.png'
-                    className='m-3 flex-1'
+                    src='./onboarding-solutions/reports/ask-questions.png'
+                    className='m-3 flex-1 rounded-xl border-white border-4 shadow-lg'
                     style={{ width: '100%', maxWidth: '500px' }}
                   />
                 </div>
@@ -499,7 +499,8 @@ const ReportsChat = () => {
                   )}
                   <div className='flex flex-col'>
                     <span className='font-bold text-sm sm:text-lg lg:text-xl'>
-                      {findTag(state.solution, 'solutionName')}
+                      {findTag(state.solution, 'solutionName') ||
+                        'Arbitrum CollabTech: LTIPP Retrospective'}
                     </span>
                     <span className='text-xs lg:text-base hidden sm:inline-block text-gray-500'>
                       {state.solution.node.id}

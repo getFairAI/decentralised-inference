@@ -45,6 +45,7 @@ import {
   ArticleRounded,
   ChatRounded,
   CloseRounded,
+  HourglassBottomRounded,
   NoteAddRounded,
   SendRounded,
 } from '@mui/icons-material';
@@ -94,6 +95,7 @@ const ChatReportsContent = ({
   const [generateLoading, setGenerateLoading] = useState(false);
   const [currentReportId, setCurrentReportId] = useState('');
   const [messages, setMessages] = useState([] as IMessage[]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
   const [reportIsGenerated, setReportIsGenerated] = useState(false);
@@ -176,6 +178,8 @@ const ChatReportsContent = ({
       }));
       setReportIsGenerated(false);
       setSafeHtmlStr('');
+
+      loadExistingChatPrompts();
     }
   }, [requestsData]);
 
@@ -326,8 +330,13 @@ const ChatReportsContent = ({
       });
     }
   }, [currentConversationId, inputValue, currentReportId, state, currentAddress, customUpload]);
+
   const [showLearnMoreChat, setShowLearnMoreChat] = useState(false);
   const handleSetShowChat = useCallback(() => {
+    setShowLearnMoreChat((prev) => !prev);
+  }, [throwawayAddr, currentConversationId, setShowLearnMoreChat, getReportPrompts]);
+
+  const loadExistingChatPrompts = () => {
     // load prompts
     const tags = [
       { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
@@ -351,8 +360,7 @@ const ChatReportsContent = ({
       nextFetchPolicy: 'network-only',
       notifyOnNetworkStatusChange: true,
     });
-    setShowLearnMoreChat((prev) => !prev);
-  }, [throwawayAddr, currentConversationId, setShowLearnMoreChat, getReportPrompts]);
+  };
 
   useEffect(() => {
     (async () => {
@@ -364,6 +372,8 @@ const ChatReportsContent = ({
         const newMessages = reportAnswersData.transactions.edges.filter(
           (el: IEdge) => !messages.find((msg) => msg.id === el.node.id),
         );
+
+        setLoadingMessages(true);
         for (const tx of newMessages) {
           const data = await getData(tx.node.id);
           const newMessage: IMessage = {
@@ -383,6 +393,7 @@ const ChatReportsContent = ({
 
           temp.push(newMessage);
         }
+        setLoadingMessages(false);
 
         // sort messages by timestamp
         temp.sort((a, b) => a.timestamp - b.timestamp);
@@ -391,6 +402,7 @@ const ChatReportsContent = ({
       }
     })();
   }, [reportAnswersData]);
+
   useEffect(() => {
     const temp: IMessage[] = [];
     (async () => {
@@ -403,6 +415,8 @@ const ChatReportsContent = ({
           (el: IEdge) => !messages.find((msg) => msg.id === el.node.id),
         );
         // setMessages((prev) => prev.concat(newMessages));
+
+        setLoadingMessages(true);
         for (const tx of newMessages) {
           const data = await getData(tx.node.id);
           const newMessage: IMessage = {
@@ -439,6 +453,7 @@ const ChatReportsContent = ({
             notifyOnNetworkStatusChange: true,
           });
         }
+        setLoadingMessages(false);
       }
       // sort messages by timestamp
       temp.sort((a, b) => a.timestamp - b.timestamp);
@@ -530,7 +545,15 @@ const ChatReportsContent = ({
           <div>
             <p className='text-center flex gap-1'>
               <ArticleRounded className='primary-text-color' />
-              <strong>Report - {new Date().toLocaleString()}</strong>
+              <strong>
+                Report -{' '}
+                {findTag(responsesPollingData.transactions.edges[0], 'unixTime')
+                  ? new Date(
+                      Number(findTag(responsesPollingData.transactions.edges[0], 'unixTime')) *
+                        1000,
+                    ).toLocaleString()
+                  : '(New)'}
+              </strong>
             </p>
           </div>
         </Divider>
@@ -539,26 +562,29 @@ const ChatReportsContent = ({
           {safeHtmlStr}
         </Markdown>
 
-        {!showLearnMoreChat && (
-          <div className='flex justify-center p-2 mb-6 animate-scale-in animation-delay-200ms'>
-            <StyledMuiButton className='primary' onClick={handleSetShowChat}>
-              <ChatRounded style={{ width: '20px' }} />
-              Learn or ask more about this report
-            </StyledMuiButton>
+        {messages.length > 0 && (
+          <div className='px-4'>
+            {messages.map((el: IMessage, index: number) => (
+              <Container
+                key={el.id}
+                maxWidth={false}
+                sx={{ paddingTop: '16px', mb: '16px' }}
+                className='message-container'
+              >
+                <Message message={el} index={index} copySettings={handleCopySettings} />
+              </Container>
+            ))}
           </div>
         )}
 
-        {messages.map((el: IMessage, index: number) => (
-          <Container
-            key={el.id}
-            maxWidth={false}
-            sx={{ paddingTop: '16px', mb: '16px' }}
-            className='message-container'
-          >
-            <Message message={el} index={index} copySettings={handleCopySettings} />
-          </Container>
-        ))}
         {waitingResponseFragment()}
+
+        {loadingMessages && (
+          <div className='w-full flex gap-2 justify-center p-4 font-bold'>
+            <HourglassBottomRounded className='primary-text-color' /> Loading previous messages ...
+          </div>
+        )}
+
         {showLearnMoreChat && (
           <div className='w-100 px-10 mb-6 flex gap-3 items-center'>
             <Tooltip title='Hide this chat box'>
@@ -585,6 +611,15 @@ const ChatReportsContent = ({
               onClick={newPrompt}
             >
               Send <SendRounded />
+            </StyledMuiButton>
+          </div>
+        )}
+
+        {!showLearnMoreChat && (
+          <div className='flex justify-center p-2 mb-6 animate-scale-in animation-delay-200ms'>
+            <StyledMuiButton className='primary' onClick={handleSetShowChat}>
+              <ChatRounded style={{ width: '20px' }} />
+              Learn or ask more about this report
             </StyledMuiButton>
           </div>
         )}
