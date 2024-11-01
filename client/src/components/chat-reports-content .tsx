@@ -69,10 +69,12 @@ import {
   PROTOCOL_VERSION,
   RETROSPECTIVE_SOLUTION,
   TAG_NAMES,
+  secondInMS,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { findTag } from '@/utils/common';
 import Message from './message';
+import { debounce } from 'lodash';
 
 const ChatReportsContent = ({
   currentConversationId,
@@ -97,6 +99,7 @@ const ChatReportsContent = ({
   const [messages, setMessages] = useState([] as IMessage[]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [isWaitingResponse, setIsWaitingResponse] = useState(false);
 
   const [reportIsGenerated, setReportIsGenerated] = useState(false);
   const [requestParams, setRequestParams] = useState({
@@ -142,13 +145,14 @@ const ChatReportsContent = ({
   ] = useLazyQuery(responsesQuery);
 
   useEffect(() => {
-    if (throwawayAddr) {
+    if (throwawayAddr && currentAddress) {
       setRequestParams((previousParams) => ({
         ...previousParams,
         userAddrs: [throwawayAddr],
+        requestCaller: currentAddress
       }));
     }
-  }, [throwawayAddr]);
+  }, [throwawayAddr, currentAddress]);
 
   useEffect(() => {
     setRequestParams((previousParams) => ({
@@ -219,7 +223,7 @@ const ChatReportsContent = ({
     setSafeHtmlStr,
   ]);
 
-  const handleSetReportGenerated = useCallback(async () => {
+  const handleSetReportGenerated = debounce(useCallback(async () => {
     try {
       const tags = [
         { name: 'Protocol-Name', value: 'FairAI' },
@@ -260,9 +264,9 @@ const ChatReportsContent = ({
         variant: 'error',
       });
     }
-  }, [currentConversationId, state, currentAddress, customUpload]);
+  }, [currentConversationId, state, currentAddress, customUpload]), secondInMS);
 
-  const newPrompt = useCallback(async () => {
+  const newPrompt = debounce(useCallback(async () => {
     if (!inputValue) {
       return;
     }
@@ -314,10 +318,10 @@ const ChatReportsContent = ({
       stopReportAnswersPolling(); // stop any previous polling
       const variables = {
         tags: [
-          { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-          { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
           { name: 'Request-Transaction', values: [id] },
+          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+          { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+          { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
         ],
         owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
         first: 10,
@@ -329,22 +333,20 @@ const ChatReportsContent = ({
         variant: 'error',
       });
     }
-  }, [currentConversationId, inputValue, currentReportId, state, currentAddress, customUpload]);
+  }, [currentConversationId, inputValue, currentReportId, state, currentAddress, customUpload]), secondInMS);
 
   const [showLearnMoreChat, setShowLearnMoreChat] = useState(false);
-  const handleSetShowChat = useCallback(() => {
-    setShowLearnMoreChat((prev) => !prev);
-  }, [throwawayAddr, currentConversationId, setShowLearnMoreChat, getReportPrompts]);
 
-  const loadExistingChatPrompts = () => {
+  const loadExistingChatPrompts = useCallback(() => {
     // load prompts
     const tags = [
-      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-      { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
       { name: TAG_NAMES.solutionTransaction, values: [RETROSPECTIVE_SOLUTION] },
       { name: 'Conversation-ID', values: [currentConversationId.toString()] },
       { name: 'Request-Type', values: ['Prompt'] },
+      { name: 'Request-Caller', values: [currentAddress] },
+      { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
+      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
     ];
 
     getReportPrompts({
@@ -360,7 +362,13 @@ const ChatReportsContent = ({
       nextFetchPolicy: 'network-only',
       notifyOnNetworkStatusChange: true,
     });
-  };
+  }, [ currentAddress, currentConversationId, throwawayAddr, getReportPrompts ]);
+
+  const handleSetShowChat = useCallback(() => {
+    setShowLearnMoreChat((prev) => !prev);
+    // get reportPrompts
+    loadExistingChatPrompts();
+  }, [throwawayAddr, currentConversationId, setShowLearnMoreChat, loadExistingChatPrompts]);
 
   useEffect(() => {
     (async () => {
@@ -441,10 +449,10 @@ const ChatReportsContent = ({
           getReportAnswers({
             variables: {
               tags: [
-                { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-                { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-                { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
                 { name: 'Request-Transaction', values: requestIds },
+                { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+                { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+                { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
               ],
               owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
               first: 1,
@@ -462,6 +470,19 @@ const ChatReportsContent = ({
     })();
   }, [reportPromptsData]);
 
+  useEffect(() => {
+    const lastRequest = messages.filter((el) => el.type === 'request').pop();
+    const hasResponse =
+      lastRequest &&
+      messages.find(
+        (el) =>
+          el.type === 'response' &&
+          el.tags.find((tag) => tag.name === 'Request-Transaction')?.value === lastRequest.id,
+      );
+  
+    setIsWaitingResponse(!!lastRequest && !hasResponse);
+  }, [ messages ]);
+
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value),
     [setInputValue],
@@ -471,17 +492,9 @@ const ChatReportsContent = ({
   const handleCopySettings = useCallback((_: ITag[]) => {}, []);
 
   const waitingResponseFragment = useCallback(() => {
-    const lastRequest = messages.filter((el) => el.type === 'request').pop();
-    const hasResponse =
-      lastRequest &&
-      messages.find(
-        (el) =>
-          el.type === 'response' &&
-          el.tags.find((tag) => tag.name === 'Request-Transaction')?.value === lastRequest.id,
-      );
     return (
       <Container maxWidth={false} sx={{ paddingTop: '16px', opacity: '0.8', mb: '16px' }}>
-        {lastRequest && !hasResponse && (
+        {isWaitingResponse && (
           <div
             className={'flex w-full gap-4 md:flex-nowrap items-end justify-start flex-wrap-reverse'}
           >
@@ -505,7 +518,7 @@ const ChatReportsContent = ({
         )}
       </Container>
     );
-  }, [messages]);
+  }, [isWaitingResponse]);
 
   if (loading || generateLoading) {
     return (
@@ -562,7 +575,7 @@ const ChatReportsContent = ({
           {safeHtmlStr}
         </Markdown>
 
-        {messages.length > 0 && (
+        {showLearnMoreChat && messages.length > 0 && (
           <div className='px-4'>
             {messages.map((el: IMessage, index: number) => (
               <Container
@@ -609,6 +622,7 @@ const ChatReportsContent = ({
             <StyledMuiButton
               className='primary animate-slide-right animation-delay-300ms'
               onClick={newPrompt}
+              disabled={isWaitingResponse || inputValue.length === 0}
             >
               Send <SendRounded />
             </StyledMuiButton>
@@ -664,7 +678,7 @@ const ChatReportsContent = ({
           className='flex justify-center p-2 mb-4 animate-slide-down'
           style={{ animationDelay: '0.2s' }}
         >
-          <StyledMuiButton className='primary' onClick={handleSetReportGenerated}>
+          <StyledMuiButton className='primary' onClick={handleSetReportGenerated} disabled={loading || generateLoading}>
             <NoteAddRounded style={{ width: '20px' }} />
             Generate Report
           </StyledMuiButton>
