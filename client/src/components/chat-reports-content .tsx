@@ -149,7 +149,7 @@ const ChatReportsContent = ({
       setRequestParams((previousParams) => ({
         ...previousParams,
         userAddrs: [throwawayAddr],
-        requestCaller: currentAddress
+        requestCaller: currentAddress,
       }));
     }
   }, [throwawayAddr, currentAddress]);
@@ -223,117 +223,134 @@ const ChatReportsContent = ({
     setSafeHtmlStr,
   ]);
 
-  const handleSetReportGenerated = debounce(useCallback(async () => {
-    try {
-      const tags = [
-        { name: 'Protocol-Name', value: 'FairAI' },
-        { name: 'Protocol-Version', value: '2.0' },
-        { name: 'Request-Type', value: 'Report' },
-        { name: 'Operation-Name', value: 'Inference Request' },
-        { name: 'Model-Name', value: 'Llama3:70B' },
-        { name: 'Request-Caller', value: currentAddress },
-        { name: 'Conversation-ID', value: currentConversationId.toString() },
-        { name: 'Solution-Transaction', value: state.solution.node.id },
-        { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
-        { name: 'Transaction-Origin', value: 'FairAI Browser' },
-        { name: 'Content-Type', value: 'text/plain' },
-        { name: 'Unix-Time', value: Date.now().toString() },
-      ];
+  const handleSetReportGenerated = debounce(
+    useCallback(async () => {
+      try {
+        setGenerateLoading(true);
+        const tags = [
+          { name: 'Protocol-Name', value: 'FairAI' },
+          { name: 'Protocol-Version', value: '2.0' },
+          { name: 'Request-Type', value: 'Report' },
+          { name: 'Operation-Name', value: 'Inference Request' },
+          { name: 'Model-Name', value: 'Llama3:70B' },
+          { name: 'Request-Caller', value: currentAddress },
+          { name: 'Conversation-ID', value: currentConversationId.toString() },
+          { name: 'Solution-Transaction', value: state.solution.node.id },
+          { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
+          { name: 'Transaction-Origin', value: 'FairAI Browser' },
+          { name: 'Content-Type', value: 'text/plain' },
+          { name: 'Unix-Time', value: Date.now().toString() },
+        ];
 
-      const id = await customUpload('Generate Report', tags);
-      setRequestIds([id]);
-      await sendThrowawayUSDC(
-        currentAddress as `0x${string}`,
-        state.defaultOperator.evmWallet,
-        state.defaultOperator.operatorFee,
-        id,
-      );
+        const id = await customUpload('Generate Report', tags);
+        setRequestIds([id]);
+        await sendThrowawayUSDC(
+          currentAddress as `0x${string}`,
+          state.defaultOperator.evmWallet,
+          state.defaultOperator.operatorFee,
+          id,
+        );
 
-      enqueueSnackbar('Report generation request sent.', { variant: 'success' });
-      // update balance after payments
-      // activate polling
-      setResponseParams((previousParams) => ({
-        ...previousParams,
-        lastRequestId: id,
-        conversationId: currentConversationId,
-      }));
-      setGenerateLoading(true);
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('An error ocurred.', {
-        variant: 'error',
-      });
-    }
-  }, [currentConversationId, state, currentAddress, customUpload]), secondInMS);
+        enqueueSnackbar('Report generation request sent.', { variant: 'success' });
+        // update balance after payments
+        // activate polling
+        setResponseParams((previousParams) => ({
+          ...previousParams,
+          lastRequestId: id,
+          conversationId: currentConversationId,
+        }));
+      } catch (error) {
+        setGenerateLoading(false);
+        console.error(error);
+        enqueueSnackbar('An error ocurred.', {
+          variant: 'error',
+        });
+      }
+    }, [currentConversationId, state, currentAddress, customUpload]),
+    secondInMS,
+  );
 
-  const newPrompt = debounce(useCallback(async () => {
-    if (!inputValue) {
-      return;
-    }
+  const newPrompt = debounce(
+    useCallback(async () => {
+      if (!inputValue) {
+        return;
+      }
+      setIsWaitingResponse(true);
 
-    try {
-      const timestamp = Date.now() / 1000;
-      const tags = [
-        { name: 'Protocol-Name', value: 'FairAI' },
-        { name: 'Protocol-Version', value: '2.0' },
-        { name: 'Request-Type', value: 'Prompt' },
-        { name: 'Operation-Name', value: 'Inference Request' },
-        { name: 'Model-Name', value: 'Llama3:70B' },
-        { name: 'Request-Caller', value: currentAddress },
-        { name: 'Conversation-ID', value: currentConversationId.toString() },
-        { name: 'Solution-Transaction', value: state.solution.node.id },
-        { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
-        { name: 'Transaction-Origin', value: 'FairAI Browser' },
-        { name: 'Content-Type', value: 'text/plain' },
-        { name: 'Unix-Time', value: timestamp.toString() },
-        { name: 'Report-Transaction', value: currentReportId },
-      ];
+      try {
+        const timestamp = Date.now() / 1000;
+        const tags = [
+          { name: 'Protocol-Name', value: 'FairAI' },
+          { name: 'Protocol-Version', value: '2.0' },
+          { name: 'Request-Type', value: 'Prompt' },
+          { name: 'Operation-Name', value: 'Inference Request' },
+          { name: 'Model-Name', value: 'Llama3:70B' },
+          { name: 'Request-Caller', value: currentAddress },
+          { name: 'Conversation-ID', value: currentConversationId.toString() },
+          { name: 'Solution-Transaction', value: state.solution.node.id },
+          { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
+          { name: 'Transaction-Origin', value: 'FairAI Browser' },
+          { name: 'Content-Type', value: 'text/plain' },
+          { name: 'Unix-Time', value: timestamp.toString() },
+          { name: 'Report-Transaction', value: currentReportId },
+        ];
 
-      const id = await customUpload(inputValue, tags);
-      setRequestIds([id]);
-      await sendThrowawayUSDC(
-        currentAddress as `0x${string}`,
-        state.defaultOperator.evmWallet,
-        state.defaultOperator.operatorFee,
-        id,
-      );
+        const id = await customUpload(inputValue, tags);
+        setRequestIds([id]);
+        await sendThrowawayUSDC(
+          currentAddress as `0x${string}`,
+          state.defaultOperator.evmWallet,
+          state.defaultOperator.operatorFee,
+          id,
+        );
 
-      enqueueSnackbar('Report prompt request sent.', { variant: 'success' });
-      setInputValue('');
-      const newMessage: IMessage = {
-        id,
-        timestamp,
-        msg: inputValue,
-        type: 'request',
-        contentType: 'text/plain',
-        height: 0,
-        cid: currentConversationId,
-        from: currentAddress,
-        to: state.defaultOperator.arweaveWallet,
-        tags: tags,
-      };
-      // update balance after payments
-      setMessages((prev) => prev.concat([newMessage]));
-      // activate polling
-      stopReportAnswersPolling(); // stop any previous polling
-      const variables = {
-        tags: [
-          { name: 'Request-Transaction', values: [id] },
-          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-          { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-          { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-        ],
-        owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
-        first: 10,
-      };
-      getReportAnswers({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('An error ocurred.', {
-        variant: 'error',
-      });
-    }
-  }, [currentConversationId, inputValue, currentReportId, state, currentAddress, customUpload]), secondInMS);
+        enqueueSnackbar('Report prompt request sent.', { variant: 'success' });
+        setInputValue('');
+        const newMessage: IMessage = {
+          id,
+          timestamp,
+          msg: inputValue,
+          type: 'request',
+          contentType: 'text/plain',
+          height: 0,
+          cid: currentConversationId,
+          from: currentAddress,
+          to: state.defaultOperator.arweaveWallet,
+          tags: tags,
+        };
+        // update balance after payments
+        setMessages((prev) => prev.concat([newMessage]));
+        // activate polling
+        stopReportAnswersPolling(); // stop any previous polling
+        const variables = {
+          tags: [
+            { name: 'Request-Transaction', values: [id] },
+            { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+            { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+            { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
+          ],
+          owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
+          first: 10,
+        };
+        getReportAnswers({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
+      } catch (error) {
+        setIsWaitingResponse(false);
+        console.error(error);
+        enqueueSnackbar('An error ocurred.', {
+          variant: 'error',
+        });
+      }
+    }, [
+      currentConversationId,
+      inputValue,
+      currentReportId,
+      state,
+      currentAddress,
+      customUpload,
+      setIsWaitingResponse,
+    ]),
+    secondInMS,
+  );
 
   const [showLearnMoreChat, setShowLearnMoreChat] = useState(false);
 
@@ -362,7 +379,7 @@ const ChatReportsContent = ({
       nextFetchPolicy: 'network-only',
       notifyOnNetworkStatusChange: true,
     });
-  }, [ currentAddress, currentConversationId, throwawayAddr, getReportPrompts ]);
+  }, [currentAddress, currentConversationId, throwawayAddr, getReportPrompts]);
 
   const handleSetShowChat = useCallback(() => {
     setShowLearnMoreChat((prev) => !prev);
@@ -479,9 +496,9 @@ const ChatReportsContent = ({
           el.type === 'response' &&
           el.tags.find((tag) => tag.name === 'Request-Transaction')?.value === lastRequest.id,
       );
-  
+
     setIsWaitingResponse(!!lastRequest && !hasResponse);
-  }, [ messages ]);
+  }, [messages]);
 
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value),
@@ -678,7 +695,11 @@ const ChatReportsContent = ({
           className='flex justify-center p-2 mb-4 animate-slide-down'
           style={{ animationDelay: '0.2s' }}
         >
-          <StyledMuiButton className='primary' onClick={handleSetReportGenerated} disabled={loading || generateLoading}>
+          <StyledMuiButton
+            className='primary'
+            onClick={handleSetReportGenerated}
+            disabled={loading || generateLoading}
+          >
             <NoteAddRounded style={{ width: '20px' }} />
             Generate Report
           </StyledMuiButton>

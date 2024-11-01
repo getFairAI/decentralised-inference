@@ -3,10 +3,13 @@ import { ArrowForwardIosRounded, PlayArrowRounded } from '@mui/icons-material';
 import { Backdrop, useTheme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
-const LtippRetrospectiveOnboarding = (
-  { isOnboardingPopupOpen, handleSetOnboardingPopupState }: { isOnboardingPopupOpen: boolean, handleSetOnboardingPopupState: () => void }
-) => {
-
+const LtippRetrospectiveOnboarding = ({
+  isOnboardingPopupOpen,
+  handleSetOnboardingPopupState,
+}: {
+  isOnboardingPopupOpen: boolean;
+  handleSetOnboardingPopupState: () => void;
+}) => {
   const theme = useTheme();
 
   return (
@@ -38,10 +41,7 @@ const LtippRetrospectiveOnboarding = (
               <div className='w-full rounded-xl bg-gray-100 flex justify-center flex-wrap'>
                 <div className='p-4 flex-1'>
                   <h3 className='flex items-center gap-2'>
-                    <ArrowForwardIosRounded
-                      className='primary-text-color'
-                      sx={{ width: '18px' }}
-                    />
+                    <ArrowForwardIosRounded className='primary-text-color' sx={{ width: '18px' }} />
                     Generate new reports
                   </h3>
                   <h4>
@@ -60,10 +60,7 @@ const LtippRetrospectiveOnboarding = (
               <div className='w-full flex justify-center flex-wrap'>
                 <div className='p-4 flex-1'>
                   <h3 className='flex items-center gap-2'>
-                    <ArrowForwardIosRounded
-                      className='primary-text-color'
-                      sx={{ width: '18px' }}
-                    />
+                    <ArrowForwardIosRounded className='primary-text-color' sx={{ width: '18px' }} />
                     Manage reports
                   </h3>
                   <h4>
@@ -82,10 +79,7 @@ const LtippRetrospectiveOnboarding = (
               <div className='w-full rounded-xl bg-gray-100 flex justify-center flex-wrap'>
                 <div className='p-4 flex-1'>
                   <h3 className='flex items-center gap-2'>
-                    <ArrowForwardIosRounded
-                      className='primary-text-color'
-                      sx={{ width: '18px' }}
-                    />
+                    <ArrowForwardIosRounded className='primary-text-color' sx={{ width: '18px' }} />
                     Compare reports
                   </h3>
                   <h4>Access all your generated reports and compare data between them.</h4>
@@ -101,10 +95,7 @@ const LtippRetrospectiveOnboarding = (
               <div className='w-full flex justify-center flex-wrap'>
                 <div className='p-4 flex-1'>
                   <h3 className='flex items-center gap-2'>
-                    <ArrowForwardIosRounded
-                      className='primary-text-color'
-                      sx={{ width: '18px' }}
-                    />
+                    <ArrowForwardIosRounded className='primary-text-color' sx={{ width: '18px' }} />
                     Research reports
                   </h3>
                   <h4>

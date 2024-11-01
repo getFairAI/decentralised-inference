@@ -85,7 +85,7 @@ const ReportsChat = () => {
 
   useEffect(() => {
     console.log(state.solution);
-  }, [ state ]);
+  }, [state]);
   /**
    * If there is a save element (currentEl) scroll to it to mantain user in same place after load more
    */

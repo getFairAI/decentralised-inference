@@ -71,7 +71,10 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
                 id: RETROSPECTIVE_SOLUTION,
                 owner: { address: 'wGT06tKaEGXuF6QR2dXqqmO7B_TF41rELP4D1IX4-IA' },
                 tags: [
-                  { name: 'Solution-Name', value: 'Arbitrum Collabtech DECIDE: LTIPP Retrospective'},
+                  {
+                    name: 'Solution-Name',
+                    value: 'Arbitrum Collabtech DECIDE: LTIPP Retrospective',
+                  },
                   { name: 'Output', value: 'text' },
                   { name: 'Supported-Models', value: '[]' },
                 ],
@@ -114,7 +117,12 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   };
 
   if (pathname.includes('collabtech-hackathon-decide') && isOnboardingPopupOpen) {
-    return <LtippRetrospectiveOnboarding isOnboardingPopupOpen={isOnboardingPopupOpen} handleSetOnboardingPopupState={handleSetOnboardingPopupState} />;
+    return (
+      <LtippRetrospectiveOnboarding
+        isOnboardingPopupOpen={isOnboardingPopupOpen}
+        handleSetOnboardingPopupState={handleSetOnboardingPopupState}
+      />
+    );
   } else if (!state?.defaultOperator) {
     return (
       <Backdrop

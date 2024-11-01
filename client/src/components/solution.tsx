@@ -254,9 +254,10 @@ const Solution = ({
               }}
               title={
                 <Typography variant='h3'>
-                  {tx.node.id === RETROSPECTIVE_SOLUTION ?
-                    'Arbitrum Collabtech DECIDE: LTIPP Retrospective' :
-                      tx.node.tags.find((el) => el.name === 'Solution-Name')?.value ?? 'Name Not Available'}
+                  {tx.node.id === RETROSPECTIVE_SOLUTION
+                    ? 'Arbitrum Collabtech DECIDE: LTIPP Retrospective'
+                    : tx.node.tags.find((el) => el.name === 'Solution-Name')?.value ??
+                      'Name Not Available'}
                 </Typography>
               }
               subheader={`${getTimePassed()}`}

@@ -180,7 +180,7 @@ const Conversations = ({
       }
 
       setConversationIds((prev) => prev.set(id, Date.now() / 1000));
-      setFilteredConversationIds((prev) => [ ...prev, id ]);
+      setFilteredConversationIds((prev) => [...prev, id]);
       setCurrentConversationId(id);
     } catch (error) {
       enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
