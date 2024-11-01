@@ -55,10 +55,10 @@ const useResponses = ({
   useEffect(() => {
     const variables = {
       tags: [
+        { name: 'Request-Transaction', values: reqIds },
+        { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
         { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
         { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-        { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-        { name: 'Request-Transaction', values: reqIds },
       ],
       owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
       first: 10,
@@ -77,10 +77,10 @@ const useResponses = ({
       const pollReqIds = [lastRequestId];
       const variables = {
         tags: [
+          { name: 'Request-Transaction', values: pollReqIds },
+          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
           { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
           { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-          { name: 'Request-Transaction', values: pollReqIds },
         ],
         owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
         first: 10,

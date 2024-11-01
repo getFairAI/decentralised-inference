@@ -104,6 +104,40 @@
   animation: anime 16s linear infinite;
 }
 
+h1 {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  padding: 10px 0px;
+}
+
+h2 {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  padding: 10px 0px;
+}
+
+h3 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  padding: 5px 0px;
+}
+
+h4 {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 5px 0px;
+}
+
+h5 {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+h6 {
+  font-size: 14px !important;
+  font-weight: 200 !important;
+}
+
 @keyframes anime {
   0% {
     background-position: 0% 50%;

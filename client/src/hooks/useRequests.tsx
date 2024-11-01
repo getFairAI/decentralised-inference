@@ -33,8 +33,10 @@ const useRequests = ({
   solutionTx,
   conversationId,
   first,
+  requestCaller,
 }: {
   userAddrs: string[];
+  requestCaller?: string;
   solutionTx?: string;
   conversationId?: number;
   first?: number;
@@ -74,6 +76,10 @@ const useRequests = ({
 
     if (solutionTx === RETROSPECTIVE_SOLUTION) {
       tags.push({ name: 'Request-Type', values: ['Report'] });
+    }
+
+    if (requestCaller) {
+      tags.push({ name: 'Request-Caller', values: [requestCaller] });
     }
 
     getChatRequests({

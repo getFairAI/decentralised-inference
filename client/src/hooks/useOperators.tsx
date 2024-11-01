@@ -30,6 +30,7 @@ import {
   findByIdDocument,
 } from '@fairai/evm-sdk';
 import { OperatorData } from '@/interfaces/common';
+import arweave from '@/utils/arweave';
 
 const currentOperatorRegistrations = [
   'TJwdKL6m7mGGyWpjp_V2tO3UXilvylPdduLSstQQDyk',
@@ -72,6 +73,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
   const [txs, setTxs] = useState<findByTagsQuery['transactions']['edges']>([]);
   const [validTxs, setValidTxs] = useState<OperatorData[]>([]);
   const [filtering, setFiltering] = useState(false);
+  const [startBlockHeight, setStartBlockHeight] = useState(0);
 
   const ids = useMemo(() => txs.map((tx) => tx.node.id), [txs]);
   const owners = useMemo(() => txs.map((tx) => tx.node.owner.address), [txs]);
@@ -93,25 +95,29 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
     variables: {
       tags: [
         {
-          name: 'Protocol-Name',
-          values: ['FairAI'],
+          name: 'Operation-Name',
+          values: ['Operator Active Proof'],
         },
         {
           name: 'Protocol-Version',
           values: ['2.0'],
         },
         {
-          name: 'Operation-Name',
-          values: ['Operator Active Proof'],
+          name: 'Protocol-Name',
+          values: ['FairAI'],
         },
       ],
       owners: Array.from(new Set(owners)),
       first: Array.from(new Set(owners)).length, // this should be enough to get proofs for all operators in the last half hour if they are behaving correctly
-      // minBlock: 1519194, // query only after block 1519219
+      minBlock: startBlockHeight, // query only after block 1519219
     },
-    skip: owners.length === 0 || ids.length === 0,
+    skip: owners.length === 0 || ids.length === 0 || startBlockHeight === 0,
   });
 
+  useEffect(() => {
+    // set start block for 100 blocks before current
+    (async () => setStartBlockHeight((await arweave.blocks.getCurrent()).height - 100))();
+  }, []); // run once
   /**
    * @description Effect that runs on data changes;
    * it is responsible to set the nextPage status and to update current loaded transactionsm

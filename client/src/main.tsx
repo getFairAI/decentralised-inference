@@ -85,7 +85,7 @@ const router = createHashRouter([
         ],
       },
       {
-        path: 'reports-chat',
+        path: 'collabtech-hackathon-decide',
         element: (
           <ArbitrumGuard>
             <ReportsChat />

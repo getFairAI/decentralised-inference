@@ -28,9 +28,7 @@ import {
   Box,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useLazyQuery } from '@apollo/client';
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { TAG_NAMES, NET_ARWEAVE_URL, MODEL_ATTACHMENT, AVATAR_ATTACHMENT } from '@/constants';
 import usePrevious from '@/hooks/usePrevious';
 import { findTag } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
@@ -44,14 +42,13 @@ import { EVMWalletContext } from '@/context/evm-wallet';
 import { findByTagsQuery } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
 import { StyledMuiButton } from '@/styles/components';
-import { GET_LATEST_MODEL_ATTACHMENTS } from '@/queries/graphql';
-import { toSvg } from 'jdenticon';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { ThrowawayContext } from '@/context/throwaway';
 import RequestAllowance from '@/components/request-allowance';
 import ChatReportsContent from '@/components/chat-reports-content ';
 
 const boxSizing = 'border-box';
+const imgUrl = 'https://arweave.net/wOPiTA5XqhmWyDx6OtS11rrD1c13UZtnZrHblJFc-OM';
 
 const ReportsChat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(0);
@@ -85,22 +82,10 @@ const ReportsChat = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState('64px');
   const [isLayoverOpen, setLayoverOpen] = useState(false);
-  const [imgUrl, setImgUrl] = useState('');
 
-  const [getAvatar, { data: avatarData }] = useLazyQuery(GET_LATEST_MODEL_ATTACHMENTS);
   useEffect(() => {
-    const avatarTxId = avatarData?.transactions?.edges[0]?.node?.id;
-    if (avatarTxId) {
-      setImgUrl(`${NET_ARWEAVE_URL}/${avatarTxId}`);
-    } else {
-      const imgSize = 100;
-      const solutionId = state?.solution.node.id;
-      const img = toSvg(solutionId, imgSize);
-      const svg = new Blob([img], { type: 'image/svg+xml' });
-      setImgUrl(URL.createObjectURL(svg));
-    }
-  }, [avatarData, state]);
-
+    console.log(state.solution);
+  }, [state]);
   /**
    * If there is a save element (currentEl) scroll to it to mantain user in same place after load more
    */
@@ -111,35 +96,6 @@ const ReportsChat = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [scrollHeight, currentEl, messagesEndRef]);
-
-  useEffect(() => {
-    (async () => {
-      const currentSoludionId = state?.solution.node.id;
-      let firstSolutionVersionId;
-      try {
-        firstSolutionVersionId = (
-          JSON.parse(findTag(state?.solution, 'previousVersions') as string) as string[]
-        )[0];
-      } catch (err) {
-        firstSolutionVersionId = state?.solution.node.id;
-      }
-      const attachmentAvatarTags = [
-        { name: TAG_NAMES.operationName, values: [MODEL_ATTACHMENT] },
-        { name: TAG_NAMES.attachmentRole, values: [AVATAR_ATTACHMENT] },
-        {
-          name: TAG_NAMES.solutionTransaction,
-          values: [firstSolutionVersionId, currentSoludionId],
-        },
-      ];
-
-      await getAvatar({
-        variables: {
-          tags: attachmentAvatarTags,
-          owner: state.solution.node.owner.address,
-        },
-      });
-    })();
-  }, [state]);
 
   useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
@@ -365,7 +321,8 @@ const ReportsChat = () => {
                   )}
                   <div className='flex flex-col'>
                     <span className='font-bold text-sm sm:text-lg lg:text-xl'>
-                      {findTag(state.solution, 'solutionName')}
+                      {findTag(state.solution, 'solutionName') ||
+                        'Arbitrum CollabTech: LTIPP Retrospective'}
                     </span>
                     <span className='text-xs lg:text-base hidden sm:inline-block text-gray-500'>
                       {state.solution.node.id}

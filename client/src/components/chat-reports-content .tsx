@@ -45,6 +45,7 @@ import {
   ArticleRounded,
   ChatRounded,
   CloseRounded,
+  HourglassBottomRounded,
   NoteAddRounded,
   SendRounded,
 } from '@mui/icons-material';
@@ -68,10 +69,12 @@ import {
   PROTOCOL_VERSION,
   RETROSPECTIVE_SOLUTION,
   TAG_NAMES,
+  secondInMS,
 } from '@/constants';
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { findTag } from '@/utils/common';
 import Message from './message';
+import { debounce } from 'lodash';
 
 const ChatReportsContent = ({
   currentConversationId,
@@ -94,7 +97,9 @@ const ChatReportsContent = ({
   const [generateLoading, setGenerateLoading] = useState(false);
   const [currentReportId, setCurrentReportId] = useState('');
   const [messages, setMessages] = useState([] as IMessage[]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [isWaitingResponse, setIsWaitingResponse] = useState(false);
 
   const [reportIsGenerated, setReportIsGenerated] = useState(false);
   const [requestParams, setRequestParams] = useState({
@@ -140,13 +145,14 @@ const ChatReportsContent = ({
   ] = useLazyQuery(responsesQuery);
 
   useEffect(() => {
-    if (throwawayAddr) {
+    if (throwawayAddr && currentAddress) {
       setRequestParams((previousParams) => ({
         ...previousParams,
         userAddrs: [throwawayAddr],
+        requestCaller: currentAddress,
       }));
     }
-  }, [throwawayAddr]);
+  }, [throwawayAddr, currentAddress]);
 
   useEffect(() => {
     setRequestParams((previousParams) => ({
@@ -176,6 +182,8 @@ const ChatReportsContent = ({
       }));
       setReportIsGenerated(false);
       setSafeHtmlStr('');
+
+      loadExistingChatPrompts();
     }
   }, [requestsData]);
 
@@ -215,127 +223,147 @@ const ChatReportsContent = ({
     setSafeHtmlStr,
   ]);
 
-  const handleSetReportGenerated = useCallback(async () => {
-    try {
-      const tags = [
-        { name: 'Protocol-Name', value: 'FairAI' },
-        { name: 'Protocol-Version', value: '2.0' },
-        { name: 'Request-Type', value: 'Report' },
-        { name: 'Operation-Name', value: 'Inference Request' },
-        { name: 'Model-Name', value: 'Llama3:70B' },
-        { name: 'Request-Caller', value: currentAddress },
-        { name: 'Conversation-ID', value: currentConversationId.toString() },
-        { name: 'Solution-Transaction', value: state.solution.node.id },
-        { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
-        { name: 'Transaction-Origin', value: 'FairAI Browser' },
-        { name: 'Content-Type', value: 'text/plain' },
-        { name: 'Unix-Time', value: Date.now().toString() },
-      ];
+  const handleSetReportGenerated = debounce(
+    useCallback(async () => {
+      try {
+        setGenerateLoading(true);
+        const tags = [
+          { name: 'Protocol-Name', value: 'FairAI' },
+          { name: 'Protocol-Version', value: '2.0' },
+          { name: 'Request-Type', value: 'Report' },
+          { name: 'Operation-Name', value: 'Inference Request' },
+          { name: 'Model-Name', value: 'Llama3:70B' },
+          { name: 'Request-Caller', value: currentAddress },
+          { name: 'Conversation-ID', value: currentConversationId.toString() },
+          { name: 'Solution-Transaction', value: state.solution.node.id },
+          { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
+          { name: 'Transaction-Origin', value: 'FairAI Browser' },
+          { name: 'Content-Type', value: 'text/plain' },
+          { name: 'Unix-Time', value: Date.now().toString() },
+        ];
 
-      const id = await customUpload('Generate Report', tags);
-      setRequestIds([id]);
-      await sendThrowawayUSDC(
-        currentAddress as `0x${string}`,
-        state.defaultOperator.evmWallet,
-        state.defaultOperator.operatorFee,
-        id,
-      );
+        const id = await customUpload('Generate Report', tags);
+        setRequestIds([id]);
+        await sendThrowawayUSDC(
+          currentAddress as `0x${string}`,
+          state.defaultOperator.evmWallet,
+          state.defaultOperator.operatorFee,
+          id,
+        );
 
-      enqueueSnackbar('Report generation request sent.', { variant: 'success' });
-      // update balance after payments
-      // activate polling
-      setResponseParams((previousParams) => ({
-        ...previousParams,
-        lastRequestId: id,
-        conversationId: currentConversationId,
-      }));
-      setGenerateLoading(true);
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('An error ocurred.', {
-        variant: 'error',
-      });
-    }
-  }, [currentConversationId, state, currentAddress, customUpload]);
+        enqueueSnackbar('Report generation request sent.', { variant: 'success' });
+        // update balance after payments
+        // activate polling
+        setResponseParams((previousParams) => ({
+          ...previousParams,
+          lastRequestId: id,
+          conversationId: currentConversationId,
+        }));
+      } catch (error) {
+        setGenerateLoading(false);
+        console.error(error);
+        enqueueSnackbar('An error ocurred.', {
+          variant: 'error',
+        });
+      }
+    }, [currentConversationId, state, currentAddress, customUpload]),
+    secondInMS,
+  );
 
-  const newPrompt = useCallback(async () => {
-    if (!inputValue) {
-      return;
-    }
+  const newPrompt = debounce(
+    useCallback(async () => {
+      if (!inputValue) {
+        return;
+      }
+      setIsWaitingResponse(true);
 
-    try {
-      const timestamp = Date.now() / 1000;
-      const tags = [
-        { name: 'Protocol-Name', value: 'FairAI' },
-        { name: 'Protocol-Version', value: '2.0' },
-        { name: 'Request-Type', value: 'Prompt' },
-        { name: 'Operation-Name', value: 'Inference Request' },
-        { name: 'Model-Name', value: 'Llama3:70B' },
-        { name: 'Request-Caller', value: currentAddress },
-        { name: 'Conversation-ID', value: currentConversationId.toString() },
-        { name: 'Solution-Transaction', value: state.solution.node.id },
-        { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
-        { name: 'Transaction-Origin', value: 'FairAI Browser' },
-        { name: 'Content-Type', value: 'text/plain' },
-        { name: 'Unix-Time', value: timestamp.toString() },
-        { name: 'Report-Transaction', value: currentReportId },
-      ];
+      try {
+        const timestamp = Date.now() / 1000;
+        const tags = [
+          { name: 'Protocol-Name', value: 'FairAI' },
+          { name: 'Protocol-Version', value: '2.0' },
+          { name: 'Request-Type', value: 'Prompt' },
+          { name: 'Operation-Name', value: 'Inference Request' },
+          { name: 'Model-Name', value: 'Llama3:70B' },
+          { name: 'Request-Caller', value: currentAddress },
+          { name: 'Conversation-ID', value: currentConversationId.toString() },
+          { name: 'Solution-Transaction', value: state.solution.node.id },
+          { name: 'Solution-Operator', value: state.defaultOperator.arweaveWallet },
+          { name: 'Transaction-Origin', value: 'FairAI Browser' },
+          { name: 'Content-Type', value: 'text/plain' },
+          { name: 'Unix-Time', value: timestamp.toString() },
+          { name: 'Report-Transaction', value: currentReportId },
+        ];
 
-      const id = await customUpload(inputValue, tags);
-      setRequestIds([id]);
-      await sendThrowawayUSDC(
-        currentAddress as `0x${string}`,
-        state.defaultOperator.evmWallet,
-        state.defaultOperator.operatorFee,
-        id,
-      );
+        const id = await customUpload(inputValue, tags);
+        setRequestIds([id]);
+        await sendThrowawayUSDC(
+          currentAddress as `0x${string}`,
+          state.defaultOperator.evmWallet,
+          state.defaultOperator.operatorFee,
+          id,
+        );
 
-      enqueueSnackbar('Report prompt request sent.', { variant: 'success' });
-      setInputValue('');
-      const newMessage: IMessage = {
-        id,
-        timestamp,
-        msg: inputValue,
-        type: 'request',
-        contentType: 'text/plain',
-        height: 0,
-        cid: currentConversationId,
-        from: currentAddress,
-        to: state.defaultOperator.arweaveWallet,
-        tags: tags,
-      };
-      // update balance after payments
-      setMessages((prev) => prev.concat([newMessage]));
-      // activate polling
-      stopReportAnswersPolling(); // stop any previous polling
-      const variables = {
-        tags: [
-          { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-          { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-          { name: 'Request-Transaction', values: [id] },
-        ],
-        owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
-        first: 10,
-      };
-      getReportAnswers({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('An error ocurred.', {
-        variant: 'error',
-      });
-    }
-  }, [currentConversationId, inputValue, currentReportId, state, currentAddress, customUpload]);
+        enqueueSnackbar('Report prompt request sent.', { variant: 'success' });
+        setInputValue('');
+        const newMessage: IMessage = {
+          id,
+          timestamp,
+          msg: inputValue,
+          type: 'request',
+          contentType: 'text/plain',
+          height: 0,
+          cid: currentConversationId,
+          from: currentAddress,
+          to: state.defaultOperator.arweaveWallet,
+          tags: tags,
+        };
+        // update balance after payments
+        setMessages((prev) => prev.concat([newMessage]));
+        // activate polling
+        stopReportAnswersPolling(); // stop any previous polling
+        const variables = {
+          tags: [
+            { name: 'Request-Transaction', values: [id] },
+            { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+            { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+            { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
+          ],
+          owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
+          first: 10,
+        };
+        getReportAnswers({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
+      } catch (error) {
+        setIsWaitingResponse(false);
+        console.error(error);
+        enqueueSnackbar('An error ocurred.', {
+          variant: 'error',
+        });
+      }
+    }, [
+      currentConversationId,
+      inputValue,
+      currentReportId,
+      state,
+      currentAddress,
+      customUpload,
+      setIsWaitingResponse,
+    ]),
+    secondInMS,
+  );
+
   const [showLearnMoreChat, setShowLearnMoreChat] = useState(false);
-  const handleSetShowChat = useCallback(() => {
+
+  const loadExistingChatPrompts = useCallback(() => {
     // load prompts
     const tags = [
-      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
-      { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
       { name: TAG_NAMES.solutionTransaction, values: [RETROSPECTIVE_SOLUTION] },
       { name: 'Conversation-ID', values: [currentConversationId.toString()] },
       { name: 'Request-Type', values: ['Prompt'] },
+      { name: 'Request-Caller', values: [currentAddress] },
+      { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
+      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
     ];
 
     getReportPrompts({
@@ -351,8 +379,13 @@ const ChatReportsContent = ({
       nextFetchPolicy: 'network-only',
       notifyOnNetworkStatusChange: true,
     });
+  }, [currentAddress, currentConversationId, throwawayAddr, getReportPrompts]);
+
+  const handleSetShowChat = useCallback(() => {
     setShowLearnMoreChat((prev) => !prev);
-  }, [throwawayAddr, currentConversationId, setShowLearnMoreChat, getReportPrompts]);
+    // get reportPrompts
+    loadExistingChatPrompts();
+  }, [throwawayAddr, currentConversationId, setShowLearnMoreChat, loadExistingChatPrompts]);
 
   useEffect(() => {
     (async () => {
@@ -364,6 +397,8 @@ const ChatReportsContent = ({
         const newMessages = reportAnswersData.transactions.edges.filter(
           (el: IEdge) => !messages.find((msg) => msg.id === el.node.id),
         );
+
+        setLoadingMessages(true);
         for (const tx of newMessages) {
           const data = await getData(tx.node.id);
           const newMessage: IMessage = {
@@ -383,6 +418,7 @@ const ChatReportsContent = ({
 
           temp.push(newMessage);
         }
+        setLoadingMessages(false);
 
         // sort messages by timestamp
         temp.sort((a, b) => a.timestamp - b.timestamp);
@@ -391,6 +427,7 @@ const ChatReportsContent = ({
       }
     })();
   }, [reportAnswersData]);
+
   useEffect(() => {
     const temp: IMessage[] = [];
     (async () => {
@@ -403,6 +440,8 @@ const ChatReportsContent = ({
           (el: IEdge) => !messages.find((msg) => msg.id === el.node.id),
         );
         // setMessages((prev) => prev.concat(newMessages));
+
+        setLoadingMessages(true);
         for (const tx of newMessages) {
           const data = await getData(tx.node.id);
           const newMessage: IMessage = {
@@ -427,10 +466,10 @@ const ChatReportsContent = ({
           getReportAnswers({
             variables: {
               tags: [
-                { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-                { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-                { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
                 { name: 'Request-Transaction', values: requestIds },
+                { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+                { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+                { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
               ],
               owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
               first: 1,
@@ -439,6 +478,7 @@ const ChatReportsContent = ({
             notifyOnNetworkStatusChange: true,
           });
         }
+        setLoadingMessages(false);
       }
       // sort messages by timestamp
       temp.sort((a, b) => a.timestamp - b.timestamp);
@@ -446,6 +486,19 @@ const ChatReportsContent = ({
       setMessages((prev) => prev.concat(temp)); // add new messages to the list
     })();
   }, [reportPromptsData]);
+
+  useEffect(() => {
+    const lastRequest = messages.filter((el) => el.type === 'request').pop();
+    const hasResponse =
+      lastRequest &&
+      messages.find(
+        (el) =>
+          el.type === 'response' &&
+          el.tags.find((tag) => tag.name === 'Request-Transaction')?.value === lastRequest.id,
+      );
+
+    setIsWaitingResponse(!!lastRequest && !hasResponse);
+  }, [messages]);
 
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value),
@@ -456,17 +509,9 @@ const ChatReportsContent = ({
   const handleCopySettings = useCallback((_: ITag[]) => {}, []);
 
   const waitingResponseFragment = useCallback(() => {
-    const lastRequest = messages.filter((el) => el.type === 'request').pop();
-    const hasResponse =
-      lastRequest &&
-      messages.find(
-        (el) =>
-          el.type === 'response' &&
-          el.tags.find((tag) => tag.name === 'Request-Transaction')?.value === lastRequest.id,
-      );
     return (
       <Container maxWidth={false} sx={{ paddingTop: '16px', opacity: '0.8', mb: '16px' }}>
-        {lastRequest && !hasResponse && (
+        {isWaitingResponse && (
           <div
             className={'flex w-full gap-4 md:flex-nowrap items-end justify-start flex-wrap-reverse'}
           >
@@ -490,7 +535,7 @@ const ChatReportsContent = ({
         )}
       </Container>
     );
-  }, [messages]);
+  }, [isWaitingResponse]);
 
   if (loading || generateLoading) {
     return (
@@ -530,7 +575,15 @@ const ChatReportsContent = ({
           <div>
             <p className='text-center flex gap-1'>
               <ArticleRounded className='primary-text-color' />
-              <strong>Report - {new Date().toLocaleString()}</strong>
+              <strong>
+                Report -{' '}
+                {findTag(responsesPollingData.transactions.edges[0], 'unixTime')
+                  ? new Date(
+                      Number(findTag(responsesPollingData.transactions.edges[0], 'unixTime')) *
+                        1000,
+                    ).toLocaleString()
+                  : '(New)'}
+              </strong>
             </p>
           </div>
         </Divider>
@@ -539,26 +592,29 @@ const ChatReportsContent = ({
           {safeHtmlStr}
         </Markdown>
 
-        {!showLearnMoreChat && (
-          <div className='flex justify-center p-2 mb-6 animate-scale-in animation-delay-200ms'>
-            <StyledMuiButton className='primary' onClick={handleSetShowChat}>
-              <ChatRounded style={{ width: '20px' }} />
-              Learn or ask more about this report
-            </StyledMuiButton>
+        {showLearnMoreChat && messages.length > 0 && (
+          <div className='px-4'>
+            {messages.map((el: IMessage, index: number) => (
+              <Container
+                key={el.id}
+                maxWidth={false}
+                sx={{ paddingTop: '16px', mb: '16px' }}
+                className='message-container'
+              >
+                <Message message={el} index={index} copySettings={handleCopySettings} />
+              </Container>
+            ))}
           </div>
         )}
 
-        {messages.map((el: IMessage, index: number) => (
-          <Container
-            key={el.id}
-            maxWidth={false}
-            sx={{ paddingTop: '16px', mb: '16px' }}
-            className='message-container'
-          >
-            <Message message={el} index={index} copySettings={handleCopySettings} />
-          </Container>
-        ))}
         {waitingResponseFragment()}
+
+        {loadingMessages && (
+          <div className='w-full flex gap-2 justify-center p-4 font-bold'>
+            <HourglassBottomRounded className='primary-text-color' /> Loading previous messages ...
+          </div>
+        )}
+
         {showLearnMoreChat && (
           <div className='w-100 px-10 mb-6 flex gap-3 items-center'>
             <Tooltip title='Hide this chat box'>
@@ -583,8 +639,18 @@ const ChatReportsContent = ({
             <StyledMuiButton
               className='primary animate-slide-right animation-delay-300ms'
               onClick={newPrompt}
+              disabled={isWaitingResponse || inputValue.length === 0}
             >
               Send <SendRounded />
+            </StyledMuiButton>
+          </div>
+        )}
+
+        {!showLearnMoreChat && (
+          <div className='flex justify-center p-2 mb-6 animate-scale-in animation-delay-200ms'>
+            <StyledMuiButton className='primary' onClick={handleSetShowChat}>
+              <ChatRounded style={{ width: '20px' }} />
+              Learn or ask more about this report
             </StyledMuiButton>
           </div>
         )}
@@ -629,7 +695,11 @@ const ChatReportsContent = ({
           className='flex justify-center p-2 mb-4 animate-slide-down'
           style={{ animationDelay: '0.2s' }}
         >
-          <StyledMuiButton className='primary' onClick={handleSetReportGenerated}>
+          <StyledMuiButton
+            className='primary'
+            onClick={handleSetReportGenerated}
+            disabled={loading || generateLoading}
+          >
             <NoteAddRounded style={{ width: '20px' }} />
             Generate Report
           </StyledMuiButton>

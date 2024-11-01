@@ -16,6 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
+import LtippRetrospectiveOnboarding from '@/components/ltipp-retrospective-onboarding';
 import { LTIPP_SOLUTION, RETROSPECTIVE_SOLUTION, STIP_SOLUTION } from '@/constants';
 import useOperators from '@/hooks/useOperators';
 import { useLazyQuery } from '@apollo/client';
@@ -29,6 +30,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [solutions, setSolutions] = useState<findByTagsQuery['transactions']['edges']>([]);
+  const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(true);
 
   const [getSolution, { data }] = useLazyQuery(findByIdDocument);
   const { validTxs: operatorsData, loading } = useOperators(solutions);
@@ -45,8 +47,8 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
     } else if (pathname.includes('stip')) {
       // fetch STIP solution
       getSolution({ variables: { ids: [STIP_SOLUTION] } });
-    } else if (pathname.includes('reports-chat')) {
-      // use hardcoded operator for retrospective solution
+    } else if (pathname.includes('collabtech-hackathon-decide')) {
+      // use hardcoded operator for retrospective solu               tion
       // getSolution({ variables: { ids: [RETROSPECTIVE_SOLUTION] } });
       //
       // This is a hardcoded operator for the retrospective solution.
@@ -67,8 +69,12 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
             solution: {
               node: {
                 id: RETROSPECTIVE_SOLUTION,
-                owner: { address: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q' },
+                owner: { address: 'wGT06tKaEGXuF6QR2dXqqmO7B_TF41rELP4D1IX4-IA' },
                 tags: [
+                  {
+                    name: 'Solution-Name',
+                    value: 'Arbitrum Collabtech DECIDE: LTIPP Retrospective',
+                  },
                   { name: 'Output', value: 'text' },
                   { name: 'Supported-Models', value: '[]' },
                 ],
@@ -106,7 +112,18 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
     }
   }, [data]);
 
-  if (!state?.defaultOperator) {
+  const handleSetOnboardingPopupState = () => {
+    setIsOnboardingPopupOpen(!isOnboardingPopupOpen);
+  };
+
+  if (pathname.includes('collabtech-hackathon-decide') && isOnboardingPopupOpen) {
+    return (
+      <LtippRetrospectiveOnboarding
+        isOnboardingPopupOpen={isOnboardingPopupOpen}
+        handleSetOnboardingPopupState={handleSetOnboardingPopupState}
+      />
+    );
+  } else if (!state?.defaultOperator) {
     return (
       <Backdrop
         sx={{

@@ -118,7 +118,7 @@ const Solution = ({
   const handleSolutionClick = useCallback(() => {
     // temporary
     if (tx.node.id === RETROSPECTIVE_SOLUTION) {
-      navigate('/reports-chat', {
+      navigate('collabtech-hackathon-decide', {
         state: {
           defaultOperator: operatorsData[0] ?? undefined,
           availableOperators: operatorsData ?? [],
@@ -254,8 +254,10 @@ const Solution = ({
               }}
               title={
                 <Typography variant='h3'>
-                  {tx.node.tags.find((el) => el.name === 'Solution-Name')?.value ??
-                    'Name Not Available'}
+                  {tx.node.id === RETROSPECTIVE_SOLUTION
+                    ? 'Arbitrum Collabtech DECIDE: LTIPP Retrospective'
+                    : tx.node.tags.find((el) => el.name === 'Solution-Name')?.value ??
+                      'Name Not Available'}
                 </Typography>
               }
               subheader={`${getTimePassed()}`}
