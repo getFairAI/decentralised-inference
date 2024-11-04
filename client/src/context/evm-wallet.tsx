@@ -103,7 +103,7 @@ interface IEVMWalletContext extends EVMWalletState {
   switchChain: () => void;
   disconnect: () => void;
   getPubKey: () => Promise<string>;
-  decrypt: (data: `0x${string}`) => Promise<string>;
+  decrypt: (data: string) => Promise<string>;
 }
 
 const walletReducer = (state: EVMWalletState, action: EVMWalletAction) => {
@@ -278,10 +278,11 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
           setPreviousProvider('');
         },
         getPubKey,
-        decrypt: async (data: `0x${string}`) => {
+        decrypt: async (data: string) => {
+          const hexData = `0x${Buffer.from(data, 'utf8').toString('hex')}`;
           const result = await currentProvider?.provider.request({
             method: 'eth_decrypt',
-            params: [data, state.currentAddress],
+            params: [hexData, state.currentAddress],
           });
 
           try {

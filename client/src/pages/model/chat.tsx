@@ -1254,7 +1254,7 @@ const Chat = () => {
       // decrypt the last response if it has not been decrypted yet
       lastMessageData = lastResponse?.decData
         ? lastResponse.decData
-        : await decrypt(lastMessageData as `0x${string}`);
+        : await decrypt(lastMessageData as string);
     } else {
       // ignore
     }

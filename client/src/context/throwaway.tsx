@@ -192,7 +192,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
           `https://arweave.net/${proxyData.data.transactions.edges[0].node.id}`,
         );
         const encData = await result.text();
-        const decData = await decrypt(encData as `0x${string}`);
+        const decData = await decrypt(encData);
         dispatch({ type: 'set-proxy-found-in-arweave', data: decData });
       } else if (!isNetworkRequestInFlight(proxyData.networkStatus) && proxyData.called) {
         // did not find proxy key on arweave; generate new one

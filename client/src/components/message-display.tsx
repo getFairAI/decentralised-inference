@@ -99,12 +99,12 @@ const MessageDisplay = ({ message, forDetails }: { message: IMessage; forDetails
   const handleDecrypt = useCallback(async () => {
     if (message?.msg && type === 'encrypted' && message.contentType?.includes('text')) {
       const data = JSON.parse(message.msg as string);
-      const decrypted = await decrypt(JSON.stringify(data['encPrompt']) as `0x${string}`);
+      const decrypted = await decrypt(JSON.stringify(data['encPrompt']));
       message.decData = decrypted;
       setContent(decrypted);
       setType('text');
     } else if (message?.msg && type === 'encrypted') {
-      const decrypted = await decrypt(message.msg as `0x${string}`);
+      const decrypted = await decrypt(message.msg as string);
       try {
         atob(decrypted);
         setContent(`data:image/png;base64,${decrypted}`);
