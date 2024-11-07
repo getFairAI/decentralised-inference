@@ -53,7 +53,7 @@ export const ArbitrumLoadingContainer = styled('div')(() => ({
     borderRadius: '5px',
     backgroundColor: '#9ecced',
     color: '#9ecced',
-    boxShadow: '9999px 0 0 -5px',
+    boxShadow: '0px 0px 8px grey',
     animation: 'dot-pulse 1.5s infinite linear',
     animationDelay: '0.25s',
   },
@@ -67,7 +67,6 @@ export const ArbitrumLoadingContainer = styled('div')(() => ({
     borderRadius: '5px',
     backgroundColor: '#9ecced',
     color: '#9ecced',
-    boxShadow: '9984px 0 0 -5px',
     animation: 'dot-pulse-before 1.5s infinite linear',
     animationDelay: '0s',
   },
@@ -81,7 +80,6 @@ export const ArbitrumLoadingContainer = styled('div')(() => ({
     borderRadius: '5px',
     backgroundColor: '#9ecced',
     color: '#9ecced',
-    boxShadow: '10014px 0 0 -5px',
     animation: 'dot-pulse-after 1.5s infinite linear',
     animationDelay: '0.5s',
   },
@@ -195,20 +193,27 @@ export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
   },
 
   '&.fully-rounded': {
-    minHeight: 'fit-content',
+    minHeight: '45px',
     borderRadius: '50%',
+    minWidth: '45px',
     width: '45px',
     height: '45px',
     padding: '0px',
 
     '&.smaller': {
+      fontSize: '90%',
       width: '34px',
       height: '34px',
+      minWidth: '34px',
+      minHeight: '34px',
     },
 
     '&.mini': {
+      fontSize: '80%',
       width: '30px',
       height: '30px',
+      minWidth: '30px',
+      minHeight: '30px',
     },
   },
 

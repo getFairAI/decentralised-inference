@@ -21,7 +21,6 @@ import {
   Backdrop,
   CircularProgress,
   Drawer,
-  Fab,
   FormControl,
   IconButton,
   InputAdornment,
@@ -1630,19 +1629,17 @@ const Chat = () => {
                     width={'100%'}
                     sx={{
                       position: 'absolute',
-                      top: '40px',
+                      top: '100px',
                       width: inputWidth,
                     }}
                   >
-                    <Fab
-                      variant='extended'
-                      size='medium'
-                      color='primary'
+                    <StyledMuiButton
                       aria-label='Load More'
                       onClick={handleLoadMore}
+                      className='secondary'
                     >
-                      <Typography>Load More</Typography>
-                    </Fab>
+                      Load More
+                    </StyledMuiButton>
                   </Box>
                 </Zoom>
                 <Box

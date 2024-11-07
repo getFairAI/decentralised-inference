@@ -16,11 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import {
-  TAG_NAMES,
-  MARKETPLACE_EVM_ADDRESS,
-  REGISTRATION_USDC_FEE,
-} from '@/constants';
+import { TAG_NAMES, MARKETPLACE_EVM_ADDRESS, REGISTRATION_USDC_FEE } from '@/constants';
 import { useQuery, NetworkStatus } from '@apollo/client';
 import { useState, useEffect, useMemo } from 'react';
 import _ from 'lodash';
@@ -34,6 +30,7 @@ import {
   findByIdDocument,
 } from '@fairai/evm-sdk';
 import { OperatorData } from '@/interfaces/common';
+import arweave from '@/utils/arweave';
 
 const currentOperatorRegistrations = [
   'TJwdKL6m7mGGyWpjp_V2tO3UXilvylPdduLSstQQDyk',
@@ -76,6 +73,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
   const [txs, setTxs] = useState<findByTagsQuery['transactions']['edges']>([]);
   const [validTxs, setValidTxs] = useState<OperatorData[]>([]);
   const [filtering, setFiltering] = useState(false);
+  const [startBlockHeight, setStartBlockHeight] = useState(0);
 
   const ids = useMemo(() => txs.map((tx) => tx.node.id), [txs]);
   const owners = useMemo(() => txs.map((tx) => tx.node.owner.address), [txs]);
@@ -84,9 +82,10 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
     findByIdDocument,
     {
       variables: {
-        ids: currentOperatorRegistrations
+        ids: currentOperatorRegistrations,
       },
       notifyOnNetworkStatusChange: true,
+      skip: solutions.length === 0,
     },
   );
 
@@ -96,25 +95,29 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
     variables: {
       tags: [
         {
-          name: 'Protocol-Name',
-          values: ['FairAI'],
+          name: 'Operation-Name',
+          values: ['Operator Active Proof'],
         },
         {
           name: 'Protocol-Version',
           values: ['2.0'],
         },
         {
-          name: 'Operation-Name',
-          values: ['Operator Active Proof'],
+          name: 'Protocol-Name',
+          values: ['FairAI'],
         },
       ],
       owners: Array.from(new Set(owners)),
       first: Array.from(new Set(owners)).length, // this should be enough to get proofs for all operators in the last half hour if they are behaving correctly
-      // minBlock: 1519194, // query only after block 1519219
+      minBlock: startBlockHeight, // query only after block 1519219
     },
-    skip: owners.length === 0 || ids.length === 0,
+    skip: owners.length === 0 || ids.length === 0 || startBlockHeight === 0,
   });
 
+  useEffect(() => {
+    // set start block for 100 blocks before current
+    (async () => setStartBlockHeight((await arweave.blocks.getCurrent()).height - 100))();
+  }, []); // run once
   /**
    * @description Effect that runs on data changes;
    * it is responsible to set the nextPage status and to update current loaded transactionsm
@@ -158,14 +161,13 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
 
   useEffect(() => {
     if (proofData /* && cancellationData */) {
-      const availableOperators = txs.filter(
-        (op) =>
-          proofData?.transactions.edges.find(
-            (proof) =>
-              proof.node.owner.address === op.node.owner.address &&
-              Number(proof.node.tags.find((tag) => tag.name === 'Unix-Time')?.value) >
-                Date.now() / 1000 - 45 * 60, // needs valid proof in the last 45 min (30min + 15min for tx to be included in network for sure)
-          ),
+      const availableOperators = txs.filter((op) =>
+        proofData?.transactions.edges.find(
+          (proof) =>
+            proof.node.owner.address === op.node.owner.address &&
+            Number(proof.node.tags.find((tag) => tag.name === 'Unix-Time')?.value) >
+              Date.now() / 1000 - 45 * 60, // needs valid proof in the last 45 min (30min + 15min for tx to be included in network for sure)
+        ),
       );
 
       (async () => {
@@ -176,7 +178,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
           fee: Number(el.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value),
         }));
 
-        const evmWalletsMap = new Map<string, { evmWallet: `0x${string}`, publicKey: string }>();
+        const evmWalletsMap = new Map<string, { evmWallet: `0x${string}`; publicKey: string }>();
         for (const operator of availableOperators) {
           // operator fee
           const operatorFee = Number(
@@ -184,14 +186,14 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
           );
 
           // operator evm wallet
-          let operatorEvmResult: { evmWallet: `0x${string}`, publicKey: string } | undefined;
+          let operatorEvmResult: { evmWallet: `0x${string}`; publicKey: string } | undefined;
           if (evmWalletsMap.has(operator.node.owner.address)) {
             operatorEvmResult = evmWalletsMap.get(operator.node.owner.address);
           } else {
             operatorEvmResult = await getLinkedEvmWallet(operator.node.owner.address);
             evmWalletsMap.set(operator.node.owner.address, operatorEvmResult!);
           }
-          
+
           const solutionId = operator.node.tags.find((tag) => tag.name === 'Solution-Transaction')
             ?.value as string;
           const curatorEvmAddress = solutions
@@ -227,7 +229,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
               operatorFee,
               solutionId,
             });
-            
+
             // "stream updates"
           }
         }

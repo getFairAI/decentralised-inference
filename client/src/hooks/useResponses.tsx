@@ -17,32 +17,24 @@
  */
 
 import { useLazyQuery } from '@apollo/client';
-import FairSDKWeb from '@fair-protocol/sdk/web';
 import { useEffect } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
 import { PROTOCOL_NAME, PROTOCOL_VERSION, INFERENCE_RESPONSE } from '@/constants';
+import { responsesQuery } from '@/queries/graphql';
 
 const useResponses = ({
   reqIds,
   conversationId,
   lastRequestId,
   first,
+  owners,
 }: {
   reqIds: string[];
   conversationId: number;
   lastRequestId?: string;
   first?: number;
+  owners?: string[];
 }) => {
-  const { query: responsesQuery } = FairSDKWeb.utils.getResponsesQuery(
-    reqIds,
-    undefined,
-    undefined,
-    undefined,
-    [],
-    conversationId,
-    first,
-  );
-
   const [
     getChatResponses,
     {
@@ -63,15 +55,21 @@ const useResponses = ({
   useEffect(() => {
     const variables = {
       tags: [
+        { name: 'Request-Transaction', values: reqIds },
+        { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
         { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
         { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-        { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-        { name: 'Request-Transaction', values: reqIds },
       ],
+      owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
       first: 10,
     };
     if (reqIds.length > 0) {
-      getChatResponses({ variables, fetchPolicy: 'network-only', nextFetchPolicy: 'network-only' });
+      getChatResponses({
+        variables,
+        fetchPolicy: 'network-only',
+        nextFetchPolicy: 'network-only',
+        notifyOnNetworkStatusChange: true,
+      });
     }
 
     if (lastRequestId) {
@@ -79,16 +77,17 @@ const useResponses = ({
       const pollReqIds = [lastRequestId];
       const variables = {
         tags: [
+          { name: 'Request-Transaction', values: pollReqIds },
+          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
           { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
           { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-          { name: 'Request-Transaction', values: pollReqIds },
         ],
+        owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
         first: 10,
       };
-      pollResponses({ variables, pollInterval: 10000 });
+      pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
     }
-  }, [reqIds, lastRequestId, conversationId, first]);
+  }, [reqIds, lastRequestId, conversationId, first, owners]);
 
   useEffect(() => {
     if (responsesData?.transactions?.pageInfo?.hasNextPage) {

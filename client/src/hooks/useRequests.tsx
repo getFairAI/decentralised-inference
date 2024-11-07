@@ -16,9 +16,16 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { INFERENCE_REQUEST, PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
+import {
+  INFERENCE_REQUEST,
+  PROTOCOL_NAME,
+  PROTOCOL_VERSION,
+  RETROSPECTIVE_SOLUTION,
+  TAG_NAMES,
+} from '@/constants';
+import { irysQuery } from '@/queries/graphql';
 import { commonUpdateQuery } from '@/utils/common';
-import { NetworkStatus, gql, useLazyQuery } from '@apollo/client';
+import { NetworkStatus, useLazyQuery } from '@apollo/client';
 import { useEffect, useState } from 'react';
 
 const useRequests = ({
@@ -26,34 +33,15 @@ const useRequests = ({
   solutionTx,
   conversationId,
   first,
+  requestCaller,
 }: {
   userAddrs: string[];
+  requestCaller?: string;
   solutionTx?: string;
   conversationId?: number;
   first?: number;
 }) => {
   const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
-  const irysQuery = gql`
-    query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String) {
-      transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
-        edges {
-          cursor
-          node {
-            id
-            tags {
-              name
-              value
-            }
-            address
-          }
-        }
-        pageInfo {
-          endCursor
-          hasNextPage
-        }
-      }
-    }
-  `;
 
   const [
     getChatRequests,
@@ -79,8 +67,19 @@ const useRequests = ({
       tags.push({ name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
     }
 
-    if (conversationId) {
+    if (conversationId && solutionTx === RETROSPECTIVE_SOLUTION) {
+      //
+      tags.push({ name: 'Conversation-ID', values: [conversationId.toString()] });
+    } else if (conversationId) {
       tags.push({ name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
+    }
+
+    if (solutionTx === RETROSPECTIVE_SOLUTION) {
+      tags.push({ name: 'Request-Type', values: ['Report'] });
+    }
+
+    if (requestCaller) {
+      tags.push({ name: 'Request-Caller', values: [requestCaller] });
     }
 
     getChatRequests({
@@ -94,6 +93,7 @@ const useRequests = ({
       },
       fetchPolicy: 'network-only',
       nextFetchPolicy: 'network-only',
+      notifyOnNetworkStatusChange: true,
     });
   }, [userAddrs, conversationId, first]);
 

@@ -282,3 +282,4 @@ export const MIN_U_BALANCE = 1;
 
 export const LTIPP_SOLUTION = 'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk';
 export const STIP_SOLUTION = 'zq5_Jvd4miO6QDl42XRpPx9iICDe0AVzanvTepJ_s50';
+export const RETROSPECTIVE_SOLUTION = 'PDacD6onKuLIPp7ap3Cg1gDBFDJjd7TAD_4gNEGpLFw';

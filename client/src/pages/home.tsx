@@ -37,7 +37,7 @@ import { IContractEdge } from '@/interfaces/arweave';
 import { useNavigate } from 'react-router-dom';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { motion } from 'framer-motion';
-import { MIN_U_BALANCE } from '@/constants';
+import { MIN_U_BALANCE, RETROSPECTIVE_SOLUTION } from '@/constants';
 import { StyledMuiButton } from '@/styles/components';
 
 // icons
@@ -411,7 +411,7 @@ export default function Home() {
                   >
                     <Solution
                       tx={tx}
-                      loading={operatorsLoading}
+                      loading={tx.node.id === RETROSPECTIVE_SOLUTION ? false : operatorsLoading}
                       operatorsData={operatorsData.filter((el) => el.solutionId === tx.node.id)}
                       containerRef={containerRef}
                     />

@@ -16,7 +16,8 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { LTIPP_SOLUTION, STIP_SOLUTION } from '@/constants';
+import LtippRetrospectiveOnboarding from '@/components/ltipp-retrospective-onboarding';
+import { LTIPP_SOLUTION, RETROSPECTIVE_SOLUTION, STIP_SOLUTION } from '@/constants';
 import useOperators from '@/hooks/useOperators';
 import { useLazyQuery } from '@apollo/client';
 import { findByIdDocument, findByTagsQuery } from '@fairai/evm-sdk';
@@ -29,6 +30,7 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [solutions, setSolutions] = useState<findByTagsQuery['transactions']['edges']>([]);
+  const [isOnboardingPopupOpen, setIsOnboardingPopupOpen] = useState(true);
 
   const [getSolution, { data }] = useLazyQuery(findByIdDocument);
   const { validTxs: operatorsData, loading } = useOperators(solutions);
@@ -45,6 +47,43 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
     } else if (pathname.includes('stip')) {
       // fetch STIP solution
       getSolution({ variables: { ids: [STIP_SOLUTION] } });
+    } else if (pathname.includes('collabtech-hackathon-decide')) {
+      // use hardcoded operator for retrospective solu               tion
+      // getSolution({ variables: { ids: [RETROSPECTIVE_SOLUTION] } });
+      //
+      // This is a hardcoded operator for the retrospective solution.
+      const operator = {
+        tx: { node: { id: 'LxoOIo8R30RJPSX1x_-Sz6P58ZI-zsYs-oC8b4Cj8MQ' } },
+        evmWallet: '0x9c4E9C275F7E6C17E3e1c8c6BEDF91d835757Fa0',
+        evmPublicKey: 'FLBWkjnXHN7Bn6HwEN88Icdm5L9XulHbeb0Z4dgkzW4=',
+        arweaveWallet: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
+        operatorFee: 0.1,
+        solutionId: RETROSPECTIVE_SOLUTION,
+      };
+      navigate(
+        {},
+        {
+          state: {
+            defaultOperator: operator,
+            availableOperators: [operator],
+            solution: {
+              node: {
+                id: RETROSPECTIVE_SOLUTION,
+                owner: { address: 'wGT06tKaEGXuF6QR2dXqqmO7B_TF41rELP4D1IX4-IA' },
+                tags: [
+                  {
+                    name: 'Solution-Name',
+                    value: 'Arbitrum Collabtech DECIDE: LTIPP Retrospective',
+                  },
+                  { name: 'Output', value: 'text' },
+                  { name: 'Supported-Models', value: '[]' },
+                ],
+              },
+            },
+          },
+          replace: true,
+        },
+      );
     } else {
       // if no solution is present, navigate to home
       navigate('/');
@@ -73,7 +112,18 @@ const ArbitrumGuard = ({ children }: { children: ReactElement }) => {
     }
   }, [data]);
 
-  if (!state?.defaultOperator) {
+  const handleSetOnboardingPopupState = () => {
+    setIsOnboardingPopupOpen(!isOnboardingPopupOpen);
+  };
+
+  if (pathname.includes('collabtech-hackathon-decide') && isOnboardingPopupOpen) {
+    return (
+      <LtippRetrospectiveOnboarding
+        isOnboardingPopupOpen={isOnboardingPopupOpen}
+        handleSetOnboardingPopupState={handleSetOnboardingPopupState}
+      />
+    );
+  } else if (!state?.defaultOperator) {
     return (
       <Backdrop
         sx={{

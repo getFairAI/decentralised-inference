@@ -51,20 +51,25 @@ import { Timeout } from 'react-number-format/types/types';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { Query } from '@irys/query';
 import { useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 // icons
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
-import { motion } from 'framer-motion';
+import { ArticleRounded, FolderCopyRounded } from '@mui/icons-material';
 
 const ConversationElement = ({
   cid,
   currentConversationId,
   setCurrentConversationId,
+  isReportsChat,
+  reportsChatTimestamp,
 }: {
   cid: number;
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
+  isReportsChat?: boolean;
+  reportsChatTimestamp?: number;
 }) => {
   const handleListItemClick = useCallback(
     () => setCurrentConversationId(cid),
@@ -100,7 +105,7 @@ const ConversationElement = ({
           filter: 'brightness(0.9)',
         },
       }}
-      className='plausible-event-name=Change+Conversation+Click'
+      className='plausible-event-name=Change+Report+Click'
     >
       <Typography
         sx={{
@@ -109,11 +114,21 @@ const ConversationElement = ({
           display: 'flex',
           alignItems: 'center',
           textAlign: 'center',
-          gap: 2,
+          gap: isReportsChat ? 0 : 2,
         }}
       >
-        <img src='./icons/comment_icon_fill.svg' style={{ width: 18, opacity: 0.7 }} />
-        Chat {cid}
+        {!isReportsChat && (
+          <>
+            <img src='./icons/comment_icon_fill.svg' style={{ width: 18, opacity: 0.7 }} />
+            {'Chat ' + cid}
+          </>
+        )}
+        {isReportsChat && reportsChatTimestamp && (
+          <>
+            <ArticleRounded />
+            {new Date(reportsChatTimestamp * 1000).toLocaleString()}
+          </>
+        )}
       </Typography>
     </ListItemButton>
   );
@@ -126,6 +141,7 @@ const Conversations = ({
   drawerOpen,
   setDrawerOpen,
   setLayoverOpen,
+  isReportsChat,
 }: {
   currentConversationId: number;
   setCurrentConversationId: Dispatch<SetStateAction<number>>;
@@ -133,8 +149,9 @@ const Conversations = ({
   drawerOpen: boolean;
   setDrawerOpen: Dispatch<SetStateAction<boolean>>;
   setLayoverOpen: Dispatch<SetStateAction<boolean>>;
+  isReportsChat?: boolean;
 }) => {
-  const [conversationIds, setConversationIds] = useState<number[]>([]);
+  const [conversationIds, setConversationIds] = useState<Map<number, number>>(new Map());
   const [filteredConversationIds, setFilteredConversationIds] = useState<number[]>([]);
   const [filterConversations, setFilterConversations] = useState('');
   const [conversationsLoading, setConversationsLoading] = useState(false);
@@ -156,14 +173,14 @@ const Conversations = ({
           'You chose to reject the request, or an error occurred. The feature you were trying to access might get disabled.',
           {
             variant: 'warning',
-            autoHideDuration: 12000,
+            autoHideDuration: 6000,
             style: { fontWeight: 700 },
           },
         );
       }
 
-      setConversationIds([id, ...conversationIds]);
-      setFilteredConversationIds([id, ...conversationIds]);
+      setConversationIds((prev) => prev.set(id, Date.now() / 1000));
+      setFilteredConversationIds((prev) => [...prev, id]);
       setCurrentConversationId(id);
     } catch (error) {
       enqueueSnackbar('Could not Start Conversation', { variant: 'error' });
@@ -202,22 +219,23 @@ const Conversations = ({
           // no conversations yet, create new
           await createNewConversation(1);
           setCurrentConversationId(1);
-          setConversationIds([1]);
+          setConversationIds(new Map([[1, Date.now()]]));
           setFilteredConversationIds([1]);
           setLayoverOpen(false);
         } else {
-          const cids = Array.from(
-            new Set(
-              results.map((el) =>
-                parseFloat(
-                  el.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value as string,
-                ),
-              ),
-            ),
-          );
-          setConversationIds(cids);
-          setFilteredConversationIds(cids);
-          setCurrentConversationId(cids[cids.length - 1]);
+          const newMap = new Map<number, number>();
+          for (const el of results) {
+            const cid = parseFloat(
+              el.tags.find((tag) => tag.name === 'Conversation-Identifier')?.value as string,
+            );
+            const timestamp = parseFloat(
+              el.tags.find((tag) => tag.name === 'Unix-Time')?.value as string,
+            );
+            newMap.set(cid, timestamp);
+          }
+          setConversationIds(newMap);
+          setFilteredConversationIds([...newMap.keys()]);
+          setCurrentConversationId(Array.from(newMap.keys()).pop()!);
         }
         setConversationsLoading(false);
       }
@@ -226,7 +244,7 @@ const Conversations = ({
 
   useEffect(() => {
     (async () => {
-      if (conversationIds && conversationIds.length > 0) {
+      if (conversationIds && conversationIds.size > 0) {
         const filteredIds = [];
         let hasMatch = false;
         for (const el of conversationIds) {
@@ -279,7 +297,7 @@ const Conversations = ({
             filteredIds.push(el);
           }
         }
-        setFilteredConversationIds(filteredIds);
+        setFilteredConversationIds(Array.from(filteredIds.keys()));
       }
     })();
   }, [filterConversations]);
@@ -292,7 +310,7 @@ const Conversations = ({
 
   const handleAddConversation = useCallback(async () => {
     setLayoverOpen(true);
-    const last = Math.max(...conversationIds);
+    const last = Math.max(...Array.from(conversationIds.keys()));
     await createNewConversation(last + 1);
     setFilterConversations('');
     setCurrentConversationId(last + 1);
@@ -340,11 +358,16 @@ const Conversations = ({
               marginLeft: '10px',
             }}
           >
-            <img
-              src='./icons/comment_icon_fill_primarycolor.svg'
-              style={{ width: 30, height: 30 }}
-            />
-            Chats
+            {!isReportsChat && (
+              <img
+                src='./icons/comment_icon_fill_primarycolor.svg'
+                style={{ width: 30, height: 30 }}
+              />
+            )}
+            {isReportsChat && (
+              <FolderCopyRounded style={{ color: '#3aaaaa', width: '30px', height: '30px' }} />
+            )}
+            {!isReportsChat ? 'Chats' : 'Reports'}
           </Typography>
 
           {drawerOpen && (
@@ -357,10 +380,10 @@ const Conversations = ({
               }}
               className='flex: 0 0 fit-content'
             >
-              <Tooltip title={'Hide the chats drawer'}>
+              <Tooltip title={'Hide this drawer'}>
                 <StyledMuiButton
                   onClick={toggleDrawer}
-                  className='plausible-event-name=Hide+Conversation+Click secondary'
+                  className='plausible-event-name=Hide+Reports+Click secondary'
                 >
                   <ArrowBackIosNewRoundedIcon style={{ width: 18 }} />
                 </StyledMuiButton>
@@ -422,9 +445,11 @@ const Conversations = ({
             .map((cid) => (
               <ConversationElement
                 cid={cid}
-                key={cid}
+                key={conversationIds.get(cid) ?? cid}
                 currentConversationId={currentConversationId}
                 setCurrentConversationId={setCurrentConversationId}
+                isReportsChat={isReportsChat}
+                reportsChatTimestamp={conversationIds.get(cid)}
               />
             ))
             .sort()}
@@ -434,12 +459,12 @@ const Conversations = ({
         <div
           id={'addConversation'}
           onClick={handleAddConversation}
-          className='plausible-event-name=Add+Conversation+Click'
+          className='plausible-event-name=New+Report+Click'
         >
-          <Tooltip title='Start a new chat'>
+          <Tooltip title={!isReportsChat ? 'Start a new chat' : 'Generate a new report'}>
             <StyledMuiButton className='secondary'>
               <AddIcon style={{ width: '16px' }} />
-              Start New
+              {!isReportsChat ? 'Start New' : 'New Report'}
             </StyledMuiButton>
           </Tooltip>
         </div>

@@ -20,6 +20,7 @@ import {
   MARKETPLACE_ADDRESS,
   SOLUTION_DELETION,
   TAG_NAMES,
+  RETROSPECTIVE_SOLUTION,
 } from '@/constants';
 import FilterContext from '@/context/filter';
 import { IContractEdge } from '@/interfaces/arweave';
@@ -43,7 +44,8 @@ const currentMarketplaceSolutions = [
   'j8wkH4jRdPygr6DY106n9ibq_WLeA1jaoDgJ16PlFJI',
   'RuBfsVIARw1jLKsGjQCrEHL_QBCAmAAIJ0E3UUu5X0w',
   'zq5_Jvd4miO6QDl42XRpPx9iICDe0AVzanvTepJ_s50',
-  'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk'
+  'mcr5GzGYhfP69YU-9eGanEc64zv-b5OooSKmC3dvuFk',
+  RETROSPECTIVE_SOLUTION,
 ];
 
 const useSolutions = (target?: RefObject<HTMLElement>) => {
@@ -61,7 +63,7 @@ const useSolutions = (target?: RefObject<HTMLElement>) => {
     {
       errorPolicy: 'all',
       variables: {
-        ids: currentMarketplaceSolutions
+        ids: currentMarketplaceSolutions,
       },
       notifyOnNetworkStatusChange: true,
     },
@@ -89,14 +91,13 @@ const useSolutions = (target?: RefObject<HTMLElement>) => {
     }
   };
 
-
   useEffect(() => {
     if (networkStatus === NetworkStatus.refetch || networkStatus === NetworkStatus.loading) {
       setFiltering(true);
     } else if (networkStatus === NetworkStatus.error) {
       setFiltering(false);
     }
-  }, [ networkStatus ]);
+  }, [networkStatus]);
   /**
    * @description Effect that runs on data changes;
    * it is responsible to set the nextPage status and to update current loaded transactionsm
@@ -157,12 +158,11 @@ const useSolutions = (target?: RefObject<HTMLElement>) => {
     }
   }, [data, previousData, networkStatus]);
 
-  
   useEffect(() => {
     if (error) {
       setFiltering(false);
     }
-  }, [ error ]);
+  }, [error]);
 
   useEffect(() => {
     if (data) {
