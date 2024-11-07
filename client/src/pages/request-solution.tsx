@@ -20,12 +20,24 @@ import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
 import { StyledMuiButton } from '@/styles/components';
 import { postOnArweave } from '@fairai/evm-sdk';
 import Close from '@mui/icons-material/Close';
-import { Autocomplete, Box, Button, Chip, TextField, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  Button,
+  Chip,
+  FormControl,
+  MenuItem,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
 import { UseFormSetValue, useController, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import { NumericFormat } from 'react-number-format';
+import { DateField, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 
 const defaultKeywordsList = [
   'AI',
@@ -206,7 +218,7 @@ const RequestSolution = () => {
           <Typography width={'100%'} fontWeight={600}>
             1. Provide a short title that describes your problem or idea
           </Typography>
-          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px'}>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 15px'}>
             This will be shown as the title of your request.
           </Typography>
           <TextField
@@ -224,7 +236,7 @@ const RequestSolution = () => {
           <Typography width={'100%'} fontWeight={700}>
             2. Provide a detailed description
           </Typography>
-          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px'}>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
             Explain what you need, the context, the problem and what are your initial suggestions or
             requisites. You should provide as much information as possible so that whoever reads
             this request can get a straightfoward idea of how we can build a custom solution for
@@ -247,10 +259,10 @@ const RequestSolution = () => {
           <Typography width={'100%'} fontWeight={700}>
             3. Add keywords (categories) that best suit your request
           </Typography>
-          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px'}>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
             Add at least two or three keywords that best fit your request. It will make it easier
-            for others to understand what your need and find your request faster. Some members of
-            the community like to focus on certain categories or keywords. Add up to 6 keywords.
+            for developers to understand what your need and find your request faster. Some
+            developers like to focus on certain categories. Add up to 6 keywords.
           </Typography>
 
           <div className='mt-3 w-full'>
@@ -287,18 +299,80 @@ const RequestSolution = () => {
           <Typography width={'100%'} fontWeight={700}>
             5. What is your initial budget for this request?
           </Typography>
-          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px'}>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
             Providing an initially planned budget for your request will convince more developers to
             try and accept your idea, as they see this budget as their reward for successfuly
-            completing your request. You can always talk and debate this budget with whoever accepts
-            your request.
+            completing your request. You can always talk and debate this budget with the developers.
           </Typography>
-          <div className='w-full my-3 px-6'>
-            <TextField type='number'></TextField>
+          <div className='w-full my-3'>
+            <NumericFormat
+              customInput={TextField}
+              thousandSeparator
+              prefix='US$ '
+              placeholder='Type a value (US$)'
+            ></NumericFormat>
           </div>
         </div>
 
-        <div className='w-full flex justify-end gap-2 flex-wrap'>
+        <div className='w-full'>
+          <Typography width={'100%'} fontWeight={700}>
+            6. What will be your prefered payment plan to the developers?
+          </Typography>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
+            Paying a defined portion of your total budget for each successful partial feature
+            delivery by the developers will make it feel safer for both sides to invest in your
+            request. You get deliveries in a timely manner, and the developers, their payment
+            portions.
+          </Typography>
+          <div className='w-full my-3'>
+            <FormControl fullWidth>
+              <TextField label='Paymment Plan' className='w-full max-w-[265px]' required select>
+                <MenuItem value={1}>Daily deliveries and payments</MenuItem>
+                <MenuItem value={2}>Weekly deliveries and payments</MenuItem>
+                <MenuItem value={3}>Monthly deliveries and payments</MenuItem>
+                <MenuItem value={4}>Yearly deliveries and payments</MenuItem>
+                <MenuItem value={5}>All at once, right at the start</MenuItem>
+                <MenuItem value={6}>All at once, when project ends</MenuItem>
+              </TextField>
+            </FormControl>
+          </div>
+        </div>
+
+        <div className='w-full'>
+          <Typography width={'100%'} fontWeight={700}>
+            7. What is your initial date target for this request?
+          </Typography>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
+            Tell us when you would most likely want the final portion of this request to be
+            delivered. Take in consideration the effort needed to achieve your needs for this
+            request. This is only a theoretical target, and can always be further discussed with the
+            developers.
+          </Typography>
+          <div className='w-full my-3 flex items-center flex-wrap gap-3'>
+            <div className='flex-grow-0 items-center gap-3'>
+              <LocalizationProvider dateAdapter={AdapterMoment}>
+                <DateField label='Date target' className='w-full max-w-[265px]' />
+              </LocalizationProvider>
+            </div>
+            <div className='flex-grow-0 mr-1'>or</div>
+            <div className='flex-auto flex items-center gap-3'>
+              <NumericFormat
+                className='w-full max-w-[100px]'
+                customInput={TextField}
+                thousandSeparator
+                placeholder='00'
+              ></NumericFormat>
+              <TextField label='Type' className='w-full max-w-[150px]' required select>
+                <MenuItem value={1}>Day(s)</MenuItem>
+                <MenuItem value={2}>Week(s)</MenuItem>
+                <MenuItem value={3}>Month(s)</MenuItem>
+                <MenuItem value={4}>Year(s)</MenuItem>
+              </TextField>
+            </div>
+          </div>
+        </div>
+
+        <div className='w-full flex justify-end gap-2 flex-wrap mb-20'>
           <StyledMuiButton onClick={handleBack} className='secondary'>
             <Close />
             Cancel

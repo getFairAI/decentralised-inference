@@ -16,7 +16,6 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import DebounceIconButton from '@/components/debounce-icon-button';
 import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
 import { gql, useQuery } from '@apollo/client';
 import Close from '@mui/icons-material/Close';
@@ -35,6 +34,11 @@ import {
   Fab,
   Tooltip,
   useTheme,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  FormControl,
+  MenuItem,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
@@ -47,8 +51,17 @@ import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRound
 import useScroll from '@/hooks/useScroll';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import LibraryAddRoundedIcon from '@mui/icons-material/LibraryAddRounded';
-import { InfoRounded } from '@mui/icons-material';
+import {
+  AddRounded,
+  ChatBubbleRounded,
+  CheckCircleRounded,
+  CloseRounded,
+  InfoRounded,
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { NumericFormat } from 'react-number-format';
+import { DateField, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 
 interface IrysTx {
   id: string;
@@ -132,10 +145,15 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [showAddComment, setShowAddComment] = useState(false);
+  const [showAcceptAsDev, setShowAcceptAsDev] = useState(false);
   const { currentAddress } = useContext(EVMWalletContext);
 
   const handleOpen = useCallback(() => setOpen(true), [setOpen]);
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
+
+  const handleShowNewComment = () => setShowAddComment(!showAddComment);
+  const handleShowAcceptAsDev = () => setShowAcceptAsDev(!showAcceptAsDev);
 
   const { data: commentsData } = useQuery(irysQuery, {
     variables: {
@@ -290,10 +308,30 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                             label={keyword}
                             variant='filled'
                             color='primary'
-                            className='font-bold saturate-50'
+                            className='font-bold saturate-50 brightness-105'
                           />
                         ))}
                       </Box>
+                      <div className='w-full p-4 text-sm sm:text-base rounded-xl bg-slate-300 flex flex-col'>
+                        <strong className='flex items-center gap-2 mb-4'>
+                          <InfoRounded style={{ fontSize: '18px' }} /> Request details
+                        </strong>
+                        <div className='w-full flex flex-wrap gap-2'>
+                          <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
+                            <strong> Planned budget:</strong> US$ 5,000.00
+                          </div>
+                          <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
+                            <strong> Payment / Deliveries:</strong> Monthly
+                          </div>
+                          <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
+                            <strong> Date target:</strong> 02/28/2025
+                          </div>
+                          <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
+                            <strong> Time budget:</strong> 4 months
+                          </div>
+                        </div>
+                      </div>
+
                       <div className='w-full px-2 font-semibold text-sm sm:text-base'>
                         {comments.length} {comments.length === 1 ? ' comment' : 'comments'}
                       </div>
@@ -326,38 +364,172 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                     animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
                   >
                     <div className='w-full px-6 pt-3 pb-6'>
-                      <TextField
-                        placeholder='Add a new comment'
-                        variant='outlined'
-                        fullWidth
-                        value={newComment}
-                        onChange={handleCommentChange}
-                        sx={{
-                          bgcolor: 'white',
-                          borderRadius: '8px',
-                        }}
-                        InputProps={{
-                          sx: {
-                            ':before': {
-                              borderBottom: 'none',
-                            },
-                            ':after': {
-                              borderBottom: 'none',
-                            },
-                            ':hover:not(.Mui-disabled .Mui-error):before': {
-                              borderBottom: 'none',
-                            },
-                          },
-                          endAdornment: (
-                            <DebounceIconButton
-                              onClick={handleNewComment}
-                              className='plausible-event-name=Request+Comment+Click'
-                            >
-                              <SendIcon style={{ color: '#3aaaaa' }} />
-                            </DebounceIconButton>
-                          ),
-                        }}
-                      />
+                      {!showAddComment && !showAcceptAsDev && (
+                        <div className='animate-slide-down w-full flex flex-wrap gap-3 justify-center'>
+                          <Tooltip title='Add a simple text comment.'>
+                            <StyledMuiButton className='primary' onClick={handleShowNewComment}>
+                              <ChatBubbleRounded />
+                              Add a comment
+                            </StyledMuiButton>
+                          </Tooltip>
+
+                          <Tooltip title='Assign yourself as a developer for this request. You can suggest different budgets, time or solutions.'>
+                            <StyledMuiButton className='secondary' onClick={handleShowAcceptAsDev}>
+                              <CheckCircleRounded />
+                              Accept and develop this request
+                            </StyledMuiButton>
+                          </Tooltip>
+                        </div>
+                      )}
+
+                      {showAddComment && (
+                        <div className='w-full flex gap-3 items-center animate-slide-down'>
+                          <StyledMuiButton
+                            className='secondary fully-rounded mini mt-1'
+                            onClick={handleShowNewComment}
+                          >
+                            <CloseRounded />
+                          </StyledMuiButton>
+                          <TextField
+                            placeholder='Add a new comment'
+                            variant='outlined'
+                            fullWidth
+                            value={newComment}
+                            onChange={handleCommentChange}
+                          />
+                          <StyledMuiButton
+                            onClick={handleNewComment}
+                            className='primary plausible-event-name=Request+Comment+Click'
+                          >
+                            <SendIcon /> Add
+                          </StyledMuiButton>
+                        </div>
+                      )}
+
+                      {showAcceptAsDev && (
+                        <div className='w-full flex flex-col gap-3 animate-slide-down'>
+                          <strong className='flex items-center gap-1'>
+                            <AddRounded className='primary-text-color' /> Assign yourself as a
+                            developer for this request
+                          </strong>
+                          <span className='font-medium rounded-xl bg-slate-300 px-3 py-2'>
+                            You are about to suggest yourself as a developer of this request.
+                            <br />
+                            Everything you fill here will be publicly visible in this request!
+                            <br />
+                            You can accept everything as is, or suggest a different budget,
+                            different target date, time needed or a different payment plan.
+                            <br />
+                            The request creator will be able to counter your offer with a different
+                            one, or accept it.
+                            <br /> You can also leave any additional info or comments in the comment
+                            box, as needed.
+                          </span>
+
+                          <strong className='mt-4'>You suggestion / proposal</strong>
+
+                          <div className='flex gap-3'>
+                            <FormGroup>
+                              <FormControlLabel
+                                control={<Checkbox defaultChecked />}
+                                label='I accept the request as is and want to start right away.'
+                              />
+                            </FormGroup>
+                          </div>
+
+                          <div className='flex gap-3 items-end flex-wrap'>
+                            <NumericFormat
+                              label='Budget suggestion'
+                              customInput={TextField}
+                              thousandSeparator
+                              prefix='US$ '
+                              placeholder='(optional)'
+                              className='w-full max-w-[170px]'
+                            ></NumericFormat>
+                            <FormControl className='w-full max-w-[250px]'>
+                              <TextField label='Payments plan suggestion' className='w-full' select>
+                                <MenuItem value={1}>Daily deliveries and payments</MenuItem>
+                                <MenuItem value={2}>Weekly deliveries and payments</MenuItem>
+                                <MenuItem value={3}>Monthly deliveries and payments</MenuItem>
+                                <MenuItem value={4}>Yearly deliveries and payments</MenuItem>
+                                <MenuItem value={5}>All at once, right at the start</MenuItem>
+                                <MenuItem value={6}>All at once, when project ends</MenuItem>
+                              </TextField>
+                            </FormControl>
+
+                            <div className='flex-grow flex flex-col gap-1'>
+                              <strong>Time budget / date target suggestion</strong>
+
+                              <div className='flex items-center flex-wrap gap-3'>
+                                <LocalizationProvider dateAdapter={AdapterMoment}>
+                                  <DateField
+                                    className='flex-grow max-w-[150px]'
+                                    label='Date target'
+                                  />
+                                </LocalizationProvider>
+                                <strong>or</strong>
+                                <div className='flex-grow flex gap-3 flex-nowrap'>
+                                  <NumericFormat
+                                    className='w-full max-w-[100px]'
+                                    customInput={TextField}
+                                    thousandSeparator
+                                    placeholder='00'
+                                  ></NumericFormat>
+                                  <TextField
+                                    label='Type'
+                                    className='w-full max-w-[150px]'
+                                    required
+                                    select
+                                  >
+                                    <MenuItem value={1}>Day(s)</MenuItem>
+                                    <MenuItem value={2}>Week(s)</MenuItem>
+                                    <MenuItem value={3}>Month(s)</MenuItem>
+                                    <MenuItem value={4}>Year(s)</MenuItem>
+                                  </TextField>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <strong>Ways to contact you</strong>
+
+                          <div className='flex gap-3'>
+                            <TextField
+                              label='Your website URL'
+                              placeholder='(optional)'
+                              variant='outlined'
+                              className='w-full max-w-[300px]'
+                            />
+                            <TextField
+                              label='Your X (twitter) handle'
+                              placeholder='(optional)'
+                              variant='outlined'
+                              className='w-full max-w-[300px]'
+                              InputProps={{ startAdornment: <>@ </> }}
+                            />
+                          </div>
+
+                          <strong>Anything else?</strong>
+
+                          <TextField
+                            label='Add a comment'
+                            placeholder='Optional. This comment will be publicly visible.'
+                            variant='outlined'
+                            fullWidth
+                            value={newComment}
+                            onChange={handleCommentChange}
+                          />
+
+                          <div className='flex gap-3 flex-wrap justify-center mt-3'>
+                            <StyledMuiButton className='secondary ' onClick={handleShowAcceptAsDev}>
+                              <CloseRounded /> Cancel
+                            </StyledMuiButton>
+                            <StyledMuiButton className='primary'>
+                              <SendIcon /> Submit
+                            </StyledMuiButton>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -405,16 +577,24 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                 gap={'5px'}
                 flexWrap={'wrap'}
               >
-                <span className='font-bold mr-2 flex-auto' style={{ fontSize: '14px' }}>
-                  {comments.length} {comments.length === 1 ? ' comment' : ' comments'}
-                </span>
+                <div
+                  className='font-bold mr-2 flex-auto flex gap-2 flex-wrap'
+                  style={{ fontSize: '14px' }}
+                >
+                  <Chip
+                    variant='outlined'
+                    label={`${comments.length} ${comments.length === 1 ? ' comment' : ' comments'}`}
+                    color='secondary'
+                  />
+                  <Chip variant='outlined' label={'Monthly payments'} color='primary' />
+                </div>
                 {request.keywords.map((keyword) => (
                   <Chip
                     key={keyword}
                     label={keyword}
                     variant='filled'
                     color='primary'
-                    className='font-bold saturate-50'
+                    className='font-bold saturate-50 brightness-105'
                   />
                 ))}
               </Box>
@@ -453,8 +633,8 @@ const MakeRequestMessage = ({ smallScreen }: { smallScreen: boolean }) => {
           <InfoRounded className='mr-2' />
           Are you looking for custom made, tailored solutions for your own projects?
           <br />
-          Create your own request listing, define your budget and quickly get amazing solutions
-          tailored for you by the trusted FairAI community members.
+          Create your request listing, define your budget and quickly get amazing solutions tailored
+          for you by the trusted FairAI community members.
         </span>
 
         <StyledMuiButton
@@ -559,7 +739,7 @@ const BrowseRequests = () => {
             <a href='#/'>
               <StyledMuiButton className='secondary'>
                 <ArrowBackIosNewRoundedIcon />
-                Go Back
+                Back
               </StyledMuiButton>
             </a>
             <div className='gap-3 flex justify-center items-center text-lg lg:text-3xl'>
