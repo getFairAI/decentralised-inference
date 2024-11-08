@@ -23,10 +23,9 @@ import {
   RETROSPECTIVE_SOLUTION,
   TAG_NAMES,
 } from '@/constants';
-import { irysQuery } from '@/queries/graphql';
-import { commonUpdateQuery } from '@/utils/common';
 import { NetworkStatus, useLazyQuery } from '@apollo/client';
-import { useEffect, useState } from 'react';
+import { findByTagsDocument, findByTagsQuery } from '@fairai/evm-sdk';
+import { useCallback, useEffect, useState } from 'react';
 
 const useRequests = ({
   userAddrs,
@@ -52,44 +51,41 @@ const useRequests = ({
       networkStatus: requestNetworkStatus,
       fetchMore: requestFetchMore,
     },
-  ] = useLazyQuery(irysQuery);
+  ] = useLazyQuery(findByTagsDocument);
   useEffect(() => {
     if (!userAddrs || userAddrs.length === 0) {
       // skip fetching while user address is not loaded
       return;
     }
     const tags = [
-      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
       { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
+      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
     ];
-    if (solutionTx) {
-      tags.push({ name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
+
+    if (requestCaller || userAddrs.length > 0 ) {
+      tags.splice(0, 0, { name: 'Request-Caller', values: requestCaller ? [ requestCaller ] : userAddrs });
     }
 
     if (conversationId && solutionTx === RETROSPECTIVE_SOLUTION) {
       //
-      tags.push({ name: 'Conversation-ID', values: [conversationId.toString()] });
+      tags.splice(0, 0, { name: 'Conversation-ID', values: [conversationId.toString()] });
     } else if (conversationId) {
-      tags.push({ name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
+      tags.splice(0, 0, { name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
     }
 
     if (solutionTx === RETROSPECTIVE_SOLUTION) {
-      tags.push({ name: 'Request-Type', values: ['Report'] });
+      tags.splice(0, 0, { name: 'Request-Type', values: ['Report'] });
     }
 
-    if (requestCaller) {
-      tags.push({ name: 'Request-Caller', values: [requestCaller] });
+    if (solutionTx) {
+      tags.splice(0, 0, { name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
     }
 
     getChatRequests({
       variables: {
         tags,
-        owners: userAddrs,
         first: first ?? 10,
-      },
-      context: {
-        clientName: 'irys',
       },
       fetchPolicy: 'network-only',
       nextFetchPolicy: 'network-only',
@@ -103,16 +99,29 @@ const useRequests = ({
     }
   }, [requestsData, requestNetworkStatus, setHasRequestNextPage]);
 
-  const fetchMore = () => {
-    const lastTx =
-      requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor;
-    requestFetchMore({
-      variables: {
-        after: lastTx,
-      },
-      updateQuery: commonUpdateQuery,
-    });
-  };
+  const handleFetchMore = useCallback(() => {
+    if (requestsData?.transactions?.edges && requestsData.transactions.edges.length > 0) {
+      const lastTx = requestsData?.transactions.edges[requestsData.transactions.edges.length - 1].cursor;
+      requestFetchMore({
+        variables: {
+          after: lastTx,
+        },
+        updateQuery: (prev: findByTagsQuery, { fetchMoreResult }) => {
+          if (!fetchMoreResult) {
+            return prev;
+          }
+
+          return Object.assign({}, prev, {
+            transactions: {
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            },
+          });
+        },
+      });
+    }
+    
+  }, [ requestsData ]);
 
   return {
     requestsData,
@@ -120,7 +129,7 @@ const useRequests = ({
     requestError,
     requestNetworkStatus,
     hasRequestNextPage,
-    fetchMore,
+    fetchMore: handleFetchMore,
   };
 };
 

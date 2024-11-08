@@ -26,7 +26,6 @@ export interface IMessage {
   contentType?: string;
   type: 'response' | 'request';
   timestamp: number;
-  height: number;
   cid?: number;
   from: string;
   to: string;

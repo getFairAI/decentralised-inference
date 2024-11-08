@@ -21,12 +21,13 @@ import {
   createContext,
   Dispatch,
   ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useReducer,
   useState,
 } from 'react';
-import { hexToBigInt, Log } from 'viem';
+import { createWalletClient, custom, hexToBigInt, Log } from 'viem';
 import { arbitrum } from 'viem/chains';
 import {
   getConnectedAddress,
@@ -38,7 +39,6 @@ import {
   getCurrentChainId,
   startConversation,
   setIrys,
-  postOnArweave,
   prompt,
   subscribe,
 } from '@fairai/evm-sdk';
@@ -47,6 +47,11 @@ import { useEvmProviders } from '@/hooks/useEvmProviders';
 import { EIP6963ProviderDetail } from '@/interfaces/evm';
 import { ConfigurationValues } from '@/interfaces/common';
 import { enqueueSnackbar } from 'notistack';
+import { BaseWebARx } from '@permaweb/arx/build/esm/web/base';
+import { WebToken } from '@permaweb/arx/build/esm/web/types';
+import EthereumConfig from '@permaweb/arx/build/esm/web/tokens/ethereum';
+import { ITag } from '@/interfaces/arweave';
+import { InjectedTypedEthereumSignerMinimalProvider } from '@dha-team/arbundles';
 
 type WalletConnectedAction = {
   type: 'wallet_connected';
@@ -262,6 +267,50 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       return '';
     }
   };
+
+  const postOnArweave = useCallback(async (text: string, tags: ITag[]) => {
+    if (!currentProvider) {
+      throw new Error('No provider found');
+    }
+    const [ account ] = await currentProvider.provider.request({ method: 'eth_requestAccounts' });
+
+    const walletClient = createWalletClient({
+      account,
+      chain: arbitrum,
+      transport: custom(currentProvider.provider),
+    });
+    const signer = {
+      getSigner: () => ({
+        getAddress: async () => (await walletClient.getAddresses())[0],
+        _signTypedData: async (domain, types, message): Promise<string> => {
+          message['Transaction hash'] = '0x' + Buffer.from(message['Transaction hash']).toString('hex');
+          // @ts-expect-error types
+          return await walletClient.signTypedData({ account: message.address, domain, types, primaryType: 'Bundlr', message });
+        },
+      }),
+    } as InjectedTypedEthereumSignerMinimalProvider;
+
+    const arx = new BaseWebARx({
+      network: 'mainnet',
+      config: {
+        providerUrl: 'https://arb1.arbitrum.io/rpc',
+      },
+      getTokenConfig: (i): WebToken =>
+        new EthereumConfig({
+          arx: i,
+          name: 'arbitrum',
+          ticker: 'ARB',
+          minConfirm: 1,
+          providerUrl: 'https://arb1.arbitrum.io/rpc',
+          wallet: signer,
+        }) as unknown as WebToken,
+    });
+    await arx.ready();
+
+    const { id } = await arx.upload(text, { tags });
+
+    return id;
+  }, [ currentProvider ]);
 
   // update the connect function with async method
   const value = useMemo(

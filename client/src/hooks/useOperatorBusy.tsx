@@ -19,9 +19,9 @@
 import { PROTOCOL_NAME, PROTOCOL_VERSION, INFERENCE_RESPONSE, TAG_NAMES } from '@/constants';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { QUERY_CHAT_RESPONSES } from '@/queries/graphql';
+import { client } from '@/utils/apollo';
 import { useLazyQuery } from '@apollo/client';
-import { decodeTxMemo, subscribe } from '@fairai/evm-sdk';
-import Query from '@irys/query';
+import { decodeTxMemo, findByIdDocument, subscribe } from '@fairai/evm-sdk';
 import { useContext, useEffect, useState } from 'react';
 import { Log } from 'viem';
 
@@ -39,8 +39,11 @@ const useOperatorBusy = (operatorAddr: string) => {
 
     const arweaveRequest = await decodeTxMemo(log.pop()?.transactionHash as `0x${string}`);
 
-    const irysQuery = new Query();
-    const [{ tags }] = await irysQuery.search('irys:transactions').ids([arweaveRequest]).limit(1);
+    const { data } = await client.query({
+      query: findByIdDocument,
+      variables: { ids: [arweaveRequest] },
+    });
+    const tags = data.transactions.edges[0].node.tags;
 
     const necessaryResponses =
       parseFloat(tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value as string) ?? 1;

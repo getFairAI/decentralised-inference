@@ -172,7 +172,7 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
 
       (async () => {
         // validate previous requests
-        const filtered = [];
+        const filtered: OperatorData[] = [];
         const registrationFees = availableOperators.map((el) => ({
           solutionId: el.node.tags.find((tag) => tag.name === 'Solution-Transaction')?.value ?? '',
           fee: Number(el.node.tags.find((tag) => tag.name === 'Operator-Fee')?.value),
@@ -233,6 +233,15 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
             // "stream updates"
           }
         }
+        // manually add llama process operator
+        filtered.push({
+          tx: { node: { id: 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' } } as findByTagsQuery['transactions']['edges'][0],
+          evmWallet: '0x9c4E9C275F7E6C17E3e1c8c6BEDF91d835757Fa0',
+          evmPublicKey: 'FLBWkjnXHN7Bn6HwEN88Icdm5L9XulHbeb0Z4dgkzW4=',
+          arweaveWallet: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
+          operatorFee: 0.005, // half a cent
+          solutionId: 'RuBfsVIARw1jLKsGjQCrEHL_QBCAmAAIJ0E3UUu5X0w', // chatbot solution
+        });
         setValidTxs(filtered);
         setFiltering(false);
       })();

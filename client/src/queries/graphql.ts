@@ -1145,8 +1145,8 @@ export const irysQuery = gql`
 `;
 
 export const responsesQuery = gql`
-  query TransactionAnswered($tags: [TagFilter!], $owner: String!, $first: Int!) {
-    transactions(first: $first, tags: $tags, owners: [$owner], sort: HEIGHT_DESC) {
+  query TransactionAnswered($tags: [TagFilter!], $owners: [String!], $first: Int!) {
+    transactions(first: $first, tags: $tags, owners: $owners, sort: HEIGHT_DESC) {
       edges {
         node {
           id

@@ -312,7 +312,6 @@ const ChatReportsContent = ({
           msg: inputValue,
           type: 'request',
           contentType: 'text/plain',
-          height: 0,
           cid: currentConversationId,
           from: currentAddress,
           to: state.defaultOperator.arweaveWallet,
@@ -407,7 +406,6 @@ const ChatReportsContent = ({
             timestamp: Number(findTag(tx, 'unixTime')) || Date.now() / 1000,
             type: 'response',
             contentType: 'text/plain',
-            height: tx.node.block?.height ?? 0,
             cid: currentConversationId,
             from: tx.node.owner.address,
             to:
@@ -450,7 +448,6 @@ const ChatReportsContent = ({
             timestamp: Number(findTag(tx, 'unixTime')) || Date.now() / 1000,
             type: 'request',
             contentType: 'text/plain',
-            height: tx.node.block?.height ?? 0,
             cid: currentConversationId,
             from:
               tx.node.tags.find((tag: ITag) => tag.name === 'Request-Caller')?.value ||

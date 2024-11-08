@@ -30,8 +30,6 @@ import { RefObject, useState, useContext, useEffect, useMemo } from 'react';
 import useOnScreen from './useOnScreen';
 import _ from 'lodash';
 import Stamps, { CountResult } from '@permaweb/stampjs';
-import { WarpFactory } from 'warp-contracts';
-import Arweave from 'arweave';
 import { client } from '@/utils/apollo';
 import { findByTagsQuery, findByTagsAndOwnersDocument, findByIdDocument } from '@fairai/evm-sdk';
 
@@ -76,13 +74,7 @@ const useSolutions = (target?: RefObject<HTMLElement>) => {
   const totalStamps = async (targetTxs: (string | undefined)[]) => {
     try {
       const filteredTxsIds = targetTxs.filter((txId) => txId !== undefined) as string[];
-      const stampsInstance = Stamps.init({
-        warp: WarpFactory.forMainnet(),
-        arweave: Arweave.init({}),
-        wallet: window.arweaveWallet,
-        dre: 'https://dre-u.warp.cc/contract',
-        graphql: 'https://arweave.net/graphql',
-      });
+      const stampsInstance = Stamps.init({});
       const counts = await stampsInstance.counts(filteredTxsIds);
 
       return transformCountsToObjectMap(counts);

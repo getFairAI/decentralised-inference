@@ -28,12 +28,14 @@ const useResponses = ({
   lastRequestId,
   first,
   owners,
+  isAO,
 }: {
   reqIds: string[];
   conversationId: number;
   lastRequestId?: string;
   first?: number;
   owners?: string[];
+  isAO?: boolean
 }) => {
   const [
     getChatResponses,
@@ -53,41 +55,82 @@ const useResponses = ({
     });
 
   useEffect(() => {
-    const variables = {
-      tags: [
-        { name: 'Request-Transaction', values: reqIds },
-        { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-        { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-        { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-      ],
-      owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
-      first: 10,
-    };
-    if (reqIds.length > 0) {
-      getChatResponses({
-        variables,
-        fetchPolicy: 'network-only',
-        nextFetchPolicy: 'network-only',
-        notifyOnNetworkStatusChange: true,
-      });
-    }
-
-    if (lastRequestId) {
-      stopResponsePolling();
-      const pollReqIds = [lastRequestId];
+    if (isAO) {
       const variables = {
         tags: [
-          { name: 'Request-Transaction', values: pollReqIds },
+          { name: 'Pushed-For', values: reqIds },
+          // { name: 'From-Module', values: [ 'From-Module:BlucTh6AJQvcbhNPa1t1UpNgHTM7UEmR0czYdAdCxXg' ]},
+          // { name: 'From-Process', values: ['wh5vB2IbqmIBUqgodOaTvByNFDPr73gbUq1bVOUtCrw'] },
+          
+          // { name: 'Action', values: ['Inference-Response'] },
+        ],
+        recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ],
+        owners: undefined,
+        // owners: [],
+        first: 10,
+      };
+      if (reqIds.length > 0) {
+        getChatResponses({
+          variables,
+          fetchPolicy: 'network-only',
+          nextFetchPolicy: 'network-only',
+          notifyOnNetworkStatusChange: true,
+        });
+      }
+  
+      if (lastRequestId) {
+        stopResponsePolling();
+        const pollReqIds = [lastRequestId];
+        const variables = {
+          tags: [
+            // {  name: 'From-Module', values: [ 'From-Module:BlucTh6AJQvcbhNPa1t1UpNgHTM7UEmR0czYdAdCxXg' ]},
+            // { name: 'From-Process', values: ['wh5vB2IbqmIBUqgodOaTvByNFDPr73gbUq1bVOUtCrw'] },
+            { name: 'Pushed-For', values: pollReqIds },
+            // { name: 'Action', values: ['Inference-Response'] },
+          ],
+          recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ],
+          owners: undefined,
+          first: 10,
+        };
+        pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
+      }
+    } else {
+      const variables = {
+        tags: [
+          { name: 'Request-Transaction', values: reqIds },
           { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
           { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
           { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
         ],
-        owner: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',
+        owners: ['SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q'],
         first: 10,
       };
-      pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
+      if (reqIds.length > 0) {
+        getChatResponses({
+          variables,
+          fetchPolicy: 'network-only',
+          nextFetchPolicy: 'network-only',
+          notifyOnNetworkStatusChange: true,
+        });
+      }
+  
+      if (lastRequestId) {
+        stopResponsePolling();
+        const pollReqIds = [lastRequestId];
+        const variables = {
+          tags: [
+            { name: 'Request-Transaction', values: pollReqIds },
+            { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+            { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
+            { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+          ],
+          owners: ['SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q'],
+          first: 10,
+        };
+        pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
+      }
     }
-  }, [reqIds, lastRequestId, conversationId, first, owners]);
+  }, [reqIds, lastRequestId, conversationId, first, owners, isAO ]);
 
   useEffect(() => {
     if (responsesData?.transactions?.pageInfo?.hasNextPage) {
