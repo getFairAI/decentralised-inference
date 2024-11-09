@@ -42,7 +42,6 @@ const useOperatorBusy = (operatorAddr: string) => {
     const irysQuery = new Query();
     const [{ tags }] = await irysQuery.search('irys:transactions').ids([arweaveRequest]).limit(1);
 
-
     const necessaryResponses =
       parseFloat(tags.find((tag) => tag.name === TAG_NAMES.nImages)?.value as string) ?? 1;
     setNecessaryResponses(necessaryResponses);

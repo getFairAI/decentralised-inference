@@ -534,7 +534,10 @@ const Configuration = ({
     [state],
   );
 
-  const isAOProvider = useMemo(() => currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM', [ currentOperator ]);
+  const isAOProvider = useMemo(
+    () => currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM',
+    [currentOperator],
+  );
 
   useEffect(() => {
     if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
@@ -682,10 +685,12 @@ const Configuration = ({
               defaultValue={currentOperator?.tx.node.id}
               renderValue={(value) => (
                 <Typography>
-                  {value === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ? 'AO provider' : displayShortTxOrAddr(
-                    state.availableOperators.find((op) => op.tx.node.id === value)?.evmWallet ??
-                      'None',
-                  )}
+                  {value === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM'
+                    ? 'AO provider'
+                    : displayShortTxOrAddr(
+                        state.availableOperators.find((op) => op.tx.node.id === value)?.evmWallet ??
+                          'None',
+                      )}
                 </Typography>
               )}
             >
@@ -695,7 +700,11 @@ const Configuration = ({
                   value={operator.tx.node.id}
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: spaceBetween }}
                 >
-                  <Typography>{operator.tx.node.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ? 'AO provider' : displayShortTxOrAddr(operator.evmWallet)}</Typography>
+                  <Typography>
+                    {operator.tx.node.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM'
+                      ? 'AO provider'
+                      : displayShortTxOrAddr(operator.evmWallet)}
+                  </Typography>
                   <Tooltip title={'Operator Fee'}>
                     <Box display={'flex'} alignItems={'center'} gap={'8px'}>
                       <Typography>{operator.operatorFee}</Typography>
@@ -759,34 +768,36 @@ const Configuration = ({
         {!isArbitrumSolution && isTextSolution && (
           <TextConfiguration messages={messages} control={control} />
         )}
-        {!isAOProvider && <FormControl component='fieldset' variant='standard'>
-          <FormControlLabel
-            control={
-              <Checkbox
-                ref={privateModeField.ref}
-                value={privateModeField.value}
-                onChange={privateModeField.onChange}
-              />
-            }
-            label={
-              <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Private Mode
-                <Tooltip
-                  title={
-                    <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
-                      {
-                        'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
-                      }
-                    </Typography>
-                  }
-                  placement='bottom'
-                >
-                  <InfoOutlined fontSize='small' />
-                </Tooltip>
-              </Typography>
-            }
-          />
-        </FormControl>}
+        {!isAOProvider && (
+          <FormControl component='fieldset' variant='standard'>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  ref={privateModeField.ref}
+                  value={privateModeField.value}
+                  onChange={privateModeField.onChange}
+                />
+              }
+              label={
+                <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Private Mode
+                  <Tooltip
+                    title={
+                      <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                        {
+                          'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
+                        }
+                      </Typography>
+                    }
+                    placement='bottom'
+                  >
+                    <InfoOutlined fontSize='small' />
+                  </Tooltip>
+                </Typography>
+              }
+            />
+          </FormControl>
+        )}
         {!isArbitrumSolution && (
           <>
             <SelectControl

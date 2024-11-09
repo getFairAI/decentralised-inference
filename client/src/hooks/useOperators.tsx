@@ -235,7 +235,9 @@ const useOperators = (solutions: findByTagsQuery['transactions']['edges']) => {
         }
         // manually add llama process operator
         filtered.push({
-          tx: { node: { id: 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' } } as findByTagsQuery['transactions']['edges'][0],
+          tx: {
+            node: { id: 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' },
+          } as findByTagsQuery['transactions']['edges'][0],
           evmWallet: '0x9c4E9C275F7E6C17E3e1c8c6BEDF91d835757Fa0',
           evmPublicKey: 'FLBWkjnXHN7Bn6HwEN88Icdm5L9XulHbeb0Z4dgkzW4=',
           arweaveWallet: 'SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q',

@@ -59,7 +59,7 @@ import {
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { useSnackbar } from 'notistack';
 import usePrevious from '@/hooks/usePrevious';
-import  { getData } from '@/utils/arweave';
+import { getData } from '@/utils/arweave';
 import { findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
@@ -182,7 +182,7 @@ const InputField = ({
         setShowFeedback(false);
       }, 2000);
     }
-  }, [handleSendFile, handleSendText, setOpenRating, file, isSending, showFeedback ]);;
+  }, [handleSendFile, handleSendText, setOpenRating, file, isSending, showFeedback]);
 
   // avoid send duplicated messages and show the new line if it's only the Enter key
   const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -341,7 +341,7 @@ const Chat = () => {
     throwawayUsdcAllowance,
     updateBalance,
     updateAllowance,
-    promptWithThrowaway
+    promptWithThrowaway,
   } = useContext(ThrowawayContext);
   const {
     state,
@@ -519,7 +519,7 @@ const Chat = () => {
     reqIds: requestIds,
     conversationId: currentConversationId,
     lastRequestId: '',
-    isAO: false
+    isAO: false,
   });
 
   const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage, fetchMore } =
@@ -578,7 +578,9 @@ const Chat = () => {
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       //
-      const reqIds = requestsData.transactions.edges.map((el: findByTagsQuery['transactions']['edges'][0]) => el.node.id);
+      const reqIds = requestsData.transactions.edges.map(
+        (el: findByTagsQuery['transactions']['edges'][0]) => el.node.id,
+      );
 
       if (reqIds.length > 0) {
         (async () => reqData())();
@@ -652,17 +654,16 @@ const Chat = () => {
     })();
   }, [responsesPollingData]);
 
-  const mapTransactionsToMessages = async (el:  findByTagsQuery['transactions']['edges'][0]) => {
+  const mapTransactionsToMessages = async (el: findByTagsQuery['transactions']['edges'][0]) => {
     const msgIdx = messages.findIndex((m) => m.id === el.node.id);
 
     const contentType = findTag(el, 'contentType') || 'text/plain';
     let data =
       msgIdx <= 0 ? await getData(el.node.id, findTag(el, 'fileName')) : messages[msgIdx].msg;
-    const timestamp =
-      parseInt(findTag(el, 'unixTime') || '', 10) || Date.now() / 1000;
+    const timestamp = parseInt(findTag(el, 'unixTime') || '', 10) || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
     const isRequest = findTag(el, 'operationName') === INFERENCE_REQUEST;
-    
+
     if (typeof data === 'string') {
       data = data.replaceAll('<|end|><|assistant|>', '');
     }
@@ -687,8 +688,11 @@ const Chat = () => {
 
     // map tags for ao transactions
     for (const el of newData) {
-      const isResponse = el.node.tags.find((tag: ITag) => tag.name === 'Operation-Name')?.value === 'Inference-Response' || el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
-      const pushedFor = el.node.tags.find(tag => tag.name === 'Pushed-For')?.value;
+      const isResponse =
+        el.node.tags.find((tag: ITag) => tag.name === 'Operation-Name')?.value ===
+          'Inference-Response' ||
+        el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
+      const pushedFor = el.node.tags.find((tag) => tag.name === 'Pushed-For')?.value;
       const request = newData.find((el) => el.node.id === pushedFor);
 
       if (request && isResponse) {
@@ -697,7 +701,7 @@ const Chat = () => {
           { name: 'Pushed-For', value: request?.node.id },
           { name: 'Request-Transaction', value: request?.node.id },
           { name: 'Conversation-Identifier', value: findTag(request, 'conversationIdentifier')! },
-          { name: 'Unix-Time', value: findTag(request, 'unixTime')! + (60 * 1000) },
+          { name: 'Unix-Time', value: findTag(request, 'unixTime')! + 60 * 1000 },
           { name: 'Content-Type', value: 'text/plain' },
         ];
       }
@@ -705,7 +709,7 @@ const Chat = () => {
 
     const filteredData = newData.filter((el: findByTagsQuery['transactions']['edges'][0]) => {
       const cid = findTag(el, 'conversationIdentifier');
-      
+
       if (cid && cid.split('-').length > 1) {
         return parseInt(cid.split('-')[1], 10) === currentConversationId;
       } else if (cid) {
@@ -721,9 +725,10 @@ const Chat = () => {
 
     const allnewMessages = [...temp, ...messages];
     setMessages((prev) => {
-      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
-        (el) => el.cid === currentConversationId,
-      );
+      const uniqueNewMsgs = _.uniqWith(
+        [...prev, ...allnewMessages],
+        (a, b) => a.id === b.id || (a.msg === b.msg && a.timestamp === b.timestamp),
+      ).filter((el) => el.cid === currentConversationId);
       sortMessages(uniqueNewMsgs);
 
       checkIsWaitingResponse(uniqueNewMsgs);
@@ -928,7 +933,12 @@ const Chat = () => {
     };
   }, [currentConfig, currentPubKey]);
 
-  const updateMessages = async (txid: string, content: string | File, contentType: string, tags: ITag[] = []) => {
+  const updateMessages = async (
+    txid: string,
+    content: string | File,
+    contentType: string,
+    tags: ITag[] = [],
+  ) => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
@@ -942,7 +952,7 @@ const Chat = () => {
 
       [{ tags }] = await irysQuery.search('irys:transactions').ids([txid]).limit(1);
     }
-    
+
     const url = `https://gateway.irys.xyz/${txid}`;
 
     enqueueSnackbar(
@@ -1094,49 +1104,53 @@ const Chat = () => {
     }
   };
 
-  const addConfigTags = (tags: { name: string, value: string }[], configuration: ConfigurationValues, userAddr: string) => {
+  const addConfigTags = (
+    tags: { name: string; value: string }[],
+    configuration: ConfigurationValues,
+    userAddr: string,
+  ) => {
     if (configuration.assetNames) {
       tags.push({ name: 'Asset-Names', value: JSON.stringify(configuration.assetNames) });
     }
-  
+
     if (configuration.negativePrompt) {
       tags.push({ name: 'Negative-Prompt', value: configuration.negativePrompt });
     }
-  
+
     if (configuration.description) {
       tags.push({ name: 'Description', value: configuration.description });
     }
-  
+
     if (configuration.customTags && configuration.customTags?.length > 0) {
       tags.push({ name: 'User-Custom-Tags', value: JSON.stringify(configuration.customTags) });
     }
-  
+
     if (configuration.nImages && configuration.nImages > 0 && configuration.nImages < 10) {
       tags.push({ name: 'N-Images', value: configuration.nImages.toString() });
     }
-  
+
     if (configuration.width && configuration.width > 0) {
       tags.push({ name: 'Images-Width', value: configuration.width.toString() });
     }
-  
+
     if (configuration.height && configuration.height > 0) {
       tags.push({ name: 'Images-Height', value: configuration.height.toString() });
     }
-  
+
     if (configuration.requestCaller) {
       tags.push({ name: 'Request-Caller', value: configuration.requestCaller });
     } else {
       tags.push({ name: 'Request-Caller', value: userAddr });
     }
-  
+
     if (configuration.privateMode) {
       tags.push({ name: 'Private-Mode', value: 'true' });
     }
-  
+
     if (configuration.userPubKey) {
       tags.push({ name: 'User-Public-Key', value: configuration.userPubKey });
     }
-  
+
     if (configuration.modelName) {
       tags.push({ name: 'Model-Name', value: configuration.modelName });
     }
@@ -1234,19 +1248,19 @@ const Chat = () => {
         tags.push({ name: 'Operator-Registration', value: operatorConfig.id || '' });
         tags.push({ name: 'Operation-Name', value: 'Inference Request' });
         tags.push({ name: 'Conversation-Identifier', value: currentConversationId.toString() });
-      
+
         const tempDate = Date.now() / 1000;
         tags.push({ name: 'Unix-Time', value: tempDate.toString() });
         tags.push({ name: 'Content-Type', value: 'text/plain' });
-        tags.push({ name: 'Transaction-Origin', value: 'FairAI Browser' });  
+        tags.push({ name: 'Transaction-Origin', value: 'FairAI Browser' });
         tags.push({ name: 'License', value: '' });
         tags.push({ name: 'Derivation', value: 'Allowed-With-License-Passthrough' });
         tags.push({ name: 'Commercial-Use', value: 'Allowed' });
-      
+
         if (config) {
           addConfigTags(tags, config, userAddr);
         }
-  
+
         arweaveTxId = await ao.message({
           process: 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM',
           data: dataToUpload,
@@ -1342,10 +1356,13 @@ const Chat = () => {
     if (allResponses && allResponses.length > 0) {
       allData = allData.concat(allResponses);
     }
-    // 
+    //
 
     for (const el of allData) {
-      const isResponse = el.node.tags.find((tag: ITag) => tag.name === 'Operation-Name')?.value === 'Inference-Response' || el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
+      const isResponse =
+        el.node.tags.find((tag: ITag) => tag.name === 'Operation-Name')?.value ===
+          'Inference-Response' ||
+        el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
       const pushedFor = el.node.tags.find((tag: ITag) => tag.name === 'Pushed-For')?.value;
       const request = allData.find((el) => el.node.id === pushedFor);
 
@@ -1355,15 +1372,15 @@ const Chat = () => {
           { name: 'Pushed-For', value: request?.node.id },
           { name: 'Request-Transaction', value: request?.node.id },
           { name: 'Conversation-Identifier', value: findTag(request, 'conversationIdentifier')! },
-          { name: 'Unix-Time', value: findTag(request, 'unixTime')! + (60 * 1000) },
+          { name: 'Unix-Time', value: findTag(request, 'unixTime')! + 60 * 1000 },
           { name: 'Content-Type', value: 'text/plain' },
         ];
       }
     }
 
-    const filteredData = allData.filter((el:  findByTagsQuery['transactions']['edges'][0]) => {
+    const filteredData = allData.filter((el: findByTagsQuery['transactions']['edges'][0]) => {
       const cid = findTag(el, 'conversationIdentifier');
-      
+
       if (cid && cid.split('-').length > 1) {
         return parseInt(cid.split('-')[1], 10) === currentConversationId;
       } else if (cid) {
@@ -1375,15 +1392,18 @@ const Chat = () => {
 
     const temp: IMessage[] = [];
     await Promise.all(
-      filteredData.map(async (el:  findByTagsQuery['transactions']['edges'][0]) => temp.push(await mapTransactionsToMessages(el))),
+      filteredData.map(async (el: findByTagsQuery['transactions']['edges'][0]) =>
+        temp.push(await mapTransactionsToMessages(el)),
+      ),
     );
 
     const allnewMessages = [...temp, ...messages];
 
     setMessages((prev) => {
-      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
-        (el) => el.cid === currentConversationId,
-      );
+      const uniqueNewMsgs = _.uniqWith(
+        [...prev, ...allnewMessages],
+        (a, b) => a.id === b.id || (a.msg === b.msg && a.timestamp === b.timestamp),
+      ).filter((el) => el.cid === currentConversationId);
       sortMessages(uniqueNewMsgs);
 
       checkIsWaitingResponse(uniqueNewMsgs);

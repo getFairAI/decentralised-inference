@@ -265,33 +265,36 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const postOnArweave = useCallback(async (text: string, tags: ITag[]) => {
-    if (!currentProvider) {
-      throw new Error('No provider found');
-    }
-    const [ account ] = await currentProvider.provider.request({ method: 'eth_requestAccounts' });
-    const network = 'mainnet';
-    const token = 'arbitrum';
-    const rpcUrl = 'https://arb1.arbitrum.io/rpc';
-    const walletClient = createWalletClient({
-      account,
-      chain: arbitrum,
-      transport: custom(currentProvider.provider),
-    });
+  const postOnArweave = useCallback(
+    async (text: string, tags: ITag[]) => {
+      if (!currentProvider) {
+        throw new Error('No provider found');
+      }
+      const [account] = await currentProvider.provider.request({ method: 'eth_requestAccounts' });
+      const network = 'mainnet';
+      const token = 'arbitrum';
+      const rpcUrl = 'https://arb1.arbitrum.io/rpc';
+      const walletClient = createWalletClient({
+        account,
+        chain: arbitrum,
+        transport: custom(currentProvider.provider),
+      });
 
-    // Create a wallet object
-    const wallet = { rpcUrl, name: 'viemv2', provider: walletClient };
-    const arx = new WebIrys({
-      network,
-      token,
-      wallet
-    });
-    await arx.ready();
+      // Create a wallet object
+      const wallet = { rpcUrl, name: 'viemv2', provider: walletClient };
+      const arx = new WebIrys({
+        network,
+        token,
+        wallet,
+      });
+      await arx.ready();
 
-    const { id } = await arx.upload(text, { tags });
+      const { id } = await arx.upload(text, { tags });
 
-    return id;
-  }, [ currentProvider ]);
+      return id;
+    },
+    [currentProvider],
+  );
 
   // update the connect function with async method
   const value = useMemo(

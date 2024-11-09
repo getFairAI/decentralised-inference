@@ -56,7 +56,7 @@ const initialState: OpfsState = {
 export const OpfsContext = createContext<IOpfsContext>({} as IOpfsContext);
 
 export const OpfsProvider = ({ children }: { children: ReactNode }) => {
-  const [ state, dispatch ] = useReducer(walletReducer, initialState);
+  const [state, dispatch] = useReducer(walletReducer, initialState);
 
   useEffect(() => {
     (async () => {
@@ -70,21 +70,21 @@ export const OpfsProvider = ({ children }: { children: ReactNode }) => {
         console.error(err, 'error reading payerPK');
       }
     })();
-  }, [ navigator, dispatch ]); // run on first render
+  }, [navigator, dispatch]); // run on first render
 
-  const savePayerPK = useCallback(async (pk: string) => {
-    const opfsRoot = await navigator.storage.getDirectory();
-    const payerFileHandle = await opfsRoot.getFileHandle('payerPK.txt', { create: true });
-    const payerFile = await payerFileHandle.createWritable();
-    await payerFile.write(pk);
-    await payerFile.close();
-    dispatch({ type: 'load_payer_pk', payerPk: pk });
-  }, [ navigator, dispatch ]);
-
-  const exportValue = useMemo(
-    () => ({ ...state, savePayerPK }),
-    [ state, savePayerPK]
+  const savePayerPK = useCallback(
+    async (pk: string) => {
+      const opfsRoot = await navigator.storage.getDirectory();
+      const payerFileHandle = await opfsRoot.getFileHandle('payerPK.txt', { create: true });
+      const payerFile = await payerFileHandle.createWritable();
+      await payerFile.write(pk);
+      await payerFile.close();
+      dispatch({ type: 'load_payer_pk', payerPk: pk });
+    },
+    [navigator, dispatch],
   );
+
+  const exportValue = useMemo(() => ({ ...state, savePayerPK }), [state, savePayerPK]);
 
   return <OpfsContext.Provider value={exportValue}>{children}</OpfsContext.Provider>;
 };

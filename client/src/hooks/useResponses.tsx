@@ -45,7 +45,8 @@ const useResponses = ({
       fetchMore: responsesAOFetchMore,
     },
   ] = useLazyQuery(responsesQuery);
-  const [ getChatResponses,
+  const [
+    getChatResponses,
     {
       data: responsesData,
       error: responseError,
@@ -69,10 +70,8 @@ const useResponses = ({
   useEffect(() => {
     if (reqIds.length > 0) {
       const AOvariables = {
-        tags: [
-          { name: 'Pushed-For', values: reqIds },
-        ],
-        recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ],
+        tags: [{ name: 'Pushed-For', values: reqIds }],
+        recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM'],
         owners: undefined,
         first: 100,
       };
@@ -99,7 +98,7 @@ const useResponses = ({
         notifyOnNetworkStatusChange: true,
       });
     }
-  
+
     if (lastRequestId) {
       stopResponsePolling();
       stopResponseAOPolling();
@@ -116,16 +115,18 @@ const useResponses = ({
       };
       pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
       const AOvariables = {
-        tags: [
-          { name: 'Pushed-For', values: pollReqIds },
-        ],
-        recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ],
+        tags: [{ name: 'Pushed-For', values: pollReqIds }],
+        recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM'],
         owners: undefined,
         first: 10,
       };
-      pollAOResponses({ variables: AOvariables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
+      pollAOResponses({
+        variables: AOvariables,
+        pollInterval: 10000,
+        notifyOnNetworkStatusChange: true,
+      });
     }
-  }, [reqIds, lastRequestId, conversationId, first, owners ]);
+  }, [reqIds, lastRequestId, conversationId, first, owners]);
 
   useEffect(() => {
     if (responsesData?.transactions?.pageInfo?.hasNextPage) {
@@ -147,7 +148,8 @@ const useResponses = ({
         variables: {
           after:
             responsesAOData.transactions.edges.length > 0
-              ? responsesAOData.transactions.edges[responsesAOData.transactions.edges.length - 1].cursor
+              ? responsesAOData.transactions.edges[responsesAOData.transactions.edges.length - 1]
+                  .cursor
               : undefined,
         },
         updateQuery: commonUpdateQuery,
@@ -178,11 +180,13 @@ const useResponses = ({
       transactions: {
         edges: transactions,
         pageInfo: {
-          hasNextPage: responsesData.transactions.pageInfo.hasNextPage || responsesAOData.transactions.pageInfo.hasNextPage,
+          hasNextPage:
+            responsesData.transactions.pageInfo.hasNextPage ||
+            responsesAOData.transactions.pageInfo.hasNextPage,
         },
       },
     };
-  }, [ responsesData, responsesAOData]);
+  }, [responsesData, responsesAOData]);
 
   const joinedResponsesPollingData = useMemo(() => {
     if (!responsesPollingData && !responsesAOPollingData) {
@@ -207,11 +211,13 @@ const useResponses = ({
       transactions: {
         edges: transactions,
         pageInfo: {
-          hasNextPage: responsesPollingData.transactions.pageInfo.hasNextPage || responsesAOPollingData.transactions.pageInfo.hasNextPage,
+          hasNextPage:
+            responsesPollingData.transactions.pageInfo.hasNextPage ||
+            responsesAOPollingData.transactions.pageInfo.hasNextPage,
         },
       },
     };
-  }, [ responsesPollingData, responsesAOPollingData ]);
+  }, [responsesPollingData, responsesAOPollingData]);
 
   const stopJoinedResponsesPolling = useCallback(() => {
     if (stopResponsePolling) {
@@ -221,13 +227,13 @@ const useResponses = ({
     if (stopResponseAOPolling) {
       stopResponseAOPolling();
     }
-  }, [ stopResponsePolling, stopResponseAOPolling ]);
+  }, [stopResponsePolling, stopResponseAOPolling]);
 
   return {
     responsesData: joinedResponsesData,
     responsesLoading: responsesLoading || responsesAOLoading,
     responseError: responseError || responseAOError,
-    responseNetworkStatus : responseNetworkStatus || responseAONetworkStatus,
+    responseNetworkStatus: responseNetworkStatus || responseAONetworkStatus,
     responsesPollingData: joinedResponsesPollingData,
     stopResponsePolling: stopJoinedResponsesPolling,
   };

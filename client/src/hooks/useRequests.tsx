@@ -81,7 +81,10 @@ const useRequests = ({
       //
       tags.splice(0, 0, { name: 'Conversation-ID', values: [conversationId.toString()] });
     } else if (conversationId) {
-      tags.splice(0, 0, { name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
+      tags.splice(0, 0, {
+        name: TAG_NAMES.conversationIdentifier,
+        values: [conversationId.toString()],
+      });
     }
 
     if (solutionTx === RETROSPECTIVE_SOLUTION) {
@@ -107,10 +110,13 @@ const useRequests = ({
     });
 
     // add request caller tag for ao requests and remove the owner tag
-    if (requestCaller || userAddrs.length > 0 ) {
-      tags.splice(0, 0, { name: 'Request-Caller', values: requestCaller ? [ requestCaller ] : userAddrs });
+    if (requestCaller || userAddrs.length > 0) {
+      tags.splice(0, 0, {
+        name: 'Request-Caller',
+        values: requestCaller ? [requestCaller] : userAddrs,
+      });
     }
-   
+
     getChatAoRequests({
       variables: {
         tags,
@@ -136,7 +142,8 @@ const useRequests = ({
 
   const handleFetchMore = useCallback(() => {
     if (requestsData?.transactions?.edges && requestsData.transactions.edges.length > 0) {
-      const lastTx = requestsData?.transactions.edges[requestsData.transactions.edges.length - 1].cursor;
+      const lastTx =
+        requestsData?.transactions.edges[requestsData.transactions.edges.length - 1].cursor;
       requestFetchMore({
         variables: {
           after: lastTx,
@@ -144,12 +151,12 @@ const useRequests = ({
         updateQuery: commonUpdateQuery,
       });
     }
-    
-  }, [ requestsData ]);
+  }, [requestsData]);
 
   const handleAOFetchMore = useCallback(() => {
     if (requestsAOData?.transactions?.edges && requestsAOData.transactions.edges.length > 0) {
-      const lastTx = requestsAOData?.transactions.edges[requestsAOData.transactions.edges.length - 1].cursor;
+      const lastTx =
+        requestsAOData?.transactions.edges[requestsAOData.transactions.edges.length - 1].cursor;
       requestAOFetchMore({
         variables: {
           after: lastTx,
@@ -168,8 +175,7 @@ const useRequests = ({
         },
       });
     }
-    
-  }, [ requestsAOData ]);
+  }, [requestsAOData]);
 
   const joinedRequestsData = useMemo(() => {
     if (!requestsData && !requestsAOData) {
@@ -194,11 +200,13 @@ const useRequests = ({
       transactions: {
         edges: transactions,
         pageInfo: {
-          hasNextPage: requestsData.transactions.pageInfo.hasNextPage || requestsAOData.transactions.pageInfo.hasNextPage,
+          hasNextPage:
+            requestsData.transactions.pageInfo.hasNextPage ||
+            requestsAOData.transactions.pageInfo.hasNextPage,
         },
       },
     };
-  }, [ requestsData, requestsAOData]);
+  }, [requestsData, requestsAOData]);
 
   const joinedFetchMore = useCallback(() => {
     if (requestsData && requestsData.transactions.pageInfo.hasNextPage) {

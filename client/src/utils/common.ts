@@ -68,7 +68,7 @@ export const commonUpdateQuery = (
   if (!fetchMoreResult) {
     return prev;
   }
-  const newData: IEdge[] = [ ...fetchMoreResult.transactions.edges];
+  const newData: IEdge[] = [...fetchMoreResult.transactions.edges];
   newData.sort((a: IEdge, b: IEdge) => {
     const aTimestamp =
       parseInt(findTag(a, 'unixTime') ?? '', 10) ??
