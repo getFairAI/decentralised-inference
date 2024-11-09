@@ -1148,6 +1148,7 @@ export const responsesQuery = gql`
   query TransactionAnswered($tags: [TagFilter!], $owners: [String!], $first: Int!) {
     transactions(first: $first, tags: $tags, owners: $owners, sort: HEIGHT_DESC) {
       edges {
+        cursor
         node {
           id
           owner {
@@ -1163,6 +1164,9 @@ export const responsesQuery = gql`
             value
           }
         }
+      }
+      pageInfo {
+        hasNextPage
       }
     }
   }

@@ -17,7 +17,7 @@
  */
 
 import { useLazyQuery } from '@apollo/client';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { commonUpdateQuery } from '@/utils/common';
 import { PROTOCOL_NAME, PROTOCOL_VERSION, INFERENCE_RESPONSE } from '@/constants';
 import { responsesQuery } from '@/queries/graphql';
@@ -28,17 +28,24 @@ const useResponses = ({
   lastRequestId,
   first,
   owners,
-  isAO,
 }: {
   reqIds: string[];
   conversationId: number;
   lastRequestId?: string;
   first?: number;
   owners?: string[];
-  isAO?: boolean
 }) => {
   const [
-    getChatResponses,
+    getChatAOResponses,
+    {
+      data: responsesAOData,
+      error: responseAOError,
+      loading: responsesAOLoading,
+      networkStatus: responseAONetworkStatus,
+      fetchMore: responsesAOFetchMore,
+    },
+  ] = useLazyQuery(responsesQuery);
+  const [ getChatResponses,
     {
       data: responsesData,
       error: responseError,
@@ -53,48 +60,28 @@ const useResponses = ({
       fetchPolicy: 'network-only',
       nextFetchPolicy: 'network-only',
     });
+  const [pollAOResponses, { data: responsesAOPollingData, stopPolling: stopResponseAOPolling }] =
+    useLazyQuery(responsesQuery, {
+      fetchPolicy: 'network-only',
+      nextFetchPolicy: 'network-only',
+    });
 
   useEffect(() => {
-    if (isAO) {
-      const variables = {
+    if (reqIds.length > 0) {
+      const AOvariables = {
         tags: [
           { name: 'Pushed-For', values: reqIds },
-          // { name: 'From-Module', values: [ 'From-Module:BlucTh6AJQvcbhNPa1t1UpNgHTM7UEmR0czYdAdCxXg' ]},
-          // { name: 'From-Process', values: ['wh5vB2IbqmIBUqgodOaTvByNFDPr73gbUq1bVOUtCrw'] },
-          
-          // { name: 'Action', values: ['Inference-Response'] },
         ],
         recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ],
         owners: undefined,
-        // owners: [],
-        first: 10,
+        first: 100,
       };
-      if (reqIds.length > 0) {
-        getChatResponses({
-          variables,
-          fetchPolicy: 'network-only',
-          nextFetchPolicy: 'network-only',
-          notifyOnNetworkStatusChange: true,
-        });
-      }
-  
-      if (lastRequestId) {
-        stopResponsePolling();
-        const pollReqIds = [lastRequestId];
-        const variables = {
-          tags: [
-            // {  name: 'From-Module', values: [ 'From-Module:BlucTh6AJQvcbhNPa1t1UpNgHTM7UEmR0czYdAdCxXg' ]},
-            // { name: 'From-Process', values: ['wh5vB2IbqmIBUqgodOaTvByNFDPr73gbUq1bVOUtCrw'] },
-            { name: 'Pushed-For', values: pollReqIds },
-            // { name: 'Action', values: ['Inference-Response'] },
-          ],
-          recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ],
-          owners: undefined,
-          first: 10,
-        };
-        pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
-      }
-    } else {
+      getChatAOResponses({
+        variables: AOvariables,
+        fetchPolicy: 'network-only',
+        nextFetchPolicy: 'network-only',
+        notifyOnNetworkStatusChange: true,
+      });
       const variables = {
         tags: [
           { name: 'Request-Transaction', values: reqIds },
@@ -105,32 +92,40 @@ const useResponses = ({
         owners: ['SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q'],
         first: 10,
       };
-      if (reqIds.length > 0) {
-        getChatResponses({
-          variables,
-          fetchPolicy: 'network-only',
-          nextFetchPolicy: 'network-only',
-          notifyOnNetworkStatusChange: true,
-        });
-      }
-  
-      if (lastRequestId) {
-        stopResponsePolling();
-        const pollReqIds = [lastRequestId];
-        const variables = {
-          tags: [
-            { name: 'Request-Transaction', values: pollReqIds },
-            { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
-            { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
-            { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
-          ],
-          owners: ['SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q'],
-          first: 10,
-        };
-        pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
-      }
+      getChatResponses({
+        variables,
+        fetchPolicy: 'network-only',
+        nextFetchPolicy: 'network-only',
+        notifyOnNetworkStatusChange: true,
+      });
     }
-  }, [reqIds, lastRequestId, conversationId, first, owners, isAO ]);
+  
+    if (lastRequestId) {
+      stopResponsePolling();
+      stopResponseAOPolling();
+      const pollReqIds = [lastRequestId];
+      const variables = {
+        tags: [
+          { name: 'Request-Transaction', values: pollReqIds },
+          { name: 'Operation-Name', values: [INFERENCE_RESPONSE] },
+          { name: 'Protocol-Name', values: [PROTOCOL_NAME] },
+          { name: 'Protocol-Version', values: [PROTOCOL_VERSION] },
+        ],
+        owners: ['SsoNc_AAEgS1S0cMVUUg3qRUTuNtwQyzsQbGrtTAs-Q'],
+        first: 10,
+      };
+      pollResponses({ variables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
+      const AOvariables = {
+        tags: [
+          { name: 'Pushed-For', values: pollReqIds },
+        ],
+        recipients: ['ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM' ],
+        owners: undefined,
+        first: 10,
+      };
+      pollAOResponses({ variables: AOvariables, pollInterval: 10000, notifyOnNetworkStatusChange: true });
+    }
+  }, [reqIds, lastRequestId, conversationId, first, owners ]);
 
   useEffect(() => {
     if (responsesData?.transactions?.pageInfo?.hasNextPage) {
@@ -146,13 +141,95 @@ const useResponses = ({
     }
   }, [responsesData]);
 
+  useEffect(() => {
+    if (responsesAOData?.transactions?.pageInfo?.hasNextPage) {
+      responsesAOFetchMore({
+        variables: {
+          after:
+            responsesAOData.transactions.edges.length > 0
+              ? responsesAOData.transactions.edges[responsesAOData.transactions.edges.length - 1].cursor
+              : undefined,
+        },
+        updateQuery: commonUpdateQuery,
+      });
+    }
+  }, [responsesAOData]);
+
+  const joinedResponsesData = useMemo(() => {
+    if (!responsesData && !responsesAOData) {
+      return undefined;
+    }
+
+    if (!responsesData) {
+      return responsesAOData;
+    }
+    if (!responsesAOData) {
+      return responsesData;
+    }
+
+    const transactions = [
+      ...responsesData.transactions.edges,
+      ...responsesAOData.transactions.edges,
+    ].sort((a, b) => {
+      return b.node.timestamp - a.node.timestamp;
+    });
+
+    return {
+      transactions: {
+        edges: transactions,
+        pageInfo: {
+          hasNextPage: responsesData.transactions.pageInfo.hasNextPage || responsesAOData.transactions.pageInfo.hasNextPage,
+        },
+      },
+    };
+  }, [ responsesData, responsesAOData]);
+
+  const joinedResponsesPollingData = useMemo(() => {
+    if (!responsesPollingData && !responsesAOPollingData) {
+      return undefined;
+    }
+
+    if (!responsesPollingData) {
+      return responsesAOPollingData;
+    }
+    if (!responsesAOPollingData) {
+      return responsesPollingData;
+    }
+
+    const transactions = [
+      ...responsesPollingData.transactions.edges,
+      ...responsesAOPollingData.transactions.edges,
+    ].sort((a, b) => {
+      return b.node.timestamp - a.node.timestamp;
+    });
+
+    return {
+      transactions: {
+        edges: transactions,
+        pageInfo: {
+          hasNextPage: responsesPollingData.transactions.pageInfo.hasNextPage || responsesAOPollingData.transactions.pageInfo.hasNextPage,
+        },
+      },
+    };
+  }, [ responsesPollingData, responsesAOPollingData ]);
+
+  const stopJoinedResponsesPolling = useCallback(() => {
+    if (stopResponsePolling) {
+      stopResponsePolling();
+    }
+
+    if (stopResponseAOPolling) {
+      stopResponseAOPolling();
+    }
+  }, [ stopResponsePolling, stopResponseAOPolling ]);
+
   return {
-    responsesData,
-    responsesLoading,
-    responseError,
-    responseNetworkStatus,
-    responsesPollingData,
-    stopResponsePolling,
+    responsesData: joinedResponsesData,
+    responsesLoading: responsesLoading || responsesAOLoading,
+    responseError: responseError || responseAOError,
+    responseNetworkStatus : responseNetworkStatus || responseAONetworkStatus,
+    responsesPollingData: joinedResponsesPollingData,
+    stopResponsePolling: stopJoinedResponsesPolling,
   };
 };
 

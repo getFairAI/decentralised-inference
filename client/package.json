@@ -20,6 +20,8 @@
     "deploy": "ts-node --esm ./scripts/deploy.ts"
   },
   "dependencies": {
+    "@irys/query": "^0.0.6",
+    "@irys/sdk": "^0.1.21",
     "@apollo/client": "3.7.13",
     "@dha-team/arbundles": "^1.0.1",
     "@dicebear/collection": "6.0.2",

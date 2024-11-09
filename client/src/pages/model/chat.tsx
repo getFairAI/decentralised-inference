@@ -95,6 +95,7 @@ import RequestAllowance from '@/components/request-allowance';
 import ao from '@/utils/ao';
 import { OpfsContext } from '@/context/opfs';
 import { Types } from '@permaweb/aoconnect/dist/dal';
+import Query from '@irys/query';
 
 const DEFAULT_N_IMAGES = 1;
 const RADIX = 10;
@@ -181,7 +182,7 @@ const InputField = ({
         setShowFeedback(false);
       }, 2000);
     }
-  }, [handleSendFile, handleSendText, setOpenRating, file, isSending, showFeedback]);
+  }, [handleSendFile, handleSendText, setOpenRating, file, isSending, showFeedback ]);;
 
   // avoid send duplicated messages and show the new line if it's only the Enter key
   const keyDownHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -340,7 +341,7 @@ const Chat = () => {
     throwawayUsdcAllowance,
     updateBalance,
     updateAllowance,
-    /* customUpload */
+    promptWithThrowaway
   } = useContext(ThrowawayContext);
   const {
     state,
@@ -555,20 +556,6 @@ const Chat = () => {
   }, [userAddr, setCurrentPubKey]);
 
   useEffect(() => {
-    if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
-      setResponseParams({
-        ...responseParams,
-        isAO: true,
-      });
-    } else {
-      setResponseParams({
-        ...responseParams,
-        isAO: false,
-      });
-    }
-  }, [ currentOperator ]);
-
-  useEffect(() => {
     const currHeaderHeight = document.querySelector('header')?.clientHeight as number;
     setChatMaxHeight(`${height - currHeaderHeight}px`);
   }, [height]);
@@ -700,7 +687,7 @@ const Chat = () => {
 
     // map tags for ao transactions
     for (const el of newData) {
-      const isResponse = el.node.tags.find((tag) => tag.name === 'Operation-Name')?.value === 'Inference-Response';
+      const isResponse = el.node.tags.find((tag: ITag) => tag.name === 'Operation-Name')?.value === 'Inference-Response' || el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
       const pushedFor = el.node.tags.find(tag => tag.name === 'Pushed-For')?.value;
       const request = newData.find((el) => el.node.id === pushedFor);
 
@@ -949,6 +936,13 @@ const Chat = () => {
     setFile(undefined);
     setIsWaitingResponse(true);
     setResponseTimeout(false);
+
+    if (tags.length === 0) {
+      const irysQuery = new Query();
+
+      [{ tags }] = await irysQuery.search('irys:transactions').ids([txid]).limit(1);
+    }
+    
     const url = `https://gateway.irys.xyz/${txid}`;
 
     enqueueSnackbar(
@@ -986,6 +980,16 @@ const Chat = () => {
   };
 
   const handleSendFile = async () => {
+    if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
+      enqueueSnackbar(
+        'You cannot currently files to the AO Provider. Please send text messages only.',
+        {
+          variant: 'error',
+        },
+      );
+      return;
+    }
+
     if (!file) {
       return;
     }
@@ -1154,7 +1158,9 @@ const Chat = () => {
 
     try {
       const config = await getConfigValues();
-      config.modelName = 'Phi2';
+      if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
+        config.modelName = 'Phi2'; // override model name for ao provider
+      }
       if (!isArbitrumChat && !config.modelName) {
         enqueueSnackbar(
           'You have no Model selected. Choose one in the configurations drawer and try again.',
@@ -1211,43 +1217,57 @@ const Chat = () => {
         dataToUpload = JSON.stringify(dataToUpload);
       }
 
-      const operatorConfig = {
-        id: currentOperator?.tx.node.id,
-        arweaveWallet: currentOperator?.arweaveWallet,
-        evmWallet: currentOperator?.evmWallet,
-        operatorFee: currentOperator?.operatorFee,
-      };
-      const tags: { name: string; value: string }[] = [];
-      tags.push({ name: 'Action', value: 'Inference' });
-      tags.push({ name: 'Protocol-Name', value: 'FairAI' });
-      tags.push({ name: 'Protocol-Version', value: '2.0' });
-      tags.push({ name: 'Solution-Transaction', value: state.solution.node.id });
-      tags.push({ name: 'Operator-Registration', value: operatorConfig.id || '' });
-      tags.push({ name: 'Operation-Name', value: 'Inference Request' });
-      tags.push({ name: 'Conversation-Identifier', value: currentConversationId.toString() });
-    
-      const tempDate = Date.now() / 1000;
-      tags.push({ name: 'Unix-Time', value: tempDate.toString() });
-      tags.push({ name: 'Content-Type', value: 'text/plain' });
-      tags.push({ name: 'Transaction-Origin', value: 'FairAI Browser' });  
-      tags.push({ name: 'License', value: '' });
-      tags.push({ name: 'Derivation', value: 'Allowed-With-License-Passthrough' });
-      tags.push({ name: 'Commercial-Use', value: 'Allowed' });
-    
-      if (config) {
-        addConfigTags(tags, config, userAddr);
+      let arweaveTxId = '';
+      let tags: ITag[] = [];
+      if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
+        const operatorConfig = {
+          id: currentOperator?.tx.node.id,
+          arweaveWallet: currentOperator?.arweaveWallet,
+          evmWallet: currentOperator?.evmWallet,
+          operatorFee: currentOperator?.operatorFee,
+        };
+        tags = [];
+        tags.push({ name: 'Action', value: 'Inference' });
+        tags.push({ name: 'Protocol-Name', value: 'FairAI' });
+        tags.push({ name: 'Protocol-Version', value: '2.0' });
+        tags.push({ name: 'Solution-Transaction', value: state.solution.node.id });
+        tags.push({ name: 'Operator-Registration', value: operatorConfig.id || '' });
+        tags.push({ name: 'Operation-Name', value: 'Inference Request' });
+        tags.push({ name: 'Conversation-Identifier', value: currentConversationId.toString() });
+      
+        const tempDate = Date.now() / 1000;
+        tags.push({ name: 'Unix-Time', value: tempDate.toString() });
+        tags.push({ name: 'Content-Type', value: 'text/plain' });
+        tags.push({ name: 'Transaction-Origin', value: 'FairAI Browser' });  
+        tags.push({ name: 'License', value: '' });
+        tags.push({ name: 'Derivation', value: 'Allowed-With-License-Passthrough' });
+        tags.push({ name: 'Commercial-Use', value: 'Allowed' });
+      
+        if (config) {
+          addConfigTags(tags, config, userAddr);
+        }
+  
+        arweaveTxId = await ao.message({
+          process: 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM',
+          data: dataToUpload,
+          tags,
+          signer: ao.customDataSignerEth(payerPK!) as unknown as Types['signer'],
+        });
+      } else {
+        const result = await promptWithThrowaway(
+          dataToUpload,
+          state.solution.node.id,
+          {
+            arweaveWallet: currentOperator?.arweaveWallet ?? '',
+            evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
+            operatorFee: currentOperator?.operatorFee ?? 0,
+          },
+          currentConversationId,
+          config,
+        );
+        arweaveTxId = result.arweaveTxId;
       }
-
-      const arweaveTxId = await ao.message({
-        process: 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM',
-        data: dataToUpload,
-        tags,
-        signer: ao.customDataSignerEth(payerPK!) as unknown as Types['signer'],
-      });
-      /* const arweaveTxId = await customUpload(
-        dataToUpload,
-        tags
-      ); */
+      /*  */
       // update balance after payments
       updateMessages(arweaveTxId, newMessage, 'text/plain', tags);
       await updateAllowance();
@@ -1325,8 +1345,8 @@ const Chat = () => {
     // 
 
     for (const el of allData) {
-      const isResponse = el.node.tags.find((tag) => tag.name === 'Operation-Name')?.value === 'Inference-Response' || el.node.tags.find((tag) => tag.name === 'Action')?.value === 'Inference-Response';
-      const pushedFor = el.node.tags.find(tag => tag.name === 'Pushed-For')?.value;
+      const isResponse = el.node.tags.find((tag: ITag) => tag.name === 'Operation-Name')?.value === 'Inference-Response' || el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
+      const pushedFor = el.node.tags.find((tag: ITag) => tag.name === 'Pushed-For')?.value;
       const request = allData.find((el) => el.node.id === pushedFor);
 
       if (request && isResponse) {

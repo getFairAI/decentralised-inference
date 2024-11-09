@@ -47,11 +47,8 @@ import { useEvmProviders } from '@/hooks/useEvmProviders';
 import { EIP6963ProviderDetail } from '@/interfaces/evm';
 import { ConfigurationValues } from '@/interfaces/common';
 import { enqueueSnackbar } from 'notistack';
-import { BaseWebARx } from '@permaweb/arx/build/esm/web/base';
-import { WebToken } from '@permaweb/arx/build/esm/web/types';
-import EthereumConfig from '@permaweb/arx/build/esm/web/tokens/ethereum';
+import { WebIrys } from '@irys/sdk';
 import { ITag } from '@/interfaces/arweave';
-import { InjectedTypedEthereumSignerMinimalProvider } from '@dha-team/arbundles';
 
 type WalletConnectedAction = {
   type: 'wallet_connected';
@@ -273,37 +270,21 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('No provider found');
     }
     const [ account ] = await currentProvider.provider.request({ method: 'eth_requestAccounts' });
-
+    const network = 'mainnet';
+    const token = 'arbitrum';
+    const rpcUrl = 'https://arb1.arbitrum.io/rpc';
     const walletClient = createWalletClient({
       account,
       chain: arbitrum,
       transport: custom(currentProvider.provider),
     });
-    const signer = {
-      getSigner: () => ({
-        getAddress: async () => (await walletClient.getAddresses())[0],
-        _signTypedData: async (domain, types, message): Promise<string> => {
-          message['Transaction hash'] = '0x' + Buffer.from(message['Transaction hash']).toString('hex');
-          // @ts-expect-error types
-          return await walletClient.signTypedData({ account: message.address, domain, types, primaryType: 'Bundlr', message });
-        },
-      }),
-    } as InjectedTypedEthereumSignerMinimalProvider;
 
-    const arx = new BaseWebARx({
-      network: 'mainnet',
-      config: {
-        providerUrl: 'https://arb1.arbitrum.io/rpc',
-      },
-      getTokenConfig: (i): WebToken =>
-        new EthereumConfig({
-          arx: i,
-          name: 'arbitrum',
-          ticker: 'ARB',
-          minConfirm: 1,
-          providerUrl: 'https://arb1.arbitrum.io/rpc',
-          wallet: signer,
-        }) as unknown as WebToken,
+    // Create a wallet object
+    const wallet = { rpcUrl, name: 'viemv2', provider: walletClient };
+    const arx = new WebIrys({
+      network,
+      token,
+      wallet
     });
     await arx.ready();
 
@@ -331,9 +312,11 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
         },
         getPubKey,
         decrypt: async (data: `0x${string}`) => {
+          const hexData = `0x${Buffer.from(data, 'utf8').toString('hex')}`;
+
           const result = await currentProvider?.provider.request({
             method: 'eth_decrypt',
-            params: [data, state.currentAddress],
+            params: [hexData, state.currentAddress],
           });
 
           try {

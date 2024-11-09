@@ -27,7 +27,6 @@ import {
   useState,
 } from 'react';
 import {
-  findByTagsDocument,
   getEthBalance,
   getUsdcAllowance,
   prompt,
@@ -38,15 +37,37 @@ import { generatePrivateKey, privateKeyToAddress } from 'viem/accounts';
 import { EVMWalletContext } from './evm-wallet';
 import { encryptSafely } from '@metamask/eth-sig-util';
 import { PROTOCOL_NAME, PROTOCOL_VERSION } from '@/constants';
-import { useLazyQuery } from '@apollo/client';
+import { gql, useLazyQuery } from '@apollo/client';
 import { isNetworkRequestInFlight } from '@apollo/client/core/networkStatus';
 import { Backdrop, Typography, useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
 import { OpfsContext } from './opfs';
-import { BaseWebARx } from '@permaweb/arx/build/esm/web/base';
+import { BaseWebIrys } from '@irys/sdk/build/esm/web/base';
 import { ITag } from '@/interfaces/arweave';
-import { WebToken } from '@permaweb/arx/build/esm/web/types';
-import EthereumConfig from '@permaweb/arx/build/esm/node/tokens/ethereum';
+import { WebToken } from '@irys/sdk/build/esm/web/types';
+import EthereumConfig from '@irys/sdk/build/esm/node/tokens/ethereum';
+
+const irysQuery = gql`
+  query requestsOnIrys($tags: [TagFilter!], $owners: [String!], $first: Int, $after: String) {
+    transactions(tags: $tags, owners: $owners, first: $first, after: $after, order: DESC) {
+      edges {
+        cursor
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          address
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+`;
 
 export interface ThrowawayContext {
   throwawayAddr: string;
@@ -126,7 +147,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
     postOnArweave,
     decrypt,
   } = useContext(EVMWalletContext);
-  const [ getProxyKey, proxyData ] = useLazyQuery(findByTagsDocument);
+  const [ getProxyKey, proxyData ] = useLazyQuery(irysQuery);
   const [isLayoverOpen, setIsLayoverOpen] = useState<boolean>(false);
   const theme = useTheme();
 
@@ -149,14 +170,14 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
 
   const customUpload = useCallback(
     async (data: string, tags: ITag[]) => {
-      const arx = new BaseWebARx({
+      const arx = new BaseWebIrys({
         network: 'mainnet',
         config: {
           providerUrl: 'https://arb1.arbitrum.io/rpc',
         },
         getTokenConfig: (i): WebToken =>
           new EthereumConfig({
-            arx: i,
+            irys: i,
             name: 'arbitrum',
             ticker: 'ARB',
             minConfirm: 1,
@@ -275,6 +296,7 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
               ],
               first: 1,
             },
+            context: { clientName: 'irys' },
           });
         }
         break;

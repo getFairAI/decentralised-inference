@@ -24,8 +24,7 @@ import {
   TERMS_VERSION,
 } from '@/constants';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import { useQuery } from '@apollo/client';
-import { findByTagsDocument } from '@fairai/evm-sdk';
+import { Query } from '@irys/query';
 import {
   Button,
   Dialog,
@@ -44,27 +43,30 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const [showChildren, setShowChildren] = useState(false);
-  const { data } = useQuery(findByTagsDocument, {
-    variables: {
-      tags: [
-        { name: TAG_NAMES.operationName, values: [TERMS_AGREEMENT] },
-        { name: 'Foreign-Address', values: [currentAddress] },
-        { name: TAG_NAMES.termsVersion, values: [TERMS_VERSION] },
-        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME, 'Fair Protocol'] },
-      ],
-      first: 1,
-    },
-    skip: !currentAddress,
-  });
 
   useEffect(() => {
-    if (data?.transactions?.edges && data.transactions.edges.length > 0) {
-      setShowDialog(false);
-      setShowChildren(true);
-    } else {
-      setShowDialog(true);
+    if (currentAddress) {
+      (async () => {
+        const irysQuery = new Query();
+        const [result] = await irysQuery
+          .search('irys:transactions')
+          .tags([
+            { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME, 'Fair Protocol'] },
+            { name: TAG_NAMES.operationName, values: [TERMS_AGREEMENT] },
+            { name: TAG_NAMES.termsVersion, values: [TERMS_VERSION] },
+          ])
+          .from([currentAddress])
+          .limit(1);
+
+        if (result) {
+          setShowDialog(false);
+          setShowChildren(true);
+        } else {
+          setShowDialog(true);
+        }
+      })();
     }
-  }, [ data ]);
+  }, [currentAddress]);
 
   const handleAgreeClick = useCallback(async () => {
     const tags = [
