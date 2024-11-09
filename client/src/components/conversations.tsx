@@ -258,6 +258,18 @@ const Conversations = ({
                 first: 100,
                 tags: [
                   {
+                    name: TAG_NAMES.solutionTransaction,
+                    values: [state.solution.node.id],
+                  },
+                  {
+                    name: TAG_NAMES.conversationIdentifier,
+                    values: [el.toString()],
+                  },
+                  {
+                    name: TAG_NAMES.operationName,
+                    values: [INFERENCE_REQUEST],
+                  },
+                  {
                     name: TAG_NAMES.protocolName,
                     values: [PROTOCOL_NAME],
                   },
@@ -266,20 +278,8 @@ const Conversations = ({
                     values: [PROTOCOL_VERSION],
                   },
                   {
-                    name: TAG_NAMES.operationName,
-                    values: [INFERENCE_REQUEST],
-                  },
-                  {
                     name: TAG_NAMES.contentType,
                     values: [textContentType],
-                  },
-                  {
-                    name: TAG_NAMES.conversationIdentifier,
-                    values: [el.toString()],
-                  },
-                  {
-                    name: TAG_NAMES.solutionTransaction,
-                    values: [state.solution.node.id],
                   },
                 ],
               },

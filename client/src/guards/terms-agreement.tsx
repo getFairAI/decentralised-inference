@@ -74,6 +74,7 @@ const TermsAgreement = ({ children }: { children: ReactElement }) => {
       { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
       { name: TAG_NAMES.operationName, value: TERMS_AGREEMENT },
       { name: TAG_NAMES.termsVersion, value: TERMS_VERSION },
+      { name: 'Foreign-Address', value: currentAddress },
     ];
 
     await postOnArweave(TERMS_AGREEMENT, tags);

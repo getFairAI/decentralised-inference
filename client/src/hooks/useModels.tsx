@@ -26,8 +26,6 @@ import useOnScreen from './useOnScreen';
 import FairSDKWeb from '@fair-protocol/sdk/web';
 import _ from 'lodash';
 import Stamps, { CountResult } from '@permaweb/stampjs';
-import { WarpFactory } from 'warp-contracts';
-import Arweave from 'arweave';
 
 const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) => {
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -55,13 +53,7 @@ const useModels = (target?: RefObject<HTMLElement>, featuredElements?: number) =
   const totalStamps = async (targetTxs: (string | undefined)[]) => {
     try {
       const filteredTxsIds = targetTxs.filter((txId) => txId !== undefined) as string[];
-      const stampsInstance = Stamps.init({
-        warp: WarpFactory.forMainnet(),
-        arweave: Arweave.init({}),
-        wallet: window.arweaveWallet,
-        dre: 'https://dre-u.warp.cc/contract',
-        graphql: 'https://arweave.net/graphql',
-      });
+      const stampsInstance = Stamps.init({});
       const counts = await stampsInstance.counts(filteredTxsIds);
 
       return transformCountsToObjectMap(counts);

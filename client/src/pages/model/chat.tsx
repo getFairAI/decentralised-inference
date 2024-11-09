@@ -48,7 +48,6 @@ import {
 } from 'react';
 import {
   TAG_NAMES,
-  N_PREVIOUS_BLOCKS,
   MAX_MESSAGE_SIZE,
   INFERENCE_REQUEST,
   PROTOCOL_NAME,
@@ -60,7 +59,7 @@ import {
 import { IEdge, ITag } from '@/interfaces/arweave';
 import { useSnackbar } from 'notistack';
 import usePrevious from '@/hooks/usePrevious';
-import arweave, { getData } from '@/utils/arweave';
+import { getData } from '@/utils/arweave';
 import { findTag, printSize } from '@/utils/common';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import _ from 'lodash';
@@ -84,7 +83,6 @@ import { ChevronLeftRounded, InfoOutlined } from '@mui/icons-material';
 import { UserFeedbackContext } from '@/context/user-feedback';
 import useRatingFeedback from '@/hooks/useRatingFeedback';
 import { EVMWalletContext } from '@/context/evm-wallet';
-import { Query } from '@irys/query';
 import { encryptSafely } from '@metamask/eth-sig-util';
 import { findByTagsQuery, postOnArweave } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
@@ -94,6 +92,10 @@ import { toSvg } from 'jdenticon';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { ThrowawayContext } from '@/context/throwaway';
 import RequestAllowance from '@/components/request-allowance';
+import ao from '@/utils/ao';
+import { OpfsContext } from '@/context/opfs';
+import { Types } from '@permaweb/aoconnect/dist/dal';
+import Query from '@irys/query';
 
 const DEFAULT_N_IMAGES = 1;
 const RADIX = 10;
@@ -335,11 +337,11 @@ const Chat = () => {
   const navigate = useNavigate();
   const { currentAddress: userAddr, prompt, getPubKey, decrypt } = useContext(EVMWalletContext);
   const {
-    promptWithThrowaway,
     throwawayAddr,
     throwawayUsdcAllowance,
     updateBalance,
     updateAllowance,
+    promptWithThrowaway,
   } = useContext(ThrowawayContext);
   const {
     state,
@@ -360,7 +362,7 @@ const Chat = () => {
   const { width: chatWidth } = useComponentDimensions(chatRef);
   const [chatMaxHeight, setChatMaxHeight] = useState('100%');
   const { enqueueSnackbar } = useSnackbar();
-  const elementsPerPage = 2;
+  const elementsPerPage = 5;
   const scrollableRef = useRef<HTMLDivElement>(null);
   const [isWaitingResponse, setIsWaitingResponse] = useState(false);
   const [responseTimeout, setResponseTimeout] = useState(false);
@@ -382,6 +384,7 @@ const Chat = () => {
   const [currentOperator, setCurrentOperator] = useState(state.defaultOperator);
   const [isLayoverOpen, setLayoverOpen] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
+  const { payerPK } = useContext(OpfsContext);
 
   const isArbitrumChat = location.href?.includes('/arbitrum/') ?? false;
 
@@ -516,6 +519,7 @@ const Chat = () => {
     reqIds: requestIds,
     conversationId: currentConversationId,
     lastRequestId: '',
+    isAO: false,
   });
 
   const { requestsData, requestError, requestNetworkStatus, hasRequestNextPage, fetchMore } =
@@ -527,7 +531,7 @@ const Chat = () => {
   const showOperatorBusy = useOperatorBusy((currentOperator?.arweaveWallet as string) ?? '');
   const { showFeedback, setShowFeedback } = useRatingFeedback(
     userAddr,
-    requestsData?.length ?? 0,
+    requestsData?.transactions?.edges?.length ?? 0,
     hasRequestNextPage,
   );
 
@@ -574,7 +578,9 @@ const Chat = () => {
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
       //
-      const reqIds = requestsData.transactions.edges.map((el: IEdge) => el.node.id);
+      const reqIds = requestsData.transactions.edges.map(
+        (el: findByTagsQuery['transactions']['edges'][0]) => el.node.id,
+      );
 
       if (reqIds.length > 0) {
         (async () => reqData())();
@@ -596,7 +602,7 @@ const Chat = () => {
 
   useEffect(() => {
     // only update messages after getting all responses
-    const hasResponsesNextPage = responsesData?.transactions.pageInfo.hasNextPage;
+    const hasResponsesNextPage = responsesData?.transactions?.pageInfo?.hasNextPage;
     if (responsesData && responseNetworkStatus === NetworkStatus.ready && !hasResponsesNextPage) {
       const newResponses = responsesData.transactions.edges.filter(
         (previous: IEdge) =>
@@ -648,26 +654,27 @@ const Chat = () => {
     })();
   }, [responsesPollingData]);
 
-  const mapTransactionsToMessages = async (el: IEdge) => {
+  const mapTransactionsToMessages = async (el: findByTagsQuery['transactions']['edges'][0]) => {
     const msgIdx = messages.findIndex((m) => m.id === el.node.id);
 
-    const contentType = findTag(el, 'contentType');
-    const data =
+    const contentType = findTag(el, 'contentType') || 'text/plain';
+    let data =
       msgIdx <= 0 ? await getData(el.node.id, findTag(el, 'fileName')) : messages[msgIdx].msg;
-    const timestamp =
-      parseInt(findTag(el, 'unixTime') || '', 10) || el.node.block?.timestamp || Date.now() / 1000;
+    const timestamp = parseInt(findTag(el, 'unixTime') || '', 10) || Date.now() / 1000;
     const cid = findTag(el, 'conversationIdentifier') as string;
-    const currentHeight = (await arweave.blocks.getCurrent()).height;
     const isRequest = findTag(el, 'operationName') === INFERENCE_REQUEST;
+
+    if (typeof data === 'string') {
+      data = data.replaceAll('<|end|><|assistant|>', '');
+    }
 
     const msg: IMessage = {
       id: el.node.id,
       msg: data,
       type: isRequest ? 'request' : 'response',
       cid: parseInt(cid?.split('-')?.length > 1 ? cid?.split('-')[1] : cid, 10),
-      height: el.node.block ? el.node.block.height : currentHeight,
       to: isRequest ? (findTag(el, 'solutionOperator') as string) : userAddr,
-      from: isRequest ? userAddr : el.node.address,
+      from: isRequest ? userAddr : el.node.owner.address,
       tags: el.node.tags,
       contentType,
       timestamp,
@@ -676,11 +683,33 @@ const Chat = () => {
     return msg;
   };
 
-  const asyncMap = async (newData: IEdge[]) => {
+  const asyncMap = async (newData: findByTagsQuery['transactions']['edges']) => {
     const temp: IMessage[] = [];
 
-    const filteredData = newData.filter((el: IEdge) => {
+    // map tags for ao transactions
+    for (const el of newData) {
+      const isResponse =
+        el.node.tags.find((tag: ITag) => tag.name === 'Operation-Name')?.value ===
+          'Inference-Response' ||
+        el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
+      const pushedFor = el.node.tags.find((tag) => tag.name === 'Pushed-For')?.value;
+      const request = newData.find((el) => el.node.id === pushedFor);
+
+      if (request && isResponse) {
+        el.node.tags = [
+          { name: 'Operation-Name', value: 'Inference-Response' },
+          { name: 'Pushed-For', value: request?.node.id },
+          { name: 'Request-Transaction', value: request?.node.id },
+          { name: 'Conversation-Identifier', value: findTag(request, 'conversationIdentifier')! },
+          { name: 'Unix-Time', value: findTag(request, 'unixTime')! + 60 * 1000 },
+          { name: 'Content-Type', value: 'text/plain' },
+        ];
+      }
+    }
+
+    const filteredData = newData.filter((el: findByTagsQuery['transactions']['edges'][0]) => {
       const cid = findTag(el, 'conversationIdentifier');
+
       if (cid && cid.split('-').length > 1) {
         return parseInt(cid.split('-')[1], 10) === currentConversationId;
       } else if (cid) {
@@ -696,9 +725,10 @@ const Chat = () => {
 
     const allnewMessages = [...temp, ...messages];
     setMessages((prev) => {
-      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
-        (el) => el.cid === currentConversationId,
-      );
+      const uniqueNewMsgs = _.uniqWith(
+        [...prev, ...allnewMessages],
+        (a, b) => a.id === b.id || (a.msg === b.msg && a.timestamp === b.timestamp),
+      ).filter((el) => el.cid === currentConversationId);
       sortMessages(uniqueNewMsgs);
 
       checkIsWaitingResponse(uniqueNewMsgs);
@@ -889,7 +919,7 @@ const Chat = () => {
       description,
       customTags,
       nImages,
-      modelName: modelName ?? '',
+      modelName: modelName ?? 'Phi2',
       width: configWidth,
       height: configHeight,
       ...(royalty && {
@@ -903,7 +933,12 @@ const Chat = () => {
     };
   }, [currentConfig, currentPubKey]);
 
-  const updateMessages = async (txid: string, content: string | File, contentType: string) => {
+  const updateMessages = async (
+    txid: string,
+    content: string | File,
+    contentType: string,
+    tags: ITag[] = [],
+  ) => {
     setNewMessage('');
     if (inputRef?.current) {
       inputRef.current.value = '';
@@ -911,9 +946,13 @@ const Chat = () => {
     setFile(undefined);
     setIsWaitingResponse(true);
     setResponseTimeout(false);
-    const irysQuery = new Query();
 
-    const [{ tags }] = await irysQuery.search('irys:transactions').ids([txid]).limit(1);
+    if (tags.length === 0) {
+      const irysQuery = new Query();
+
+      [{ tags }] = await irysQuery.search('irys:transactions').ids([txid]).limit(1);
+    }
+
     const url = `https://gateway.irys.xyz/${txid}`;
 
     enqueueSnackbar(
@@ -928,7 +967,6 @@ const Chat = () => {
       },
     );
     const temp = messages.length > 0 ? [...messages] : [];
-    const currentHeight = (await arweave.blocks.getCurrent()).height;
 
     temp.push({
       msg: content,
@@ -936,7 +974,6 @@ const Chat = () => {
       timestamp: parseFloat(tags.find((tag) => tag.name === TAG_NAMES.unixTime)?.value as string),
       id: txid,
       cid: currentConversationId,
-      height: currentHeight,
       to: currentOperator?.arweaveWallet ?? '',
       from: userAddr,
       contentType,
@@ -948,10 +985,21 @@ const Chat = () => {
       conversationId: currentConversationId,
       lastRequestId: txid,
       reqIds: [],
+      isAO: tags.includes({ name: 'Action', value: 'Inference' }),
     });
   };
 
   const handleSendFile = async () => {
+    if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
+      enqueueSnackbar(
+        'You cannot currently files to the AO Provider. Please send text messages only.',
+        {
+          variant: 'error',
+        },
+      );
+      return;
+    }
+
     if (!file) {
       return;
     }
@@ -1056,6 +1104,62 @@ const Chat = () => {
     }
   };
 
+  const addConfigTags = (
+    tags: { name: string; value: string }[],
+    configuration: ConfigurationValues,
+    userAddr: string,
+  ) => {
+    if (configuration.assetNames) {
+      tags.push({ name: 'Asset-Names', value: JSON.stringify(configuration.assetNames) });
+    }
+
+    if (configuration.negativePrompt) {
+      tags.push({ name: 'Negative-Prompt', value: configuration.negativePrompt });
+    }
+
+    if (configuration.description) {
+      tags.push({ name: 'Description', value: configuration.description });
+    }
+
+    if (configuration.customTags && configuration.customTags?.length > 0) {
+      tags.push({ name: 'User-Custom-Tags', value: JSON.stringify(configuration.customTags) });
+    }
+
+    if (configuration.nImages && configuration.nImages > 0 && configuration.nImages < 10) {
+      tags.push({ name: 'N-Images', value: configuration.nImages.toString() });
+    }
+
+    if (configuration.width && configuration.width > 0) {
+      tags.push({ name: 'Images-Width', value: configuration.width.toString() });
+    }
+
+    if (configuration.height && configuration.height > 0) {
+      tags.push({ name: 'Images-Height', value: configuration.height.toString() });
+    }
+
+    if (configuration.requestCaller) {
+      tags.push({ name: 'Request-Caller', value: configuration.requestCaller });
+    } else {
+      tags.push({ name: 'Request-Caller', value: userAddr });
+    }
+
+    if (configuration.privateMode) {
+      tags.push({ name: 'Private-Mode', value: 'true' });
+    }
+
+    if (configuration.userPubKey) {
+      tags.push({ name: 'User-Public-Key', value: configuration.userPubKey });
+    }
+
+    if (configuration.modelName) {
+      tags.push({ name: 'Model-Name', value: configuration.modelName });
+    }
+
+    if (configuration.contextFileUrl) {
+      tags.push({ name: 'Context-File-Url', value: configuration.contextFileUrl });
+    }
+  };
+
   const handleSendText = async () => {
     if (!newMessage) {
       return;
@@ -1068,7 +1172,9 @@ const Chat = () => {
 
     try {
       const config = await getConfigValues();
-
+      if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
+        config.modelName = 'Phi2'; // override model name for ao provider
+      }
       if (!isArbitrumChat && !config.modelName) {
         enqueueSnackbar(
           'You have no Model selected. Choose one in the configurations drawer and try again.',
@@ -1125,19 +1231,59 @@ const Chat = () => {
         dataToUpload = JSON.stringify(dataToUpload);
       }
 
-      const { arweaveTxId } = await promptWithThrowaway(
-        dataToUpload,
-        state.solution.node.id,
-        {
-          arweaveWallet: currentOperator?.arweaveWallet ?? '',
-          evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
-          operatorFee: currentOperator?.operatorFee ?? 0,
-        },
-        currentConversationId,
-        config,
-      );
+      let arweaveTxId = '';
+      let tags: ITag[] = [];
+      if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
+        const operatorConfig = {
+          id: currentOperator?.tx.node.id,
+          arweaveWallet: currentOperator?.arweaveWallet,
+          evmWallet: currentOperator?.evmWallet,
+          operatorFee: currentOperator?.operatorFee,
+        };
+        tags = [];
+        tags.push({ name: 'Action', value: 'Inference' });
+        tags.push({ name: 'Protocol-Name', value: 'FairAI' });
+        tags.push({ name: 'Protocol-Version', value: '2.0' });
+        tags.push({ name: 'Solution-Transaction', value: state.solution.node.id });
+        tags.push({ name: 'Operator-Registration', value: operatorConfig.id || '' });
+        tags.push({ name: 'Operation-Name', value: 'Inference Request' });
+        tags.push({ name: 'Conversation-Identifier', value: currentConversationId.toString() });
+
+        const tempDate = Date.now() / 1000;
+        tags.push({ name: 'Unix-Time', value: tempDate.toString() });
+        tags.push({ name: 'Content-Type', value: 'text/plain' });
+        tags.push({ name: 'Transaction-Origin', value: 'FairAI Browser' });
+        tags.push({ name: 'License', value: '' });
+        tags.push({ name: 'Derivation', value: 'Allowed-With-License-Passthrough' });
+        tags.push({ name: 'Commercial-Use', value: 'Allowed' });
+
+        if (config) {
+          addConfigTags(tags, config, userAddr);
+        }
+
+        arweaveTxId = await ao.message({
+          process: 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM',
+          data: dataToUpload,
+          tags,
+          signer: ao.customDataSignerEth(payerPK!) as unknown as Types['signer'],
+        });
+      } else {
+        const result = await promptWithThrowaway(
+          dataToUpload,
+          state.solution.node.id,
+          {
+            arweaveWallet: currentOperator?.arweaveWallet ?? '',
+            evmWallet: currentOperator?.evmWallet ?? ('' as `0x${string}`),
+            operatorFee: currentOperator?.operatorFee ?? 0,
+          },
+          currentConversationId,
+          config,
+        );
+        arweaveTxId = result.arweaveTxId;
+      }
+      /*  */
       // update balance after payments
-      updateMessages(arweaveTxId, newMessage, 'text/plain');
+      updateMessages(arweaveTxId, newMessage, 'text/plain', tags);
       await updateAllowance();
       await updateBalance();
     } catch (error) {
@@ -1204,15 +1350,37 @@ const Chat = () => {
     }
   };
 
-  const reqData = async (allResponses?: IEdge[]) => {
+  const reqData = async (allResponses?: findByTagsQuery['transactions']['edges']) => {
     const previousRequest = requestsData?.transactions?.edges ?? [];
     let allData = [...previousRequest];
     if (allResponses && allResponses.length > 0) {
       allData = allData.concat(allResponses);
     }
+    //
 
-    const filteredData = allData.filter((el: IEdge) => {
+    for (const el of allData) {
+      const isResponse =
+        el.node.tags.find((tag: ITag) => tag.name === 'Operation-Name')?.value ===
+          'Inference-Response' ||
+        el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
+      const pushedFor = el.node.tags.find((tag: ITag) => tag.name === 'Pushed-For')?.value;
+      const request = allData.find((el) => el.node.id === pushedFor);
+
+      if (request && isResponse) {
+        el.node.tags = [
+          { name: 'Operation-Name', value: 'Inference-Response' },
+          { name: 'Pushed-For', value: request?.node.id },
+          { name: 'Request-Transaction', value: request?.node.id },
+          { name: 'Conversation-Identifier', value: findTag(request, 'conversationIdentifier')! },
+          { name: 'Unix-Time', value: findTag(request, 'unixTime')! + 60 * 1000 },
+          { name: 'Content-Type', value: 'text/plain' },
+        ];
+      }
+    }
+
+    const filteredData = allData.filter((el: findByTagsQuery['transactions']['edges'][0]) => {
       const cid = findTag(el, 'conversationIdentifier');
+
       if (cid && cid.split('-').length > 1) {
         return parseInt(cid.split('-')[1], 10) === currentConversationId;
       } else if (cid) {
@@ -1224,15 +1392,18 @@ const Chat = () => {
 
     const temp: IMessage[] = [];
     await Promise.all(
-      filteredData.map(async (el: IEdge) => temp.push(await mapTransactionsToMessages(el))),
+      filteredData.map(async (el: findByTagsQuery['transactions']['edges'][0]) =>
+        temp.push(await mapTransactionsToMessages(el)),
+      ),
     );
 
     const allnewMessages = [...temp, ...messages];
 
     setMessages((prev) => {
-      const uniqueNewMsgs = _.uniqBy([...prev, ...allnewMessages], 'id').filter(
-        (el) => el.cid === currentConversationId,
-      );
+      const uniqueNewMsgs = _.uniqWith(
+        [...prev, ...allnewMessages],
+        (a, b) => a.id === b.id || (a.msg === b.msg && a.timestamp === b.timestamp),
+      ).filter((el) => el.cid === currentConversationId);
       sortMessages(uniqueNewMsgs);
 
       checkIsWaitingResponse(uniqueNewMsgs);
@@ -1241,10 +1412,11 @@ const Chat = () => {
   };
 
   const emptyPolling = async () => {
-    const currentBlockHeight = (await arweave.blocks.getCurrent()).height;
+    const currentTimestamp = Date.now() / 1000;
     const lastMessage = [...messages.filter((el) => el.cid === currentConversationId)].pop();
     if (lastMessage && lastMessage.type === 'request') {
-      if (currentBlockHeight - lastMessage.height > N_PREVIOUS_BLOCKS) {
+      const hourInMs = 60 * 60 * 1000;
+      if (lastMessage.timestamp + hourInMs < currentTimestamp) {
         setIsWaitingResponse(false);
         setResponseTimeout(true);
       } else {

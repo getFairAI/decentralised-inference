@@ -40,8 +40,14 @@ export const getData = async (txid: string, fileName?: string) => {
   if (contentType?.includes('text') || contentType?.includes('json')) {
     return (await result.blob()).text();
   } else {
-    const blob = await result.blob();
-    return new File([blob], fileName ?? txid, { type: blob.type });
+    try {
+      const x = await result.blob();
+      const y = await x.text();
+      return y;
+    } catch (err) {
+      const blob = await result.blob();
+      return new File([blob], fileName ?? txid, { type: blob.type });
+    }
   }
 };
 

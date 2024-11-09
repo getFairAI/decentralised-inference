@@ -534,15 +534,26 @@ const Configuration = ({
     [state],
   );
 
+  const isAOProvider = useMemo(
+    () => currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM',
+    [currentOperator],
+  );
+
   useEffect(() => {
-    if (availableModels.length > 0) {
+    if (currentOperator?.tx?.node?.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
+      setConfigValue('modelName', 'Phi2', {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    } else if (availableModels.length > 0) {
       setConfigValue('modelName', availableModels[0].name, {
         shouldDirty: true,
         shouldTouch: true,
         shouldValidate: true,
       });
     }
-  }, [availableModels]);
+  }, [availableModels, currentOperator]);
 
   const checkAssetNamesValidity = useCallback(() => {
     const assetNames = assetNamesField.value;
@@ -590,11 +601,25 @@ const Configuration = ({
       );
       if (operator) {
         setCurrentOperator(operator);
+        // change model
+        if (operator.tx.node.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM') {
+          setConfigValue('modelName', 'Phi2', {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        } else {
+          setConfigValue('modelName', availableModels[0].name, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
       } else {
         // ifgnore
       }
     },
-    [state, setCurrentOperator],
+    [state, availableModels, setCurrentOperator],
   );
 
   return (
@@ -660,10 +685,12 @@ const Configuration = ({
               defaultValue={currentOperator?.tx.node.id}
               renderValue={(value) => (
                 <Typography>
-                  {displayShortTxOrAddr(
-                    state.availableOperators.find((op) => op.tx.node.id === value)?.evmWallet ??
-                      'None',
-                  )}
+                  {value === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM'
+                    ? 'AO provider'
+                    : displayShortTxOrAddr(
+                        state.availableOperators.find((op) => op.tx.node.id === value)?.evmWallet ??
+                          'None',
+                      )}
                 </Typography>
               )}
             >
@@ -673,7 +700,11 @@ const Configuration = ({
                   value={operator.tx.node.id}
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: spaceBetween }}
                 >
-                  <Typography>{displayShortTxOrAddr(operator.evmWallet)}</Typography>
+                  <Typography>
+                    {operator.tx.node.id === 'ARrzKTW93CuLRbcOo63YlA3l1VEuw8OvZ43RcRMzBnM'
+                      ? 'AO provider'
+                      : displayShortTxOrAddr(operator.evmWallet)}
+                  </Typography>
                   <Tooltip title={'Operator Fee'}>
                     <Box display={'flex'} alignItems={'center'} gap={'8px'}>
                       <Typography>{operator.operatorFee}</Typography>
@@ -706,7 +737,7 @@ const Configuration = ({
             }}
           />
         </Box>
-        {!isArbitrumSolution && (
+        {!isArbitrumSolution && !isAOProvider && (
           <Box>
             <SelectControl
               name={'modelName'}
@@ -737,34 +768,36 @@ const Configuration = ({
         {!isArbitrumSolution && isTextSolution && (
           <TextConfiguration messages={messages} control={control} />
         )}
-        <FormControl component='fieldset' variant='standard'>
-          <FormControlLabel
-            control={
-              <Checkbox
-                ref={privateModeField.ref}
-                value={privateModeField.value}
-                onChange={privateModeField.onChange}
-              />
-            }
-            label={
-              <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Private Mode
-                <Tooltip
-                  title={
-                    <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
-                      {
-                        'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
-                      }
-                    </Typography>
-                  }
-                  placement='bottom'
-                >
-                  <InfoOutlined fontSize='small' />
-                </Tooltip>
-              </Typography>
-            }
-          />
-        </FormControl>
+        {!isAOProvider && (
+          <FormControl component='fieldset' variant='standard'>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  ref={privateModeField.ref}
+                  value={privateModeField.value}
+                  onChange={privateModeField.onChange}
+                />
+              }
+              label={
+                <Typography sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Private Mode
+                  <Tooltip
+                    title={
+                      <Typography variant='caption' sx={{ whiteSpace: 'pre-line' }}>
+                        {
+                          'When this is on, prompts and responses will be encrypted with your keys and will only be acessbile by you.'
+                        }
+                      </Typography>
+                    }
+                    placement='bottom'
+                  >
+                    <InfoOutlined fontSize='small' />
+                  </Tooltip>
+                </Typography>
+              }
+            />
+          </FormControl>
+        )}
         {!isArbitrumSolution && (
           <>
             <SelectControl

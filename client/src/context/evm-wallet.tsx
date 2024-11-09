@@ -21,12 +21,13 @@ import {
   createContext,
   Dispatch,
   ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useReducer,
   useState,
 } from 'react';
-import { hexToBigInt, Log } from 'viem';
+import { createWalletClient, custom, hexToBigInt, Log } from 'viem';
 import { arbitrum } from 'viem/chains';
 import {
   getConnectedAddress,
@@ -38,7 +39,6 @@ import {
   getCurrentChainId,
   startConversation,
   setIrys,
-  postOnArweave,
   prompt,
   subscribe,
 } from '@fairai/evm-sdk';
@@ -47,6 +47,8 @@ import { useEvmProviders } from '@/hooks/useEvmProviders';
 import { EIP6963ProviderDetail } from '@/interfaces/evm';
 import { ConfigurationValues } from '@/interfaces/common';
 import { enqueueSnackbar } from 'notistack';
+import { WebIrys } from '@irys/sdk';
+import { ITag } from '@/interfaces/arweave';
 
 type WalletConnectedAction = {
   type: 'wallet_connected';
@@ -263,6 +265,37 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const postOnArweave = useCallback(
+    async (text: string, tags: ITag[]) => {
+      if (!currentProvider) {
+        throw new Error('No provider found');
+      }
+      const [account] = await currentProvider.provider.request({ method: 'eth_requestAccounts' });
+      const network = 'mainnet';
+      const token = 'arbitrum';
+      const rpcUrl = 'https://arb1.arbitrum.io/rpc';
+      const walletClient = createWalletClient({
+        account,
+        chain: arbitrum,
+        transport: custom(currentProvider.provider),
+      });
+
+      // Create a wallet object
+      const wallet = { rpcUrl, name: 'viemv2', provider: walletClient };
+      const arx = new WebIrys({
+        network,
+        token,
+        wallet,
+      });
+      await arx.ready();
+
+      const { id } = await arx.upload(text, { tags });
+
+      return id;
+    },
+    [currentProvider],
+  );
+
   // update the connect function with async method
   const value = useMemo(
     () =>
@@ -282,9 +315,11 @@ export const EVMWalletProvider = ({ children }: { children: ReactNode }) => {
         },
         getPubKey,
         decrypt: async (data: `0x${string}`) => {
+          const hexData = `0x${Buffer.from(data, 'utf8').toString('hex')}`;
+
           const result = await currentProvider?.provider.request({
             method: 'eth_decrypt',
-            params: [data, state.currentAddress],
+            params: [hexData, state.currentAddress],
           });
 
           try {

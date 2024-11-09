@@ -30,32 +30,35 @@ import { TradeProvider } from './context/trade';
 import { UserFeedbackProvider } from './context/user-feedback';
 import { EVMWalletProvider } from './context/evm-wallet';
 import { ThrowawayProvider } from './context/throwaway';
+import { OpfsProvider } from './context/opfs';
 
 const BaseRoot = ({ children }: { children: ReactElement }) => {
   return (
-    <ApolloProvider client={client}>
-      <AppThemeProvider>
-        <SnackbarProvider
-          maxSnack={3}
-          Components={{
-            error: StyledMaterialDesignContent,
-            success: StyledMaterialDesignContent,
-            info: StyledMaterialDesignContent,
-          }}
-        >
-          <CssBaseline />
-          <EVMWalletProvider>
-            <ChooseWalletProvider>
-              <UserFeedbackProvider>
-                <TradeProvider>
-                  <ThrowawayProvider>{children}</ThrowawayProvider>
-                </TradeProvider>
-              </UserFeedbackProvider>
-            </ChooseWalletProvider>
-          </EVMWalletProvider>
-        </SnackbarProvider>
-      </AppThemeProvider>
-    </ApolloProvider>
+    <OpfsProvider>
+      <ApolloProvider client={client}>
+        <AppThemeProvider>
+          <SnackbarProvider
+            maxSnack={3}
+            Components={{
+              error: StyledMaterialDesignContent,
+              success: StyledMaterialDesignContent,
+              info: StyledMaterialDesignContent,
+            }}
+          >
+            <CssBaseline />
+            <EVMWalletProvider>
+              <ChooseWalletProvider>
+                <UserFeedbackProvider>
+                  <TradeProvider>
+                    <ThrowawayProvider>{children}</ThrowawayProvider>
+                  </TradeProvider>
+                </UserFeedbackProvider>
+              </ChooseWalletProvider>
+            </EVMWalletProvider>
+          </SnackbarProvider>
+        </AppThemeProvider>
+      </ApolloProvider>
+    </OpfsProvider>
   );
 };
 

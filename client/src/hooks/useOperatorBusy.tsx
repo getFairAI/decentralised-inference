@@ -19,9 +19,9 @@
 import { PROTOCOL_NAME, PROTOCOL_VERSION, INFERENCE_RESPONSE, TAG_NAMES } from '@/constants';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { QUERY_CHAT_RESPONSES } from '@/queries/graphql';
-import { useLazyQuery } from '@apollo/client';
 import { decodeTxMemo, subscribe } from '@fairai/evm-sdk';
 import Query from '@irys/query';
+import { useLazyQuery } from '@apollo/client';
 import { useContext, useEffect, useState } from 'react';
 import { Log } from 'viem';
 

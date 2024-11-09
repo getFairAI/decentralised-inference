@@ -23,10 +23,11 @@ import {
   RETROSPECTIVE_SOLUTION,
   TAG_NAMES,
 } from '@/constants';
+import { NetworkStatus, useLazyQuery } from '@apollo/client';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { irysQuery } from '@/queries/graphql';
 import { commonUpdateQuery } from '@/utils/common';
-import { NetworkStatus, useLazyQuery } from '@apollo/client';
-import { useEffect, useState } from 'react';
+import { findByTagsDocument, findByTagsQuery } from '@fairai/evm-sdk';
 
 const useRequests = ({
   userAddrs,
@@ -42,6 +43,7 @@ const useRequests = ({
   first?: number;
 }) => {
   const [hasRequestNextPage, setHasRequestNextPage] = useState(false);
+  const [hasAORequestNextPage, setHasAORequestNextPage] = useState(false);
 
   const [
     getChatRequests,
@@ -53,33 +55,44 @@ const useRequests = ({
       fetchMore: requestFetchMore,
     },
   ] = useLazyQuery(irysQuery);
+  const [
+    getChatAoRequests,
+    {
+      data: requestsAOData,
+      loading: requestsAOLoading,
+      error: requestAOError,
+      networkStatus: requestAONetworkStatus,
+      fetchMore: requestAOFetchMore,
+    },
+  ] = useLazyQuery(findByTagsDocument);
+
   useEffect(() => {
     if (!userAddrs || userAddrs.length === 0) {
       // skip fetching while user address is not loaded
       return;
     }
     const tags = [
-      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
       { name: TAG_NAMES.operationName, values: [INFERENCE_REQUEST] },
+      { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+      { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
     ];
-    if (solutionTx) {
-      tags.push({ name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
-    }
 
     if (conversationId && solutionTx === RETROSPECTIVE_SOLUTION) {
       //
-      tags.push({ name: 'Conversation-ID', values: [conversationId.toString()] });
+      tags.splice(0, 0, { name: 'Conversation-ID', values: [conversationId.toString()] });
     } else if (conversationId) {
-      tags.push({ name: TAG_NAMES.conversationIdentifier, values: [conversationId.toString()] });
+      tags.splice(0, 0, {
+        name: TAG_NAMES.conversationIdentifier,
+        values: [conversationId.toString()],
+      });
     }
 
     if (solutionTx === RETROSPECTIVE_SOLUTION) {
-      tags.push({ name: 'Request-Type', values: ['Report'] });
+      tags.splice(0, 0, { name: 'Request-Type', values: ['Report'] });
     }
 
-    if (requestCaller) {
-      tags.push({ name: 'Request-Caller', values: [requestCaller] });
+    if (solutionTx) {
+      tags.splice(0, 0, { name: TAG_NAMES.solutionTransaction, values: [solutionTx] });
     }
 
     getChatRequests({
@@ -95,32 +108,121 @@ const useRequests = ({
       nextFetchPolicy: 'network-only',
       notifyOnNetworkStatusChange: true,
     });
+
+    // add request caller tag for ao requests and remove the owner tag
+    if (requestCaller || userAddrs.length > 0) {
+      tags.splice(0, 0, {
+        name: 'Request-Caller',
+        values: requestCaller ? [requestCaller] : userAddrs,
+      });
+    }
+
+    getChatAoRequests({
+      variables: {
+        tags,
+        first: first ?? 10,
+      },
+      fetchPolicy: 'network-only',
+      nextFetchPolicy: 'network-only',
+      notifyOnNetworkStatusChange: true,
+    });
   }, [userAddrs, conversationId, first]);
 
   useEffect(() => {
     if (requestsData && requestNetworkStatus === NetworkStatus.ready) {
-      setHasRequestNextPage(requestsData.transactions.pageInfo.hasNextPage);
+      setHasRequestNextPage(requestsData?.transactions?.pageInfo?.hasNextPage);
     }
   }, [requestsData, requestNetworkStatus, setHasRequestNextPage]);
 
-  const fetchMore = () => {
-    const lastTx =
-      requestsData.transactions.edges[requestsData.transactions.edges.length - 1].cursor;
-    requestFetchMore({
-      variables: {
-        after: lastTx,
-      },
-      updateQuery: commonUpdateQuery,
+  useEffect(() => {
+    if (requestsAOData && requestAONetworkStatus === NetworkStatus.ready) {
+      setHasAORequestNextPage(requestsAOData?.transactions?.pageInfo?.hasNextPage);
+    }
+  }, [requestsAOData, requestAONetworkStatus, setHasAORequestNextPage]);
+
+  const handleFetchMore = useCallback(() => {
+    if (requestsData?.transactions?.edges && requestsData.transactions.edges.length > 0) {
+      const lastTx =
+        requestsData?.transactions.edges[requestsData.transactions.edges.length - 1].cursor;
+      requestFetchMore({
+        variables: {
+          after: lastTx,
+        },
+        updateQuery: commonUpdateQuery,
+      });
+    }
+  }, [requestsData]);
+
+  const handleAOFetchMore = useCallback(() => {
+    if (requestsAOData?.transactions?.edges && requestsAOData.transactions.edges.length > 0) {
+      const lastTx =
+        requestsAOData?.transactions.edges[requestsAOData.transactions.edges.length - 1].cursor;
+      requestAOFetchMore({
+        variables: {
+          after: lastTx,
+        },
+        updateQuery: (prev: findByTagsQuery, { fetchMoreResult }) => {
+          if (!fetchMoreResult) {
+            return prev;
+          }
+
+          return Object.assign({}, prev, {
+            transactions: {
+              edges: [...prev.transactions.edges, ...fetchMoreResult.transactions.edges],
+              pageInfo: fetchMoreResult.transactions.pageInfo,
+            },
+          });
+        },
+      });
+    }
+  }, [requestsAOData]);
+
+  const joinedRequestsData = useMemo(() => {
+    if (!requestsData && !requestsAOData) {
+      return undefined;
+    }
+
+    if (!requestsData) {
+      return requestsAOData;
+    }
+    if (!requestsAOData) {
+      return requestsData;
+    }
+
+    const transactions = [
+      ...requestsData.transactions.edges,
+      ...requestsAOData.transactions.edges,
+    ].sort((a, b) => {
+      return b.node.timestamp - a.node.timestamp;
     });
-  };
+
+    return {
+      transactions: {
+        edges: transactions,
+        pageInfo: {
+          hasNextPage:
+            requestsData.transactions.pageInfo.hasNextPage ||
+            requestsAOData.transactions.pageInfo.hasNextPage,
+        },
+      },
+    };
+  }, [requestsData, requestsAOData]);
+
+  const joinedFetchMore = useCallback(() => {
+    if (requestsData && requestsData.transactions.pageInfo.hasNextPage) {
+      handleFetchMore();
+    } else if (requestsAOData && requestsAOData.transactions.pageInfo.hasNextPage) {
+      handleAOFetchMore();
+    }
+  }, [requestsData, requestsAOData, handleFetchMore, handleAOFetchMore]);
 
   return {
-    requestsData,
-    requestsLoading,
-    requestError,
-    requestNetworkStatus,
-    hasRequestNextPage,
-    fetchMore,
+    requestsData: joinedRequestsData,
+    requestsLoading: requestsLoading || requestsAOLoading,
+    requestError: requestError || requestAOError,
+    requestNetworkStatus: requestNetworkStatus || requestAONetworkStatus,
+    hasRequestNextPage: hasRequestNextPage || hasAORequestNextPage,
+    fetchMore: joinedFetchMore,
   };
 };
 
