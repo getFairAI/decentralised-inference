@@ -98,12 +98,6 @@
   );
 }
 
-.underline {
-  background: linear-gradient(-45deg, #31ab7f50, #422d5c50, #a1205d50, #00000000);
-  background-size: 600%;
-  animation: anime 16s linear infinite;
-}
-
 h1 {
   font-size: 24px !important;
   font-weight: 700 !important;

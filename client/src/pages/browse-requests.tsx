@@ -57,6 +57,7 @@ import {
   CheckCircleRounded,
   CloseRounded,
   InfoRounded,
+  StarRounded,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { NumericFormat } from 'react-number-format';
@@ -114,30 +115,93 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
   }, [comment]);
 
   return (
-    <div className='rounded-xl bg-white py-5 px-6'>
-      <Box key={comment.timestamp} display={'flex'} flexDirection={'column'} gap={'8px'}>
+    <>
+      <div className='rounded-xl bg-white py-5 px-6'>
+        <Box key={comment.timestamp} display={'flex'} flexDirection={'column'} gap={'8px'}>
+          <div className='flex gap-2 items-center'>
+            <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: '16px' }} />{' '}
+            <Typography variant='caption'>
+              {'Commented by '}
+              <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
+                <u>
+                  {comment.owner.slice(0, 6)}...{comment.owner.slice(-4)}
+                </u>
+              </a>
+              {` on ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`}
+            </Typography>
+            {comment.owner === request.owner && (
+              <Tooltip title={'User that created this request.'}>
+                <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs max-fit'>
+                  Request Creator
+                </div>
+              </Tooltip>
+            )}
+          </div>
+          <div className='font-medium text-sm sm:text-base'>{comment.content}</div>
+        </Box>
+      </div>
+
+      <div key={comment.timestamp + 1} className='flex flex-col rounded-xl bg-[#fdf4e4] p-6'>
         <div className='flex gap-2 items-center'>
-          <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: '16px' }} />{' '}
-          <Typography variant='caption'>
-            {'Commented by '}
+          <StarRounded className='text-[#f7ad22]' />
+          <span className='text-sm font-bold'>
+            {'Application / suggestion by '}
             <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
               <u>
                 {comment.owner.slice(0, 6)}...{comment.owner.slice(-4)}
               </u>
             </a>
             {` on ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`}
-          </Typography>
+          </span>
           {comment.owner === request.owner && (
             <Tooltip title={'User that created this request.'}>
-              <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs max-fit'>
-                Request Creator
+              <div className='rounded-xl bg-[#ffca1b] px-2 py-1 font-bold text-xs max-fit'>
+                Application / Suggestion
               </div>
             </Tooltip>
           )}
         </div>
-        <div className='font-medium text-sm sm:text-base'>{comment.content}</div>
-      </Box>
-    </div>
+        <div className='flex gap-2 flex-wrap mt-2'>
+          <div className='bg-white rounded-xl px-3 py-1'>
+            <strong>Budget suggestion: </strong> US$ 6,000.00
+          </div>
+          <div className='bg-white rounded-xl px-3 py-1'>
+            <strong>Time suggestion: </strong> 6 month(s)
+          </div>
+          <div className='bg-white rounded-xl px-3 py-1'>
+            <strong>Payment / Deliveries: </strong> All at once, right at the start
+          </div>
+        </div>
+        <div className='font-medium text-sm sm:text-base p-2 flex gap-2 items-start'>
+          <img
+            src='./icons/comment_icon_fill_primarycolor.svg'
+            style={{ width: '16px', marginTop: '4px' }}
+          />{' '}
+          This would be a very difficult project, so I would like to make this suggestion before
+          accepting it. If we reach an agreement, I can start right away.
+        </div>
+        <div className='flex gap-2 flex-wrap mt-2'>
+          <div className='bg-white rounded-xl px-3 py-1'>
+            <strong>X / Twitter: </strong>{' '}
+            <a href='getfair.ai' className='primary-text-color underline'>
+              @testing.fairAI
+            </a>
+          </div>
+          <div className='bg-white rounded-xl px-3 py-1'>
+            <strong>LinkedIn: </strong>{' '}
+            <a href='getfair.ai' className='primary-text-color underline'>
+              @getfair
+            </a>
+          </div>
+          <div className='bg-white rounded-xl px-3 py-1'>
+            <strong>Website: </strong>{' '}
+            <a href='getfair.ai' className='primary-text-color underline'>
+              getfair.ai
+            </a>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -333,7 +397,8 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                       </div>
 
                       <div className='w-full px-2 font-semibold text-sm sm:text-base'>
-                        {comments.length} {comments.length === 1 ? ' comment' : 'comments'}
+                        {comments.length} {comments.length === 1 ? ' comment' : 'comments'}, 0
+                        applications
                       </div>
                       {comments.length === 0 && (
                         <Typography
@@ -413,7 +478,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                             developer for this request
                           </strong>
                           <span className='font-medium rounded-xl bg-slate-300 px-3 py-2'>
-                            You are about to suggest yourself as a developer of this request.
+                            You are about to suggest yourself as a developer for this request.
                             <br />
                             Everything you fill here will be publicly visible in this request!
                             <br />
@@ -432,7 +497,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                             <FormGroup>
                               <FormControlLabel
                                 control={<Checkbox defaultChecked />}
-                                label='I accept the request as is and want to start right away.'
+                                label='I accept the request as is and am ready to start right away.'
                               />
                             </FormGroup>
                           </div>
@@ -583,7 +648,9 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                 >
                   <Chip
                     variant='outlined'
-                    label={`${comments.length} ${comments.length === 1 ? ' comment' : ' comments'}`}
+                    label={`${comments.length} ${
+                      comments.length === 1 ? ' comment' : ' comments'
+                    }, 0 applications`}
                     color='secondary'
                   />
                   <Chip variant='outlined' label={'Monthly payments'} color='primary' />
