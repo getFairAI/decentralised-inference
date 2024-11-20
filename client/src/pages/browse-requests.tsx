@@ -55,8 +55,10 @@ import {
   AddRounded,
   ChatBubbleRounded,
   CheckCircleRounded,
+  CheckRounded,
   CloseRounded,
   InfoRounded,
+  ReplyRounded,
   StarRounded,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -107,6 +109,8 @@ interface Comment {
   owner: string;
   timestamp: string;
   content: string;
+  showReplyInput?: boolean;
+  reply?: string;
 }
 
 const CommentElement = ({ comment, request }: { comment: Comment; request: RequestData }) => {
@@ -114,22 +118,40 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
     window.open(`https://arbiscan.io/address/${comment.owner}`, '_blank');
   }, [comment]);
 
+  const [changedComment, setChangedComment] = useState(comment);
+  const [reply, setReply] = useState('');
+
+  const handleSetShowAddReply = (commentToChange: Comment) => {
+    if (reply && commentToChange.showReplyInput) {
+      setReply(''); // clear the reply input
+    }
+
+    commentToChange.showReplyInput = !commentToChange.showReplyInput;
+    setChangedComment((prev) => ({ ...prev, reply: reply }));
+  };
+
+  const handlePostReplyToComment = (commentToChange: Comment, reply: string) => {
+    commentToChange.reply = reply;
+    setChangedComment((prev) => ({ ...prev, reply: reply }));
+    handleSetShowAddReply(commentToChange);
+  };
+
   return (
     <>
       <div className='rounded-xl bg-white py-5 px-6'>
-        <Box key={comment.timestamp} display={'flex'} flexDirection={'column'} gap={'8px'}>
+        <Box key={changedComment.timestamp} display={'flex'} flexDirection={'column'} gap={'8px'}>
           <div className='flex gap-2 items-center'>
             <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: '16px' }} />{' '}
             <Typography variant='caption'>
               {'Commented by '}
               <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
                 <u>
-                  {comment.owner.slice(0, 6)}...{comment.owner.slice(-4)}
+                  {changedComment.owner.slice(0, 6)}...{changedComment.owner.slice(-4)}
                 </u>
               </a>
-              {` on ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`}
+              {` on ${new Date(Number(changedComment.timestamp) * 1000).toLocaleString()}`}
             </Typography>
-            {comment.owner === request.owner && (
+            {changedComment.owner === request.owner && (
               <Tooltip title={'User that created this request.'}>
                 <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs max-fit'>
                   Request Creator
@@ -137,23 +159,57 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
               </Tooltip>
             )}
           </div>
-          <div className='font-medium text-sm sm:text-base'>{comment.content}</div>
+          <div className='font-medium text-sm sm:text-base'>{changedComment.content}</div>
+          {!changedComment?.showReplyInput && (
+            <div className='w-full flex justify-end gap-2 flex-wrap mt-2 animate-slide-right'>
+              <StyledMuiButton
+                className='outlined-secondary'
+                onClick={() => handleSetShowAddReply(changedComment)}
+              >
+                <ReplyRounded /> Reply
+              </StyledMuiButton>
+            </div>
+          )}
+
+          {changedComment?.showReplyInput && (
+            <div className='w-full flex gap-3 items-center animate-slide-left mt-2'>
+              <StyledMuiButton
+                className='secondary fully-rounded mini mt-1'
+                onClick={() => handleSetShowAddReply(changedComment)}
+              >
+                <CloseRounded />
+              </StyledMuiButton>
+              <TextField
+                placeholder='Type your reply here'
+                variant='outlined'
+                fullWidth
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+              />
+              <StyledMuiButton
+                onClick={() => handlePostReplyToComment(changedComment, 'posted reply')}
+                className='primary plausible-event-name=Request+Reply+Post+Click'
+              >
+                <SendIcon /> Send
+              </StyledMuiButton>
+            </div>
+          )}
         </Box>
       </div>
 
-      <div key={comment.timestamp + 1} className='flex flex-col rounded-xl bg-[#fdf4e4] p-6'>
+      <div key={changedComment.timestamp + 1} className='flex flex-col rounded-xl bg-[#fdf4e4] p-6'>
         <div className='flex gap-2 items-center'>
           <StarRounded className='text-[#f7ad22]' />
           <span className='text-sm font-bold'>
             {'Application / suggestion by '}
             <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
               <u>
-                {comment.owner.slice(0, 6)}...{comment.owner.slice(-4)}
+                {changedComment.owner.slice(0, 6)}...{changedComment.owner.slice(-4)}
               </u>
             </a>
             {` on ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`}
           </span>
-          {comment.owner === request.owner && (
+          {changedComment.owner === changedComment.owner && (
             <Tooltip title={'User that created this request.'}>
               <div className='rounded-xl bg-[#ffca1b] px-2 py-1 font-bold text-xs max-fit'>
                 Application / Suggestion
@@ -171,14 +227,6 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
           <div className='bg-white rounded-xl px-3 py-1'>
             <strong>Payment / Deliveries: </strong> All at once, right at the start
           </div>
-        </div>
-        <div className='font-medium text-sm sm:text-base p-2 flex gap-2 items-start'>
-          <img
-            src='./icons/comment_icon_fill_primarycolor.svg'
-            style={{ width: '16px', marginTop: '4px' }}
-          />{' '}
-          This would be a very difficult project, so I would like to make this suggestion before
-          accepting it. If we reach an agreement, I can start right away.
         </div>
         <div className='flex gap-2 flex-wrap mt-2'>
           <div className='bg-white rounded-xl px-3 py-1'>
@@ -200,6 +248,48 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
             </a>
           </div>
         </div>
+        <div className='font-medium text-sm sm:text-base p-2 flex gap-2 items-start mt-2'>
+          <img
+            src='./icons/comment_icon_fill_primarycolor.svg'
+            style={{ width: '16px', marginTop: '4px' }}
+          />
+          This would be a very difficult project, so I would like to make this suggestion before
+          accepting it. If we reach an agreement, I can start right away.
+        </div>
+        {!changedComment?.showReplyInput && (
+          <div className='w-full flex justify-end gap-2 flex-wrap mt-3 animate-slide-right'>
+            <StyledMuiButton
+              className='outlined-secondary'
+              onClick={() => handleSetShowAddReply(changedComment)}
+            >
+              <ReplyRounded /> Reply
+            </StyledMuiButton>
+            <StyledMuiButton className='outlined-secondary'>
+              <img src='./icons/comment_icon_fill.svg' style={{ width: '16px' }} />
+              Counter Suggestion
+            </StyledMuiButton>
+            <StyledMuiButton className='outlined-secondary'>
+              <CheckRounded /> Accept Suggestion
+            </StyledMuiButton>
+          </div>
+        )}
+        {changedComment?.showReplyInput && (
+          <div className='w-full flex gap-3 items-center animate-slide-left mt-3'>
+            <StyledMuiButton
+              className='secondary fully-rounded mini mt-1'
+              onClick={() => handleSetShowAddReply(changedComment)}
+            >
+              <CloseRounded />
+            </StyledMuiButton>
+            <TextField placeholder='Type your reply here' variant='outlined' fullWidth value={''} />
+            <StyledMuiButton
+              onClick={() => handleSetShowAddReply(changedComment)}
+              className='primary plausible-event-name=Request+Reply+Post+Click'
+            >
+              <SendIcon /> Send
+            </StyledMuiButton>
+          </div>
+        )}
       </div>
     </>
   );
@@ -578,7 +668,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
 
                           <TextField
                             label='Add a comment'
-                            placeholder='Optional. This comment will be publicly visible.'
+                            placeholder='Explain why you are making this suggestion and your opinion on this request. This comment will be publicly visible.'
                             variant='outlined'
                             fullWidth
                             value={newComment}

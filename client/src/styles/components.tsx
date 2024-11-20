@@ -164,9 +164,14 @@ export const StyledMuiButton = styled('button')<ButtonProps>(({ theme }) => ({
     backgroundColor: 'transparent',
     border: '2px solid rgb(70,70,70)',
 
-    '&:hover': {
+    '&:hover, &:active, &:focus-within': {
       backgroundColor: theme.palette.backdropContrast.main,
       color: '#ffffff',
+
+      img: {
+        filter: 'invert(1) !important',
+        transition: '0.2s filter',
+      },
     },
 
     '&:focus': {

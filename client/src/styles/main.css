@@ -176,7 +176,39 @@ html {
   }
 }
 
+@keyframes fadeInSlideRight {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+}
+
+@keyframes fadeInSlideLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+}
+
 .animate-slide-down {
   opacity: 0;
   animation: 0.3s fadeInSlideDown ease-out forwards;
+}
+
+.animate-slide-right {
+  opacity: 0;
+  animation: 0.3s fadeInSlideRight ease-out forwards;
+}
+
+.animate-slide-left {
+  opacity: 0;
+  animation: 0.3s fadeInSlideLeft ease-out forwards;
 }
