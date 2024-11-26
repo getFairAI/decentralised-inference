@@ -1108,6 +1108,7 @@ const Chat = () => {
     tags: { name: string; value: string }[],
     configuration: ConfigurationValues,
     userAddr: string,
+    isAO?: boolean,
   ) => {
     if (configuration.assetNames) {
       tags.push({ name: 'Asset-Names', value: JSON.stringify(configuration.assetNames) });
@@ -1143,7 +1144,7 @@ const Chat = () => {
       tags.push({ name: 'Request-Caller', value: userAddr });
     }
 
-    if (configuration.privateMode) {
+    if (configuration.privateMode && !isAO) {
       tags.push({ name: 'Private-Mode', value: 'true' });
     }
 
@@ -1258,7 +1259,7 @@ const Chat = () => {
         tags.push({ name: 'Commercial-Use', value: 'Allowed' });
 
         if (config) {
-          addConfigTags(tags, config, userAddr);
+          addConfigTags(tags, config, userAddr, true); // set is ao true to skip adding private mode
         }
 
         arweaveTxId = await ao.message({
