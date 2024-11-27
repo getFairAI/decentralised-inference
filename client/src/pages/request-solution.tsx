@@ -26,7 +26,10 @@ import {
   Button,
   Chip,
   FormControl,
+  FormControlLabel,
   MenuItem,
+  Radio,
+  RadioGroup,
   TextField,
   Typography,
 } from '@mui/material';
@@ -226,10 +229,16 @@ const RequestSolution = () => {
             onChange={title.onChange}
             inputRef={title.ref}
             onBlur={title.onBlur}
-            fullWidth
             variant='outlined'
+            fullWidth
             placeholder='Write a title or subject...'
-            sx={{ backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px' }}
+            sx={{
+              backgroundColor: 'white',
+              overflow: 'hidden',
+              borderRadius: '8px',
+              margin: '0px 16px',
+              maxWidth: '850px',
+            }}
           />
         </div>
         <div className='w-full'>
@@ -237,10 +246,11 @@ const RequestSolution = () => {
             2. Provide a detailed description
           </Typography>
           <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
-            Explain what you need, the context, the problem and what are your initial suggestions or
-            requisites. You should provide as much information as possible so that whoever reads
-            this request can get a straightfoward idea of how we can build a custom solution for
-            you. Remember that everything you write here will be public and visible to everyone.
+            Explain your project, what you need, the context, the problem and what are your initial
+            suggestions or pre-requisites. You should provide as much information as needed so that
+            whoever reads this request can get a straightfoward idea of how we can build a custom
+            solution for you. Remember that everything you write here will be public and visible to
+            everyone.
           </Typography>
           <TextField
             value={description.value}
@@ -249,10 +259,16 @@ const RequestSolution = () => {
             onBlur={description.onBlur}
             placeholder='Explain your problem and ideas...'
             multiline
-            minRows={7}
             fullWidth
+            minRows={7}
             variant='outlined'
-            sx={{ backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px' }}
+            sx={{
+              backgroundColor: 'white',
+              overflow: 'hidden',
+              borderRadius: '8px',
+              margin: '0px 16px',
+              maxWidth: '850px',
+            }}
           />
         </div>
         <div className='w-full'>
@@ -260,12 +276,12 @@ const RequestSolution = () => {
             3. Add keywords (categories) that best suit your request
           </Typography>
           <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
-            Add at least two or three keywords that best fit your request. It will make it easier
-            for developers to understand what your need and find your request faster. Some
+            Add at least two or three keywords that best fit your request/project. It will make it
+            easier for developers to understand what your need and find your request faster. Some
             developers like to focus on certain categories. Add up to 6 keywords.
           </Typography>
 
-          <div className='mt-3 w-full'>
+          <div className='mt-3 w-full mx-4'>
             {keywords.map((keyword) => (
               <Keyword
                 key={keyword}
@@ -276,7 +292,7 @@ const RequestSolution = () => {
             ))}
           </div>
 
-          <div className='flex flex-wrap items-center w-full gap-3 my-3'>
+          <div className='flex flex-wrap items-center w-full gap-3 my-3 mx-4'>
             <Autocomplete
               disablePortal
               options={defaultKeywordsList}
@@ -297,14 +313,89 @@ const RequestSolution = () => {
 
         <div className='w-full'>
           <Typography width={'100%'} fontWeight={700}>
-            5. What is your initial budget for this request?
+            5. Do you have or need the data and/or database for this project?
           </Typography>
           <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
-            Providing an initially planned budget for your request will convince more developers to
-            try and accept your idea, as they see this budget as their reward for successfuly
-            completing your request. You can always talk and debate this budget with the developers.
+            This will clarify if the developers can pick and use a database right up or if they need
+            to develop one from scratch for your project. This can and should impact the budget and
+            time/date target.
           </Typography>
-          <div className='w-full my-3'>
+          <div className='w-full my-3 mx-4'>
+            <FormControl>
+              <RadioGroup
+                aria-labelledby='demo-row-radio-buttons-group-label'
+                name='row-radio-buttons-group'
+              >
+                <FormControlLabel
+                  value='yes'
+                  control={<Radio />}
+                  label='Yes, I have all the required data or database and we can use it right away.'
+                />
+                <FormControlLabel
+                  value='no-will-create-myself'
+                  control={<Radio />}
+                  label='No, but I will create one myself and then provide it to the developers.'
+                />
+                <FormControlLabel
+                  value='no-but-find-on-web'
+                  control={<Radio />}
+                  label='No, but we can find the required data or database on the web.'
+                />
+                <FormControlLabel
+                  value='no-devs-create-from-scratch'
+                  control={<Radio />}
+                  label='No, I need the developers to create the necessary database from scratch.'
+                />
+              </RadioGroup>
+            </FormControl>
+          </div>
+        </div>
+
+        <div className='w-full'>
+          <Typography width={'100%'} fontWeight={700}>
+            6. Do you have or need an app or website to integrate with this project?
+          </Typography>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
+            If your project needs it, tell us if you already have an app or website that you want
+            this project to be integrated into, or if developers need to create one for you. This
+            can and should impact the budget and time/date target.
+          </Typography>
+          <div className='w-full my-3 mx-4'>
+            <FormControl>
+              <RadioGroup
+                aria-labelledby='demo-row-radio-buttons-group-label'
+                name='row-radio-buttons-group'
+              >
+                <FormControlLabel
+                  value='yes'
+                  control={<Radio />}
+                  label='Yes, I already have an app or website that I can integrate with this project.'
+                />
+                <FormControlLabel
+                  value='no-need-create-e2e'
+                  control={<Radio />}
+                  label='No, I need the developers to create and end-to-end solution for this project.'
+                />
+                <FormControlLabel
+                  value='no-but-find-on-web'
+                  control={<Radio />}
+                  label="No, this project doesn't need any app or website."
+                />
+              </RadioGroup>
+            </FormControl>
+          </div>
+        </div>
+
+        <div className='w-full'>
+          <Typography width={'100%'} fontWeight={700}>
+            7. What is your expected budget for this project?
+          </Typography>
+          <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
+            Providing an expected budget for your project will attract more developers, as they see
+            this budget as their reward for successfuly completing your project. You can always talk
+            and debate this budget with the developers.
+          </Typography>
+          <div className='w-full my-3 mx-4'>
             <NumericFormat
               customInput={TextField}
               thousandSeparator
@@ -316,15 +407,15 @@ const RequestSolution = () => {
 
         <div className='w-full'>
           <Typography width={'100%'} fontWeight={700}>
-            6. What will be your prefered payment plan to the developers?
+            8. What will be your prefered payment plan to the developers?
           </Typography>
           <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
             Paying a defined portion of your total budget for each successful partial feature
             delivery by the developers will make it feel safer for both sides to invest in your
-            request. You get deliveries in a timely manner, and the developers, their payment
+            project. You get deliveries in a timely manner, and the developers, their payment
             portions.
           </Typography>
-          <div className='w-full my-3'>
+          <div className='w-full my-3 mx-4'>
             <FormControl fullWidth>
               <TextField label='Paymment Plan' className='w-full max-w-[265px]' required select>
                 <MenuItem value={1}>Daily deliveries and payments</MenuItem>
@@ -340,15 +431,15 @@ const RequestSolution = () => {
 
         <div className='w-full'>
           <Typography width={'100%'} fontWeight={700}>
-            7. What is your initial date target for this request?
+            9. What is your initial date target for this project?
           </Typography>
           <Typography width={'100%'} fontWeight={400} fontSize={14} padding={'5px 20px'}>
-            Tell us when you would most likely want the final portion of this request to be
+            Tell us when you would most likely want the final portion of this project to be
             delivered. Take in consideration the effort needed to achieve your needs for this
-            request. This is only a theoretical target, and can always be further discussed with the
+            project. This is only a theoretical target, and can always be further discussed with the
             developers.
           </Typography>
-          <div className='w-full my-3 flex items-center flex-wrap gap-3'>
+          <div className='w-full my-3 flex items-center flex-wrap gap-3 mx-4'>
             <div className='flex-grow-0 items-center gap-3'>
               <LocalizationProvider dateAdapter={AdapterMoment}>
                 <DateField label='Date target' className='w-full max-w-[265px]' />

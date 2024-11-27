@@ -119,11 +119,16 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
   }, [comment]);
 
   const [changedComment, setChangedComment] = useState(comment);
+  const [replyingTo, setReplyingTo] = useState('');
   const [reply, setReply] = useState('');
 
-  const handleSetShowAddReply = (commentToChange: Comment) => {
+  const handleSetShowAddReply = (commentToChange: Comment, replyToAddress: string) => {
     if (reply && commentToChange.showReplyInput) {
+      // reply is open, we are closing it now
       setReply(''); // clear the reply input
+      setReplyingTo('');
+    } else {
+      setReplyingTo(replyToAddress);
     }
 
     commentToChange.showReplyInput = !commentToChange.showReplyInput;
@@ -133,7 +138,7 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
   const handlePostReplyToComment = (commentToChange: Comment, reply: string) => {
     commentToChange.reply = reply;
     setChangedComment((prev) => ({ ...prev, reply: reply }));
-    handleSetShowAddReply(commentToChange);
+    handleSetShowAddReply(commentToChange, '');
   };
 
   return (
@@ -164,7 +169,7 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
             <div className='w-full flex justify-end gap-2 flex-wrap mt-2 animate-slide-right'>
               <StyledMuiButton
                 className='outlined-secondary'
-                onClick={() => handleSetShowAddReply(changedComment)}
+                onClick={() => handleSetShowAddReply(changedComment, changedComment.owner)}
               >
                 <ReplyRounded /> Reply
               </StyledMuiButton>
@@ -172,27 +177,36 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
           )}
 
           {changedComment?.showReplyInput && (
-            <div className='w-full flex gap-3 items-center animate-slide-left mt-2'>
-              <StyledMuiButton
-                className='secondary fully-rounded mini mt-1'
-                onClick={() => handleSetShowAddReply(changedComment)}
-              >
-                <CloseRounded />
-              </StyledMuiButton>
-              <TextField
-                placeholder='Type your reply here'
-                variant='outlined'
-                fullWidth
-                value={reply}
-                onChange={(e) => setReply(e.target.value)}
-              />
-              <StyledMuiButton
-                onClick={() => handlePostReplyToComment(changedComment, 'posted reply')}
-                className='primary plausible-event-name=Request+Reply+Post+Click'
-              >
-                <SendIcon /> Send
-              </StyledMuiButton>
-            </div>
+            <>
+              <div className='w-full font-bold text-sm mt-3 animate-slide-left ml-11'>
+                Replying to{' '}
+                <span className='primary-text-color'>
+                  {replyingTo.slice(0, 6)}...{replyingTo.slice(-4)}
+                </span>{' '}
+                :
+              </div>
+              <div className='w-full flex gap-3 items-center animate-slide-left'>
+                <StyledMuiButton
+                  className='secondary fully-rounded mini mt-1'
+                  onClick={() => handleSetShowAddReply(changedComment, changedComment.owner)}
+                >
+                  <CloseRounded />
+                </StyledMuiButton>
+                <TextField
+                  placeholder='Type your reply here'
+                  variant='outlined'
+                  fullWidth
+                  value={reply}
+                  onChange={(e) => setReply(e.target.value)}
+                />
+                <StyledMuiButton
+                  onClick={() => handlePostReplyToComment(changedComment, 'posted reply')}
+                  className='primary plausible-event-name=Request+Reply+Post+Click'
+                >
+                  <SendIcon /> Send
+                </StyledMuiButton>
+              </div>
+            </>
           )}
         </Box>
       </div>
@@ -260,35 +274,51 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
           <div className='w-full flex justify-end gap-2 flex-wrap mt-3 animate-slide-right'>
             <StyledMuiButton
               className='outlined-secondary'
-              onClick={() => handleSetShowAddReply(changedComment)}
+              onClick={() => handleSetShowAddReply(changedComment, changedComment.owner)}
             >
               <ReplyRounded /> Reply
             </StyledMuiButton>
-            <StyledMuiButton className='outlined-secondary'>
-              <img src='./icons/comment_icon_fill.svg' style={{ width: '16px' }} />
-              Counter Suggestion
-            </StyledMuiButton>
+            <Tooltip title='Refuse and close this suggestion. This person will be able to create a new application/suggestion in the future. Replies will still be available for this suggestion.'>
+              <StyledMuiButton className='outlined-secondary'>
+                <CloseRounded /> Deny Suggestion
+              </StyledMuiButton>
+            </Tooltip>
             <StyledMuiButton className='outlined-secondary'>
               <CheckRounded /> Accept Suggestion
             </StyledMuiButton>
           </div>
         )}
         {changedComment?.showReplyInput && (
-          <div className='w-full flex gap-3 items-center animate-slide-left mt-3'>
-            <StyledMuiButton
-              className='secondary fully-rounded mini mt-1'
-              onClick={() => handleSetShowAddReply(changedComment)}
-            >
-              <CloseRounded />
-            </StyledMuiButton>
-            <TextField placeholder='Type your reply here' variant='outlined' fullWidth value={''} />
-            <StyledMuiButton
-              onClick={() => handleSetShowAddReply(changedComment)}
-              className='primary plausible-event-name=Request+Reply+Post+Click'
-            >
-              <SendIcon /> Send
-            </StyledMuiButton>
-          </div>
+          <>
+            <div className='w-full font-bold text-sm mt-3 animate-slide-left ml-11'>
+              Replying to suggestion from{' '}
+              <span className='primary-text-color'>
+                {replyingTo.slice(0, 6)}...{replyingTo.slice(-4)}
+              </span>{' '}
+              :
+            </div>
+            <div className='w-full flex gap-3 items-center animate-slide-left'>
+              <StyledMuiButton
+                className='secondary fully-rounded mini mt-1'
+                onClick={() => handleSetShowAddReply(changedComment, changedComment.owner)}
+              >
+                <CloseRounded />
+              </StyledMuiButton>
+              <TextField
+                placeholder='Type your reply here'
+                variant='outlined'
+                fullWidth
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+              />
+              <StyledMuiButton
+                onClick={() => handlePostReplyToComment(changedComment, 'posted reply')}
+                className='primary plausible-event-name=Request+Reply+Post+Click'
+              >
+                <SendIcon /> Send
+              </StyledMuiButton>
+            </div>
+          </>
         )}
       </div>
     </>
