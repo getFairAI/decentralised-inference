@@ -618,7 +618,7 @@ const Chat = () => {
         setMessagesLoading(false);
       }
     }
-  }, [responsesData, responseNetworkStatus]);
+  }, [responsesData, responseNetworkStatus, previousResponses ]);
 
   useEffect(() => {
     if (currentConversationId) {
@@ -646,13 +646,13 @@ const Chat = () => {
     );
     (async () => {
       if (newValidResponses.length > 0) {
-        setPreviousResponses([...currentRespones, ...newValidResponses]);
         await asyncMap(newValidResponses);
+        setPreviousResponses([...currentRespones, ...newValidResponses]);
       } else {
         await emptyPolling();
       }
     })();
-  }, [responsesPollingData]);
+  }, [responsesPollingData, previousResponses ]);
 
   const mapTransactionsToMessages = async (el: findByTagsQuery['transactions']['edges'][0]) => {
     const msgIdx = messages.findIndex((m) => m.id === el.node.id);
@@ -683,7 +683,7 @@ const Chat = () => {
     return msg;
   };
 
-  const asyncMap = async (newData: findByTagsQuery['transactions']['edges']) => {
+  const asyncMap = useCallback(async (newData: findByTagsQuery['transactions']['edges']) => {
     const temp: IMessage[] = [];
 
     // map tags for ao transactions
@@ -693,15 +693,15 @@ const Chat = () => {
           'Inference-Response' ||
         el.node.tags.find((tag: ITag) => tag.name === 'Action')?.value === 'Inference-Response';
       const pushedFor = el.node.tags.find((tag) => tag.name === 'Pushed-For')?.value;
-      const request = newData.find((el) => el.node.id === pushedFor);
+      const request = messages.find((msg) => msg.id === pushedFor);
 
       if (request && isResponse) {
         el.node.tags = [
           { name: 'Operation-Name', value: 'Inference-Response' },
-          { name: 'Pushed-For', value: request?.node.id },
-          { name: 'Request-Transaction', value: request?.node.id },
-          { name: 'Conversation-Identifier', value: findTag(request, 'conversationIdentifier')! },
-          { name: 'Unix-Time', value: findTag(request, 'unixTime')! + 60 * 1000 },
+          { name: 'Pushed-For', value: request?.id },
+          { name: 'Request-Transaction', value: request?.id },
+          { name: 'Conversation-Identifier', value: (request.cid!).toString() },
+          { name: 'Unix-Time', value: (request.timestamp! + 60 * 1000).toString() },
           { name: 'Content-Type', value: 'text/plain' },
         ];
       }
@@ -723,10 +723,9 @@ const Chat = () => {
       filteredData.map(async (el) => temp.push(await mapTransactionsToMessages(el))),
     );
 
-    const allnewMessages = [...temp, ...messages];
     setMessages((prev) => {
       const uniqueNewMsgs = _.uniqWith(
-        [...prev, ...allnewMessages],
+        [...prev, ...temp],
         (a, b) => a.id === b.id || (a.msg === b.msg && a.timestamp === b.timestamp),
       ).filter((el) => el.cid === currentConversationId);
       sortMessages(uniqueNewMsgs);
@@ -734,7 +733,7 @@ const Chat = () => {
       checkIsWaitingResponse(uniqueNewMsgs);
       return uniqueNewMsgs;
     });
-  };
+  }, [ messages, currentConversationId ]);
 
   const checkCanSend = (dataSize: number) => {
     try {
