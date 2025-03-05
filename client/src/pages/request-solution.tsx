@@ -186,7 +186,7 @@ const RequestSolution = () => {
   };
 
   const handleNewKeywordAutoCompleteChanged = useCallback(
-    (event: SyntheticEvent, newValue: string | null) => {
+    (_: SyntheticEvent, newValue: string | null) => {
       if (newValue && newValue.includes('Add')) {
         setValue('keywords', [...keywords, newValue.split('Add')[1].trim()]);
         setAutomcompleteInputValue('');
@@ -199,7 +199,7 @@ const RequestSolution = () => {
   );
 
   const handleAutocompleteInputChanged = useCallback(
-    (event: SyntheticEvent, newValue: string | null) => {
+    (_: SyntheticEvent, newValue: string | null) => {
       if (newValue && newValue.includes('Add')) {
         setAutomcompleteInputValue('');
       } else {

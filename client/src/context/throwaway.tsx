@@ -198,7 +198,12 @@ export const ThrowawayProvider = ({ children }: { children: ReactNode }) => {
           `https://arweave.net/${throwawayData.data.transactions.edges[0].node.id}`,
         );
         const encData = await result.text();
-        const decData = await decrypt(encData as `0x${string}`);
+        const buf = Buffer.from(
+          encData,
+          'utf8'
+        );
+        const encryptedValue = '0x' + buf.toString('hex');  
+        const decData = await decrypt(encryptedValue as `0x${string}`);
         setPrivateKey(decData);
         await setIrys(decData as `0x${string}`);
         setThrowawayProvider(decData as `0x${string}`);
