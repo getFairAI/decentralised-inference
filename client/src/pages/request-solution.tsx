@@ -25,6 +25,7 @@ import {
   Box,
   Button,
   Chip,
+  FilterOptionsState,
   FormControl,
   FormControlLabel,
   MenuItem,
@@ -32,15 +33,28 @@ import {
   RadioGroup,
   TextField,
   Typography,
+  createFilterOptions
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { useCallback, useState } from 'react';
+import { SyntheticEvent, useCallback, useState } from 'react';
 import { UseFormSetValue, useController, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { NumericFormat } from 'react-number-format';
-import { DateField, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
+
+interface IRequestSolution {
+  title: string;
+  description: string;
+  keywords: string[];
+  needsDb: string;
+  needsApp: string;
+  budget: number;
+  paymentPlan: string;
+  targetUnixTimestamp: number;
+};
 
 const defaultKeywordsList = [
   'AI',
@@ -71,8 +85,9 @@ const defaultKeywordsList = [
   'Technology',
   'Hardware Control',
   'Database Management',
-  'Other (specify)',
 ];
+
+const filter = createFilterOptions<string>();
 
 const Keyword = ({
   currentKeyword,
@@ -81,11 +96,7 @@ const Keyword = ({
 }: {
   currentKeyword: string;
   keywords: string[];
-  setValue: UseFormSetValue<{
-    title: string;
-    description: string;
-    keywords: string[];
-  }>;
+  setValue: UseFormSetValue<IRequestSolution>;
 }) => {
   const onDelete = useCallback(() => {
     setValue(
@@ -101,26 +112,29 @@ const Keyword = ({
       variant='filled'
       color='primary'
       className='font-bold'
+      sx={{ margin:'0px 4px 4px 4px'}}
     />
   );
 };
 
 const RequestSolution = () => {
   const [requestSuccessful, setRequestSuccessfull] = useState(false);
-  const [newKeyword, setNewKeyword] = useState('');
+  const [dateTarge, setDateTarget] = useState<Dayjs | null>(null);
+  const [autocompleteInputValue, setAutomcompleteInputValue] = useState('');
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
   const handleBack = useCallback(() => navigate(-1), [navigate]);
-  const { control, formState, setValue, handleSubmit } = useForm<{
-    title: string;
-    description: string;
-    keywords: string[];
-  }>({
+  const { control, formState, setValue, handleSubmit } = useForm<IRequestSolution>({
     defaultValues: {
       title: '',
       description: '',
-      keywords: ['asd'],
+      keywords: [],
+      needsDb: '',
+      needsApp: '',
+      budget: 0,
+      paymentPlan: '',
+      targetUnixTimestamp: 0,
     },
   });
   const { field: title } = useController({ control, name: 'title', rules: { required: true } });
@@ -129,15 +143,30 @@ const RequestSolution = () => {
     name: 'description',
     rules: { required: true },
   });
+  const { field: needsDb } = useController({ control, name: 'needsDb', rules: { required: true } });
+  const { field: needsApp } = useController({ control, name: 'needsApp', rules: { required: true } });
+  const { field: budget } = useController({ control, name: 'budget', rules: { required: true } });
+  const { field: paymentPlan } = useController({
+    control,
+    name: 'paymentPlan',
+    rules: { required: true },
+  });
 
   const keywords = useWatch({ control, name: 'keywords' });
 
-  const handleClick = async (data: { title: string; description: string; keywords: string[] }) => {
+  const handleClick = async (data: IRequestSolution) => {
     try {
       const tags = [
         { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
         { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
         { name: TAG_NAMES.operationName, value: 'Request-Solution' },
+        { name: 'Request-Title', value: data.title },
+        { name: 'Request-Description', value: data.description },
+        { name: 'needsDb', value: data.needsDb },
+        { name: 'needsApp', value: data.needsApp },
+        { name: 'budget', value: data.budget.toString() },
+        { name: 'paymentPlan', value: data.paymentPlan },
+        { name: 'targetUnixTimestamp', value: data.targetUnixTimestamp.toString() },
         { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
       ];
 
@@ -156,23 +185,47 @@ const RequestSolution = () => {
     }
   };
 
-  const keyDownHandler = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.code === 'Enter') {
-        event.preventDefault();
-        setValue('keywords', [...keywords, newKeyword]);
-        setNewKeyword('');
+  const handleNewKeywordAutoCompleteChanged = useCallback(
+    (event: SyntheticEvent, newValue: string | null) => {
+      if (newValue && newValue.includes('Add')) {
+        setValue('keywords', [...keywords, newValue.split('Add')[1].trim()]);
+        setAutomcompleteInputValue('');
+      } else if (newValue) {
+        setValue('keywords', [...keywords, newValue]);
+        setAutomcompleteInputValue('');
       }
-    },
-    [keywords, newKeyword, setValue, setNewKeyword],
+    }, 
+    [keywords, setValue],
   );
 
-  const handleNewKeywordChanged = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setNewKeyword(event.target.value);
+  const handleAutocompleteInputChanged = useCallback(
+    (event: SyntheticEvent, newValue: string | null) => {
+      if (newValue && newValue.includes('Add')) {
+        setAutomcompleteInputValue('');
+      } else {
+        setAutomcompleteInputValue(newValue || '');
+      }
+  }, [setAutomcompleteInputValue]);
+
+  const handleTargetDataChange = useCallback(
+    (newValue: Dayjs | null) => {
+      if (newValue) {
+        setValue('targetUnixTimestamp', newValue.unix());
+        setDateTarget(newValue);
+      }
     },
-    [setNewKeyword],
+    [setValue, setDateTarget],
   );
+
+  const autocompleteFilterOptions = useCallback((options: string[], state: FilterOptionsState<string>) => {
+    const filtered = filter(options, state);
+
+    if (state.inputValue !== '' && !keywords.includes(state.inputValue)) {
+      filtered.push(`Add "${state.inputValue}"`);
+    }
+
+    return filtered.filter((option) => !keywords.includes(option));
+  }, [ filter, keywords ]);
 
   if (requestSuccessful) {
     return (
@@ -281,7 +334,7 @@ const RequestSolution = () => {
             developers like to focus on certain categories. Add up to 6 keywords.
           </Typography>
 
-          <div className='mt-3 w-full mx-4'>
+          <Box className='mt-3 w-full mx-4'>
             {keywords.map((keyword) => (
               <Keyword
                 key={keyword}
@@ -290,24 +343,21 @@ const RequestSolution = () => {
                 setValue={setValue}
               />
             ))}
-          </div>
+          </Box>
 
           <div className='flex flex-wrap items-center w-full gap-3 my-3 mx-4'>
             <Autocomplete
+              clearOnBlur
+              clearOnEscape
               disablePortal
               options={defaultKeywordsList}
+              filterOptions={autocompleteFilterOptions}
               sx={{ width: '100%', maxWidth: '250px' }}
+              inputValue={autocompleteInputValue}
+              onInputChange={handleAutocompleteInputChanged}
+              onChange={handleNewKeywordAutoCompleteChanged}
               renderInput={(params) => <TextField {...params} label='Keyword' />}
             />
-            <TextField
-              className='w-full max-w-[250px]'
-              variant='outlined'
-              placeholder='Type a keyword...'
-              value={newKeyword}
-              onChange={handleNewKeywordChanged}
-              onKeyDown={keyDownHandler}
-            />
-            <StyledMuiButton className='primary'>Add</StyledMuiButton>
           </div>
         </div>
 
@@ -323,8 +373,9 @@ const RequestSolution = () => {
           <div className='w-full my-3 mx-4'>
             <FormControl>
               <RadioGroup
-                aria-labelledby='demo-row-radio-buttons-group-label'
                 name='row-radio-buttons-group'
+                value={needsDb.value}
+                onChange={needsDb.onChange}
               >
                 <FormControlLabel
                   value='yes'
@@ -363,8 +414,9 @@ const RequestSolution = () => {
           <div className='w-full my-3 mx-4'>
             <FormControl>
               <RadioGroup
-                aria-labelledby='demo-row-radio-buttons-group-label'
                 name='row-radio-buttons-group'
+                value={needsApp.value}
+                onChange={needsApp.onChange}
               >
                 <FormControlLabel
                   value='yes'
@@ -401,6 +453,8 @@ const RequestSolution = () => {
               thousandSeparator
               prefix='US$ '
               placeholder='Type a value (US$)'
+              value={budget.value}
+              onChange={budget.onChange}
             ></NumericFormat>
           </div>
         </div>
@@ -417,13 +471,13 @@ const RequestSolution = () => {
           </Typography>
           <div className='w-full my-3 mx-4'>
             <FormControl fullWidth>
-              <TextField label='Paymment Plan' className='w-full max-w-[265px]' required select>
-                <MenuItem value={1}>Daily deliveries and payments</MenuItem>
-                <MenuItem value={2}>Weekly deliveries and payments</MenuItem>
-                <MenuItem value={3}>Monthly deliveries and payments</MenuItem>
-                <MenuItem value={4}>Yearly deliveries and payments</MenuItem>
-                <MenuItem value={5}>All at once, right at the start</MenuItem>
-                <MenuItem value={6}>All at once, when project ends</MenuItem>
+              <TextField label='Paymment Plan' className='w-full max-w-[265px]' required select value={paymentPlan.value} onChange={paymentPlan.onChange}>
+                <MenuItem value={'daily'}>Daily deliveries and payments</MenuItem>
+                <MenuItem value={'weekly'}>Weekly deliveries and payments</MenuItem>
+                <MenuItem value={'monthly'}>Monthly deliveries and payments</MenuItem>
+                <MenuItem value={'yearly'}>Yearly deliveries and payments</MenuItem>
+                <MenuItem value={'full-at-start'}>All at once, right at the start</MenuItem>
+                <MenuItem value={'full-at-end'}>All at once, when project ends</MenuItem>
               </TextField>
             </FormControl>
           </div>
@@ -441,24 +495,9 @@ const RequestSolution = () => {
           </Typography>
           <div className='w-full my-3 flex items-center flex-wrap gap-3 mx-4'>
             <div className='flex-grow-0 items-center gap-3'>
-              <LocalizationProvider dateAdapter={AdapterMoment}>
-                <DateField label='Date target' className='w-full max-w-[265px]' />
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker label={'Targeet Start Date'} views={['month', 'year']} minDate={dayjs()} value={dateTarge} onChange={handleTargetDataChange}/>
               </LocalizationProvider>
-            </div>
-            <div className='flex-grow-0 mr-1'>or</div>
-            <div className='flex-auto flex items-center gap-3'>
-              <NumericFormat
-                className='w-full max-w-[100px]'
-                customInput={TextField}
-                thousandSeparator
-                placeholder='00'
-              ></NumericFormat>
-              <TextField label='Type' className='w-full max-w-[150px]' required select>
-                <MenuItem value={1}>Day(s)</MenuItem>
-                <MenuItem value={2}>Week(s)</MenuItem>
-                <MenuItem value={3}>Month(s)</MenuItem>
-                <MenuItem value={4}>Year(s)</MenuItem>
-              </TextField>
             </div>
           </div>
         </div>
