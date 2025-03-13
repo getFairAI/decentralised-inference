@@ -63,7 +63,7 @@ export default function Layout({ children }: { children: ReactElement }) {
         disableGutters
         sx={{
           width: '100%',
-          height: !userScrolledDown && !isSmallScreen ? `calc(100% - ${headerHeight})` : '100%',
+          height: `calc(100% - ${headerHeight})`,
           top: userScrolledDown && isSmallScreen ? 0 : headerHeight,
           position: 'fixed',
           transition: 'all 0.2s',
