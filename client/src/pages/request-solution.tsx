@@ -16,7 +16,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
-import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
+import { /* PROTOCOL_NAME, PROTOCOL_VERSION, */ TAG_NAMES } from '@/constants';
 import { StyledMuiButton } from '@/styles/components';
 import { postOnArweave } from '@fairai/evm-sdk';
 import Close from '@mui/icons-material/Close';
@@ -44,17 +44,7 @@ import { NumericFormat } from 'react-number-format';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-
-interface IRequestSolution {
-  title: string;
-  description: string;
-  keywords: string[];
-  needsDb: string;
-  needsApp: string;
-  budget: number;
-  paymentPlan: string;
-  targetUnixTimestamp: number;
-};
+import { IRequestSolution } from '@/interfaces/common';
 
 const defaultKeywordsList = [
   'AI',
@@ -157,8 +147,10 @@ const RequestSolution = () => {
   const handleClick = async (data: IRequestSolution) => {
     try {
       const tags = [
-        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
-        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+        /* { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION }, */
+        { name: TAG_NAMES.protocolName, values: ['FairAI-test'] },
+        { name: TAG_NAMES.protocolVersion, values: ['test'] },
         { name: TAG_NAMES.operationName, value: 'Request-Solution' },
         { name: 'Request-Title', value: data.title },
         { name: 'Request-Description', value: data.description },

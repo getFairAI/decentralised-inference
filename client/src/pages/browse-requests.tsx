@@ -50,7 +50,6 @@ import { StyledMuiButton } from '@/styles/components';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import useScroll from '@/hooks/useScroll';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
-import LibraryAddRoundedIcon from '@mui/icons-material/LibraryAddRounded';
 import {
   AddRounded,
   ChatBubbleRounded,
@@ -61,10 +60,12 @@ import {
   ReplyRounded,
   StarRounded,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { NumericFormat } from 'react-number-format';
 import { DateField, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import { IRequestSolution } from '@/interfaces/common';
+import dayjs from 'dayjs';
+import MakeRequestBanner from '@/components/make-request-banner';
 
 interface IrysTx {
   id: string;
@@ -75,10 +76,7 @@ interface IrysTx {
   address: string;
 }
 
-interface RequestData {
-  title: string;
-  description: string;
-  keywords: string[];
+interface RequestData extends IRequestSolution {
   id: string;
   owner: string;
   timestamp: string;
@@ -502,16 +500,19 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                         </strong>
                         <div className='w-full flex flex-wrap gap-2'>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Planned budget:</strong> US$ 5,000.00
+                            <strong> Planned budget:</strong>{request.budget}
                           </div>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Payment / Deliveries:</strong> Monthly
+                            <strong> Payment / Deliveries:</strong>{request.paymentPlan}
                           </div>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Date target:</strong> 02/28/2025
+                            <strong> Date target:</strong>{dayjs(request.targetUnixTimestamp * 1000).format('MM/YYYY')}
                           </div>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Time budget:</strong> 4 months
+                            <strong> Application Development:</strong>{request.needsApp}
+                          </div>
+                          <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
+                            <strong> Database Configuration:</strong>{request.needsDb}
                           </div>
                         </div>
                       </div>
@@ -793,54 +794,6 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   );
 };
 
-const MakeRequestMessage = ({ smallScreen }: { smallScreen: boolean }) => {
-  const navigate = useNavigate();
-  const openRequestsRoute = useCallback(() => navigate('/request'), [navigate]);
-
-  return (
-    <div className='flex justify-center w-full animate-slide-down'>
-      <div
-        style={{
-          opacity: 1,
-          height: 'fit-content',
-          minHeight: '40px',
-          width: 'fit-content',
-          maxWidth: '100%',
-          marginTop: !smallScreen ? '30px' : '20px',
-          padding: !smallScreen ? '20px' : '10px',
-          borderRadius: '20px',
-          background: 'linear-gradient(200deg, #bfe3e0, #a9c9d4)',
-          color: '#003030',
-          marginLeft: '20px',
-          marginRight: '20px',
-        }}
-        className='w-full flex flex-wrap justify-center xl:justify-between items-center gap-3 shadow-sm font-medium overflow-hidden text-xs md:text-base'
-      >
-        <span className='px-2 flex flex-nowrap gap-3 items-center'>
-          <InfoRounded className='mr-2' />
-          Are you looking for custom made, tailored solutions for your own projects?
-          <br />
-          Create your request listing, define your budget and quickly get amazing solutions tailored
-          for you by the trusted FairAI community members.
-        </span>
-
-        <StyledMuiButton
-          style={{
-            display: 'flex',
-            gap: '5px',
-            alignItems: 'center',
-          }}
-          className='plausible-event-name=HomeScreen-Info-Message-Access-Requests primary'
-          onClick={openRequestsRoute}
-        >
-          <LibraryAddRoundedIcon style={{ width: '20px', marginRight: '4px' }} />
-          Create a request
-        </StyledMuiButton>
-      </div>
-    </div>
-  );
-};
-
 const BrowseRequests = () => {
   const [requests, setRequests] = useState<RequestData[]>([]);
   const [filtering, setFiltering] = useState(false);
@@ -859,8 +812,8 @@ const BrowseRequests = () => {
   const { data, loading } = useQuery(irysQuery, {
     variables: {
       tags: [
-        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+        { name: TAG_NAMES.protocolName, values: ['FairAI-test'] },
+        { name: TAG_NAMES.protocolVersion, values: ['test'] },
         { name: TAG_NAMES.operationName, values: ['Request-Solution'] },
       ],
       first: 10,
@@ -948,7 +901,7 @@ const BrowseRequests = () => {
           </Box>
         )}
 
-        {!isLoading && <MakeRequestMessage smallScreen={isSmallScreen} />}
+        {!isLoading && <MakeRequestBanner smallScreen={isSmallScreen} />}
 
         {requests.length === 0 && !isLoading && (
           <Box display={'flex'} justifyContent={'center'} alignItems={'center'} marginTop={'30px'}>

@@ -20,6 +20,7 @@ import { Box, Container, Grid, InputBase, Typography, useTheme } from '@mui/mate
 import '@/styles/ui.css';
 import useSolutions from '@/hooks/useSolutions';
 import LoadingCard from '@/components/loading-card';
+import MakeRequestBanner from '@/components/make-request-banner';
 import {
   ChangeEvent,
   RefObject,
@@ -46,7 +47,6 @@ import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
-import { InfoRounded } from '@mui/icons-material';
 
 const WarningMessage = ({
   smallScreen,
@@ -182,53 +182,6 @@ const WarningMessage = ({
   } else {
     return <></>;
   }
-};
-
-const B2bMessage = ({ smallScreen }: { smallScreen: boolean }) => {
-  const navigate = useNavigate();
-  const openRequestsRoute = useCallback(() => navigate('/browse'), [navigate]);
-
-  return (
-    <div
-      style={{
-        opacity: 1,
-        height: 'fit-content',
-        minHeight: '40px',
-        width: 'fit-content',
-        maxWidth: !smallScreen ? '1600px' : '100%',
-        marginTop: !smallScreen ? '30px' : '0px',
-        padding: !smallScreen ? '20px' : '10px',
-        borderRadius: !smallScreen ? '20px' : '0px',
-        background: 'linear-gradient(200deg, #bfe3e0, #a9c9d4)',
-        color: '#003030',
-        marginLeft: '20px',
-        marginRight: '20px',
-      }}
-      className='animate-slide-down w-full flex flex-wrap justify-center xl:justify-between items-center gap-3 shadow-sm font-medium overflow-hidden text-xs md:text-base'
-    >
-      <span className='px-2 flex flex-nowrap gap-3 items-center'>
-        <InfoRounded className='mr-2' />
-        Are you a business or company looking for custom made, tailored solutions for your own
-        projects?
-        <br />
-        Make a request, define your budget and quickly get amazing solutions tailored for you by the
-        trusted FairAI community members.
-      </span>
-
-      <StyledMuiButton
-        style={{
-          display: 'flex',
-          gap: '5px',
-          alignItems: 'center',
-        }}
-        className='plausible-event-name=HomeScreen-Info-Message-Access-Requests primary'
-        onClick={openRequestsRoute}
-      >
-        <OpenInNewRoundedIcon style={{ width: '20px', marginRight: '4px' }} />
-        Go to requests
-      </StyledMuiButton>
-    </div>
-  );
 };
 
 export default function Home() {
@@ -393,7 +346,7 @@ export default function Home() {
 
           {!error && !loading && (
             <div className='mt-4 mb-10'>
-              <B2bMessage smallScreen={isSmallScreen} />
+              <MakeRequestBanner smallScreen={isSmallScreen} />
             </div>
           )}
 

@@ -98,3 +98,14 @@ export interface OperatorData {
   operatorFee: number;
   solutionId: string;
 }
+
+export interface IRequestSolution {
+  title: string;
+  description: string;
+  keywords: string[];
+  needsDb: string;
+  needsApp: string;
+  budget: number;
+  paymentPlan: string;
+  targetUnixTimestamp: number;
+};
