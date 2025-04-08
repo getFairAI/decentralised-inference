@@ -105,7 +105,7 @@ export interface IRequestSolution {
   keywords: string[];
   needsDb: string;
   needsApp: string;
-  budget: number;
+  budget: string;
   paymentPlan: string;
   targetUnixTimestamp: number;
-};
+}

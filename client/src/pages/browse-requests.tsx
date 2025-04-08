@@ -16,6 +16,12 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  */
 
+import {
+  databaseConfigType,
+  needsAppConfig,
+  paymentPlanBrowseTag,
+  paymentPlanType,
+} from '@/utils/requestsPipeFunctions';
 import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
 import { gql, useQuery } from '@apollo/client';
 import Close from '@mui/icons-material/Close';
@@ -438,7 +444,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
               animate={{ opacity: 1, y: 0 }}
               className='w-full'
             >
-              <Paper sx={{ padding: '10px', width: '100%' }}>
+              <Paper sx={{ padding: '10px', width: '100%', bgcolor: 'white' }}>
                 <Box>
                   <DialogTitle display='flex' justifyContent={'flex-end'} gap={'5px'}>
                     <Box display={'flex'} flexDirection={'column'} width={'100%'}>
@@ -500,19 +506,24 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                         </strong>
                         <div className='w-full flex flex-wrap gap-2'>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Planned budget:</strong>{request.budget}
+                            <strong> Planned budget:</strong>
+                            {request.budget}
                           </div>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Payment / Deliveries:</strong>{request.paymentPlan}
+                            <strong> Payment / Deliveries:</strong>
+                            {paymentPlanType(request.paymentPlan)}
                           </div>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Date target:</strong>{dayjs(request.targetUnixTimestamp * 1000).format('MM/YYYY')}
+                            <strong> Date target:</strong>
+                            {dayjs(request.targetUnixTimestamp * 1000).format('MM/YYYY')}
                           </div>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Application Development:</strong>{request.needsApp}
+                            <strong> Application Development:</strong>
+                            {needsAppConfig(request.needsApp)}
                           </div>
                           <div className='flex items-center gap-1 rounded-xl bg-white w-fit px-3 py-1 mb-2'>
-                            <strong> Database Configuration:</strong>{request.needsDb}
+                            <strong> Database:</strong>
+                            {databaseConfigType(request.needsDb)}
                           </div>
                         </div>
                       </div>
@@ -527,7 +538,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                           display={'flex'}
                           justifyContent={'center'}
                           fontWeight={600}
-                          className='bg-white rounded-lg py-3'
+                          className='bg-neutral-100 rounded-lg py-3'
                         >
                           {'No comments yet.'}
                         </Typography>
@@ -774,7 +785,11 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                     }, 0 applications`}
                     color='secondary'
                   />
-                  <Chip variant='outlined' label={'Monthly payments'} color='primary' />
+                  <Chip
+                    variant='outlined'
+                    label={paymentPlanBrowseTag(request.paymentPlan)}
+                    color='primary'
+                  />
                 </div>
                 {request.keywords.map((keyword) => (
                   <Chip

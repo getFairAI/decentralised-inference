@@ -33,7 +33,7 @@ import {
   RadioGroup,
   TextField,
   Typography,
-  createFilterOptions
+  createFilterOptions,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { SyntheticEvent, useCallback, useState } from 'react';
@@ -102,7 +102,7 @@ const Keyword = ({
       variant='filled'
       color='primary'
       className='font-bold'
-      sx={{ margin:'0px 4px 4px 4px'}}
+      sx={{ margin: '0px 4px 4px 4px' }}
     />
   );
 };
@@ -122,7 +122,7 @@ const RequestSolution = () => {
       keywords: [],
       needsDb: '',
       needsApp: '',
-      budget: 0,
+      budget: '',
       paymentPlan: '',
       targetUnixTimestamp: 0,
     },
@@ -134,7 +134,11 @@ const RequestSolution = () => {
     rules: { required: true },
   });
   const { field: needsDb } = useController({ control, name: 'needsDb', rules: { required: true } });
-  const { field: needsApp } = useController({ control, name: 'needsApp', rules: { required: true } });
+  const { field: needsApp } = useController({
+    control,
+    name: 'needsApp',
+    rules: { required: true },
+  });
   const { field: budget } = useController({ control, name: 'budget', rules: { required: true } });
   const { field: paymentPlan } = useController({
     control,
@@ -186,7 +190,7 @@ const RequestSolution = () => {
         setValue('keywords', [...keywords, newValue]);
         setAutomcompleteInputValue('');
       }
-    }, 
+    },
     [keywords, setValue],
   );
 
@@ -197,7 +201,9 @@ const RequestSolution = () => {
       } else {
         setAutomcompleteInputValue(newValue || '');
       }
-  }, [setAutomcompleteInputValue]);
+    },
+    [setAutomcompleteInputValue],
+  );
 
   const handleTargetDataChange = useCallback(
     (newValue: Dayjs | null) => {
@@ -209,15 +215,18 @@ const RequestSolution = () => {
     [setValue, setDateTarget],
   );
 
-  const autocompleteFilterOptions = useCallback((options: string[], state: FilterOptionsState<string>) => {
-    const filtered = filter(options, state);
+  const autocompleteFilterOptions = useCallback(
+    (options: string[], state: FilterOptionsState<string>) => {
+      const filtered = filter(options, state);
 
-    if (state.inputValue !== '' && !keywords.includes(state.inputValue)) {
-      filtered.push(`Add "${state.inputValue}"`);
-    }
+      if (state.inputValue !== '' && !keywords.includes(state.inputValue)) {
+        filtered.push(`Add "${state.inputValue}"`);
+      }
 
-    return filtered.filter((option) => !keywords.includes(option));
-  }, [ filter, keywords ]);
+      return filtered.filter((option) => !keywords.includes(option));
+    },
+    [filter, keywords],
+  );
 
   if (requestSuccessful) {
     return (
@@ -230,7 +239,7 @@ const RequestSolution = () => {
         alignItems={'center'}
         overflow={'auto'}
       >
-        <Typography variant='h2'>Your Request Has been registered.</Typography>
+        <Typography variant='h2'>Your Request Has Been Registered.</Typography>
         <Typography variant='body1'>Thank you for your collaboration.</Typography>
         <Button onClick={handleBack} variant='outlined' sx={{ marginTop: '16px' }}>
           Explore Marketplace
@@ -248,9 +257,7 @@ const RequestSolution = () => {
               src='./fair-protocol-face-primarycolor.png'
               style={{ width: '40px', objectFit: 'contain' }}
             />
-            <Typography variant='h2'>
-              Create a request: tell the community what you need.
-            </Typography>
+            <Typography variant='h2'>Create a request: tell us what you need.</Typography>
           </div>
 
           <div className='flex flex-grow-0 w-fit justify-end'>
@@ -389,6 +396,11 @@ const RequestSolution = () => {
                   control={<Radio />}
                   label='No, I need the developers to create the necessary database from scratch.'
                 />
+                <FormControlLabel
+                  value='not-needed'
+                  control={<Radio />}
+                  label='This project does not need a database or specific data.'
+                />
               </RadioGroup>
             </FormControl>
           </div>
@@ -423,7 +435,12 @@ const RequestSolution = () => {
                 <FormControlLabel
                   value='no-but-find-on-web'
                   control={<Radio />}
-                  label="No, this project doesn't need any app or website."
+                  label='No, but we can find one on the web that we can use for this project.'
+                />
+                <FormControlLabel
+                  value='not-needed'
+                  control={<Radio />}
+                  label='This project does not need any app or website.'
                 />
               </RadioGroup>
             </FormControl>
@@ -463,7 +480,14 @@ const RequestSolution = () => {
           </Typography>
           <div className='w-full my-3 mx-4'>
             <FormControl fullWidth>
-              <TextField label='Paymment Plan' className='w-full max-w-[265px]' required select value={paymentPlan.value} onChange={paymentPlan.onChange}>
+              <TextField
+                label='Paymment Plan'
+                className='w-full max-w-[265px]'
+                required
+                select
+                value={paymentPlan.value}
+                onChange={paymentPlan.onChange}
+              >
                 <MenuItem value={'daily'}>Daily deliveries and payments</MenuItem>
                 <MenuItem value={'weekly'}>Weekly deliveries and payments</MenuItem>
                 <MenuItem value={'monthly'}>Monthly deliveries and payments</MenuItem>
@@ -488,7 +512,13 @@ const RequestSolution = () => {
           <div className='w-full my-3 flex items-center flex-wrap gap-3 mx-4'>
             <div className='flex-grow-0 items-center gap-3'>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker label={'Targeet Start Date'} views={['month', 'year']} minDate={dayjs()} value={dateTarge} onChange={handleTargetDataChange}/>
+                <DatePicker
+                  label={'Targeet Start Date'}
+                  views={['month', 'year']}
+                  minDate={dayjs()}
+                  value={dateTarge}
+                  onChange={handleTargetDataChange}
+                />
               </LocalizationProvider>
             </div>
           </div>
