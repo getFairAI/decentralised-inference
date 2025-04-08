@@ -529,8 +529,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                       </div>
 
                       <div className='w-full px-2 font-semibold text-sm sm:text-base'>
-                        {comments.length} {comments.length === 1 ? ' comment' : 'comments'}, 0
-                        applications
+                        {comments.length} {comments.length === 1 ? ' comment' : 'comments'}
                       </div>
                       {comments.length === 0 && (
                         <Typography
@@ -780,9 +779,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                 >
                   <Chip
                     variant='outlined'
-                    label={`${comments.length} ${
-                      comments.length === 1 ? ' comment' : ' comments'
-                    }, 0 applications`}
+                    label={`${comments.length} ${comments.length === 1 ? ' comment' : ' comments'}`}
                     color='secondary'
                   />
                   <Chip
