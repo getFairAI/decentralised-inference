@@ -45,6 +45,7 @@ import {
   Checkbox,
   FormControl,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
@@ -60,7 +61,6 @@ import {
   AddRounded,
   ChatBubbleRounded,
   CheckCircleRounded,
-  CheckRounded,
   CloseRounded,
   InfoRounded,
   ReplyRounded,
@@ -110,6 +110,7 @@ const irysQuery = gql`
 `;
 
 interface Comment {
+  id: string;
   owner: string;
   timestamp: string;
   content: string;
@@ -126,22 +127,39 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
   const [replyingTo, setReplyingTo] = useState('');
   const [reply, setReply] = useState('');
 
-  const handleSetShowAddReply = (commentToChange: Comment, replyToAddress: string) => {
+  const handleSetShowAddReply = (commentToChange: Comment, replyToCommentId: string) => {
     if (reply && commentToChange.showReplyInput) {
       // reply is open, we are closing it now
       setReply(''); // clear the reply input
       setReplyingTo('');
     } else {
-      setReplyingTo(replyToAddress);
+      setReplyingTo(replyToCommentId);
     }
 
     commentToChange.showReplyInput = !commentToChange.showReplyInput;
     setChangedComment((prev) => ({ ...prev, reply: reply }));
   };
 
-  const handlePostReplyToComment = (commentToChange: Comment, reply: string) => {
-    commentToChange.reply = reply;
-    setChangedComment((prev) => ({ ...prev, reply: reply }));
+  const handlePostReplyToComment = async (commentToChange: Comment, reply: string) => {
+    // const newComment = {
+    //   owner: currentAddress,
+    //   timestamp: (Date.now() / 1000).toString(),
+    //   content: reply,
+    // };
+
+    const tags = [
+      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+      { name: TAG_NAMES.operationName, value: 'Comment' },
+      { name: 'Comment-For', value: request.id },
+      { name: 'Comment-Reply-To-Comment', value: replyingTo },
+      { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
+    ];
+
+    await postOnArweave(reply, tags);
+
+    // setComments((prev) => [...prev, newComment]);
+
     handleSetShowAddReply(commentToChange, '');
   };
 
@@ -152,7 +170,7 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
           <div className='flex gap-2 items-center'>
             <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: '16px' }} />{' '}
             <Typography variant='caption'>
-              {'Commented by '}
+              {'Comment by '}
               <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
                 <u>
                   {changedComment.owner.slice(0, 6)}...{changedComment.owner.slice(-4)}
@@ -168,12 +186,14 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
               </Tooltip>
             )}
           </div>
+
           <div className='font-medium text-sm sm:text-base'>{changedComment.content}</div>
+
           {!changedComment?.showReplyInput && (
             <div className='w-full flex justify-end gap-2 flex-wrap mt-2 animate-slide-right'>
               <StyledMuiButton
                 className='outlined-secondary'
-                onClick={() => handleSetShowAddReply(changedComment, changedComment.owner)}
+                onClick={() => handleSetShowAddReply(changedComment, changedComment.id)}
               >
                 <ReplyRounded /> Reply
               </StyledMuiButton>
@@ -248,20 +268,35 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
         </div>
         <div className='flex gap-2 flex-wrap mt-2'>
           <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>X / Twitter: </strong>{' '}
-            <a href='getfair.ai' className='primary-text-color underline'>
-              @testing.fairAI
+            <strong>X / Twitter: </strong>
+            <a
+              href='https://www.x.com/@getfairai'
+              target='_blank'
+              rel='noreferrer'
+              className='primary-text-color underline'
+            >
+              @getfairai
             </a>
           </div>
           <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>LinkedIn: </strong>{' '}
-            <a href='getfair.ai' className='primary-text-color underline'>
-              @getfair
+            <strong>LinkedIn: </strong>
+            <a
+              href='https://www.linkedin.com/'
+              target='_blank'
+              rel='noreferrer'
+              className='primary-text-color underline'
+            >
+              @getfairai
             </a>
           </div>
           <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>Website: </strong>{' '}
-            <a href='getfair.ai' className='primary-text-color underline'>
+            <strong>Website: </strong>
+            <a
+              href='https://getfair.ai'
+              target='_blank'
+              rel='noreferrer'
+              className='primary-text-color underline'
+            >
               getfair.ai
             </a>
           </div>
@@ -282,47 +317,7 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
             >
               <ReplyRounded /> Reply
             </StyledMuiButton>
-            <Tooltip title='Refuse and close this suggestion. This person will be able to create a new application/suggestion in the future. Replies will still be available for this suggestion.'>
-              <StyledMuiButton className='outlined-secondary'>
-                <CloseRounded /> Deny Suggestion
-              </StyledMuiButton>
-            </Tooltip>
-            <StyledMuiButton className='outlined-secondary'>
-              <CheckRounded /> Accept Suggestion
-            </StyledMuiButton>
           </div>
-        )}
-        {changedComment?.showReplyInput && (
-          <>
-            <div className='w-full font-bold text-sm mt-3 animate-slide-left ml-11'>
-              Replying to suggestion from{' '}
-              <span className='primary-text-color'>
-                {replyingTo.slice(0, 6)}...{replyingTo.slice(-4)}
-              </span>{' '}
-              :
-            </div>
-            <div className='w-full flex gap-3 items-center animate-slide-left'>
-              <StyledMuiButton
-                className='secondary fully-rounded mini mt-1'
-                onClick={() => handleSetShowAddReply(changedComment, changedComment.owner)}
-              >
-                <CloseRounded />
-              </StyledMuiButton>
-              <TextField
-                placeholder='Type your reply here'
-                variant='outlined'
-                fullWidth
-                value={reply}
-                onChange={(e) => setReply(e.target.value)}
-              />
-              <StyledMuiButton
-                onClick={() => handlePostReplyToComment(changedComment, 'posted reply')}
-                className='primary plausible-event-name=Request+Reply+Post+Click'
-              >
-                <SendIcon /> Send
-              </StyledMuiButton>
-            </div>
-          </>
         )}
       </div>
     </>
@@ -332,6 +327,7 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
 const RequestElement = ({ request }: { request: RequestData }) => {
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoadingAnim, setCommentsLoadingAnim] = useState<boolean>(false);
   const [newComment, setNewComment] = useState('');
   const [showAddComment, setShowAddComment] = useState(false);
   const [showAcceptAsDev, setShowAcceptAsDev] = useState(false);
@@ -364,23 +360,24 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   );
 
   const handleNewComment = useCallback(async () => {
-    const comment = {
-      owner: currentAddress,
-      timestamp: (Date.now() / 1000).toString(),
-      content: newComment,
-    };
+    // const comment = {
+    //   owner: currentAddress,
+    //   timestamp: (Date.now() / 1000).toString(),
+    //   content: newComment,
+    // };
 
     const tags = [
       { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
       { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
       { name: TAG_NAMES.operationName, value: 'Comment' },
       { name: 'Comment-For', value: request.id },
+      { name: 'Comment-Reply-To-Comment', value: request.id },
       { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
     ];
 
     await postOnArweave(newComment, tags);
 
-    setComments((prev) => [...prev, comment]);
+    // setComments((prev) => [...prev, comment]);
     setNewComment('');
   }, [request, newComment, currentAddress, setComments, setNewComment]);
 
@@ -388,11 +385,13 @@ const RequestElement = ({ request }: { request: RequestData }) => {
     if (commentsData && commentsData.transactions.edges) {
       (async () => {
         const allComments = [];
+        setCommentsLoadingAnim(true);
         for (const tx of commentsData.transactions.edges) {
           const res = await fetch(`https://arweave.net/${tx.node.id}`);
           const data = await res.text();
 
           allComments.push({
+            id: tx.node.id,
             owner: tx.node.address,
             timestamp:
               tx.node.tags.find(
@@ -403,6 +402,9 @@ const RequestElement = ({ request }: { request: RequestData }) => {
         }
 
         setComments(allComments);
+        setTimeout(() => {
+          setCommentsLoadingAnim(false);
+        }, 5000);
       })();
     }
   }, [commentsData, setComments]);
@@ -569,10 +571,9 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                             </StyledMuiButton>
                           </Tooltip>
 
-                          <Tooltip title='Assign yourself as a developer for this request. You can suggest different budgets, time or solutions.'>
+                          <Tooltip title='Show your interest into becoming the developer or one of the developers for this request.'>
                             <StyledMuiButton className='secondary' onClick={handleShowAcceptAsDev}>
-                              <CheckCircleRounded />
-                              Accept and develop this request
+                              <CheckCircleRounded />I am interested in developing this request
                             </StyledMuiButton>
                           </Tooltip>
                         </div>
@@ -597,7 +598,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                             onClick={handleNewComment}
                             className='primary plausible-event-name=Request+Comment+Click'
                           >
-                            <SendIcon /> Add
+                            <SendIcon /> Submit
                           </StyledMuiButton>
                         </div>
                       )}
@@ -605,21 +606,23 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                       {showAcceptAsDev && (
                         <div className='w-full flex flex-col gap-3 animate-slide-down'>
                           <strong className='flex items-center gap-1'>
-                            <AddRounded className='primary-text-color' /> Assign yourself as a
-                            developer for this request
+                            <AddRounded className='primary-text-color' /> Request to be a developer
+                            for this request
                           </strong>
                           <span className='font-medium rounded-xl bg-slate-300 px-3 py-2'>
-                            You are about to suggest yourself as a developer for this request.
+                            You are about to suggest yourself as a developer or one of the
+                            developers for this request.
                             <br />
-                            Everything you fill here will be publicly visible in this request!
+                            Everything you fill here will be publicly visible in this request
+                            comments!
                             <br />
                             You can accept everything as is, or suggest a different budget,
                             different target date, time needed or a different payment plan.
                             <br />
-                            The request creator will be able to counter your offer with a different
-                            one, or accept it.
-                            <br /> You can also leave any additional info or comments in the comment
-                            box, as needed.
+                            The request creator will be able to make a response to your request and
+                            let you know more details.
+                            <br /> You can also leave any additional info or comments in the
+                            &quot;Anything else?&quot; box, as needed.
                           </span>
 
                           <strong className='mt-4'>You suggestion / proposal</strong>
@@ -632,6 +635,8 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                               />
                             </FormGroup>
                           </div>
+
+                          <strong>Budgets and date targets suggestion</strong>
 
                           <div className='flex gap-3 items-end flex-wrap'>
                             <NumericFormat
@@ -653,9 +658,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                               </TextField>
                             </FormControl>
 
-                            <div className='flex-grow flex flex-col gap-1'>
-                              <strong>Time budget / date target suggestion</strong>
-
+                            <div className='flex-grow flex flex-col gap-1 mt-2'>
                               <div className='flex items-center flex-wrap gap-3'>
                                 <LocalizationProvider dateAdapter={AdapterMoment}>
                                   <DateField
@@ -687,7 +690,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                             </div>
                           </div>
 
-                          <strong>Ways to contact you</strong>
+                          <strong className='mt-2'>Ways to contact you</strong>
 
                           <div className='flex gap-3'>
                             <TextField
@@ -703,13 +706,20 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                               className='w-full max-w-[300px]'
                               InputProps={{ startAdornment: <>@ </> }}
                             />
+                            <TextField
+                              label='Your LinkedIn handle'
+                              placeholder='(optional)'
+                              variant='outlined'
+                              className='w-full max-w-[300px]'
+                              InputProps={{ startAdornment: <>@ </> }}
+                            />
                           </div>
 
-                          <strong>Anything else?</strong>
+                          <strong className='mt-2'>Anything else?</strong>
 
                           <TextField
-                            label='Add a comment'
-                            placeholder='Explain why you are making this suggestion and your opinion on this request. This comment will be publicly visible.'
+                            label='Add a comment or additional info'
+                            placeholder='Add any details you find important or a comment. This will be publicly visible.'
                             variant='outlined'
                             fullWidth
                             value={newComment}
@@ -779,7 +789,9 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                 >
                   <Chip
                     variant='outlined'
-                    label={`${comments.length} ${comments.length === 1 ? ' comment' : ' comments'}`}
+                    label={`${commentsLoadingAnim && <CircularProgress size='25px' />} ${
+                      comments.length
+                    } ${comments.length === 1 ? ' comment' : ' comments'}`}
                     color='secondary'
                   />
                   <Chip
