@@ -22,7 +22,7 @@ import {
   paymentPlanBrowseTag,
   paymentPlanType,
 } from '@/utils/requestsPipeFunctions';
-import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
+import { PROTOCOL_NAME_TEST, PROTOCOL_VERSION_TEST, TAG_NAMES } from '@/constants';
 import { gql, useQuery } from '@apollo/client';
 import Close from '@mui/icons-material/Close';
 import {
@@ -72,6 +72,7 @@ import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { IRequestSolution } from '@/interfaces/common';
 import dayjs from 'dayjs';
 import MakeRequestBanner from '@/components/make-request-banner';
+import { ITag } from '@/interfaces/arweave';
 
 interface IrysTx {
   id: string;
@@ -115,85 +116,190 @@ interface Comment {
   timestamp: string;
   content: string;
   showReplyInput?: boolean;
-  reply?: string;
+  replies?: Comment[];
+  tags: ITag[];
 }
 
-const CommentElement = ({ comment, request }: { comment: Comment; request: RequestData }) => {
+const CommentElement = ({
+  comment,
+  request,
+  refetchComments,
+  isReply,
+  replyToUserAddress,
+  commentType,
+  replyChainMainParentId,
+}: {
+  comment: Comment;
+  request: RequestData;
+  isReply: boolean;
+  replyToUserAddress: string;
+  replyChainMainParentId: string;
+  commentType: 'text' | 'application';
+  refetchComments: () => void;
+}) => {
   const handleAddressClick = useCallback(() => {
     window.open(`https://arbiscan.io/address/${comment.owner}`, '_blank');
   }, [comment]);
 
   const [changedComment, setChangedComment] = useState(comment);
-  const [replyingTo, setReplyingTo] = useState('');
+  const [replyingToCommentId, setReplyingToCommentId] = useState('');
+  const [replyingToUserAddress, setReplyingToUserAddress] = useState('');
   const [reply, setReply] = useState('');
 
-  const handleSetShowAddReply = (commentToChange: Comment, replyToCommentId: string) => {
+  const handleSetShowAddReply = (
+    commentToChange: Comment,
+    replyToCommentId: string,
+    replyToCommentOwnerAddress: string,
+  ) => {
     if (reply && commentToChange.showReplyInput) {
       // reply is open, we are closing it now
       setReply(''); // clear the reply input
-      setReplyingTo('');
+      setReplyingToCommentId('');
+      setReplyingToUserAddress('');
     } else {
-      setReplyingTo(replyToCommentId);
+      setReplyingToCommentId(replyToCommentId);
+      setReplyingToUserAddress(replyToCommentOwnerAddress);
     }
 
     commentToChange.showReplyInput = !commentToChange.showReplyInput;
     setChangedComment((prev) => ({ ...prev, reply: reply }));
   };
 
-  const handlePostReplyToComment = async (commentToChange: Comment, reply: string) => {
-    // const newComment = {
-    //   owner: currentAddress,
-    //   timestamp: (Date.now() / 1000).toString(),
-    //   content: reply,
-    // };
-
+  const handlePostReplyToComment = async (
+    commentToChange: Comment,
+    reply: string,
+    isSuggestion: boolean = false,
+  ) => {
     const tags = [
-      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
-      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME_TEST },
+      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION_TEST },
       { name: TAG_NAMES.operationName, value: 'Comment' },
       { name: 'Comment-For', value: request.id },
-      { name: 'Comment-Reply-To-Comment', value: replyingTo },
+      { name: 'Replying-To-Comment-Id', value: replyingToCommentId },
+      { name: 'Replying-To-User-Address', value: replyingToUserAddress },
+      { name: 'Reply-Chain-Main-Parent-Id', value: replyChainMainParentId },
+      { name: 'Is-Suggestion', value: isSuggestion.toString() },
       { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
     ];
 
     await postOnArweave(reply, tags);
 
-    // setComments((prev) => [...prev, newComment]);
+    refetchComments();
 
-    handleSetShowAddReply(commentToChange, '');
+    handleSetShowAddReply(commentToChange, '', '');
   };
 
   return (
-    <>
-      <div className='rounded-xl bg-white py-5 px-6'>
-        <Box key={changedComment.timestamp} display={'flex'} flexDirection={'column'} gap={'8px'}>
+    <div className='w-100 flex flex-nowrap gap-2 my-1' key={changedComment.timestamp}>
+      {isReply && <div className='w-[5px] bg-[#c0e9e9] rounded-xl h-100 flex-grow-0'></div>}
+
+      <div
+        className={
+          'rounded-xl bg-neutral-100 py-5 px-6 w-100 flex-grow ' +
+          (commentType === 'application' ? 'bg-[#fdf4e4]' : '')
+        }
+      >
+        <div className='flex flex-col gap-4'>
           <div className='flex gap-2 items-center'>
-            <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: '16px' }} />{' '}
+            {commentType === 'text' && (
+              <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: '16px' }} />
+            )}
+
+            {commentType === 'application' && <StarRounded className='text-[#f7ad22]' />}
+
             <Typography variant='caption'>
-              {'Comment by '}
+              {!isReply ? 'Comment by ' : 'Reply by '}
               <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
                 <u>
                   {changedComment.owner.slice(0, 6)}...{changedComment.owner.slice(-4)}
                 </u>
               </a>
+              {isReply && replyToUserAddress && (
+                <>
+                  {' to '}
+                  <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
+                    <u>
+                      {replyToUserAddress.slice(0, 6)}...{replyToUserAddress.slice(-4)}
+                    </u>
+                  </a>
+                </>
+              )}
               {` on ${new Date(Number(changedComment.timestamp) * 1000).toLocaleString()}`}
             </Typography>
             {changedComment.owner === request.owner && (
               <Tooltip title={'User that created this request.'}>
-                <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs max-fit'>
+                <div className='rounded-xl bg-[#3aaaaa] px-2 py-1 text-white font-bold text-xs max-fit mx-1'>
                   Request Creator
                 </div>
               </Tooltip>
             )}
+            {commentType === 'application' && (
+              <div className='rounded-xl bg-[#ffca1b] px-2 py-1 font-bold text-xs max-fit mx-1'>
+                Application / Suggestion
+              </div>
+            )}
           </div>
 
-          <div className='font-medium text-sm sm:text-base'>{changedComment.content}</div>
+          {commentType === 'application' && (
+            <div className='w-100 flex flex-col gap-1'>
+              <div className='flex gap-2 flex-wrap mt-2'>
+                <div className='bg-white rounded-xl px-3 py-1'>
+                  <strong>Budget suggestion: </strong> US$ 6,000.00
+                </div>
+                <div className='bg-white rounded-xl px-3 py-1'>
+                  <strong>Time suggestion: </strong> 6 month(s)
+                </div>
+                <div className='bg-white rounded-xl px-3 py-1'>
+                  <strong>Payment / Deliveries: </strong> All at once, right at the start
+                </div>
+              </div>
+              <div className='flex gap-2 flex-wrap mt-2'>
+                <div className='bg-white rounded-xl px-3 py-1'>
+                  <strong>X / Twitter: </strong>
+                  <a
+                    href='https://www.x.com/@getfairai'
+                    target='_blank'
+                    rel='noreferrer'
+                    className='primary-text-color underline'
+                  >
+                    @getfairai
+                  </a>
+                </div>
+                <div className='bg-white rounded-xl px-3 py-1'>
+                  <strong>LinkedIn: </strong>
+                  <a
+                    href='https://www.linkedin.com/'
+                    target='_blank'
+                    rel='noreferrer'
+                    className='primary-text-color underline'
+                  >
+                    @getfairai
+                  </a>
+                </div>
+                <div className='bg-white rounded-xl px-3 py-1'>
+                  <strong>Website: </strong>
+                  <a
+                    href='https://getfair.ai'
+                    target='_blank'
+                    rel='noreferrer'
+                    className='primary-text-color underline'
+                  >
+                    getfair.ai
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className='font-medium text-sm sm:text-base px-2'>{changedComment.content}</div>
 
           {!changedComment?.showReplyInput && (
             <div className='w-full flex justify-end gap-2 flex-wrap mt-2 animate-slide-right'>
               <StyledMuiButton
                 className='outlined-secondary'
-                onClick={() => handleSetShowAddReply(changedComment, changedComment.id)}
+                onClick={() =>
+                  handleSetShowAddReply(changedComment, changedComment.id, changedComment.owner)
+                }
               >
                 <ReplyRounded /> Reply
               </StyledMuiButton>
@@ -205,14 +311,16 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
               <div className='w-full font-bold text-sm mt-3 animate-slide-left ml-11'>
                 Replying to{' '}
                 <span className='primary-text-color'>
-                  {replyingTo.slice(0, 6)}...{replyingTo.slice(-4)}
+                  {replyingToUserAddress.slice(0, 6)}...{replyingToUserAddress.slice(-4)}
                 </span>{' '}
                 :
               </div>
               <div className='w-full flex gap-3 items-center animate-slide-left'>
                 <StyledMuiButton
                   className='secondary fully-rounded mini mt-1'
-                  onClick={() => handleSetShowAddReply(changedComment, changedComment.owner)}
+                  onClick={() =>
+                    handleSetShowAddReply(changedComment, changedComment.id, changedComment.owner)
+                  }
                 >
                   <CloseRounded />
                 </StyledMuiButton>
@@ -224,7 +332,7 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
                   onChange={(e) => setReply(e.target.value)}
                 />
                 <StyledMuiButton
-                  onClick={() => handlePostReplyToComment(changedComment, 'posted reply')}
+                  onClick={() => handlePostReplyToComment(changedComment, reply, false)}
                   className='primary plausible-event-name=Request+Reply+Post+Click'
                 >
                   <SendIcon /> Send
@@ -232,95 +340,9 @@ const CommentElement = ({ comment, request }: { comment: Comment; request: Reque
               </div>
             </>
           )}
-        </Box>
+        </div>
       </div>
-
-      <div key={changedComment.timestamp + 1} className='flex flex-col rounded-xl bg-[#fdf4e4] p-6'>
-        <div className='flex gap-2 items-center'>
-          <StarRounded className='text-[#f7ad22]' />
-          <span className='text-sm font-bold'>
-            {'Application / suggestion by '}
-            <a style={{ cursor: 'pointer', color: '#3aaaaa' }} onClick={handleAddressClick}>
-              <u>
-                {changedComment.owner.slice(0, 6)}...{changedComment.owner.slice(-4)}
-              </u>
-            </a>
-            {` on ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`}
-          </span>
-          {changedComment.owner === changedComment.owner && (
-            <Tooltip title={'User that created this request.'}>
-              <div className='rounded-xl bg-[#ffca1b] px-2 py-1 font-bold text-xs max-fit'>
-                Application / Suggestion
-              </div>
-            </Tooltip>
-          )}
-        </div>
-        <div className='flex gap-2 flex-wrap mt-2'>
-          <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>Budget suggestion: </strong> US$ 6,000.00
-          </div>
-          <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>Time suggestion: </strong> 6 month(s)
-          </div>
-          <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>Payment / Deliveries: </strong> All at once, right at the start
-          </div>
-        </div>
-        <div className='flex gap-2 flex-wrap mt-2'>
-          <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>X / Twitter: </strong>
-            <a
-              href='https://www.x.com/@getfairai'
-              target='_blank'
-              rel='noreferrer'
-              className='primary-text-color underline'
-            >
-              @getfairai
-            </a>
-          </div>
-          <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>LinkedIn: </strong>
-            <a
-              href='https://www.linkedin.com/'
-              target='_blank'
-              rel='noreferrer'
-              className='primary-text-color underline'
-            >
-              @getfairai
-            </a>
-          </div>
-          <div className='bg-white rounded-xl px-3 py-1'>
-            <strong>Website: </strong>
-            <a
-              href='https://getfair.ai'
-              target='_blank'
-              rel='noreferrer'
-              className='primary-text-color underline'
-            >
-              getfair.ai
-            </a>
-          </div>
-        </div>
-        <div className='font-medium text-sm sm:text-base p-2 flex gap-2 items-start mt-2'>
-          <img
-            src='./icons/comment_icon_fill_primarycolor.svg'
-            style={{ width: '16px', marginTop: '4px' }}
-          />
-          This would be a very difficult project, so I would like to make this suggestion before
-          accepting it. If we reach an agreement, I can start right away.
-        </div>
-        {!changedComment?.showReplyInput && (
-          <div className='w-full flex justify-end gap-2 flex-wrap mt-3 animate-slide-right'>
-            <StyledMuiButton
-              className='outlined-secondary'
-              onClick={() => handleSetShowAddReply(changedComment, changedComment.owner)}
-            >
-              <ReplyRounded /> Reply
-            </StyledMuiButton>
-          </div>
-        )}
-      </div>
-    </>
+    </div>
   );
 };
 
@@ -328,6 +350,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoadingAnim, setCommentsLoadingAnim] = useState<boolean>(false);
+  const [commentsAmountTotal, setCommentsAmountTotal] = useState(0);
   const [newComment, setNewComment] = useState('');
   const [showAddComment, setShowAddComment] = useState(false);
   const [showAcceptAsDev, setShowAcceptAsDev] = useState(false);
@@ -339,11 +362,15 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   const handleShowNewComment = () => setShowAddComment(!showAddComment);
   const handleShowAcceptAsDev = () => setShowAcceptAsDev(!showAcceptAsDev);
 
-  const { data: commentsData } = useQuery(irysQuery, {
+  const {
+    data: commentsData,
+    refetch,
+    loading: loadingQuery,
+  } = useQuery(irysQuery, {
     variables: {
       tags: [
-        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
-        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
+        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME_TEST] },
+        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION_TEST] },
         { name: TAG_NAMES.operationName, values: ['Comment'] },
         { name: 'Comment-For', values: [request.id] },
       ],
@@ -352,6 +379,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
     context: {
       clientName: 'irys',
     },
+    notifyOnNetworkStatusChange: true,
   });
 
   const handleCommentChange = useCallback(
@@ -360,31 +388,24 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   );
 
   const handleNewComment = useCallback(async () => {
-    // const comment = {
-    //   owner: currentAddress,
-    //   timestamp: (Date.now() / 1000).toString(),
-    //   content: newComment,
-    // };
-
     const tags = [
-      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
-      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME_TEST },
+      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION_TEST },
       { name: TAG_NAMES.operationName, value: 'Comment' },
       { name: 'Comment-For', value: request.id },
-      { name: 'Comment-Reply-To-Comment', value: request.id },
       { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
     ];
 
     await postOnArweave(newComment, tags);
 
-    // setComments((prev) => [...prev, comment]);
+    refetch();
     setNewComment('');
   }, [request, newComment, currentAddress, setComments, setNewComment]);
 
   useEffect(() => {
     if (commentsData && commentsData.transactions.edges) {
       (async () => {
-        const allComments = [];
+        const allComments: Comment[] = [];
         setCommentsLoadingAnim(true);
         for (const tx of commentsData.transactions.edges) {
           const res = await fetch(`https://arweave.net/${tx.node.id}`);
@@ -398,13 +419,63 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                 (tag: { name: string; value: string }) => tag.name === TAG_NAMES.unixTime,
               )?.value ?? '',
             content: data,
+            tags: tx.node.tags,
           });
         }
 
-        setComments(allComments);
-        setTimeout(() => {
-          setCommentsLoadingAnim(false);
-        }, 5000);
+        const allCommentsWithReplies: Comment[] = [];
+
+        // check and organize comment replies
+        allComments.forEach((comment: Comment) => {
+          if (allCommentsWithReplies.find((parent) => parent.id === comment.id)) {
+            // if this comment is already added, skip it
+            return;
+          }
+          const foundId = comment.tags.find(
+            (tag) => tag.name === 'Reply-Chain-Main-Parent-Id',
+          )?.value;
+          if (foundId) {
+            // its a reply
+            const foundParentIndex = allCommentsWithReplies.findIndex(
+              (parent) => parent.id === foundId,
+            );
+            if (foundParentIndex >= 0) {
+              if (!allCommentsWithReplies[foundParentIndex]?.replies) {
+                allCommentsWithReplies[foundParentIndex].replies = [];
+              }
+
+              allCommentsWithReplies[foundParentIndex].replies.push(comment);
+            } else {
+              const foundParentInAllComments = allComments.find(
+                (allComment) => allComment.id === foundId,
+              );
+              if (foundParentInAllComments) {
+                allCommentsWithReplies.push({
+                  ...foundParentInAllComments,
+                  ...{
+                    replies: [comment],
+                  },
+                });
+              }
+            }
+          } else {
+            // if its reply and no parent was found, show it as a parent anyway
+            allCommentsWithReplies.push(comment);
+          }
+        });
+
+        const totalComments = allCommentsWithReplies.reduce((acc: number, comment: Comment) => {
+          if (comment.replies) {
+            acc += comment.replies.length + 1;
+          } else {
+            acc += 1;
+          }
+          return acc;
+        }, 0);
+
+        setCommentsAmountTotal(totalComments);
+        setComments(allCommentsWithReplies);
+        setCommentsLoadingAnim(false);
       })();
     }
   }, [commentsData, setComments]);
@@ -531,9 +602,9 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                       </div>
 
                       <div className='w-full px-2 font-semibold text-sm sm:text-base'>
-                        {comments.length} {comments.length === 1 ? ' comment' : 'comments'}
+                        {commentsAmountTotal} {commentsAmountTotal === 1 ? ' comment' : 'comments'}
                       </div>
-                      {comments.length === 0 && (
+                      {commentsAmountTotal === 0 && (
                         <Typography
                           width={'100%'}
                           display={'flex'}
@@ -544,13 +615,54 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                           {'No comments yet.'}
                         </Typography>
                       )}
-                      {comments.map((comment) => (
-                        <CommentElement
-                          key={comment.timestamp}
-                          comment={comment}
-                          request={request}
-                        />
-                      ))}
+
+                      {(loadingQuery || commentsLoadingAnim) && (
+                        <div className='w-100 flex justify-center items-center my-3 px-2 gap-3'>
+                          <CircularProgress size={'18px'} />
+                          <span className='font-semibold'>Loading comments ...</span>
+                        </div>
+                      )}
+
+                      {!loadingQuery && !commentsLoadingAnim && (
+                        <>
+                          {comments.map((comment) => (
+                            <div className='flex flex-col' key={comment.timestamp}>
+                              <CommentElement
+                                isReply={false}
+                                key={comment.timestamp}
+                                comment={comment}
+                                request={request}
+                                refetchComments={refetch}
+                                commentType='text'
+                                replyToUserAddress=''
+                                replyChainMainParentId={comment.id}
+                              />
+
+                              {comment?.replies?.length && (
+                                <>
+                                  {comment.replies.map((reply) => (
+                                    <div key={reply.timestamp} className='pl-2'>
+                                      <CommentElement
+                                        replyChainMainParentId={comment.id}
+                                        isReply={true}
+                                        comment={reply}
+                                        request={request}
+                                        refetchComments={refetch}
+                                        commentType='text'
+                                        replyToUserAddress={
+                                          reply.tags.find(
+                                            (tag) => tag.name === 'Replying-To-User-Address',
+                                          )?.value ?? ''
+                                        }
+                                      />
+                                    </div>
+                                  ))}
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </>
+                      )}
                     </Box>
                   </DialogContent>
                 </Box>
@@ -789,9 +901,14 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                 >
                   <Chip
                     variant='outlined'
-                    label={`${commentsLoadingAnim && <CircularProgress size='25px' />} ${
-                      comments.length
-                    } ${comments.length === 1 ? ' comment' : ' comments'}`}
+                    icon={
+                      <>
+                        {commentsLoadingAnim && <CircularProgress size='18px' className='ml-2' />}
+                      </>
+                    }
+                    label={`${commentsAmountTotal} ${
+                      commentsAmountTotal === 1 ? ' comment' : ' comments'
+                    }`}
                     color='secondary'
                   />
                   <Chip
@@ -836,8 +953,8 @@ const BrowseRequests = () => {
   const { data, loading } = useQuery(irysQuery, {
     variables: {
       tags: [
-        { name: TAG_NAMES.protocolName, values: ['FairAI-test'] },
-        { name: TAG_NAMES.protocolVersion, values: ['test'] },
+        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME_TEST] },
+        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION_TEST] },
         { name: TAG_NAMES.operationName, values: ['Request-Solution'] },
       ],
       first: 10,
@@ -845,6 +962,7 @@ const BrowseRequests = () => {
     context: {
       clientName: 'irys',
     },
+    notifyOnNetworkStatusChange: true,
   });
   const isLoading = useMemo(() => loading || filtering, [loading, filtering]);
 

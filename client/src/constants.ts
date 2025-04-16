@@ -45,6 +45,9 @@ export const OLD_PROTOCOL_VERSION = '1.0';
 export const PROTOCOL_NAME = 'FairAI';
 export const PROTOCOL_VERSION = '2.0';
 
+export const PROTOCOL_NAME_TEST = 'FairAI-test';
+export const PROTOCOL_VERSION_TEST = 'test';
+
 export const MARKETPLACE_FEE = '0.5'; // u
 export const OPERATOR_REGISTRATION_AR_FEE = '0.05'; // u
 
