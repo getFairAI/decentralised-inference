@@ -46,6 +46,7 @@ import {
   FormControl,
   MenuItem,
   CircularProgress,
+  Switch,
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
@@ -115,7 +116,9 @@ interface Comment {
   owner: string;
   timestamp: string;
   content: string;
+  commentType: 'text' | 'suggestion';
   showReplyInput?: boolean;
+  showMakeSuggestionInputs?: boolean;
   replies?: Comment[];
   tags: ITag[];
 }
@@ -134,7 +137,7 @@ const CommentElement = ({
   isReply: boolean;
   replyToUserAddress: string;
   replyChainMainParentId: string;
-  commentType: 'text' | 'application';
+  commentType: 'text' | 'suggestion';
   refetchComments: () => void;
 }) => {
   const handleAddressClick = useCallback(() => {
@@ -145,6 +148,24 @@ const CommentElement = ({
   const [replyingToCommentId, setReplyingToCommentId] = useState('');
   const [replyingToUserAddress, setReplyingToUserAddress] = useState('');
   const [reply, setReply] = useState('');
+
+  const handleShowSuggestionInputsReply = (commentToChange: Comment) => {
+    if (commentToChange.showReplyInput) {
+      // reply is open, open the suggestion inputs
+      commentToChange.showMakeSuggestionInputs = !commentToChange.showMakeSuggestionInputs;
+    } else {
+      // reply is closed
+      commentToChange.showMakeSuggestionInputs = false;
+    }
+
+    if (commentToChange.showMakeSuggestionInputs) {
+      commentToChange.commentType = 'suggestion';
+    } else {
+      commentToChange.commentType = 'text';
+    }
+
+    setChangedComment((prev) => ({ ...prev, ...commentToChange }));
+  };
 
   const handleSetShowAddReply = (
     commentToChange: Comment,
@@ -157,12 +178,13 @@ const CommentElement = ({
       setReplyingToCommentId('');
       setReplyingToUserAddress('');
     } else {
+      // reply is closed, initiate new reply
       setReplyingToCommentId(replyToCommentId);
       setReplyingToUserAddress(replyToCommentOwnerAddress);
     }
 
     commentToChange.showReplyInput = !commentToChange.showReplyInput;
-    setChangedComment((prev) => ({ ...prev, reply: reply }));
+    setChangedComment((prev) => ({ ...prev, ...commentToChange }));
   };
 
   const handlePostReplyToComment = async (
@@ -178,7 +200,7 @@ const CommentElement = ({
       { name: 'Replying-To-Comment-Id', value: replyingToCommentId },
       { name: 'Replying-To-User-Address', value: replyingToUserAddress },
       { name: 'Reply-Chain-Main-Parent-Id', value: replyChainMainParentId },
-      { name: 'Is-Suggestion', value: isSuggestion.toString() },
+      { name: 'Comment-Type', value: isSuggestion ? 'suggestion' : 'text' },
       { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
     ];
 
@@ -196,7 +218,7 @@ const CommentElement = ({
       <div
         className={
           'rounded-xl bg-neutral-100 py-5 px-6 w-100 flex-grow ' +
-          (commentType === 'application' ? 'bg-[#fdf4e4]' : '')
+          (commentType === 'suggestion' ? 'bg-[#fdf4e4]' : '')
         }
       >
         <div className='flex flex-col gap-4'>
@@ -205,7 +227,7 @@ const CommentElement = ({
               <img src='./icons/comment_icon_fill_primarycolor.svg' style={{ width: '16px' }} />
             )}
 
-            {commentType === 'application' && <StarRounded className='text-[#f7ad22]' />}
+            {commentType === 'suggestion' && <StarRounded className='text-[#f7ad22]' />}
 
             <Typography variant='caption'>
               {!isReply ? 'Comment by ' : 'Reply by '}
@@ -233,14 +255,14 @@ const CommentElement = ({
                 </div>
               </Tooltip>
             )}
-            {commentType === 'application' && (
+            {commentType === 'suggestion' && (
               <div className='rounded-xl bg-[#ffca1b] px-2 py-1 font-bold text-xs max-fit mx-1'>
-                Application / Suggestion
+                Suggestion
               </div>
             )}
           </div>
 
-          {commentType === 'application' && (
+          {commentType === 'suggestion' && (
             <div className='w-100 flex flex-col gap-1'>
               <div className='flex gap-2 flex-wrap mt-2'>
                 <div className='bg-white rounded-xl px-3 py-1'>
@@ -308,13 +330,125 @@ const CommentElement = ({
 
           {changedComment?.showReplyInput && (
             <>
-              <div className='w-full font-bold text-sm mt-3 animate-slide-left ml-11'>
-                Replying to{' '}
-                <span className='primary-text-color'>
-                  {replyingToUserAddress.slice(0, 6)}...{replyingToUserAddress.slice(-4)}
-                </span>{' '}
-                :
+              <div className='w-full font-bold text-sm mt-3 animate-slide-left pl-11 flex justify-between flex-wrap items-center'>
+                <div className='flex-grow flex items-center gap-1'>
+                  Replying to
+                  <span className='primary-text-color'>
+                    {replyingToUserAddress.slice(0, 6)}...{replyingToUserAddress.slice(-4)}
+                  </span>
+                  :
+                </div>
+
+                <div className='flex-grow-0 flex justify-end items-center'>
+                  <Switch
+                    checked={changedComment.showMakeSuggestionInputs ?? false}
+                    onClick={() => handleShowSuggestionInputsReply(changedComment)}
+                  />
+                  Suggest different budgets
+                </div>
               </div>
+
+              {changedComment?.showMakeSuggestionInputs && (
+                <>
+                  <div className='pl-4 w-100 flex flex-col'>
+                    <strong className='flex items-center gap-2'>
+                      <StarRounded className='primary-text-color' /> Suggesting new budgets and/or
+                      targets
+                    </strong>
+                    <p className='pl-8'>
+                      Fill any field as needed. All fields are optional. <br />
+                      These will be added to your comment and will be publicly visible.
+                    </p>
+                  </div>
+                  <div className='w-full mt-3 animate-slide-left pl-11 flex flex-col gap-2'>
+                    <strong>Budgets and date targets suggestion</strong>
+
+                    <div className='flex gap-3 items-end flex-wrap'>
+                      <NumericFormat
+                        label='Budget suggestion'
+                        customInput={TextField}
+                        thousandSeparator
+                        prefix='US$ '
+                        placeholder='(optional)'
+                        className='w-full max-w-[170px]'
+                      ></NumericFormat>
+                      <FormControl className='w-full max-w-[250px]'>
+                        <TextField
+                          label='Payments plan suggestion'
+                          placeholder='(optional)'
+                          className='w-full'
+                          select
+                        >
+                          <MenuItem value={1}>Daily deliveries and payments</MenuItem>
+                          <MenuItem value={2}>Weekly deliveries and payments</MenuItem>
+                          <MenuItem value={3}>Monthly deliveries and payments</MenuItem>
+                          <MenuItem value={4}>Yearly deliveries and payments</MenuItem>
+                          <MenuItem value={5}>All at once, right at the start</MenuItem>
+                          <MenuItem value={6}>All at once, when project ends</MenuItem>
+                        </TextField>
+                      </FormControl>
+
+                      <div className='flex-grow flex flex-col gap-1 mt-2'>
+                        <div className='flex items-center flex-wrap gap-3'>
+                          <LocalizationProvider dateAdapter={AdapterMoment}>
+                            <DateField className='flex-grow max-w-[150px]' label='Date target' />
+                          </LocalizationProvider>
+                          <strong>or</strong>
+                          <div className='flex-grow flex gap-3 flex-nowrap'>
+                            <NumericFormat
+                              className='w-full max-w-[100px]'
+                              customInput={TextField}
+                              thousandSeparator
+                              placeholder='00'
+                            ></NumericFormat>
+                            <TextField
+                              label='Type'
+                              className='w-full max-w-[150px]'
+                              required
+                              select
+                            >
+                              <MenuItem value={1}>Day(s)</MenuItem>
+                              <MenuItem value={2}>Week(s)</MenuItem>
+                              <MenuItem value={3}>Month(s)</MenuItem>
+                              <MenuItem value={4}>Year(s)</MenuItem>
+                            </TextField>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <strong className='mt-2'>Ways to contact you</strong>
+
+                    <div className='flex gap-3 items-end flex-wrap'>
+                      <div className='flex gap-3'>
+                        <TextField
+                          label='Your website URL'
+                          placeholder='(optional)'
+                          variant='outlined'
+                          className='w-full max-w-[300px]'
+                        />
+                        <TextField
+                          label='Your X (twitter) handle'
+                          placeholder='(optional)'
+                          variant='outlined'
+                          className='w-full max-w-[300px]'
+                          InputProps={{ startAdornment: <>@ </> }}
+                        />
+                        <TextField
+                          label='Your LinkedIn handle'
+                          placeholder='(optional)'
+                          variant='outlined'
+                          className='w-full max-w-[300px]'
+                          InputProps={{ startAdornment: <>@ </> }}
+                        />
+                      </div>
+                    </div>
+
+                    <strong className='mt-2'>Anything else?</strong>
+                  </div>
+                </>
+              )}
+
               <div className='w-full flex gap-3 items-center animate-slide-left'>
                 <StyledMuiButton
                   className='secondary fully-rounded mini mt-1'
@@ -325,7 +459,7 @@ const CommentElement = ({
                   <CloseRounded />
                 </StyledMuiButton>
                 <TextField
-                  placeholder='Type your reply here'
+                  placeholder='Type your comment here'
                   variant='outlined'
                   fullWidth
                   value={reply}
@@ -414,6 +548,10 @@ const RequestElement = ({ request }: { request: RequestData }) => {
           allComments.push({
             id: tx.node.id,
             owner: tx.node.address,
+            commentType:
+              tx.node.tags.find(
+                (tag: { name: string; value: string }) => tag.name === 'Comment-Type',
+              )?.value ?? 'text',
             timestamp:
               tx.node.tags.find(
                 (tag: { name: string; value: string }) => tag.name === TAG_NAMES.unixTime,
@@ -431,6 +569,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
             // if this comment is already added, skip it
             return;
           }
+          // lets use the main parent Id for now ... (only 1 level of replies)
           const foundId = comment.tags.find(
             (tag) => tag.name === 'Reply-Chain-Main-Parent-Id',
           )?.value;
