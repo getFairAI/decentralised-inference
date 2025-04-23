@@ -74,6 +74,8 @@ import { IRequestSolution } from '@/interfaces/common';
 import dayjs from 'dayjs';
 import MakeRequestBanner from '@/components/make-request-banner';
 import { ITag } from '@/interfaces/arweave';
+import { Controller, useForm } from 'react-hook-form';
+import moment from 'moment';
 
 interface IrysTx {
   id: string;
@@ -88,6 +90,28 @@ interface RequestData extends IRequestSolution {
   id: string;
   owner: string;
   timestamp: string;
+}
+
+interface FormCommentInputs {
+  budget: string;
+  paymentPlan: string;
+  dateTarget: string;
+  websiteUrl: string;
+  twitterHandle: string;
+  linkedinHandle: string;
+  commentText: string;
+}
+
+interface Comment {
+  id: string;
+  owner: string;
+  timestamp: string;
+  content: string;
+  commentType: 'text' | 'suggestion';
+  showReplyInput?: boolean;
+  replies?: Comment[];
+  tags: ITag[];
+  suggestionFields?: FormCommentInputs;
 }
 
 const irysQuery = gql`
@@ -110,18 +134,6 @@ const irysQuery = gql`
     }
   }
 `;
-
-interface Comment {
-  id: string;
-  owner: string;
-  timestamp: string;
-  content: string;
-  commentType: 'text' | 'suggestion';
-  showReplyInput?: boolean;
-  showMakeSuggestionInputs?: boolean;
-  replies?: Comment[];
-  tags: ITag[];
-}
 
 const CommentElement = ({
   comment,
@@ -147,24 +159,21 @@ const CommentElement = ({
   const [changedComment, setChangedComment] = useState(comment);
   const [replyingToCommentId, setReplyingToCommentId] = useState('');
   const [replyingToUserAddress, setReplyingToUserAddress] = useState('');
-  const [reply, setReply] = useState('');
+  const [isSuggestion, setIsSuggestion] = useState(false);
 
-  const handleShowSuggestionInputsReply = (commentToChange: Comment) => {
-    if (commentToChange.showReplyInput) {
-      // reply is open, open the suggestion inputs
-      commentToChange.showMakeSuggestionInputs = !commentToChange.showMakeSuggestionInputs;
-    } else {
-      // reply is closed
-      commentToChange.showMakeSuggestionInputs = false;
-    }
+  // declare comment form
+  const {
+    register,
+    handleSubmit,
+    reset: resetForm,
+    formState,
+    getValues,
+    control,
+  } = useForm<FormCommentInputs>();
+  // const onReplySubmit: SubmitHandler<FormCommentInputs> = (data) => console.log(data);
 
-    if (commentToChange.showMakeSuggestionInputs) {
-      commentToChange.commentType = 'suggestion';
-    } else {
-      commentToChange.commentType = 'text';
-    }
-
-    setChangedComment((prev) => ({ ...prev, ...commentToChange }));
+  const handleShowSuggestionInputsReply = () => {
+    setIsSuggestion(!isSuggestion);
   };
 
   const handleSetShowAddReply = (
@@ -172,9 +181,9 @@ const CommentElement = ({
     replyToCommentId: string,
     replyToCommentOwnerAddress: string,
   ) => {
-    if (reply && commentToChange.showReplyInput) {
+    if (commentToChange.showReplyInput) {
       // reply is open, we are closing it now
-      setReply(''); // clear the reply input
+      resetForm(); // clear the reply input
       setReplyingToCommentId('');
       setReplyingToUserAddress('');
     } else {
@@ -187,28 +196,46 @@ const CommentElement = ({
     setChangedComment((prev) => ({ ...prev, ...commentToChange }));
   };
 
-  const handlePostReplyToComment = async (
-    commentToChange: Comment,
-    reply: string,
-    isSuggestion: boolean = false,
-  ) => {
-    const tags = [
-      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME_TEST },
-      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION_TEST },
-      { name: TAG_NAMES.operationName, value: 'Comment' },
-      { name: 'Comment-For', value: request.id },
-      { name: 'Replying-To-Comment-Id', value: replyingToCommentId },
-      { name: 'Replying-To-User-Address', value: replyingToUserAddress },
-      { name: 'Reply-Chain-Main-Parent-Id', value: replyChainMainParentId },
-      { name: 'Comment-Type', value: isSuggestion ? 'suggestion' : 'text' },
-      { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
-    ];
+  const handlePostReplyToComment = async (commentToChange: Comment) => {
+    if (formState.isValid) {
+      let tags = [
+        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME_TEST },
+        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION_TEST },
+        { name: TAG_NAMES.operationName, value: 'Comment' },
+        { name: 'Comment-For', value: request.id },
+        { name: 'Replying-To-Comment-Id', value: replyingToCommentId },
+        { name: 'Replying-To-User-Address', value: replyingToUserAddress },
+        { name: 'Reply-Chain-Main-Parent-Id', value: replyChainMainParentId },
+        { name: 'Comment-Type', value: isSuggestion ? 'suggestion' : 'text' },
+        { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
+      ];
 
-    await postOnArweave(reply, tags);
+      if (isSuggestion) {
+        // declare tags of extra suggestion fields
+        tags = tags.concat([
+          {
+            name: 'Suggestion-Budget',
+            value: getValues().budget,
+          },
+          { name: 'Suggestion-PaymentPlan', value: getValues().paymentPlan },
+          {
+            name: 'Suggestion-DateTargetISO',
+            value: getValues().dateTarget ? moment(getValues().dateTarget)?.toISOString() : '',
+          },
+          { name: 'Suggestion-Website', value: getValues().websiteUrl },
+          { name: 'Suggestion-TwitterXHandle', value: getValues().twitterHandle },
+          { name: 'Suggestion-LinkedInHandle', value: getValues().linkedinHandle },
+        ]);
+      }
 
-    refetchComments();
+      // submit data to blockchain
+      await postOnArweave(getValues().commentText, tags);
 
-    handleSetShowAddReply(commentToChange, '', '');
+      resetForm();
+      handleSetShowAddReply(commentToChange, '', '');
+
+      refetchComments();
+    }
   };
 
   return (
@@ -266,49 +293,59 @@ const CommentElement = ({
             <div className='w-100 flex flex-col gap-1'>
               <div className='flex gap-2 flex-wrap mt-2'>
                 <div className='bg-white rounded-xl px-3 py-1'>
-                  <strong>Budget suggestion: </strong> US$ 6,000.00
+                  <strong>Budget suggestion: </strong>{' '}
+                  {changedComment.suggestionFields?.budget ?? '(Not Provided)'}
                 </div>
                 <div className='bg-white rounded-xl px-3 py-1'>
-                  <strong>Time suggestion: </strong> 6 month(s)
+                  <strong>Date target: </strong>{' '}
+                  {changedComment.suggestionFields?.dateTarget ?? '(Not Provided)'}
                 </div>
                 <div className='bg-white rounded-xl px-3 py-1'>
-                  <strong>Payment / Deliveries: </strong> All at once, right at the start
+                  <strong>Payment / Deliveries: </strong>{' '}
+                  {paymentPlanBrowseTag(changedComment.suggestionFields?.paymentPlan ?? '') ??
+                    '(Not Provided)'}
                 </div>
               </div>
               <div className='flex gap-2 flex-wrap mt-2'>
-                <div className='bg-white rounded-xl px-3 py-1'>
-                  <strong>X / Twitter: </strong>
-                  <a
-                    href='https://www.x.com/@getfairai'
-                    target='_blank'
-                    rel='noreferrer'
-                    className='primary-text-color underline'
-                  >
-                    @getfairai
-                  </a>
-                </div>
-                <div className='bg-white rounded-xl px-3 py-1'>
-                  <strong>LinkedIn: </strong>
-                  <a
-                    href='https://www.linkedin.com/'
-                    target='_blank'
-                    rel='noreferrer'
-                    className='primary-text-color underline'
-                  >
-                    @getfairai
-                  </a>
-                </div>
-                <div className='bg-white rounded-xl px-3 py-1'>
-                  <strong>Website: </strong>
-                  <a
-                    href='https://getfair.ai'
-                    target='_blank'
-                    rel='noreferrer'
-                    className='primary-text-color underline'
-                  >
-                    getfair.ai
-                  </a>
-                </div>
+                {changedComment.suggestionFields?.twitterHandle && (
+                  <div className='bg-white rounded-xl px-3 py-1'>
+                    <strong>X / Twitter: </strong>
+                    <a
+                      href={`https://www.x.com/${changedComment.suggestionFields?.twitterHandle}`}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='primary-text-color underline'
+                    >
+                      @{changedComment.suggestionFields?.twitterHandle}
+                    </a>
+                  </div>
+                )}
+                {changedComment.suggestionFields?.linkedinHandle && (
+                  <div className='bg-white rounded-xl px-3 py-1'>
+                    <strong>LinkedIn: </strong>
+                    <a
+                      href={`https://www.linkedin.com/in/${changedComment.suggestionFields?.linkedinHandle}`}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='primary-text-color underline'
+                    >
+                      @{changedComment.suggestionFields?.linkedinHandle}
+                    </a>
+                  </div>
+                )}
+                {changedComment.suggestionFields?.websiteUrl && (
+                  <div className='bg-white rounded-xl px-3 py-1'>
+                    <strong>Website: </strong>
+                    <a
+                      href={'//' + changedComment.suggestionFields?.websiteUrl}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='primary-text-color underline'
+                    >
+                      {changedComment.suggestionFields?.websiteUrl}
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -341,14 +378,14 @@ const CommentElement = ({
 
                 <div className='flex-grow-0 flex justify-end items-center'>
                   <Switch
-                    checked={changedComment.showMakeSuggestionInputs ?? false}
-                    onClick={() => handleShowSuggestionInputsReply(changedComment)}
+                    checked={isSuggestion}
+                    onClick={() => handleShowSuggestionInputsReply()}
                   />
                   Suggest different budgets
                 </div>
               </div>
 
-              {changedComment?.showMakeSuggestionInputs && (
+              {isSuggestion && (
                 <>
                   <div className='pl-4 w-100 flex flex-col'>
                     <strong className='flex items-center gap-2'>
@@ -364,57 +401,54 @@ const CommentElement = ({
                     <strong>Budgets and date targets suggestion</strong>
 
                     <div className='flex gap-3 items-end flex-wrap'>
-                      <NumericFormat
-                        label='Budget suggestion'
-                        customInput={TextField}
-                        thousandSeparator
-                        prefix='US$ '
-                        placeholder='(optional)'
-                        className='w-full max-w-[170px]'
-                      ></NumericFormat>
+                      <Controller
+                        control={control}
+                        name='budget'
+                        render={({ field }) => (
+                          <NumericFormat
+                            label='Budget suggestion'
+                            customInput={TextField}
+                            thousandSeparator
+                            prefix='US$ '
+                            placeholder='(optional)'
+                            className='w-full max-w-[170px]'
+                            onChange={(budgetText) => field.onChange(budgetText)}
+                          ></NumericFormat>
+                        )}
+                      />
+
                       <FormControl className='w-full max-w-[250px]'>
                         <TextField
                           label='Payments plan suggestion'
                           placeholder='(optional)'
                           className='w-full'
                           select
+                          {...register('paymentPlan')}
                         >
-                          <MenuItem value={1}>Daily deliveries and payments</MenuItem>
-                          <MenuItem value={2}>Weekly deliveries and payments</MenuItem>
-                          <MenuItem value={3}>Monthly deliveries and payments</MenuItem>
-                          <MenuItem value={4}>Yearly deliveries and payments</MenuItem>
-                          <MenuItem value={5}>All at once, right at the start</MenuItem>
-                          <MenuItem value={6}>All at once, when project ends</MenuItem>
+                          <MenuItem value={'daily'}>Daily deliveries and payments</MenuItem>
+                          <MenuItem value={'weekly'}>Weekly deliveries and payments</MenuItem>
+                          <MenuItem value={'monthly'}>Monthly deliveries and payments</MenuItem>
+                          <MenuItem value={'yearly'}>Yearly deliveries and payments</MenuItem>
+                          <MenuItem value={'full-at-start'}>
+                            All at once, right at the start
+                          </MenuItem>
+                          <MenuItem value={'full-at-end'}>All at once, when project ends</MenuItem>
                         </TextField>
                       </FormControl>
 
-                      <div className='flex-grow flex flex-col gap-1 mt-2'>
-                        <div className='flex items-center flex-wrap gap-3'>
+                      <Controller
+                        control={control}
+                        name='dateTarget'
+                        render={({ field }) => (
                           <LocalizationProvider dateAdapter={AdapterMoment}>
-                            <DateField className='flex-grow max-w-[150px]' label='Date target' />
+                            <DateField
+                              className='flex-grow max-w-[200px]'
+                              label='Target (MM/DD/YYYY)'
+                              onChange={(date) => field.onChange(date)}
+                            />
                           </LocalizationProvider>
-                          <strong>or</strong>
-                          <div className='flex-grow flex gap-3 flex-nowrap'>
-                            <NumericFormat
-                              className='w-full max-w-[100px]'
-                              customInput={TextField}
-                              thousandSeparator
-                              placeholder='00'
-                            ></NumericFormat>
-                            <TextField
-                              label='Type'
-                              className='w-full max-w-[150px]'
-                              required
-                              select
-                            >
-                              <MenuItem value={1}>Day(s)</MenuItem>
-                              <MenuItem value={2}>Week(s)</MenuItem>
-                              <MenuItem value={3}>Month(s)</MenuItem>
-                              <MenuItem value={4}>Year(s)</MenuItem>
-                            </TextField>
-                          </div>
-                        </div>
-                      </div>
+                        )}
+                      />
                     </div>
 
                     <strong className='mt-2'>Ways to contact you</strong>
@@ -426,6 +460,7 @@ const CommentElement = ({
                           placeholder='(optional)'
                           variant='outlined'
                           className='w-full max-w-[300px]'
+                          {...register('websiteUrl', { maxLength: 50 })}
                         />
                         <TextField
                           label='Your X (twitter) handle'
@@ -433,6 +468,7 @@ const CommentElement = ({
                           variant='outlined'
                           className='w-full max-w-[300px]'
                           InputProps={{ startAdornment: <>@ </> }}
+                          {...register('twitterHandle', { maxLength: 50 })}
                         />
                         <TextField
                           label='Your LinkedIn handle'
@@ -440,11 +476,12 @@ const CommentElement = ({
                           variant='outlined'
                           className='w-full max-w-[300px]'
                           InputProps={{ startAdornment: <>@ </> }}
+                          {...register('linkedinHandle', { maxLength: 50 })}
                         />
                       </div>
                     </div>
 
-                    <strong className='mt-2'>Anything else?</strong>
+                    <strong className='mt-2'>Your comment</strong>
                   </div>
                 </>
               )}
@@ -462,11 +499,10 @@ const CommentElement = ({
                   placeholder='Type your comment here'
                   variant='outlined'
                   fullWidth
-                  value={reply}
-                  onChange={(e) => setReply(e.target.value)}
+                  {...register('commentText', { required: true, maxLength: 2000 })}
                 />
                 <StyledMuiButton
-                  onClick={() => handlePostReplyToComment(changedComment, reply, false)}
+                  onClick={handleSubmit(() => handlePostReplyToComment(changedComment))}
                   className='primary plausible-event-name=Request+Reply+Post+Click'
                 >
                   <SendIcon /> Send
@@ -573,6 +609,37 @@ const RequestElement = ({ request }: { request: RequestData }) => {
           const foundId = comment.tags.find(
             (tag) => tag.name === 'Reply-Chain-Main-Parent-Id',
           )?.value;
+
+          // set the comment type by tag
+          comment.commentType =
+            comment.tags.find((tag) => tag.name === 'Comment-Type')?.value === 'suggestion'
+              ? 'suggestion'
+              : 'text';
+
+          if (comment.commentType === 'suggestion') {
+            // set additional tag info
+            comment.suggestionFields = {
+              budget: comment.tags.find((tag) => tag.name === 'Suggestion-Budget')?.value ?? '',
+              paymentPlan:
+                comment.tags.find((tag) => tag.name === 'Suggestion-PaymentPlan')?.value ?? '',
+              dateTarget:
+                comment.tags.find((tag) => tag.name === 'Suggestion-DateTargetISO')?.value ?? '',
+              websiteUrl:
+                comment.tags.find((tag) => tag.name === 'Suggestion-Website')?.value ?? '',
+              twitterHandle:
+                comment.tags.find((tag) => tag.name === 'Suggestion-TwitterXHandle')?.value ?? '',
+              linkedinHandle:
+                comment.tags.find((tag) => tag.name === 'Suggestion-LinkedInHandle')?.value ?? '',
+              commentText: '', // not used here
+            };
+
+            if (comment.suggestionFields.dateTarget) {
+              comment.suggestionFields.dateTarget = moment(comment.suggestionFields.dateTarget)
+                .toDate()
+                .toDateString();
+            }
+          }
+
           if (foundId) {
             // its a reply
             const foundParentIndex = allCommentsWithReplies.findIndex(
@@ -772,7 +839,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                                 comment={comment}
                                 request={request}
                                 refetchComments={refetch}
-                                commentType='text'
+                                commentType={comment.commentType}
                                 replyToUserAddress=''
                                 replyChainMainParentId={comment.id}
                               />
@@ -787,7 +854,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                                         comment={reply}
                                         request={request}
                                         refetchComments={refetch}
-                                        commentType='text'
+                                        commentType={reply.commentType}
                                         replyToUserAddress={
                                           reply.tags.find(
                                             (tag) => tag.name === 'Replying-To-User-Address',
