@@ -169,12 +169,25 @@ const CommentElement = ({
     formState,
     getValues,
     control,
+    trigger,
   } = useForm<FormCommentInputs>();
-  // const onReplySubmit: SubmitHandler<FormCommentInputs> = (data) => console.log(data);
 
   const handleShowSuggestionInputsReply = () => {
     setIsSuggestion(!isSuggestion);
   };
+
+  const checkIfAtLeastOneFieldIsFilled = (): boolean => {
+    const fieldValues = Object.values(getValues()).filter(
+      (value) => value && value !== getValues().commentText,
+    );
+    if (fieldValues.length === 0) {
+      return false;
+    } else return true;
+  };
+
+  useEffect(() => {
+    trigger();
+  }, [isSuggestion]);
 
   const handleSetShowAddReply = (
     commentToChange: Comment,
@@ -198,6 +211,10 @@ const CommentElement = ({
 
   const handlePostReplyToComment = async (commentToChange: Comment) => {
     if (formState.isValid) {
+      if (isSuggestion && !checkIfAtLeastOneFieldIsFilled()) {
+        setIsSuggestion(false);
+      }
+
       let tags = [
         { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME_TEST },
         { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION_TEST },
@@ -504,6 +521,7 @@ const CommentElement = ({
                 <StyledMuiButton
                   onClick={handleSubmit(() => handlePostReplyToComment(changedComment))}
                   className='primary plausible-event-name=Request+Reply+Post+Click'
+                  disabled={!formState.isValid}
                 >
                   <SendIcon /> Send
                 </StyledMuiButton>
@@ -523,14 +541,15 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   const [commentsAmountTotal, setCommentsAmountTotal] = useState(0);
   const [newComment, setNewComment] = useState('');
   const [showAddComment, setShowAddComment] = useState(false);
-  const [showAcceptAsDev, setShowAcceptAsDev] = useState(false);
+  const [showExtraSuggestionOptions, setShowExtraSuggestionOptions] = useState(false);
   const { currentAddress } = useContext(EVMWalletContext);
 
   const handleOpen = useCallback(() => setOpen(true), [setOpen]);
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
   const handleShowNewComment = () => setShowAddComment(!showAddComment);
-  const handleShowAcceptAsDev = () => setShowAcceptAsDev(!showAcceptAsDev);
+  const handleShowExtraSuggestionOptions = () =>
+    setShowExtraSuggestionOptions(!showExtraSuggestionOptions);
 
   const {
     data: commentsData,
@@ -880,7 +899,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                     animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
                   >
                     <div className='w-full px-6 pt-3 pb-6'>
-                      {!showAddComment && !showAcceptAsDev && (
+                      {!showAddComment && (
                         <div className='animate-slide-down w-full flex flex-wrap gap-3 justify-center'>
                           <Tooltip title='Add a simple text comment.'>
                             <StyledMuiButton className='primary' onClick={handleShowNewComment}>
@@ -888,13 +907,164 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                               Add a comment
                             </StyledMuiButton>
                           </Tooltip>
-
-                          <Tooltip title='Show your interest into becoming the developer or one of the developers for this request.'>
-                            <StyledMuiButton className='secondary' onClick={handleShowAcceptAsDev}>
-                              <CheckCircleRounded />I am interested in developing this request
-                            </StyledMuiButton>
-                          </Tooltip>
                         </div>
+                      )}
+
+                      {showExtraSuggestionOptions && (
+                        <>
+                          <div className='w-full font-bold text-sm mt-3 animate-slide-left pl-11 flex justify-between flex-wrap items-center'>
+                            <div className='flex-grow flex items-center gap-1'>
+                              Type your comment
+                            </div>
+
+                            <div className='flex-grow-0 flex justify-end items-center'>
+                              <Switch
+                                checked={isSuggestion}
+                                onClick={() => handleShowSuggestionInputsReply()}
+                              />
+                              Suggest different budgets
+                            </div>
+                          </div>
+
+                          {isSuggestion && (
+                            <>
+                              <div className='pl-4 w-100 flex flex-col'>
+                                <strong className='flex items-center gap-2'>
+                                  <StarRounded className='primary-text-color' /> Suggesting new
+                                  budgets and/or targets
+                                </strong>
+                                <p className='pl-8'>
+                                  Fill any field as needed. All fields are optional. <br />
+                                  These will be added to your comment and will be publicly visible.
+                                </p>
+                              </div>
+                              <div className='w-full mt-3 animate-slide-left pl-11 flex flex-col gap-2'>
+                                <strong>Budgets and date targets suggestion</strong>
+
+                                <div className='flex gap-3 items-end flex-wrap'>
+                                  <Controller
+                                    control={control}
+                                    name='budget'
+                                    render={({ field }) => (
+                                      <NumericFormat
+                                        label='Budget suggestion'
+                                        customInput={TextField}
+                                        thousandSeparator
+                                        prefix='US$ '
+                                        placeholder='(optional)'
+                                        className='w-full max-w-[170px]'
+                                        onChange={(budgetText) => field.onChange(budgetText)}
+                                      ></NumericFormat>
+                                    )}
+                                  />
+
+                                  <FormControl className='w-full max-w-[250px]'>
+                                    <TextField
+                                      label='Payments plan suggestion'
+                                      placeholder='(optional)'
+                                      className='w-full'
+                                      select
+                                      {...register('paymentPlan')}
+                                    >
+                                      <MenuItem value={'daily'}>
+                                        Daily deliveries and payments
+                                      </MenuItem>
+                                      <MenuItem value={'weekly'}>
+                                        Weekly deliveries and payments
+                                      </MenuItem>
+                                      <MenuItem value={'monthly'}>
+                                        Monthly deliveries and payments
+                                      </MenuItem>
+                                      <MenuItem value={'yearly'}>
+                                        Yearly deliveries and payments
+                                      </MenuItem>
+                                      <MenuItem value={'full-at-start'}>
+                                        All at once, right at the start
+                                      </MenuItem>
+                                      <MenuItem value={'full-at-end'}>
+                                        All at once, when project ends
+                                      </MenuItem>
+                                    </TextField>
+                                  </FormControl>
+
+                                  <Controller
+                                    control={control}
+                                    name='dateTarget'
+                                    render={({ field }) => (
+                                      <LocalizationProvider dateAdapter={AdapterMoment}>
+                                        <DateField
+                                          className='flex-grow max-w-[200px]'
+                                          label='Target (MM/DD/YYYY)'
+                                          onChange={(date) => field.onChange(date)}
+                                        />
+                                      </LocalizationProvider>
+                                    )}
+                                  />
+                                </div>
+
+                                <strong className='mt-2'>Ways to contact you</strong>
+
+                                <div className='flex gap-3 items-end flex-wrap'>
+                                  <div className='flex gap-3'>
+                                    <TextField
+                                      label='Your website URL'
+                                      placeholder='(optional)'
+                                      variant='outlined'
+                                      className='w-full max-w-[300px]'
+                                      {...register('websiteUrl', { maxLength: 50 })}
+                                    />
+                                    <TextField
+                                      label='Your X (twitter) handle'
+                                      placeholder='(optional)'
+                                      variant='outlined'
+                                      className='w-full max-w-[300px]'
+                                      InputProps={{ startAdornment: <>@ </> }}
+                                      {...register('twitterHandle', { maxLength: 50 })}
+                                    />
+                                    <TextField
+                                      label='Your LinkedIn handle'
+                                      placeholder='(optional)'
+                                      variant='outlined'
+                                      className='w-full max-w-[300px]'
+                                      InputProps={{ startAdornment: <>@ </> }}
+                                      {...register('linkedinHandle', { maxLength: 50 })}
+                                    />
+                                  </div>
+                                </div>
+
+                                <strong className='mt-2'>Your comment</strong>
+                              </div>
+                            </>
+                          )}
+
+                          <div className='w-full flex gap-3 items-center animate-slide-left'>
+                            <StyledMuiButton
+                              className='secondary fully-rounded mini mt-1'
+                              onClick={() =>
+                                handleSetShowAddReply(
+                                  changedComment,
+                                  changedComment.id,
+                                  changedComment.owner,
+                                )
+                              }
+                            >
+                              <CloseRounded />
+                            </StyledMuiButton>
+                            <TextField
+                              placeholder='Type your comment here'
+                              variant='outlined'
+                              fullWidth
+                              {...register('commentText', { required: true, maxLength: 2000 })}
+                            />
+                            <StyledMuiButton
+                              onClick={handleSubmit(() => handlePostReplyToComment(changedComment))}
+                              className='primary plausible-event-name=Request+Reply+Post+Click'
+                              disabled={!formState.isValid}
+                            >
+                              <SendIcon /> Send
+                            </StyledMuiButton>
+                          </div>
+                        </>
                       )}
 
                       {showAddComment && (
@@ -916,142 +1086,8 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                             onClick={handleNewComment}
                             className='primary plausible-event-name=Request+Comment+Click'
                           >
-                            <SendIcon /> Submit
+                            <SendIcon /> Send
                           </StyledMuiButton>
-                        </div>
-                      )}
-
-                      {showAcceptAsDev && (
-                        <div className='w-full flex flex-col gap-3 animate-slide-down'>
-                          <strong className='flex items-center gap-1'>
-                            <AddRounded className='primary-text-color' /> Request to be a developer
-                            for this request
-                          </strong>
-                          <span className='font-medium rounded-xl bg-slate-300 px-3 py-2'>
-                            You are about to suggest yourself as a developer or one of the
-                            developers for this request.
-                            <br />
-                            Everything you fill here will be publicly visible in this request
-                            comments!
-                            <br />
-                            You can accept everything as is, or suggest a different budget,
-                            different target date, time needed or a different payment plan.
-                            <br />
-                            The request creator will be able to make a response to your request and
-                            let you know more details.
-                            <br /> You can also leave any additional info or comments in the
-                            &quot;Anything else?&quot; box, as needed.
-                          </span>
-
-                          <strong className='mt-4'>You suggestion / proposal</strong>
-
-                          <div className='flex gap-3'>
-                            <FormGroup>
-                              <FormControlLabel
-                                control={<Checkbox defaultChecked />}
-                                label='I accept the request as is and am ready to start right away.'
-                              />
-                            </FormGroup>
-                          </div>
-
-                          <strong>Budgets and date targets suggestion</strong>
-
-                          <div className='flex gap-3 items-end flex-wrap'>
-                            <NumericFormat
-                              label='Budget suggestion'
-                              customInput={TextField}
-                              thousandSeparator
-                              prefix='US$ '
-                              placeholder='(optional)'
-                              className='w-full max-w-[170px]'
-                            ></NumericFormat>
-                            <FormControl className='w-full max-w-[250px]'>
-                              <TextField label='Payments plan suggestion' className='w-full' select>
-                                <MenuItem value={1}>Daily deliveries and payments</MenuItem>
-                                <MenuItem value={2}>Weekly deliveries and payments</MenuItem>
-                                <MenuItem value={3}>Monthly deliveries and payments</MenuItem>
-                                <MenuItem value={4}>Yearly deliveries and payments</MenuItem>
-                                <MenuItem value={5}>All at once, right at the start</MenuItem>
-                                <MenuItem value={6}>All at once, when project ends</MenuItem>
-                              </TextField>
-                            </FormControl>
-
-                            <div className='flex-grow flex flex-col gap-1 mt-2'>
-                              <div className='flex items-center flex-wrap gap-3'>
-                                <LocalizationProvider dateAdapter={AdapterMoment}>
-                                  <DateField
-                                    className='flex-grow max-w-[150px]'
-                                    label='Date target'
-                                  />
-                                </LocalizationProvider>
-                                <strong>or</strong>
-                                <div className='flex-grow flex gap-3 flex-nowrap'>
-                                  <NumericFormat
-                                    className='w-full max-w-[100px]'
-                                    customInput={TextField}
-                                    thousandSeparator
-                                    placeholder='00'
-                                  ></NumericFormat>
-                                  <TextField
-                                    label='Type'
-                                    className='w-full max-w-[150px]'
-                                    required
-                                    select
-                                  >
-                                    <MenuItem value={1}>Day(s)</MenuItem>
-                                    <MenuItem value={2}>Week(s)</MenuItem>
-                                    <MenuItem value={3}>Month(s)</MenuItem>
-                                    <MenuItem value={4}>Year(s)</MenuItem>
-                                  </TextField>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <strong className='mt-2'>Ways to contact you</strong>
-
-                          <div className='flex gap-3'>
-                            <TextField
-                              label='Your website URL'
-                              placeholder='(optional)'
-                              variant='outlined'
-                              className='w-full max-w-[300px]'
-                            />
-                            <TextField
-                              label='Your X (twitter) handle'
-                              placeholder='(optional)'
-                              variant='outlined'
-                              className='w-full max-w-[300px]'
-                              InputProps={{ startAdornment: <>@ </> }}
-                            />
-                            <TextField
-                              label='Your LinkedIn handle'
-                              placeholder='(optional)'
-                              variant='outlined'
-                              className='w-full max-w-[300px]'
-                              InputProps={{ startAdornment: <>@ </> }}
-                            />
-                          </div>
-
-                          <strong className='mt-2'>Anything else?</strong>
-
-                          <TextField
-                            label='Add a comment or additional info'
-                            placeholder='Add any details you find important or a comment. This will be publicly visible.'
-                            variant='outlined'
-                            fullWidth
-                            value={newComment}
-                            onChange={handleCommentChange}
-                          />
-
-                          <div className='flex gap-3 flex-wrap justify-center mt-3'>
-                            <StyledMuiButton className='secondary ' onClick={handleShowAcceptAsDev}>
-                              <CloseRounded /> Cancel
-                            </StyledMuiButton>
-                            <StyledMuiButton className='primary'>
-                              <SendIcon /> Submit
-                            </StyledMuiButton>
-                          </div>
                         </div>
                       )}
                     </div>
