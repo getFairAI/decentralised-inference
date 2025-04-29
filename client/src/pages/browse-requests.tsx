@@ -22,7 +22,7 @@ import {
   paymentPlanBrowseTag,
   paymentPlanType,
 } from '@/utils/requestsPipeFunctions';
-import { PROTOCOL_NAME_TEST, PROTOCOL_VERSION_TEST, TAG_NAMES } from '@/constants';
+import { PROTOCOL_NAME, PROTOCOL_VERSION, TAG_NAMES } from '@/constants';
 import { gql, useQuery } from '@apollo/client';
 import Close from '@mui/icons-material/Close';
 import {
@@ -40,9 +40,6 @@ import {
   Fab,
   Tooltip,
   useTheme,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
   FormControl,
   MenuItem,
   CircularProgress,
@@ -50,7 +47,7 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SendIcon from '@mui/icons-material/Send';
-import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { EVMWalletContext } from '@/context/evm-wallet';
 import { postOnArweave } from '@fairai/evm-sdk';
 import { motion } from 'framer-motion';
@@ -59,9 +56,7 @@ import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRound
 import useScroll from '@/hooks/useScroll';
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import {
-  AddRounded,
   ChatBubbleRounded,
-  CheckCircleRounded,
   CloseRounded,
   InfoRounded,
   ReplyRounded,
@@ -156,6 +151,7 @@ const CommentElement = ({
     window.open(`https://arbiscan.io/address/${comment.owner}`, '_blank');
   }, [comment]);
 
+  const { currentAddress } = useContext(EVMWalletContext);
   const [changedComment, setChangedComment] = useState(comment);
   const [replyingToCommentId, setReplyingToCommentId] = useState('');
   const [replyingToUserAddress, setReplyingToUserAddress] = useState('');
@@ -216,8 +212,8 @@ const CommentElement = ({
       }
 
       let tags = [
-        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME_TEST },
-        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION_TEST },
+        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
         { name: TAG_NAMES.operationName, value: 'Comment' },
         { name: 'Comment-For', value: request.id },
         { name: 'Replying-To-Comment-Id', value: replyingToCommentId },
@@ -369,7 +365,7 @@ const CommentElement = ({
 
           <div className='font-medium text-sm sm:text-base px-2'>{changedComment.content}</div>
 
-          {!changedComment?.showReplyInput && (
+          {currentAddress && !changedComment?.showReplyInput && (
             <div className='w-full flex justify-end gap-2 flex-wrap mt-2 animate-slide-right'>
               <StyledMuiButton
                 className='outlined-secondary'
@@ -382,7 +378,7 @@ const CommentElement = ({
             </div>
           )}
 
-          {changedComment?.showReplyInput && (
+          {currentAddress && changedComment?.showReplyInput && (
             <>
               <div className='w-full font-bold text-sm mt-3 animate-slide-left pl-11 flex justify-between flex-wrap items-center'>
                 <div className='flex-grow flex items-center gap-1'>
@@ -398,7 +394,7 @@ const CommentElement = ({
                     checked={isSuggestion}
                     onClick={() => handleShowSuggestionInputsReply()}
                   />
-                  Suggest different budgets
+                  Suggest budgets
                 </div>
               </div>
 
@@ -539,17 +535,51 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoadingAnim, setCommentsLoadingAnim] = useState<boolean>(false);
   const [commentsAmountTotal, setCommentsAmountTotal] = useState(0);
-  const [newComment, setNewComment] = useState('');
   const [showAddComment, setShowAddComment] = useState(false);
-  const [showExtraSuggestionOptions, setShowExtraSuggestionOptions] = useState(false);
   const { currentAddress } = useContext(EVMWalletContext);
 
   const handleOpen = useCallback(() => setOpen(true), [setOpen]);
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
-  const handleShowNewComment = () => setShowAddComment(!showAddComment);
-  const handleShowExtraSuggestionOptions = () =>
-    setShowExtraSuggestionOptions(!showExtraSuggestionOptions);
+  const handleShowNewComment = () => {
+    setShowAddComment(!showAddComment);
+
+    // reset this if not showing new comment
+    if (!showAddComment) {
+      setIsSuggestion(false);
+      resetForm();
+    }
+  };
+
+  const [isSuggestion, setIsSuggestion] = useState(false);
+
+  // declare comment form
+  const {
+    register,
+    handleSubmit,
+    reset: resetForm,
+    formState,
+    getValues,
+    control,
+    trigger,
+  } = useForm<FormCommentInputs>();
+
+  const handleShowSuggestionInputsReply = () => {
+    setIsSuggestion(!isSuggestion);
+  };
+
+  const checkIfAtLeastOneFieldIsFilled = (): boolean => {
+    const fieldValues = Object.values(getValues()).filter(
+      (value) => value && value !== getValues().commentText,
+    );
+    if (fieldValues.length === 0) {
+      return false;
+    } else return true;
+  };
+
+  useEffect(() => {
+    trigger();
+  }, [isSuggestion]);
 
   const {
     data: commentsData,
@@ -558,8 +588,8 @@ const RequestElement = ({ request }: { request: RequestData }) => {
   } = useQuery(irysQuery, {
     variables: {
       tags: [
-        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME_TEST] },
-        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION_TEST] },
+        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
+        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
         { name: TAG_NAMES.operationName, values: ['Comment'] },
         { name: 'Comment-For', values: [request.id] },
       ],
@@ -571,25 +601,48 @@ const RequestElement = ({ request }: { request: RequestData }) => {
     notifyOnNetworkStatusChange: true,
   });
 
-  const handleCommentChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => setNewComment(e.target.value),
-    [setNewComment],
-  );
+  const handlePostNewComment = async () => {
+    if (formState.isValid) {
+      if (isSuggestion && !checkIfAtLeastOneFieldIsFilled()) {
+        setIsSuggestion(false);
+      }
 
-  const handleNewComment = useCallback(async () => {
-    const tags = [
-      { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME_TEST },
-      { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION_TEST },
-      { name: TAG_NAMES.operationName, value: 'Comment' },
-      { name: 'Comment-For', value: request.id },
-      { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
-    ];
+      let tags = [
+        { name: TAG_NAMES.protocolName, value: PROTOCOL_NAME },
+        { name: TAG_NAMES.protocolVersion, value: PROTOCOL_VERSION },
+        { name: TAG_NAMES.operationName, value: 'Comment' },
+        { name: 'Comment-For', value: request.id },
+        { name: 'Comment-Type', value: isSuggestion ? 'suggestion' : 'text' },
+        { name: TAG_NAMES.unixTime, value: (Date.now() / 1000).toString() },
+      ];
 
-    await postOnArweave(newComment, tags);
+      if (isSuggestion) {
+        // declare tags of extra suggestion fields
+        tags = tags.concat([
+          {
+            name: 'Suggestion-Budget',
+            value: getValues().budget,
+          },
+          { name: 'Suggestion-PaymentPlan', value: getValues().paymentPlan },
+          {
+            name: 'Suggestion-DateTargetISO',
+            value: getValues().dateTarget ? moment(getValues().dateTarget)?.toISOString() : '',
+          },
+          { name: 'Suggestion-Website', value: getValues().websiteUrl },
+          { name: 'Suggestion-TwitterXHandle', value: getValues().twitterHandle },
+          { name: 'Suggestion-LinkedInHandle', value: getValues().linkedinHandle },
+        ]);
+      }
 
-    refetch();
-    setNewComment('');
-  }, [request, newComment, currentAddress, setComments, setNewComment]);
+      // submit data to blockchain
+      await postOnArweave(getValues().commentText, tags);
+
+      resetForm();
+      handleShowNewComment();
+
+      refetch();
+    }
+  };
 
   useEffect(() => {
     if (commentsData && commentsData.transactions.edges) {
@@ -910,11 +963,11 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                         </div>
                       )}
 
-                      {showExtraSuggestionOptions && (
+                      {showAddComment && (
                         <>
                           <div className='w-full font-bold text-sm mt-3 animate-slide-left pl-11 flex justify-between flex-wrap items-center'>
                             <div className='flex-grow flex items-center gap-1'>
-                              Type your comment
+                              {isSuggestion ? '' : 'Type your comment'}
                             </div>
 
                             <div className='flex-grow-0 flex justify-end items-center'>
@@ -922,7 +975,7 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                                 checked={isSuggestion}
                                 onClick={() => handleShowSuggestionInputsReply()}
                               />
-                              Suggest different budgets
+                              Suggest budgets
                             </div>
                           </div>
 
@@ -1037,58 +1090,28 @@ const RequestElement = ({ request }: { request: RequestData }) => {
                             </>
                           )}
 
-                          <div className='w-full flex gap-3 items-center animate-slide-left'>
+                          <div className='w-full flex gap-3 items-center animate-slide-down'>
                             <StyledMuiButton
                               className='secondary fully-rounded mini mt-1'
-                              onClick={() =>
-                                handleSetShowAddReply(
-                                  changedComment,
-                                  changedComment.id,
-                                  changedComment.owner,
-                                )
-                              }
+                              onClick={handleShowNewComment}
                             >
                               <CloseRounded />
                             </StyledMuiButton>
                             <TextField
-                              placeholder='Type your comment here'
+                              placeholder='Add a new comment'
                               variant='outlined'
                               fullWidth
                               {...register('commentText', { required: true, maxLength: 2000 })}
                             />
                             <StyledMuiButton
-                              onClick={handleSubmit(() => handlePostReplyToComment(changedComment))}
-                              className='primary plausible-event-name=Request+Reply+Post+Click'
+                              onClick={handleSubmit(() => handlePostNewComment())}
+                              className='primary plausible-event-name=Request+Comment+Click'
                               disabled={!formState.isValid}
                             >
                               <SendIcon /> Send
                             </StyledMuiButton>
                           </div>
                         </>
-                      )}
-
-                      {showAddComment && (
-                        <div className='w-full flex gap-3 items-center animate-slide-down'>
-                          <StyledMuiButton
-                            className='secondary fully-rounded mini mt-1'
-                            onClick={handleShowNewComment}
-                          >
-                            <CloseRounded />
-                          </StyledMuiButton>
-                          <TextField
-                            placeholder='Add a new comment'
-                            variant='outlined'
-                            fullWidth
-                            value={newComment}
-                            onChange={handleCommentChange}
-                          />
-                          <StyledMuiButton
-                            onClick={handleNewComment}
-                            className='primary plausible-event-name=Request+Comment+Click'
-                          >
-                            <SendIcon /> Send
-                          </StyledMuiButton>
-                        </div>
                       )}
                     </div>
                   </motion.div>
@@ -1195,8 +1218,8 @@ const BrowseRequests = () => {
   const { data, loading } = useQuery(irysQuery, {
     variables: {
       tags: [
-        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME_TEST] },
-        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION_TEST] },
+        { name: TAG_NAMES.protocolName, values: [PROTOCOL_NAME] },
+        { name: TAG_NAMES.protocolVersion, values: [PROTOCOL_VERSION] },
         { name: TAG_NAMES.operationName, values: ['Request-Solution'] },
       ],
       first: 10,
