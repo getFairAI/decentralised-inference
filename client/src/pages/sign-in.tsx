@@ -107,7 +107,7 @@ const WalletnotConnectedContent = () => {
       <div className='w-full flex flex-col justify-center items-center gap-10'>
         <Box>
           <img
-            src='./fair-ai-outline.svg'
+            src='./logo_non_capitalized_black_transp.svg'
             alt='FairAI Logo'
             style={{ width: '230px', filter: 'brightness(1.5)' }}
           />
