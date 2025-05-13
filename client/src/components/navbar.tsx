@@ -351,7 +351,7 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
 
                       <div className='w-full px-4'>
                         <img
-                          src='./fair-ai-outline.svg'
+                          src='./logo_non_capitalized_black_transp.svg'
                           alt='FairAI Logo'
                           style={{
                             width: '200px',
