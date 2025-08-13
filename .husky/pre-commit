@@ -3,3 +3,4 @@
 
 echo Checking lint...
 npx --no -- lint-staged
+npx --no -- lint-staged

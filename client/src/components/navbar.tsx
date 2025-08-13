@@ -234,7 +234,7 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
         <div className='flex-col w-full justify-start'>
           <Toolbar className='flex justify-between'>
             <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
-              <Link to='/' style={{ width: '150px', height: '50px' }} replace={true}>
+              <Link to='/' style={{ width: '100px', height: '50px' }}>
                 <Logo />
               </Link>
               <Typography

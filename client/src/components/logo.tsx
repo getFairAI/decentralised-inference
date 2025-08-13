@@ -21,7 +21,7 @@ import { Icon } from '@mui/material';
 const Logo = () => {
   return (
     <Icon sx={{ height: '100%', width: '100%', display: 'flex' }}>
-      <img src={'./logo_non_capitalized_black_transp.svg'} alt='FairAI Logo' />
+      <img src={'./fairai-v3-logo-color-black.svg'} alt='FairAI Logo' />
     </Icon>
   );
 };
