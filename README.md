@@ -3,9 +3,11 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=FAIR-Protocol_decentralised-inference&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=FAIR-Protocol_decentralised-inference)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=FAIR-Protocol_decentralised-inference&metric=bugs)](https://sonarcloud.io/summary/new_code?id=FAIR-Protocol_decentralised-inference)
 
-# Fair Protocol
+# FairAI (previously Fair Protocol)
 
-Welcome to the Fair Protocol GitHub! Please read our [whitepaper](./documents/whitepaper.md) to understand more about this application.
+Visit us right now at [getfair.ai](https://getfair.ai)!
+
+Welcome to the FairAI GitHub! Please read our [whitepaper](./documents/whitepaper.md) to understand more about this application.
 Online [marketplace](https://fair.g8way.io/) permanently on arweave.
 
 ## File Structure
@@ -49,7 +51,7 @@ To become an Operator, you must install a template inserted in Arweave by a CUra
 
 Operators can decide to terminate the activity whenever they want. They should send a new transaction specifying this business termination to end it, and they can also restart it again later on. This transaction will be free of costs, and the advantage of doing it will be that the Marketplace won't penalise the Operator since the Users won't be left without a response. As such, the Operator will have better statistics.
 
-The Fair Protocol marketplace will ensure that all participants follow all the specified rules, charging users another 5% fee for that service when they request inferences. Those 5% will be paid to Operators, which will pay them back to the Marketplace. **If the Operator does not send the fees to the Marketplace within 7 Arweave blocks, the Marketplace won't list to Users the Operator anymore.**
+The FairAI marketplace will ensure that all participants follow all the specified rules, charging users another 5% fee for that service when they request inferences. Those 5% will be paid to Operators, which will pay them back to the Marketplace. **If the Operator does not send the fees to the Marketplace within 7 Arweave blocks, the Marketplace won't list to Users the Operator anymore.**
 
 By becoming an Operator, you accept all these rules, terms, and conditions.
 
