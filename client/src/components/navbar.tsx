@@ -234,7 +234,7 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
         <div className='flex-col w-full justify-start'>
           <Toolbar className='flex justify-between'>
             <Box display={'flex'} flexDirection={'row'} alignItems={'center'}>
-              <Link to='/' style={{ width: '150px', height: '50px' }} replace={true}>
+              <Link to='/' style={{ width: '100px', height: '50px' }}>
                 <Logo />
               </Link>
               <Typography
@@ -351,7 +351,7 @@ const Navbar = ({ userScrolledDown }: { userScrolledDown: boolean }) => {
 
                       <div className='w-full px-4'>
                         <img
-                          src='./fair-ai-outline.svg'
+                          src='./logo_non_capitalized_black_transp.svg'
                           alt='FairAI Logo'
                           style={{
                             width: '200px',
